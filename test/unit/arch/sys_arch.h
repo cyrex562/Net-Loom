@@ -51,7 +51,7 @@ typedef struct lwip_mbox sys_mbox_t;
 #define sys_mbox_valid_val(mbox) (((mbox).sem != NULL)  && ((mbox).sem != (void*)-1))
 
 /* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
-typedef u32_t sys_thread_t;
+typedef uint32_t sys_thread_t;
 
 #define SYS_ARCH_DECL_PROTECT(lev)
 #define SYS_ARCH_PROTECT(lev)
@@ -66,7 +66,7 @@ typedef int (*test_sys_arch_waiting_fn)(sys_sem_t* wait_sem, sys_mbox_t* wait_mb
 void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
 
 /* current time */
-extern u32_t lwip_sys_now;
+extern uint32_t lwip_sys_now;
 
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
 

@@ -1,16 +1,16 @@
 #include "test_udp.h"
 
-#include "lwip/udp.h"
-#include "lwip/stats.h"
-#include "lwip/inet_chksum.h"
+#include "udp.h"
+#include "stats.h"
+#include "inet_chksum.h"
 
 #if !LWIP_STATS || !UDP_STATS || !MEMP_STATS
 #error "This tests needs UDP- and MEMP-statistics enabled"
 #endif
 
 struct test_udp_rxdata {
-  u32_t rx_cnt;
-  u32_t rx_bytes;
+  uint32_t rx_cnt;
+  uint32_t rx_bytes;
   struct udp_pcb *pcb;
 };
 
@@ -150,7 +150,7 @@ START_TEST(test_udp_new_remove)
 END_TEST
 
 static void test_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-    const ip_addr_t *addr, u16_t port)
+    const ip_addr_t *addr, uint16_t port)
 {
   struct test_udp_rxdata *ctr = (struct test_udp_rxdata *)arg;
 
@@ -169,7 +169,7 @@ static void test_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 }
 
 static struct pbuf *
-test_udp_create_test_packet(u16_t length, u16_t port, u32_t dst_addr)
+test_udp_create_test_packet(uint16_t length, uint16_t port, uint32_t dst_addr)
 {
   err_t err;
   u8_t ret;
@@ -213,7 +213,7 @@ START_TEST(test_udp_broadcast_rx_with_2_netifs)
 {
   err_t err;
   struct udp_pcb *pcb1, *pcb2;
-  const u16_t port = 12345;
+  const uint16_t port = 12345;
   struct test_udp_rxdata ctr1, ctr2;
   struct pbuf *p;
 #if SO_REUSE

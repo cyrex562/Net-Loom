@@ -1,10 +1,10 @@
 #include "test_dhcp.h"
 
-#include "lwip/netif.h"
-#include "lwip/dhcp.h"
-#include "lwip/prot/dhcp.h"
-#include "lwip/etharp.h"
-#include "netif/ethernet.h"
+#include "netif.h"
+#include "dhcp.h"
+#include "prot/dhcp.h"
+#include "etharp.h"
+#include "ethernet.h"
 
 struct netif net_test;
 
@@ -144,11 +144,11 @@ static void send_pkt(struct netif *netif, const u8_t *data, size_t len)
 {
   struct pbuf *p, *q;
   LWIP_ASSERT("pkt too big", len <= 0xFFFF);
-  p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, (uint16_t)len, PBUF_POOL);
 
   if (debug) {
     /* Dump data */
-    u32_t i;
+    uint32_t i;
     printf("RX data (len %d)", p->tot_len);
     for (i = 0; i < len; i++) {
       printf(" %02X", data[i]);
@@ -197,7 +197,7 @@ static void dhcp_teardown(void)
   lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
-static void check_pkt(struct pbuf *p, u32_t pos, const u8_t *mem, u32_t len)
+static void check_pkt(struct pbuf *p, uint32_t pos, const u8_t *mem, uint32_t len)
 {
   u8_t *data;
 
@@ -213,10 +213,10 @@ static void check_pkt(struct pbuf *p, u32_t pos, const u8_t *mem, u32_t len)
   fail_if(memcmp(&data[pos], mem, len), "data at pos %d, len %d in packet %d did not match", pos, len, txpacket);
 }
 
-static void check_pkt_fuzzy(struct pbuf *p, u32_t startpos, const u8_t *mem, u32_t len)
+static void check_pkt_fuzzy(struct pbuf *p, uint32_t startpos, const u8_t *mem, uint32_t len)
 {
   int found;
-  u32_t i;
+  uint32_t i;
   u8_t *data;
 
   fail_if((startpos + len) > p->tot_len);
@@ -437,7 +437,7 @@ START_TEST(test_dhcp)
   ip4_addr_t netmask;
   ip4_addr_t gw;
   int i;
-  u32_t xid;
+  uint32_t xid;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP;
@@ -510,7 +510,7 @@ START_TEST(test_dhcp_nak)
   ip4_addr_t addr;
   ip4_addr_t netmask;
   ip4_addr_t gw;
-  u32_t xid;
+  uint32_t xid;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP;
@@ -732,7 +732,7 @@ START_TEST(test_dhcp_relayed)
   ip4_addr_t netmask;
   ip4_addr_t gw;
   int i;
-  u32_t xid;
+  uint32_t xid;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP_RELAY;
@@ -874,10 +874,10 @@ START_TEST(test_dhcp_nak_no_endmarker)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
-  u32_t xid;
+  uint32_t xid;
   struct dhcp* dhcp;
   u8_t tries;
-  u16_t request_timeout;
+  uint16_t request_timeout;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP_NAK_NO_ENDMARKER;
@@ -984,7 +984,7 @@ START_TEST(test_dhcp_invalid_overload)
   ip4_addr_t addr;
   ip4_addr_t netmask;
   ip4_addr_t gw;
-  u32_t xid;
+  uint32_t xid;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP_INVALID_OVERLOAD;

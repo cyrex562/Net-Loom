@@ -71,10 +71,10 @@ developers.
 
 The current Git trees are web-browsable:
   http://git.savannah.gnu.org/cgit/lwip.git
-  http://git.savannah.gnu.org/cgit/lwip/lwip-contrib.git
+  http://git.savannah.gnu.org/cgit/lwip-contrib.git
 
 Submit patches and bugs via the lwIP project page:
-  http://savannah.nongnu.org/projects/lwip/
+  http://savannah.nongnu.org/projects/
 
 Continuous integration builds (GCC, clang):
   https://travis-ci.org/yarrick/lwip-merged
@@ -84,7 +84,7 @@ DOCUMENTATION
 
 Self documentation of the source code is regularly extracted from the current
 Git sources and is available from this web page:
-  http://www.nongnu.org/lwip/
+  http://www.nongnu.org/
 
 There is now a constantly growing wiki about lwIP at
   http://lwip.wikia.com/wiki/LwIP_Wiki

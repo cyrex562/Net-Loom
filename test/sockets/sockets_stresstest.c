@@ -49,13 +49,13 @@
  *
  */
 
-#include "lwip/opt.h"
+#include "opt.h"
 #include "sockets_stresstest.h"
 
-#include "lwip/sockets.h"
-#include "lwip/sys.h"
+#include "sockets.h"
+#include "sys.h"
 
-#include "lwip/mem.h"
+#include "mem.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -99,7 +99,7 @@ static void
 fill_test_data(void *buf, size_t buf_len_bytes)
 {
   u8_t *p = (u8_t*)buf;
-  u16_t i, chk;
+  uint16_t i, chk;
 
   LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
   LWIP_ASSERT("buffer too big", buf_len_bytes <= 0xFFFF);
@@ -123,17 +123,17 @@ static size_t
 check_test_data(const void *buf, size_t buf_len_bytes)
 {
   u8_t *p = (u8_t*)buf;
-  u16_t i, chk, chk_rx, len_rx;
+  uint16_t i, chk, chk_rx, len_rx;
 
   LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
-  len_rx = (((u16_t)p[0]) << 8) | p[1];
+  len_rx = (((uint16_t)p[0]) << 8) | p[1];
   LWIP_ASSERT("len too short", len_rx >= 4);
   if (len_rx > buf_len_bytes) {
     /* not all data received in this segment */
     LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("check-\n"));
     return buf_len_bytes;
   }
-  chk_rx = (((u16_t)p[2]) << 8) | p[3];
+  chk_rx = (((uint16_t)p[2]) << 8) | p[3];
   /* calculate received checksum */
   chk = 0;
   for (i = 4; i < len_rx; i++) {
@@ -315,7 +315,7 @@ sockets_stresstest_wait_readable_nonblock(int s, int timeout_ms)
 {
   int ret;
   char buf;
-  u32_t wait_until = sys_now() + timeout_ms;
+  uint32_t wait_until = sys_now() + timeout_ms;
 
   while(sys_now() < wait_until) {
     /* peek for one byte */
@@ -338,7 +338,7 @@ sockets_stresstest_wait_readable_nonblock(int s, int timeout_ms)
 
 static int sockets_stresstest_rand_mode(int allow_wait, int allow_rx)
 {
-  u32_t random_value = LWIP_RAND();
+  uint32_t random_value = LWIP_RAND();
 #if LWIP_SOCKET_SELECT
   if (random_value & TEST_MODE_SELECT) {
     return TEST_MODE_SELECT;
@@ -436,7 +436,7 @@ sockets_stresstest_conn_client(void *arg)
   char txbuf[TEST_TXRX_BUFSIZE];
   char rxbuf[TEST_TXRX_BUFSIZE];
   size_t rxoff = 0;
-  u32_t max_time = sys_now() + (TEST_TIME_SECONDS * 1000);
+  uint32_t max_time = sys_now() + (TEST_TIME_SECONDS * 1000);
   int do_rx = 1;
   struct sockets_stresstest_fullduplex *data = NULL;
 
@@ -467,7 +467,7 @@ sockets_stresstest_conn_client(void *arg)
 #endif
 
   /* @todo: nonblocking connect? */
-  ret = lwip_connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_storage));
+  ret = lwip_connect(s, (struct LwipSockaddr *)&addr, sizeof(struct sockaddr_storage));
   LWIP_ASSERT("ret == 0", ret == 0);
 
   while (sys_now() < max_time) {
@@ -589,14 +589,14 @@ sockets_stresstest_listener(void *arg)
   LWIP_ASSERT("slisten >= 0", slisten >= 0);
 
   memcpy(&addr, &settings->addr, sizeof(struct sockaddr_storage));
-  ret = lwip_bind(slisten, (struct sockaddr *)&addr, sizeof(addr));
+  ret = lwip_bind(slisten, (struct LwipSockaddr *)&addr, sizeof(addr));
   LWIP_ASSERT("ret == 0", ret == 0);
 
   ret = lwip_listen(slisten, 0);
   LWIP_ASSERT("ret == 0", ret == 0);
 
   addr_len = sizeof(addr);
-  ret = lwip_getsockname(slisten, (struct sockaddr *)&addr, &addr_len);
+  ret = lwip_getsockname(slisten, (struct LwipSockaddr *)&addr, &addr_len);
   LWIP_ASSERT("ret == 0", ret == 0);
 
   num_clients = sockets_stresstest_start_clients(&addr);
@@ -604,7 +604,7 @@ sockets_stresstest_listener(void *arg)
   while (num_servers < num_clients) {
     struct sockaddr_storage aclient;
     socklen_t aclient_len = sizeof(aclient);
-    int sclient = lwip_accept(slisten, (struct sockaddr *)&aclient, &aclient_len);
+    int sclient = lwip_accept(slisten, (struct LwipSockaddr *)&aclient, &aclient_len);
 #if 1
     /* using server threads */
     {
@@ -673,7 +673,7 @@ sockets_stresstest_init_loopback(int addr_family)
 }
 
 void
-sockets_stresstest_init_server(int addr_family, u16_t server_port)
+sockets_stresstest_init_server(int addr_family, uint16_t server_port)
 {
   sys_thread_t t;
   struct test_settings *settings = (struct test_settings *)mem_malloc(sizeof(struct test_settings));
@@ -692,7 +692,7 @@ sockets_stresstest_init_server(int addr_family, u16_t server_port)
 }
 
 void
-sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port)
+sockets_stresstest_init_client(const char *remote_ip, uint16_t remote_port)
 {
 #if LWIP_IPV4
   ip4_addr_t ip4;

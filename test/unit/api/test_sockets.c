@@ -1,14 +1,14 @@
 #include "test_sockets.h"
 
-#include "lwip/mem.h"
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/priv/sockets_priv.h"
-#include "lwip/stats.h"
+#include "mem.h"
+#include "opt.h"
+#include "sockets.h"
+#include "priv/sockets_priv.h"
+#include "stats.h"
 
-#include "lwip/tcpip.h"
-#include "lwip/priv/tcp_priv.h"
-#include "lwip/api.h"
+#include "tcpip.h"
+#include "priv/tcp_priv.h"
+#include "api.h"
 
 
 static int
@@ -118,7 +118,7 @@ static void test_sockets_allfunctions_basic_domain(int domain)
   fail_unless(ret == 0);
 
   addrlen = sizeof(addr);
-  ret = lwip_getsockname(s, (struct sockaddr*)&addr, &addrlen);
+  ret = lwip_getsockname(s, (struct LwipSockaddr*)&addr, &addrlen);
   fail_unless(ret == 0);
 
   s2 = test_sockets_alloc_socket_nonblocking(domain, SOCK_STREAM);
@@ -136,19 +136,19 @@ static void test_sockets_allfunctions_basic_domain(int domain)
     addr6->sin6_addr = lo6;
 #endif
   }
-  ret = lwip_connect(s2, (struct sockaddr*)&addr, addrlen);
+  ret = lwip_connect(s2, (struct LwipSockaddr*)&addr, addrlen);
   fail_unless(ret == -1);
   fail_unless(errno == EINPROGRESS);
-  ret = lwip_connect(s2, (struct sockaddr*)&addr, addrlen);
+  ret = lwip_connect(s2, (struct LwipSockaddr*)&addr, addrlen);
   fail_unless(ret == -1);
   fail_unless(errno == EALREADY);
 
   while(tcpip_thread_poll_one());
 
-  s3 = lwip_accept(s, (struct sockaddr*)&addr2, &addr2len);
+  s3 = lwip_accept(s, (struct LwipSockaddr*)&addr2, &addr2len);
   fail_unless(s3 >= 0);
 
-  ret = lwip_connect(s2, (struct sockaddr*)&addr, addrlen);
+  ret = lwip_connect(s2, (struct LwipSockaddr*)&addr, addrlen);
   fail_unless(ret == -1);
   fail_unless(errno == EISCONN);
 
@@ -303,17 +303,17 @@ static void test_sockets_msgapi_tcp(int domain)
   fail_unless(s1 >= 0);
 
   /* setup a listener socket on loopback with ephemeral port */
-  ret = lwip_bind(listnr, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_bind(listnr, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == 0);
   ret = lwip_listen(listnr, 0);
   fail_unless(ret == 0);
 
   /* update address with ephemeral port */
-  ret = lwip_getsockname(listnr, (struct sockaddr*)&addr_storage, &addr_size);
+  ret = lwip_getsockname(listnr, (struct LwipSockaddr*)&addr_storage, &addr_size);
   fail_unless(ret == 0);
 
   /* connect, won't complete until we accept it */
-  ret = lwip_connect(s1, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_connect(s1, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == -1);
   fail_unless(errno == EINPROGRESS);
 
@@ -324,7 +324,7 @@ static void test_sockets_msgapi_tcp(int domain)
   fail_unless(s2 >= 0);
 
   /* double check s1 is connected */
-  ret = lwip_connect(s1, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_connect(s1, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == -1);
   fail_unless(errno == EISCONN);
 
@@ -495,11 +495,11 @@ static void test_sockets_msgapi_udp(int domain)
   s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
   fail_unless(s >= 0);
 
-  ret = lwip_bind(s, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_bind(s, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == 0);
 
   /* Update addr with epehermal port */
-  ret = lwip_getsockname(s, (struct sockaddr*)&addr_storage, &addr_size);
+  ret = lwip_getsockname(s, (struct LwipSockaddr*)&addr_storage, &addr_size);
   fail_unless(ret == 0);
   switch(domain) {
 #if LWIP_IPV6
@@ -532,7 +532,7 @@ static void test_sockets_msgapi_udp(int domain)
   test_sockets_msgapi_udp_send_recv_loop(s, &smsg, &rmsg);
 
   /* Connect to self, allowing us to not pass message name */
-  ret = lwip_connect(s, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_connect(s, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == 0);
 
   smsg.msg_name = NULL;
@@ -563,11 +563,11 @@ static void test_sockets_msgapi_cmsg(int domain)
   s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
   fail_unless(s >= 0);
 
-  ret = lwip_bind(s, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_bind(s, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == 0);
 
   /* Update addr with epehermal port */
-  ret = lwip_getsockname(s, (struct sockaddr*)&addr_storage, &addr_size);
+  ret = lwip_getsockname(s, (struct LwipSockaddr*)&addr_storage, &addr_size);
   fail_unless(ret == 0);
 
   enable = 1;
@@ -586,7 +586,7 @@ static void test_sockets_msgapi_cmsg(int domain)
   msg.msg_namelen = 0;
 
   memset(rcv_buf, 0, sizeof(rcv_buf));
-  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == sizeof(snd_buf));
   
   tcpip_thread_poll_one();
@@ -614,7 +614,7 @@ static void test_sockets_msgapi_cmsg(int domain)
 
   /* Send datagram again, testing truncation */
   memset(rcv_buf, 0, sizeof(rcv_buf));
-  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct sockaddr*)&addr_storage, addr_size);
+  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct LwipSockaddr*)&addr_storage, addr_size);
   fail_unless(ret == sizeof(snd_buf));
 
   tcpip_thread_poll_one();
@@ -691,7 +691,7 @@ START_TEST(test_sockets_recv_after_rst)
   int spass = -1;
   int ret;
   struct sockaddr_in sa_listen;
-  const u16_t port = 1234;
+  const uint16_t port = 1234;
   int arg;
   const char txbuf[] = "something";
   char rxbuf[16];
@@ -711,7 +711,7 @@ START_TEST(test_sockets_recv_after_rst)
   fail_unless(sl >= 0);
   fail_unless(test_sockets_get_used_count() == 0);
 
-  ret = lwip_bind(sl, (struct sockaddr *)&sa_listen, sizeof(sa_listen));
+  ret = lwip_bind(sl, (struct LwipSockaddr *)&sa_listen, sizeof(sa_listen));
   fail_unless(ret == 0);
   ret = lwip_listen(sl, 0);
   fail_unless(ret == 0);
@@ -726,7 +726,7 @@ START_TEST(test_sockets_recv_after_rst)
   fail_unless(ret == 0);
   /* connect */
   do {
-    ret = lwip_connect(sact, (struct sockaddr *)&sa_listen, sizeof(sa_listen));
+    ret = lwip_connect(sact, (struct LwipSockaddr *)&sa_listen, sizeof(sa_listen));
     err = errno;
     fail_unless((ret == 0) || (ret == -1));
     if (ret != 0) {
@@ -741,7 +741,7 @@ START_TEST(test_sockets_recv_after_rst)
           goto cleanup;
         }
         /* we're in progress: little side check: test for EALREADY */
-        ret = lwip_connect(sact, (struct sockaddr *)&sa_listen, sizeof(sa_listen));
+        ret = lwip_connect(sact, (struct LwipSockaddr *)&sa_listen, sizeof(sa_listen));
         err = errno;
         fail_unless(ret == -1);
         fail_unless(err == EALREADY);

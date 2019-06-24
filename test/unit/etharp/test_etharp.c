@@ -1,10 +1,10 @@
 #include "test_etharp.h"
 
-#include "lwip/udp.h"
-#include "lwip/etharp.h"
-#include "netif/ethernet.h"
-#include "lwip/stats.h"
-#include "lwip/prot/iana.h"
+#include "udp.h"
+#include "etharp.h"
+#include "ethernet.h"
+#include "stats.h"
+#include "prot/iana.h"
 
 #if !LWIP_STATS || !UDP_STATS || !MEMP_STATS || !ETHARP_STATS
 #error "This tests needs UDP-, MEMP- and ETHARP-statistics enabled"

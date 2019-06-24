@@ -1,15 +1,15 @@
 #include "test_ip6.h"
 
-#include "lwip/ethip6.h"
-#include "lwip/ip6.h"
-#include "lwip/inet_chksum.h"
-#include "lwip/nd6.h"
-#include "lwip/stats.h"
-#include "lwip/prot/ethernet.h"
-#include "lwip/prot/ip.h"
-#include "lwip/prot/ip6.h"
+#include "ethip6.h"
+#include "ip6.h"
+#include "inet_chksum.h"
+#include "nd6.h"
+#include "stats.h"
+#include "ethernet.h"
+#include "prot/ip.h"
+#include "prot/ip6.h"
 
-#include "lwip/tcpip.h"
+#include "tcpip.h"
 
 #if LWIP_IPV6 /* allow to build the unit tests without IPv6 support */
 
@@ -246,8 +246,8 @@ START_TEST(test_ip6_lladdr)
 {
   u8_t zeros[128];
   const u8_t test_mac_addr[6] = {0xb0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5};
-  const u32_t expected_ip6_addr_1[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0xb2a1a2ff), PP_HTONL(0xfea3a4a5)};
-  const u32_t expected_ip6_addr_2[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0x0000b0a1), PP_HTONL(0xa2a3a4a5)};
+  const uint32_t expected_ip6_addr_1[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0xb2a1a2ff), PP_HTONL(0xfea3a4a5)};
+  const uint32_t expected_ip6_addr_2[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0x0000b0a1), PP_HTONL(0xa2a3a4a5)};
   LWIP_UNUSED_ARG(_i);
   memset(zeros, 0, sizeof(zeros));
 

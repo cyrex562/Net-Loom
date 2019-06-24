@@ -16,9 +16,9 @@
 #include "mqtt/test_mqtt.h"
 #include "api/test_sockets.h"
 
-#include "lwip/init.h"
+#include "init.h"
 #if !NO_SYS
-#include "lwip/tcpip.h"
+#include "tcpip.h"
 #endif
 
 Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun setup, SFun teardown)

@@ -1,7 +1,7 @@
 #include "test_pbuf.h"
 
-#include "lwip/pbuf.h"
-#include "lwip/stats.h"
+#include "pbuf.h"
+#include "stats.h"
 
 #if !LWIP_STATS || !MEM_STATS ||!MEMP_STATS
 #error "This tests needs MEM- and MEMP-statistics enabled"
@@ -153,7 +153,7 @@ START_TEST(test_pbuf_queueing_bigger_than_64k)
 
   pbuf_split_64k(p1, &rest2);
   fail_unless(p1->tot_len == TESTBUFSIZE_1);
-  fail_unless(rest2->tot_len == (u16_t)((TESTBUFSIZE_2+TESTBUFSIZE_3) & 0xFFFF));
+  fail_unless(rest2->tot_len == (uint16_t)((TESTBUFSIZE_2+TESTBUFSIZE_3) & 0xFFFF));
   pbuf_split_64k(rest2, &rest3);
   fail_unless(rest2->tot_len == TESTBUFSIZE_2);
   fail_unless(rest3->tot_len == TESTBUFSIZE_3);

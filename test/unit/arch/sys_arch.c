@@ -31,26 +31,26 @@
  */
 
 
-#include <lwip/opt.h>
-#include <lwip/arch.h>
+#include <opt.h>
+#include <arch.h>
 #if !NO_SYS
 #include "sys_arch.h"
 #endif
-#include <lwip/stats.h>
-#include <lwip/debug.h>
-#include <lwip/sys.h>
+#include <stats.h>
+#include <debug.h>
+#include <sys.h>
 
 #include <string.h>
 
-u32_t lwip_sys_now;
+uint32_t lwip_sys_now;
 
-u32_t
+uint32_t
 sys_jiffies(void)
 {
   return lwip_sys_now;
 }
 
-u32_t
+uint32_t
 sys_now(void)
 {
   return lwip_sys_now;
@@ -94,10 +94,10 @@ sys_sem_set_invalid(sys_sem_t *sem)
 }
 
 /* semaphores are 1-based because RAM is initialized as 0, which would be valid */
-u32_t
-sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
+uint32_t
+sys_arch_sem_wait(sys_sem_t *sem, uint32_t timeout)
 {
-  u32_t ret = 0;
+  uint32_t ret = 0;
   LWIP_ASSERT("sem != NULL", sem != NULL);
   LWIP_ASSERT("*sem > 0", *sem > 0);
   if (*sem == 1) {
@@ -289,11 +289,11 @@ sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
   return sys_mbox_trypost(q, msg);
 }
 
-u32_t
-sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
+uint32_t
+sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, uint32_t timeout)
 {
-  u32_t ret = 0;
-  u32_t ret2;
+  uint32_t ret = 0;
+  uint32_t ret2;
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
   LWIP_ASSERT("q->sem == q", q->sem == q);
   LWIP_ASSERT("q->q_mem != NULL", q->q_mem != NULL);
@@ -339,7 +339,7 @@ sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
   return ret;
 }
 
-u32_t
+uint32_t
 sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);

@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
-project(lwIP)
+# project name
+project(lwip)
 
+# set c++ standard to C++ 17
+set(CMAKE_CXX_STANDARD 17)
+# set c standard to C11
+set(CMAKE_C_STANDARD 11)
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-include(src/Filelists.cmake)
+
 
 # Package generation
 #set(CPACK_SOURCE_GENERATOR "ZIP")
@@ -18,4 +23,23 @@ include(src/Filelists.cmake)
 # Target for package generation
 #add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 #add_dependencies(dist lwipdocs)
+
+# compile fmt
+add_subdirectory(fmt)
+#add_subdirectory(fmt/build)
+
+file(GLOB SRC_FILES src/*.c src/*.cpp)
+
+# add src
+add_library(lwip STATIC ${SRC_FILES})
+target_include_directories(lwip PUBLIC src)
+target_include_directories(lwip PUBLIC npcap/Include)
+#target_include_directories(lwip PUBLIC npcap/Include/pcap)
+target_link_libraries(lwip fmt)
+target_link_libraries(lwip npcap/Lib/x64/wpcap.lib)
+target_link_libraries(lwip npcap/Lib/x64/Packet.lib)
+
+
+
+
 

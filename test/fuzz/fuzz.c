@@ -30,19 +30,19 @@
  *
  */
 
-#include "lwip/init.h"
-#include "lwip/netif.h"
-#include "lwip/dns.h"
-#include "netif/etharp.h"
+#include "init.h"
+#include "netif.h"
+#include "dns.h"
+#include "etharp.h"
 #if LWIP_IPV6
-#include "lwip/ethip6.h"
-#include "lwip/nd6.h"
+#include "ethip6.h"
+#include "nd6.h"
 #endif
 
-#include "lwip/apps/httpd.h"
-#include "lwip/apps/snmp.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/mdns.h"
+#include "apps/httpd.h"
+#include "apps/snmp.h"
+#include "apps/lwiperf.h"
+#include "apps/mdns.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -98,7 +98,7 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
   err_t err;
 
   LWIP_ASSERT("pkt too big", len <= 0xFFFF);
-  p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, (uint16_t)len, PBUF_POOL);
   LWIP_ASSERT("alloc failed", p);
   for(q = p; q != NULL; q = q->next) {
     MEMCPY(q->payload, data, q->len);
@@ -113,19 +113,19 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
 static void input_pkts(struct netif *netif, const u8_t *data, size_t len)
 {
 #ifdef LWIP_FUZZ_MULTI_PACKET
-  const u16_t max_packet_size = 1514;
+  const uint16_t max_packet_size = 1514;
   const u8_t *ptr = data;
   size_t rem_len = len;
 
-  while (rem_len > sizeof(u16_t)) {
-    u16_t frame_len;
-    memcpy(&frame_len, ptr, sizeof(u16_t));
-    ptr += sizeof(u16_t);
-    rem_len -= sizeof(u16_t);
+  while (rem_len > sizeof(uint16_t)) {
+    uint16_t frame_len;
+    memcpy(&frame_len, ptr, sizeof(uint16_t));
+    ptr += sizeof(uint16_t);
+    rem_len -= sizeof(uint16_t);
     frame_len = htons(frame_len) & 0x7FF;
     frame_len = LWIP_MIN(frame_len, max_packet_size);
     if (frame_len > rem_len) {
-      frame_len = (u16_t)rem_len;
+      frame_len = (uint16_t)rem_len;
     }
     if (frame_len != 0) {
       input_pkt(netif, ptr, frame_len);

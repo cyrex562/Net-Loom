@@ -1,12 +1,12 @@
 #include "test_ip4.h"
 
-#include "lwip/ip4.h"
-#include "lwip/inet_chksum.h"
-#include "lwip/stats.h"
-#include "lwip/prot/ip.h"
-#include "lwip/prot/ip4.h"
+#include "ip4.h"
+#include "inet_chksum.h"
+#include "stats.h"
+#include "prot/ip.h"
+#include "prot/ip4.h"
 
-#include "lwip/tcpip.h"
+#include "tcpip.h"
 
 #if !LWIP_IPV4 || !IP_REASSEMBLY || !MIB2_STATS || !IPFRAG_STATS
 #error "This tests needs LWIP_IPV4, IP_REASSEMBLY; MIB2- and IPFRAG-statistics enabled"
@@ -14,7 +14,7 @@
 
 /* Helper functions */
 static void
-create_ip4_input_fragment(u16_t ip_id, u16_t start, u16_t len, int last)
+create_ip4_input_fragment(uint16_t ip_id, uint16_t start, uint16_t len, int last)
 {
   struct pbuf *p;
   struct netif *input_netif = netif_list; /* just use any netif */
@@ -78,7 +78,7 @@ ip4_teardown(void)
 
 START_TEST(test_ip4_reass)
 {
-  const u16_t ip_id = 128;
+  const uint16_t ip_id = 128;
   LWIP_UNUSED_ARG(_i);
 
   memset(&lwip_stats.mib2, 0, sizeof(lwip_stats.mib2));
