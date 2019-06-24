@@ -21,7 +21,7 @@ Compilation of the C compiler identification source "CMakeCCompilerId.c" produce
 
 Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
 
-The C compiler identification is MSVC, found in "C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/3.14.19050301-MSVC_2/CompilerIdC/CMakeCCompilerId.exe"
+The C compiler identification is MSVC, found in "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/3.14.19050301-MSVC_2/CompilerIdC/CMakeCCompilerId.exe"
 
 Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
 Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.21.27702/bin/HostX64/x64/cl.exe 
@@ -45,60 +45,60 @@ Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" p
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
 
-The CXX compiler identification is MSVC, found in "C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/3.14.19050301-MSVC_2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+The CXX compiler identification is MSVC, found in "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/3.14.19050301-MSVC_2/CompilerIdCXX/CMakeCXXCompilerId.exe"
 
 Determining if the C compiler works passed with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9f0be 
-[1/2] Building C object CMakeFiles\cmTC_9f0be.dir\testCCompiler.c.obj
-[2/2] Linking C executable cmTC_9f0be.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_7f3d6 
+[1/2] Building C object CMakeFiles\cmTC_7f3d6.dir\testCCompiler.c.obj
+[2/2] Linking C executable cmTC_7f3d6.exe
 
 
 Detecting C compiler ABI info compiled with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_80a74 
-[1/2] Building C object CMakeFiles\cmTC_80a74.dir\CMakeCCompilerABI.c.obj
-[2/2] Linking C executable cmTC_80a74.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9a561 
+[1/2] Building C object CMakeFiles\cmTC_9a561.dir\CMakeCCompilerABI.c.obj
+[2/2] Linking C executable cmTC_9a561.exe
 
 
 
 
 Detecting C [] compiler features compiled with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_6e75f 
-[1/2] Building C object CMakeFiles\cmTC_6e75f.dir\feature_tests.c.obj
-[2/2] Linking C executable cmTC_6e75f.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_26ab2 
+[1/2] Building C object CMakeFiles\cmTC_26ab2.dir\feature_tests.c.obj
+[2/2] Linking C executable cmTC_26ab2.exe
 
 
     Feature record: C_FEATURE:1c_function_prototypes
     Feature record: C_FEATURE:1c_variadic_macros
 Determining if the CXX compiler works passed with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_d0ad8 
-[1/2] Building CXX object CMakeFiles\cmTC_d0ad8.dir\testCXXCompiler.cxx.obj
-[2/2] Linking CXX executable cmTC_d0ad8.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_fbd0f 
+[1/2] Building CXX object CMakeFiles\cmTC_fbd0f.dir\testCXXCompiler.cxx.obj
+[2/2] Linking CXX executable cmTC_fbd0f.exe
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_e1068 
-[1/2] Building CXX object CMakeFiles\cmTC_e1068.dir\CMakeCXXCompilerABI.cpp.obj
-[2/2] Linking CXX executable cmTC_e1068.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_d20a5 
+[1/2] Building CXX object CMakeFiles\cmTC_d20a5.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_d20a5.exe
 
 
 
 
 Detecting CXX [] compiler features compiled with the following output:
-Change Dir: C:/Users/JoshMadden/Documents/projects/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
+Change Dir: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_7086f 
-[1/2] Building CXX object CMakeFiles\cmTC_7086f.dir\feature_tests.cxx.obj
-[2/2] Linking CXX executable cmTC_7086f.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_1123d 
+[1/2] Building CXX object CMakeFiles\cmTC_1123d.dir\feature_tests.cxx.obj
+[2/2] Linking CXX executable cmTC_1123d.exe
 
 
     Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
