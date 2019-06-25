@@ -53,7 +53,6 @@
 
 #include "pcapif.h"
 
-#include "snmp.h"
 #include "stats.h"
 
 #include "sys.h"

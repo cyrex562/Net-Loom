@@ -237,26 +237,21 @@
  * Useful if pool are moved in uninitialized section of memory. This will ensure
  * default values in pcbs struct are well initialized in all conditions.
  */
-#if !defined MEMP_MEM_INIT || defined __DOXYGEN__
 #define MEMP_MEM_INIT                   0
-#endif
 
 /**
  * MEM_ALIGNMENT: should be set to the alignment of the CPU
  *    4 byte alignment -> \#define MEM_ALIGNMENT 4
  *    2 byte alignment -> \#define MEM_ALIGNMENT 2
  */
-#if !defined MEM_ALIGNMENT || defined __DOXYGEN__
 #define MEM_ALIGNMENT                   1
-#endif
+
 
 /**
  * MEM_SIZE: the size of the heap memory. If the application will send
  * a lot of data that needs to be copied, this should be set high.
  */
-#if !defined MEM_SIZE || defined __DOXYGEN__
 #define MEM_SIZE                        1600
-#endif
 
 /**
  * MEMP_OVERFLOW_CHECK: memp overflow protection reserves a configurable
@@ -267,17 +262,13 @@
  *    MEMP_OVERFLOW_CHECK >= 2 checks each element in every pool every time
  *      memp_malloc() or memp_free() is called (useful but slow!)
  */
-#if !defined MEMP_OVERFLOW_CHECK || defined __DOXYGEN__
 #define MEMP_OVERFLOW_CHECK             0
-#endif
 
 /**
  * MEMP_SANITY_CHECK==1: run a sanity check after each memp_free() to make
  * sure that there are no cycles in the linked lists.
  */
-#if !defined MEMP_SANITY_CHECK || defined __DOXYGEN__
 #define MEMP_SANITY_CHECK               0
-#endif
 
 /**
  * MEM_OVERFLOW_CHECK: mem overflow protection reserves a configurable

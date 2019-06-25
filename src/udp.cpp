@@ -69,8 +69,6 @@
 
 #include "opt.h"
 
-#include "snmp.h"
-
 #include "stats.h"
 
 #include <cstring>
@@ -227,8 +225,8 @@ udp_input(struct pbuf *p, struct netif *inp)
   /* Check minimum length (UDP header) */
   if (p->len < UDP_HLEN) {
     /* drop short packets */
-    LWIP_DEBUGF(UDP_DEBUG,
-                ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
+//    LWIP_DEBUGF(UDP_DEBUG,
+//                ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
     UDP_STATS_INC(udp.lenerr);
     UDP_STATS_INC(udp.drop);
     MIB2_STATS_INC(mib2.udpinerrors);

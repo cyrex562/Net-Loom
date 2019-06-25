@@ -294,7 +294,7 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, uint16_t proto_len, uint32_t 
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
+//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 
@@ -440,7 +440,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, uint16_t proto_len,
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
+//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 

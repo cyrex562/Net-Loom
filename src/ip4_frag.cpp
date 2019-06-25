@@ -140,13 +140,13 @@ ip_reass_tmr(void)
      * clean up the incomplete fragment assembly */
     if (r->timer > 0) {
       r->timer--;
-      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n", (uint16_t)r->timer));
+//      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n", (uint16_t)r->timer));
       prev = r;
       r = r->next;
     } else {
       /* reassembly timed out */
       struct ip_reassdata *tmp;
-      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out\n"));
+//      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out\n"));
       tmp = r;
       /* get the next pointer before freeing */
       r = r->next;
@@ -564,8 +564,8 @@ ip4_reass(struct pbuf *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if (IP_ADDRESSES_AND_ID_MATCH(&ipr->iphdr, fraghdr)) {
-      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
-                                   lwip_ntohs(IPH_ID(fraghdr))));
+//      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
+//                                   lwip_ntohs(IPH_ID(fraghdr))));
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;
     }
@@ -617,9 +617,9 @@ ip4_reass(struct pbuf *p)
     uint16_t datagram_len = (uint16_t)(offset + len);
     ipr->datagram_len = datagram_len;
     ipr->flags |= IP_REASS_FLAG_LASTFRAG;
-    LWIP_DEBUGF(IP_REASS_DEBUG,
-                ("ip4_reass: last fragment seen, total len %"S16_F"\n",
-                 ipr->datagram_len));
+//    LWIP_DEBUGF(IP_REASS_DEBUG,
+//                ("ip4_reass: last fragment seen, total len %"S16_F"\n",
+//                 ipr->datagram_len));
   }
 
   if (valid == IP_REASS_VALIDATE_TELEGRAM_FINISHED) {

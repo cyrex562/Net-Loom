@@ -101,11 +101,11 @@ icmp_input(struct pbuf *p, struct netif *inp)
   iphdr_in = ip4_current_header();
   hlen = IPH_HL_BYTES(iphdr_in);
   if (hlen < IP_HLEN) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
+//    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
     goto lenerr;
   }
   if (p->len < sizeof(uint16_t) * 2) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
+//    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
     goto lenerr;
   }
 
@@ -281,8 +281,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
       } else if (type == ICMP_AMR) {
         MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
       }
-      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
-                               (int16_t)type, (int16_t)code));
+//      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
+//                               (int16_t)type, (int16_t)code));
       ICMP_STATS_INC(icmp.proterr);
       ICMP_STATS_INC(icmp.drop);
   }

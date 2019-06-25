@@ -30,19 +30,16 @@
 * 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
 *   Original derived from BSD codes.
 *****************************************************************************/
+#pragma once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef PPP_H
-#define PPP_H
-
 #include "def.h"
 #include "stats.h"
 #include "mem.h"
 #include "netif.h"
 #include "sys.h"
 #include "timeouts.h"
+//#include "lcp.h"
 #if PPP_IPV6_SUPPORT
 #include "ip6_addr.h"
 #endif /* PPP_IPV6_SUPPORT */
@@ -317,64 +314,34 @@ struct ppp_pcb_s {
   ppp_settings settings;
   const struct link_callbacks *link_cb;
   void *link_ctx_cb;
-  void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
-#if PPP_NOTIFY_PHASE
+  void (*link_status_cb)(ppp_pcb *pcb,
+                         int err_code,
+                         void *ctx);  /* Status change callback */
   void (*notify_phase_cb)(ppp_pcb *pcb, u8_t phase, void *ctx);   /* Notify phase callback */
-#endif /* PPP_NOTIFY_PHASE */
   void *ctx_cb;                  /* Callbacks optional pointer */
   struct netif *netif;           /* PPP interface */
   u8_t phase;                    /* where the link is at */
   u8_t err_code;                 /* Code indicating why interface is down. */
-
   /* flags */
-#if PPP_IPV4_SUPPORT
   unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
   unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
   unsigned int if4_up                  :1; /* True when the IPv4 interface is up. */
-#if 0 /* UNUSED - PROXY ARP */
   unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
-#endif /* UNUSED - PROXY ARP */
-#endif /* PPP_IPV4_SUPPORT */
-#if PPP_IPV6_SUPPORT
   unsigned int ipv6cp_is_up            :1; /* have called ip6cp_up() */
   unsigned int if6_up                  :1; /* True when the IPv6 interface is up. */
-#endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-#if VJ_SUPPORT
   unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
-#endif /* VJ_SUPPORT */
-#if CCP_SUPPORT
   unsigned int ccp_all_rejected        :1; /* we rejected all peer's options */
-#endif /* CCP_SUPPORT */
-#if MPPE_SUPPORT
   unsigned int mppe_keys_set           :1; /* Have the MPPE keys been set? */
-#endif /* MPPE_SUPPORT */
-
-#if PPP_AUTH_SUPPORT
   /* auth data */
-#if PPP_SERVER && defined(HAVE_MULTILINK)
-  char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */
-#endif /* PPP_SERVER && defined(HAVE_MULTILINK) */
+  char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
   uint16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   uint16_t auth_done;           /* Records which authentication operations have been completed. */
-
-#if PAP_SUPPORT
   upap_state upap;           /* PAP data */
-#endif /* PAP_SUPPORT */
-
-#if CHAP_SUPPORT
   chap_client_state chap_client;  /* CHAP client data */
-#if PPP_SERVER
   chap_server_state chap_server;  /* CHAP server data */
-#endif /* PPP_SERVER */
-#endif /* CHAP_SUPPORT */
-
-#if EAP_SUPPORT
   eap_state eap;            /* EAP data */
-#endif /* EAP_SUPPORT */
-#endif /* PPP_AUTH_SUPPORT */
-
   fsm lcp_fsm;                   /* LCP fsm structure */
   lcp_options lcp_wantoptions;   /* Options that we want to request */
   lcp_options lcp_gotoptions;    /* Options that peer ack'd */
@@ -383,15 +350,9 @@ struct ppp_pcb_s {
   uint16_t peer_mru;                /* currently negotiated peer MRU */
   u8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   u8_t lcp_echo_number;          /* ID number of next echo frame */
-
   u8_t num_np_open;              /* Number of network protocols which we have opened. */
   u8_t num_np_up;                /* Number of network protocols which have come up. */
-
-#if VJ_SUPPORT
   struct vjcompress vj_comp;     /* Van Jacobson compression header. */
-#endif /* VJ_SUPPORT */
-
-#if CCP_SUPPORT
   fsm ccp_fsm;                   /* CCP fsm structure */
   ccp_options ccp_wantoptions;   /* what to request the peer to use */
   ccp_options ccp_gotoptions;    /* what the peer agreed to do */
@@ -400,27 +361,18 @@ struct ppp_pcb_s {
   u8_t ccp_localstate;           /* Local state (mainly for handling reset-reqs and reset-acks). */
   u8_t ccp_receive_method;       /* Method chosen on receive path */
   u8_t ccp_transmit_method;      /* Method chosen on transmit path */
-#if MPPE_SUPPORT
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
-#endif /* MPPE_SUPPORT */
-#endif /* CCP_SUPPORT */
-
-#if PPP_IPV4_SUPPORT
   fsm ipcp_fsm;                   /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;  /* Options that we want to request */
   ipcp_options ipcp_gotoptions;   /* Options that peer ack'd */
   ipcp_options ipcp_allowoptions; /* Options we allow peer to request */
   ipcp_options ipcp_hisoptions;   /* Options that we ack'd */
-#endif /* PPP_IPV4_SUPPORT */
-
-#if PPP_IPV6_SUPPORT
   fsm ipv6cp_fsm;                     /* IPV6CP fsm structure */
   ipv6cp_options ipv6cp_wantoptions;  /* Options that we want to request */
   ipv6cp_options ipv6cp_gotoptions;   /* Options that peer ack'd */
   ipv6cp_options ipv6cp_allowoptions; /* Options we allow peer to request */
   ipv6cp_options ipv6cp_hisoptions;   /* Options that we ack'd */
-#endif /* PPP_IPV6_SUPPORT */
 };
 
 /************************
@@ -432,7 +384,7 @@ struct ppp_pcb_s {
  * only be called while the PPP is in the dead phase (i.e. disconnected).
  */
 
-#if PPP_AUTH_SUPPORT
+
 /*
  * Set PPP authentication.
  *
@@ -471,9 +423,9 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
  * Default is false.
  */
 #define ppp_set_auth_required(ppp, boolval) (ppp->settings.auth_required = boolval)
-#endif /* PPP_AUTH_SUPPORT */
 
-#if PPP_IPV4_SUPPORT
+
+
 /*
  * Set PPP interface "our" and "his" IPv4 addresses. This is mostly necessary for PPP server
  * support but it can also be used on a PPP link where each side choose its own IP address.
@@ -483,7 +435,7 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #define ppp_set_ipcp_ouraddr(ppp, addr) do { ppp->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr); \
                                              ppp->ask_for_local = ppp->ipcp_wantoptions.ouraddr != 0; } while(0)
 #define ppp_set_ipcp_hisaddr(ppp, addr) (ppp->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
-#if LWIP_DNS
+
 /*
  * Set DNS server addresses that are sent if the peer asks for them. This is mostly necessary
  * for PPP server support.
@@ -499,10 +451,9 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
  * Default is false.
  */
 #define ppp_set_usepeerdns(ppp, boolval) (ppp->settings.usepeerdns = boolval)
-#endif /* LWIP_DNS */
-#endif /* PPP_IPV4_SUPPORT */
 
-#if MPPE_SUPPORT
+
+
 /* Disable MPPE (Microsoft Point to Point Encryption). This parameter is exclusive. */
 #define PPP_MPPE_DISABLE           0x00
 /* Require the use of MPPE (Microsoft Point to Point Encryption). */
@@ -519,7 +470,7 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
  * Default is disabled.
  */
 void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
-#endif /* MPPE_SUPPORT */
+
 
 /*
  * Wait for up to intval milliseconds for a valid PPP packet from the peer.
@@ -693,6 +644,4 @@ err_t ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 }
 #endif
 
-#endif /* PPP_H */
 
-#endif /* PPP_SUPPORT */

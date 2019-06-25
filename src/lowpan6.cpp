@@ -48,10 +48,8 @@
  * 6LowPAN netif implementation
  */
 
+//#if LWIP_IPV6
 #include "lowpan6.h"
-
-#if LWIP_IPV6
-
 #include "ip.h"
 #include "pbuf.h"
 #include "ip_addr.h"
@@ -60,10 +58,11 @@
 #include "mem.h"
 #include "udp.h"
 #include "tcpip.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 #include "ieee802154.h"
-
-#include <string.h>
+#include "lowpan6_common.h"
+#include "lwip_debug.h"
+#include <cstring>
 
 #if LWIP_6LOWPAN_802154_HW_CRC
 #define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) 0
@@ -917,4 +916,4 @@ tcpip_6lowpan_input(struct pbuf *p, struct netif *inp)
 }
 #endif /* !NO_SYS */
 
-#endif /* LWIP_IPV6 */
+//#endif /* LWIP_IPV6 */

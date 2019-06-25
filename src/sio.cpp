@@ -30,18 +30,16 @@
 
 #include "opt.h"
 #include "sio.h"
-
+#include "def.h"
 #include "sys.h"
-
-#include <cstdarg>
-
-#include <cstdio>
 #include "lwip_debug.h"
-
+#include <cstdarg>
+#include <cstdio>
 #define WIN32_LEAN_AND_MEAN
-#ifdef _MSC_VER
 #include <Windows.h>
-#endif
+//#ifdef _MSC_VER
+//#include <Windows.h>
+//#endif
 
 // #ifdef _MSC_VER
 // #pragma warning (push, 3)
@@ -96,7 +94,7 @@ static int sio_abort = 0;
 /** When using a real COM port, set up the
  * serial line settings (baudrate etc.)
  */
-static BOOL
+static bool
 sio_setup(HANDLE fd)
 {
   COMMTIMEOUTS cto;
@@ -106,7 +104,7 @@ sio_setup(HANDLE fd)
   memset(&dcb, 0, sizeof(dcb));
   /* Obtain the DCB structure for the device */
   if (!GetCommState(fd, &dcb)) {
-    return FALSE;
+    return false;
   }
   /* Set the new data */
   dcb.BaudRate = SIO_COMPORT_SPEED;
@@ -152,8 +150,8 @@ sio_setup(HANDLE fd)
  */
 sio_fd_t sio_open(u8_t devnum)
 {
-  HANDLE fileHandle = INVALID_HANDLE_VALUE;
-  CHAR   fileName[256];
+  HANDLE fileHandle = (PVOID*)-1ll; // INVALID_HANDLE_VALUE
+  char   fileName[256];
   LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu)\n", (DWORD)devnum));
 #if SIO_USE_COMPORT
   snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(devnum));

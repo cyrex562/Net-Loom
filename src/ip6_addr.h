@@ -45,7 +45,7 @@
 #include "opt.h"
 #include "def.h"
 
-#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
+//#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 #include "ip6_zone.h"
 
@@ -347,6 +347,6 @@ char *ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen);
 }
 #endif
 
-#endif /* LWIP_IPV6 */
+//#endif /* LWIP_IPV6 */
 
 #endif /* LWIP_HDR_IP6_ADDR_H */

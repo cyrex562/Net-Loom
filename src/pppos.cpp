@@ -32,7 +32,7 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
+//#if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include <string.h>
 
@@ -42,7 +42,7 @@
 #include "sys.h"
 #include "memp.h"
 #include "netif.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 #include "priv/tcpip_priv.h"
 #include "api.h"
 #include "ip4.h" /* for ip4_input() */
@@ -892,4 +892,4 @@ failed:
   return err;
 }
 
-#endif /* PPP_SUPPORT && PPPOS_SUPPORT */
+//#endif /* PPP_SUPPORT && PPPOS_SUPPORT */

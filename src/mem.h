@@ -38,7 +38,7 @@
 #define LWIP_HDR_MEM_H
 
 #include "opt.h"
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {

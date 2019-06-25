@@ -86,26 +86,26 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+//#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "pbuf.h"
 #include "stats.h"
 #include "sys.h"
 #include "tcpip.h"
 #include "api.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 #include "ip4.h" /* for ip4_input() */
 #if PPP_IPV6_SUPPORT
 #include "ip6.h" /* for ip6_input() */
 #endif /* PPP_IPV6_SUPPORT */
 #include "dns.h"
 
-#include "ppp/ppp_impl.h"
-#include "ppp/pppos.h"
+#include "ppp_impl.h"
+#include "pppos.h"
 
-#include "ppp/fsm.h"
-#include "ppp/lcp.h"
-#include "ppp/magic.h"
+#include "fsm.h"
+#include "lcp.h"
+#include "magic.h"
 
 #if PAP_SUPPORT
 #include "ppp/upap.h"
@@ -152,7 +152,7 @@ LWIP_MEMPOOL_PROTOTYPE(PPPOL2TP_PCB);
 #if LWIP_PPP_API && LWIP_MPU_COMPATIBLE
 LWIP_MEMPOOL_PROTOTYPE(PPPAPI_MSG);
 #endif
-LWIP_MEMPOOL_DECLARE(PPP_PCB, MEMP_NUM_PPP_PCB, sizeof(ppp_pcb), "PPP_PCB")
+//LWIP_MEMPOOL_DECLARE(PPP_PCB, MEMP_NUM_PPP_PCB, sizeof(ppp_pcb), "PPP_PCB")
 
 /* FIXME: add stats per PPP session */
 #if PPP_STATS_SUPPORT
@@ -1625,4 +1625,4 @@ void print_link_stats() {
 }
 #endif /* PPP_STATS_SUPPORT */
 
-#endif /* PPP_SUPPORT */
+//#endif /* PPP_SUPPORT */

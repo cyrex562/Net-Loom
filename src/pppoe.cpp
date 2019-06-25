@@ -69,7 +69,7 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
+//#if PPP_SUPPORT && PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
 #include <string.h>
@@ -79,16 +79,16 @@
 #include "timeouts.h"
 #include "memp.h"
 #include "stats.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 
 #include "ethernet.h"
-#include "ppp/ppp_impl.h"
-#include "ppp/lcp.h"
-#include "ppp/ipcp.h"
-#include "ppp/pppoe.h"
+#include "ppp_impl.h"
+#include "lcp.h"
+#include "ipcp.h"
+#include "pppoe.h"
 
 /* Memory pool */
-LWIP_MEMPOOL_DECLARE(PPPOE_IF, MEMP_NUM_PPPOE_INTERFACES, sizeof(struct pppoe_softc), "PPPOE_IF")
+//LWIP_MEMPOOL_DECLARE(PPPOE_IF, MEMP_NUM_PPPOE_INTERFACES, sizeof(struct pppoe_softc), "PPPOE_IF")
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
@@ -1198,4 +1198,4 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   ppp_link_end(sc->pcb);  /* notify upper layers - /!\ dangerous /!\ - see pppoe_disc_input() */
 }
 #endif /* UNUSED */
-#endif /* PPP_SUPPORT && PPPOE_SUPPORT */
+//#endif /* PPP_SUPPORT && PPPOE_SUPPORT */

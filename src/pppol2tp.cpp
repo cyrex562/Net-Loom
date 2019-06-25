@@ -51,13 +51,13 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+//#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "err.h"
 #include "memp.h"
 #include "netif.h"
 #include "udp.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 
 #include "ppp/ppp_impl.h"
 #include "ppp/lcp.h"
@@ -1156,4 +1156,4 @@ static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   return err;
 }
 
-#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */
+//#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

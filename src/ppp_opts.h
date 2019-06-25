@@ -25,8 +25,7 @@
  *
  */
 
-#ifndef LWIP_PPP_OPTS_H
-#define LWIP_PPP_OPTS_H
+#pragma once
 
 #include "opt.h"
 
@@ -607,4 +606,3 @@
 #define PPP_NUM_TIMEOUTS                0
 #endif /* PPP_NUM_TIMEOUTS */
 
-#endif /* LWIP_PPP_OPTS_H */

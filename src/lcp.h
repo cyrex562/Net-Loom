@@ -41,13 +41,9 @@
  *
  * $Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp $
  */
+#pragma once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef LCP_H
-#define	LCP_H
-
 #include "ppp.h"
 
 #ifdef __cplusplus
@@ -175,5 +171,4 @@ extern const struct protent lcp_protent;
 }
 #endif
 
-#endif /* LCP_H */
-#endif /* PPP_SUPPORT */
+

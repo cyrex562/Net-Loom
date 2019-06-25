@@ -45,9 +45,9 @@
 
 #include <ctime>
 
-#ifdef _MSC_VER
 #include <windows.h>
-#endif
+
+
 
 
 
@@ -75,7 +75,7 @@
 static LARGE_INTEGER freq, sys_start_time;
 #define SYS_INITIALIZED() (freq.QuadPart != 0)
 
-static DWORD netconn_sem_tls_index;
+static uint32_t netconn_sem_tls_index;
 
 static HCRYPTPROV hcrypt;
 
@@ -83,7 +83,7 @@ uint32_t
 sys_win_rand(void)
 {
   uint32_t ret;
-  if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
+  if (CryptGenRandom(hcrypt, sizeof(ret), (uint8_t*)&ret)) {
     return ret;
   }
   LWIP_ASSERT("CryptGenRandom failed", 0);

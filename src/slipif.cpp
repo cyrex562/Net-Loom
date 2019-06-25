@@ -61,11 +61,10 @@
 
 #include "slipif.h"
 #include "opt.h"
-
 #include "def.h"
 #include "pbuf.h"
 #include "stats.h"
-#include "snmp.h"
+//#include "snmp.h"
 #include "sys.h"
 #include "sio.h"
 #include "lwip_debug.h"
@@ -126,7 +125,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
   LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
   LWIP_ASSERT("p != NULL", (p != NULL));
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
+//  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
 
   /* Send pbuf out on the serial I/O device. */
@@ -227,7 +226,7 @@ slipif_rxbyte(struct netif *netif, u8_t c)
 
             LINK_STATS_INC(link.recv);
 
-            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+//            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
             t = priv->q;
             priv->p = priv->q = NULL;
             priv->i = priv->recved = 0;
@@ -369,7 +368,7 @@ slipif_init(struct netif *netif)
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(u8_t, netif->state);
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
+//  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));

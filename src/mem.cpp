@@ -972,7 +972,7 @@ mem_malloc_adjust_lfree:
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
   sys_mutex_unlock(&mem_mutex);
-  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (int16_t)size));
+//  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (int16_t)size));
   return NULL;
 }
 
@@ -1003,7 +1003,7 @@ mem_calloc(mem_size_t count, mem_size_t size)
   size_t alloc_size = (size_t)count * (size_t)size;
 
   if ((size_t)(mem_size_t)alloc_size != alloc_size) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
+//    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
     return NULL;
   }
 

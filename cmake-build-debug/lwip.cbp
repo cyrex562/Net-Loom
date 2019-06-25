@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="lwip"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\fmt\;CMake Files\fmt\support\;CMake Files\fmt\support\cmake\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="lwip">
+				<Option output="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/liblwip.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src"/>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/npcap/Include"/>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 lwip"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="lwip/fast">
+				<Option output="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/liblwip.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src"/>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/npcap/Include"/>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 lwip/fast"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="package">
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 package"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="package_source">
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 package_source"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fmt">
+				<Option output="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/libfmtd.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="fmt/fast">
+				<Option output="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/libfmtd.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt/fast"/>
+					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/ChangeLog.rst">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/README.rst">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/chrono.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/color.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/core.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/format-inl.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/format.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/locale.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/ostream.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/posix.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/printf.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/ranges.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include/fmt/time.h">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/src/format.cc">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/src/posix.cc">
+			<Option target="fmt"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp_alloc.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp_tcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp_tcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/arc4.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/arc4.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/auth.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/autoip.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/autoip.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/bridgeif.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/bridgeif.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/bridgeif_fdb.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ccp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ccp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-md5.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-md5.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-new.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-new.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap_ms.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap_ms.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/def.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/def.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/demand.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/des.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/des.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dhcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dhcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dhcp6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dhcp6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dns.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/dns.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/eap.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/eap.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ecp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ecp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/etharp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/etharp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ethernet.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ethernet.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ethip6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ethip6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/eui64.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/eui64.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/fsm.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/fsm.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/igmp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/igmp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/inet6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/inet_chksum.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/inet_chksum.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/init.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/init.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4_addr.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4_addr.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4_frag.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip4_frag.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6_addr.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6_addr.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6_frag.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip6_frag.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ipcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ipcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ipv6cp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ipv6cp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6_ble.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6_ble.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6_common.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/lowpan6_common.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/magic.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/magic.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md4.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md4.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md5.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md5.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mem.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mem.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/memp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/memp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mld6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mld6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mppe.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mppe.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/multilink.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/nd6.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/nd6.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/netif.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/netif.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pbuf.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pbuf.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif_helper.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif_helper.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ppp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ppp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppapi.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppapi.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppcrypt.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppcrypt.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppoe.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppoe.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppol2tp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppol2tp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppos.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pppos.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/raw.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/raw.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sha1.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sha1.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sio.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sio.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/slipif.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/slipif.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/stats.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/stats.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys_arch.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys_arch.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp_in.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp_out.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/timeouts.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/timeouts.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/udp.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/udp.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/upap.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/upap.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/utils.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/vj.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/vj.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/zepif.cpp">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/zepif.h">
+			<Option target="lwip"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\fmt\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/support/cmake/cxx14.cmake">
+			<Option virtualFolder="CMake Files\fmt\support\cmake\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
