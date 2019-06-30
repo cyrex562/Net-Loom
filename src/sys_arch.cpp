@@ -229,7 +229,7 @@ struct threadlist {
 static struct threadlist *lwip_win32_threads = NULL;
 
 err_t
-sys_sem_new(sys_sem_t *sem, u8_t count)
+sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   HANDLE new_sem = NULL;
 

@@ -20,12 +20,9 @@
  * $Id: eap.h,v 1.2 2003/06/11 23:56:26 paulus Exp $
  */
 
+#pragma once
+
 #include "ppp_opts.h"
-#if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#ifndef PPP_EAP_H
-#define	PPP_EAP_H
-
 #include "ppp.h"
 
 #ifdef	__cplusplus
@@ -139,31 +136,17 @@ typedef struct eap_state {
 	int es_savedtime;		/* Saved timeout */
 	int es_rechallenge;		/* EAP rechallenge interval */
 	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */
-	u8_t es_usepseudo;		/* Use SRP Pseudonym if offered one */
+	uint8_t es_usepseudo;		/* Use SRP Pseudonym if offered one */
 	int es_usedpseudo;		/* Set if we already sent PN */
 	int es_challen;			/* Length of challenge string */
 	u_char es_challenge[EAP_MAX_CHALLENGE_LENGTH];
 } eap_state;
 
-/*
- * Timeouts.
- */
-#if 0 /* moved to ppp_opts.h */
-#define	EAP_DEFTIMEOUT		3	/* Timeout (seconds) for rexmit */
-#define	EAP_DEFTRANSMITS	10	/* max # times to transmit */
-#define	EAP_DEFREQTIME		20	/* Time to wait for peer request */
-#define	EAP_DEFALLOWREQ		20	/* max # times to accept requests */
-#endif /* moved to ppp_opts.h */
+void eap_authwithpeer(PppPcb *pcb, const char *localname);
+void eap_authpeer(PppPcb *pcb, const char *localname);
 
-void eap_authwithpeer(ppp_pcb *pcb, const char *localname);
-void eap_authpeer(ppp_pcb *pcb, const char *localname);
-
-extern const struct protent eap_protent;
+extern const struct Protent eap_protent;
 
 #ifdef	__cplusplus
 }
 #endif
-
-#endif /* PPP_EAP_H */
-
-#endif /* PPP_SUPPORT && EAP_SUPPORT */

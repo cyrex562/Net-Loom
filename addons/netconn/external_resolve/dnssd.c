@@ -81,7 +81,7 @@ static void addr_info_callback(DNSServiceRef ref, DNSServiceFlags flags, uint32_
                                const struct LwipSockaddr* address, uint32_t ttl, void* context);
 
 int
-lwip_dnssd_gethostbyname(const char *name, ip_addr_t *addr, u8_t addrtype, err_t *err)
+lwip_dnssd_gethostbyname(const char *name, ip_addr_t *addr, uint8_t addrtype, err_t *err)
 {
   DNSServiceErrorType result;
   DNSServiceRef ref;

@@ -45,6 +45,6 @@
 #include "err.h"
 #include "ip_addr.h"
 
-int lwip_dnssd_gethostbyname(const char *name, ip_addr_t *addr, u8_t addrtype, err_t *err);
+int lwip_dnssd_gethostbyname(const char *name, ip_addr_t *addr, uint8_t addrtype, err_t *err);
 
 #endif /* LWIP_HDR_DNSSD_H */

@@ -59,8 +59,8 @@ PACK_STRUCT_END
     struct etharp_hdr {
     PACK_STRUCT_FIELD(uint16_t hwtype);
     PACK_STRUCT_FIELD(uint16_t proto);
-    PACK_STRUCT_FLD_8(u8_t  hwlen);
-    PACK_STRUCT_FLD_8(u8_t  protolen);
+    PACK_STRUCT_FLD_8(uint8_t  hwlen);
+    PACK_STRUCT_FLD_8(uint8_t  protolen);
     PACK_STRUCT_FIELD(uint16_t opcode);
     PACK_STRUCT_FLD_S(struct eth_addr shwaddr);
     PACK_STRUCT_FLD_S(struct ip4_addr_wordaligned sipaddr);

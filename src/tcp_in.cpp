@@ -90,14 +90,14 @@ static struct tcp_seg inseg;
 static struct tcp_hdr *tcphdr;
 static uint16_t tcphdr_optlen;
 static uint16_t tcphdr_opt1len;
-static u8_t *tcphdr_opt2;
+static uint8_t *tcphdr_opt2;
 static uint16_t tcp_optidx;
 static uint32_t seqno, ackno;
 static tcpwnd_size_t recv_acked;
 static uint16_t tcplen;
-static u8_t flags;
+static uint8_t flags;
 
-static u8_t recv_flags;
+static uint8_t recv_flags;
 static struct pbuf *recv_data;
 
 struct tcp_pcb *tcp_input_pcb;
@@ -138,7 +138,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   struct tcp_pcb *lpcb_prev = NULL;
   struct tcp_pcb_listen *lpcb_any = NULL;
 #endif /* SO_REUSE */
-  u8_t hdrlen_bytes;
+  uint8_t hdrlen_bytes;
   err_t err;
 
   LWIP_UNUSED_ARG(inp);
@@ -228,7 +228,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     }
 
     /* remember the pointer to the second part of the options */
-    tcphdr_opt2 = (u8_t *)p->next->payload;
+    tcphdr_opt2 = (uint8_t *)p->next->payload;
 
     /* advance p->next to point after the options, and manually
         adjust p->tot_len to keep it consistent with the changed p->next */
@@ -803,7 +803,7 @@ static err_t
 tcp_process(struct tcp_pcb *pcb)
 {
   struct tcp_seg *rseg;
-  u8_t acceptable = 0;
+  uint8_t acceptable = 0;
   err_t err;
 
   err = ERR_OK;
@@ -1220,7 +1220,7 @@ tcp_receive(struct tcp_pcb *pcb)
             /* Clause 5 */
             if (pcb->lastack == ackno) {
               found_dupack = 1;
-              if ((u8_t)(pcb->dupacks + 1) > pcb->dupacks) {
+              if ((uint8_t)(pcb->dupacks + 1) > pcb->dupacks) {
                 ++pcb->dupacks;
               }
               if (pcb->dupacks > 3) {
@@ -1272,7 +1272,7 @@ tcp_receive(struct tcp_pcb *pcb)
         if (pcb->cwnd < pcb->ssthresh) {
           tcpwnd_size_t increase;
           /* limit to 1 SMSS segment during period following RTO */
-          u8_t num_seg = (pcb->flags & TF_RTO) ? 1 : 2;
+          uint8_t num_seg = (pcb->flags & TF_RTO) ? 1 : 2;
           /* RFC 3465, section 2.2 Slow Start */
           increase = LWIP_MIN(acked, (tcpwnd_size_t)(num_seg * pcb->mss));
           TCP_WND_INC(pcb->cwnd, increase);
@@ -1899,15 +1899,15 @@ tcp_receive(struct tcp_pcb *pcb)
   }
 }
 
-static u8_t
+static uint8_t
 tcp_get_next_optbyte(void)
 {
   uint16_t optidx = tcp_optidx++;
   if ((tcphdr_opt2 == NULL) || (optidx < tcphdr_opt1len)) {
-    u8_t *opts = (u8_t *)tcphdr + TCP_HLEN;
+    uint8_t *opts = (uint8_t *)tcphdr + TCP_HLEN;
     return opts[optidx];
   } else {
-    u8_t idx = (u8_t)(optidx - tcphdr_opt1len);
+    uint8_t idx = (uint8_t)(optidx - tcphdr_opt1len);
     return tcphdr_opt2[idx];
   }
 }
@@ -1923,7 +1923,7 @@ tcp_get_next_optbyte(void)
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
-  u8_t data;
+  uint8_t data;
   uint16_t mss;
 #if LWIP_TCP_TIMESTAMPS
   uint32_t tsval;
@@ -1934,7 +1934,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
   /* Parse the TCP MSS option, if present. */
   if (tcphdr_optlen != 0) {
     for (tcp_optidx = 0; tcp_optidx < tcphdr_optlen; ) {
-      u8_t opt = tcp_get_next_optbyte();
+      uint8_t opt = tcp_get_next_optbyte();
       switch (opt) {
         case LWIP_TCP_OPT_EOL:
           /* End of options. */
@@ -2061,8 +2061,8 @@ tcp_trigger_input_pcb_close(void)
 static void
 tcp_add_sack(struct tcp_pcb *pcb, uint32_t left, uint32_t right)
 {
-  u8_t i;
-  u8_t unused_idx;
+  uint8_t i;
+  uint8_t unused_idx;
 
   if ((pcb->flags & TF_SACK) == 0 || !TCP_SEQ_LT(left, right)) {
     return;
@@ -2121,8 +2121,8 @@ tcp_add_sack(struct tcp_pcb *pcb, uint32_t left, uint32_t right)
 static void
 tcp_remove_sacks_lt(struct tcp_pcb *pcb, uint32_t seq)
 {
-  u8_t i;
-  u8_t unused_idx;
+  uint8_t i;
+  uint8_t unused_idx;
 
   /* We run this loop for all entries, until we find the first invalid one.
      There is no point checking after that. */
@@ -2161,8 +2161,8 @@ tcp_remove_sacks_lt(struct tcp_pcb *pcb, uint32_t seq)
 static void
 tcp_remove_sacks_gt(struct tcp_pcb *pcb, uint32_t seq)
 {
-  u8_t i;
-  u8_t unused_idx;
+  uint8_t i;
+  uint8_t unused_idx;
 
   /* We run this loop for all entries, until we find the first invalid one.
      There is no point checking after that. */

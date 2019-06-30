@@ -39,13 +39,8 @@
  * <delamer@inicotech.com>
  */
 
-#ifndef LWIP_HDR_LOWPAN6_H
-#define LWIP_HDR_LOWPAN6_H
-
+#pragma once
 #include "lowpan6_opts.h"
-
-#if LWIP_IPV6
-
 #include "lowpan6_common.h"
 #include "pbuf.h"
 #include "ip.h"
@@ -57,33 +52,23 @@ extern "C" {
 #endif
 
 /** 1 second period for reassembly */
-#define LOWPAN6_TMR_INTERVAL 1000
+constexpr auto kLowpan6TmrInterval = 1000;
 
 void lowpan6_tmr(void);
 
-err_t lowpan6_set_context(u8_t idx, const ip6_addr_t * context);
-err_t lowpan6_set_short_addr(u8_t addr_high, u8_t addr_low);
-
-#if LWIP_IPV4
+err_t lowpan6_set_context(uint8_t idx, const ip6_addr_t * context);
+err_t lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
 err_t lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr);
-#endif /* LWIP_IPV4 */
 err_t lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr);
 err_t lowpan6_input(struct pbuf * p, struct netif *netif);
 err_t lowpan6_if_init(struct netif *netif);
 
 /* pan_id in network byte order. */
 err_t lowpan6_set_pan_id(uint16_t pan_id);
-
 uint16_t lowpan6_calc_crc(const void *buf, uint16_t len);
-
-#if !NO_SYS
 err_t tcpip_6lowpan_input(struct pbuf *p, struct netif *inp);
-#endif /* !NO_SYS */
+
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_LOWPAN6_H */

@@ -71,7 +71,7 @@ struct nd6_q_entry {
 struct nd6_neighbor_cache_entry {
   ip6_addr_t next_hop_address;
   struct netif *netif;
-  u8_t lladdr[NETIF_MAX_HWADDR_LEN];
+  uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
 #if LWIP_ND6_QUEUEING
   /** Pointer to queue of pending outgoing packets on this entry. */
@@ -80,8 +80,8 @@ struct nd6_neighbor_cache_entry {
   /** Pointer to a single pending outgoing packet on this entry. */
   struct pbuf *q;
 #endif /* LWIP_ND6_QUEUEING */
-  u8_t state;
-  u8_t isrouter;
+  uint8_t state;
+  uint8_t isrouter;
   union {
     uint32_t reachable_time; /* in seconds */
     uint32_t delay_time;     /* ticks (ND6_TMR_INTERVAL) */
@@ -106,7 +106,7 @@ struct nd6_prefix_list_entry {
 struct nd6_router_list_entry {
   struct nd6_neighbor_cache_entry *neighbor_entry;
   uint32_t invalidation_timer; /* in seconds */
-  u8_t flags;
+  uint8_t flags;
 };
 
 enum nd6_neighbor_cache_entry_state {

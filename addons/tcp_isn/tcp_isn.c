@@ -85,7 +85,7 @@
 #include "ppp/polarssl/md5.h"
 #endif
 
-static u8_t input[64];
+static uint8_t input[64];
 static uint32_t base_time;
 
 /**
@@ -95,7 +95,7 @@ static uint32_t base_time;
  * @param secret_16_bytes A 16-byte secret used to randomize the TCP ISNs.
  */
 void
-lwip_init_tcp_isn(uint32_t boot_time, const u8_t *secret_16_bytes)
+lwip_init_tcp_isn(uint32_t boot_time, const uint8_t *secret_16_bytes)
 {
   /* Initialize the input buffer with the secret and trailing zeroes. */
   memset(input, 0, sizeof(input));
@@ -120,7 +120,7 @@ lwip_hook_tcp_isn(const ip_addr_t *local_ip, uint16_t local_port,
     const ip_addr_t *remote_ip, uint16_t remote_port)
 {
   md5_context ctx;
-  u8_t output[16];
+  uint8_t output[16];
   uint32_t isn;
 
 #if LWIP_IPV4 && LWIP_IPV6
@@ -160,10 +160,10 @@ lwip_hook_tcp_isn(const ip_addr_t *local_ip, uint16_t local_port,
   }   
 #endif /* LWIP_IPV4 */
 
-  input[32] = (u8_t)(local_port >> 8);
-  input[33] = (u8_t)(local_port & 0xff);
-  input[34] = (u8_t)(remote_port >> 8);
-  input[35] = (u8_t)(remote_port & 0xff);
+  input[32] = (uint8_t)(local_port >> 8);
+  input[33] = (uint8_t)(local_port & 0xff);
+  input[34] = (uint8_t)(remote_port >> 8);
+  input[35] = (uint8_t)(remote_port & 0xff);
 
   /* The secret and padding are already filled in. */
 

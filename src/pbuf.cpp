@@ -114,7 +114,7 @@ static const struct pbuf *pbuf_skip_const(const struct pbuf *in,
 #endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
 #endif /* !NO_SYS */
 
-volatile u8_t pbuf_free_ooseq_pending;
+volatile uint8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
 
 /**
@@ -159,7 +159,7 @@ static void pbuf_pool_is_empty(void) {
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
   SYS_ARCH_SET(pbuf_free_ooseq_pending, 1);
 #else  /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
-  u8_t queued;
+  uint8_t queued;
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
   queued = pbuf_free_ooseq_pending;
@@ -177,12 +177,12 @@ static void pbuf_pool_is_empty(void) {
 /* Initialize members of struct pbuf after allocation */
 static void pbuf_init_alloced_pbuf(struct pbuf *p, void *payload,
                                    uint16_t tot_len, uint16_t len,
-                                   pbuf_type type, u8_t flags) {
+                                   pbuf_type type, uint8_t flags) {
   p->next = NULL;
   p->payload = payload;
   p->tot_len = tot_len;
   p->len = len;
-  p->type_internal = (u8_t)type;
+  p->type_internal = (uint8_t)type;
   p->flags = flags;
   p->ref = 1;
   p->if_idx = NETIF_NO_INDEX;
@@ -254,7 +254,7 @@ struct pbuf *pbuf_alloc(pbuf_layer layer, uint16_t length, pbuf_type type) {
                                             LWIP_MEM_ALIGN_SIZE(offset)));
         pbuf_init_alloced_pbuf(
             q,
-            LWIP_MEM_ALIGN((void *)((u8_t *)q + SIZEOF_STRUCT_PBUF + offset)),
+            LWIP_MEM_ALIGN((void *)((uint8_t *)q + SIZEOF_STRUCT_PBUF + offset)),
             rem_len, qlen, type, 0);
         LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
                     ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
@@ -292,7 +292,7 @@ struct pbuf *pbuf_alloc(pbuf_layer layer, uint16_t length, pbuf_type type) {
         return NULL;
       }
       pbuf_init_alloced_pbuf(
-          p, LWIP_MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset)),
+          p, LWIP_MEM_ALIGN((void *)((uint8_t *)p + SIZEOF_STRUCT_PBUF + offset)),
           length, length, type, 0);
       LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
                   ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
@@ -384,7 +384,7 @@ struct pbuf *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_type type,
   }
 
   if (payload_mem != NULL) {
-    payload = (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
+    payload = (uint8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
   } else {
     payload = NULL;
   }
@@ -454,7 +454,7 @@ void pbuf_realloc(struct pbuf *p, uint16_t new_len) {
   ) {
     /* reallocate and adjust the length of the pbuf that will be split */
     q = (struct pbuf *)mem_trim(
-        q, (mem_size_t)(((u8_t *)q->payload - (u8_t *)q) + rem_len));
+        q, (mem_size_t)(((uint8_t *)q->payload - (uint8_t *)q) + rem_len));
     LWIP_ASSERT("mem_trim returned q == NULL", q != NULL);
   }
   /* adjust length fields for new last pbuf */
@@ -481,8 +481,8 @@ void pbuf_realloc(struct pbuf *p, uint16_t new_len) {
  * @return non-zero on failure, zero on success.
  *
  */
-static u8_t pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment,
-                                 u8_t force) {
+static uint8_t pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment,
+                                 uint8_t force) {
   uint16_t type_internal;
   void *payload;
   uint16_t increment_magnitude;
@@ -506,13 +506,13 @@ static u8_t pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment,
   /* pbuf types containing payloads? */
   if (type_internal & PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS) {
     /* set new payload pointer */
-    payload = (u8_t *)p->payload - header_size_increment;
+    payload = (uint8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
-    if ((u8_t *)payload < (u8_t *)p + SIZEOF_STRUCT_PBUF) {
+    if ((uint8_t *)payload < (uint8_t *)p + SIZEOF_STRUCT_PBUF) {
       LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE,
                   ("pbuf_add_header: failed as %p < %p (not enough space for "
                    "new header size)\n",
-                   (void *)payload, (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF)));
+                   (void *)payload, (void *)((uint8_t *)p + SIZEOF_STRUCT_PBUF)));
       /* bail out unsuccessfully */
       return 1;
     }
@@ -520,7 +520,7 @@ static u8_t pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment,
   } else {
     /* hide a header in the payload? */
     if (force) {
-      payload = (u8_t *)p->payload - header_size_increment;
+      payload = (uint8_t *)p->payload - header_size_increment;
     } else {
       /* cannot expand payload to front (yet!)
        * bail out unsuccessfully */
@@ -560,7 +560,7 @@ static u8_t pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment,
  * @return non-zero on failure, zero on success.
  *
  */
-u8_t pbuf_add_header(struct pbuf *p, size_t header_size_increment) {
+uint8_t pbuf_add_header(struct pbuf *p, size_t header_size_increment) {
   return pbuf_add_header_impl(p, header_size_increment, 0);
 }
 
@@ -568,7 +568,7 @@ u8_t pbuf_add_header(struct pbuf *p, size_t header_size_increment) {
  * Same as @ref pbuf_add_header but does not check if 'header_size > 0' is
  * allowed. This is used internally only, to allow PBUF_REF for RX.
  */
-u8_t pbuf_add_header_force(struct pbuf *p, size_t header_size_increment) {
+uint8_t pbuf_add_header_force(struct pbuf *p, size_t header_size_increment) {
   return pbuf_add_header_impl(p, header_size_increment, 1);
 }
 
@@ -588,7 +588,7 @@ u8_t pbuf_add_header_force(struct pbuf *p, size_t header_size_increment) {
  * @return non-zero on failure, zero on success.
  *
  */
-u8_t pbuf_remove_header(struct pbuf *p, size_t header_size_decrement) {
+uint8_t pbuf_remove_header(struct pbuf *p, size_t header_size_decrement) {
   void *payload;
   uint16_t increment_magnitude;
 
@@ -610,7 +610,7 @@ u8_t pbuf_remove_header(struct pbuf *p, size_t header_size_decrement) {
   LWIP_UNUSED_ARG(payload); /* only used in LWIP_DEBUGF below */
 
   /* increase payload pointer (guarded by length check above) */
-  p->payload = (u8_t *)p->payload + header_size_decrement;
+  p->payload = (uint8_t *)p->payload + header_size_decrement;
   /* modify pbuf length fields */
   p->len = (uint16_t)(p->len - increment_magnitude);
   p->tot_len = (uint16_t)(p->tot_len - increment_magnitude);
@@ -622,8 +622,8 @@ u8_t pbuf_remove_header(struct pbuf *p, size_t header_size_decrement) {
   return 0;
 }
 
-static u8_t pbuf_header_impl(struct pbuf *p, int16_t header_size_increment,
-                             u8_t force) {
+static uint8_t pbuf_header_impl(struct pbuf *p, int16_t header_size_increment,
+                             uint8_t force) {
   if (header_size_increment < 0) {
     return pbuf_remove_header(p, (size_t)-header_size_increment);
   } else {
@@ -652,7 +652,7 @@ static u8_t pbuf_header_impl(struct pbuf *p, int16_t header_size_increment,
  * @return non-zero on failure, zero on success.
  *
  */
-u8_t pbuf_header(struct pbuf *p, int16_t header_size_increment) {
+uint8_t pbuf_header(struct pbuf *p, int16_t header_size_increment) {
   return pbuf_header_impl(p, header_size_increment, 0);
 }
 
@@ -660,7 +660,7 @@ u8_t pbuf_header(struct pbuf *p, int16_t header_size_increment) {
  * Same as pbuf_header but does not check if 'header_size > 0' is allowed.
  * This is used internally only, to allow PBUF_REF for RX.
  */
-u8_t pbuf_header_force(struct pbuf *p, int16_t header_size_increment) {
+uint8_t pbuf_header_force(struct pbuf *p, int16_t header_size_increment) {
   return pbuf_header_impl(p, header_size_increment, 1);
 }
 
@@ -724,10 +724,10 @@ struct pbuf *pbuf_free_header(struct pbuf *q, uint16_t size) {
  * 1->1->1 becomes .......
  *
  */
-u8_t pbuf_free(struct pbuf *p) {
-  u8_t alloc_src;
+uint8_t pbuf_free(struct pbuf *p) {
+  uint8_t alloc_src;
   struct pbuf *q;
-  u8_t count;
+  uint8_t count;
 
   if (p == NULL) {
     LWIP_ASSERT("p != NULL", p != NULL);
@@ -912,7 +912,7 @@ void pbuf_chain(struct pbuf *h, struct pbuf *t) {
  */
 struct pbuf *pbuf_dechain(struct pbuf *p) {
   struct pbuf *q;
-  u8_t tail_gone = 1;
+  uint8_t tail_gone = 1;
   /* tail */
   q = p->next;
   /* pbuf has successor in chain? */
@@ -986,8 +986,8 @@ err_t pbuf_copy(struct pbuf *p_to, const struct pbuf *p_from) {
       /* current p_from does not fit into current p_to */
       len = p_to->len - offset_to;
     }
-    MEMCPY((u8_t *)p_to->payload + offset_to,
-           (u8_t *)p_from->payload + offset_from, len);
+    MEMCPY((uint8_t *)p_to->payload + offset_to,
+           (uint8_t *)p_from->payload + offset_from, len);
     offset_to += len;
     offset_from += len;
     LWIP_ASSERT("offset_to <= p_to->len", offset_to <= p_to->len);
@@ -1099,7 +1099,7 @@ void *pbuf_get_contiguous(const struct pbuf *p, void *buffer, size_t bufsize,
   if (q != NULL) {
     if (q->len >= (out_offset + len)) {
       /* all data in this pbuf, return zero-copy */
-      return (u8_t *)q->payload + out_offset;
+      return (uint8_t *)q->payload + out_offset;
     }
     /* need to copy */
     if (pbuf_copy_partial(q, buffer, len, out_offset) != len) {
@@ -1259,12 +1259,12 @@ err_t pbuf_take_at(struct pbuf *buf, const void *dataptr, uint16_t len,
   /* return requested data if pbuf is OK */
   if ((q != NULL) && (q->tot_len >= target_offset + len)) {
     uint16_t remaining_len = len;
-    const u8_t *src_ptr = (const u8_t *)dataptr;
+    const uint8_t *src_ptr = (const uint8_t *)dataptr;
     /* copy the part that goes into the first pbuf */
     uint16_t first_copy_len;
     LWIP_ASSERT("check pbuf_skip result", target_offset < q->len);
     first_copy_len = (uint16_t)LWIP_MIN(q->len - target_offset, len);
-    MEMCPY(((u8_t *)q->payload) + target_offset, dataptr, first_copy_len);
+    MEMCPY(((uint8_t *)q->payload) + target_offset, dataptr, first_copy_len);
     remaining_len = (uint16_t)(remaining_len - first_copy_len);
     src_ptr += first_copy_len;
     if (remaining_len > 0) {
@@ -1375,10 +1375,10 @@ err_t pbuf_fill_chksum(struct pbuf *p, uint16_t start_offset,
  * @param offset offset into p of the byte to return
  * @return byte at an offset into p OR ZERO IF 'offset' >= p->tot_len
  */
-u8_t pbuf_get_at(const struct pbuf *p, uint16_t offset) {
+uint8_t pbuf_get_at(const struct pbuf *p, uint16_t offset) {
   int ret = pbuf_try_get_at(p, offset);
   if (ret >= 0) {
-    return (u8_t)ret;
+    return (uint8_t)ret;
   }
   return 0;
 }
@@ -1398,7 +1398,7 @@ int pbuf_try_get_at(const struct pbuf *p, uint16_t offset) {
 
   /* return requested data if pbuf is OK */
   if ((q != NULL) && (q->len > q_idx)) {
-    return ((u8_t *)q->payload)[q_idx];
+    return ((uint8_t *)q->payload)[q_idx];
   }
   return -1;
 }
@@ -1412,13 +1412,13 @@ int pbuf_try_get_at(const struct pbuf *p, uint16_t offset) {
  * @param offset offset into p of the byte to write
  * @param data byte to write at an offset into p
  */
-void pbuf_put_at(struct pbuf *p, uint16_t offset, u8_t data) {
+void pbuf_put_at(struct pbuf *p, uint16_t offset, uint8_t data) {
   uint16_t q_idx;
   struct pbuf *q = pbuf_skip(p, offset, &q_idx);
 
   /* write requested data if pbuf is OK */
   if ((q != NULL) && (q->len > q_idx)) {
-    ((u8_t *)q->payload)[q_idx] = data;
+    ((uint8_t *)q->payload)[q_idx] = data;
   }
 }
 
@@ -1454,8 +1454,8 @@ uint16_t pbuf_memcmp(const struct pbuf *p, uint16_t offset, const void *s2,
   /* return requested data if pbuf is OK */
   for (i = 0; i < n; i++) {
     /* We know pbuf_get_at() succeeds because of p->tot_len check above. */
-    u8_t a = pbuf_get_at(q, (uint16_t)(start + i));
-    u8_t b = ((const u8_t *)s2)[i];
+    uint8_t a = pbuf_get_at(q, (uint16_t)(start + i));
+    uint8_t b = ((const uint8_t *)s2)[i];
     if (a != b) {
       return (uint16_t)LWIP_MIN(i + 1, 0xFFFF);
     }

@@ -191,7 +191,7 @@
 struct pcapipf_pending_packet {
   struct pcapipf_pending_packet *next;
   uint16_t len;
-  u8_t data[ETH_MAX_FRAME_LEN];
+  uint8_t data[ETH_MAX_FRAME_LEN];
 };
 #endif /* PCAPIF_RECEIVE_PROMISCUOUS */
 
@@ -726,7 +726,7 @@ pcapif_input_thread(void *arg)
 static void
 pcapif_low_level_init(struct netif *netif)
 {
-  u8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
+  uint8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
   struct pcapif_private *pa;
 #ifdef PACKET_LIB_GET_ADAPTER_NETADDRESS
@@ -903,9 +903,9 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
   const struct eth_addr *dest = (const struct eth_addr*)packet;
   int unicast;
 #if PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS
-  const u8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-  const u8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
-  const u8_t ipv6mcast[] = {0x33, 0x33};
+  const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+  const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
+  const uint8_t ipv6mcast[] = {0x33, 0x33};
 #endif /* PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS */
 
   if (pcaipf_is_tx_packet(netif, packet, packet_len)) {

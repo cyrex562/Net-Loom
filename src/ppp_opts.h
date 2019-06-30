@@ -71,8 +71,6 @@
 #define LWIP_PPP_API                    (PPP_SUPPORT && (NO_SYS == 0))
 #endif
 
-#if PPP_SUPPORT
-
 /**
  * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
  * connections (requires the PPP_SUPPORT option)
@@ -598,8 +596,6 @@
 #ifndef LWIP_INCLUDED_POLARSSL_ARC4
 #define LWIP_INCLUDED_POLARSSL_ARC4     0
 #endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
-
-#endif /* PPP_SUPPORT */
 
 /* Default value if unset */
 #ifndef PPP_NUM_TIMEOUTS

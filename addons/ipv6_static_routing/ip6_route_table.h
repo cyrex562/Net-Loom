@@ -68,7 +68,7 @@ struct netif;
 
 struct ip6_prefix {
   ip6_addr_t addr;
-  u8_t prefix_len; /* prefix length in bits at byte boundaries */
+  uint8_t prefix_len; /* prefix length in bits at byte boundaries */
 };
 
 struct ip6_route_entry {

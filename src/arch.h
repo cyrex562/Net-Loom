@@ -112,7 +112,7 @@
 
 /** Define this to 1 in cc.h of your port if your compiler does not provide
  * the stdint.h header. You need to typedef the generic types listed in
- * arch.h yourself in this case (u8_t, uint16_t...).
+ * arch.h yourself in this case (uint8_t, uint16_t...).
  */
 #ifndef LWIP_NO_STDINT_H
 #define LWIP_NO_STDINT_H 0
@@ -124,7 +124,7 @@
 #if !defined(LWIP_HAVE_INT64) && defined(UINT64_MAX)
 #define LWIP_HAVE_INT64 1
 #endif
-typedef uint8_t   u8_t;
+typedef uint8_t   uint8_t;
 typedef int8_t    s8_t;
 typedef uint16_t  uint16_t;
 typedef int16_t   int16_t;
@@ -218,7 +218,7 @@ typedef int ssize_t;
 #endif
 
 #if LWIP_NO_CTYPE_H
-#define lwip_in_range(c, lo, up)  ((u8_t)(c) >= (lo) && (u8_t)(c) <= (up))
+#define lwip_in_range(c, lo, up)  ((uint8_t)(c) >= (lo) && (uint8_t)(c) <= (up))
 #define lwip_isdigit(c)           lwip_in_range((c), '0', '9')
 #define lwip_isxdigit(c)          (lwip_isdigit(c) || lwip_in_range((c), 'a', 'f') || lwip_in_range((c), 'A', 'F'))
 #define lwip_islower(c)           lwip_in_range((c), 'a', 'z')
@@ -247,7 +247,7 @@ typedef int ssize_t;
 #endif
 
 /** Get rid of warnings related to pointer-to-numeric and vice-versa casts,
- * e.g. "conversion from 'u8_t' to 'void *' of greater size"
+ * e.g. "conversion from 'uint8_t' to 'void *' of greater size"
  */
 #ifndef LWIP_PTR_NUMERIC_CAST
 #define LWIP_PTR_NUMERIC_CAST(target_type, val) LWIP_CONST_CAST(target_type, val)
@@ -264,12 +264,12 @@ typedef int ssize_t;
  * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
  * requirements.\n
  * e.g. if you use gcc and need 32 bit alignment:\n
- * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))\n
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) uint8_t variable_name[size] \_\_attribute\_\_((aligned(4)))\n
  * or more portable:\n
  * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) uint32_t variable_name[(size + sizeof(uint32_t) - 1) / sizeof(uint32_t)]
  */
 #ifndef LWIP_DECLARE_MEMORY_ALIGNED
-#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[LWIP_MEM_ALIGN_BUFFER(size)]
+#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) uint8_t variable_name[LWIP_MEM_ALIGN_BUFFER(size)]
 #endif
 
 /** Calculate memory size for an aligned buffer - returns the next highest
@@ -282,7 +282,7 @@ typedef int ssize_t;
 
 /** Calculate safe memory size for an aligned buffer when using an unaligned
  * type as storage. This includes a safety-margin on (MEM_ALIGNMENT - 1) at the
- * start (e.g. if buffer is u8_t[] and actual data will be uint32_t*)
+ * start (e.g. if buffer is uint8_t[] and actual data will be uint32_t*)
  */
 #ifndef LWIP_MEM_ALIGN_BUFFER
 #define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1U))
@@ -340,7 +340,7 @@ extern "C" {
 #endif /* PACK_STRUCT_FIELD */
 
 /** Packed structs support.
-  * Wraps u8_t members, where some compilers warn that packing is not necessary.\n
+  * Wraps uint8_t members, where some compilers warn that packing is not necessary.\n
   * For examples of packed struct declarations, see include/prot/ subfolder.\n
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */

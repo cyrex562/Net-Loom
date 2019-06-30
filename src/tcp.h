@@ -97,8 +97,8 @@ PACK_STRUCT_END
 #define TCP_MAX_OPTION_BYTES 40
 
 #define TCPH_HDRLEN(phdr) ((uint16_t)(lwip_ntohs((phdr)->_hdrlen_rsvd_flags) >> 12))
-#define TCPH_HDRLEN_BYTES(phdr) ((u8_t)(TCPH_HDRLEN(phdr) << 2))
-#define TCPH_FLAGS(phdr)  ((u8_t)((lwip_ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)))
+#define TCPH_HDRLEN_BYTES(phdr) ((uint8_t)(TCPH_HDRLEN(phdr) << 2))
+#define TCPH_FLAGS(phdr)  ((uint8_t)((lwip_ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)))
 
 #define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = lwip_htons(((len) << 12) | TCPH_FLAGS(phdr))
 #define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & PP_HTONS(~TCP_FLAGS)) | lwip_htons(flags))
@@ -231,7 +231,7 @@ struct tcp_sack_range {
  * @param id ext arg id (allocated via @ref tcp_ext_arg_alloc_id)
  * @param data pointer to the data (set via @ref tcp_ext_arg_set before)
  */
-typedef void (*tcp_extarg_callback_pcb_destroyed_fn)(u8_t id, void *data);
+typedef void (*tcp_extarg_callback_pcb_destroyed_fn)(uint8_t id, void *data);
 
 /** Function prototype to transition arguments from a listening pcb to an accepted pcb
  *
@@ -240,7 +240,7 @@ typedef void (*tcp_extarg_callback_pcb_destroyed_fn)(u8_t id, void *data);
  * @param cpcb the newly allocated connection pcb
  * @return ERR_OK if OK, any error if connection should be dropped
  */
-typedef err_t (*tcp_extarg_callback_passive_open_fn)(u8_t id, struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
+typedef err_t (*tcp_extarg_callback_passive_open_fn)(uint8_t id, struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
 
 /** A table of callback functions that is invoked for ext arguments */
 struct tcp_ext_arg_callbacks {
@@ -275,7 +275,7 @@ typedef uint16_t tcpflags_t;
   void *callback_arg; \
   TCP_PCB_EXTARGS \
   enum tcp_state state; /* TCP state */ \
-  u8_t prio; \
+  uint8_t prio; \
   /* ports are in host byte order */ \
   uint16_t local_port
 
@@ -293,8 +293,8 @@ struct tcp_pcb_listen {
 #endif /* LWIP_CALLBACK_API */
 
 #if TCP_LISTEN_BACKLOG
-  u8_t backlog;
-  u8_t accepts_pending;
+  uint8_t backlog;
+  uint8_t accepts_pending;
 #endif /* TCP_LISTEN_BACKLOG */
 };
 
@@ -336,8 +336,8 @@ struct tcp_pcb {
      as we have to do some math with them */
 
   /* Timers */
-  u8_t polltmr, pollinterval;
-  u8_t last_timer;
+  uint8_t polltmr, pollinterval;
+  uint8_t last_timer;
   uint32_t tmr;
 
   /* receiver variables */
@@ -363,10 +363,10 @@ struct tcp_pcb {
   int16_t sa, sv; /* @see "Congestion Avoidance and Control" by Van Jacobson and Karels */
 
   int16_t rto;    /* retransmission time-out (in ticks of TCP_SLOW_INTERVAL) */
-  u8_t nrtx;    /* number of retransmissions */
+  uint8_t nrtx;    /* number of retransmissions */
 
   /* fast retransmit/recovery */
-  u8_t dupacks;
+  uint8_t dupacks;
   uint32_t lastack; /* Highest acknowledged seqno. */
 
   /* congestion avoidance/control variables */
@@ -434,18 +434,18 @@ struct tcp_pcb {
 #endif /* LWIP_TCP_KEEPALIVE */
 
   /* Persist timer counter */
-  u8_t persist_cnt;
+  uint8_t persist_cnt;
   /* Persist timer back-off */
-  u8_t persist_backoff;
+  uint8_t persist_backoff;
   /* Number of persist probes */
-  u8_t persist_probe;
+  uint8_t persist_probe;
 
   /* KEEPALIVE counter */
-  u8_t keep_cnt_sent;
+  uint8_t keep_cnt_sent;
 
 #if LWIP_WND_SCALE
-  u8_t snd_scale;
-  u8_t rcv_scale;
+  uint8_t snd_scale;
+  uint8_t rcv_scale;
 #endif
 };
 
@@ -470,7 +470,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
 
 /* Application program's interface: */
 struct tcp_pcb * tcp_new     (void);
-struct tcp_pcb * tcp_new_ip_type (u8_t type);
+struct tcp_pcb * tcp_new_ip_type (uint8_t type);
 
 void             tcp_arg     (struct tcp_pcb *pcb, void *arg);
 #if LWIP_CALLBACK_API
@@ -479,7 +479,7 @@ void             tcp_sent    (struct tcp_pcb *pcb, tcp_sent_fn sent);
 void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 void             tcp_accept  (struct tcp_pcb *pcb, tcp_accept_fn accept);
 #endif /* LWIP_CALLBACK_API */
-void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval);
+void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, uint8_t interval);
 
 #define          tcp_set_flags(pcb, set_flags)     do { (pcb)->flags = (tcpflags_t)((pcb)->flags |  (set_flags)); } while(0)
 #define          tcp_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (tcpflags_t)((pcb)->flags & (tcpflags_t)(~(clr_flags) & TCP_ALLFLAGS)); } while(0)
@@ -522,8 +522,8 @@ void             tcp_bind_netif(struct tcp_pcb *pcb, const struct netif *netif);
 err_t            tcp_connect (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,
                               uint16_t port, tcp_connected_fn connected);
 
-struct tcp_pcb * tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err);
-struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
+struct tcp_pcb * tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, uint8_t backlog, err_t *err);
+struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, uint8_t backlog);
 /** @ingroup tcp_raw */
 #define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
 
@@ -532,9 +532,9 @@ err_t            tcp_close   (struct tcp_pcb *pcb);
 err_t            tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx);
 
 err_t            tcp_write   (struct tcp_pcb *pcb, const void *dataptr, uint16_t len,
-                              u8_t apiflags);
+                              uint8_t apiflags);
 
-void             tcp_setprio (struct tcp_pcb *pcb, u8_t prio);
+void             tcp_setprio (struct tcp_pcb *pcb, uint8_t prio);
 
 err_t            tcp_output  (struct tcp_pcb *pcb);
 
@@ -546,7 +546,7 @@ err_t            tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_add
 #define tcp_new_ip6() tcp_new_ip_type(IPADDR_TYPE_V6)
 
 #if LWIP_TCP_PCB_NUM_EXT_ARGS
-u8_t tcp_ext_arg_alloc_id(void);
+uint8_t tcp_ext_arg_alloc_id(void);
 void tcp_ext_arg_set_callbacks(struct tcp_pcb *pcb, uint8_t id, const struct tcp_ext_arg_callbacks * const callbacks);
 void tcp_ext_arg_set(struct tcp_pcb *pcb, uint8_t id, void *arg);
 void *tcp_ext_arg_get(const struct tcp_pcb *pcb, uint8_t id);

@@ -62,7 +62,7 @@ struct netbuf {
   ip_addr_t addr;
   uint16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
-  u8_t flags;
+  uint8_t flags;
   uint16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
   ip_addr_t toaddr;

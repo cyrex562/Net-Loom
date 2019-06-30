@@ -57,8 +57,8 @@
 #define BR_FDB_TIMEOUT_SEC  (60*5) /* 5 minutes FDB timeout */
 
 typedef struct bridgeif_dfdb_entry_s {
-  u8_t used;
-  u8_t port;
+  uint8_t used;
+  uint8_t port;
   uint32_t ts;
   struct eth_addr addr;
 } bridgeif_dfdb_entry_t;
@@ -78,7 +78,7 @@ typedef struct bridgeif_dfdb_s {
  * provide a better implementation :-)
  */
 void
-bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, u8_t port_idx)
+bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_idx)
 {
   int i;
   bridgeif_dfdb_t *fdb = (bridgeif_dfdb_t *)fdb_ptr;

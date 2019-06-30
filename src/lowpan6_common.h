@@ -67,8 +67,8 @@ struct lowpan6_link_addr {
 int8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
 
 #if LWIP_6LOWPAN_IPHC
-err_t lowpan6_compress_headers(struct netif *netif, u8_t *inbuf, size_t inbuf_size, u8_t *outbuf, size_t outbuf_size,
-                               u8_t *lowpan6_header_len_out, u8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
+err_t lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
+                               uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
                                const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst);
 struct pbuf *lowpan6_decompress(struct pbuf *p, uint16_t datagram_size, ip6_addr_t *lowpan6_contexts,
                                 struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest);

@@ -234,7 +234,7 @@ pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
  */
 ppp_pcb*
 pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, uint16_t port,
-                        const u8_t *secret, u8_t secret_len,
+                        const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   ppp_pcb* result;
@@ -347,7 +347,7 @@ pppapi_do_ppp_close(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_close(ppp_pcb *pcb, u8_t nocarrier)
+pppapi_close(ppp_pcb *pcb, uint8_t nocarrier)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -410,7 +410,7 @@ pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
+pppapi_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);

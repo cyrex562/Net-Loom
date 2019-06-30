@@ -148,7 +148,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
  * This expects an address of 6 or 8 bytes.
  */
 static err_t
-rfc7668_set_addr(struct lowpan6_link_addr *addr, const u8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
+rfc7668_set_addr(struct lowpan6_link_addr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
   if ((in_addr == NULL) || (addr == NULL)) {
     return ERR_VAL;
@@ -174,7 +174,7 @@ rfc7668_set_addr(struct lowpan6_link_addr *addr, const u8_t *in_addr, size_t in_
  * This expects an address of 8 bytes.
  */
 err_t
-rfc7668_set_local_addr_eui64(struct netif *netif, const u8_t *local_addr, size_t local_addr_len)
+rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -185,7 +185,7 @@ rfc7668_set_local_addr_eui64(struct netif *netif, const u8_t *local_addr, size_t
  * This expects an address of 6 bytes.
  */
 err_t
-rfc7668_set_local_addr_mac48(struct netif *netif, const u8_t *local_addr, size_t local_addr_len, int is_public_addr)
+rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -196,7 +196,7 @@ rfc7668_set_local_addr_mac48(struct netif *netif, const u8_t *local_addr, size_t
  * This expects an address of 8 bytes.
  */
 err_t
-rfc7668_set_peer_addr_eui64(struct netif *netif, const u8_t *peer_addr, size_t peer_addr_len)
+rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -207,7 +207,7 @@ rfc7668_set_peer_addr_eui64(struct netif *netif, const u8_t *peer_addr, size_t p
  * This expects an address of 6 bytes.
  */
 err_t
-rfc7668_set_peer_addr_mac48(struct netif *netif, const u8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
+rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -232,9 +232,9 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
 {
   struct pbuf *p_frag;
   uint16_t remaining_len;
-  u8_t *buffer;
-  u8_t lowpan6_header_len;
-  u8_t hidden_header_len;
+  uint8_t *buffer;
+  uint8_t lowpan6_header_len;
+  uint8_t hidden_header_len;
   err_t err;
 
 //  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
@@ -252,9 +252,9 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
 //  LWIP_ASSERT("this needs a pbuf in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IP6 header (with IPHC). */
-  buffer = (u8_t*)p_frag->payload;
+  buffer = (uint8_t*)p_frag->payload;
 
-  err = lowpan6_compress_headers(netif, (u8_t *)p->payload, p->len, buffer, p_frag->len,
+  err = lowpan6_compress_headers(netif, (uint8_t *)p->payload, p->len, buffer, p_frag->len,
     &lowpan6_header_len, &hidden_header_len, rfc7668_context, &rfc7668_local_addr, &rfc7668_peer_addr);
   if (err != ERR_OK) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
@@ -298,7 +298,7 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
  * @return ERR_OK (if everything is fine), ERR_ARG (if the context id is out of range), ERR_VAL (if contexts disabled)
  */
 err_t
-rfc7668_set_context(u8_t idx, const ip6_addr_t *context)
+rfc7668_set_context(uint8_t idx, const ip6_addr_t *context)
 {
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   /* check if the ID is possible */
@@ -347,12 +347,12 @@ rfc7668_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 err_t
 rfc7668_input(struct pbuf * p, struct netif *netif)
 {
-  u8_t * puc;
+  uint8_t * puc;
 
   MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
 
   /* Load first header byte */
-  puc = (u8_t*)p->payload;
+  puc = (uint8_t*)p->payload;
   
   /* no IP header compression */
   if (*puc == 0x41) {

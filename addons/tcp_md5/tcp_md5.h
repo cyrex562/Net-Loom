@@ -65,7 +65,7 @@ struct tcp_md5sig {
   uint16_t   __tcpm_pad1;
   uint16_t   tcpm_keylen;
   uint32_t   __tcpm_pad2;
-  u8_t    tcpm_key[TCP_MD5SIG_MAXKEYLEN];
+  uint8_t    tcpm_key[TCP_MD5SIG_MAXKEYLEN];
 };
 
 /* socket setsockopt hook: */
@@ -73,8 +73,8 @@ int tcp_md5_setsockopt_hook(struct lwip_sock *sock, int level, int optname, cons
 
 /* Internal hook functions */
 void tcp_md5_init(void);
-err_t tcp_md5_check_inpacket(struct tcp_pcb* pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, u8_t *opt2, struct pbuf *p);
-u8_t tcp_md5_get_additional_option_length(const struct tcp_pcb *pcb, u8_t internal_option_length);
+err_t tcp_md5_check_inpacket(struct tcp_pcb* pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
+uint8_t tcp_md5_get_additional_option_length(const struct tcp_pcb *pcb, uint8_t internal_option_length);
 uint32_t *tcp_md5_add_tx_options(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, uint32_t *opts);
 
 #ifdef __cplusplus

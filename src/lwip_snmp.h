@@ -159,8 +159,8 @@ void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip);
 #if LWIP_IPV4
 void mib2_add_ip4(struct netif *ni);
 void mib2_remove_ip4(struct netif *ni);
-void mib2_add_route_ip4(u8_t dflt, struct netif *ni);
-void mib2_remove_route_ip4(u8_t dflt, struct netif *ni);
+void mib2_add_route_ip4(uint8_t dflt, struct netif *ni);
+void mib2_remove_route_ip4(uint8_t dflt, struct netif *ni);
 #endif /* LWIP_IPV4 */
 
 /* UDP */

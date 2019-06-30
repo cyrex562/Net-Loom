@@ -28,12 +28,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#pragma once
 #include "ppp_opts.h"
-#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#ifndef CHAP_H
-#define CHAP_H
-
+#include "ppp.h"
 #include "ppp.h"
 
 #ifdef __cplusplus
@@ -152,26 +149,26 @@ struct chap_digest_type {
 /*
  * Each interface is described by chap structure.
  */
-#if CHAP_SUPPORT
+
 typedef struct chap_client_state {
-	u8_t flags;
+	uint8_t flags;
 	const char *name;
 	const struct chap_digest_type *digest;
 	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
 
-#if PPP_SERVER
+
 typedef struct chap_server_state {
-	u8_t flags;
-	u8_t id;
+	uint8_t flags;
+	uint8_t id;
 	const char *name;
 	const struct chap_digest_type *digest;
 	int challenge_xmits;
 	int challenge_pktlen;
 	unsigned char challenge[CHAL_MAX_PKTLEN];
 } chap_server_state;
-#endif /* PPP_SERVER */
-#endif /* CHAP_SUPPORT */
+
+
 
 #if 0 /* UNUSED */
 /* Hook for a plugin to validate CHAP challenge */
@@ -190,11 +187,8 @@ extern void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code);
 extern void chap_auth_with_peer(ppp_pcb *pcb, const char *our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
-extern const struct protent chap_protent;
+extern const struct Protent chap_protent;
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* CHAP_H */
-#endif /* PPP_SUPPORT && CHAP_SUPPORT */

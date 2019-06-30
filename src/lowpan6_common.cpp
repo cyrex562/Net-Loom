@@ -129,13 +129,13 @@ lowpan6_context_lookup(const ip6_addr_t *lowpan6_contexts, const ip6_addr_t *ip6
  * Compress IPv6 and/or UDP headers.
  * */
 err_t
-lowpan6_compress_headers(struct netif *netif, u8_t *inbuf, size_t inbuf_size, u8_t *outbuf, size_t outbuf_size,
-                         u8_t *lowpan6_header_len_out, u8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
+lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
+                         uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
                          const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
 {
-  u8_t *buffer, *inptr;
-  u8_t lowpan6_header_len;
-  u8_t hidden_header_len = 0;
+  uint8_t *buffer, *inptr;
+  uint8_t lowpan6_header_len;
+  uint8_t hidden_header_len = 0;
   s8_t i;
   struct ip6_hdr *ip6hdr;
   ip_addr_t ip6src, ip6dst;
@@ -388,8 +388,8 @@ lowpan6_compress_headers(struct netif *netif, u8_t *inbuf, size_t inbuf_size, u8
  * @return ERR_OK if decompression succeeded, an error otherwise
  */
 static err_t
-lowpan6_decompress_hdr(u8_t *lowpan6_buffer, size_t lowpan6_bufsize,
-                       u8_t *decomp_buffer, size_t decomp_bufsize,
+lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
+                       uint8_t *decomp_buffer, size_t decomp_bufsize,
                        uint16_t *hdr_size_comp, uint16_t *hdr_size_decomp,
                        uint16_t datagram_size, uint16_t compressed_size,
                        ip6_addr_t *lowpan6_contexts,
@@ -711,7 +711,7 @@ lowpan6_decompress_hdr(u8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
       /* UDP compression */
       IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_UDP);
-      udphdr = (struct udp_hdr *)((u8_t *)decomp_buffer + ip6_offset);
+      udphdr = (struct udp_hdr *)((uint8_t *)decomp_buffer + ip6_offset);
       if (decomp_bufsize < IP6_HLEN + UDP_HLEN) {
         return ERR_MEM;
       }
@@ -804,7 +804,7 @@ lowpan6_decompress(struct pbuf *p, uint16_t datagram_size, ip6_addr_t *lowpan6_c
   }
 
   /* Decompress the IPv6 (and possibly UDP) header(s) into the new pbuf */
-  err = lowpan6_decompress_hdr((u8_t *)p->payload, p->len, (u8_t *)q->payload, q->len,
+  err = lowpan6_decompress_hdr((uint8_t *)p->payload, p->len, (uint8_t *)q->payload, q->len,
     &lowpan6_offset, &ip6_offset, datagram_size, p->tot_len, lowpan6_contexts, src, dest);
   if (err != ERR_OK) {
     pbuf_free(p);

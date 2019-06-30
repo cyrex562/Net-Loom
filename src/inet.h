@@ -63,7 +63,7 @@ struct in_addr {
 struct in6_addr {
   union {
     uint32_t u32_addr[4];
-    u8_t  u8_addr[16];
+    uint8_t  u8_addr[16];
   } un;
 #define s6_addr  un.u8_addr
 };

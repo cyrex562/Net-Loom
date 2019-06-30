@@ -142,24 +142,24 @@ typedef struct lcp_options {
     uint16_t mrru;			/* Value of MRRU, and multilink enable */
 #endif /* MULTILINK */
 #if CHAP_SUPPORT
-    u8_t chap_mdtype;		/* which MD types (hashing algorithm) */
+    uint8_t chap_mdtype;		/* which MD types (hashing algorithm) */
 #endif /* CHAP_SUPPORT */
     uint32_t asyncmap;		/* Value of async map */
     uint32_t magicnumber;
-    u8_t  numloops;		/* Number of loops during magic number neg. */
+    uint8_t  numloops;		/* Number of loops during magic number neg. */
 #if LQR_SUPPORT
     uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
 #endif /* LQR_SUPPORT */
     struct epdisc endpoint;	/* endpoint discriminator */
 } lcp_options;
 
-void lcp_open(ppp_pcb *pcb);
-void lcp_close(ppp_pcb *pcb, const char *reason);
-void lcp_lowerup(ppp_pcb *pcb);
-void lcp_lowerdown(ppp_pcb *pcb);
-void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject */
+void lcp_open(PppPcb *pcb);
+void lcp_close(PppPcb *pcb, const char *reason);
+void lcp_lowerup(PppPcb *pcb);
+void lcp_lowerdown(PppPcb *pcb);
+void lcp_sprotrej(PppPcb *pcb, u_char *p, int len);    /* send protocol reject */
 
-extern const struct protent lcp_protent;
+extern const struct Protent lcp_protent;
 
 #if 0 /* moved to ppp_opts.h */
 /* Default number of times we receive our magic number from the peer

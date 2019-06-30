@@ -83,7 +83,7 @@ void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
 /* @todo: add linux/unix implementation? */
 
 struct pcapifh_linkstate {
-  u8_t empty;
+  uint8_t empty;
 };
 
 struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)

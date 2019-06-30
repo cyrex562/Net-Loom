@@ -59,7 +59,7 @@ extern "C" {
 struct ip6_addr {
   uint32_t addr[4];
 #if LWIP_IPV6_SCOPES
-  u8_t zone;
+  uint8_t zone;
 #endif /* LWIP_IPV6_SCOPES */
 };
 

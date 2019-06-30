@@ -42,11 +42,9 @@
  * $Id: upap.h,v 1.8 2002/12/04 23:03:33 paulus Exp $
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+#pragma once
 
-#ifndef UPAP_H
-#define UPAP_H
+#include "ppp_opts.h"
 
 #include "ppp.h"
 
@@ -100,32 +98,30 @@ extern "C" {
 /*
  * Each interface is described by upap structure.
  */
-#if PAP_SUPPORT
 typedef struct upap_state {
     const char *us_user;	/* User */
-    u8_t us_userlen;		/* User length */
+    uint8_t us_userlen;		/* User length */
     const char *us_passwd;	/* Password */
-    u8_t us_passwdlen;		/* Password length */
-    u8_t us_clientstate;	/* Client state */
+    uint8_t us_passwdlen;		/* Password length */
+    uint8_t us_clientstate;	/* Client state */
 #if PPP_SERVER
-    u8_t us_serverstate;	/* Server state */
+    uint8_t us_serverstate;	/* Server state */
 #endif /* PPP_SERVER */
-    u8_t us_id;		        /* Current id */
-    u8_t us_transmits;		/* Number of auth-reqs sent */
+    uint8_t us_id;		        /* Current id */
+    uint8_t us_transmits;		/* Number of auth-reqs sent */
 } upap_state;
-#endif /* PAP_SUPPORT */
+
 
 
 void upap_authwithpeer(ppp_pcb *pcb, const char *user, const char *password);
-#if PPP_SERVER
-void upap_authpeer(ppp_pcb *pcb);
-#endif /* PPP_SERVER */
 
-extern const struct protent pap_protent;
+void upap_authpeer(ppp_pcb *pcb);
+
+
+extern const struct Protent pap_protent;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* UPAP_H */
-#endif /* PPP_SUPPORT && PAP_SUPPORT */
+

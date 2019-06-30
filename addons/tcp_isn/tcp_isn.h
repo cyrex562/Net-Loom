@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-void lwip_init_tcp_isn(uint32_t boot_time, const u8_t *secret_16_bytes);
+void lwip_init_tcp_isn(uint32_t boot_time, const uint8_t *secret_16_bytes);
 uint32_t lwip_hook_tcp_isn(const ip_addr_t *local_ip, uint16_t local_port,
                         const ip_addr_t *remote_ip, uint16_t remote_port);
 

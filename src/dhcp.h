@@ -59,10 +59,10 @@ PACK_STRUCT_BEGIN
 /** minimum set of fields of any DHCP message */
 struct dhcp_msg
 {
-    PACK_STRUCT_FLD_8(u8_t op);
-    PACK_STRUCT_FLD_8(u8_t htype);
-    PACK_STRUCT_FLD_8(u8_t hlen);
-    PACK_STRUCT_FLD_8(u8_t hops);
+    PACK_STRUCT_FLD_8(uint8_t op);
+    PACK_STRUCT_FLD_8(uint8_t htype);
+    PACK_STRUCT_FLD_8(uint8_t hlen);
+    PACK_STRUCT_FLD_8(uint8_t hops);
     PACK_STRUCT_FIELD(uint32_t xid);
     PACK_STRUCT_FIELD(uint16_t secs);
     PACK_STRUCT_FIELD(uint16_t flags);
@@ -70,9 +70,9 @@ struct dhcp_msg
     PACK_STRUCT_FLD_S(ip4_addr_p_t yiaddr);
     PACK_STRUCT_FLD_S(ip4_addr_p_t siaddr);
     PACK_STRUCT_FLD_S(ip4_addr_p_t giaddr);
-    PACK_STRUCT_FLD_8(u8_t chaddr[DHCP_CHADDR_LEN]);
-    PACK_STRUCT_FLD_8(u8_t sname[DHCP_SNAME_LEN]);
-    PACK_STRUCT_FLD_8(u8_t file[DHCP_FILE_LEN]);
+    PACK_STRUCT_FLD_8(uint8_t chaddr[DHCP_CHADDR_LEN]);
+    PACK_STRUCT_FLD_8(uint8_t sname[DHCP_SNAME_LEN]);
+    PACK_STRUCT_FLD_8(uint8_t file[DHCP_FILE_LEN]);
     PACK_STRUCT_FIELD(uint32_t cookie);
 #define DHCP_MIN_OPTIONS_LEN 68U
     /** make sure user does not configure this too small */
@@ -84,7 +84,7 @@ struct dhcp_msg
 /** set this to be sufficient for your options in outgoing DHCP msgs */
 #  define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
 #endif
-    PACK_STRUCT_FLD_8(u8_t options[DHCP_OPTIONS_LEN]);
+    PACK_STRUCT_FLD_8(uint8_t options[DHCP_OPTIONS_LEN]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -197,15 +197,15 @@ struct dhcp
   /** transaction identifier of last sent request */
   uint32_t xid;
   /** track PCB allocation state */
-  u8_t pcb_allocated;
+  uint8_t pcb_allocated;
   /** current DHCP state machine state */
-  u8_t state;
+  uint8_t state;
   /** retries of current request */
-  u8_t tries;
+  uint8_t tries;
 #if LWIP_DHCP_AUTOIP_COOP
-  u8_t autoip_coop_state;
+  uint8_t autoip_coop_state;
 #endif
-  u8_t subnet_mask_given;
+  uint8_t subnet_mask_given;
 
   uint16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
   uint16_t t1_timeout;  /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
@@ -243,7 +243,7 @@ void dhcp_network_changed(struct netif *netif);
 #if DHCP_DOES_ARP_CHECK
 void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr);
 #endif
-u8_t dhcp_supplied_address(const struct netif *netif);
+uint8_t dhcp_supplied_address(const struct netif *netif);
 /* to be called every minute */
 void dhcp_coarse_tmr(void);
 /* to be called every half second */
@@ -253,7 +253,7 @@ void dhcp_fine_tmr(void);
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP_MAX_NTP_SERVERS */
-extern void dhcp_set_ntp_servers(u8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
+extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
 #endif /* LWIP_DHCP_GET_NTP_SRV */
 
 #define netif_dhcp_data(netif) ((struct dhcp*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP))

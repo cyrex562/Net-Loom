@@ -70,7 +70,7 @@ typedef struct ip_addr {
     ip4_addr_t ip4;
   } u_addr;
   /** @ref lwip_ip_addr_type */
-  u8_t type;
+  uint8_t type;
 } ip_addr_t;
 
 extern const ip_addr_t ip_addr_any_type;

@@ -99,15 +99,15 @@ struct netif *netif_list;
 struct netif *netif_default;
 
 #define netif_index_to_num(index)   ((index) - 1)
-static u8_t netif_num;
+static uint8_t netif_num;
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
-static u8_t netif_client_id;
+static uint8_t netif_client_id;
 #endif
 
 #define NETIF_REPORT_TYPE_IPV4  0x01
 #define NETIF_REPORT_TYPE_IPV6  0x02
-static void netif_issue_reports(struct netif *netif, u8_t report_type);
+static void netif_issue_reports(struct netif *netif, uint8_t report_type);
 
 #if LWIP_IPV6
 static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr);
@@ -366,7 +366,7 @@ netif_add(struct netif *netif,
 
 #if !LWIP_SINGLE_NETIF
   /* Assign a unique netif number in the range [0..254], so that (num+1) can
-     serve as an interface index that fits in a u8_t.
+     serve as an interface index that fits in a uint8_t.
      We assume that the new netif has not yet been added to the list here.
      This algorithm is O(n^2), but that should be OK for lwIP.
      */
@@ -392,7 +392,7 @@ netif_add(struct netif *netif,
   if (netif->num == 254) {
     netif_num = 0;
   } else {
-    netif_num = (u8_t)(netif->num + 1);
+    netif_num = (uint8_t)(netif->num + 1);
   }
 
   /* add this netif to the list */
@@ -859,7 +859,7 @@ netif_set_up(struct netif *netif)
 /** Send ARP/IGMP/MLD/RS events, e.g. on link-up/netif-up or addr-change
  */
 static void
-netif_issue_reports(struct netif *netif, u8_t report_type)
+netif_issue_reports(struct netif *netif, uint8_t report_type)
 {
   LWIP_ASSERT("netif_issue_reports: invalid netif", netif != NULL);
 
@@ -1079,7 +1079,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 #endif /* LWIP_HAVE_LOOPIF */
 #endif /* MIB2_STATS */
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
-  u8_t schedule_poll = 0;
+  uint8_t schedule_poll = 0;
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   SYS_ARCH_DECL_PROTECT(lev);
 
@@ -1202,7 +1202,7 @@ netif_poll(struct netif *netif)
   while (netif->loop_first != NULL) {
     struct pbuf *in, *in_end;
 #if LWIP_LOOPBACK_MAX_PBUFS
-    u8_t clen = 1;
+    uint8_t clen = 1;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
     in = in_end = netif->loop_first;
@@ -1270,10 +1270,10 @@ netif_poll_all(void)
  * Returned value is an index in mentioned array.
  * @see LWIP_NUM_NETIF_CLIENT_DATA
  */
-u8_t
+uint8_t
 netif_alloc_client_data_id(void)
 {
-  u8_t result = netif_client_id;
+  uint8_t result = netif_client_id;
   netif_client_id++;
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -1282,7 +1282,7 @@ netif_alloc_client_data_id(void)
 #error LWIP_NUM_NETIF_CLIENT_DATA must be <= 256
 #endif
   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", result < LWIP_NUM_NETIF_CLIENT_DATA);
-  return (u8_t)(result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX);
+  return (uint8_t)(result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX);
 }
 #endif
 
@@ -1377,9 +1377,9 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, uint32_t i0, uint32
  * @param state the new IPv6 address state
  */
 void
-netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, u8_t state)
+netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, uint8_t state)
 {
-  u8_t old_state;
+  uint8_t old_state;
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
@@ -1387,8 +1387,8 @@ netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, u8_t state)
   old_state = netif_ip6_addr_state(netif, addr_idx);
   /* state is actually being changed? */
   if (old_state != state) {
-    u8_t old_valid = old_state & IP6_ADDR_VALID;
-    u8_t new_valid = state & IP6_ADDR_VALID;
+    uint8_t old_valid = old_state & IP6_ADDR_VALID;
+    uint8_t new_valid = state & IP6_ADDR_VALID;
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
 
 #if LWIP_IPV6_MLD
@@ -1481,9 +1481,9 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
  *                       if == 0, use hwaddr directly as interface ID
  */
 void
-netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
+netif_create_ip6_linklocal_address(struct netif *netif, uint8_t from_mac_48bit)
 {
-  u8_t i, addr_index;
+  uint8_t i, addr_index;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1620,7 +1620,7 @@ netif_null_output_ip4(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipa
 *
 * @param name the name of the netif
 */
-u8_t
+uint8_t
 netif_name_to_index(const char *name)
 {
   struct netif *netif = netif_find(name);
@@ -1640,7 +1640,7 @@ netif_name_to_index(const char *name)
 * @param name char buffer of at least NETIF_NAMESIZE bytes
 */
 char *
-netif_index_to_name(u8_t idx, char *name)
+netif_index_to_name(uint8_t idx, char *name)
 {
   struct netif *netif = netif_get_by_index(idx);
 
@@ -1660,7 +1660,7 @@ netif_index_to_name(u8_t idx, char *name)
 * @param idx index of netif to find
 */
 struct netif *
-netif_get_by_index(u8_t idx)
+netif_get_by_index(uint8_t idx)
 {
   struct netif *netif;
 
@@ -1688,7 +1688,7 @@ struct netif *
 netif_find(const char *name)
 {
   struct netif *netif;
-  u8_t num;
+  uint8_t num;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1696,7 +1696,7 @@ netif_find(const char *name)
     return NULL;
   }
 
-  num = (u8_t)atoi(&name[2]);
+  num = (uint8_t)atoi(&name[2]);
 
   NETIF_FOREACH(netif) {
     if (num == netif->num &&

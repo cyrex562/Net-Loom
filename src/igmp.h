@@ -76,8 +76,8 @@
 #endif
 PACK_STRUCT_BEGIN
 struct igmp_msg {
-    PACK_STRUCT_FLD_8(u8_t         igmp_msgtype);
-    PACK_STRUCT_FLD_8(u8_t         igmp_maxresp);
+    PACK_STRUCT_FLD_8(uint8_t         igmp_msgtype);
+    PACK_STRUCT_FLD_8(uint8_t         igmp_maxresp);
     PACK_STRUCT_FIELD(uint16_t        igmp_checksum);
     PACK_STRUCT_FLD_S(ip4_addr_p_t igmp_group_address);
 } PACK_STRUCT_STRUCT;
@@ -119,13 +119,13 @@ struct igmp_group {
   /** multicast address */
   ip4_addr_t         group_address;
   /** signifies we were the last person to report */
-  u8_t               last_reporter_flag;
+  uint8_t               last_reporter_flag;
   /** current state of the group */
-  u8_t               group_state;
+  uint8_t               group_state;
   /** timer for reporting, negative is OFF */
   uint16_t              timer;
   /** counter of simultaneous uses */
-  u8_t               use;
+  uint8_t               use;
 };
 
 /*  Prototypes */
