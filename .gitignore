@@ -57,3 +57,4 @@ out/*
 .vs/lwip_refactor/v16/ipch/AutoPCH/4933260d7584cd3d/PPP.ipch
 .vs/lwip_refactor/v16/ipch/AutoPCH/2c5ca880b2079503/PCAPIF.ipch
 *.ipch
+.vs/lwip_refactor/v16/ipch/AutoPCH/4933260d7584cd3d/PPP.ipch
