@@ -1,11 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\npcap",
     "\\npcap\\Include",
     "\\npcap\\Include\\pcap",
     "\\src"
   ],
-  "SelectedNode": "\\CMakeLists.txt",
+  "SelectedNode": "\\original_license.md",
   "PreviewInSolutionExplorer": false
 }
