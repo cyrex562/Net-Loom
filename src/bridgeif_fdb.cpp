@@ -205,8 +205,8 @@ bridgeif_fdb_init(uint16_t max_fdb_entries)
   LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len));
   fdb = (bridgeif_dfdb_t *)mem_calloc(1, alloc_len);
-  if (fdb == NULL) {
-    return NULL;
+  if (fdb == nullptr) {
+    return nullptr;
   }
   fdb->max_fdb_entries = max_fdb_entries;
   fdb->fdb = (bridgeif_dfdb_entry_t *)(fdb + 1);

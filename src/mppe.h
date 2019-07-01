@@ -33,13 +33,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#pragma once
 #include "ppp_opts.h"
-#if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#ifndef MPPE_H
-#define MPPE_H
 
-#include "ppp/pppcrypt.h"
+#include "pppcrypt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,7 +77,7 @@ extern "C" {
 /* Build a CI from mppe opts (see RFC 3078) */
 #define MPPE_OPTS_TO_CI(opts, ci)		\
     do {					\
-	u_char *ptr = ci; /* u_char[4] */	\
+	uint8_t *ptr = ci; /* uint8_t[4] */	\
 						\
 	/* H bit */				\
 	if (opts & MPPE_OPT_STATEFUL)		\
@@ -101,7 +99,7 @@ extern "C" {
 /* The reverse of the above */
 #define MPPE_CI_TO_OPTS(ci, opts)		\
     do {					\
-	const u_char *ptr = ci; /* u_char[4] */	\
+	const uint8_t *ptr = ci; /* uint8_t[4] */	\
 						\
 	opts = 0;				\
 						\
@@ -166,16 +164,13 @@ typedef struct ppp_mppe_state {
 	unsigned int discard   :1;  /* stateful mode packet loss flag */
 } ppp_mppe_state;
 
-void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key);
-void mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options);
-void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-err_t mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol);
-void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
+void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key);
+void mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options);
+void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state);
+err_t mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol);
+void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state);
+err_t mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* MPPE_H */
-#endif /* PPP_SUPPORT && MPPE_SUPPORT */

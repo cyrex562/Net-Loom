@@ -40,6 +40,7 @@
 #include "opt.h"
 
 #include "ip4_addr.h"
+#include "ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,9 @@ enum lwip_ip_addr_type {
   /** IPv4+IPv6 ("dual-stack") */
   IPADDR_TYPE_ANY = 46U
 };
+
+#define LWIP_IPV4 1
+#define LWIP_IPV6 1
 
 #if LWIP_IPV4 && LWIP_IPV6
 /**
@@ -362,7 +366,7 @@ typedef ip6_addr_t ip_addr_t;
 #endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-#if LWIP_IPV4
+
 
 extern const ip_addr_t ip_addr_any;
 extern const ip_addr_t ip_addr_broadcast;
@@ -396,9 +400,9 @@ extern const ip_addr_t ip_addr_broadcast;
 /** @ingroup ip4addr */
 #define IP4_ADDR_BROADCAST  (ip_2_ip4(&ip_addr_broadcast))
 
-#endif /* LWIP_IPV4*/
 
-#if LWIP_IPV6
+
+
 
 extern const ip_addr_t ip6_addr_any;
 
@@ -420,14 +424,12 @@ extern const ip_addr_t ip6_addr_any;
 #define IP_ADDR_ANY IP6_ADDR_ANY
 #endif /* !LWIP_IPV4 */
 
-#endif
 
-#if LWIP_IPV4 && LWIP_IPV6
+
+
 /** @ingroup ipaddr */
 #define IP_ANY_TYPE    (&ip_addr_any_type)
-#else
-#define IP_ANY_TYPE    IP_ADDR_ANY
-#endif
+
 
 #ifdef __cplusplus
 }

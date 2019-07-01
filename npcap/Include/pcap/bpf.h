@@ -233,8 +233,8 @@ struct bpf_program {
  */
 struct bpf_insn {
 	u_short	code;
-	u_char 	jt;
-	u_char 	jf;
+	uint8_t 	jt;
+	uint8_t 	jf;
 	bpf_u_int32 k;
 };
 
@@ -245,7 +245,7 @@ struct bpf_insn {
 #define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
 
 PCAP_API int bpf_validate(const struct bpf_insn *, int);
-PCAP_API u_int bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+PCAP_API u_int bpf_filter(const struct bpf_insn *, const uint8_t *, u_int, u_int);
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

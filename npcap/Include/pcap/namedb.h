@@ -49,15 +49,15 @@ extern "C" {
  * as Debian).
  */
 struct pcap_etherent {
-	u_char addr[6];
+	uint8_t addr[6];
 	char name[122];
 };
 #ifndef PCAP_ETHERS_FILE
 #define PCAP_ETHERS_FILE "/etc/ethers"
 #endif
 PCAP_API struct	pcap_etherent *pcap_next_etherent(FILE *);
-PCAP_API u_char *pcap_ether_hostton(const char*);
-PCAP_API u_char *pcap_ether_aton(const char *);
+PCAP_API uint8_t *pcap_ether_hostton(const char*);
+PCAP_API uint8_t *pcap_ether_aton(const char *);
 
 PCAP_API bpf_u_int32 **pcap_nametoaddr(const char *);
 PCAP_API struct addrinfo *pcap_nametoaddrinfo(const char *);

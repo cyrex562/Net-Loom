@@ -85,7 +85,7 @@ extern "C" {
 	"Initial", "Pending", "Closed", "Listen", "Identify", \
 	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
 
-#define	eap_client_active(pcb)	((pcb)->eap.es_client.ea_state == eapListen)
+// #define	eap_client_active(pcb)	((pcb)->eap.es_client.ea_state == eapListen)
 #if PPP_SERVER
 #define	eap_server_active(pcb)	\
 	((pcb)->eap.es_server.ea_state >= eapIdentify && \
@@ -114,14 +114,14 @@ struct eap_auth {
 	const char *ea_name;	/* Our name */
 	char ea_peer[MAXNAMELEN +1];	/* Peer's name */
 	void *ea_session;	/* Authentication library linkage */
-	u_char *ea_skey;	/* Shared encryption key */
+	uint8_t *ea_skey;	/* Shared encryption key */
 	u_short ea_namelen;	/* Length of our name */
 	u_short ea_peerlen;	/* Length of peer's name */
 	enum eap_state_code ea_state;
-	u_char ea_id;		/* Current id */
-	u_char ea_requests;	/* Number of Requests sent/received */
-	u_char ea_responses;	/* Number of Responses */
-	u_char ea_type;		/* One of EAPT_* */
+	uint8_t ea_id;		/* Current id */
+	uint8_t ea_requests;	/* Number of Requests sent/received */
+	uint8_t ea_responses;	/* Number of Responses */
+	uint8_t ea_type;		/* One of EAPT_* */
 	uint32_t ea_keyflags;	/* SRP shared key usage flags */
 };
 
@@ -139,7 +139,7 @@ typedef struct eap_state {
 	uint8_t es_usepseudo;		/* Use SRP Pseudonym if offered one */
 	int es_usedpseudo;		/* Set if we already sent PN */
 	int es_challen;			/* Length of challenge string */
-	u_char es_challenge[EAP_MAX_CHALLENGE_LENGTH];
+	uint8_t es_challenge[EAP_MAX_CHALLENGE_LENGTH];
 } eap_state;
 
 void eap_authwithpeer(PppPcb *pcb, const char *localname);

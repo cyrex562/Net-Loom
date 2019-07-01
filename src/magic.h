@@ -73,12 +73,9 @@
 * 98-05-29 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
 *   Extracted from avos.
 *****************************************************************************/
+#pragma once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef MAGIC_H
-#define MAGIC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,6 +122,3 @@ uint32_t magic_pow(uint8_t pow);
 }
 #endif
 
-#endif /* MAGIC_H */
-
-#endif /* PPP_SUPPORT */

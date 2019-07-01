@@ -28,7 +28,7 @@ class null_terminating_iterator {
   typedef const Char& reference;
   typedef std::random_access_iterator_tag iterator_category;
 
-  null_terminating_iterator() : ptr_(0), end_(0) {}
+  null_terminating_iterator() : ptr_(nullptr), end_(nullptr) {}
 
   FMT_CONSTEXPR null_terminating_iterator(const Char *ptr, const Char *end)
     : ptr_(ptr), end_(end) {}

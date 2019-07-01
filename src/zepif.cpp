@@ -206,7 +206,7 @@ zepif_init(struct netif* netif)
         state->init.zep_dst_udp_port = zepif_default_udp_port;
     }
 #if LWIP_IPV4
-    if (state->init.zep_dst_ip_addr == NULL)
+    if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
         state->init.zep_dst_ip_addr = IP_ADDR_BROADCAST;
@@ -226,7 +226,7 @@ zepif_init(struct netif* netif)
     {
         goto err_ret;
     }
-    if (state->init.zep_netif != NULL)
+    if (state->init.zep_netif != nullptr)
     {
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }

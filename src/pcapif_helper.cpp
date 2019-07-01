@@ -32,18 +32,18 @@ struct pcapifh_linkstate {
 struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
 {
   struct pcapifh_linkstate* state = (struct pcapifh_linkstate*)malloc(sizeof(struct pcapifh_linkstate));
-  if (state != NULL) {
+  if (state != nullptr) {
     memset(state, 0, sizeof(struct pcapifh_linkstate));
     state->ppacket_oid_data = (PPACKET_OID_DATA)malloc(sizeof(PACKET_OID_DATA) + sizeof(NDIS_MEDIA_STATE));
-    if (state->ppacket_oid_data == NULL) {
+    if (state->ppacket_oid_data == nullptr) {
       free(state);
-      state = NULL;
+      state = nullptr;
     } else {
       state->lpAdapter = PacketOpenAdapter((char*)adapter_name);
-      if ((state->lpAdapter == NULL) || (state->lpAdapter->hFile == INVALID_HANDLE_VALUE)) {
+      if ((state->lpAdapter == nullptr) || (state->lpAdapter->hFile == INVALID_HANDLE_VALUE)) {
         /* failed to open adapter */
         free(state);
-        state = NULL;
+        state = nullptr;
       }
     }
   }
@@ -53,7 +53,7 @@ struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
 enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state)
 {
   enum pcapifh_link_event ret = PCAPIF_LINKEVENT_UNKNOWN;
-  if (state != NULL) {
+  if (state != nullptr) {
     state->ppacket_oid_data->Oid    = OID_GEN_MEDIA_CONNECT_STATUS;
     state->ppacket_oid_data->Length = sizeof(NDIS_MEDIA_STATE);
     if (PacketRequest(state->lpAdapter, FALSE, state->ppacket_oid_data)) {
@@ -67,11 +67,11 @@ enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state)
 
 void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
 {
-  if (state != NULL) {
-    if (state->lpAdapter != NULL) {
+  if (state != nullptr) {
+    if (state->lpAdapter != nullptr) {
       PacketCloseAdapter(state->lpAdapter);
     }
-    if (state->ppacket_oid_data != NULL) {
+    if (state->ppacket_oid_data != nullptr) {
       free(state->ppacket_oid_data);
     }
     free(state);

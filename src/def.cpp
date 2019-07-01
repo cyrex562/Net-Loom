@@ -107,7 +107,7 @@ char *lwip_strnstr(const char *buffer, const char *token, size_t n) {
       return LWIP_CONST_CAST(char *, p);
     }
   }
-  return NULL;
+  return nullptr;
 }
 #endif
 

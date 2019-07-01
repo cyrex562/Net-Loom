@@ -475,7 +475,7 @@ TEST(UtilTest, UTF8ToUTF16Error) {
 
 TEST(UtilTest, UTF16ToUTF8Convert) {
   fmt::internal::utf16_to_utf8 u;
-  EXPECT_EQ(ERROR_INVALID_PARAMETER, u.convert(fmt::wstring_view(0, 1)));
+  EXPECT_EQ(ERROR_INVALID_PARAMETER, u.convert(fmt::wstring_view(nullptr, 1)));
   EXPECT_EQ(ERROR_INVALID_PARAMETER,
             u.convert(fmt::wstring_view(L"foo", INT_MAX + 1u)));
 }
@@ -540,11 +540,11 @@ TEST(UtilTest, ReportSystemError) {
 #ifdef _WIN32
 
 TEST(UtilTest, FormatWindowsError) {
-  LPWSTR message = 0;
+  LPWSTR message = nullptr;
   FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 0,
+      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
       ERROR_FILE_EXISTS, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      reinterpret_cast<LPWSTR>(&message), 0, 0);
+      reinterpret_cast<LPWSTR>(&message), 0, nullptr);
   fmt::internal::utf16_to_utf8 utf8_message(message);
   LocalFree(message);
   fmt::memory_buffer actual_message;
@@ -555,22 +555,22 @@ TEST(UtilTest, FormatWindowsError) {
   actual_message.resize(0);
   fmt::internal::format_windows_error(
         actual_message, ERROR_FILE_EXISTS,
-        fmt::string_view(0, std::numeric_limits<size_t>::max()));
+        fmt::string_view(nullptr, std::numeric_limits<size_t>::max()));
   EXPECT_EQ(fmt::format("error {}", ERROR_FILE_EXISTS),
             fmt::to_string(actual_message));
 }
 
 TEST(UtilTest, FormatLongWindowsError) {
-  LPWSTR message = 0;
+  LPWSTR message = nullptr;
   // this error code is not available on all Windows platforms and
   // Windows SDKs, so do not fail the test if the error string cannot
   // be retrieved.
   const int provisioning_not_allowed = 0x80284013L /*TBS_E_PROVISIONING_NOT_ALLOWED*/;
   if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 0,
+      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
       static_cast<DWORD>(provisioning_not_allowed),
       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      reinterpret_cast<LPWSTR>(&message), 0, 0) == 0) {
+      reinterpret_cast<LPWSTR>(&message), 0, nullptr) == 0) {
     return;
   }
   fmt::internal::utf16_to_utf8 utf8_message(message);

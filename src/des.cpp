@@ -40,9 +40,7 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES
-
-#include "ppp/polarssl/des.h"
+#include "des.h"
 
 /*
  * 32-bit integer manipulation macros (big endian)
@@ -418,5 +416,3 @@ void des_crypt_ecb( des_context *ctx,
     PUT_ULONG_BE( Y, output, 0 );
     PUT_ULONG_BE( X, output, 4 );
 }
-
-#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES */

@@ -227,7 +227,7 @@ netif_add_noaddr(struct netif *netif, void *state, netif_init_fn init, netif_inp
 {
   return netif_add(netif,
 #if LWIP_IPV4
-                   NULL, NULL, NULL,
+                   nullptr, nullptr, nullptr,
 #endif /* LWIP_IPV4*/
                    state, init, input);
 }
@@ -283,13 +283,13 @@ netif_add(struct netif *netif,
   LWIP_ERROR("netif_add: No init function given", init != NULL, return NULL);
 
 #if LWIP_IPV4
-  if (ipaddr == NULL) {
+  if (ipaddr == nullptr) {
     ipaddr = ip_2_ip4(IP4_ADDR_ANY);
   }
-  if (netmask == NULL) {
+  if (netmask == nullptr) {
     netmask = ip_2_ip4(IP4_ADDR_ANY);
   }
-  if (gw == NULL) {
+  if (gw == nullptr) {
     gw = ip_2_ip4(IP4_ADDR_ANY);
   }
 
@@ -356,7 +356,7 @@ netif_add(struct netif *netif,
 
   /* call user specified initialization function for netif */
   if (init(netif) != ERR_OK) {
-    return NULL;
+    return nullptr;
   }
 #if LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES
   /* Initialize the MTU for IPv6 to the one set by the netif driver.
@@ -378,7 +378,7 @@ netif_add(struct netif *netif,
         netif->num = 0;
       }
       num_netifs = 0;
-      for (netif2 = netif_list; netif2 != NULL; netif2 = netif2->next) {
+      for (netif2 = netif_list; netif2 != nullptr; netif2 = netif2->next) {
         LWIP_ASSERT("netif already added", netif2 != netif);
         num_netifs++;
         LWIP_ASSERT("too many netifs, max. supported number is 255", num_netifs <= 255);
@@ -387,7 +387,7 @@ netif_add(struct netif *netif,
           break;
         }
       }
-    } while (netif2 != NULL);
+    } while (netif2 != nullptr);
   }
   if (netif->num == 254) {
     netif_num = 0;
@@ -491,7 +491,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
   LWIP_ERROR("netif_set_ipaddr: invalid netif", netif != NULL, return);
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
-  if (ipaddr == NULL) {
+  if (ipaddr == nullptr) {
     ipaddr = IP4_ADDR_ANY4;
   }
 
@@ -550,14 +550,14 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
   ip_addr_t old_nm_val;
   ip_addr_t *old_nm = &old_nm_val;
 #else
-  ip_addr_t *old_nm = NULL;
+  ip_addr_t *old_nm = nullptr;
 #endif
   LWIP_ASSERT_CORE_LOCKED();
 
   LWIP_ERROR("netif_set_netmask: invalid netif", netif != NULL, return);
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
-  if (netmask == NULL) {
+  if (netmask == nullptr) {
     netmask = IP4_ADDR_ANY4;
   }
 
@@ -611,14 +611,14 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
   ip_addr_t old_gw_val;
   ip_addr_t *old_gw = &old_gw_val;
 #else
-  ip_addr_t *old_gw = NULL;
+  ip_addr_t *old_gw = nullptr;
 #endif
   LWIP_ASSERT_CORE_LOCKED();
 
   LWIP_ERROR("netif_set_gw: invalid netif", netif != NULL, return);
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
-  if (gw == NULL) {
+  if (gw == nullptr) {
     gw = IP4_ADDR_ANY4;
   }
 
@@ -653,8 +653,8 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
   ip_addr_t *old_nm = &old_nm_val;
   ip_addr_t *old_gw = &old_gw_val;
 #else
-  ip_addr_t *old_nm = NULL;
-  ip_addr_t *old_gw = NULL;
+  ip_addr_t *old_nm = nullptr;
+  ip_addr_t *old_gw = nullptr;
 #endif
   ip_addr_t old_addr;
   int remove;
@@ -662,13 +662,13 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
   LWIP_ASSERT_CORE_LOCKED();
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
-  if (ipaddr == NULL) {
+  if (ipaddr == nullptr) {
     ipaddr = IP4_ADDR_ANY4;
   }
-  if (netmask == NULL) {
+  if (netmask == nullptr) {
     netmask = IP4_ADDR_ANY4;
   }
-  if (gw == NULL) {
+  if (gw == nullptr) {
     gw = IP4_ADDR_ANY4;
   }
 
@@ -729,7 +729,7 @@ netif_remove(struct netif *netif)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (netif == NULL) {
+  if (netif == nullptr) {
     return;
   }
 
@@ -737,7 +737,7 @@ netif_remove(struct netif *netif)
 
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    netif_do_ip_addr_changed(netif_ip_addr4(netif), NULL);
+    netif_do_ip_addr_changed(netif_ip_addr4(netif), nullptr);
   }
 
 #if LWIP_IGMP
@@ -769,7 +769,7 @@ netif_remove(struct netif *netif)
   /* this netif is default? */
   if (netif_default == netif) {
     /* reset default netif */
-    netif_set_default(NULL);
+    netif_set_default(nullptr);
   }
 #if !LWIP_SINGLE_NETIF
   /*  is it the first netif? */
@@ -784,7 +784,7 @@ netif_remove(struct netif *netif)
         break;
       }
     }
-    if (tmp_netif == NULL) {
+    if (tmp_netif == nullptr) {
       return; /* netif is not on the list */
     }
   }
@@ -810,7 +810,7 @@ netif_set_default(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (netif == NULL) {
+  if (netif == nullptr) {
     /* remove default route */
     mib2_remove_route_ip4(1, netif);
   } else {
@@ -1624,7 +1624,7 @@ uint8_t
 netif_name_to_index(const char *name)
 {
   struct netif *netif = netif_find(name);
-  if (netif != NULL) {
+  if (netif != nullptr) {
     return netif_get_index(netif);
   }
   /* No name found, return invalid index */
@@ -1644,13 +1644,13 @@ netif_index_to_name(uint8_t idx, char *name)
 {
   struct netif *netif = netif_get_by_index(idx);
 
-  if (netif != NULL) {
+  if (netif != nullptr) {
     name[0] = netif->name[0];
     name[1] = netif->name[1];
     lwip_itoa(&name[2], NETIF_NAMESIZE - 2, netif_index_to_num(idx));
     return name;
   }
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -1674,7 +1674,7 @@ netif_get_by_index(uint8_t idx)
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -1692,8 +1692,8 @@ netif_find(const char *name)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (name == NULL) {
-    return NULL;
+  if (name == nullptr) {
+    return nullptr;
   }
 
   num = (uint8_t)atoi(&name[2]);
@@ -1707,7 +1707,7 @@ netif_find(const char *name)
     }
   }
   LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
-  return NULL;
+  return nullptr;
 }
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK

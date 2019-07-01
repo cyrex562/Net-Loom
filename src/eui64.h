@@ -60,7 +60,7 @@ typedef union
 				((e).e32[1] == (o).e32[1]))
 #define eui64_zero(e)		(e).e32[0] = (e).e32[1] = 0;
 
-#define eui64_copy(s, d)	memcpy(&(d), &(s), sizeof(eui64_t))
+#define eui64_copy(s, d)	memcpy(&(d), &(s), sizeof(Eui64T))
 
 #define eui64_magic(e)		do {			\
 				(e).e32[0] = magic();	\

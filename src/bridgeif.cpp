@@ -214,7 +214,7 @@ bridgeif_is_local_mac(bridgeif_private_t *br, struct eth_addr *addr)
   BRIDGEIF_READ_PROTECT(lev);
   for (i = 0; i < br->num_ports; i++) {
     struct netif *portif = br->ports[i].port_netif;
-    if (portif != NULL) {
+    if (portif != nullptr) {
       if (!memcmp(portif->hwaddr, addr, sizeof(struct eth_addr))) {
         BRIDGEIF_READ_UNPROTECT(lev);
         return 1;
@@ -233,7 +233,7 @@ bridgeif_send_to_port(bridgeif_private_t *br, struct pbuf *p, uint8_t dstport_id
     /* possibly an external port */
     if (dstport_idx < br->max_ports) {
       struct netif *portif = br->ports[dstport_idx].port_netif;
-      if ((portif != NULL) && (portif->linkoutput != NULL)) {
+      if ((portif != nullptr) && (portif->linkoutput != nullptr)) {
         /* prevent sending out to rx port */
         if (netif_get_index(portif) != p->if_idx) {
           if (netif_is_link_up(portif)) {
@@ -311,12 +311,12 @@ bridgeif_input(struct pbuf *p, struct netif *netif)
   struct eth_addr *src, *dst;
   bridgeif_private_t *br;
   bridgeif_port_t *port;
-  if (p == NULL || netif == NULL) {
+  if (p == nullptr || netif == nullptr) {
     return ERR_VAL;
   }
   port = (bridgeif_port_t *)NETIF_GET_CLIENT_DATA(netif, bridgeif_netif_client_id);
   LWIP_ASSERT("port data not set", port != NULL);
-  if (port == NULL || port->bridge == NULL) {
+  if (port == nullptr || port->bridge == nullptr) {
     return ERR_VAL;
   }
   br = (bridgeif_private_t *)port->bridge;
@@ -420,7 +420,7 @@ bridgeif_init(struct netif *netif)
   LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
   br = (bridgeif_private_t *)mem_calloc(1, alloc_len);
-  if (br == NULL) {
+  if (br == nullptr) {
     LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
     return ERR_MEM;
   }
@@ -435,7 +435,7 @@ bridgeif_init(struct netif *netif)
 
   br->max_fdbd_entries = init_data->max_fdb_dynamic_entries;
   br->fdbd = bridgeif_fdb_init(init_data->max_fdb_dynamic_entries);
-  if (br->fdbd == NULL) {
+  if (br->fdbd == nullptr) {
     LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory in fdb_init\n"));
     mem_free(br);
     return ERR_MEM;

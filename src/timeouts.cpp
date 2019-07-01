@@ -164,7 +164,7 @@ tcpip_tcp_timer(void *arg)
   /* timer still needed? */
   if (tcp_active_pcbs || tcp_tw_pcbs) {
     /* restart timer */
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, nullptr);
   } else {
     /* disable timer */
     tcpip_tcp_timer_active = 0;
@@ -185,7 +185,7 @@ tcp_timer_needed(void)
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
     /* enable and start timer */
     tcpip_tcp_timer_active = 1;
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, nullptr);
   }
 }
 #endif /* LWIP_TCP */
@@ -201,12 +201,12 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
 
   // timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
   timeout = new sys_timeo;
-  if (timeout == NULL) {
+  if (timeout == nullptr) {
     LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
     return;
   }
 
-  timeout->next = NULL;
+  timeout->next = nullptr;
   timeout->h = handler;
   timeout->arg = arg;
   timeout->time = abs_time;
@@ -217,7 +217,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
                              (void *)timeout, abs_time, handler_name, (void *)arg));
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
-  if (next_timeout == NULL) {
+  if (next_timeout == nullptr) {
     next_timeout = timeout;
     return;
   }
@@ -225,8 +225,8 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
-    for (t = next_timeout; t != NULL; t = t->next) {
-      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
+    for (t = next_timeout; t != nullptr; t = t->next) {
+      if ((t->next == nullptr) || TIME_LESS_THAN(timeout->time, t->next->time)) {
         timeout->next = t->next;
         t->next = timeout;
         break;
@@ -335,15 +335,15 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (next_timeout == NULL) {
+  if (next_timeout == nullptr) {
     return;
   }
 
-  for (t = next_timeout, prev_t = NULL; t != NULL; prev_t = t, t = t->next) {
+  for (t = next_timeout, prev_t = nullptr; t != nullptr; prev_t = t, t = t->next) {
     if ((t->h == handler) && (t->arg == arg)) {
       /* We have a match */
       /* Unlink from previous in list */
-      if (prev_t == NULL) {
+      if (prev_t == nullptr) {
         next_timeout = t->next;
       } else {
         prev_t->next = t->next;
@@ -382,7 +382,7 @@ sys_check_timeouts(void)
     PBUF_CHECK_FREE_OOSEQ();
 
     tmptimeout = next_timeout;
-    if (tmptimeout == NULL) {
+    if (tmptimeout == nullptr) {
       return;
     }
 
@@ -403,7 +403,7 @@ sys_check_timeouts(void)
 #endif /* LWIP_DEBUG_TIMERNAMES */
     // memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
     delete tmptimeout;
-    if (handler != NULL) {
+    if (handler != nullptr) {
       handler(arg);
     }
     LWIP_TCPIP_THREAD_ALIVE();
@@ -424,14 +424,14 @@ sys_restart_timeouts(void)
   uint32_t base;
   struct sys_timeo *t;
 
-  if (next_timeout == NULL) {
+  if (next_timeout == nullptr) {
     return;
   }
 
   now = sys_now();
   base = next_timeout->time;
 
-  for (t = next_timeout; t != NULL; t = t->next) {
+  for (t = next_timeout; t != nullptr; t = t->next) {
     t->time = (t->time - base) + now;
   }
 }
@@ -446,7 +446,7 @@ sys_timeouts_sleeptime(void)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (next_timeout == NULL) {
+  if (next_timeout == nullptr) {
     return SYS_TIMEOUTS_SLEEPTIME_INFINITE;
   }
   now = sys_now();

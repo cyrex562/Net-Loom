@@ -132,7 +132,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
   /* Start with packet delimiter. */
   sio_send(SLIP_END, priv->sd);
 
-  for (q = p; q != NULL; q = q->next) {
+  for (q = p; q != nullptr; q = q->next) {
     for (i = 0; i < q->len; i++) {
       c = ((uint8_t *)q->payload)[i];
       switch (c) {
@@ -228,14 +228,14 @@ slipif_rxbyte(struct netif *netif, uint8_t c)
 
 //            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
             t = priv->q;
-            priv->p = priv->q = NULL;
+            priv->p = priv->q = nullptr;
             priv->i = priv->recved = 0;
             return t;
           }
-          return NULL;
+          return nullptr;
         case SLIP_ESC:
           priv->state = SLIP_RECV_ESCAPE;
-          return NULL;
+          return nullptr;
         default:
           break;
       } /* end switch (c) */
@@ -260,19 +260,19 @@ slipif_rxbyte(struct netif *netif, uint8_t c)
   } /* end switch (priv->state) */
 
   /* byte received, packet not yet completely received */
-  if (priv->p == NULL) {
+  if (priv->p == nullptr) {
     /* allocate a new pbuf */
     LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
     priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN), PBUF_POOL);
 
-    if (priv->p == NULL) {
+    if (priv->p == nullptr) {
       LINK_STATS_INC(link.drop);
       LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
       /* don't process any further since we got no pbuf to receive to */
-      return NULL;
+      return nullptr;
     }
 
-    if (priv->q != NULL) {
+    if (priv->q != nullptr) {
       /* 'chain' the pbuf to the existing chain */
       pbuf_cat(priv->q, priv->p);
     } else {
@@ -282,24 +282,24 @@ slipif_rxbyte(struct netif *netif, uint8_t c)
   }
 
   /* this automatically drops bytes if > SLIP_MAX_SIZE */
-  if ((priv->p != NULL) && (priv->recved <= SLIP_MAX_SIZE)) {
+  if ((priv->p != nullptr) && (priv->recved <= SLIP_MAX_SIZE)) {
     ((uint8_t *)priv->p->payload)[priv->i] = c;
     priv->recved++;
     priv->i++;
     if (priv->i >= priv->p->len) {
       /* on to the next pbuf */
       priv->i = 0;
-      if (priv->p->next != NULL && priv->p->next->len > 0) {
+      if (priv->p->next != nullptr && priv->p->next->len > 0) {
         /* p is a chain, on to the next in the chain */
         priv->p = priv->p->next;
       } else {
         /* p is a single pbuf, set it to NULL so next time a new
          * pbuf is allocated */
-        priv->p = NULL;
+        priv->p = nullptr;
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 /** Like slipif_rxbyte, but passes completed packets to netif->input
@@ -312,7 +312,7 @@ slipif_rxbyte_input(struct netif *netif, uint8_t c)
 {
   struct pbuf *p;
   p = slipif_rxbyte(netif, c);
-  if (p != NULL) {
+  if (p != nullptr) {
     if (netif->input(p, netif) != ERR_OK) {
       pbuf_free(p);
     }
@@ -395,8 +395,8 @@ slipif_init(struct netif *netif)
   }
 
   /* Initialize private data */
-  priv->p = NULL;
-  priv->q = NULL;
+  priv->p = nullptr;
+  priv->q = nullptr;
   priv->state = SLIP_RECV_NORMAL;
   priv->i = 0;
   priv->recved = 0;

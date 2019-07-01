@@ -494,7 +494,7 @@ epdisc_to_str(ep)
      struct epdisc *ep;
 {
 	static char str[MAX_ENDP_LEN*3+8];
-	u_char *p = ep->value;
+	uint8_t *p = ep->value;
 	int i, mask = 0;
 	char *q, c, c2;
 

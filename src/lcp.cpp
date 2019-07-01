@@ -217,26 +217,26 @@ static option_t lcp_option_list[] = {
  */
 static void lcp_resetci(fsm *f);	/* Reset our CI */
 static int  lcp_cilen(fsm *f);		/* Return length of our CI */
-static void lcp_addci(fsm *f, u_char *ucp, int *lenp); /* Add our CI to pkt */
-static int  lcp_ackci(fsm *f, u_char *p, int len); /* Peer ack'd our CI */
-static int  lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject); /* Peer nak'd our CI */
-static int  lcp_rejci(fsm *f, u_char *p, int len); /* Peer rej'd our CI */
-static int  lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree); /* Rcv peer CI */
+static void lcp_addci(fsm *f, uint8_t *ucp, int *lenp); /* Add our CI to pkt */
+static int  lcp_ackci(fsm *f, uint8_t *p, int len); /* Peer ack'd our CI */
+static int  lcp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject); /* Peer nak'd our CI */
+static int  lcp_rejci(fsm *f, uint8_t *p, int len); /* Peer rej'd our CI */
+static int  lcp_reqci(fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree); /* Rcv peer CI */
 static void lcp_up(fsm *f);		/* We're UP */
 static void lcp_down(fsm *f);		/* We're DOWN */
 static void lcp_starting (fsm *);	/* We need lower layer up */
 static void lcp_finished (fsm *);	/* We need lower layer down */
-static int  lcp_extcode(fsm *f, int code, int id, u_char *inp, int len);
-static void lcp_rprotrej(fsm *f, u_char *inp, int len);
+static int  lcp_extcode(fsm *f, int code, int id, uint8_t *inp, int len);
+static void lcp_rprotrej(fsm *f, uint8_t *inp, int len);
 
 /*
  * routines to send LCP echos to peer
  */
 
-static void lcp_echo_lowerup(ppp_pcb *pcb);
-static void lcp_echo_lowerdown(ppp_pcb *pcb);
+static void lcp_echo_lowerup(PppPcb *pcb);
+static void lcp_echo_lowerdown(PppPcb *pcb);
 static void LcpEchoTimeout(void *arg);
-static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len);
+static void lcp_received_echo_reply(fsm *f, int id, uint8_t *inp, int len);
 static void LcpSendEchoRequest(fsm *f);
 static void LcpLinkFailure(fsm *f);
 static void LcpEchoCheck(fsm *f);
@@ -264,11 +264,11 @@ static const fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
  * Some of these are called directly.
  */
 
-static void lcp_init(ppp_pcb *pcb);
-static void lcp_input(ppp_pcb *pcb, u_char *p, int len);
-static void lcp_protrej(ppp_pcb *pcb);
+static void lcp_init(PppPcb *pcb);
+static void lcp_input(PppPcb *pcb, uint8_t *p, int len);
+static void lcp_protrej(PppPcb *pcb);
 #if PRINTPKT_SUPPORT
-static int lcp_printpkt(const u_char *p, int plen,
+static int lcp_printpkt(const uint8_t *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
@@ -360,7 +360,7 @@ printendpoint(opt, printer, arg)
 /*
  * lcp_init - Initialize LCP.
  */
-static void lcp_init(ppp_pcb *pcb) {
+static void lcp_init(PppPcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
@@ -403,7 +403,7 @@ static void lcp_init(ppp_pcb *pcb) {
 /*
  * lcp_open - LCP is allowed to come up.
  */
-void lcp_open(ppp_pcb *pcb) {
+void lcp_open(PppPcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
     lcp_options *wo = &pcb->lcp_wantoptions;
 
@@ -419,7 +419,7 @@ void lcp_open(ppp_pcb *pcb) {
 /*
  * lcp_close - Take LCP down.
  */
-void lcp_close(ppp_pcb *pcb, const char *reason) {
+void lcp_close(PppPcb *pcb, const char *reason) {
     fsm *f = &pcb->lcp_fsm;
     int oldstate;
 
@@ -454,7 +454,7 @@ void lcp_close(ppp_pcb *pcb, const char *reason) {
 /*
  * lcp_lowerup - The lower layer is up.
  */
-void lcp_lowerup(ppp_pcb *pcb) {
+void lcp_lowerup(PppPcb *pcb) {
     lcp_options *wo = &pcb->lcp_wantoptions;
     fsm *f = &pcb->lcp_fsm;
     /*
@@ -479,7 +479,7 @@ void lcp_lowerup(ppp_pcb *pcb) {
 /*
  * lcp_lowerdown - The lower layer is down.
  */
-void lcp_lowerdown(ppp_pcb *pcb) {
+void lcp_lowerdown(PppPcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     if (f->flags & DELAYED_UP) {
@@ -506,7 +506,7 @@ static void lcp_delayed_up(void *arg) {
 /*
  * lcp_input - Input LCP packet.
  */
-static void lcp_input(ppp_pcb *pcb, u_char *p, int len) {
+static void lcp_input(PppPcb *pcb, uint8_t *p, int len) {
     fsm *f = &pcb->lcp_fsm;
 
     if (f->flags & DELAYED_UP) {
@@ -520,10 +520,10 @@ static void lcp_input(ppp_pcb *pcb, u_char *p, int len) {
 /*
  * lcp_extcode - Handle a LCP-specific code.
  */
-static int lcp_extcode(fsm *f, int code, int id, u_char *inp, int len) {
-    ppp_pcb *pcb = f->pcb;
+static int lcp_extcode(fsm *f, int code, int id, uint8_t *inp, int len) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
-    u_char *magp;
+    uint8_t *magp;
 
     switch( code ){
     case PROTREJ:
@@ -559,7 +559,7 @@ static int lcp_extcode(fsm *f, int code, int id, u_char *inp, int len) {
  *
  * Figure out which protocol is rejected and inform it.
  */
-static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
+static void lcp_rprotrej(fsm *f, uint8_t *inp, int len) {
     int i;
     const struct protent *protp;
     u_short prot;
@@ -617,7 +617,7 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
  * lcp_protrej - A Protocol-Reject was received.
  */
 /*ARGSUSED*/
-static void lcp_protrej(ppp_pcb *pcb) {
+static void lcp_protrej(PppPcb *pcb) {
     /*
      * Can't reject LCP!
      */
@@ -629,7 +629,7 @@ static void lcp_protrej(ppp_pcb *pcb) {
 /*
  * lcp_sprotrej - Send a Protocol-Reject for some protocol.
  */
-void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len) {
+void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len) {
     fsm *f = &pcb->lcp_fsm;
     /*
      * Send back the protocol and the information field of the
@@ -649,7 +649,7 @@ void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len) {
  * lcp_resetci - Reset our CI.
  */
 static void lcp_resetci(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *go = &pcb->lcp_gotoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
@@ -768,7 +768,7 @@ static void lcp_resetci(fsm *f) {
  * lcp_cilen - Return length of our CI.
  */
 static int lcp_cilen(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
 
 #define LENCIVOID(neg)	((neg) ? CILEN_VOID : 0)
@@ -831,10 +831,10 @@ static int lcp_cilen(fsm *f) {
 /*
  * lcp_addci - Add our desired CIs to a packet.
  */
-static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
-    ppp_pcb *pcb = f->pcb;
+static void lcp_addci(fsm *f, uint8_t *ucp, int *lenp) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
-    u_char *start_ucp = ucp;
+    uint8_t *start_ucp = ucp;
 
 #define ADDCIVOID(opt, neg) \
     if (neg) { \
@@ -944,10 +944,10 @@ static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
  *	0 - Ack was bad.
  *	1 - Ack was good.
  */
-static int lcp_ackci(fsm *f, u_char *p, int len) {
-    ppp_pcb *pcb = f->pcb;
+static int lcp_ackci(fsm *f, uint8_t *p, int len) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
-    u_char cilen, citype, cichar;
+    uint8_t cilen, citype, cichar;
     u_short cishort;
     uint32_t cilong;
 
@@ -1124,11 +1124,11 @@ bad:
  *	0 - Nak was bad.
  *	1 - Nak was good.
  */
-static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
-    ppp_pcb *pcb = f->pcb;
+static int lcp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     lcp_options *wo = &pcb->lcp_wantoptions;
-    u_char citype, cichar, *next;
+    uint8_t citype, cichar, *next;
     u_short cishort;
     uint32_t cilong;
     lcp_options no;		/* options we've seen Naks for */
@@ -1586,10 +1586,10 @@ bad:
  *	0 - Reject was bad.
  *	1 - Reject was good.
  */
-static int lcp_rejci(fsm *f, u_char *p, int len) {
-    ppp_pcb *pcb = f->pcb;
+static int lcp_rejci(fsm *f, uint8_t *p, int len) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
-    u_char cichar;
+    uint8_t cichar;
     u_short cishort;
     uint32_t cilong;
     lcp_options try_;		/* options to request next time */
@@ -1817,21 +1817,21 @@ bad:
  * inp = Requested CIs
  * lenp = Length of requested CIs
  */
-static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
-    ppp_pcb *pcb = f->pcb;
+static int lcp_reqci(fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     lcp_options *ho = &pcb->lcp_hisoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
-    u_char *cip, *next;		/* Pointer to current and next CIs */
+    uint8_t *cip, *next;		/* Pointer to current and next CIs */
     int cilen, citype, cichar;	/* Parsed len, type, char value */
     u_short cishort;		/* Parsed short value */
     uint32_t cilong;		/* Parse long value */
     int rc = CONFACK;		/* Final packet return code */
     int orc;			/* Individual option return code */
-    u_char *p;			/* Pointer to next char to parse */
-    u_char *rejp;		/* Pointer to next char in reject frame */
+    uint8_t *p;			/* Pointer to next char to parse */
+    uint8_t *rejp;		/* Pointer to next char in reject frame */
     struct pbuf *nakp;          /* Nak buffer */
-    u_char *nakoutp;		/* Pointer to next char in Nak frame */
+    uint8_t *nakoutp;		/* Pointer to next char in Nak frame */
     int l = *lenp;		/* Length left */
 
     /*
@@ -1851,7 +1851,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
         return 0;
     }
 
-    nakoutp = (u_char*)nakp->payload;
+    nakoutp = (uint8_t*)nakp->payload;
     rejp = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
@@ -2268,7 +2268,7 @@ endswitch:
 	/*
 	 * Copy the Nak'd options from the nak buffer to the caller's buffer.
 	 */
-	*lenp = nakoutp - (u_char*)nakp->payload;
+	*lenp = nakoutp - (uint8_t*)nakp->payload;
 	MEMCPY(inp, nakp->payload, *lenp);
 	break;
     case CONFREJ:
@@ -2288,7 +2288,7 @@ endswitch:
  * lcp_up - LCP has come UP.
  */
 static void lcp_up(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *ho = &pcb->lcp_hisoptions;
     lcp_options *go = &pcb->lcp_gotoptions;
@@ -2337,7 +2337,7 @@ static void lcp_up(fsm *f) {
  * Alert other protocols.
  */
 static void lcp_down(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
 
     lcp_echo_lowerdown(f->pcb);
@@ -2356,7 +2356,7 @@ static void lcp_down(fsm *f) {
  * lcp_starting - LCP needs the lower layer up.
  */
 static void lcp_starting(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     link_required(pcb);
 }
 
@@ -2365,7 +2365,7 @@ static void lcp_starting(fsm *f) {
  * lcp_finished - LCP has finished with the lower layer.
  */
 static void lcp_finished(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     link_terminated(pcb);
 }
 
@@ -2381,10 +2381,10 @@ static const char* const lcp_codenames[] = {
     "TimeRem"
 };
 
-static int lcp_printpkt(const u_char *p, int plen,
+static int lcp_printpkt(const uint8_t *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len, olen, i;
-    const u_char *pstart, *optend;
+    const uint8_t *pstart, *optend;
     u_short cishort;
     uint32_t cilong;
 
@@ -2637,7 +2637,7 @@ static int lcp_printpkt(const u_char *p, int plen,
  */
 
 static void LcpLinkFailure(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     if (f->state == PPP_FSM_OPENED) {
 	ppp_info("No response to %d echo-requests", pcb->lcp_echos_pending);
         ppp_notice("Serial link appears to be disconnected.");
@@ -2651,7 +2651,7 @@ static void LcpLinkFailure(fsm *f) {
  */
 
 static void LcpEchoCheck(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
 
     LcpSendEchoRequest (f);
     if (f->state != PPP_FSM_OPENED)
@@ -2672,7 +2672,7 @@ static void LcpEchoCheck(fsm *f) {
 
 static void LcpEchoTimeout(void *arg) {
     fsm *f = (fsm*)arg;
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     if (pcb->lcp_echo_timer_running != 0) {
         pcb->lcp_echo_timer_running = 0;
         LcpEchoCheck ((fsm *) arg);
@@ -2683,8 +2683,8 @@ static void LcpEchoTimeout(void *arg) {
  * LcpEchoReply - LCP has received a reply to the echo
  */
 
-static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
-    ppp_pcb *pcb = f->pcb;
+static void lcp_received_echo_reply(fsm *f, int id, uint8_t *inp, int len) {
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     uint32_t magic_val;
     LWIP_UNUSED_ARG(id);
@@ -2710,10 +2710,10 @@ static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
  */
 
 static void LcpSendEchoRequest(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     uint32_t lcp_magic;
-    u_char pkt[4], *pktp;
+    uint8_t pkt[4], *pktp;
 
     /*
      * Detect the failure of the peer at this point.
@@ -2761,7 +2761,7 @@ static void LcpSendEchoRequest(fsm *f) {
  * lcp_echo_lowerup - Start the timer for the LCP frame
  */
 
-static void lcp_echo_lowerup(ppp_pcb *pcb) {
+static void lcp_echo_lowerup(PppPcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     /* Clear the parameters for generating echo frames */
@@ -2778,7 +2778,7 @@ static void lcp_echo_lowerup(ppp_pcb *pcb) {
  * lcp_echo_lowerdown - Stop the timer for the LCP frame
  */
 
-static void lcp_echo_lowerdown(ppp_pcb *pcb) {
+static void lcp_echo_lowerdown(PppPcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     if (pcb->lcp_echo_timer_running != 0) {

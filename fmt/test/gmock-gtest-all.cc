@@ -840,7 +840,7 @@ class OsStackTraceGetterInterface {
 // A working implementation of the OsStackTraceGetterInterface interface.
 class OsStackTraceGetter : public OsStackTraceGetterInterface {
  public:
-  OsStackTraceGetter() : caller_frame_(NULL) {}
+  OsStackTraceGetter() : caller_frame_(nullptr) {}
 
   virtual string CurrentStackTrace(int max_depth, int skip_count)
       GTEST_LOCK_EXCLUDED_(mutex_);
@@ -1875,10 +1875,10 @@ FilePath GetCurrentExecutableName() {
 // Returns the output format, or "" for normal printed output.
 std::string UnitTestOptions::GetOutputFormat() {
   const char* const gtest_output_flag = GTEST_FLAG(output).c_str();
-  if (gtest_output_flag == NULL) return std::string("");
+  if (gtest_output_flag == nullptr) return std::string("");
 
   const char* const colon = strchr(gtest_output_flag, ':');
-  return (colon == NULL) ?
+  return (colon == nullptr) ?
       std::string(gtest_output_flag) :
       std::string(gtest_output_flag, colon - gtest_output_flag);
 }
@@ -1887,11 +1887,11 @@ std::string UnitTestOptions::GetOutputFormat() {
 // was explicitly specified.
 std::string UnitTestOptions::GetAbsolutePathToOutputFile() {
   const char* const gtest_output_flag = GTEST_FLAG(output).c_str();
-  if (gtest_output_flag == NULL)
+  if (gtest_output_flag == nullptr)
     return "";
 
   const char* const colon = strchr(gtest_output_flag, ':');
-  if (colon == NULL)
+  if (colon == nullptr)
     return internal::FilePath::ConcatPaths(
         internal::FilePath(
             UnitTest::GetInstance()->original_working_dir()),
@@ -1950,7 +1950,7 @@ bool UnitTestOptions::MatchesFilter(
     cur_pattern = strchr(cur_pattern, ':');
 
     // Returns if no more pattern can be found.
-    if (cur_pattern == NULL) {
+    if (cur_pattern == nullptr) {
       return false;
     }
 
@@ -1971,7 +1971,7 @@ bool UnitTestOptions::FilterMatchesTest(const std::string &test_case_name,
   const char* const dash = strchr(p, '-');
   std::string positive;
   std::string negative;
-  if (dash == NULL) {
+  if (dash == nullptr) {
     positive = GTEST_FLAG(filter).c_str();  // Whole string is a positive filter
     negative = "";
   } else {
@@ -2358,9 +2358,9 @@ const char* String::Utf16ToAnsi(LPCWSTR utf16_str)  {
 // C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::CStringEquals(const char * lhs, const char * rhs) {
-  if ( lhs == NULL ) return rhs == NULL;
+  if ( lhs == nullptr ) return rhs == nullptr;
 
-  if ( rhs == NULL ) return false;
+  if ( rhs == nullptr ) return false;
 
   return strcmp(lhs, rhs) == 0;
 }
@@ -2437,7 +2437,7 @@ AssertionResult::AssertionResult(const AssertionResult& other)
     : success_(other.success_),
       message_(other.message_.get() != NULL ?
                new ::std::string(*other.message_) :
-               static_cast< ::std::string*>(NULL)) {
+               static_cast< ::std::string*>(nullptr)) {
 }
 
 // Returns the assertion's negation. Used with EXPECT/ASSERT_FALSE.
@@ -2716,17 +2716,17 @@ namespace {
 // only.
 
 bool IsSubstringPred(const char* needle, const char* haystack) {
-  if (needle == NULL || haystack == NULL)
+  if (needle == nullptr || haystack == nullptr)
     return needle == haystack;
 
-  return strstr(haystack, needle) != NULL;
+  return strstr(haystack, needle) != nullptr;
 }
 
 bool IsSubstringPred(const wchar_t* needle, const wchar_t* haystack) {
-  if (needle == NULL || haystack == NULL)
+  if (needle == nullptr || haystack == nullptr)
     return needle == haystack;
 
-  return wcsstr(haystack, needle) != NULL;
+  return wcsstr(haystack, needle) != nullptr;
 }
 
 // StringType here can be either ::std::string or ::std::wstring.
@@ -3007,7 +3007,7 @@ std::string WideStringToUtf8(const wchar_t* str, int num_chars) {
 // Converts a wide C string to an std::string using the UTF-8 encoding.
 // NULL will be converted to "(null)".
 std::string String::ShowWideCString(const wchar_t * wide_c_str) {
-  if (wide_c_str == NULL)  return "(null)";
+  if (wide_c_str == nullptr)  return "(null)";
 
   return internal::WideStringToUtf8(wide_c_str, -1);
 }
@@ -3019,9 +3019,9 @@ std::string String::ShowWideCString(const wchar_t * wide_c_str) {
 // C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::WideCStringEquals(const wchar_t * lhs, const wchar_t * rhs) {
-  if (lhs == NULL) return rhs == NULL;
+  if (lhs == nullptr) return rhs == nullptr;
 
-  if (rhs == NULL) return false;
+  if (rhs == nullptr) return false;
 
   return wcscmp(lhs, rhs) == 0;
 }
@@ -3064,9 +3064,9 @@ AssertionResult CmpHelperSTRNE(const char* s1_expression,
 // NULL C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
-  if (lhs == NULL)
-    return rhs == NULL;
-  if (rhs == NULL)
+  if (lhs == nullptr)
+    return rhs == nullptr;
+  if (rhs == nullptr)
     return false;
   return posix::StrCaseCmp(lhs, rhs) == 0;
 }
@@ -3085,9 +3085,9 @@ bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
   // current locale.
 bool String::CaseInsensitiveWideCStringEquals(const wchar_t* lhs,
                                               const wchar_t* rhs) {
-  if (lhs == NULL) return rhs == NULL;
+  if (lhs == nullptr) return rhs == nullptr;
 
-  if (rhs == NULL) return false;
+  if (rhs == nullptr) return false;
 
 #if GTEST_OS_WINDOWS
   return _wcsicmp(lhs, rhs) == 0;
@@ -3666,8 +3666,8 @@ TestInfo::TestInfo(const std::string& a_test_case_name,
                    internal::TestFactoryBase* factory)
     : test_case_name_(a_test_case_name),
       name_(a_name),
-      type_param_(a_type_param ? new std::string(a_type_param) : NULL),
-      value_param_(a_value_param ? new std::string(a_value_param) : NULL),
+      type_param_(a_type_param ? new std::string(a_type_param) : nullptr),
+      value_param_(a_value_param ? new std::string(a_value_param) : nullptr),
       fixture_class_id_(fixture_class_id),
       should_run_(false),
       is_disabled_(false),
@@ -3804,7 +3804,7 @@ void TestInfo::Run() {
 
   // Runs the test only if the test object was created and its
   // constructor didn't generate a fatal failure.
-  if ((test != NULL) && !Test::HasFatalFailure()) {
+  if ((test != nullptr) && !Test::HasFatalFailure()) {
     // This doesn't throw as all user code that can throw are wrapped into
     // exception handling code.
     test->Run();
@@ -3875,7 +3875,7 @@ TestCase::TestCase(const char* a_name, const char* a_type_param,
                    Test::SetUpTestCaseFunc set_up_tc,
                    Test::TearDownTestCaseFunc tear_down_tc)
     : name_(a_name),
-      type_param_(a_type_param ? new std::string(a_type_param) : NULL),
+      type_param_(a_type_param ? new std::string(a_type_param) : nullptr),
       set_up_tc_(set_up_tc),
       tear_down_tc_(tear_down_tc),
       should_run_(false),
@@ -4059,7 +4059,7 @@ const char* GetAnsiColorCode(GTestColor color) {
     case COLOR_RED:     return "1";
     case COLOR_GREEN:   return "2";
     case COLOR_YELLOW:  return "3";
-    default:            return NULL;
+    default:            return nullptr;
   };
 }
 
@@ -4157,14 +4157,14 @@ void PrintFullTestCommentIfPresent(const TestInfo& test_info) {
   const char* const type_param = test_info.type_param();
   const char* const value_param = test_info.value_param();
 
-  if (type_param != NULL || value_param != NULL) {
+  if (type_param != nullptr || value_param != nullptr) {
     printf(", where ");
-    if (type_param != NULL) {
+    if (type_param != nullptr) {
       printf("%s = %s", kTypeParamLabel, type_param);
-      if (value_param != NULL)
+      if (value_param != nullptr)
         printf(" and ");
     }
-    if (value_param != NULL) {
+    if (value_param != nullptr) {
       printf("%s = %s", kValueParamLabel, value_param);
     }
   }
@@ -4433,7 +4433,7 @@ TestEventListener* TestEventRepeater::Release(TestEventListener *listener) {
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 // Since most methods are very similar, use macros to reduce boilerplate.
@@ -4568,7 +4568,7 @@ class XmlUnitTestResultPrinter : public EmptyTestEventListener {
 // Creates a new XmlUnitTestResultPrinter.
 XmlUnitTestResultPrinter::XmlUnitTestResultPrinter(const char* output_file)
     : output_file_(output_file) {
-  if (output_file_.c_str() == NULL || output_file_.empty()) {
+  if (output_file_.c_str() == nullptr || output_file_.empty()) {
     fprintf(stderr, "XML output file may not be null\n");
     fflush(stderr);
     exit(EXIT_FAILURE);
@@ -4578,14 +4578,14 @@ XmlUnitTestResultPrinter::XmlUnitTestResultPrinter(const char* output_file)
 // Called after the unit test ends.
 void XmlUnitTestResultPrinter::OnTestIterationEnd(const UnitTest& unit_test,
                                                   int /*iteration*/) {
-  FILE* xmlout = NULL;
+  FILE* xmlout = nullptr;
   FilePath output_file(output_file_);
   FilePath output_dir(output_file.RemoveFileName());
 
   if (output_dir.CreateDirectoriesRecursively()) {
     xmlout = posix::FOpen(output_file_.c_str(), "w");
   }
-  if (xmlout == NULL) {
+  if (xmlout == nullptr) {
     // TODO(wan): report the reason of the failure.
     //
     // We don't do it for now as:
@@ -4714,7 +4714,7 @@ std::string FormatEpochTimeInMillisAsIso8601(TimeInMillis ms) {
 #else
   const struct tm* const time_struct = localtime(&seconds);  // NOLINT
 #endif
-  if (time_struct == NULL)
+  if (time_struct == nullptr)
     return "";  // Invalid ms value
 
   // YYYY-MM-DDThh:mm:ss
@@ -4733,7 +4733,7 @@ void XmlUnitTestResultPrinter::OutputXmlCDataSection(::std::ostream* stream,
   *stream << "<![CDATA[";
   for (;;) {
     const char* const next_segment = strstr(segment, "]]>");
-    if (next_segment != NULL) {
+    if (next_segment != nullptr) {
       stream->write(
           segment, static_cast<std::streamsize>(next_segment - segment));
       *stream << "]]>]]&gt;<![CDATA[";
@@ -5014,7 +5014,7 @@ class ScopedPrematureExitFile {
   explicit ScopedPrematureExitFile(const char* premature_exit_filepath)
       : premature_exit_filepath_(premature_exit_filepath) {
     // If a path to the premature-exit file is specified...
-    if (premature_exit_filepath != NULL && *premature_exit_filepath != '\0') {
+    if (premature_exit_filepath != nullptr && *premature_exit_filepath != '\0') {
       // create the file with a single "0" character in it.  I/O
       // errors are ignored as there's nothing better we can do and we
       // don't want to fail the test because of this.
@@ -5025,7 +5025,7 @@ class ScopedPrematureExitFile {
   }
 
   ~ScopedPrematureExitFile() {
-    if (premature_exit_filepath_ != NULL && *premature_exit_filepath_ != '\0') {
+    if (premature_exit_filepath_ != nullptr && *premature_exit_filepath_ != '\0') {
       remove(premature_exit_filepath_);
     }
   }
@@ -5082,7 +5082,7 @@ void TestEventListeners::SetDefaultResultPrinter(TestEventListener* listener) {
     // list.
     delete Release(default_result_printer_);
     default_result_printer_ = listener;
-    if (listener != NULL)
+    if (listener != nullptr)
       Append(listener);
   }
 }
@@ -5098,7 +5098,7 @@ void TestEventListeners::SetDefaultXmlGenerator(TestEventListener* listener) {
     // list.
     delete Release(default_xml_generator_);
     default_xml_generator_ = listener;
-    if (listener != NULL)
+    if (listener != nullptr)
       Append(listener);
   }
 }
@@ -5246,8 +5246,8 @@ TestEventListeners& UnitTest::listeners() {
 // We don't protect this under mutex_, as we only support calling it
 // from the main thread.
 Environment* UnitTest::AddEnvironment(Environment* env) {
-  if (env == NULL) {
-    return NULL;
+  if (env == nullptr) {
+    return nullptr;
   }
 
   impl_->environments().push_back(env);
@@ -5306,7 +5306,7 @@ void UnitTest::AddTestPartResult(
       // from removing. We use this rather than abort() or __builtin_trap() for
       // portability: Symbian doesn't implement abort() well, and some debuggers
       // don't correctly trap abort().
-      *static_cast<volatile int*>(NULL) = 1;
+      *static_cast<volatile int*>(nullptr) = 1;
 #endif  // GTEST_OS_WINDOWS
     } else if (GTEST_FLAG(throw_on_failure)) {
 #if GTEST_HAS_EXCEPTIONS
@@ -5635,7 +5635,7 @@ class TestCaseNameIs {
 
   // Returns true iff the name of test_case matches name_.
   bool operator()(const TestCase* test_case) const {
-    return test_case != NULL && strcmp(test_case->name(), name_.c_str()) == 0;
+    return test_case != nullptr && strcmp(test_case->name(), name_.c_str()) == 0;
   }
 
  private:
@@ -5842,9 +5842,9 @@ bool UnitTestImpl::RunAllTests() {
 // be created, prints an error and exits.
 void WriteToShardStatusFileIfNeeded() {
   const char* const test_shard_file = posix::GetEnv(kTestShardStatusFile);
-  if (test_shard_file != NULL) {
+  if (test_shard_file != nullptr) {
     FILE* const file = posix::FOpen(test_shard_file, "w");
-    if (file == NULL) {
+    if (file == nullptr) {
       ColoredPrintf(COLOR_RED,
                     "Could not write to the test shard status file \"%s\" "
                     "specified by the %s environment variable.\n",
@@ -5909,7 +5909,7 @@ bool ShouldShard(const char* total_shards_env,
 // and aborts.
 Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
   const char* str_val = posix::GetEnv(var);
-  if (str_val == NULL) {
+  if (str_val == nullptr) {
     return default_val;
   }
 
@@ -5994,7 +5994,7 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
 // max_length characters, only prints the first max_length characters
 // and "...".
 static void PrintOnOneLine(const char* str, int max_length) {
-  if (str != NULL) {
+  if (str != nullptr) {
     for (int i = 0; *str != '\0'; ++str) {
       if (i >= max_length) {
         printf("...");
@@ -6162,12 +6162,12 @@ const char* ParseFlagValue(const char* str,
                            const char* flag,
                            bool def_optional) {
   // str and flag must not be NULL.
-  if (str == NULL || flag == NULL) return NULL;
+  if (str == nullptr || flag == nullptr) return nullptr;
 
   // The flag must start with "--" followed by GTEST_FLAG_PREFIX_.
   const std::string flag_str = std::string("--") + GTEST_FLAG_PREFIX_ + flag;
   const size_t flag_len = flag_str.length();
-  if (strncmp(str, flag_str.c_str(), flag_len) != 0) return NULL;
+  if (strncmp(str, flag_str.c_str(), flag_len) != 0) return nullptr;
 
   // Skips the flag name.
   const char* flag_end = str + flag_len;
@@ -6180,7 +6180,7 @@ const char* ParseFlagValue(const char* str,
   // If def_optional is true and there are more characters after the
   // flag name, or if def_optional is false, there must be a '=' after
   // the flag name.
-  if (flag_end[0] != '=') return NULL;
+  if (flag_end[0] != '=') return nullptr;
 
   // Returns the string after "=".
   return flag_end + 1;
@@ -6201,7 +6201,7 @@ bool ParseBoolFlag(const char* str, const char* flag, bool* value) {
   const char* const value_str = ParseFlagValue(str, flag, true);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (value_str == nullptr) return false;
 
   // Converts the string value to a bool.
   *value = !(*value_str == '0' || *value_str == 'f' || *value_str == 'F');
@@ -6218,7 +6218,7 @@ bool ParseInt32Flag(const char* str, const char* flag, Int32* value) {
   const char* const value_str = ParseFlagValue(str, flag, false);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (value_str == nullptr) return false;
 
   // Sets *value to the value of the flag.
   return ParseInt32(Message() << "The value of flag --" << flag,
@@ -6235,7 +6235,7 @@ bool ParseStringFlag(const char* str, const char* flag, std::string* value) {
   const char* const value_str = ParseFlagValue(str, flag, false);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (value_str == nullptr) return false;
 
   // Sets *value to the value of the flag.
   *value = value_str;
@@ -6277,7 +6277,7 @@ static void PrintColorEncoded(const char* str) {
   // next segment.
   for (;;) {
     const char* p = strchr(str, '@');
-    if (p == NULL) {
+    if (p == nullptr) {
       ColoredPrintf(color, "%s", str);
       return;
     }
@@ -8664,7 +8664,7 @@ const char kUnknownFile[] = "unknown file";
 // Formats a source file path and a line number as they would appear
 // in an error message from the compiler used to compile this code.
 GTEST_API_ ::std::string FormatFileLocation(const char* file, int line) {
-  const std::string file_name(file == NULL ? kUnknownFile : file);
+  const std::string file_name(file == nullptr ? kUnknownFile : file);
 
   if (line < 0) {
     return file_name + ":";
@@ -8683,7 +8683,7 @@ GTEST_API_ ::std::string FormatFileLocation(const char* file, int line) {
 // to the file location it produces, unlike FormatFileLocation().
 GTEST_API_ ::std::string FormatCompilerIndependentFileLocation(
     const char* file, int line) {
-  const std::string file_name(file == NULL ? kUnknownFile : file);
+  const std::string file_name(file == nullptr ? kUnknownFile : file);
 
   if (line < 0)
     return file_name;
@@ -8933,7 +8933,7 @@ static std::string FlagToEnvVar(const char* flag) {
 // unchanged and returns false.
 bool ParseInt32(const Message& src_text, const char* str, Int32* value) {
   // Parses the environment variable as a decimal integer.
-  char* end = NULL;
+  char* end = nullptr;
   const long long_value = strtol(str, &end, 10);  // NOLINT
 
   // Has strtol() consumed all characters in the string?
@@ -8976,7 +8976,7 @@ bool ParseInt32(const Message& src_text, const char* str, Int32* value) {
 bool BoolFromGTestEnv(const char* flag, bool default_value) {
   const std::string env_var = FlagToEnvVar(flag);
   const char* const string_value = posix::GetEnv(env_var.c_str());
-  return string_value == NULL ?
+  return string_value == nullptr ?
       default_value : strcmp(string_value, "0") != 0;
 }
 
@@ -8986,7 +8986,7 @@ bool BoolFromGTestEnv(const char* flag, bool default_value) {
 Int32 Int32FromGTestEnv(const char* flag, Int32 default_value) {
   const std::string env_var = FlagToEnvVar(flag);
   const char* const string_value = posix::GetEnv(env_var.c_str());
-  if (string_value == NULL) {
+  if (string_value == nullptr) {
     // The environment variable is not set.
     return default_value;
   }
@@ -9008,7 +9008,7 @@ Int32 Int32FromGTestEnv(const char* flag, Int32 default_value) {
 const char* StringFromGTestEnv(const char* flag, const char* default_value) {
   const std::string env_var = FlagToEnvVar(flag);
   const char* const value = posix::GetEnv(env_var.c_str());
-  return value == NULL ? default_value : value;
+  return value == nullptr ? default_value : value;
 }
 
 }  // namespace internal
@@ -9321,7 +9321,7 @@ void UniversalPrintArray(const wchar_t* begin, size_t len, ostream* os) {
 
 // Prints the given C string to the ostream.
 void PrintTo(const char* s, ostream* os) {
-  if (s == NULL) {
+  if (s == nullptr) {
     *os << "NULL";
   } else {
     *os << ImplicitCast_<const void*>(s) << " pointing to ";
@@ -9338,7 +9338,7 @@ void PrintTo(const char* s, ostream* os) {
 #if !defined(_MSC_VER) || defined(_NATIVE_WCHAR_T_DEFINED)
 // Prints the given wide C string to the ostream.
 void PrintTo(const wchar_t* s, ostream* os) {
-  if (s == NULL) {
+  if (s == nullptr) {
     *os << "NULL";
   } else {
     *os << ImplicitCast_<const void*>(s) << " pointing to ";
@@ -9424,7 +9424,7 @@ using internal::GetUnitTestImpl;
 // in it.
 std::string TestPartResult::ExtractSummary(const char* message) {
   const char* const stack_trace = strstr(message, internal::kStackTraceMarker);
-  return stack_trace == NULL ? message :
+  return stack_trace == nullptr ? message :
       std::string(message, stack_trace);
 }
 
@@ -10703,7 +10703,7 @@ void ReportUninterestingCall(CallReaction reaction, const string& msg) {
       Log(kWarning, msg, 3);
       break;
     default:  // FAIL
-      Expect(false, NULL, -1, msg);
+      Expect(false, nullptr, -1, msg);
   }
 }
 
@@ -10870,7 +10870,7 @@ UntypedFunctionMockerBase::UntypedInvokeWith(const void* const untyped_args)
 
   if (!found) {
     // No expectation matches this call - reports a failure.
-    Expect(false, NULL, -1, ss.str());
+    Expect(false, nullptr, -1, ss.str());
   } else if (is_excessive) {
     // We had an upper-bound violation and the failure message is in ss.
     Expect(false, untyped_expectation->file(),
@@ -10962,7 +10962,7 @@ typedef std::set<internal::UntypedFunctionMockerBase*> FunctionMockers;
 // expectations.
 struct MockObjectState {
   MockObjectState()
-      : first_used_file(NULL), first_used_line(-1), leakable(false) {}
+      : first_used_file(nullptr), first_used_line(-1), leakable(false) {}
 
   // Where in the source file an ON_CALL or EXPECT_CALL is first
   // invoked on this mock object.
@@ -11320,12 +11320,12 @@ static const char* ParseGoogleMockFlagValue(const char* str,
                                             const char* flag,
                                             bool def_optional) {
   // str and flag must not be NULL.
-  if (str == NULL || flag == NULL) return NULL;
+  if (str == nullptr || flag == nullptr) return nullptr;
 
   // The flag must start with "--gmock_".
   const std::string flag_str = std::string("--gmock_") + flag;
   const size_t flag_len = flag_str.length();
-  if (strncmp(str, flag_str.c_str(), flag_len) != 0) return NULL;
+  if (strncmp(str, flag_str.c_str(), flag_len) != 0) return nullptr;
 
   // Skips the flag name.
   const char* flag_end = str + flag_len;
@@ -11338,7 +11338,7 @@ static const char* ParseGoogleMockFlagValue(const char* str,
   // If def_optional is true and there are more characters after the
   // flag name, or if def_optional is false, there must be a '=' after
   // the flag name.
-  if (flag_end[0] != '=') return NULL;
+  if (flag_end[0] != '=') return nullptr;
 
   // Returns the string after "=".
   return flag_end + 1;
@@ -11355,7 +11355,7 @@ static bool ParseGoogleMockBoolFlag(const char* str, const char* flag,
   const char* const value_str = ParseGoogleMockFlagValue(str, flag, true);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (value_str == nullptr) return false;
 
   // Converts the string value to a bool.
   *value = !(*value_str == '0' || *value_str == 'f' || *value_str == 'F');
@@ -11373,7 +11373,7 @@ static bool ParseGoogleMockStringFlag(const char* str, const char* flag,
   const char* const value_str = ParseGoogleMockFlagValue(str, flag, false);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (value_str == nullptr) return false;
 
   // Sets *value to the value of the flag.
   *value = value_str;

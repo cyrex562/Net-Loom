@@ -471,7 +471,7 @@ void netif_poll_all(void);
 
 err_t netif_input(struct pbuf *p, struct netif *inp);
 
-#if LWIP_IPV6
+
 /** @ingroup netif_ip6 */
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif_ip6 */
@@ -503,7 +503,7 @@ err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t
 #else /* LWIP_ND6_ALLOW_RA_UPDATES */
 #define netif_mtu6(netif) ((netif)->mtu)
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
-#endif /* LWIP_IPV6 */
+
 
 #if LWIP_NETIF_USE_HINTS
 #define NETIF_SET_HINTS(netif, netifhint)  (netif)->hints = (netifhint)

@@ -42,11 +42,10 @@
  * $Id: ipcp.h,v 1.14 2002/12/04 23:03:32 paulus Exp $
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT && PPP_IPV4_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#pragma once
 
-#ifndef IPCP_H
-#define	IPCP_H
+#include "ppp_opts.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -124,11 +123,9 @@ typedef struct ipcp_options {
 char *ip_ntoa (uint32_t);
 #endif /* UNUSED, already defined by lwIP */
 
-extern const struct protent ipcp_protent;
+extern const struct Protent ipcp_protent;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* IPCP_H */
-#endif /* PPP_SUPPORT && PPP_IPV4_SUPPORT */

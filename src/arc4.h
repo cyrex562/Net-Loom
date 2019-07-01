@@ -32,12 +32,10 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
 
 #include "ppp_opts.h"
-#if LWIP_INCLUDED_POLARSSL_ARC4
 
-#ifndef LWIP_INCLUDED_POLARSSL_ARC4_H
-#define LWIP_INCLUDED_POLARSSL_ARC4_H
 
 /**
  * \brief          ARC4 context structure
@@ -76,6 +74,3 @@ void arc4_crypt( arc4_context *ctx, unsigned char *buf, int buflen );
 }
 #endif
 
-#endif /* LWIP_INCLUDED_POLARSSL_ARC4_H */
-
-#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */

@@ -685,7 +685,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
   }
 
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(sc->pcb, pb);
+  ppp_input(sc->pcb, pb,,);
   return;
 
 drop:
@@ -860,8 +860,8 @@ pppoe_connect(PppPcb *ppp, void *ctx)
 {
   err_t err;
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
-  lcp_options *lcp_wo;
-  lcp_options *lcp_ao;
+  LcpOptions *lcp_wo;
+  LcpOptions *lcp_ao;
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;

@@ -87,16 +87,16 @@ static void ecp_open (int unit);
 static void ecp_close (int unit, char *);
 static void ecp_lowerup (int unit);
 static void ecp_lowerdown (int);
-static void ecp_input (int unit, u_char *pkt, int len);
+static void ecp_input (int unit, uint8_t *pkt, int len);
 static void ecp_protrej (int unit);
 */
 #if PRINTPKT_SUPPORT
-static int  ecp_printpkt (const u_char *pkt, int len,
+static int  ecp_printpkt (const uint8_t *pkt, int len,
 			      void (*printer) (void *, char *, ...),
 			      void *arg);
 #endif /* PRINTPKT_SUPPORT */
 /*
-static void ecp_datainput (int unit, u_char *pkt, int len);
+static void ecp_datainput (int unit, uint8_t *pkt, int len);
 */
 
 const struct protent ecp_protent = {
@@ -179,7 +179,7 @@ ecp_init(unit)
 #if PRINTPKT_SUPPORT
 static int
 ecp_printpkt(p, plen, printer, arg)
-    const u_char *p;
+    const uint8_t *p;
     int plen;
     void (*printer) (void *, char *, ...);
     void *arg;

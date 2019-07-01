@@ -55,7 +55,7 @@ extern "C" {
 /*
  * Packet header = Code, id, length.
  */
-#define UPAP_HEADERLEN	4
+constexpr auto UPAP_HEADERLEN = 4;
 
 
 /*
@@ -113,9 +113,9 @@ typedef struct upap_state {
 
 
 
-void upap_authwithpeer(ppp_pcb *pcb, const char *user, const char *password);
+void upap_authwithpeer(PppPcb *pcb, const char *user, const char *password);
 
-void upap_authpeer(ppp_pcb *pcb);
+void upap_authpeer(PppPcb*pcb);
 
 
 extern const struct Protent pap_protent;

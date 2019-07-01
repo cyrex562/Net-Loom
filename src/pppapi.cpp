@@ -70,7 +70,7 @@ pppapi_do_ppp_set_default(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_set_default(ppp_pcb *pcb)
+pppapi_set_default(PppPcb *pcb)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -103,7 +103,7 @@ pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb)
+pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -138,11 +138,11 @@ pppapi_do_pppos_create(struct tcpip_api_call_data *m)
  * Call pppos_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-ppp_pcb*
+PppPcb*
 pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
                ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
-  ppp_pcb* result;
+  PppPcb* result;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
 
@@ -180,12 +180,12 @@ pppapi_do_pppoe_create(struct tcpip_api_call_data *m)
  * Call pppoe_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-ppp_pcb*
+PppPcb*
 pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *service_name,
                             const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                             void *ctx_cb)
 {
-  ppp_pcb* result;
+  PppPcb* result;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
 
@@ -232,12 +232,12 @@ pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
  * Call pppol2tp_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-ppp_pcb*
+PppPcb*
 pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, uint16_t port,
                         const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
-  ppp_pcb* result;
+  PppPcb* result;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
 #if !PPPOL2TP_AUTH_SUPPORT
@@ -282,7 +282,7 @@ pppapi_do_ppp_connect(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_connect(ppp_pcb *pcb, uint16_t holdoff)
+pppapi_connect(PppPcb *pcb, uint16_t holdoff)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -315,7 +315,7 @@ pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_listen(ppp_pcb *pcb)
+pppapi_listen(PppPcb *pcb)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -347,7 +347,7 @@ pppapi_do_ppp_close(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_close(ppp_pcb *pcb, uint8_t nocarrier)
+pppapi_close(PppPcb *pcb, uint8_t nocarrier)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -379,7 +379,7 @@ pppapi_do_ppp_free(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_free(ppp_pcb *pcb)
+pppapi_free(PppPcb *pcb)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -410,7 +410,7 @@ pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
+pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);

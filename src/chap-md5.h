@@ -28,9 +28,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+#pragma once
+extern const struct ChapDigestType kMd5Digest;
 
-extern const struct chap_digest_type md5_digest;
-
-#endif /* PPP_SUPPORT && CHAP_SUPPORT */

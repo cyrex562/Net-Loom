@@ -39,10 +39,14 @@
 #include "netif.h"
 #include "sys.h"
 #include "timeouts.h"
-#include "upap.h"
+#include "ccp.h"
+// #include "upap.h"
 #include "chap-new.h"
 //#include "lcp.h"
 #include "ip6_addr.h"
+#include "mppe.h"
+#include "ipv6cp.h"
+#include "vj.h"
 
 
 #ifdef __cplusplus
@@ -105,8 +109,8 @@ extern "C" {
 /*
  * The basic PPP frame.
  */
-constexpr auto PPP_HDRLEN = 4	/* octets for standard ppp header */;
-constexpr auto PPP_FCSLEN = 2	/* octets for FCS */;
+
+
 
 /*
  * Values for phase.
@@ -149,19 +153,19 @@ constexpr auto PPP_FCSLEN = 2	/* octets for FCS */;
 ************************/
 
 /*
- * Other headers require ppp_pcb definition for prototypes, but ppp_pcb
+ * Other headers require PppPcb definition for prototypes, but PppPcb
  * require some structure definition from other headers as well, we are
- * fixing the dependency loop here by declaring the ppp_pcb type then
- * by including headers containing necessary struct definition for ppp_pcb
+ * fixing the dependency loop here by declaring the PppPcb type then
+ * by including headers containing necessary struct definition for PppPcb
  */
-typedef struct ppp_pcb_s PppPcb;
+struct PppPcb;
 
 /* Type definitions for BSD code. */
-#ifndef __u_char_defined
+#ifndef __uint8_t_defined
 typedef unsigned long  u_long;
 typedef unsigned int   u_int;
 typedef unsigned short u_short;
-typedef unsigned char  u_char;
+typedef unsigned char  uint8_t;
 #endif
 
 #include "fsm.h"
@@ -199,95 +203,51 @@ typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
  */
 typedef struct ppp_settings_s {
 
-#if PPP_SERVER && PPP_AUTH_SUPPORT
-  unsigned int  auth_required       :1;      /* Peer is required to authenticate */
-  unsigned int  null_login          :1;      /* Username of "" and a password of "" are acceptable */
-#endif /* PPP_SERVER && PPP_AUTH_SUPPORT */
-#if PPP_REMOTENAME
-  unsigned int  explicit_remote     :1;      /* remote_name specified with remotename opt */
-#endif /* PPP_REMOTENAME */
-#if PAP_SUPPORT
-  unsigned int  refuse_pap          :1;      /* Don't proceed auth. with PAP */
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-  unsigned int  refuse_chap         :1;      /* Don't proceed auth. with CHAP */
-#endif /* CHAP_SUPPORT */
-#if MSCHAP_SUPPORT
-  unsigned int  refuse_mschap       :1;      /* Don't proceed auth. with MS-CHAP */
-  unsigned int  refuse_mschap_v2    :1;      /* Don't proceed auth. with MS-CHAPv2 */
-#endif /* MSCHAP_SUPPORT */
-#if EAP_SUPPORT
-  unsigned int  refuse_eap          :1;      /* Don't proceed auth. with EAP */
-#endif /* EAP_SUPPORT */
-#if LWIP_DNS
-  unsigned int  usepeerdns          :1;      /* Ask peer for DNS adds */
-#endif /* LWIP_DNS */
-  unsigned int  persist             :1;      /* Persist mode, always try to open the connection */
-#if PRINTPKT_SUPPORT
-  unsigned int  hide_password       :1;      /* Hide password in dumped packets */
-#endif /* PRINTPKT_SUPPORT */
-  unsigned int  noremoteip          :1;      /* Let him have no IP address */
-  unsigned int  lax_recv            :1;      /* accept control chars in asyncmap */
-  unsigned int  noendpoint          :1;      /* don't send/accept endpoint discriminator */
-#if PPP_LCP_ADAPTIVE
-  unsigned int lcp_echo_adaptive    :1;      /* request echo only if the link was idle */
-#endif /* PPP_LCP_ADAPTIVE */
-#if MPPE_SUPPORT
-  unsigned int require_mppe         :1;      /* Require MPPE (Microsoft Point to Point Encryption) */
-  unsigned int refuse_mppe_40       :1;      /* Allow MPPE 40-bit mode? */
-  unsigned int refuse_mppe_128      :1;      /* Allow MPPE 128-bit mode? */
-  unsigned int refuse_mppe_stateful :1;      /* Allow MPPE stateful mode? */
-#endif /* MPPE_SUPPORT */
+  unsigned int  auth_required       :1;      // Peer is required to authenticate */
+  unsigned int  null_login          :1;      // Username of "" and a password of "" are acceptable 
 
-  uint16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
+  unsigned int  explicit_remote     :1;      // remote_name specified with remotename opt */
+  unsigned int  refuse_pap          :1;      // Don't proceed auth. with PAP */
+  unsigned int  refuse_chap         :1;      // Don't proceed auth. with CHAP */
+  unsigned int  refuse_mschap       :1;      //Don't proceed auth. with MS-CHAP */
+  unsigned int  refuse_mschap_v2    :1;      // Don't proceed auth. with MS-CHAPv2 */
+  unsigned int  refuse_eap          :1;      // Don't proceed auth. with EAP */
+  unsigned int  usepeerdns          :1;      // Ask peer for DNS adds */
+  unsigned int  persist             :1;      // Persist mode, always try to open the connection */
+  unsigned int  hide_password       :1;      // Hide password in dumped packets */
+  unsigned int  noremoteip          :1;      // Let him have no IP address */
+  unsigned int  lax_recv            :1;      // accept control chars in asyncmap */
+  unsigned int  noendpoint          :1;      // don't send/accept endpoint discriminator */
+  unsigned int lcp_echo_adaptive    :1;      // request echo only if the link was idle */
+  unsigned int require_mppe         :1;      // Require MPPE (Microsoft Point to Point Encryption) 
+  unsigned int refuse_mppe_40       :1;      // Allow MPPE 40-bit mode? */
+  unsigned int refuse_mppe_128      :1;      // Allow MPPE 128-bit mode? */
+  unsigned int refuse_mppe_stateful :1;      // Allow MPPE stateful mode? */
 
-#if PPP_IDLETIMELIMIT
+
+  uint16_t  listen_time;                 // time to listen first (ms), waiting for peer to send LCP packet */
   uint16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
-#endif /* PPP_IDLETIMELIMIT */
-#if PPP_MAXCONNECT
   uint32_t  maxconnect;                  /* Maximum connect time (seconds) */
-#endif /* PPP_MAXCONNECT */
 
-#if PPP_AUTH_SUPPORT
   /* auth data */
   const char  *user;                   /* Username for PAP */
   const char  *passwd;                 /* Password for PAP, secret for CHAP */
-#if PPP_REMOTENAME
   char  remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
-#endif /* PPP_REMOTENAME */
 
-#if PAP_SUPPORT
   uint8_t  pap_timeout_time;        /* Timeout (seconds) for auth-req retrans. */
   uint8_t  pap_max_transmits;       /* Number of auth-reqs sent */
-#if PPP_SERVER
   uint8_t  pap_req_timeout;         /* Time to wait for auth-req from peer */
-#endif /* PPP_SERVER */
-#endif /* PAP_SUPPPORT */
-
-#if CHAP_SUPPORT
   uint8_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
   uint8_t  chap_max_transmits;      /* max # times to send challenge */
-#if PPP_SERVER
   uint8_t  chap_rechallenge_time;   /* Time to wait for auth-req from peer */
-#endif /* PPP_SERVER */
-#endif /* CHAP_SUPPPORT */
-
-#if EAP_SUPPORT
   uint8_t  eap_req_time;            /* Time to wait (for retransmit/fail) */
   uint8_t  eap_allow_req;           /* Max Requests allowed */
-#if PPP_SERVER
   uint8_t  eap_timeout_time;        /* Time to wait (for retransmit/fail) */
   uint8_t  eap_max_transmits;       /* Max Requests allowed */
-#endif /* PPP_SERVER */
-#endif /* EAP_SUPPORT */
-
-#endif /* PPP_AUTH_SUPPORT */
-
   uint8_t  fsm_timeout_time;            /* Timeout time in seconds */
   uint8_t  fsm_max_conf_req_transmits;  /* Maximum Configure-Request transmissions */
   uint8_t  fsm_max_term_transmits;      /* Maximum Terminate-Request transmissions */
   uint8_t  fsm_max_nak_loops;           /* Maximum number of nak loops tolerated */
-
   uint8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
                                  before deciding the link is looped-back. */
   uint8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
@@ -311,7 +271,7 @@ struct ppp_addrs {
 /*
  * PPP interface control block.
  */
-struct ppp_pcb_s {
+struct PppPcb {
   ppp_settings settings;
   const struct LinkCallbacks *link_cb;
   void *link_ctx_cb;
@@ -339,21 +299,21 @@ struct ppp_pcb_s {
   char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
   uint16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   uint16_t auth_done;           /* Records which authentication operations have been completed. */
-  upap_state upap;           /* PAP data */
+  // upap_state upap;           /* PAP data */
   chap_client_state chap_client;  /* CHAP client data */
   chap_server_state chap_server;  /* CHAP server data */
-  eap_state eap;            /* EAP data */
-  fsm lcp_fsm;                   /* LCP fsm structure */
-  lcp_options lcp_wantoptions;   /* Options that we want to request */
-  lcp_options lcp_gotoptions;    /* Options that peer ack'd */
-  lcp_options lcp_allowoptions;  /* Options we allow peer to request */
-  lcp_options lcp_hisoptions;    /* Options that we ack'd */
+  // eap_state eap;            /* EAP data */
+  // fsm lcp_fsm;                   /* LCP fsm structure */
+  LcpOptions lcp_wantoptions;   /* Options that we want to request */
+  LcpOptions lcp_gotoptions;    /* Options that peer ack'd */
+  LcpOptions lcp_allowoptions;  /* Options we allow peer to request */
+  LcpOptions lcp_hisoptions;    /* Options that we ack'd */
   uint16_t peer_mru;                /* currently negotiated peer MRU */
   uint8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   uint8_t lcp_echo_number;          /* ID number of next echo frame */
   uint8_t num_np_open;              /* Number of network protocols which we have opened. */
   uint8_t num_np_up;                /* Number of network protocols which have come up. */
-  struct Vjcompress vj_comp;     /* Van Jacobson compression header. */
+  Vjcompress vj_comp;     /* Van Jacobson compression header. */
   fsm ccp_fsm;                   /* CCP fsm structure */
   ccp_options ccp_wantoptions;   /* what to request the peer to use */
   ccp_options ccp_gotoptions;    /* what the peer agreed to do */
@@ -544,16 +504,15 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  */
 #define ppp_set_default(ppp)         netif_set_default(ppp->netif)
 
-#if PPP_NOTIFY_PHASE
 /*
  * Set a PPP notify phase callback.
  *
  * This can be used for example to set a LED pattern depending on the
  * current phase of the PPP session.
  */
-typedef void (*ppp_notify_phase_cb_fn)(ppp_pcb *pcb, uint8_t phase, void *ctx);
-void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
-#endif /* PPP_NOTIFY_PHASE */
+typedef void (*ppp_notify_phase_cb_fn)(PppPcb *pcb, uint8_t phase, void *ctx);
+void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
+
 
 /*
  * Initiate a PPP connection.
@@ -568,7 +527,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  */
 err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
 
-#if PPP_SERVER
+
 /*
  * Listen for an incoming PPP connection.
  *
@@ -577,8 +536,8 @@ err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(ppp_pcb *pcb);
-#endif /* PPP_SERVER */
+err_t ppp_listen(PppPcb *pcb);
+
 
 /*
  * Initiate the end of a PPP connection.
