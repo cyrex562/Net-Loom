@@ -138,7 +138,7 @@ const struct Protent* const kProtocols[] = {
     nullptr,
     &ipcp_protent,
     &ipv6cp_protent,
-    &ccp_protent,
+    &kCcpProtent,
     &kEcpProtent,
     nullptr,
     &eap_protent,
@@ -1266,35 +1266,10 @@ netif_get_mtu(PppPcb* pcb)
 {
     return pcb->netif->mtu;
 }
-#if 0 /* unused */
-/*
- * ccp_test - whether a given compression method is acceptable for use.
- */
-int
-ccp_test(PppPcb *pcb, uint8_t *opt_ptr, int opt_len, int for_transmit)
-{
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(opt_ptr);
-  LWIP_UNUSED_ARG(opt_len);
-  LWIP_UNUSED_ARG(for_transmit);
-  return -1;
-}
-#endif /* unused */
 
 
-#if 0 /* unused */
-/*
- * ccp_fatal_error - returns 1 if decompression was disabled as a
- * result of an error detected after decompression of a packet,
- * 0 otherwise.  This is necessary because of patent nonsense.
- */
-int
-ccp_fatal_error(PppPcb *pcb)
-{
-  LWIP_UNUSED_ARG(pcb);
-  return 1;
-}
-#endif /* unused */
+
+
 /********************************************************************
  *
  * get_idle_time - return how long the link has been idle.

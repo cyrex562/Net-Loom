@@ -42,6 +42,7 @@
  * $Id: fsm.h,v 1.10 2004/11/13 02:28:15 paulus Exp $
  */
 #pragma once
+#include "protent.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,7 +109,7 @@ struct FsmCallbacks
     /* Request peer's Configuration Information */
     int (*reqci)(fsm*, uint8_t*, size_t*, int, PppPcb*);
     /* Called when fsm reaches PPP_FSM_OPENED state */
-    void (*up)(fsm*, PppPcb*);
+    void (*up)(fsm*, PppPcb*, Protent** protocols);
     /* Called when fsm leaves PPP_FSM_OPENED state */
     void (*down)(fsm*, fsm*, PppPcb*);
     /* Called when we want the lower layer */

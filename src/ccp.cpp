@@ -35,7 +35,6 @@
 #include "ppp_impl.h"
 #include "fsm.h"
 #include "ccp.h"
-
 #include <cstdlib>
 #include <cstring>
 
@@ -166,16 +165,12 @@ static void ccp_open(PppPcb* pcb);
 static void ccp_close(PppPcb* pcb, const char* reason);
 static void ccp_lowerup(PppPcb* pcb);
 static void ccp_lowerdown(PppPcb* pcb);
-static void ccp_input(PppPcb* pcb, uint8_t* pkt, int len);
+static void ccp_input(PppPcb* pcb, uint8_t* pkt, int len, Protent** protocols);
 static void ccp_protrej(PppPcb* pcb);
-#if PRINTPKT_SUPPORT
-static int ccp_printpkt(const uint8_t *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_DATAINPUT
 static void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
-#endif /* PPP_DATAINPUT */
 
-const struct Protent ccp_protent = {
+
+const struct Protent kCcpProtent = {
     PPP_CCP,
     ccp_init,
     ccp_input,
@@ -184,24 +179,7 @@ const struct Protent ccp_protent = {
     ccp_lowerdown,
     ccp_open,
     ccp_close,
-#if PRINTPKT_SUPPORT
-    ccp_printpkt,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_DATAINPUT
     ccp_datainput,
-#endif /* PPP_DATAINPUT */
-#if PRINTPKT_SUPPORT
-    "CCP",
-    "Compressed",
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_OPTIONS
-    ccp_option_list,
-    NULL,
-#endif /* PPP_OPTIONS */
-#if DEMAND_SUPPORT
-    NULL,
-    NULL
-#endif /* DEMAND_SUPPORT */
 };
 
 /*
@@ -214,7 +192,7 @@ static int ccp_ackci(fsm*, uint8_t*, int, PppPcb* pcb);
 static int ccp_nakci(fsm*, uint8_t*, int, int, PppPcb* pcb);
 static int ccp_rejci(fsm*, uint8_t*, int, PppPcb* pcb);
 static int ccp_reqci(fsm*, uint8_t*, size_t*, int, PppPcb* pcb);
-static void ccp_up(fsm*, PppPcb* pcb);
+static void ccp_up(fsm*, PppPcb* pcb, Protent** protocols);
 static void ccp_down(fsm*, fsm* lcp_fsm, PppPcb* pcb);
 static int ccp_extcode(fsm*, int, int, uint8_t*, int, PppPcb* ppp_pcb);
 static void ccp_rack_timeout(void*);
@@ -473,33 +451,29 @@ static void ccp_lowerup(PppPcb* pcb)
  */
 static void ccp_lowerdown(PppPcb* pcb)
 {
-    fsm* f = &pcb->ccp_fsm;
-    fsm_lowerdown(f);
+    fsm_lowerdown(&pcb->ccp_fsm);
 }
 
 /*
  * ccp_input - process a received CCP packet.
  */
-static void ccp_input(PppPcb* pcb, uint8_t* p, int len)
+static void ccp_input(PppPcb* pcb, uint8_t* p, int len, Protent** protocols)
 {
-    fsm* f = &pcb->ccp_fsm;
-    ccp_options* go = &pcb->ccp_gotoptions;
-    int oldstate;
+    auto f = &pcb->ccp_fsm;
+    auto go = &pcb->ccp_gotoptions;
 
     /*
      * Check for a terminate-request so we can print a message.
      */
-    oldstate = f->state;
+    auto oldstate = f->state;
     fsm_input(f, p, len);
     if (oldstate == PPP_FSM_OPENED && p[0] == TERMREQ && f->state != PPP_FSM_OPENED)
     {
         ppp_notice("Compression disabled by peer.");
-#if MPPE_SUPPORT
 	if (go->mppe) {
 	    ppp_error("MPPE disabled, closing LCP");
 	    lcp_close(pcb, "MPPE disabled by peer");
 	}
-#endif /* MPPE_SUPPORT */
     }
 
     /*
@@ -1526,7 +1500,7 @@ static const char* method_name(ccp_options* opt, ccp_options* opt2)
 /*
  * CCP has come up - inform the kernel driver and log a message.
  */
-static void ccp_up(fsm* f, PppPcb* pcb)
+static void ccp_up(fsm* f, PppPcb* pcb, Protent** protocols)
 {
     ccp_options* go = &pcb->ccp_gotoptions;
     ccp_options* ho = &pcb->ccp_hisoptions;
@@ -1555,7 +1529,7 @@ static void ccp_up(fsm* f, PppPcb* pcb)
         ppp_notice("%s transmit compression enabled", method_name(ho, nullptr));
     if (go->mppe)
     {
-        continue_networks(pcb,); /* Bring up IP et al */
+        continue_networks(pcb, protocols); /* Bring up IP et al */
     }
 }
 
@@ -1565,7 +1539,7 @@ static void ccp_up(fsm* f, PppPcb* pcb)
 static void ccp_down(fsm* f, fsm* lcp_fsm, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
+    auto go = &pcb->ccp_gotoptions;
 
     if (pcb->ccp_localstate & RACK_PENDING)
         UNTIMEOUT(ccp_rack_timeout, f);
@@ -1583,143 +1557,6 @@ static void ccp_down(fsm* f, fsm* lcp_fsm, PppPcb* pcb)
     }
 }
 
-#if PRINTPKT_SUPPORT
-/*
- * Print the contents of a CCP packet.
- */
-static const char* const ccp_codenames[] = {
-    "ConfReq", "ConfAck", "ConfNak", "ConfRej",
-    "TermReq", "TermAck", "CodeRej",
-    NULL, NULL, NULL, NULL, NULL, NULL,
-    "ResetReq", "ResetAck",
-};
-
-static int ccp_printpkt(const uint8_t *p, int plen, void (*printer) (void *, const char *, ...), void *arg) {
-    const uint8_t *p0, *optend;
-    int code, id, len;
-    int optlen;
-
-    p0 = p;
-    if (plen < HEADERLEN)
-	return 0;
-    code = p[0];
-    id = p[1];
-    len = (p[2] << 8) + p[3];
-    if (len < HEADERLEN || len > plen)
-	return 0;
-
-    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ccp_codenames) && ccp_codenames[code-1] != NULL)
-	printer(arg, " %s", ccp_codenames[code-1]);
-    else
-	printer(arg, " code=0x%x", code);
-    printer(arg, " id=0x%x", id);
-    len -= HEADERLEN;
-    p += HEADERLEN;
-
-    switch (code) {
-    case CONFREQ:
-    case CONFACK:
-    case CONFNAK:
-    case CONFREJ:
-	/* print list of possible compression methods */
-	while (len >= 2) {
-	    code = p[0];
-	    optlen = p[1];
-	    if (optlen < 2 || optlen > len)
-		break;
-	    printer(arg, " <");
-	    len -= optlen;
-	    optend = p + optlen;
-	    switch (code) {
-#if MPPE_SUPPORT
-	    case CI_MPPE:
-		if (optlen >= CILEN_MPPE) {
-		    uint8_t mppe_opts;
-
-		    MPPE_CI_TO_OPTS(&p[2], mppe_opts);
-		    printer(arg, "mppe %s %s %s %s %s %s%s",
-			    (p[2] & MPPE_H_BIT)? "+H": "-H",
-			    (p[5] & MPPE_M_BIT)? "+M": "-M",
-			    (p[5] & MPPE_S_BIT)? "+S": "-S",
-			    (p[5] & MPPE_L_BIT)? "+L": "-L",
-			    (p[5] & MPPE_D_BIT)? "+D": "-D",
-			    (p[5] & MPPE_C_BIT)? "+C": "-C",
-			    (mppe_opts & MPPE_OPT_UNKNOWN)? " +U": "");
-		    if (mppe_opts & MPPE_OPT_UNKNOWN)
-			printer(arg, " (%.2x %.2x %.2x %.2x)",
-				p[2], p[3], p[4], p[5]);
-		    p += CILEN_MPPE;
-		}
-		break;
-#endif /* MPPE_SUPPORT */
-#if DEFLATE_SUPPORT
-	    case CI_DEFLATE:
-	    case CI_DEFLATE_DRAFT:
-		if (optlen >= CILEN_DEFLATE) {
-		    printer(arg, "deflate%s %d",
-			    (code == CI_DEFLATE_DRAFT? "(old#)": ""),
-			    DEFLATE_SIZE(p[2]));
-		    if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL)
-			printer(arg, " method %d", DEFLATE_METHOD(p[2]));
-		    if (p[3] != DEFLATE_CHK_SEQUENCE)
-			printer(arg, " check %d", p[3]);
-		    p += CILEN_DEFLATE;
-		}
-		break;
-#endif /* DEFLATE_SUPPORT */
-#if BSDCOMPRESS_SUPPORT
-	    case CI_BSD_COMPRESS:
-		if (optlen >= CILEN_BSD_COMPRESS) {
-		    printer(arg, "bsd v%d %d", BSD_VERSION(p[2]),
-			    BSD_NBITS(p[2]));
-		    p += CILEN_BSD_COMPRESS;
-		}
-		break;
-#endif /* BSDCOMPRESS_SUPPORT */
-#if PREDICTOR_SUPPORT
-	    case CI_PREDICTOR_1:
-		if (optlen >= CILEN_PREDICTOR_1) {
-		    printer(arg, "predictor 1");
-		    p += CILEN_PREDICTOR_1;
-		}
-		break;
-	    case CI_PREDICTOR_2:
-		if (optlen >= CILEN_PREDICTOR_2) {
-		    printer(arg, "predictor 2");
-		    p += CILEN_PREDICTOR_2;
-		}
-		break;
-#endif /* PREDICTOR_SUPPORT */
-	    default:
-                break;
-	    }
-	    while (p < optend)
-		printer(arg, " %.2x", *p++);
-	    printer(arg, ">");
-	}
-	break;
-
-    case TERMACK:
-    case TERMREQ:
-	if (len > 0 && *p >= ' ' && *p < 0x7f) {
-	    ppp_print_string(p, len, printer, arg);
-	    p += len;
-	    len = 0;
-	}
-	break;
-    default:
-        break;
-    }
-
-    /* dump out the rest of the packet in hex */
-    while (--len >= 0)
-	printer(arg, " %.2x", *p++);
-
-    return p - p0;
-}
-#endif /* PRINTPKT_SUPPORT */
-
-#if PPP_DATAINPUT
 /*
  * We have received a packet that the decompressor failed to
  * decompress.  Here we would expect to issue a reset-request, but
@@ -1742,37 +1579,36 @@ static void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len) {
 
     f = &pcb->ccp_fsm;
     if (f->state == PPP_FSM_OPENED) {
-	if (ccp_fatal_error(pcb)) {
-	    /*
-	     * Disable compression by taking CCP down.
-	     */
-	    ppp_error("Lost compression sync: disabling compression");
-	    ccp_close(pcb, "Lost compression sync");
-#if MPPE_SUPPORT
-	    /*
-	     * If we were doing MPPE, we must also take the link down.
-	     */
-	    if (go->mppe) {
-		ppp_error("Too many MPPE errors, closing LCP");
-		lcp_close(pcb, "Too many MPPE errors");
-	    }
-#endif /* MPPE_SUPPORT */
-	} else {
-	    /*
-	     * Send a reset-request to reset the peer's compressor.
-	     * We don't do that if we are still waiting for an
-	     * acknowledgement to a previous reset-request.
-	     */
-	    if (!(pcb->ccp_localstate & RACK_PENDING)) {
-		fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, NULL, 0);
-		TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
-		pcb->ccp_localstate |= RACK_PENDING;
-	    } else
-		pcb->ccp_localstate |= RREQ_REPEAT;
-	}
+// 	if (ccp_fatal_error(pcb)) {
+// 	    /*
+// 	     * Disable compression by taking CCP down.
+// 	     */
+// 	    ppp_error("Lost compression sync: disabling compression");
+// 	    ccp_close(pcb, "Lost compression sync");
+// #if MPPE_SUPPORT
+// 	    /*
+// 	     * If we were doing MPPE, we must also take the link down.
+// 	     */
+// 	    if (go->mppe) {
+// 		ppp_error("Too many MPPE errors, closing LCP");
+// 		lcp_close(pcb, "Too many MPPE errors");
+// 	    }
+// #endif /* MPPE_SUPPORT */
+// 	} else {
+// 	    /*
+// 	     * Send a reset-request to reset the peer's compressor.
+// 	     * We don't do that if we are still waiting for an
+// 	     * acknowledgement to a previous reset-request.
+// 	     */
+// 	    if (!(pcb->ccp_localstate & RACK_PENDING)) {
+// 		fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, NULL, 0);
+// 		TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
+// 		pcb->ccp_localstate |= RACK_PENDING;
+// 	    } else
+// 		pcb->ccp_localstate |= RREQ_REPEAT;
+// 	}
     }
 }
-#endif /* PPP_DATAINPUT */
 
 /*
  * We have received a packet that the decompressor failed to

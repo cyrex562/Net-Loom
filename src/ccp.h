@@ -132,7 +132,7 @@ typedef struct ccp_options {
     uint8_t method;		/* code for chosen compression method */
 } ccp_options;
 
-extern const struct Protent ccp_protent;
+extern const struct Protent kCcpProtent;
 
 void ccp_resetrequest(uint8_t* PppPcb_ccp_local_state);  /* Issue a reset-request. */
 

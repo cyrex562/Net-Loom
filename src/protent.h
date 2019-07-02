@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
-#include "ppp.h"
+
+struct PppPcb;
 
 /*
  * The following struct gives the addresses of procedures to call
