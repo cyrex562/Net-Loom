@@ -137,13 +137,9 @@
  *
  * $Id: ipv6cp.h,v 1.7 2002/12/04 23:03:32 paulus Exp $
  */
+#pragma  once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#ifndef IPV6CP_H
-#define	IPV6CP_H
-
 #include "eui64.h"
 
 #ifdef __cplusplus
@@ -178,14 +174,12 @@ typedef struct ipv6cp_options {
 #ifdef IPV6CP_COMP
     u_short vj_protocol;        /* protocol value to use in VJ option */
 #endif /* IPV6CP_COMP */
-    eui64_t ourid, hisid;       /* Interface identifiers */
+    Eui64T ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;
 
-extern const struct protent ipv6cp_protent;
+extern const struct Protent ipv6cp_protent;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* IPV6CP_H */
-#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

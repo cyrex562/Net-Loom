@@ -32,12 +32,9 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#pragma once
 #include "ppp_opts.h"
-#if LWIP_INCLUDED_POLARSSL_MD5
 
-#ifndef LWIP_INCLUDED_POLARSSL_MD5_H
-#define LWIP_INCLUDED_POLARSSL_MD5_H
 
 /**
  * \brief          MD5 context structure
@@ -91,6 +88,3 @@ void md5( unsigned char *input, int ilen, unsigned char output[16] );
 }
 #endif
 
-#endif /* LWIP_INCLUDED_POLARSSL_MD5_H */
-
-#endif /* LWIP_INCLUDED_POLARSSL_MD5 */

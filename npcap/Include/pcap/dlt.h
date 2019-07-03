@@ -440,8 +440,8 @@
  *
  *	#define FIREWIRE_EUI64_LEN	8
  *	struct firewire_header {
- *		u_char  firewire_dhost[FIREWIRE_EUI64_LEN];
- *		u_char  firewire_shost[FIREWIRE_EUI64_LEN];
+ *		uint8_t  firewire_dhost[FIREWIRE_EUI64_LEN];
+ *		uint8_t  firewire_shost[FIREWIRE_EUI64_LEN];
  *		u_short firewire_type;
  *	};
  *

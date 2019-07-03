@@ -24,17 +24,14 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#include <string.h>
-
+#include <cstring>
 #include "err.h"
-
-#include "ppp/ppp_impl.h"
-#include "ppp/ccp.h"
-#include "ppp/mppe.h"
-#include "ppp/pppdebug.h"
-#include "ppp/pppcrypt.h"
+#include "ppp_impl.h"
+#include "ccp.h"
+#include "mppe.h"
+#include "pppdebug.h"
+#include "pppcrypt.h"
+#include "lcp.h"
 
 #define SHA1_SIGNATURE_SIZE 20
 
@@ -178,7 +175,7 @@ mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options)
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
+void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
 {
 	LWIP_UNUSED_ARG(pcb);
 	state->bits |= MPPE_BIT_FLUSHED;
@@ -190,7 +187,7 @@ void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 err_t
-mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol)
+mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol)
 {
 	struct pbuf *n, *np;
 	uint8_t *pl;
@@ -265,7 +262,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t pr
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
+void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
 {
 	LWIP_UNUSED_ARG(pcb);
 	LWIP_UNUSED_ARG(state);
@@ -276,7 +273,7 @@ void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
  * Decompress (decrypt) an MPPE packet.
  */
 err_t
-mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
+mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 {
 	struct pbuf *n0 = *pb, *n;
 	uint8_t *pl;
@@ -347,7 +344,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 				 * Signal the peer to rekey (by sending a CCP Reset-Request).
 				 */
 				state->discard = 1;
-				ccp_resetrequest(pcb);
+				ccp_resetrequest(&pcb->ccp_localstate, &pcb->ccp_fsm);
 				return ERR_BUF;
 			}
 		} else {
@@ -409,4 +406,3 @@ sanity_error:
 	return ERR_BUF;
 }
 
-#endif /* PPP_SUPPORT && MPPE_SUPPORT */

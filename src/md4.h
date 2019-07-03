@@ -33,11 +33,9 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
 #include "ppp_opts.h"
-#if LWIP_INCLUDED_POLARSSL_MD4
 
-#ifndef LWIP_INCLUDED_POLARSSL_MD4_H
-#define LWIP_INCLUDED_POLARSSL_MD4_H
 
 /**
  * \brief          MD4 context structure
@@ -91,7 +89,3 @@ void md4( unsigned char *input, int ilen, unsigned char output[16] );
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_INCLUDED_POLARSSL_MD4_H */
-
-#endif /* LWIP_INCLUDED_POLARSSL_MD4 */

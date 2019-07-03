@@ -67,11 +67,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#pragma once
 
-#ifndef PPP_OE_H
-#define PPP_OE_H
+#include "ppp_opts.h"
 
 #include "ppp.h"
 #include "etharp.h"
@@ -80,71 +78,47 @@
 extern "C" {
 #endif
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct pppoehdr {
   PACK_STRUCT_FLD_8(uint8_t vertype);
   PACK_STRUCT_FLD_8(uint8_t code);
   PACK_STRUCT_FIELD(uint16_t session);
   PACK_STRUCT_FIELD(uint16_t plen);
 } PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct pppoetag {
   PACK_STRUCT_FIELD(uint16_t tag);
   PACK_STRUCT_FIELD(uint16_t len);
 } PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
 
-
-#define PPPOE_STATE_INITIAL   0
-#define PPPOE_STATE_PADI_SENT 1
-#define PPPOE_STATE_PADR_SENT 2
-#define PPPOE_STATE_SESSION   3
-/* passive */
-#define PPPOE_STATE_PADO_SENT 1
-
+constexpr auto PPPOE_STATE_INITIAL = 0;
+constexpr auto PPPOE_STATE_PADI_SENT = 1;
+constexpr auto PPPOE_STATE_PADR_SENT = 2;
+constexpr auto PPPOE_STATE_SESSION = 3;
+constexpr auto PPPOE_STATE_PADO_SENT = 1;
 #define PPPOE_HEADERLEN       sizeof(struct pppoehdr)
-#define PPPOE_VERTYPE         0x11    /* VER=1, TYPE = 1 */
+constexpr auto PPPOE_VERTYPE = 0x11    /* VER=1, TYPE = 1 */;
+constexpr auto PPPOE_TAG_EOL = 0x0000  /* end of list */;
+constexpr auto PPPOE_TAG_SNAME = 0x0101  /* service name */;
+constexpr auto PPPOE_TAG_ACNAME = 0x0102  /* access concentrator name */;
+constexpr auto PPPOE_TAG_HUNIQUE = 0x0103  /* host unique */;
+constexpr auto PPPOE_TAG_ACCOOKIE = 0x0104  /* AC cookie */;
+constexpr auto PPPOE_TAG_VENDOR = 0x0105  /* vendor specific */;
+constexpr auto PPPOE_TAG_RELAYSID = 0x0110  /* relay session id */;
+constexpr auto PPPOE_TAG_SNAME_ERR = 0x0201  /* service name error */;
+constexpr auto PPPOE_TAG_ACSYS_ERR = 0x0202  /* AC system error */;
+constexpr auto PPPOE_TAG_GENERIC_ERR = 0x0203  /* gerneric error */;
+constexpr auto PPPOE_CODE_PADI = 0x09    /* Active Discovery Initiation */;
+constexpr auto PPPOE_CODE_PADO = 0x07    /* Active Discovery Offer */;
+constexpr auto PPPOE_CODE_PADR = 0x19    /* Active Discovery Request */;
+constexpr auto PPPOE_CODE_PADS = 0x65    /* Active Discovery Session confirmation */;
+constexpr auto PPPOE_CODE_PADT = 0xA7    /* Active Discovery Terminate */;
+constexpr auto PPPOE_MAX_AC_COOKIE_LEN = 64;
 
-#define PPPOE_TAG_EOL         0x0000  /* end of list */
-#define PPPOE_TAG_SNAME       0x0101  /* service name */
-#define PPPOE_TAG_ACNAME      0x0102  /* access concentrator name */
-#define PPPOE_TAG_HUNIQUE     0x0103  /* host unique */
-#define PPPOE_TAG_ACCOOKIE    0x0104  /* AC cookie */
-#define PPPOE_TAG_VENDOR      0x0105  /* vendor specific */
-#define PPPOE_TAG_RELAYSID    0x0110  /* relay session id */
-#define PPPOE_TAG_SNAME_ERR   0x0201  /* service name error */
-#define PPPOE_TAG_ACSYS_ERR   0x0202  /* AC system error */
-#define PPPOE_TAG_GENERIC_ERR 0x0203  /* gerneric error */
-
-#define PPPOE_CODE_PADI       0x09    /* Active Discovery Initiation */
-#define PPPOE_CODE_PADO       0x07    /* Active Discovery Offer */
-#define PPPOE_CODE_PADR       0x19    /* Active Discovery Request */
-#define PPPOE_CODE_PADS       0x65    /* Active Discovery Session confirmation */
-#define PPPOE_CODE_PADT       0xA7    /* Active Discovery Terminate */
-
-#ifndef PPPOE_MAX_AC_COOKIE_LEN
-#define PPPOE_MAX_AC_COOKIE_LEN   64
-#endif
 
 struct pppoe_softc {
   struct pppoe_softc *next;
   struct netif *sc_ethif;      /* ethernet interface we are using */
-  ppp_pcb *pcb;                /* PPP PCB */
-
+  PppPcb *pcb;                /* PPP PCB */
   struct eth_addr sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
   uint8_t sc_state;               /* discovery phase or session connected */
@@ -166,7 +140,7 @@ struct pppoe_softc {
 
 #define pppoe_init() /* compatibility define, no initialization needed */
 
-ppp_pcb *pppoe_create(struct netif *pppif,
+PppPcb *pppoe_create(struct netif *pppif,
        struct netif *ethif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
@@ -181,7 +155,3 @@ void pppoe_data_input(struct netif *netif, struct pbuf *p);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PPP_OE_H */
-
-#endif /* PPP_SUPPORT && PPPOE_SUPPORT */

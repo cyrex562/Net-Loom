@@ -94,21 +94,21 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
  * To relocate a pool, declare it as extern in cc.h. Example for GCC:
  *   extern uint8_t \_\_attribute\_\_((section(".onchip_mem"))) memp_memory_my_private_pool_base[];
  */
-#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
-  LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
-    \
-  LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(memp_stats_ ## name) \
-    \
-  static struct memp *memp_tab_ ## name; \
-    \
-  const struct memp_desc memp_ ## name = { \
-    DECLARE_LWIP_MEMPOOL_DESC(desc) \
-    LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(memp_stats_ ## name) \
-    LWIP_MEM_ALIGN_SIZE(size), \
-    (num), \
-    memp_memory_ ## name ## _base, \
-    &memp_tab_ ## name \
-  };
+//#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
+//  LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
+//    \
+//  LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(memp_stats_ ## name) \
+//    \
+//  static struct memp *memp_tab_ ## name; \
+//    \
+//  const struct memp_desc memp_ ## name = { \
+//    DECLARE_LWIP_MEMPOOL_DESC(desc) \
+//    LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(memp_stats_ ## name) \
+//    LWIP_MEM_ALIGN_SIZE(size), \
+//    (num), \
+//    memp_memory_ ## name ## _base, \
+//    &memp_tab_ ## name \
+//  };
 
 #endif /* MEMP_MEM_MALLOC */
 

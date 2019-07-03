@@ -32,12 +32,9 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#pragma once
 #include "ppp_opts.h"
-#if LWIP_INCLUDED_POLARSSL_DES
 
-#ifndef LWIP_INCLUDED_POLARSSL_DES_H
-#define LWIP_INCLUDED_POLARSSL_DES_H
 
 #define DES_ENCRYPT     1
 #define DES_DECRYPT     0
@@ -87,6 +84,3 @@ void des_crypt_ecb( des_context *ctx,
 }
 #endif
 
-#endif /* LWIP_INCLUDED_POLARSSL_DES_H */
-
-#endif /* LWIP_INCLUDED_POLARSSL_DES */

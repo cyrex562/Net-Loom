@@ -60,12 +60,12 @@
 #include "ppp/fsm.h"
 
 static void fsm_timeout (void *);
-static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len);
-static void fsm_rconfack(fsm *f, int id, u_char *inp, int len);
-static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len);
-static void fsm_rtermreq(fsm *f, int id, u_char *p, int len);
+static void fsm_rconfreq(fsm *f, uint8_t id, uint8_t *inp, int len);
+static void fsm_rconfack(fsm *f, int id, uint8_t *inp, int len);
+static void fsm_rconfnakrej(fsm *f, int code, int id, uint8_t *inp, int len);
+static void fsm_rtermreq(fsm *f, int id, uint8_t *p, int len);
 static void fsm_rtermack(fsm *f);
-static void fsm_rcoderej(fsm *f, u_char *inp, int len);
+static void fsm_rcoderej(fsm *f, uint8_t *inp, int len);
 static void fsm_sconfreq(fsm *f, int retransmit);
 
 #define PROTO_NAME(f)	((f)->callbacks->proto_name)
@@ -76,7 +76,7 @@ static void fsm_sconfreq(fsm *f, int retransmit);
  * Initialize fsm state.
  */
 void fsm_init(fsm *f) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     f->state = PPP_FSM_INITIAL;
     f->flags = 0;
     f->id = 0;				/* XXX Start with random id? */
@@ -198,7 +198,7 @@ void fsm_open(fsm *f) {
  * send a terminate-request message as configured.
  */
 static void terminate_layer(fsm *f, int nextstate) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
 
     if( f->state != PPP_FSM_OPENED )
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
@@ -208,7 +208,7 @@ static void terminate_layer(fsm *f, int nextstate) {
     /* Init restart counter and send Terminate-Request */
     f->retransmits = pcb->settings.fsm_max_term_transmits;
     fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-	      (const u_char *) f->term_reason, f->term_reason_len);
+	      (const uint8_t *) f->term_reason, f->term_reason_len);
 
     if (f->retransmits == 0) {
 	/*
@@ -265,7 +265,7 @@ void fsm_close(fsm *f, const char *reason) {
  */
 static void fsm_timeout(void *arg) {
     fsm *f = (fsm *) arg;
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
 
     switch (f->state) {
     case PPP_FSM_CLOSING:
@@ -280,7 +280,7 @@ static void fsm_timeout(void *arg) {
 	} else {
 	    /* Send Terminate-Request */
 	    fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-		      (const u_char *) f->term_reason, f->term_reason_len);
+		      (const uint8_t *) f->term_reason, f->term_reason_len);
 	    TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
 	    --f->retransmits;
 	}
@@ -315,9 +315,9 @@ static void fsm_timeout(void *arg) {
 /*
  * fsm_input - Input packet.
  */
-void fsm_input(fsm *f, u_char *inpacket, int l) {
-    u_char *inp;
-    u_char code, id;
+void fsm_input(fsm *f, uint8_t *inpacket, int l) {
+    uint8_t *inp;
+    uint8_t code, id;
     int len;
 
     /*
@@ -389,7 +389,7 @@ void fsm_input(fsm *f, u_char *inpacket, int l) {
 /*
  * fsm_rconfreq - Receive Configure-Request.
  */
-static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
+static void fsm_rconfreq(fsm *f, uint8_t id, uint8_t *inp, int len) {
     int code, reject_if_disagree;
 
     switch( f->state ){
@@ -456,8 +456,8 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
 /*
  * fsm_rconfack - Receive Configure-Ack.
  */
-static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
-    ppp_pcb *pcb = f->pcb;
+static void fsm_rconfack(fsm *f, int id, uint8_t *inp, int len) {
+    PppPcb *pcb = f->pcb;
 
     if (id != f->reqid || f->seen_ack)		/* Expected id? */
 	return;					/* Nope, toss... */
@@ -512,7 +512,7 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
 /*
  * fsm_rconfnakrej - Receive Configure-Nak or Configure-Reject.
  */
-static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
+static void fsm_rconfnakrej(fsm *f, int code, int id, uint8_t *inp, int len) {
     int ret;
     int treat_as_reject;
 
@@ -577,8 +577,8 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
 /*
  * fsm_rtermreq - Receive Terminate-Req.
  */
-static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
-    ppp_pcb *pcb = f->pcb;
+static void fsm_rtermreq(fsm *f, int id, uint8_t *p, int len) {
+    PppPcb *pcb = f->pcb;
 
     switch (f->state) {
     case PPP_FSM_ACKRCVD:
@@ -642,8 +642,8 @@ static void fsm_rtermack(fsm *f) {
 /*
  * fsm_rcoderej - Receive an Code-Reject.
  */
-static void fsm_rcoderej(fsm *f, u_char *inp, int len) {
-    u_char code, id;
+static void fsm_rcoderej(fsm *f, uint8_t *inp, int len) {
+    uint8_t code, id;
 
     if (len < HEADERLEN) {
 	FSMDEBUG(("fsm_rcoderej: Rcvd short Code-Reject packet!"));
@@ -704,9 +704,9 @@ void fsm_protreject(fsm *f) {
  * fsm_sconfreq - Send a Configure-Request.
  */
 static void fsm_sconfreq(fsm *f, int retransmit) {
-    ppp_pcb *pcb = f->pcb;
+    PppPcb *pcb = f->pcb;
     struct pbuf *p;
-    u_char *outp;
+    uint8_t *outp;
     int cilen;
 
     if( f->state != PPP_FSM_REQSENT && f->state != PPP_FSM_ACKRCVD && f->state != PPP_FSM_ACKSENT ){
@@ -744,7 +744,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     }
 
     /* send the request to our peer */
-    outp = (u_char*)p->payload;
+    outp = (uint8_t*)p->payload;
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(CONFREQ, outp);
     PUTCHAR(f->reqid, outp);
@@ -767,10 +767,10 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
  *
  * Used for all packets sent to our peer by this module.
  */
-void fsm_sdata(fsm *f, u_char code, u_char id, const u_char *data, int datalen) {
-    ppp_pcb *pcb = f->pcb;
+void fsm_sdata(fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datalen) {
+    PppPcb *pcb = f->pcb;
     struct pbuf *p;
-    u_char *outp;
+    uint8_t *outp;
     int outlen;
 
     /* Adjust length to be smaller than MTU */
@@ -786,7 +786,7 @@ void fsm_sdata(fsm *f, u_char code, u_char id, const u_char *data, int datalen) 
         return;
     }
 
-    outp = (u_char*)p->payload;
+    outp = (uint8_t*)p->payload;
     if (datalen) /* && data != outp + PPP_HDRLEN + HEADERLEN)  -- was only for fsm_sconfreq() */
 	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     MAKEHEADER(outp, f->protocol);

@@ -1998,7 +1998,7 @@ class scoped_ptr {
  public:
   typedef T element_type;
 
-  explicit scoped_ptr(T* p = NULL) : ptr_(p) {}
+  explicit scoped_ptr(T* p = nullptr) : ptr_(p) {}
   ~scoped_ptr() { reset(); }
 
   T& operator*() const { return *ptr_; }
@@ -2011,7 +2011,7 @@ class scoped_ptr {
     return ptr;
   }
 
-  void reset(T* p = NULL) {
+  void reset(T* p = nullptr) {
     if (p != ptr_) {
       if (IsTrue(sizeof(T) > 0)) {  // Makes sure T is a complete type.
         delete ptr_;
@@ -2148,7 +2148,7 @@ class GTEST_API_ GTestLog {
                                   __FILE__, __LINE__).GetStream()
 
 inline void LogToStderr() {}
-inline void FlushInfoLog() { fflush(NULL); }
+inline void FlushInfoLog() { fflush(nullptr); }
 
 // INTERNAL IMPLEMENTATION - DO NOT USE.
 //
@@ -3223,7 +3223,7 @@ class GTEST_API_ Message {
   // as "(null)".
   template <typename T>
   inline Message& operator <<(T* const& pointer) {  // NOLINT
-    if (pointer == NULL) {
+    if (pointer == nullptr) {
       *ss_ << "(null)";
     } else {
       *ss_ << pointer;
@@ -7505,8 +7505,8 @@ class GTEST_API_ TypedTestCasePState {
 // returns NULL if no comma is found in 'str'.
 inline const char* SkipComma(const char* str) {
   const char* comma = strchr(str, ',');
-  if (comma == NULL) {
-    return NULL;
+  if (comma == nullptr) {
+    return nullptr;
   }
   while (IsSpace(*(++comma))) {}
   return comma;
@@ -7516,7 +7516,7 @@ inline const char* SkipComma(const char* str) {
 // the entire string if it contains no comma.
 inline std::string GetPrefixUntilComma(const char* str) {
   const char* comma = strchr(str, ',');
-  return comma == NULL ? str : std::string(str, comma);
+  return comma == nullptr ? str : std::string(str, comma);
 }
 
 // TypeParameterizedTest<Fixture, TestSel, Types>::Register()
@@ -7823,8 +7823,8 @@ struct IsAProtocolMessage
 typedef int IsContainer;
 template <class C>
 IsContainer IsContainerTest(int /* dummy */,
-                            typename C::iterator* /* it */ = NULL,
-                            typename C::const_iterator* /* const_it */ = NULL) {
+                            typename C::iterator* /* it */ = nullptr,
+                            typename C::const_iterator* /* const_it */ = nullptr) {
   return 0;
 }
 
@@ -9103,7 +9103,7 @@ class linked_ptr {
 
   // Take over ownership of a raw pointer.  This should happen as soon as
   // possible after the object is created.
-  explicit linked_ptr(T* ptr = NULL) { capture(ptr); }
+  explicit linked_ptr(T* ptr = nullptr) { capture(ptr); }
   ~linked_ptr() { depart(); }
 
   // Copy an existing linked_ptr<>, adding ourselves to the list of references.
@@ -9129,7 +9129,7 @@ class linked_ptr {
   }
 
   // Smart pointer members.
-  void reset(T* ptr = NULL) {
+  void reset(T* ptr = nullptr) {
     depart();
     capture(ptr);
   }
@@ -9498,7 +9498,7 @@ template <typename T>
 void DefaultPrintTo(IsNotContainer /* dummy */,
                     true_type /* is a pointer */,
                     T* p, ::std::ostream* os) {
-  if (p == NULL) {
+  if (p == nullptr) {
     *os << "NULL";
   } else {
     // C++ doesn't allow casting from a function pointer to any object
@@ -9897,7 +9897,7 @@ template <>
 class UniversalTersePrinter<const char*> {
  public:
   static void Print(const char* str, ::std::ostream* os) {
-    if (str == NULL) {
+    if (str == nullptr) {
       *os << "NULL";
     } else {
       UniversalPrint(string(str), os);
@@ -9917,7 +9917,7 @@ template <>
 class UniversalTersePrinter<const wchar_t*> {
  public:
   static void Print(const wchar_t* str, ::std::ostream* os) {
-    if (str == NULL) {
+    if (str == nullptr) {
       *os << "NULL";
     } else {
       UniversalPrint(::std::wstring(str), os);
@@ -10511,7 +10511,7 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
           MakeAndRegisterTestInfo(
               test_case_name.c_str(),
               test_name_stream.GetString().c_str(),
-              NULL,  // No type parameter.
+              nullptr,  // No type parameter.
               PrintToString(*param_it).c_str(),
               GetTestCaseTypeId(),
               TestCase::SetUpTestCase,
@@ -10573,7 +10573,7 @@ class ParameterizedTestCaseRegistry {
       const char* test_case_name,
       const char* file,
       int line) {
-    ParameterizedTestCaseInfo<TestCase>* typed_test_info = NULL;
+    ParameterizedTestCaseInfo<TestCase>* typed_test_info = nullptr;
     for (TestCaseInfoContainer::iterator it = test_case_infos_.begin();
          it != test_case_infos_.end(); ++it) {
       if ((*it)->GetTestCaseName() == test_case_name) {
@@ -10593,7 +10593,7 @@ class ParameterizedTestCaseRegistry {
         break;
       }
     }
-    if (typed_test_info == NULL) {
+    if (typed_test_info == nullptr) {
       typed_test_info = new ParameterizedTestCaseInfo<TestCase>(test_case_name);
       test_case_infos_.push_back(typed_test_info);
     }
@@ -17109,7 +17109,7 @@ class GTEST_API_ TestPartResult {
                  int a_line_number,
                  const char* a_message)
       : type_(a_type),
-        file_name_(a_file_name == NULL ? "" : a_file_name),
+        file_name_(a_file_name == nullptr ? "" : a_file_name),
         line_number_(a_line_number),
         summary_(ExtractSummary(a_message)),
         message_(a_message) {
@@ -17121,7 +17121,7 @@ class GTEST_API_ TestPartResult {
   // Gets the name of the source file where the test part took place, or
   // NULL if it's unknown.
   const char* file_name() const {
-    return file_name_.empty() ? NULL : file_name_.c_str();
+    return file_name_.empty() ? nullptr : file_name_.c_str();
   }
 
   // Gets the line in the source file where the test part took place,
@@ -17689,7 +17689,7 @@ class GTEST_API_ AssertionResult {
   // assertion's expectation). When nothing has been streamed into the
   // object, returns an empty string.
   const char* message() const {
-    return message_.get() != NULL ?  message_->c_str() : "";
+    return message_.get() != nullptr ?  message_->c_str() : "";
   }
   // TODO(vladl@google.com): Remove this after making sure no clients use it.
   // Deprecated; please use message() instead.
@@ -17712,7 +17712,7 @@ class GTEST_API_ AssertionResult {
  private:
   // Appends the contents of message to message_.
   void AppendMessage(const Message& a_message) {
-    if (message_.get() == NULL)
+    if (message_.get() == nullptr)
       message_.reset(new ::std::string);
     message_->append(a_message.GetString().c_str());
   }
@@ -17865,7 +17865,7 @@ class GTEST_API_ Test {
   // If you see an error about overriding the following function or
   // about it being private, you have mis-spelled SetUp() as Setup().
   struct Setup_should_be_spelled_SetUp {};
-  virtual Setup_should_be_spelled_SetUp* Setup() { return NULL; }
+  virtual Setup_should_be_spelled_SetUp* Setup() { return nullptr; }
 
   // We disallow copying Tests.
   GTEST_DISALLOW_COPY_AND_ASSIGN_(Test);
@@ -18050,17 +18050,17 @@ class GTEST_API_ TestInfo {
   // Returns the name of the parameter type, or NULL if this is not a typed
   // or a type-parameterized test.
   const char* type_param() const {
-    if (type_param_.get() != NULL)
+    if (type_param_.get() != nullptr)
       return type_param_->c_str();
-    return NULL;
+    return nullptr;
   }
 
   // Returns the text representation of the value parameter, or NULL if this
   // is not a value-parameterized test.
   const char* value_param() const {
-    if (value_param_.get() != NULL)
+    if (value_param_.get() != nullptr)
       return value_param_->c_str();
-    return NULL;
+    return nullptr;
   }
 
   // Returns true if this test should run, that is if the test is not
@@ -18187,9 +18187,9 @@ class GTEST_API_ TestCase {
   // Returns the name of the parameter type, or NULL if this is not a
   // type-parameterized test case.
   const char* type_param() const {
-    if (type_param_.get() != NULL)
+    if (type_param_.get() != nullptr)
       return type_param_->c_str();
-    return NULL;
+    return nullptr;
   }
 
   // Returns true if any test in this test case should run.
@@ -18368,7 +18368,7 @@ class Environment {
   // If you see an error about overriding the following function or
   // about it being private, you have mis-spelled SetUp() as Setup().
   struct Setup_should_be_spelled_SetUp {};
-  virtual Setup_should_be_spelled_SetUp* Setup() { return NULL; }
+  virtual Setup_should_be_spelled_SetUp* Setup() { return nullptr; }
 };
 
 // The interface for tracing execution of tests. The methods are organized in
@@ -18937,7 +18937,7 @@ class EqHelper<true> {
       // expands to Compare("", "", NULL, my_ptr), which requires a conversion
       // to match the Secret* in the other overload, which would otherwise make
       // this template match better.
-      typename EnableIf<!is_pointer<T2>::value>::type* = 0) {
+      typename EnableIf<!is_pointer<T2>::value>::type* = nullptr) {
     return CmpHelperEQ(expected_expression, actual_expression, expected,
                        actual);
   }
@@ -18958,7 +18958,7 @@ class EqHelper<true> {
       T* actual) {
     // We already know that 'expected' is a null pointer.
     return CmpHelperEQ(expected_expression, actual_expression,
-                       static_cast<T*>(NULL), actual);
+                       static_cast<T*>(nullptr), actual);
   }
 };
 
@@ -19246,7 +19246,7 @@ class WithParamInterface {
 };
 
 template <typename T>
-const T* WithParamInterface<T>::parameter_ = NULL;
+const T* WithParamInterface<T>::parameter_ = nullptr;
 
 // Most value-parameterized classes can ignore the existence of
 // WithParamInterface, and can just inherit from ::testing::TestWithParam.

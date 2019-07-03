@@ -30,15 +30,14 @@
  * $Id: ccp.h,v 1.12 2004/11/04 10:02:26 paulus Exp $
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT && CCP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#ifndef CCP_H
-#define CCP_H
+#pragma once
+#include "fsm.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+    struct PppPcb;
 
 /*
  * CCP codes.
@@ -70,7 +69,6 @@ extern "C" {
 #define CCP_OPT_LENGTH(dp)	((dp)[1])
 #define CCP_OPT_MINLEN		2
 
-#if BSDCOMPRESS_SUPPORT
 /*
  * Definitions for BSD-Compress.
  */
@@ -86,9 +84,9 @@ extern "C" {
 
 #define BSD_MIN_BITS		9	/* smallest code size supported */
 #define BSD_MAX_BITS		15	/* largest code size supported */
-#endif /* BSDCOMPRESS_SUPPORT */
 
-#if DEFLATE_SUPPORT
+
+
 /*
  * Definitions for Deflate.
  */
@@ -104,19 +102,14 @@ extern "C" {
 #define DEFLATE_METHOD(x)	((x) & 0x0F)
 #define DEFLATE_MAKE_OPT(w)	((((w) - 8) << 4) + DEFLATE_METHOD_VAL)
 #define DEFLATE_CHK_SEQUENCE	0
-#endif /* DEFLATE_SUPPORT */
-
-#if MPPE_SUPPORT
 /*
  * Definitions for MPPE.
  */
 
 #define CI_MPPE                18      /* config option for MPPE */
 #define CILEN_MPPE              6      /* length of config option */
-#endif /* MPPE_SUPPORT */
 
-#if PREDICTOR_SUPPORT
-/*
+    /*
  * Definitions for other, as yet unsupported, compression methods.
  */
 
@@ -124,18 +117,13 @@ extern "C" {
 #define CILEN_PREDICTOR_1	2	/* length of its config option */
 #define CI_PREDICTOR_2		2	/* config option for Predictor-2 */
 #define CILEN_PREDICTOR_2	2	/* length of its config option */
-#endif /* PREDICTOR_SUPPORT */
+
 
 typedef struct ccp_options {
-#if DEFLATE_SUPPORT
     unsigned int deflate          :1; /* do Deflate? */
     unsigned int deflate_correct  :1; /* use correct code for deflate? */
     unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
-#endif /* DEFLATE_SUPPORT */
-#if BSDCOMPRESS_SUPPORT
     unsigned int bsd_compress     :1; /* do BSD Compress? */
-#endif /* BSDCOMPRESS_SUPPORT */
-#if PREDICTOR_SUPPORT
     unsigned int predictor_1      :1; /* do Predictor-1? */
     unsigned int predictor_2      :1; /* do Predictor-2? */
 #endif /* PREDICTOR_SUPPORT */
@@ -152,13 +140,17 @@ typedef struct ccp_options {
     uint8_t method;		/* code for chosen compression method */
 } ccp_options;
 
-extern const struct protent ccp_protent;
+extern const struct Protent kCcpProtent;
 
-void ccp_resetrequest(ppp_pcb *pcb);  /* Issue a reset-request. */
+void ccp_resetrequest(uint8_t* PppPcb_ccp_local_state);  /* Issue a reset-request. */
+
+struct CcpRackTimeoutArgs
+{
+    fsm* f;
+    PppPcb* pcb;
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CCP_H */
-#endif /* PPP_SUPPORT && CCP_SUPPORT */

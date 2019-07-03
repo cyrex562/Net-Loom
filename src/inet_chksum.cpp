@@ -268,7 +268,7 @@ inet_cksum_pseudo_base(struct pbuf *p, uint8_t proto, uint16_t proto_len, uint32
   int swapped = 0;
 
   /* iterate through all pbuf in chain */
-  for (q = p; q != NULL; q = q->next) {
+  for (q = p; q != nullptr; q = q->next) {
     LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
                              (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
@@ -294,7 +294,7 @@ inet_cksum_pseudo_base(struct pbuf *p, uint8_t proto, uint16_t proto_len, uint32
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
+//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 
@@ -409,7 +409,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, uint8_t proto, uint16_t proto_len
   uint16_t chklen;
 
   /* iterate through all pbuf in chain */
-  for (q = p; (q != NULL) && (chksum_len > 0); q = q->next) {
+  for (q = p; (q != nullptr) && (chksum_len > 0); q = q->next) {
     LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
                              (void *)q, (void *)q->next));
     chklen = q->len;
@@ -440,7 +440,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, uint8_t proto, uint16_t proto_len
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
+//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 
@@ -577,7 +577,7 @@ inet_chksum_pbuf(struct pbuf *p)
   int swapped = 0;
 
   acc = 0;
-  for (q = p; q != NULL; q = q->next) {
+  for (q = p; q != nullptr; q = q->next) {
     acc += LWIP_CHKSUM(q->payload, q->len);
     acc = FOLD_U32T(acc);
     if (q->len % 2 != 0) {

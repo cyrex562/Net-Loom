@@ -43,7 +43,7 @@
 static LARGE_INTEGER freq, sys_start_time;
 #define SYS_INITIALIZED() (freq.QuadPart != 0)
 
-static DWORD netconn_sem_tls_index;
+static uint32_t netconn_sem_tls_index;
 
 static HCRYPTPROV hcrypt;
 
@@ -51,7 +51,7 @@ uint32_t
 sys_win_rand(void)
 {
   uint32_t ret;
-  if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
+  if (CryptGenRandom(hcrypt, sizeof(ret), (uint8_t*)&ret)) {
     return ret;
   }
   LWIP_ASSERT("CryptGenRandom failed", 0);
@@ -61,10 +61,10 @@ sys_win_rand(void)
 static void
 sys_win_rand_init(void)
 {
-  if (!CryptAcquireContext(&hcrypt, NULL, NULL, PROV_RSA_FULL, 0)) {
+  if (!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, 0)) {
     DWORD err = GetLastError();
     LWIP_PLATFORM_DIAG(("CryptAcquireContext failed with error %d, trying to create NEWKEYSET", (int)err));
-    if(!CryptAcquireContext(&hcrypt, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+    if(!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
       char errbuf[128];
       err = GetLastError();
       snprintf(errbuf, sizeof(errbuf), "CryptAcquireContext failed with error %d", (int)err);
@@ -194,18 +194,18 @@ struct threadlist {
   struct threadlist *next;
 };
 
-static struct threadlist *lwip_win32_threads = NULL;
+static struct threadlist *lwip_win32_threads = nullptr;
 
 err_t
 sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
-  HANDLE new_sem = NULL;
+  HANDLE new_sem = nullptr;
 
   LWIP_ASSERT("sem != NULL", sem != NULL);
 
-  new_sem = CreateSemaphore(0, count, 100000, 0);
+  new_sem = CreateSemaphore(nullptr, count, 100000, nullptr);
   LWIP_ASSERT("Error creating semaphore", new_sem != NULL);
-  if(new_sem != NULL) {
+  if(new_sem != nullptr) {
     if (SYS_INITIALIZED()) {
       SYS_ARCH_LOCKED(SYS_STATS_INC_USED(sem));
     } else {
@@ -224,7 +224,7 @@ sys_sem_new(sys_sem_t *sem, uint8_t count)
   } else {
     SYS_STATS_INC(sem.err);
   }
-  sem->sem = NULL;
+  sem->sem = nullptr;
   return ERR_MEM;
 }
 
@@ -241,7 +241,7 @@ sys_sem_free(sys_sem_t *sem)
 #if LWIP_STATS && SYS_STATS
   LWIP_ASSERT("sys_sem_free() closed more than created", lwip_stats.sys.sem.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
-  sem->sem = NULL;
+  sem->sem = nullptr;
 }
 
 uint32_t
@@ -283,7 +283,7 @@ sys_sem_signal(sys_sem_t *sem)
   LWIP_ASSERT("sem != NULL", sem != NULL);
   LWIP_ASSERT("sem->sem != NULL", sem->sem != NULL);
   LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
-  ret = ReleaseSemaphore(sem->sem, 1, NULL);
+  ret = ReleaseSemaphore(sem->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing semaphore", ret != 0);
   LWIP_UNUSED_ARG(ret);
 }
@@ -291,13 +291,13 @@ sys_sem_signal(sys_sem_t *sem)
 err_t
 sys_mutex_new(sys_mutex_t *mutex)
 {
-  HANDLE new_mut = NULL;
+  HANDLE new_mut = nullptr;
 
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
 
-  new_mut = CreateMutex(NULL, FALSE, NULL);
+  new_mut = CreateMutex(nullptr, FALSE, nullptr);
   LWIP_ASSERT("Error creating mutex", new_mut != NULL);
-  if (new_mut != NULL) {
+  if (new_mut != nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mutex));
 #if LWIP_STATS && SYS_STATS
     LWIP_ASSERT("sys_mutex_new() counter overflow", lwip_stats.sys.mutex.used != 0);
@@ -308,7 +308,7 @@ sys_mutex_new(sys_mutex_t *mutex)
    
   /* failed to allocate memory... */
   SYS_ARCH_LOCKED(SYS_STATS_INC(mutex.err));
-  mutex->mut = NULL;
+  mutex->mut = nullptr;
   return ERR_MEM;
 }
 
@@ -325,7 +325,7 @@ sys_mutex_free(sys_mutex_t *mutex)
 #if LWIP_STATS && SYS_STATS
   LWIP_ASSERT("sys_mutex_free() closed more than created", lwip_stats.sys.mutex.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
-  mutex->mut = NULL;
+  mutex->mut = nullptr;
 }
 
 void sys_mutex_lock(sys_mutex_t *mutex)
@@ -416,15 +416,15 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
 
   new_thread = (struct threadlist*)malloc(sizeof(struct threadlist));
   LWIP_ASSERT("new_thread != NULL", new_thread != NULL);
-  if (new_thread != NULL) {
+  if (new_thread != nullptr) {
     new_thread->function = function;
     new_thread->arg = arg;
     SYS_ARCH_PROTECT(lev);
     new_thread->next = lwip_win32_threads;
     lwip_win32_threads = new_thread;
 
-    h = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)sys_thread_function, new_thread, 0, &(new_thread->id));
-    LWIP_ASSERT("h != 0", h != 0);
+    h = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)sys_thread_function, new_thread, 0, &(new_thread->id));
+    LWIP_ASSERT("h != 0", h != nullptr);
     LWIP_ASSERT("h != -1", h != INVALID_HANDLE_VALUE);
     LWIP_UNUSED_ARG(h);
     SetThreadName(new_thread->id, name);
@@ -487,9 +487,9 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
   LWIP_ASSERT("mbox != NULL", mbox != NULL);
   LWIP_UNUSED_ARG(size);
 
-  mbox->sem = CreateSemaphore(0, 0, MAX_QUEUE_ENTRIES, 0);
+  mbox->sem = CreateSemaphore(nullptr, 0, MAX_QUEUE_ENTRIES, nullptr);
   LWIP_ASSERT("Error creating semaphore", mbox->sem != NULL);
-  if (mbox->sem == NULL) {
+  if (mbox->sem == nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC(mbox.err));
     return ERR_MEM;
   }
@@ -517,7 +517,7 @@ sys_mbox_free(sys_mbox_t *mbox)
 #if LWIP_STATS && SYS_STATS
   LWIP_ASSERT( "sys_mbox_free() ", lwip_stats.sys.mbox.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
-  mbox->sem = NULL;
+  mbox->sem = nullptr;
 }
 
 void
@@ -539,7 +539,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
     q->head = 0;
   }
   LWIP_ASSERT("mbox is full!", q->head != q->tail);
-  ret = ReleaseSemaphore(q->sem, 1, 0);
+  ret = ReleaseSemaphore(q->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing sem", ret != 0);
   LWIP_UNUSED_ARG(ret);
 
@@ -573,7 +573,7 @@ sys_mbox_trypost(sys_mbox_t *q, void *msg)
   q->q_mem[q->head] = msg;
   q->head = new_head;
   LWIP_ASSERT("mbox is full!", q->head != q->tail);
-  ret = ReleaseSemaphore(q->sem, 1, 0);
+  ret = ReleaseSemaphore(q->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing sem", ret != 0);
   LWIP_UNUSED_ARG(ret);
 
@@ -606,7 +606,7 @@ sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, uint32_t timeout)
   ret = WaitForSingleObject(q->sem, timeout);
   if (ret == WAIT_OBJECT_0) {
     SYS_ARCH_PROTECT(lev);
-    if (msg != NULL) {
+    if (msg != nullptr) {
       *msg  = q->q_mem[q->tail];
     }
 
@@ -619,8 +619,8 @@ sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, uint32_t timeout)
     return (uint32_t)(endtime - starttime);
   } else {
     LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
-    if (msg != NULL) {
-      *msg  = NULL;
+    if (msg != nullptr) {
+      *msg  = nullptr;
     }
 
     return SYS_ARCH_TIMEOUT;
@@ -641,7 +641,7 @@ sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
   ret = WaitForSingleObject(q->sem, 0);
   if (ret == WAIT_OBJECT_0) {
     SYS_ARCH_PROTECT(lev);
-    if (msg != NULL) {
+    if (msg != nullptr) {
       *msg  = q->q_mem[q->tail];
     }
 
@@ -653,8 +653,8 @@ sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
     return 0;
   } else {
     LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
-    if (msg != NULL) {
-      *msg  = NULL;
+    if (msg != nullptr) {
+      *msg  = nullptr;
     }
 
     return SYS_ARCH_TIMEOUT;

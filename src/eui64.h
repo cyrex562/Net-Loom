@@ -34,12 +34,10 @@
  *
  * $Id: eui64.h,v 1.6 2002/12/04 23:03:32 paulus Exp $
 */
+#pragma once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#ifndef EUI64_H
-#define EUI64_H
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,14 +53,14 @@ typedef union
     uint8_t e8[8];
     uint16_t e16[4];
     uint32_t e32[2];
-} eui64_t;
+} Eui64T;
 
 #define eui64_iszero(e)		(((e).e32[0] | (e).e32[1]) == 0)
 #define eui64_equals(e, o)	(((e).e32[0] == (o).e32[0]) && \
 				((e).e32[1] == (o).e32[1]))
 #define eui64_zero(e)		(e).e32[0] = (e).e32[1] = 0;
 
-#define eui64_copy(s, d)	memcpy(&(d), &(s), sizeof(eui64_t))
+#define eui64_copy(s, d)	memcpy(&(d), &(s), sizeof(Eui64T))
 
 #define eui64_magic(e)		do {			\
 				(e).e32[0] = magic();	\
@@ -92,11 +90,8 @@ typedef union
 				} while (0)
 #define eui64_setlo32(e, l)	eui64_set32(e, l)
 
-char *eui64_ntoa(eui64_t);	/* Returns ascii representation of id */
+char *eui64_ntoa(Eui64T);	/* Returns ascii representation of id */
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* EUI64_H */
-#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

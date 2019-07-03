@@ -305,12 +305,12 @@ ip4addr_ntoa_r(const LwipIpv4Addr *addr, char *buf, int buflen)
     } while (*ap);
     while (i--) {
       if (len++ >= buflen) {
-        return NULL;
+        return nullptr;
       }
       *rp++ = inv[i];
     }
     if (len++ >= buflen) {
-      return NULL;
+      return nullptr;
     }
     *rp++ = '.';
     ap++;

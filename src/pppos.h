@@ -31,14 +31,10 @@
  *
  */
 
+#pragma once
+
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef PPPOS_H
-#define PPPOS_H
-
 #include "sys.h"
-
 #include "ppp.h"
 #include "vj.h"
 
@@ -72,7 +68,7 @@ typedef uint8_t ext_accm[32];
 typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
-  ppp_pcb *ppp;                    /* PPP PCB */
+  PppPcb *ppp;                    /* PPP PCB */
   pppos_output_cb_fn output_cb;    /* PPP serial output callback */
 
   /* -- below are data that will be cleared between two sessions
@@ -98,7 +94,7 @@ struct pppos_pcb_s {
 };
 
 /* Create a new PPPoS session. */
-ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
+PppPcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
@@ -121,6 +117,3 @@ err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PPPOS_H */
-#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

@@ -1,0 +1,23 @@
+C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\JoshMadden\Documents\GitHub\lwip_refactor
+-- Version: 5.3.0
+-- Build type: Debug
+-- CXX_STANDARD: 17
+-- Performing Test has_std_17_flag
+-- Performing Test has_std_17_flag - Success
+-- Performing Test has_std_1z_flag
+-- Performing Test has_std_1z_flag - Success
+-- Performing Test SUPPORTS_VARIADIC_TEMPLATES
+-- Performing Test SUPPORTS_VARIADIC_TEMPLATES - Success
+-- Performing Test SUPPORTS_INITIALIZER_LIST
+-- Performing Test SUPPORTS_INITIALIZER_LIST - Success
+-- Performing Test SUPPORTS_ENUM_BASE
+-- Performing Test SUPPORTS_ENUM_BASE - Success
+-- Performing Test SUPPORTS_TYPE_TRAITS
+-- Performing Test SUPPORTS_TYPE_TRAITS - Success
+-- Performing Test SUPPORTS_USER_DEFINED_LITERALS
+-- Performing Test SUPPORTS_USER_DEFINED_LITERALS - Success
+-- Looking for open
+-- Looking for open - found
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug

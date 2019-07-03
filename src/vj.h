@@ -22,21 +22,17 @@
  * - Initial distribution.
  */
 
+#pragma once
 #include "ppp_opts.h"
-#if PPP_SUPPORT && VJ_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef VJ_H
-#define VJ_H
-
 #include "ip.h"
-#include "priv/tcp_priv.h"
+#include "tcp_priv.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define MAX_SLOTS 16 /* must be > 2 and < 256 */
-#define MAX_HDR   128
+constexpr auto kMaxHdr = 128;
 
 /*
  * Compressed packet format:
@@ -82,25 +78,25 @@ extern "C" {
  */
 
 /* packet types */
-#define TYPE_IP               0x40
-#define TYPE_UNCOMPRESSED_TCP 0x70
-#define TYPE_COMPRESSED_TCP   0x80
-#define TYPE_ERROR            0x00
+constexpr auto kTypeIp = 0x40;
+constexpr auto kTypeUncompressedTcp = 0x70;
+constexpr auto kTypeCompressedTcp = 0x80;
+constexpr auto kTypeError = 0x00;
 
 /* Bits in first octet of compressed packet */
-#define NEW_C 0x40 /* flag bits for what changed in a packet */
-#define NEW_I 0x20
-#define NEW_S 0x08
-#define NEW_A 0x04
-#define NEW_W 0x02
-#define NEW_U 0x01
+constexpr auto kNewC = 0x40 /* flag bits for what changed in a packet */;
+constexpr auto kNewI = 0x20;
+constexpr auto kNewS = 0x08;
+constexpr auto kNewA = 0x04;
+constexpr auto kNewW = 0x02;
+constexpr auto kNewU = 0x01;
 
 /* reserved, special-case values of above */
 #define SPECIAL_I (NEW_S|NEW_W|NEW_U) /* echoed interactive traffic */
 #define SPECIAL_D (NEW_S|NEW_A|NEW_W|NEW_U) /* unidirectional data */
 #define SPECIALS_MASK (NEW_S|NEW_A|NEW_W|NEW_U)
 
-#define TCP_PUSH_BIT 0x10
+constexpr auto kTcpPushBit = 0x10;
 
 
 /*
@@ -109,21 +105,21 @@ extern "C" {
  * we saw from the conversation together with a small identifier
  * the transmit & receive ends of the line use to locate saved header.
  */
-struct cstate {
-  struct cstate *cs_next; /* next most recently used state (xmit only) */
+struct Cstate {
+  struct Cstate *cs_next; /* next most recently used state (xmit only) */
   uint16_t cs_hlen;        /* size of hdr (receive only) */
   uint8_t cs_id;           /* connection # associated with this state */
   uint8_t cs_filler;
   union {
-    char csu_hdr[MAX_HDR];
+    char csu_hdr[kMaxHdr];
     struct ip_hdr csu_ip;     /* ip/tcp hdr from most recent packet */
   } vjcs_u;
 };
-#define cs_ip vjcs_u.csu_ip
-#define cs_hdr vjcs_u.csu_hdr
+#define CS_IP vjcs_u.csu_ip
+#define CS_HDR vjcs_u.csu_hdr
 
 
-struct vjstat {
+struct Vjstat {
   uint32_t vjs_packets;        /* outbound packets */
   uint32_t vjs_compressed;     /* outbound compressed packets */
   uint32_t vjs_searches;       /* searches for connection state */
@@ -145,14 +141,14 @@ struct vjcompress {
   uint8_t maxSlotIndex;
   uint8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
 #if LINK_STATS
-  struct vjstat stats;
+  struct Vjstat stats;
 #endif
-  struct cstate tstate[MAX_SLOTS]; /* xmit connection states */
-  struct cstate rstate[MAX_SLOTS]; /* receive connection states */
+  struct Cstate tstate[MAX_SLOTS]; /* xmit connection states */
+  struct Cstate rstate[MAX_SLOTS]; /* receive connection states */
 };
 
 /* flag values */
-#define VJF_TOSS 1U /* tossing rcvd frames because of input err */
+constexpr auto kVjfToss = 1U /* tossing rcvd frames because of input err */;
 
 extern void  vj_compress_init    (struct vjcompress *comp);
 extern uint8_t  vj_compress_tcp     (struct vjcompress *comp, struct pbuf **pb);
@@ -163,7 +159,3 @@ extern int   vj_uncompress_tcp   (struct pbuf **nb, struct vjcompress *comp);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* VJ_H */
-
-#endif /* PPP_SUPPORT && VJ_SUPPORT */

@@ -39,11 +39,11 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_SHA1
 
-#include "ppp/polarssl/sha1.h"
 
-#include <string.h>
+#include "sha1.h"
+
+#include <cstring>
 
 /*
  * 32-bit integer manipulation macros (big endian)
@@ -332,4 +332,3 @@ void sha1( unsigned char *input, int ilen, unsigned char output[20] )
     sha1_finish( &ctx, output );
 }
 
-#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_SHA1 */

@@ -42,11 +42,9 @@
  * $Id: upap.h,v 1.8 2002/12/04 23:03:33 paulus Exp $
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+#pragma once
 
-#ifndef UPAP_H
-#define UPAP_H
+#include "ppp_opts.h"
 
 #include "ppp.h"
 
@@ -57,7 +55,7 @@ extern "C" {
 /*
  * Packet header = Code, id, length.
  */
-#define UPAP_HEADERLEN	4
+constexpr auto UPAP_HEADERLEN = 4;
 
 
 /*
@@ -100,7 +98,6 @@ extern "C" {
 /*
  * Each interface is described by upap structure.
  */
-#if PAP_SUPPORT
 typedef struct upap_state {
     const char *us_user;	/* User */
     uint8_t us_userlen;		/* User length */
@@ -113,19 +110,18 @@ typedef struct upap_state {
     uint8_t us_id;		        /* Current id */
     uint8_t us_transmits;		/* Number of auth-reqs sent */
 } upap_state;
-#endif /* PAP_SUPPORT */
 
 
-void upap_authwithpeer(ppp_pcb *pcb, const char *user, const char *password);
-#if PPP_SERVER
-void upap_authpeer(ppp_pcb *pcb);
-#endif /* PPP_SERVER */
 
-extern const struct protent pap_protent;
+void upap_authwithpeer(PppPcb *pcb, const char *user, const char *password);
+
+void upap_authpeer(PppPcb*pcb);
+
+
+extern const struct Protent pap_protent;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* UPAP_H */
-#endif /* PPP_SUPPORT && PAP_SUPPORT */
+

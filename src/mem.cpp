@@ -620,7 +620,7 @@ mem_free(void *rmem)
   struct mem *mem;
   LWIP_MEM_FREE_DECL_PROTECT();
 
-  if (rmem == NULL) {
+  if (rmem == nullptr) {
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\n"));
     return;
   }
@@ -716,7 +716,7 @@ mem_trim(void *rmem, mem_size_t new_size)
   newsize += MEM_SANITY_REGION_BEFORE_ALIGNED + MEM_SANITY_REGION_AFTER_ALIGNED;
 #endif
   if ((newsize > MEM_SIZE_ALIGNED) || (newsize < new_size)) {
-    return NULL;
+    return nullptr;
   }
 
   LWIP_ASSERT("mem_trim: legal memory", (uint8_t *)rmem >= (uint8_t *)ram &&
@@ -741,7 +741,7 @@ mem_trim(void *rmem, mem_size_t new_size)
   LWIP_ASSERT("mem_trim can only shrink memory", newsize <= size);
   if (newsize > size) {
     /* not supported */
-    return NULL;
+    return nullptr;
   }
   if (newsize == size) {
     /* No change in size, simply return */
@@ -839,7 +839,7 @@ mem_malloc(mem_size_t size_in)
   LWIP_MEM_ALLOC_DECL_PROTECT();
 
   if (size_in == 0) {
-    return NULL;
+    return nullptr;
   }
 
   /* Expand the size of the allocated memory region so that we can
@@ -853,7 +853,7 @@ mem_malloc(mem_size_t size_in)
   size += MEM_SANITY_REGION_BEFORE_ALIGNED + MEM_SANITY_REGION_AFTER_ALIGNED;
 #endif
   if ((size > MEM_SIZE_ALIGNED) || (size < size_in)) {
-    return NULL;
+    return nullptr;
   }
 
   /* protect the heap from concurrent access */
@@ -972,8 +972,8 @@ mem_malloc_adjust_lfree:
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
   sys_mutex_unlock(&mem_mutex);
-  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (int16_t)size));
-  return NULL;
+//  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (int16_t)size));
+  return nullptr;
 }
 
 #endif /* MEM_USE_POOLS */
@@ -1003,8 +1003,8 @@ mem_calloc(mem_size_t count, mem_size_t size)
   size_t alloc_size = (size_t)count * (size_t)size;
 
   if ((size_t)(mem_size_t)alloc_size != alloc_size) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
-    return NULL;
+//    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
+    return nullptr;
   }
 
   /* allocate 'count' objects of size 'size' */

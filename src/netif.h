@@ -68,28 +68,27 @@ constexpr auto NETIF_NAMESIZE = 6;
  * @}
  */
 
-enum lwip_internal_netif_client_data_index
-{
+enum lwip_internal_netif_client_data_index {
 #if LWIP_IPV4
 #if LWIP_DHCP
-   LWIP_NETIF_CLIENT_DATA_INDEX_DHCP,
+  LWIP_NETIF_CLIENT_DATA_INDEX_DHCP,
 #endif
 #if LWIP_AUTOIP
-   LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP,
+  LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP,
 #endif
 #if LWIP_IGMP
-   LWIP_NETIF_CLIENT_DATA_INDEX_IGMP,
+  LWIP_NETIF_CLIENT_DATA_INDEX_IGMP,
 #endif
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
 #if LWIP_IPV6_DHCP6
-   LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6,
+  LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6,
 #endif
 #if LWIP_IPV6_MLD
-   LWIP_NETIF_CLIENT_DATA_INDEX_MLD6,
+  LWIP_NETIF_CLIENT_DATA_INDEX_MLD6,
 #endif
 #endif /* LWIP_IPV6 */
-   LWIP_NETIF_CLIENT_DATA_INDEX_MAX
+  LWIP_NETIF_CLIENT_DATA_INDEX_MAX
 };
 
 #if LWIP_CHECKSUM_CTRL_PER_NETIF
@@ -113,9 +112,9 @@ struct netif;
  * mld_mac_filter callback function. */
 enum netif_mac_filter_action {
   /** Delete a filter entry */
-  NETIF_DEL_MAC_FILTER = 0,
+      NETIF_DEL_MAC_FILTER = 0,
   /** Add a filter entry */
-  NETIF_ADD_MAC_FILTER = 1
+      NETIF_ADD_MAC_FILTER = 1
 };
 
 /** Function prototype for netif init functions. Set up flags and output/linkoutput
@@ -302,7 +301,10 @@ extern struct netif *netif_default;
 
 void netif_init(void);
 
-struct netif *netif_add_noaddr(struct netif *netif, void *state, netif_init_fn init, netif_input_fn input);
+struct netif *netif_add_noaddr(struct netif *netif,
+                               void *state,
+                               netif_init_fn init,
+                               netif_input_fn input);
 
 #if LWIP_IPV4
 struct netif *netif_add(struct netif *netif,
@@ -313,7 +315,7 @@ void netif_set_addr(struct netif *netif, const LwipIpv4Addr *ipaddr, const LwipI
 #else /* LWIP_IPV4 */
 struct netif *netif_add(struct netif *netif, void *state, netif_init_fn init, netif_input_fn input);
 #endif /* LWIP_IPV4 */
-void netif_remove(struct netif * netif);
+void netif_remove(struct netif *netif);
 
 /* Returns a network interface given its name. The name is of the form
    "et0", where the first two letters are the "name" field in the
@@ -398,7 +400,7 @@ void netif_poll_all(void);
 
 err_t netif_input(struct pbuf *p, struct netif *inp);
 
-#if LWIP_IPV6
+
 /** @ingroup netif_ip6 */
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif_ip6 */
@@ -430,7 +432,7 @@ err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t
 #else /* LWIP_ND6_ALLOW_RA_UPDATES */
 #define netif_mtu6(netif) ((netif)->mtu)
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
-#endif /* LWIP_IPV6 */
+
 
 #if LWIP_NETIF_USE_HINTS
 #define NETIF_SET_HINTS(netif, netifhint)  (netif)->hints = (netifhint)
@@ -483,39 +485,33 @@ typedef uint16_t netif_nsc_reason_t;
 /** @ingroup netif
  * Argument supplied to netif_ext_callback_fn.
  */
-typedef union
-{
+typedef union {
   /** Args to LWIP_NSC_LINK_CHANGED callback */
-  struct link_changed_s
-  {
+  struct link_changed_s {
     /** 1: up; 0: down */
     uint8_t state;
   } link_changed;
   /** Args to LWIP_NSC_STATUS_CHANGED callback */
-  struct status_changed_s
-  {
+  struct status_changed_s {
     /** 1: up; 0: down */
     uint8_t state;
   } status_changed;
   /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED|LWIP_NSC_IPV4_GATEWAY_CHANGED|LWIP_NSC_IPV4_NETMASK_CHANGED|LWIP_NSC_IPV4_SETTINGS_CHANGED callback */
-  struct ipv4_changed_s
-  {
+  struct ipv4_changed_s {
     /** Old IPv4 address */
     const LwipIpAddr* old_address;
     const LwipIpAddr* old_netmask;
     const LwipIpAddr* old_gw;
   } ipv4_changed;
   /** Args to LWIP_NSC_IPV6_SET callback */
-  struct ipv6_set_s
-  {
+  struct ipv6_set_s {
     /** Index of changed IPv6 address */
     s8_t addr_index;
     /** Old IPv6 address */
     const LwipIpAddr* old_address;
   } ipv6_set;
   /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
-  struct ipv6_addr_state_changed_s
-  {
+  struct ipv6_addr_state_changed_s {
     /** Index of affected IPv6 address */
     s8_t addr_index;
     /** Old IPv6 address state */
@@ -533,7 +529,9 @@ typedef union
  * @param reason change reason
  * @param args depends on reason, see reason description
  */
-typedef void (*netif_ext_callback_fn)(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
+typedef void(*netif_ext_callback_fn)(struct netif *netif,
+                                     netif_nsc_reason_t reason,
+                                     const netif_ext_callback_args_t *args);
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 struct netif_ext_callback;

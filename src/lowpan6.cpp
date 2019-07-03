@@ -48,10 +48,8 @@
  * 6LowPAN netif implementation
  */
 
+//#if LWIP_IPV6
 #include "lowpan6.h"
-
-#if LWIP_IPV6
-
 #include "ip.h"
 #include "pbuf.h"
 #include "ip_addr.h"
@@ -60,10 +58,11 @@
 #include "mem.h"
 #include "udp.h"
 #include "tcpip.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 #include "ieee802154.h"
-
-#include <string.h>
+#include "lowpan6_common.h"
+#include "lwip_debug.h"
+#include <cstring>
 
 #if LWIP_6LOWPAN_802154_HW_CRC
 #define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) 0
@@ -319,10 +318,10 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *
 void
 lowpan6_tmr(void)
 {
-  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = NULL;
+  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = nullptr;
 
   lrh = lowpan6_data.reass_list;
-  while (lrh != NULL) {
+  while (lrh != nullptr) {
     lrh_next = lrh->next_packet;
     if ((--lrh->timer) == 0) {
       dequeue_datagram(lrh, lrh_prev);
@@ -356,7 +355,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr
 
   /* We'll use a dedicated pbuf for building 6LowPAN fragments. */
   p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
-  if (p_frag == NULL) {
+  if (p_frag == nullptr) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
@@ -625,7 +624,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 
   /* If no hardware address is returned, nd6 has queued the packet for later. */
-  if (hwaddr == NULL) {
+  if (hwaddr == nullptr) {
     return ERR_OK;
   }
 
@@ -650,9 +649,9 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   struct lowpan6_link_addr src, dest;
   uint16_t datagram_size = 0;
   uint16_t datagram_offset, datagram_tag;
-  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = NULL;
+  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = nullptr;
 
-  if (p == NULL) {
+  if (p == nullptr) {
     return ERR_OK;
   }
 
@@ -678,7 +677,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 
     /* check for duplicate */
     lrh = lowpan6_data.reass_list;
-    while (lrh != NULL) {
+    while (lrh != nullptr) {
       uint8_t discard = 0;
       lrh_next = lrh->next_packet;
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
@@ -705,7 +704,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     pbuf_remove_header(p, 4); /* hide frag1 dispatch */
 
     lrh = (struct lowpan6_reass_helper *) mem_malloc(sizeof(struct lowpan6_reass_helper));
-    if (lrh == NULL) {
+    if (lrh == nullptr) {
       goto lowpan6_input_discard;
     }
 
@@ -722,7 +721,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       lrh->reass = p;
     } else if ((*(uint8_t *)p->payload & 0xe0 ) == 0x60) {
       lrh->reass = lowpan6_decompress(p, datagram_size, LWIP_6LOWPAN_CONTEXTS(netif), &src, &dest);
-      if (lrh->reass == NULL) {
+      if (lrh->reass == nullptr) {
         /* decompression failed */
         mem_free(lrh);
         goto lowpan6_input_discard;
@@ -741,7 +740,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     datagram_offset = (uint16_t)puc[4] << 3;
     pbuf_remove_header(p, 4); /* hide frag1 dispatch but keep datagram offset for reassembly */
 
-    for (lrh = lowpan6_data.reass_list; lrh != NULL; lrh_prev = lrh, lrh = lrh->next_packet) {
+    for (lrh = lowpan6_data.reass_list; lrh != nullptr; lrh_prev = lrh, lrh = lrh->next_packet) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0) &&
           (datagram_tag == lrh->datagram_tag) &&
@@ -749,14 +748,14 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         break;
       }
     }
-    if (lrh == NULL) {
+    if (lrh == nullptr) {
       /* rogue fragment */
       goto lowpan6_input_discard;
     }
     /* Insert new pbuf into list of fragments. Each fragment is a pbuf,
        this only works for unchained pbufs. */
     LWIP_ASSERT("p->next == NULL", p->next == NULL);
-    if (lrh->reass != NULL) {
+    if (lrh->reass != nullptr) {
       /* FRAG1 already received, check this offset against first len */
       if (datagram_offset < lrh->reass->len) {
         /* fragment overlap, discard old fragments */
@@ -765,7 +764,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         goto lowpan6_input_discard;
       }
     }
-    if (lrh->frags == NULL) {
+    if (lrh->frags == nullptr) {
       /* first FRAGN */
       lrh->frags = p;
     } else {
@@ -797,7 +796,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         }
       }
       /* insert fragment */
-      if (last == NULL) {
+      if (last == nullptr) {
         lrh->frags = p;
       } else {
         last->next = p;
@@ -819,7 +818,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       if (offset == datagram_size) {
         /* all fragments received, combine pbufs */
         uint16_t datagram_left = datagram_size - lrh->reass->len;
-        for (q = lrh->frags; q != NULL; q = q->next) {
+        for (q = lrh->frags; q != nullptr; q = q->next) {
           /* hide datagram_offset byte now */
           pbuf_remove_header(q, 1);
           q->tot_len = datagram_left;
@@ -829,8 +828,8 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         q = lrh->reass;
         q->tot_len = datagram_size;
         q->next = lrh->frags;
-        lrh->frags = NULL;
-        lrh->reass = NULL;
+        lrh->frags = nullptr;
+        lrh->reass = nullptr;
         dequeue_datagram(lrh, lrh_prev);
         mem_free(lrh);
 
@@ -848,7 +847,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     } else if ((b & 0xe0 ) == 0x60) {
       /* IPv6 headers are compressed using IPHC. */
       p = lowpan6_decompress(p, datagram_size, LWIP_6LOWPAN_CONTEXTS(netif), &src, &dest);
-      if (p == NULL) {
+      if (p == nullptr) {
         MIB2_STATS_NETIF_INC(netif, ifindiscards);
         return ERR_OK;
       }
@@ -917,4 +916,4 @@ tcpip_6lowpan_input(struct pbuf *p, struct netif *inp)
 }
 #endif /* !NO_SYS */
 
-#endif /* LWIP_IPV6 */
+//#endif /* LWIP_IPV6 */

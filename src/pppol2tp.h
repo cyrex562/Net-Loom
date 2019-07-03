@@ -31,12 +31,9 @@
  *
  */
 
+#pragma once
+
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef PPPOL2TP_H
-#define PPPOL2TP_H
-
 #include "ppp.h"
 
 #ifdef __cplusplus
@@ -196,7 +193,7 @@ struct pppol2tp_pcb_s {
 
 
 /* Create a new L2TP session. */
-ppp_pcb *pppol2tp_create(struct netif *pppif,
+PppPcb *pppol2tp_create(struct netif *pppif,
        struct netif *netif, const ip_addr_t *ipaddr, uint16_t port,
        const uint8_t *secret, uint8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
@@ -204,6 +201,3 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PPPOL2TP_H */
-#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

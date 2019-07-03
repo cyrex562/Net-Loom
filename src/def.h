@@ -157,6 +157,16 @@ uint16_t lwip_ntohs(uint16_t x);
 
 #define NETIF_MAX_HWADDR_LEN 6
 
+typedef int64_t LONGLONG;
+
+//typedef struct _LARGE_INTEGER {
+//  LONGLONG QuadPart;
+//} LARGE_INTEGER;
+
+typedef void* HANDLE;
+
+typedef uintptr_t HCRYPTPROV;
+
 #ifdef __cplusplus
 }
 #endif

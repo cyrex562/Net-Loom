@@ -101,11 +101,11 @@ icmp_input(struct pbuf *p, struct netif *inp)
   iphdr_in = ip4_current_header();
   hlen = IPH_HL_BYTES(iphdr_in);
   if (hlen < IP_HLEN) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
+//    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
     goto lenerr;
   }
   if (p->len < sizeof(uint16_t) * 2) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
+//    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
     goto lenerr;
   }
 
@@ -173,7 +173,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
         }
         /* allocate new packet buffer with space for link headers */
         r = pbuf_alloc(PBUF_LINK, alloc_len, PBUF_RAM);
-        if (r == NULL) {
+        if (r == nullptr) {
           LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed\n"));
           goto icmperr;
         }
@@ -254,55 +254,65 @@ icmp_input(struct pbuf *p, struct netif *inp)
         MIB2_STATS_INC(mib2.icmpoutechoreps);
 
         /* send an ICMP packet */
-        ret = ip4_output_if(p, src, LWIP_IP_HDRINCL,
+        ret = ip4_output_if(p, src, nullptr,
                             ICMP_TTL, 0, IP_PROTO_ICMP, inp);
-        if (ret != ERR_OK) {
-          LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)));
+        if (ret != ERR_OK)
+        {
+            LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)));
         }
-      }
-      break;
+        }
+        break;
     default:
-      if (type == ICMP_DUR) {
-        MIB2_STATS_INC(mib2.icmpindestunreachs);
-      } else if (type == ICMP_TE) {
-        MIB2_STATS_INC(mib2.icmpintimeexcds);
-      } else if (type == ICMP_PP) {
-        MIB2_STATS_INC(mib2.icmpinparmprobs);
-      } else if (type == ICMP_SQ) {
-        MIB2_STATS_INC(mib2.icmpinsrcquenchs);
-      } else if (type == ICMP_RD) {
-        MIB2_STATS_INC(mib2.icmpinredirects);
-      } else if (type == ICMP_TS) {
-        MIB2_STATS_INC(mib2.icmpintimestamps);
-      } else if (type == ICMP_TSR) {
-        MIB2_STATS_INC(mib2.icmpintimestampreps);
-      } else if (type == ICMP_AM) {
-        MIB2_STATS_INC(mib2.icmpinaddrmasks);
-      } else if (type == ICMP_AMR) {
-        MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
-      }
-      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
-                               (int16_t)type, (int16_t)code));
-      ICMP_STATS_INC(icmp.proterr);
-      ICMP_STATS_INC(icmp.drop);
-  }
-  pbuf_free(p);
-  return;
-lenerr:
-  pbuf_free(p);
-  ICMP_STATS_INC(icmp.lenerr);
-  MIB2_STATS_INC(mib2.icmpinerrors);
-  return;
+        if (type == ICMP_DUR)
+        {
+            MIB2_STATS_INC(mib2.icmpindestunreachs);
+        } else if (type == ICMP_TE)
+        {
+            MIB2_STATS_INC(mib2.icmpintimeexcds);
+        } else if (type == ICMP_PP)
+        {
+            MIB2_STATS_INC(mib2.icmpinparmprobs);
+        } else if (type == ICMP_SQ)
+        {
+            MIB2_STATS_INC(mib2.icmpinsrcquenchs);
+        } else if (type == ICMP_RD)
+        {
+            MIB2_STATS_INC(mib2.icmpinredirects);
+        } else if (type == ICMP_TS)
+        {
+            MIB2_STATS_INC(mib2.icmpintimestamps);
+        } else if (type == ICMP_TSR)
+        {
+            MIB2_STATS_INC(mib2.icmpintimestampreps);
+        } else if (type == ICMP_AM)
+        {
+            MIB2_STATS_INC(mib2.icmpinaddrmasks);
+        } else if (type == ICMP_AMR)
+        {
+            MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
+        }
+        //      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
+        //                               (int16_t)type, (int16_t)code));
+        ICMP_STATS_INC(icmp.proterr);
+        ICMP_STATS_INC(icmp.drop);
+        }
+        pbuf_free(p);
+        return;
+    lenerr:
+        pbuf_free(p);
+        ICMP_STATS_INC(icmp.lenerr);
+        MIB2_STATS_INC(mib2.icmpinerrors);
+        return;
 #if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
-icmperr:
-  pbuf_free(p);
-  ICMP_STATS_INC(icmp.err);
-  MIB2_STATS_INC(mib2.icmpinerrors);
-  return;
+    icmperr:
+        pbuf_free(p);
+        ICMP_STATS_INC(icmp.err);
+        MIB2_STATS_INC(mib2.icmpinerrors);
+        return;
 #endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
-}
+        }
 
-/**
+        /**
  * Send an icmp 'destination unreachable' packet, called from ip_input() if
  * the transport layer protocol is unknown and from udp_input() if the local
  * port is not bound.
@@ -311,31 +321,31 @@ icmperr:
  *          p->payload pointing to the IP header
  * @param t type of the 'unreachable' packet
  */
-void
-icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
-{
-  MIB2_STATS_INC(mib2.icmpoutdestunreachs);
-  icmp_send_response(p, ICMP_DUR, t);
-}
+        void
+        icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
+        {
+            MIB2_STATS_INC(mib2.icmpoutdestunreachs);
+            icmp_send_response(p, ICMP_DUR, t);
+        }
 
 #if IP_FORWARD || IP_REASSEMBLY
-/**
+        /**
  * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
  *
  * @param p the input packet for which the 'time exceeded' should be sent,
  *          p->payload pointing to the IP header
  * @param t type of the 'time exceeded' packet
  */
-void
-icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
-{
-  MIB2_STATS_INC(mib2.icmpouttimeexcds);
-  icmp_send_response(p, ICMP_TE, t);
-}
+        void
+        icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
+        {
+            MIB2_STATS_INC(mib2.icmpouttimeexcds);
+            icmp_send_response(p, ICMP_TE, t);
+        }
 
 #endif /* IP_FORWARD || IP_REASSEMBLY */
 
-/**
+        /**
  * Send an icmp packet in response to an incoming packet.
  *
  * @param p the input packet for which the 'unreachable' should be sent,
@@ -392,20 +402,21 @@ icmp_send_response(struct pbuf *p, uint8_t type, uint8_t code)
     netif = ip4_route_src(&iphdr_dst, &iphdr_src);
   }
 #else
-  netif = ip4_route(&iphdr_src);
+            netif = ip4_route(&iphdr_src);
 #endif
-  if (netif != NULL) {
-    /* calculate checksum */
-    icmphdr->chksum = 0;
+            if (netif != nullptr)
+            {
+                /* calculate checksum */
+                icmphdr->chksum = 0;
 #if CHECKSUM_GEN_ICMP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP) {
-      icmphdr->chksum = inet_chksum(icmphdr, q->len);
-    }
+                IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP) {
+                    icmphdr->chksum = inet_chksum(icmphdr, q->len);
+                }
 #endif
-    ICMP_STATS_INC(icmp.xmit);
-    ip4_output_if(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
-  }
-  pbuf_free(q);
-}
+                ICMP_STATS_INC(icmp.xmit);
+                ip4_output_if(q, nullptr, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
+            }
+            pbuf_free(q);
+        }
 
-// #endif /* LWIP_IPV4 && LWIP_ICMP */
+        // #endif /* LWIP_IPV4 && LWIP_ICMP */

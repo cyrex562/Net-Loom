@@ -74,13 +74,13 @@
 #include <pcap/pcap-inttypes.h>
 
 #if defined(_WIN32)
-  #include <winsock2.h>		/* u_int, u_char etc. */
+  #include <winsock2.h>		/* u_int, uint8_t etc. */
   #include <io.h>		/* _get_osfhandle() */
 #elif defined(MSDOS)
-  #include <sys/types.h>	/* u_int, u_char etc. */
+  #include <sys/types.h>	/* u_int, uint8_t etc. */
   #include <sys/socket.h>
 #else /* UN*X */
-  #include <sys/types.h>	/* u_int, u_char etc. */
+  #include <sys/types.h>	/* u_int, uint8_t etc. */
   #include <sys/time.h>
 #endif /* _WIN32/MSDOS/UN*X */
 
@@ -283,8 +283,8 @@ struct pcap_addr {
 	struct sockaddr *dstaddr;	/* P2P destination address for that address */
 };
 
-typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
-			     const u_char *);
+typedef void (*pcap_handler)(uint8_t *, const struct pcap_pkthdr *,
+			     const uint8_t *);
 
 /*
  * Error codes for the pcap API.
@@ -439,10 +439,10 @@ PCAP_API pcap_t	*pcap_open_offline(const char *, char *);
 #endif /*_WIN32*/
 
 PCAP_API void	pcap_close(pcap_t *);
-PCAP_API int	pcap_loop(pcap_t *, int, pcap_handler, u_char *);
-PCAP_API int	pcap_dispatch(pcap_t *, int, pcap_handler, u_char *);
-PCAP_API const u_char *pcap_next(pcap_t *, struct pcap_pkthdr *);
-PCAP_API int 	pcap_next_ex(pcap_t *, struct pcap_pkthdr **, const u_char **);
+PCAP_API int	pcap_loop(pcap_t *, int, pcap_handler, uint8_t *);
+PCAP_API int	pcap_dispatch(pcap_t *, int, pcap_handler, uint8_t *);
+PCAP_API const uint8_t *pcap_next(pcap_t *, struct pcap_pkthdr *);
+PCAP_API int 	pcap_next_ex(pcap_t *, struct pcap_pkthdr **, const uint8_t **);
 PCAP_API void	pcap_breakloop(pcap_t *);
 PCAP_API int	pcap_stats(pcap_t *, struct pcap_stat *);
 PCAP_API int	pcap_setfilter(pcap_t *, struct bpf_program *);
@@ -450,7 +450,7 @@ PCAP_API int 	pcap_setdirection(pcap_t *, pcap_direction_t);
 PCAP_API int	pcap_getnonblock(pcap_t *, char *);
 PCAP_API int	pcap_setnonblock(pcap_t *, int, char *);
 PCAP_API int	pcap_inject(pcap_t *, const void *, size_t);
-PCAP_API int	pcap_sendpacket(pcap_t *, const u_char *, int);
+PCAP_API int	pcap_sendpacket(pcap_t *, const uint8_t *, int);
 PCAP_API const char *pcap_statustostr(int);
 PCAP_API const char *pcap_strerror(int);
 PCAP_API char	*pcap_geterr(pcap_t *);
@@ -461,7 +461,7 @@ PCAP_API int	pcap_compile_nopcap(int, int, struct bpf_program *,
 	    const char *, int, bpf_u_int32);
 PCAP_API void	pcap_freecode(struct bpf_program *);
 PCAP_API int	pcap_offline_filter(const struct bpf_program *,
-	    const struct pcap_pkthdr *, const u_char *);
+	    const struct pcap_pkthdr *, const uint8_t *);
 PCAP_API int	pcap_datalink(pcap_t *);
 PCAP_API int	pcap_datalink_ext(pcap_t *);
 PCAP_API int	pcap_list_datalinks(pcap_t *, int **);
@@ -513,7 +513,7 @@ PCAP_API long	pcap_dump_ftell(pcap_dumper_t *);
 PCAP_API int64_t	pcap_dump_ftell64(pcap_dumper_t *);
 PCAP_API int	pcap_dump_flush(pcap_dumper_t *);
 PCAP_API void	pcap_dump_close(pcap_dumper_t *);
-PCAP_API void	pcap_dump(u_char *, const struct pcap_pkthdr *, const u_char *);
+PCAP_API void	pcap_dump(uint8_t *, const struct pcap_pkthdr *, const uint8_t *);
 
 PCAP_API int	pcap_findalldevs(pcap_if_t **, char *);
 PCAP_API void	pcap_freealldevs(pcap_if_t *);
@@ -543,7 +543,7 @@ PCAP_API const char *pcap_lib_version(void);
  * declared when we build pcap-bpf.c.
  */
 #if !defined(__NetBSD__) && !defined(__QNX__)
-  PCAP_API u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+  PCAP_API u_int	bpf_filter(const struct bpf_insn *, const uint8_t *, u_int, u_int);
 #endif
 PCAP_API int	bpf_validate(const struct bpf_insn *f, int len);
 PCAP_API char	*bpf_image(const struct bpf_insn *, int);
@@ -589,7 +589,7 @@ PCAP_API void	bpf_dump(const struct bpf_program *, int);
 
   PCAP_API void pcap_sendqueue_destroy(pcap_send_queue* queue);
 
-  PCAP_API int pcap_sendqueue_queue(pcap_send_queue* queue, const struct pcap_pkthdr *pkt_header, const u_char *pkt_data);
+  PCAP_API int pcap_sendqueue_queue(pcap_send_queue* queue, const struct pcap_pkthdr *pkt_header, const uint8_t *pkt_data);
 
   PCAP_API u_int pcap_sendqueue_transmit(pcap_t *p, pcap_send_queue* queue, int sync);
 

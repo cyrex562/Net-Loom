@@ -41,7 +41,7 @@
 #include "ppp_opts.h"
 #if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_ARC4
 
-#include "ppp/polarssl/arc4.h"
+#include "arc4.h"
 /*
  * ARC4 key schedule
  */

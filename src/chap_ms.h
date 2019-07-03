@@ -29,16 +29,8 @@
  *
  * $Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp $
  */
-
+#pragma once
 #include "ppp_opts.h"
-#if PPP_SUPPORT && MSCHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#ifndef CHAPMS_INCLUDE
-#define CHAPMS_INCLUDE
-
-extern const struct chap_digest_type chapms_digest;
-extern const struct chap_digest_type chapms2_digest;
-
-#endif /* CHAPMS_INCLUDE */
-
-#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */
+extern const struct ChapDigestType kChapmsDigest;
+extern const struct ChapDigestType kChapms2Digest;

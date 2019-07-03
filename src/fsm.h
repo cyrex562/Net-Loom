@@ -41,23 +41,19 @@
  *
  * $Id: fsm.h,v 1.10 2004/11/13 02:28:15 paulus Exp $
  */
-
-#include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef FSM_H
-#define	FSM_H
-
-#include "ppp.h"
+#pragma once
+#include "protent.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct PppPcb;
+
 /*
  * Packet header = Code, id, length.
  */
-#define HEADERLEN	4
+constexpr auto HEADERLEN = 4;
 
 
 /*
@@ -150,33 +146,18 @@ typedef struct fsm_callbacks {
 #define OPT_RESTART	2	/* Treat 2nd OPEN as DOWN, UP */
 #define OPT_SILENT	4	/* Wait for peer to speak first */
 
-
-/*
- * Timeouts.
- */
-#if 0 /* moved to ppp_opts.h */
-#define DEFTIMEOUT	3	/* Timeout time in seconds */
-#define DEFMAXTERMREQS	2	/* Maximum Terminate-Request transmissions */
-#define DEFMAXCONFREQS	10	/* Maximum Configure-Request transmissions */
-#define DEFMAXNAKLOOPS	5	/* Maximum number of nak loops */
-#endif /* moved to ppp_opts.h */
-
-
 /*
  * Prototypes
  */
-void fsm_init(fsm *f);
-void fsm_lowerup(fsm *f);
-void fsm_lowerdown(fsm *f);
-void fsm_open(fsm *f);
-void fsm_close(fsm *f, const char *reason);
-void fsm_input(fsm *f, u_char *inpacket, int l);
-void fsm_protreject(fsm *f);
-void fsm_sdata(fsm *f, u_char code, u_char id, const u_char *data, int datalen);
+void fsm_init(fsm* f);
+void fsm_lowerup(fsm* f);
+void fsm_lowerdown(fsm* f);
+void fsm_open(fsm* f);
+void fsm_close(fsm* f, const char* reason);
+void fsm_input(fsm* f, uint8_t* inpacket, int l);
+void fsm_protreject(fsm* f);
+void fsm_sdata(fsm* f, uint8_t code, uint8_t id, const uint8_t* data, int datalen);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* FSM_H */
-#endif /* PPP_SUPPORT */

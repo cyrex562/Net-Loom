@@ -68,7 +68,7 @@
 
 #include "lowpan6_ble.h"
 
-#if LWIP_IPV6
+//#if LWIP_IPV6
 
 #include "ip.h"
 #include "pbuf.h"
@@ -78,7 +78,8 @@
 #include "mem.h"
 #include "udp.h"
 #include "tcpip.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
+#include "lowpan6_common.h"
 
 #include <string.h>
 
@@ -236,7 +237,7 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
   uint8_t hidden_header_len;
   err_t err;
 
-  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
+//  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
 #if LWIP_6LOWPAN_IPHC
 
@@ -244,11 +245,11 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
    * We'll over-allocate it by the bytes saved for header compression.
    */
   p_frag = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if (p_frag == NULL) {
+  if (p_frag == nullptr) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
-  LWIP_ASSERT("this needs a pbuf in one piece", p_frag->len == p_frag->tot_len);
+//  LWIP_ASSERT("this needs a pbuf in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IP6 header (with IPHC). */
   buffer = (uint8_t*)p_frag->payload;
@@ -273,7 +274,7 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
 
   /* send the packet */
   MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
-  LWIP_DEBUGF(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (void *)p));
+//  LWIP_DEBUGF(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (void *)p));
   err = netif->linkoutput(netif, p_frag);
 
   pbuf_free(p_frag);
@@ -355,22 +356,22 @@ rfc7668_input(struct pbuf * p, struct netif *netif)
   
   /* no IP header compression */
   if (*puc == 0x41) {
-    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, removing dispatch: 0x%2x \n", *puc));
+//    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, removing dispatch: 0x%2x \n", *puc));
     /* This is a complete IPv6 packet, just skip header byte. */
     pbuf_remove_header(p, 1);
   /* IPHC header compression */
   } else if ((*puc & 0xe0 )== 0x60) {
-    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, decompress dispatch: 0x%2x \n", *puc));
+//    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, decompress dispatch: 0x%2x \n", *puc));
     /* IPv6 headers are compressed using IPHC. */
     p = lowpan6_decompress(p, 0, rfc7668_context, &rfc7668_peer_addr, &rfc7668_local_addr);
     /* if no pbuf is returned, handle as discarded packet */
-    if (p == NULL) {
+    if (p == nullptr) {
       MIB2_STATS_NETIF_INC(netif, ifindiscards);
       return ERR_OK;
     }
   /* invalid header byte, discard */
   } else {
-    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, discarding: 0x%2x \n", *puc));
+//    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, discarding: 0x%2x \n", *puc));
     MIB2_STATS_NETIF_INC(netif, ifindiscards);
     pbuf_free(p);
     return ERR_OK;
@@ -444,4 +445,4 @@ tcpip_rfc7668_input(struct pbuf *p, struct netif *inp)
 }
 #endif /* !NO_SYS */
 
-#endif /* LWIP_IPV6 */
+//#endif /* LWIP_IPV6 */

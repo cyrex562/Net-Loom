@@ -36,8 +36,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LWIP_HDR_DNS_H
-#define LWIP_HDR_DNS_H
+#pragma once
+
 
 #include "opt.h"
 
@@ -129,9 +129,6 @@ PACK_STRUCT_END
 #define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
 #endif
 
-
-#if LWIP_DNS
-
 #include "ip_addr.h"
 #include "err.h"
 
@@ -215,6 +212,3 @@ err_t          dns_local_addhost(const char *hostname, const ip_addr_t *addr);
 }
 #endif
 
-#endif /* LWIP_DNS */
-
-#endif /* LWIP_HDR_DNS_H */

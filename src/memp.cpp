@@ -205,7 +205,7 @@ memp_init_pool(const struct memp_desc *desc)
   int i;
   struct memp *memp;
 
-  *desc->tab = NULL;
+  *desc->tab = nullptr;
   memp = (struct memp *)LWIP_MEM_ALIGN(desc->base);
 #if MEMP_MEM_INIT
   /* force memset on pool memory */
@@ -282,7 +282,7 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char *file, const int
   memp = *desc->tab;
 #endif /* MEMP_MEM_MALLOC */
 
-  if (memp != NULL) {
+  if (memp != nullptr) {
 #if !MEMP_MEM_MALLOC
 #if MEMP_OVERFLOW_CHECK == 1
     memp_overflow_check_element(memp, desc);
@@ -319,7 +319,7 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char *file, const int
     LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", desc->desc));
   }
 
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -337,8 +337,8 @@ memp_malloc_pool_fn(const struct memp_desc *desc, const char *file, const int li
 #endif
 {
   LWIP_ASSERT("invalid pool desc", desc != NULL);
-  if (desc == NULL) {
-    return NULL;
+  if (desc == nullptr) {
+    return nullptr;
   }
 
 #if !MEMP_OVERFLOW_CHECK
@@ -426,7 +426,7 @@ void
 memp_free_pool(const struct memp_desc *desc, void *mem)
 {
   LWIP_ASSERT("invalid pool desc", desc != NULL);
-  if ((desc == NULL) || (mem == NULL)) {
+  if ((desc == nullptr) || (mem == nullptr)) {
     return;
   }
 
@@ -448,7 +448,7 @@ memp_free(memp_t type, void *mem)
 
   LWIP_ERROR("memp_free: type < MEMP_MAX", (type < MEMP_MAX), return;);
 
-  if (mem == NULL) {
+  if (mem == nullptr) {
     return;
   }
 

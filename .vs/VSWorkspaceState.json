@@ -3,8 +3,6 @@
     "",
     "\\npcap\\Include",
     "\\npcap\\Include\\pcap",
-    "\\npcap\\Lib",
-    "\\npcap\\Lib\\x64",
     "\\src"
   ],
   "SelectedNode": "\\src\\err.h",

@@ -44,12 +44,13 @@
 
 #include "lowpan6_opts.h"
 
-#if LWIP_IPV6 /* don't build if IPv6 is disabled in lwipopts.h */
+//#if LWIP_IPV6 /* don't build if IPv6 is disabled in lwipopts.h */
 
 #include "pbuf.h"
 #include "ip.h"
 #include "ip6_addr.h"
 #include "netif.h"
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,7 +64,7 @@ struct lowpan6_link_addr {
   uint8_t addr[8];
 };
 
-s8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
+int8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
 
 #if LWIP_6LOWPAN_IPHC
 err_t lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
@@ -77,6 +78,6 @@ struct pbuf *lowpan6_decompress(struct pbuf *p, uint16_t datagram_size, ip6_addr
 }
 #endif
 
-#endif /* LWIP_IPV6 */
+//#endif /* LWIP_IPV6 */
 
 #endif /* LWIP_HDR_LOWPAN6_COMMON_H */

@@ -270,8 +270,6 @@ PACK_STRUCT_END
 #define SIZEOF_RDNSS_OPTION_BASE 8 /* size without addresses */
 
 
-#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
-
 #include "ip6_addr.h"
 #include "err.h"
 
@@ -309,6 +307,6 @@ void nd6_restart_netif(struct netif *netif);
 }
 #endif
 
-#endif /* LWIP_IPV6 */
+
 
 #endif /* LWIP_HDR_ND6_H */

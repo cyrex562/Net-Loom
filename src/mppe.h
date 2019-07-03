@@ -33,13 +33,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#pragma once
 #include "ppp_opts.h"
-#if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#ifndef MPPE_H
-#define MPPE_H
 
-#include "ppp/pppcrypt.h"
+#include "pppcrypt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,7 +77,7 @@ extern "C" {
 /* Build a CI from mppe opts (see RFC 3078) */
 #define MPPE_OPTS_TO_CI(opts, ci)		\
     do {					\
-	u_char *ptr = ci; /* u_char[4] */	\
+	uint8_t *ptr = ci; /* uint8_t[4] */	\
 						\
 	/* H bit */				\
 	if (opts & MPPE_OPT_STATEFUL)		\
@@ -101,7 +99,7 @@ extern "C" {
 /* The reverse of the above */
 #define MPPE_CI_TO_OPTS(ci, opts)		\
     do {					\
-	const u_char *ptr = ci; /* u_char[4] */	\
+	const uint8_t *ptr = ci; /* uint8_t[4] */	\
 						\
 	opts = 0;				\
 						\
@@ -176,6 +174,3 @@ err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* MPPE_H */
-#endif /* PPP_SUPPORT && MPPE_SUPPORT */

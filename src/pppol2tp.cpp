@@ -51,30 +51,30 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+//#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "err.h"
 #include "memp.h"
 #include "netif.h"
 #include "udp.h"
-#include "snmp.h"
+#include "lwip_snmp.h"
 
-#include "ppp/ppp_impl.h"
-#include "ppp/lcp.h"
-#include "ppp/ipcp.h"
-#include "ppp/pppol2tp.h"
-#include "ppp/pppcrypt.h"
-#include "ppp/magic.h"
+#include "ppp_impl.h"
+#include "lcp.h"
+#include "ipcp.h"
+#include "pppol2tp.h"
+#include "pppcrypt.h"
+#include "magic.h"
 
 /* Memory pool */
-LWIP_MEMPOOL_DECLARE(PPPOL2TP_PCB, MEMP_NUM_PPPOL2TP_INTERFACES, sizeof(pppol2tp_pcb), "PPPOL2TP_PCB")
+//LWIP_MEMPOOL_DECLARE(PPPOL2TP_PCB, MEMP_NUM_PPPOL2TP_INTERFACES, sizeof(pppol2tp_pcb), "PPPOL2TP_PCB")
 
 /* callbacks called from PPP core */
-static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
-static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx);    /* Destroy a L2TP control block */
-static void pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
-static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
+static err_t pppol2tp_write(PppPcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
+static err_t pppol2tp_destroy(PppPcb *ppp, void *ctx);    /* Destroy a L2TP control block */
+static void pppol2tp_connect(PppPcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
+static void pppol2tp_disconnect(PppPcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, uint16_t port);
@@ -91,7 +91,7 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
 static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb);
 
 /* Callbacks structure for PPP core */
-static const struct link_callbacks pppol2tp_callbacks = {
+static const struct LinkCallbacks pppol2tp_callbacks = {
   pppol2tp_connect,
 #if PPP_SERVER
   NULL,
@@ -106,11 +106,11 @@ static const struct link_callbacks pppol2tp_callbacks = {
 
 
 /* Create a new L2TP session. */
-ppp_pcb *pppol2tp_create(struct netif *pppif,
+PppPcb *pppol2tp_create(struct netif *pppif,
        struct netif *netif, const ip_addr_t *ipaddr, uint16_t port,
        const uint8_t *secret, uint8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  ppp_pcb *ppp;
+  PppPcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
 #if !PPPOL2TP_AUTH_SUPPORT
@@ -118,23 +118,23 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   LWIP_UNUSED_ARG(secret_len);
 #endif /* !PPPOL2TP_AUTH_SUPPORT */
 
-  if (ipaddr == NULL) {
+  if (ipaddr == nullptr) {
     goto ipaddr_check_failed;
   }
 
   l2tp = (pppol2tp_pcb *)LWIP_MEMPOOL_ALLOC(PPPOL2TP_PCB);
-  if (l2tp == NULL) {
+  if (l2tp == nullptr) {
     goto memp_malloc_l2tp_failed;
   }
 
   udp = udp_new_ip_type(IP_GET_TYPE(ipaddr));
-  if (udp == NULL) {
+  if (udp == nullptr) {
     goto udp_new_failed;
   }
   udp_recv(udp, pppol2tp_input, l2tp);
 
   ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp, link_status_cb, ctx_cb);
-  if (ppp == NULL) {
+  if (ppp == nullptr) {
     goto ppp_new_failed;
   }
 
@@ -158,11 +158,11 @@ udp_new_failed:
   LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
 memp_malloc_l2tp_failed:
 ipaddr_check_failed:
-  return NULL;
+  return nullptr;
 }
 
 /* Called by PPP core */
-static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
+static err_t pppol2tp_write(PppPcb *ppp, void *ctx, struct pbuf *p) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *ph; /* UDP + L2TP header */
   err_t ret;
@@ -201,7 +201,7 @@ static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
 }
 
 /* Called by PPP core */
-static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
+static err_t pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *pb;
   uint8_t *pl;
@@ -244,7 +244,7 @@ static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_sh
 }
 
 /* Destroy a L2TP control block */
-static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
+static err_t pppol2tp_destroy(PppPcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   LWIP_UNUSED_ARG(ppp);
 
@@ -255,11 +255,11 @@ static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
 }
 
 /* Be a LAC, connect to a LNS. */
-static void pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
+static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
   err_t err;
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
-  lcp_options *lcp_wo;
-  lcp_options *lcp_ao;
+  LcpOptions *lcp_wo;
+  LcpOptions *lcp_ao;
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;
@@ -329,7 +329,7 @@ static void pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
 }
 
 /* Disconnect */
-static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
+static void pppol2tp_disconnect(PppPcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
 
   l2tp->our_ns++;
@@ -473,7 +473,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
     }
   }
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(l2tp->ppp, p);
+  ppp_input(l2tp->ppp, p,,);
   return;
 
 packet_too_short:
@@ -823,7 +823,7 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -918,7 +918,7 @@ static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, uint16_t ns) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -965,7 +965,7 @@ static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, uint16_t ns) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -1013,7 +1013,7 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, uint16_t ns) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -1060,7 +1060,7 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, uint16_t ns, uint16_t nr) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -1089,7 +1089,7 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, uint16_t ns) {
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
-  if (pb == NULL) {
+  if (pb == nullptr) {
     return ERR_MEM;
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -1156,4 +1156,4 @@ static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   return err;
 }
 
-#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */
+//#endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

@@ -41,13 +41,9 @@
  *
  * $Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp $
  */
+#pragma once
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#ifndef LCP_H
-#define	LCP_H
-
 #include "ppp.h"
 
 #ifdef __cplusplus
@@ -111,38 +107,24 @@ struct epdisc {
 /*
  * The state of options is described by an lcp_options structure.
  */
-typedef struct lcp_options {
+struct LcpOptions {
     unsigned int passive           :1; /* Don't die if we don't get a response */
     unsigned int silent            :1; /* Wait for the other end to start first */
-#if 0 /* UNUSED */
     unsigned int restart           :1; /* Restart vs. exit after close */
-#endif /* UNUSED */
     unsigned int neg_mru           :1; /* Negotiate the MRU? */
     unsigned int neg_asyncmap      :1; /* Negotiate the async map? */
-#if PAP_SUPPORT
     unsigned int neg_upap          :1; /* Ask for UPAP authentication? */
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
     unsigned int neg_chap          :1; /* Ask for CHAP authentication? */
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
     unsigned int neg_eap           :1; /* Ask for EAP authentication? */
-#endif /* EAP_SUPPORT */
     unsigned int neg_magicnumber   :1; /* Ask for magic number? */
     unsigned int neg_pcompression  :1; /* HDLC Protocol Field Compression? */
     unsigned int neg_accompression :1; /* HDLC Address/Control Field Compression? */
-#if LQR_SUPPORT
     unsigned int neg_lqr           :1; /* Negotiate use of Link Quality Reports */
-#endif /* LQR_SUPPORT */
     unsigned int neg_cbcp          :1; /* Negotiate use of CBCP */
-#ifdef HAVE_MULTILINK
     unsigned int neg_mrru          :1; /* negotiate multilink MRRU */
-#endif /* HAVE_MULTILINK */
     unsigned int neg_ssnhf         :1; /* negotiate short sequence numbers */
     unsigned int neg_endpoint      :1; /* negotiate endpoint discriminator */
-
     uint16_t mru;			/* Value of MRU */
-#ifdef HAVE_MULTILINK
     uint16_t mrru;			/* Value of MRRU, and multilink enable */
 #endif /* MULTILINK */
 #if CHAP_SUPPORT
@@ -153,17 +135,16 @@ typedef struct lcp_options {
     uint8_t  numloops;		/* Number of loops during magic number neg. */
 #if LQR_SUPPORT
     uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
-#endif /* LQR_SUPPORT */
     struct epdisc endpoint;	/* endpoint discriminator */
-} lcp_options;
+};
 
-void lcp_open(ppp_pcb *pcb);
-void lcp_close(ppp_pcb *pcb, const char *reason);
-void lcp_lowerup(ppp_pcb *pcb);
-void lcp_lowerdown(ppp_pcb *pcb);
-void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject */
+void lcp_open(PppPcb *pcb);
+void lcp_close(PppPcb *pcb, const char *reason);
+void lcp_lowerup(PppPcb *pcb);
+void lcp_lowerdown(PppPcb *pcb);
+void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len);    /* send protocol reject */
 
-extern const struct protent lcp_protent;
+extern const struct Protent lcp_protent;
 
 #if 0 /* moved to ppp_opts.h */
 /* Default number of times we receive our magic number from the peer
@@ -175,5 +156,4 @@ extern const struct protent lcp_protent;
 }
 #endif
 
-#endif /* LCP_H */
-#endif /* PPP_SUPPORT */
+
