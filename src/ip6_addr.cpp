@@ -223,7 +223,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 {
   uint32_t current_block_index, current_block_value, next_block_value;
   s32_t i;
-  u8_t zero_flag, empty_block_flag;
+  uint8_t zero_flag, empty_block_flag;
 
 #if LWIP_IPV4
   if (ip6_addr_isipv4mappedipv6(addr)) {

@@ -29,9 +29,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_ARCH_CC_H
-#define LWIP_ARCH_CC_H
-
+#pragma once
 //#ifdef _MSC_VER
 //#pragma warning (disable: 4127) /* conditional expression is constant */
 //#pragma warning (disable: 4996) /* 'strncpy' was declared deprecated */
@@ -78,35 +76,22 @@ typedef int sys_prot_t;
 #define SZT_F "lu"
 #endif /* _MSC_VER */
 
-/* Compiler hints for packing structures */
-// #define PACK_STRUCT_USE_INCLUDES
-
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
   printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
   fflush(NULL);handler;} } while(0)
 
-#ifdef _MSC_VER
-/* C runtime functions redefined */
-#if _MSC_VER < 1910
-#define snprintf _snprintf
-#endif
-#define strdup   _strdup
-#endif
 
 /* Define an example for LWIP_PLATFORM_DIAG: since this uses varargs and the old
  * C standard lwIP targets does not support this in macros, we have extra brackets
  * around the arguments, which are left out in the following macro definition:
  */
-#if !defined(LWIP_TESTMODE) || !LWIP_TESTMODE
 void lwip_win32_platform_diag(const char *format, ...);
 #define LWIP_PLATFORM_DIAG(x) lwip_win32_platform_diag x
-#endif
 
-#ifndef LWIP_NORAND
+
 extern unsigned int sys_win_rand(void);
 #define LWIP_RAND() (sys_win_rand())
-#endif
+
 
 #define PPP_INCLUDE_SETTINGS_HEADER
 
-#endif /* LWIP_ARCH_CC_H */

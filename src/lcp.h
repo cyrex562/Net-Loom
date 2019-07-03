@@ -146,11 +146,11 @@ typedef struct lcp_options {
     uint16_t mrru;			/* Value of MRRU, and multilink enable */
 #endif /* MULTILINK */
 #if CHAP_SUPPORT
-    u8_t chap_mdtype;		/* which MD types (hashing algorithm) */
+    uint8_t chap_mdtype;		/* which MD types (hashing algorithm) */
 #endif /* CHAP_SUPPORT */
     uint32_t asyncmap;		/* Value of async map */
     uint32_t magicnumber;
-    u8_t  numloops;		/* Number of loops during magic number neg. */
+    uint8_t  numloops;		/* Number of loops during magic number neg. */
 #if LQR_SUPPORT
     uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
 #endif /* LQR_SUPPORT */

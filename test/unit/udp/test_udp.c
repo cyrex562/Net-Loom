@@ -15,8 +15,8 @@ struct test_udp_rxdata {
 };
 
 static struct netif test_netif1, test_netif2;
-static ip4_addr_t test_gw1, test_ipaddr1, test_netmask1;
-static ip4_addr_t test_gw2, test_ipaddr2, test_netmask2;
+static LwipIpv4Addr test_gw1, test_ipaddr1, test_netmask1;
+static LwipIpv4Addr test_gw2, test_ipaddr2, test_netmask2;
 static int output_ctr, linkoutput_ctr;
 
 /* Helper functions */
@@ -35,7 +35,7 @@ udp_remove_all(void)
 }
 
 static err_t
-default_netif_output(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipaddr)
+default_netif_output(struct netif *netif, struct pbuf *p, const LwipIpv4Addr *ipaddr)
 {
   fail_unless((netif == &test_netif1) || (netif == &test_netif2));
   fail_unless(p != NULL);
@@ -172,11 +172,11 @@ static struct pbuf *
 test_udp_create_test_packet(uint16_t length, uint16_t port, uint32_t dst_addr)
 {
   err_t err;
-  u8_t ret;
+  uint8_t ret;
   struct udp_hdr *uh;
   struct ip_hdr *ih;
   struct pbuf *p;
-  const u8_t test_data[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+  const uint8_t test_data[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
 
   p = pbuf_alloc(PBUF_TRANSPORT, length, PBUF_POOL);
   fail_unless(p != NULL);

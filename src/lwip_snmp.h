@@ -34,8 +34,7 @@
  * Author: Dirk Ziegelmeier <dziegel@gmx.de>
  *
  */
-#ifndef LWIP_HDR_SNMP_H
-#define LWIP_HDR_SNMP_H
+#pragma once
 
 #include "opt.h"
 #include "ip_addr.h"
@@ -53,7 +52,7 @@ struct netif;
  */
 
 /* MIB2 statistics functions */
-#if MIB2_STATS  /* don't build if not configured for use in lwipopts.h */
+
 /**
  * @ingroup netif_mib2
  * @see RFC1213, "MIB-II, 6. Definitions"
@@ -131,66 +130,33 @@ enum snmp_ifType {
   (netif)->mib2_counters.ifoutnucastpkts = 0; \
   (netif)->mib2_counters.ifoutdiscards = 0; \
   (netif)->mib2_counters.ifouterrors = 0; } while(0)
-#else /* MIB2_STATS */
-#ifndef MIB2_COPY_SYSUPTIME_TO
-#define MIB2_COPY_SYSUPTIME_TO(ptrToVal)
-#endif
-#define MIB2_INIT_NETIF(netif, type, speed)
-#define MIB2_STATS_NETIF_INC(n, x)
-#define MIB2_STATS_NETIF_ADD(n, x, val)
-#endif /* MIB2_STATS */
+
 
 /* LWIP MIB2 callbacks */
-#if LWIP_MIB2_CALLBACKS /* don't build if not configured for use in lwipopts.h */
 /* network interface */
 void mib2_netif_added(struct netif *ni);
 void mib2_netif_removed(struct netif *ni);
 
-#if LWIP_IPV4 && LWIP_ARP
 /* ARP (for atTable and ipNetToMediaTable) */
-void mib2_add_arp_entry(struct netif *ni, ip4_addr_t *ip);
-void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip);
-#else /* LWIP_IPV4 && LWIP_ARP */
-#define mib2_add_arp_entry(ni,ip)
-#define mib2_remove_arp_entry(ni,ip)
-#endif /* LWIP_IPV4 && LWIP_ARP */
+void mib2_add_arp_entry(struct netif *ni, LwipIpAddr *ip);
+void mib2_remove_arp_entry(struct netif *ni, LwipIpAddr*ip);
+
+
 
 /* IP */
-#if LWIP_IPV4
+
 void mib2_add_ip4(struct netif *ni);
 void mib2_remove_ip4(struct netif *ni);
-void mib2_add_route_ip4(u8_t dflt, struct netif *ni);
-void mib2_remove_route_ip4(u8_t dflt, struct netif *ni);
-#endif /* LWIP_IPV4 */
+void mib2_add_route_ip4(uint8_t dflt, struct netif *ni);
+void mib2_remove_route_ip4(uint8_t dflt, struct netif *ni);
+
 
 /* UDP */
-#if LWIP_UDP
+
 void mib2_udp_bind(struct udp_pcb *pcb);
 void mib2_udp_unbind(struct udp_pcb *pcb);
-#endif /* LWIP_UDP */
 
-#else /* LWIP_MIB2_CALLBACKS */
-/* LWIP_MIB2_CALLBACKS support not available */
-/* define everything to be empty */
 
-/* network interface */
-#define mib2_netif_added(ni)
-#define mib2_netif_removed(ni)
-
-/* ARP */
-#define mib2_add_arp_entry(ni,ip)
-#define mib2_remove_arp_entry(ni,ip)
-
-/* IP */
-#define mib2_add_ip4(ni)
-#define mib2_remove_ip4(ni)
-#define mib2_add_route_ip4(dflt, ni)
-#define mib2_remove_route_ip4(dflt, ni)
-
-/* UDP */
-#define mib2_udp_bind(pcb)
-#define mib2_udp_unbind(pcb)
-#endif /* LWIP_MIB2_CALLBACKS */
 
 /* for source-code compatibility reasons only, can be removed (not used internally) */
 #define NETIF_INIT_SNMP                MIB2_INIT_NETIF
@@ -210,4 +176,3 @@ void mib2_udp_unbind(struct udp_pcb *pcb);
 }
 #endif
 
-#endif /* LWIP_HDR_SNMP_H */

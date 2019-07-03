@@ -1,45 +1,8 @@
-/**
- * @file
- * IP address API (common IPv4 and IPv6)
- */
-
-/*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Adam Dunkels <adam@sics.se>
- *
- */
-#ifndef LWIP_HDR_IP_ADDR_H
-#define LWIP_HDR_IP_ADDR_H
+#pragma once
 
 #include "opt.h"
-
 #include "ip4_addr.h"
+#include "ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +12,7 @@ extern "C" {
  * IP address types for use in ip_addr_t.type member.
  * @see tcp_new_ip_type(), udp_new_ip_type(), raw_new_ip_type().
  */
-enum lwip_ip_addr_type {
+enum LwipIpAddrType {
   /** IPv4 */
   IPADDR_TYPE_V4 =   0U,
   /** IPv6 */
@@ -58,22 +21,21 @@ enum lwip_ip_addr_type {
   IPADDR_TYPE_ANY = 46U
 };
 
-#if LWIP_IPV4 && LWIP_IPV6
 /**
  * @ingroup ipaddr
  * A union struct for both IP version's addresses.
  * ATTENTION: watch out for its size when adding IPv6 address scope!
  */
-typedef struct ip_addr {
+struct LwipIpAddr {
   union {
     ip6_addr_t ip6;
-    ip4_addr_t ip4;
+    struct LwipIpv4Addr ip4;
   } u_addr;
   /** @ref lwip_ip_addr_type */
-  u8_t type;
-} ip_addr_t;
+  uint8_t type;
+};
 
-extern const ip_addr_t ip_addr_any_type;
+extern const struct LwipIpAddr ip_addr_any_type;
 
 /** @ingroup ip4addr */
 #define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_V4 }
@@ -255,7 +217,6 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 #define IP46_ADDR_ANY(type) (((type) == IPADDR_TYPE_V6)? IP6_ADDR_ANY : IP4_ADDR_ANY)
 
-#else /* LWIP_IPV4 && LWIP_IPV6 */
 
 #define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)          1
 #define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)  1
@@ -263,9 +224,7 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 #define ip_addr_set_any_val(is_ipv6, ipaddr)          ip_addr_set_any(is_ipv6, &(ipaddr))
 #define ip_addr_set_loopback_val(is_ipv6, ipaddr)     ip_addr_set_loopback(is_ipv6, &(ipaddr))
 
-#if LWIP_IPV4
-
-typedef ip4_addr_t ip_addr_t;
+typedef LwipIpv4Addr ip_addr_t;
 #define IPADDR4_INIT(u32val)                    { u32val }
 #define IPADDR4_INIT_BYTES(a,b,c,d)             IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 #define IP_IS_V4_VAL(ipaddr)                    1
@@ -310,8 +269,6 @@ typedef ip4_addr_t ip_addr_t;
 #define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
 
 #define IP46_ADDR_ANY(type) (IP4_ADDR_ANY)
-
-#else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
 #define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } IPADDR6_ZONE_INIT }
@@ -359,10 +316,6 @@ typedef ip6_addr_t ip_addr_t;
 
 #define IP46_ADDR_ANY(type) (IP6_ADDR_ANY)
 
-#endif /* LWIP_IPV4 */
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
-#if LWIP_IPV4
 
 extern const ip_addr_t ip_addr_any;
 extern const ip_addr_t ip_addr_broadcast;
@@ -396,9 +349,6 @@ extern const ip_addr_t ip_addr_broadcast;
 /** @ingroup ip4addr */
 #define IP4_ADDR_BROADCAST  (ip_2_ip4(&ip_addr_broadcast))
 
-#endif /* LWIP_IPV4*/
-
-#if LWIP_IPV6
 
 extern const ip_addr_t ip6_addr_any;
 
@@ -420,17 +370,11 @@ extern const ip_addr_t ip6_addr_any;
 #define IP_ADDR_ANY IP6_ADDR_ANY
 #endif /* !LWIP_IPV4 */
 
-#endif
-
-#if LWIP_IPV4 && LWIP_IPV6
 /** @ingroup ipaddr */
 #define IP_ANY_TYPE    (&ip_addr_any_type)
-#else
-#define IP_ANY_TYPE    IP_ADDR_ANY
-#endif
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_IP_ADDR_H */

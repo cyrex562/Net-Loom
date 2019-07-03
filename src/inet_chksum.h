@@ -78,24 +78,24 @@ uint16_t lwip_chksum_copy(void *dst, const void *src, uint16_t len);
 #endif /* LWIP_CHKSUM_COPY_ALGORITHM */
 
 #if LWIP_IPV4
-uint16_t inet_chksum_pseudo(struct pbuf *p, u8_t proto, uint16_t proto_len,
-       const ip4_addr_t *src, const ip4_addr_t *dest);
-uint16_t inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto,
-       uint16_t proto_len, uint16_t chksum_len, const ip4_addr_t *src, const ip4_addr_t *dest);
+uint16_t inet_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+       const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
+uint16_t inet_chksum_pseudo_partial(struct pbuf *p, uint8_t proto,
+       uint16_t proto_len, uint16_t chksum_len, const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
-uint16_t ip6_chksum_pseudo(struct pbuf *p, u8_t proto, uint16_t proto_len,
+uint16_t ip6_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
        const ip6_addr_t *src, const ip6_addr_t *dest);
-uint16_t ip6_chksum_pseudo_partial(struct pbuf *p, u8_t proto, uint16_t proto_len,
+uint16_t ip6_chksum_pseudo_partial(struct pbuf *p, uint8_t proto, uint16_t proto_len,
        uint16_t chksum_len, const ip6_addr_t *src, const ip6_addr_t *dest);
 #endif /* LWIP_IPV6 */
 
 
-uint16_t ip_chksum_pseudo(struct pbuf *p, u8_t proto, uint16_t proto_len,
-       const ip_addr_t *src, const ip_addr_t *dest);
-uint16_t ip_chksum_pseudo_partial(struct pbuf *p, u8_t proto, uint16_t proto_len,
-       uint16_t chksum_len, const ip_addr_t *src, const ip_addr_t *dest);
+uint16_t ip_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+       const LwipIpAddr *src, const LwipIpAddr *dest);
+uint16_t ip_chksum_pseudo_partial(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+       uint16_t chksum_len, const LwipIpAddr *src, const LwipIpAddr *dest);
 
 #ifdef __cplusplus
 }

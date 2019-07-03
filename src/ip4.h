@@ -77,9 +77,9 @@ PACK_STRUCT_BEGIN
 /* The IPv4 header */
 struct ip_hdr {
     /* version / header length */
-    PACK_STRUCT_FLD_8(u8_t _v_hl);
+    PACK_STRUCT_FLD_8(uint8_t _v_hl);
     /* type of service */
-    PACK_STRUCT_FLD_8(u8_t _tos);
+    PACK_STRUCT_FLD_8(uint8_t _tos);
     /* total length */
     PACK_STRUCT_FIELD(uint16_t _len);
     /* identification */
@@ -91,9 +91,9 @@ struct ip_hdr {
 #define IP_MF 0x2000U        /* more fragments flag */
 #define IP_OFFMASK 0x1fffU   /* mask for fragmenting bits */
     /* time to live */
-    PACK_STRUCT_FLD_8(u8_t _ttl);
+    PACK_STRUCT_FLD_8(uint8_t _ttl);
     /* protocol*/
-    PACK_STRUCT_FLD_8(u8_t _proto);
+    PACK_STRUCT_FLD_8(uint8_t _proto);
     /* checksum */
     PACK_STRUCT_FIELD(uint16_t _chksum);
     /* source and destination IP addresses */
@@ -108,7 +108,7 @@ PACK_STRUCT_END
 /* Macros to get struct ip_hdr fields: */
 #define IPH_V(hdr)  ((hdr)->_v_hl >> 4)
 #define IPH_HL(hdr) ((hdr)->_v_hl & 0x0f)
-#define IPH_HL_BYTES(hdr) ((u8_t)(IPH_HL(hdr) * 4))
+#define IPH_HL_BYTES(hdr) ((uint8_t)(IPH_HL(hdr) * 4))
 #define IPH_TOS(hdr) ((hdr)->_tos)
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
@@ -119,13 +119,13 @@ PACK_STRUCT_END
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
 
 /* Macros to set struct ip_hdr fields: */
-#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (u8_t)((((v) << 4) | (hl)))
+#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (uint8_t)((((v) << 4) | (hl)))
 #define IPH_TOS_SET(hdr, tos) (hdr)->_tos = (tos)
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)
 #define IPH_OFFSET_SET(hdr, off) (hdr)->_offset = (off)
-#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl = (u8_t)(ttl)
-#define IPH_PROTO_SET(hdr, proto) (hdr)->_proto = (u8_t)(proto)
+#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl = (uint8_t)(ttl)
+#define IPH_PROTO_SET(hdr, proto) (hdr)->_proto = (uint8_t)(proto)
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
 
@@ -144,29 +144,29 @@ extern "C" {
 #define IP_OPTIONS_SEND   (LWIP_IPV4 && LWIP_IGMP)
 
 #define ip_init() /* Compatibility define, no init needed. */
-struct netif *ip4_route(const ip4_addr_t *dest);
+struct netif *ip4_route(const LwipIpv4Addr *dest);
 #if LWIP_IPV4_SRC_ROUTING
 struct netif *ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest);
 #else /* LWIP_IPV4_SRC_ROUTING */
 #define ip4_route_src(src, dest) ip4_route(dest)
 #endif /* LWIP_IPV4_SRC_ROUTING */
 err_t ip4_input(struct pbuf *p, struct netif *inp);
-err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto);
-err_t ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif);
-err_t ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif);
+err_t ip4_output(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+       uint8_t ttl, uint8_t tos, uint8_t proto);
+err_t ip4_output_if(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
+err_t ip4_output_if_src(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
 #if LWIP_NETIF_USE_HINTS
 err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif_hint *netif_hint);
+       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint);
 #endif /* LWIP_NETIF_USE_HINTS */
 #if IP_OPTIONS_SEND
 err_t ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
 err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
 #endif /* IP_OPTIONS_SEND */
 

@@ -145,8 +145,8 @@ extern "C" {
 #endif
     PACK_STRUCT_BEGIN
         struct icmp6_hdr {
-        PACK_STRUCT_FLD_8(u8_t type);
-        PACK_STRUCT_FLD_8(u8_t code);
+        PACK_STRUCT_FLD_8(uint8_t type);
+        PACK_STRUCT_FLD_8(uint8_t code);
         PACK_STRUCT_FIELD(uint16_t chksum);
         PACK_STRUCT_FIELD(uint32_t data);
     } PACK_STRUCT_STRUCT;
@@ -161,8 +161,8 @@ extern "C" {
 #endif
         PACK_STRUCT_BEGIN
         struct icmp6_echo_hdr {
-        PACK_STRUCT_FLD_8(u8_t type);
-        PACK_STRUCT_FLD_8(u8_t code);
+        PACK_STRUCT_FLD_8(uint8_t type);
+        PACK_STRUCT_FLD_8(uint8_t code);
         PACK_STRUCT_FIELD(uint16_t chksum);
         PACK_STRUCT_FIELD(uint16_t id);
         PACK_STRUCT_FIELD(uint16_t seqno);

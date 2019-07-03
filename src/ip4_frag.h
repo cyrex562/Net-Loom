@@ -63,8 +63,8 @@ struct ip_reassdata {
   struct pbuf *p;
   struct ip_hdr iphdr;
   uint16_t datagram_len;
-  u8_t flags;
-  u8_t timer;
+  uint8_t flags;
+  uint8_t timer;
 };
 
 void ip_reass_init(void);
@@ -88,7 +88,7 @@ struct pbuf_custom_ref {
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 #endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
 
-err_t ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest);
+err_t ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest);
 #endif /* IP_FRAG */
 
 #ifdef __cplusplus

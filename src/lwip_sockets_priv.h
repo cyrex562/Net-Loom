@@ -55,7 +55,7 @@ extern "C" {
  * select on the same socket...
  */
 #ifndef SELWAIT_T
-#define SELWAIT_T u8_t
+#define SELWAIT_T uint8_t
 #endif
 
 union lwip_sock_lastdata {
@@ -83,9 +83,9 @@ struct lwip_sock {
 #endif /* LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL */
 #if LWIP_NETCONN_FULLDUPLEX
   /* counter of how many threads are using a struct lwip_sock (not the 'int') */
-  u8_t fd_used;
+  uint8_t fd_used;
   /* status of pending close/delete actions */
-  u8_t fd_free_pending;
+  uint8_t fd_free_pending;
 #define LWIP_SOCK_FD_FREE_TCP  1
 #define LWIP_SOCK_FD_FREE_FREE 2
 #endif
@@ -111,7 +111,7 @@ struct lwip_setgetsockopt_data {
   /** set: value to set the option to
     * get: value of the option is stored here */
 #if LWIP_MPU_COMPATIBLE
-  u8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
+  uint8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
 #else
   union {
     void *p;
@@ -119,7 +119,7 @@ struct lwip_setgetsockopt_data {
   } optval;
 #endif
   /** size of *optval */
-  socklen_t optlen;
+  LwipSocklen optlen;
   /** if an error occurs, it is temporarily stored here */
   int err;
   /** semaphore to wake up the calling task */
@@ -151,15 +151,15 @@ struct lwip_select_cb {
   struct lwip_select_cb *prev;
 #if LWIP_SOCKET_SELECT
   /** readset passed to select */
-  fd_set *readset;
+  LwipFdSet *readset;
   /** writeset passed to select */
-  fd_set *writeset;
+  LwipFdSet *writeset;
   /** unimplemented: exceptset passed to select */
-  fd_set *exceptset;
+  LwipFdSet *exceptset;
 #endif /* LWIP_SOCKET_SELECT */
 #if LWIP_SOCKET_POLL
   /** fds passed to poll; NULL if select */
-  struct pollfd *poll_fds;
+  struct LwipPolllfd *poll_fds;
   /** nfds passed to poll; 0 if select */
   nfds_t poll_nfds;
 #endif /* LWIP_SOCKET_POLL */

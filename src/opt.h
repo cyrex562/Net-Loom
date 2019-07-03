@@ -901,7 +901,7 @@
 /**
  * LWIP_DHCP_GETS_NTP==1: Request NTP servers with discover/select. For each
  * response packet, an callback is called, which has to be provided by the port:
- * void dhcp_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+ * void dhcp_set_ntp_servers(uint8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
 */
 #if !defined LWIP_DHCP_GET_NTP_SRV || defined __DOXYGEN__
 #define LWIP_DHCP_GET_NTP_SRV           0
@@ -1102,7 +1102,7 @@
  *                                    DNS_LOCAL_HOSTLIST_ELEM("host_ip6", IPADDR6_INIT_HOST(123, 234, 345, 456)}
  *
  *  Instead, you can also use an external function:
- *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern err_t my_lookup_function(const char *name, ip_addr_t *addr, u8_t dns_addrtype)
+ *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern err_t my_lookup_function(const char *name, ip_addr_t *addr, uint8_t dns_addrtype)
  *  that looks up the IP address and returns ERR_OK if found (LWIP_DNS_ADDRTYPE_xxx is passed in dns_addrtype).
  */
 #if !defined DNS_LOCAL_HOSTLIST || defined __DOXYGEN__
@@ -1357,7 +1357,7 @@
 /**
  * The maximum allowed backlog for TCP listen netconns.
  * This backlog is used unless another is explicitly specified.
- * 0xff is the maximum (u8_t).
+ * 0xff is the maximum (uint8_t).
  */
 #if !defined TCP_DEFAULT_LISTEN_BACKLOG || defined __DOXYGEN__
 #define TCP_DEFAULT_LISTEN_BACKLOG      0xff
@@ -1511,10 +1511,10 @@
 
 /**
  * LWIP_PBUF_REF_T: Refcount type in pbuf.
- * Default width of u8_t can be increased if 255 refs are not enough for you.
+ * Default width of uint8_t can be increased if 255 refs are not enough for you.
  */
 #if !defined LWIP_PBUF_REF_T || defined __DOXYGEN__
-#define LWIP_PBUF_REF_T                 u8_t
+#define LWIP_PBUF_REF_T                 uint8_t
 #endif
 /**
  * @}
@@ -1934,15 +1934,6 @@
 #endif
 
 /**
- * LWIP_TCP_KEEPALIVE==1: Enable TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT
- * options processing. Note that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set
- * in seconds. (does not require sockets.c, and will affect tcp.c)
- */
-#if !defined LWIP_TCP_KEEPALIVE || defined __DOXYGEN__
-#define LWIP_TCP_KEEPALIVE              0
-#endif
-
-/**
  * LWIP_SO_SNDTIMEO==1: Enable send timeout for sockets/netconns and
  * SO_SNDTIMEO processing.
  */
@@ -1950,13 +1941,6 @@
 #define LWIP_SO_SNDTIMEO                0
 #endif
 
-/**
- * LWIP_SO_RCVTIMEO==1: Enable receive timeout for sockets/netconns and
- * SO_RCVTIMEO processing.
- */
-#if !defined LWIP_SO_RCVTIMEO || defined __DOXYGEN__
-#define LWIP_SO_RCVTIMEO                0
-#endif
 
 /**
  * LWIP_SO_SNDRCVTIMEO_NONSTANDARD==1: SO_RCVTIMEO/SO_SNDTIMEO take an int
@@ -1966,19 +1950,9 @@
 #define LWIP_SO_SNDRCVTIMEO_NONSTANDARD 0
 #endif
 
-/**
- * LWIP_SO_RCVBUF==1: Enable SO_RCVBUF processing.
- */
-#if !defined LWIP_SO_RCVBUF || defined __DOXYGEN__
-#define LWIP_SO_RCVBUF                  0
-#endif
 
-/**
- * LWIP_SO_LINGER==1: Enable SO_LINGER processing.
- */
-#if !defined LWIP_SO_LINGER || defined __DOXYGEN__
-#define LWIP_SO_LINGER                  0
-#endif
+
+
 
 /**
  * If LWIP_SO_RCVBUF is used, this is the default value for recv_bufsize.
@@ -1995,7 +1969,7 @@
 #endif
 
 /**
- * SO_REUSE==1: Enable SO_REUSEADDR option.
+ * SO_REUSE==1: Enable LWIP_SO_REUSEADDR option.
  */
 #if !defined SO_REUSE || defined __DOXYGEN__
 #define SO_REUSE                        0
@@ -2003,7 +1977,7 @@
 
 /**
  * SO_REUSE_RXTOALL==1: Pass a copy of incoming broadcast/multicast packets
- * to all local matches if SO_REUSEADDR is turned on.
+ * to all local matches if LWIP_SO_REUSEADDR is turned on.
  * WARNING: Adds a memcpy for every packet if passing to more than one pcb!
  */
 #if !defined SO_REUSE_RXTOALL || defined __DOXYGEN__
@@ -2655,7 +2629,7 @@
 /**
  * LWIP_DHCP6_GETS_NTP==1: Request NTP servers via DHCPv6. For each
  * response packet, a callback is called, which has to be provided by the port:
- * void dhcp6_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+ * void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
 */
 #if !defined LWIP_DHCP6_GET_NTP_SRV || defined __DOXYGEN__
 #define LWIP_DHCP6_GET_NTP_SRV          0
@@ -2732,7 +2706,7 @@
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
  * Signature:\code{.c}
- * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, u8_t *opt2, struct pbuf *p);
+ * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
  * \endcode
  * Arguments:
  * - pcb: tcp_pcb selected for input of this packet (ATTENTION: this may be
@@ -2741,7 +2715,7 @@
  * - optlen: tcp option length
  * - opt1len: tcp option length 1st part
  * - opt2: if this is != NULL, tcp options are split among 2 pbufs. In that case,
- *         options start at right after the tcp header ('(u8_t*)(hdr + 1)') for
+ *         options start at right after the tcp header ('(uint8_t*)(hdr + 1)') for
  *         the first 'opt1len' bytes and the rest starts at 'opt2'. opt2len can
  *         be simply calculated: 'opt2len = optlen - opt1len;'
  * - p: input packet, p->payload points to application data (that's why tcp hdr
@@ -2763,7 +2737,7 @@
  * Together with LWIP_HOOK_TCP_OUT_ADD_TCPOPTS, this can be used to add custom
  * options to outgoing tcp segments.
  * Signature:\code{.c}
- * u8_t my_hook_tcp_out_tcpopt_length(const struct tcp_pcb *pcb, u8_t internal_option_length);
+ * uint8_t my_hook_tcp_out_tcpopt_length(const struct tcp_pcb *pcb, uint8_t internal_option_length);
  * \endcode
  * Arguments:
  * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
@@ -3034,15 +3008,15 @@
  * This hook is called just before the DHCP message trailer is added, so the
  * options are at the end of a DHCP message.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp *dhcp, u8_t state, struct dhcp_msg *msg,
- *                u8_t msg_type, uint16_t *options_len_ptr);
+ *   void my_hook(struct netif *netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
+ *                uint8_t msg_type, uint16_t *options_len_ptr);
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp: struct dhcp on that netif
- * - state: current dhcp state (dhcp_state_enum_t as an u8_t)
+ * - state: current dhcp state (dhcp_state_enum_t as an uint8_t)
  * - msg: struct dhcp_msg that will be sent
- * - msg_type: dhcp message type to be sent (u8_t)
+ * - msg_type: dhcp message type to be sent (uint8_t)
  * - options_len_ptr: pointer to the current length of options in the dhcp_msg "msg"
  *                    (must be increased when options are added!)
  *
@@ -3062,24 +3036,24 @@
  * Called from dhcp_parse_reply when receiving a DHCP message.
  * This hook is called for every option in the received message that is not handled internally.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp *dhcp, u8_t state, struct dhcp_msg *msg,
- *                u8_t msg_type, u8_t option, u8_t option_len, struct pbuf *pbuf, uint16_t option_value_offset);
+ *   void my_hook(struct netif *netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
+ *                uint8_t msg_type, uint8_t option, uint8_t option_len, struct pbuf *pbuf, uint16_t option_value_offset);
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp: struct dhcp on that netif
- * - state: current dhcp state (dhcp_state_enum_t as an u8_t)
+ * - state: current dhcp state (dhcp_state_enum_t as an uint8_t)
  * - msg: struct dhcp_msg that was received
- * - msg_type: dhcp message type received (u8_t, ATTENTION: only valid after
+ * - msg_type: dhcp message type received (uint8_t, ATTENTION: only valid after
  *             the message type option has been parsed!)
- * - option: option value (u8_t)
- * - len: option data length (u8_t)
+ * - option: option value (uint8_t)
+ * - len: option data length (uint8_t)
  * - pbuf: pbuf where option data is contained
  * - option_value_offset: offset in pbuf where option data begins
  *
  * A nice way to get the option contents is pbuf_get_contiguous():
- *  u8_t buf[32];
- *  u8_t *ptr = (u8_t*)pbuf_get_contiguous(p, buf, sizeof(buf), LWIP_MIN(option_len, sizeof(buf)), offset);
+ *  uint8_t buf[32];
+ *  uint8_t *ptr = (uint8_t*)pbuf_get_contiguous(p, buf, sizeof(buf), LWIP_MIN(option_len, sizeof(buf)), offset);
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset)
@@ -3091,20 +3065,20 @@
  * This hook is called just before the DHCP6 message is sent, so the
  * options are at the end of a DHCP6 message.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp6 *dhcp, u8_t state, struct dhcp6_msg *msg,
- *                u8_t msg_type, uint16_t *options_len_ptr);
+ *   void my_hook(struct netif *netif, struct dhcp6 *dhcp, uint8_t state, struct dhcp6_msg *msg,
+ *                uint8_t msg_type, uint16_t *options_len_ptr);
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp6: struct dhcp6 on that netif
- * - state: current dhcp6 state (dhcp6_state_enum_t as an u8_t)
+ * - state: current dhcp6 state (dhcp6_state_enum_t as an uint8_t)
  * - msg: struct dhcp6_msg that will be sent
- * - msg_type: dhcp6 message type to be sent (u8_t)
+ * - msg_type: dhcp6 message type to be sent (uint8_t)
  * - options_len_ptr: pointer to the current length of options in the dhcp6_msg "msg"
  *                    (must be increased when options are added!)
  *
  * Options need to appended like this:
- *   u8_t *options = (u8_t *)(msg + 1);
+ *   uint8_t *options = (uint8_t *)(msg + 1);
  *   LWIP_ASSERT("dhcp option overflow", sizeof(struct dhcp6_msg) + *options_len_ptr + newoptlen <= max_len);
  *   options[(*options_len_ptr)++] = &lt;option_data&gt;;
  *   [...]
@@ -3118,7 +3092,7 @@
  * Called from socket API to implement setsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, socklen_t optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, LwipSocklen optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor
@@ -3141,7 +3115,7 @@
  * Called from socket API to implement getsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, socklen_t *optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, LwipSocklen *optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor
@@ -3164,7 +3138,7 @@
  * Called from netconn APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
  * Signature:\code{.c}
- *   int my_hook(const char *name, ip_addr_t *addr, u8_t addrtype, err_t *err)
+ *   int my_hook(const char *name, ip_addr_t *addr, uint8_t addrtype, err_t *err)
  * \endcode
  * Arguments:
  * - name: hostname to resolve

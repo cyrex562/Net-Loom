@@ -150,7 +150,7 @@ sio_setup(HANDLE fd)
  * @param devnum device number
  * @return handle to serial device if successful, NULL otherwise
  */
-sio_fd_t sio_open(u8_t devnum)
+sio_fd_t sio_open(uint8_t devnum)
 {
   HANDLE fileHandle = INVALID_HANDLE_VALUE;
   CHAR   fileName[256];
@@ -208,7 +208,7 @@ sio_fd_t sio_open(u8_t devnum)
  * 
  * @note This function will block until the character can be sent.
  */
-void sio_send(u8_t c, sio_fd_t fd)
+void sio_send(uint8_t c, sio_fd_t fd)
 {
   DWORD dwNbBytesWritten = 0;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_send(%lu)\n", (DWORD)c));
@@ -223,10 +223,10 @@ void sio_send(u8_t c, sio_fd_t fd)
  * 
  * @note This function will block until a character is received.
  */
-u8_t sio_recv(sio_fd_t fd)
+uint8_t sio_recv(sio_fd_t fd)
 {
   DWORD dwNbBytesReadden = 0;
-  u8_t byte = 0;
+  uint8_t byte = 0;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()\n"));
   while ((sio_abort == 0) && ((!ReadFile((HANDLE)(fd), &byte, 1, &dwNbBytesReadden, NULL)) || (dwNbBytesReadden < 1)));
   LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()=%lu\n", (DWORD)byte));
@@ -244,7 +244,7 @@ u8_t sio_recv(sio_fd_t fd)
  * @note This function will block until data can be received. The blocking
  * can be cancelled by calling sio_read_abort().
  */
-uint32_t sio_read(sio_fd_t fd, u8_t* data, uint32_t len)
+uint32_t sio_read(sio_fd_t fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
@@ -264,7 +264,7 @@ uint32_t sio_read(sio_fd_t fd, u8_t* data, uint32_t len)
  * @param len maximum length (in bytes) of data to receive
  * @return number of bytes actually received
  */
-uint32_t sio_tryread(sio_fd_t fd, u8_t* data, uint32_t len)
+uint32_t sio_tryread(sio_fd_t fd, uint8_t* data, uint32_t len)
 {
   /* @todo: implement non-blocking read */
   BOOL ret;
@@ -286,7 +286,7 @@ uint32_t sio_tryread(sio_fd_t fd, u8_t* data, uint32_t len)
  * 
  * @note This function will block until all data can be sent.
  */
-uint32_t sio_write(sio_fd_t fd, u8_t* data, uint32_t len)
+uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesWritten = 0;

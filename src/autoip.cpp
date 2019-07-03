@@ -86,8 +86,8 @@
  */
 #ifndef LWIP_AUTOIP_CREATE_SEED_ADDR
 #define LWIP_AUTOIP_CREATE_SEED_ADDR(netif) \
-  lwip_htonl(AUTOIP_RANGE_START + ((uint32_t)(((u8_t)(netif->hwaddr[4])) | \
-                 ((uint32_t)((u8_t)(netif->hwaddr[5]))) << 8)))
+  lwip_htonl(AUTOIP_RANGE_START + ((uint32_t)(((uint8_t)(netif->hwaddr[4])) | \
+                 ((uint32_t)((uint8_t)(netif->hwaddr[5]))) << 8)))
 #endif /* LWIP_AUTOIP_CREATE_SEED_ADDR */
 
 /* static functions */
@@ -507,7 +507,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
  * @return 1 if AutoIP supplied netif->ip_addr (state BOUND or ANNOUNCING),
  *         0 otherwise
  */
-u8_t
+uint8_t
 autoip_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif_autoip_data(netif) != NULL)) {
@@ -517,7 +517,7 @@ autoip_supplied_address(const struct netif *netif)
   return 0;
 }
 
-u8_t
+uint8_t
 autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
 {
   struct autoip *autoip = netif_autoip_data(netif);

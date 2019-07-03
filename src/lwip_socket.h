@@ -30,4 +30,6 @@
  *
  */
 
-#include "sockets.h"
+#pragma once
+
+#include "lwip_sockets.h"

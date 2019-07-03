@@ -47,9 +47,9 @@ extern "C" {
 
 /* For a totally minimal and standalone system, we provide null
    definitions of the sys_ functions. */
-typedef u8_t sys_sem_t;
-typedef u8_t sys_mutex_t;
-typedef u8_t sys_mbox_t;
+typedef uint8_t sys_sem_t;
+typedef uint8_t sys_mutex_t;
+typedef uint8_t sys_mbox_t;
 
 #define sys_sem_new(s, c) ERR_OK
 #define sys_sem_signal(s)
@@ -192,7 +192,7 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex);
  * @param count initial count of the semaphore
  * @return ERR_OK if successful, another err_t otherwise
  */
-err_t sys_sem_new(sys_sem_t *sem, u8_t count);
+err_t sys_sem_new(sys_sem_t *sem, uint8_t count);
 /**
  * @ingroup sys_sem
  * Signals a semaphore

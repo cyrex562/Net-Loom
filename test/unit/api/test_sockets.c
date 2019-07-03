@@ -131,8 +131,8 @@ static void test_sockets_allfunctions_basic_domain(int domain)
 #endif
   } else {
 #if LWIP_IPV6
-    struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&addr;
-    struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
+    struct LwipSockaddrIn6 *addr6 = (struct LwipSockaddrIn6 *)&addr;
+    struct LwipIn6Addr lo6 = IN6ADDR_LOOPBACK_INIT;
     addr6->sin6_addr = lo6;
 #endif
   }
@@ -216,14 +216,14 @@ START_TEST(test_sockets_allfunctions_basic)
 }
 END_TEST
 
-static void test_sockets_init_loopback_addr(int domain, struct sockaddr_storage *addr_st, socklen_t *sz)
+static void test_sockets_init_loopback_addr(int domain, struct LwipSockaddrStorage *addr_st, socklen_t *sz)
 {
   memset(addr_st, 0, sizeof(*addr_st));
   switch(domain) {
 #if LWIP_IPV6
     case AF_INET6: {
-      struct sockaddr_in6 *addr = (struct sockaddr_in6*)addr_st;
-      struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
+      struct LwipSockaddrIn6 *addr = (struct LwipSockaddrIn6*)addr_st;
+      struct LwipIn6Addr lo6 = IN6ADDR_LOOPBACK_INIT;
       addr->sin6_family = AF_INET6;
       addr->sin6_port = 0; /* use ephemeral port */
       addr->sin6_addr = lo6;
@@ -248,7 +248,7 @@ static void test_sockets_init_loopback_addr(int domain, struct sockaddr_storage 
   }
 }
 
-static void test_sockets_msgapi_update_iovs(struct msghdr *msg, size_t bytes)
+static void test_sockets_msgapi_update_iovs(struct LwipMsgHdr *msg, size_t bytes)
 {
   int i;
 
@@ -271,7 +271,7 @@ static void test_sockets_msgapi_update_iovs(struct msghdr *msg, size_t bytes)
   msg->msg_iovlen -= i;
 
   /* update new first vector with any remaining amount */
-  msg->msg_iov[0].iov_base = ((u8_t *)msg->msg_iov[0].iov_base + bytes);
+  msg->msg_iov[0].iov_base = ((uint8_t *)msg->msg_iov[0].iov_base + bytes);
   msg->msg_iov[0].iov_len -= bytes;
 }
 
@@ -282,18 +282,18 @@ static void test_sockets_msgapi_tcp(int domain)
   #define NEED_TRAILER    (BUF_SZ % 4 != 0)
   int listnr, s1, s2, i, ret, opt;
   int bytes_written, bytes_read;
-  struct sockaddr_storage addr_storage;
+  struct LwipSockaddrStorage addr_storage;
   socklen_t addr_size;
   struct iovec siovs[8];
-  struct msghdr smsg;
-  u8_t * snd_buf;
+  struct LwipMsgHdr smsg;
+  uint8_t * snd_buf;
   struct iovec riovs[5];
   struct iovec riovs_tmp[5];
-  struct msghdr rmsg;
-  u8_t * rcv_buf;
+  struct LwipMsgHdr rmsg;
+  uint8_t * rcv_buf;
   int    rcv_off;
   int    rcv_trailer = 0;
-  u8_t val;
+  uint8_t val;
 
   test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
 
@@ -342,7 +342,7 @@ static void test_sockets_msgapi_tcp(int domain)
   /* allocate a buffer for a stream of incrementing hex (0x00..0xFF) which we will use
      to create an input vector set that is larger than the TCP's send buffer. This will
      force execution of the partial IO vector send case */
-  snd_buf = (u8_t*)mem_malloc(BUF_SZ);
+  snd_buf = (uint8_t*)mem_malloc(BUF_SZ);
   val = 0x00;
   fail_unless(snd_buf != NULL);
   for (i = 0; i < BUF_SZ; i++,val++) {
@@ -356,7 +356,7 @@ static void test_sockets_msgapi_tcp(int domain)
   }
 
   /* allocate a receive buffer, same size as snd_buf for easy verification */
-  rcv_buf = (u8_t*)mem_calloc(1, BUF_SZ);
+  rcv_buf = (uint8_t*)mem_calloc(1, BUF_SZ);
   fail_unless(rcv_buf != NULL);
   /* split across iovs */
   for (i = 0; i < 4; i++) {
@@ -441,7 +441,7 @@ static void test_sockets_msgapi_tcp(int domain)
   mem_free(rcv_buf);
 }
 
-static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, struct msghdr *rmsg)
+static void test_sockets_msgapi_udp_send_recv_loop(int s, struct LwipMsgHdr *smsg, struct LwipMsgHdr *rmsg)
 {
   int i, ret;
 
@@ -457,37 +457,37 @@ static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, s
     fail_unless(ret == 4);
 
     /* verify data */
-    fail_unless(*((u8_t*)rmsg->msg_iov[0].iov_base) == 0xDE);
-    fail_unless(*((u8_t*)rmsg->msg_iov[1].iov_base) == 0xAD);
-    fail_unless(*((u8_t*)rmsg->msg_iov[2].iov_base) == 0xBE);
-    fail_unless(*((u8_t*)rmsg->msg_iov[3].iov_base) == 0xEF);
+    fail_unless(*((uint8_t*)rmsg->msg_iov[0].iov_base) == 0xDE);
+    fail_unless(*((uint8_t*)rmsg->msg_iov[1].iov_base) == 0xAD);
+    fail_unless(*((uint8_t*)rmsg->msg_iov[2].iov_base) == 0xBE);
+    fail_unless(*((uint8_t*)rmsg->msg_iov[3].iov_base) == 0xEF);
 
     /* clear rcv_buf to ensure no data is being skipped */
-    *((u8_t*)rmsg->msg_iov[0].iov_base) = 0x00;
-    *((u8_t*)rmsg->msg_iov[1].iov_base) = 0x00;
-    *((u8_t*)rmsg->msg_iov[2].iov_base) = 0x00;
-    *((u8_t*)rmsg->msg_iov[3].iov_base) = 0x00;
+    *((uint8_t*)rmsg->msg_iov[0].iov_base) = 0x00;
+    *((uint8_t*)rmsg->msg_iov[1].iov_base) = 0x00;
+    *((uint8_t*)rmsg->msg_iov[2].iov_base) = 0x00;
+    *((uint8_t*)rmsg->msg_iov[3].iov_base) = 0x00;
   }
 }
 
 static void test_sockets_msgapi_udp(int domain)
 {
   int s, i, ret;
-  struct sockaddr_storage addr_storage;
+  struct LwipSockaddrStorage addr_storage;
   socklen_t addr_size;
   struct iovec riovs[4];
-  struct msghdr rmsg;
-  u8_t rcv_buf[4];
+  struct LwipMsgHdr rmsg;
+  uint8_t rcv_buf[4];
   struct iovec siovs[4];
-  struct msghdr smsg;
-  u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+  struct LwipMsgHdr smsg;
+  uint8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
 
   /* initialize IO vectors with data */
   for (i = 0; i < 4; i++) {
     siovs[i].iov_base = &snd_buf[i];
-    siovs[i].iov_len = sizeof(u8_t);
+    siovs[i].iov_len = sizeof(uint8_t);
     riovs[i].iov_base = &rcv_buf[i];
-    riovs[i].iov_len = sizeof(u8_t);
+    riovs[i].iov_len = sizeof(uint8_t);
   }
 
   test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
@@ -504,7 +504,7 @@ static void test_sockets_msgapi_udp(int domain)
   switch(domain) {
 #if LWIP_IPV6
     case AF_INET6:
-      fail_unless(addr_size == sizeof(struct sockaddr_in6));
+      fail_unless(addr_size == sizeof(struct LwipSockaddrIn6));
       break;
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4
@@ -548,15 +548,15 @@ static void test_sockets_msgapi_udp(int domain)
 static void test_sockets_msgapi_cmsg(int domain)
 {
   int s, ret, enable;
-  struct sockaddr_storage addr_storage;
+  struct LwipSockaddrStorage addr_storage;
   socklen_t addr_size;
   struct iovec iov;
-  struct msghdr msg;
+  struct LwipMsgHdr msg;
   struct cmsghdr *cmsg;
   struct in_pktinfo *pktinfo;
-  u8_t rcv_buf[4];
-  u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-  u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+  uint8_t rcv_buf[4];
+  uint8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+  uint8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 
   test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
 

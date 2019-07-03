@@ -59,8 +59,8 @@ PACK_STRUCT_END
     struct etharp_hdr {
     PACK_STRUCT_FIELD(uint16_t hwtype);
     PACK_STRUCT_FIELD(uint16_t proto);
-    PACK_STRUCT_FLD_8(u8_t  hwlen);
-    PACK_STRUCT_FLD_8(u8_t  protolen);
+    PACK_STRUCT_FLD_8(uint8_t  hwlen);
+    PACK_STRUCT_FLD_8(uint8_t  protolen);
     PACK_STRUCT_FIELD(uint16_t opcode);
     PACK_STRUCT_FLD_S(struct eth_addr shwaddr);
     PACK_STRUCT_FLD_S(struct ip4_addr_wordaligned sipaddr);
@@ -99,12 +99,12 @@ extern "C" {
 
 #define etharp_init() /* Compatibility define, no init needed. */
     void etharp_tmr(void);
-    ssize_t etharp_find_addr(struct netif* netif, const ip4_addr_t* ipaddr,
-        struct eth_addr** eth_ret, const ip4_addr_t** ip_ret);
-    int etharp_get_entry(size_t i, ip4_addr_t** ipaddr, struct netif** netif, struct eth_addr** eth_ret);
-    err_t etharp_output(struct netif* netif, struct pbuf* q, const ip4_addr_t* ipaddr);
-    err_t etharp_query(struct netif* netif, const ip4_addr_t* ipaddr, struct pbuf* q);
-    err_t etharp_request(struct netif* netif, const ip4_addr_t* ipaddr);
+    ssize_t etharp_find_addr(struct netif* netif, const LwipIpv4Addr* ipaddr,
+        struct eth_addr** eth_ret, const LwipIpv4Addr** ip_ret);
+    int etharp_get_entry(size_t i, LwipIpv4Addr** ipaddr, struct netif** netif, struct eth_addr** eth_ret);
+    err_t etharp_output(struct netif* netif, struct pbuf* q, const LwipIpv4Addr* ipaddr);
+    err_t etharp_query(struct netif* netif, const LwipIpv4Addr* ipaddr, struct pbuf* q);
+    err_t etharp_request(struct netif* netif, const LwipIpv4Addr* ipaddr);
     /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
      *  this is an ARP packet sent by a node in order to spontaneously cause other
      *  nodes to update an entry in their ARP cache.

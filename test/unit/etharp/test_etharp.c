@@ -14,7 +14,7 @@
 #endif
 
 static struct netif test_netif;
-static ip4_addr_t test_ipaddr, test_netmask, test_gw;
+static LwipIpv4Addr test_ipaddr, test_netmask, test_gw;
 struct eth_addr test_ethaddr =  {{1,1,1,1,1,1}};
 struct eth_addr test_ethaddr2 = {{1,1,1,1,1,2}};
 struct eth_addr test_ethaddr3 = {{1,1,1,1,1,3}};
@@ -74,7 +74,7 @@ default_netif_remove(void)
 }
 
 static void
-create_arp_response(ip4_addr_t *adr)
+create_arp_response(LwipIpv4Addr *adr)
 {
   int k;
   struct eth_hdr *ethhdr;
@@ -93,11 +93,11 @@ create_arp_response(ip4_addr_t *adr)
   etharphdr->hwtype = htons(LWIP_IANA_HWTYPE_ETHERNET);
   etharphdr->proto = htons(ETHTYPE_IP);
   etharphdr->hwlen = ETHARP_HWADDR_LEN;
-  etharphdr->protolen = sizeof(ip4_addr_t);
+  etharphdr->protolen = sizeof(LwipIpv4Addr);
   etharphdr->opcode = htons(ARP_REPLY);
 
-  SMEMCPY(&etharphdr->sipaddr, adr, sizeof(ip4_addr_t));
-  SMEMCPY(&etharphdr->dipaddr, &test_ipaddr, sizeof(ip4_addr_t));
+  SMEMCPY(&etharphdr->sipaddr, adr, sizeof(LwipIpv4Addr));
+  SMEMCPY(&etharphdr->dipaddr, &test_ipaddr, sizeof(LwipIpv4Addr));
 
   k = 6;
   while(k > 0) {
@@ -140,7 +140,7 @@ START_TEST(test_etharp_table)
   err_t err;
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   ssize_t idx;
-  const ip4_addr_t *unused_ipaddr;
+  const LwipIpv4Addr *unused_ipaddr;
   struct eth_addr *unused_ethaddr;
   struct udp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
@@ -154,7 +154,7 @@ START_TEST(test_etharp_table)
   pcb = udp_new();
   fail_unless(pcb != NULL);
   if (pcb != NULL) {
-    ip4_addr_t adrs[ARP_TABLE_SIZE + 2];
+    LwipIpv4Addr adrs[ARP_TABLE_SIZE + 2];
     int i;
     for(i = 0; i < ARP_TABLE_SIZE + 2; i++) {
       IP4_ADDR(&adrs[i], 192,168,0,i+2);

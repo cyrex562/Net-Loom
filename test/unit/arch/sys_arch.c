@@ -72,7 +72,7 @@ test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn)
 }
 
 err_t
-sys_sem_new(sys_sem_t *sem, u8_t count)
+sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   *sem = count + 1;

@@ -246,11 +246,11 @@ struct ppp_idle {
  * Global variables.
  */
 #ifdef HAVE_MULTILINK
-extern u8_t	multilink;	/* enable multilink operation */
-extern u8_t	doing_multilink;
-extern u8_t	multilink_master;
-extern u8_t	bundle_eof;
-extern u8_t	bundle_terminating;
+extern uint8_t	multilink;	/* enable multilink operation */
+extern uint8_t	doing_multilink;
+extern uint8_t	multilink_master;
+extern uint8_t	bundle_eof;
+extern uint8_t	bundle_terminating;
 #endif
 
 #ifdef MAXOCTETS
@@ -463,7 +463,7 @@ int netif_get_mtu(ppp_pcb *pcb);
 #if 0 /* unused */
 int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit);
 #endif /* unused */
-void ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method);
+void ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
 void ccp_reset_comp(ppp_pcb *pcb);
 void ccp_reset_decomp(ppp_pcb *pcb);
 #if 0 /* unused */

@@ -112,8 +112,8 @@ extern "C" {
 struct cstate {
   struct cstate *cs_next; /* next most recently used state (xmit only) */
   uint16_t cs_hlen;        /* size of hdr (receive only) */
-  u8_t cs_id;           /* connection # associated with this state */
-  u8_t cs_filler;
+  uint8_t cs_id;           /* connection # associated with this state */
+  uint8_t cs_filler;
   union {
     char csu_hdr[MAX_HDR];
     struct ip_hdr csu_ip;     /* ip/tcp hdr from most recent packet */
@@ -139,11 +139,11 @@ struct vjstat {
  */
 struct vjcompress {
   struct cstate *last_cs;          /* most recently used tstate */
-  u8_t last_recv;                /* last rcvd conn. id */
-  u8_t last_xmit;                /* last sent conn. id */
+  uint8_t last_recv;                /* last rcvd conn. id */
+  uint8_t last_xmit;                /* last sent conn. id */
   uint16_t flags;
-  u8_t maxSlotIndex;
-  u8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
+  uint8_t maxSlotIndex;
+  uint8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
 #if LINK_STATS
   struct vjstat stats;
 #endif
@@ -155,7 +155,7 @@ struct vjcompress {
 #define VJF_TOSS 1U /* tossing rcvd frames because of input err */
 
 extern void  vj_compress_init    (struct vjcompress *comp);
-extern u8_t  vj_compress_tcp     (struct vjcompress *comp, struct pbuf **pb);
+extern uint8_t  vj_compress_tcp     (struct vjcompress *comp, struct pbuf **pb);
 extern void  vj_uncompress_err   (struct vjcompress *comp);
 extern int   vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp);
 extern int   vj_uncompress_tcp   (struct pbuf **nb, struct vjcompress *comp);

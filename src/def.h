@@ -45,8 +45,7 @@
  * - PERF_STOP(x): stop measuring something, and record the result.
  */
 
-#ifndef LWIP_HDR_DEF_H
-#define LWIP_HDR_DEF_H
+#pragma once
 
 /* arch.h might define NULL already */
 #include "arch.h"
@@ -162,4 +161,3 @@ uint16_t lwip_ntohs(uint16_t x);
 }
 #endif
 
-#endif /* LWIP_HDR_DEF_H */

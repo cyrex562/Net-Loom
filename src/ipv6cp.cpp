@@ -340,7 +340,7 @@ setifaceid(argv)
 {
     char *comma, *arg, c;
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
-    struct in6_addr addr;
+    struct LwipIn6Addr addr;
     static int prio_local, prio_remote;
 
 #define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \

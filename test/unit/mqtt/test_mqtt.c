@@ -10,7 +10,7 @@ const ip_addr_t test_mqtt_remote_ip = IPADDR4_INIT_BYTES(192, 168, 1, 2);
 const ip_addr_t test_mqtt_netmask = IPADDR4_INIT_BYTES(255, 255, 255, 0);
 
 static err_t test_mqtt_netif_output(struct netif *netif, struct pbuf *p,
-       const ip4_addr_t *ipaddr)
+       const LwipIpv4Addr *ipaddr)
 {
   LWIP_UNUSED_ARG(netif);
   LWIP_UNUSED_ARG(ipaddr);

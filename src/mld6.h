@@ -53,8 +53,8 @@
 #endif
 PACK_STRUCT_BEGIN
 struct mld_header {
-    PACK_STRUCT_FLD_8(u8_t type);
-    PACK_STRUCT_FLD_8(u8_t code);
+    PACK_STRUCT_FLD_8(uint8_t type);
+    PACK_STRUCT_FLD_8(uint8_t code);
     PACK_STRUCT_FIELD(uint16_t chksum);
     PACK_STRUCT_FIELD(uint16_t max_resp_delay);
     PACK_STRUCT_FIELD(uint16_t reserved);
@@ -82,13 +82,13 @@ struct mld_group {
   /** multicast address */
   ip6_addr_t         group_address;
   /** signifies we were the last person to report */
-  u8_t               last_reporter_flag;
+  uint8_t               last_reporter_flag;
   /** current state of the group */
-  u8_t               group_state;
+  uint8_t               group_state;
   /** timer for reporting */
   uint16_t              timer;
   /** counter of simultaneous uses */
-  u8_t               use;
+  uint8_t               use;
 };
 
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */

@@ -45,8 +45,8 @@
 #include "netif.h"
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const ip_addr_t ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
-const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
+const LwipIpAddr ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
+const LwipIpAddr ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
 
 /**
  * Determine if an address is a broadcast address on a network interface
@@ -55,10 +55,10 @@ const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  */
-u8_t
+uint8_t
 ip4_addr_isbroadcast_u32(uint32_t addr, const struct netif *netif)
 {
-  ip4_addr_t ipaddr;
+  LwipIpv4Addr ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
@@ -90,7 +90,7 @@ ip4_addr_isbroadcast_u32(uint32_t addr, const struct netif *netif)
  * @param netmask the IPv4 netmask to check (in network byte order!)
  * @return 1 if the netmask is valid, 0 if it is not
  */
-u8_t
+uint8_t
 ip4_addr_netmask_valid(uint32_t netmask)
 {
   uint32_t mask;
@@ -123,7 +123,7 @@ ip4_addr_netmask_valid(uint32_t netmask)
 uint32_t
 ipaddr_addr(const char *cp)
 {
-  ip4_addr_t val;
+  LwipIpv4Addr val;
 
   if (ip4addr_aton(cp, &val)) {
     return ip4_addr_get_u32(&val);
@@ -143,10 +143,10 @@ ipaddr_addr(const char *cp)
  * @return 1 if cp could be converted to addr, 0 on failure
  */
 int
-ip4addr_aton(const char *cp, ip4_addr_t *addr)
+ip4addr_aton(const char *cp, LwipIpv4Addr *addr)
 {
   uint32_t val;
-  u8_t base;
+  uint8_t base;
   char c;
   uint32_t parts[4];
   uint32_t *pp = parts;
@@ -265,7 +265,7 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
  *         representation of addr
  */
 char *
-ip4addr_ntoa(const ip4_addr_t *addr)
+ip4addr_ntoa(const LwipIpv4Addr *addr)
 {
   static char str[IP4ADDR_STRLEN_MAX];
   return ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);
@@ -281,26 +281,26 @@ ip4addr_ntoa(const ip4_addr_t *addr)
  *         representation of addr or NULL if buf was too small
  */
 char *
-ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen)
+ip4addr_ntoa_r(const LwipIpv4Addr *addr, char *buf, int buflen)
 {
   uint32_t s_addr;
   char inv[3];
   char *rp;
-  u8_t *ap;
-  u8_t rem;
-  u8_t n;
-  u8_t i;
+  uint8_t *ap;
+  uint8_t rem;
+  uint8_t n;
+  uint8_t i;
   int len = 0;
 
   s_addr = ip4_addr_get_u32(addr);
 
   rp = buf;
-  ap = (u8_t *)&s_addr;
+  ap = (uint8_t *)&s_addr;
   for (n = 0; n < 4; n++) {
     i = 0;
     do {
-      rem = *ap % (u8_t)10;
-      *ap /= (u8_t)10;
+      rem = *ap % (uint8_t)10;
+      *ap /= (uint8_t)10;
       inv[i++] = (char)('0' + rem);
     } while (*ap);
     while (i--) {

@@ -85,7 +85,7 @@
 static int sockets_stresstest_numthreads;
 
 struct test_settings {
-  struct sockaddr_storage addr;
+  struct LwipSockaddrStorage addr;
   int start_client;
   int loop_cnt;
 };
@@ -98,31 +98,31 @@ struct sockets_stresstest_fullduplex {
 static void
 fill_test_data(void *buf, size_t buf_len_bytes)
 {
-  u8_t *p = (u8_t*)buf;
+  uint8_t *p = (uint8_t*)buf;
   uint16_t i, chk;
 
   LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
   LWIP_ASSERT("buffer too big", buf_len_bytes <= 0xFFFF);
   /* store the total number of bytes */
-  p[0] = (u8_t)(buf_len_bytes >> 8);
-  p[1] = (u8_t)buf_len_bytes;
+  p[0] = (uint8_t)(buf_len_bytes >> 8);
+  p[1] = (uint8_t)buf_len_bytes;
 
   /* fill buffer with random */
   chk = 0;
   for (i = 4; i < buf_len_bytes; i++) {
-    u8_t rnd = (u8_t)LWIP_RAND();
+    uint8_t rnd = (uint8_t)LWIP_RAND();
     p[i] = rnd;
     chk += rnd;
   }
   /* store checksum */
-  p[2] = (u8_t)(chk >> 8);
-  p[3] = (u8_t)chk;
+  p[2] = (uint8_t)(chk >> 8);
+  p[3] = (uint8_t)chk;
 }
 
 static size_t
 check_test_data(const void *buf, size_t buf_len_bytes)
 {
-  u8_t *p = (u8_t*)buf;
+  uint8_t *p = (uint8_t*)buf;
   uint16_t i, chk, chk_rx, len_rx;
 
   LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
@@ -430,7 +430,7 @@ sockets_stresstest_conn_client_r(void *arg)
 static void
 sockets_stresstest_conn_client(void *arg)
 {
-  struct sockaddr_storage addr;
+  struct LwipSockaddrStorage addr;
   struct sockaddr_in *addr_in;
   int s, ret;
   char txbuf[TEST_TXRX_BUFSIZE];
@@ -467,7 +467,7 @@ sockets_stresstest_conn_client(void *arg)
 #endif
 
   /* @todo: nonblocking connect? */
-  ret = lwip_connect(s, (struct LwipSockaddr *)&addr, sizeof(struct sockaddr_storage));
+  ret = lwip_connect(s, (struct LwipSockaddr *)&addr, sizeof(struct LwipSockaddrStorage));
   LWIP_ASSERT("ret == 0", ret == 0);
 
   while (sys_now() < max_time) {
@@ -560,7 +560,7 @@ sockets_stresstest_conn_server(void *arg)
 }
 
 static int
-sockets_stresstest_start_clients(const struct sockaddr_storage *remote_addr)
+sockets_stresstest_start_clients(const struct LwipSockaddrStorage *remote_addr)
 {
   /* limit the number of connections */
   const int max_connections = LWIP_MIN(TEST_MAX_CONNECTIONS, MEMP_NUM_TCP_PCB/3);
@@ -580,7 +580,7 @@ sockets_stresstest_listener(void *arg)
 {
   int slisten;
   int ret;
-  struct sockaddr_storage addr;
+  struct LwipSockaddrStorage addr;
   socklen_t addr_len;
   struct test_settings *settings = (struct test_settings *)arg;
   int num_clients, num_servers = 0;
@@ -588,7 +588,7 @@ sockets_stresstest_listener(void *arg)
   slisten = lwip_socket(AF_INET, SOCK_STREAM, 0);
   LWIP_ASSERT("slisten >= 0", slisten >= 0);
 
-  memcpy(&addr, &settings->addr, sizeof(struct sockaddr_storage));
+  memcpy(&addr, &settings->addr, sizeof(struct LwipSockaddrStorage));
   ret = lwip_bind(slisten, (struct LwipSockaddr *)&addr, sizeof(addr));
   LWIP_ASSERT("ret == 0", ret == 0);
 
@@ -602,7 +602,7 @@ sockets_stresstest_listener(void *arg)
   num_clients = sockets_stresstest_start_clients(&addr);
 
   while (num_servers < num_clients) {
-    struct sockaddr_storage aclient;
+    struct LwipSockaddrStorage aclient;
     socklen_t aclient_len = sizeof(aclient);
     int sclient = lwip_accept(slisten, (struct LwipSockaddr *)&aclient, &aclient_len);
 #if 1
@@ -700,7 +700,7 @@ sockets_stresstest_init_client(const char *remote_ip, uint16_t remote_port)
 #if LWIP_IPV6
   ip6_addr_t ip6;
 #endif
-  struct sockaddr_storage *addr = (struct sockaddr_storage *)mem_malloc(sizeof(struct sockaddr_storage));
+  struct LwipSockaddrStorage *addr = (struct LwipSockaddrStorage *)mem_malloc(sizeof(struct LwipSockaddrStorage));
 
   LWIP_ASSERT("OOM", addr != NULL);
   memset(addr, 0, sizeof(struct test_settings));

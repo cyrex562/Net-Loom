@@ -163,7 +163,7 @@ ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest)
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip4_route(const ip4_addr_t *dest)
+ip4_route(const LwipIpv4Addr *dest)
 {
 #if !LWIP_SINGLE_NETIF
   struct netif *netif;
@@ -593,7 +593,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if (netif == NULL) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
-      const struct udp_hdr *udphdr = (const struct udp_hdr *)((const u8_t *)iphdr + iphdr_hlen);
+      const struct udp_hdr *udphdr = (const struct udp_hdr *)((const uint8_t *)iphdr + iphdr_hlen);
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip4_input: UDP packet to DHCP client port %"U16_F"\n",
                                               lwip_ntohs(udphdr->dest)));
       if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(udphdr->dest)) {
@@ -798,9 +798,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
  *  unique identifiers independent of destination"
  */
 err_t
-ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-              u8_t ttl, u8_t tos,
-              u8_t proto, struct netif *netif)
+ip4_output_if(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+              uint8_t ttl, uint8_t tos,
+              uint8_t proto, struct netif *netif)
 {
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
@@ -814,11 +814,11 @@ ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  */
 err_t
 ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-                  u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+                  uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
                   uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
-  const ip4_addr_t *src_used = src;
+  const LwipIpv4Addr *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
     if (ip4_addr_isany(src)) {
       src_used = netif_ip4_addr(netif);
@@ -838,9 +838,9 @@ ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  * when it is 'any'.
  */
 err_t
-ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-                  u8_t ttl, u8_t tos,
-                  u8_t proto, struct netif *netif)
+ip4_output_if_src(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+                  uint8_t ttl, uint8_t tos,
+                  uint8_t proto, struct netif *netif)
 {
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, NULL, 0);
@@ -852,12 +852,12 @@ ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  */
 err_t
 ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-                      u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+                      uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
                       uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
   struct ip_hdr *iphdr;
-  ip4_addr_t dest_addr;
+  LwipIpv4Addr dest_addr;
 #if CHECKSUM_GEN_IP_INLINE
   uint32_t chk_sum = 0;
 #endif /* CHECKSUM_GEN_IP_INLINE */
@@ -1039,8 +1039,8 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
  *         see ip_output_if() for more return values
  */
 err_t
-ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-           u8_t ttl, u8_t tos, u8_t proto)
+ip4_output(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
+           uint8_t ttl, uint8_t tos, uint8_t proto)
 {
   struct netif *netif;
 
@@ -1077,7 +1077,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  */
 err_t
 ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-                  u8_t ttl, u8_t tos, u8_t proto, struct netif_hint *netif_hint)
+                  uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint)
 {
   struct netif *netif;
   err_t err;

@@ -39,13 +39,11 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_IP6_ADDR_H
-#define LWIP_HDR_IP6_ADDR_H
+#pragma once
 
-#include "opt.h"
 #include "def.h"
 
-#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
+#include "opt.h"
 
 #include "ip6_zone.h"
 
@@ -56,15 +54,11 @@ extern "C" {
 
 /** This is the aligned version of ip6_addr_t,
     used as local variable, on the stack, etc. */
-struct ip6_addr {
-  uint32_t addr[4];
-#if LWIP_IPV6_SCOPES
-  u8_t zone;
-#endif /* LWIP_IPV6_SCOPES */
+struct LwipIp6Addr
+{
+    uint32_t addr[4];
+    uint8_t zone;
 };
-
-/** IPv6 address */
-typedef struct ip6_addr ip6_addr_t;
 
 /** Set an IPv6 partial address given by byte-parts */
 #define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
@@ -336,17 +330,12 @@ typedef struct ip6_addr ip6_addr_t;
 
 #define IP6ADDR_STRLEN_MAX    46
 
-int ip6addr_aton(const char *cp, ip6_addr_t *addr);
+int ip6addr_aton(const char* cp, LwipIp6Addr* addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ip6addr_ntoa(const ip6_addr_t *addr);
-char *ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen);
-
+char* ip6addr_ntoa(const LwipIp6Addr* addr);
+char* ip6addr_ntoa_r(const LwipIp6Addr* addr, char* buf, int buflen);
 
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_IP6_ADDR_H */

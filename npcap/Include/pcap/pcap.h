@@ -69,9 +69,9 @@
 #ifndef lib_pcap_pcap_h
 #define lib_pcap_pcap_h
 
-#include "funcattrs.h"
+#include <pcap/funcattrs.h>
 
-#include "pcap-inttypes.h"
+#include <pcap/pcap-inttypes.h>
 
 #if defined(_WIN32)
   #include <winsock2.h>		/* u_int, u_char etc. */
@@ -277,10 +277,10 @@ struct pcap_if {
  */
 struct pcap_addr {
 	struct pcap_addr *next;
-	struct LwipSockaddr *addr;		/* address */
-	struct LwipSockaddr *netmask;	/* netmask for that address */
-	struct LwipSockaddr *broadaddr;	/* broadcast address for that address */
-	struct LwipSockaddr *dstaddr;	/* P2P destination address for that address */
+	struct sockaddr *addr;		/* address */
+	struct sockaddr *netmask;	/* netmask for that address */
+	struct sockaddr *broadaddr;	/* broadcast address for that address */
+	struct sockaddr *dstaddr;	/* P2P destination address for that address */
 };
 
 typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,

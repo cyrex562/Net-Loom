@@ -52,9 +52,9 @@
  * #define LWIP_FUZZ_MULTI_PACKET
 */
 #ifdef LWIP_FUZZ_MULTI_PACKET
-u8_t pktbuf[20000];
+uint8_t pktbuf[20000];
 #else
-u8_t pktbuf[2000];
+uint8_t pktbuf[2000];
 #endif
 
 /* no-op send function */
@@ -92,7 +92,7 @@ static err_t testif_init(struct netif *netif)
   return ERR_OK;
 }
 
-static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
+static void input_pkt(struct netif *netif, const uint8_t *data, size_t len)
 {
   struct pbuf *p, *q;
   err_t err;
@@ -110,11 +110,11 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
   }
 }
 
-static void input_pkts(struct netif *netif, const u8_t *data, size_t len)
+static void input_pkts(struct netif *netif, const uint8_t *data, size_t len)
 {
 #ifdef LWIP_FUZZ_MULTI_PACKET
   const uint16_t max_packet_size = 1514;
-  const u8_t *ptr = data;
+  const uint8_t *ptr = data;
   size_t rem_len = len;
 
   while (rem_len > sizeof(uint16_t)) {
@@ -141,9 +141,9 @@ static void input_pkts(struct netif *netif, const u8_t *data, size_t len)
 int main(int argc, char** argv)
 {
   struct netif net_test;
-  ip4_addr_t addr;
-  ip4_addr_t netmask;
-  ip4_addr_t gw;
+  LwipIpv4Addr addr;
+  LwipIpv4Addr netmask;
+  LwipIpv4Addr gw;
   size_t len;
 
   lwip_init();

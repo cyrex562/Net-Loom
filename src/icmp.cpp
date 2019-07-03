@@ -72,7 +72,7 @@
 /* The amount of data from the original packet to return in a dest-unreachable */
 #define ICMP_DEST_UNREACH_DATASIZE 8
 
-static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
+static void icmp_send_response(struct pbuf *p, uint8_t type, uint8_t code);
 
 /**
  * Processes ICMP input packets, called from ip_input().
@@ -86,14 +86,14 @@ static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
 void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
-  u8_t type;
+  uint8_t type;
 #ifdef LWIP_DEBUG
-  u8_t code;
+  uint8_t code;
 #endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
   const struct ip_hdr *iphdr_in;
   uint16_t hlen;
-  const ip4_addr_t *src;
+  const LwipIpv4Addr *src;
 
   ICMP_STATS_INC(icmp.recv);
   MIB2_STATS_INC(mib2.icmpinmsgs);
@@ -109,9 +109,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
     goto lenerr;
   }
 
-  type = *((u8_t *)p->payload);
+  type = *((uint8_t *)p->payload);
 #ifdef LWIP_DEBUG
-  code = *(((u8_t *)p->payload) + 1);
+  code = *(((uint8_t *)p->payload) + 1);
   /* if debug is enabled but debug statement below is somehow disabled: */
   LWIP_UNUSED_ARG(code);
 #endif /* LWIP_DEBUG */
@@ -344,13 +344,13 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
  * @param code Code of the ICMP header
  */
 static void
-icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
+icmp_send_response(struct pbuf *p, uint8_t type, uint8_t code)
 {
   struct pbuf *q;
   struct ip_hdr *iphdr;
   /* we can use the echo header here */
   struct icmp_echo_hdr *icmphdr;
-  ip4_addr_t iphdr_src;
+  LwipIpv4Addr iphdr_src;
   struct netif *netif;
 
   /* increase number of messages attempted to send */
@@ -381,7 +381,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   icmphdr->seqno = 0;
 
   /* copy fields from original packet */
-  SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_echo_hdr), (u8_t *)p->payload,
+  SMEMCPY((uint8_t *)q->payload + sizeof(struct icmp_echo_hdr), (uint8_t *)p->payload,
           IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
 
   ip4_addr_copy(iphdr_src, iphdr->src);

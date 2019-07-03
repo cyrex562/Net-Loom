@@ -215,7 +215,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, uint16_t pro
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
 #if PPP_AUTH_SUPPORT
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
+void ppp_set_auth(ppp_pcb *pcb, uint8_t authtype, const char *user, const char *passwd) {
   LWIP_ASSERT_CORE_LOCKED();
 #if PAP_SUPPORT
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
@@ -237,7 +237,7 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 
 #if MPPE_SUPPORT
 /* Set MPPE configuration */
-void ppp_set_mppe(ppp_pcb *pcb, u8_t flags) {
+void ppp_set_mppe(ppp_pcb *pcb, uint8_t flags) {
   if (flags == PPP_MPPE_DISABLE) {
     pcb->settings.require_mppe = 0;
     return;
@@ -328,7 +328,7 @@ err_t ppp_listen(ppp_pcb *pcb) {
  * Return 0 on success, an error code on failure.
  */
 err_t
-ppp_close(ppp_pcb *pcb, u8_t nocarrier)
+ppp_close(ppp_pcb *pcb, uint8_t nocarrier)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -410,7 +410,7 @@ err_t ppp_free(ppp_pcb *pcb) {
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 err_t
-ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
+ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if (pcb == NULL) {
@@ -782,7 +782,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
     goto drop;
   }
-  protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
+  protocol = (((uint8_t *)pb->payload)[0] << 8) | ((uint8_t*)pb->payload)[1];
 
 #if PRINTPKT_SUPPORT
   ppp_dump_packet(pcb, "rcvd", (unsigned char *)pb->payload, pb->len);
@@ -840,7 +840,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* MPPE_SUPPORT */
 
   if (protocol == PPP_COMP) {
-    u8_t *pl;
+    uint8_t *pl;
 
     switch (pcb->ccp_receive_method) {
 #if MPPE_SUPPORT
@@ -861,7 +861,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     }
 
     /* Extract and hide protocol (do PFC decompression if necessary) */
-    pl = (u8_t*)pb->payload;
+    pl = (uint8_t*)pb->payload;
     if (pl[0] & 0x01) {
       protocol = pl[0];
       pbuf_remove_header(pb, 1);
@@ -928,7 +928,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol) {
           pb = pbuf_coalesce(pb, PBUF_RAW);
-          (*protp->input)(pcb, (u8_t*)pb->payload, pb->len);
+          (*protp->input)(pcb, (uint8_t*)pb->payload, pb->len);
           goto out;
         }
 #if 0   /* UNUSED
@@ -965,7 +965,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
           PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
           goto drop;
         }
-        lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
+        lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
       }
       break;
   }
@@ -1346,7 +1346,7 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
  * ccp_set - inform about the current state of CCP.
  */
 void
-ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
+ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method)
 {
   LWIP_UNUSED_ARG(isopen);
   LWIP_UNUSED_ARG(isup);

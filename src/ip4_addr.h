@@ -48,13 +48,9 @@ extern "C" {
 
 /** This is the aligned version of ip4_addr_t,
    used as local variable, on the stack, etc. */
-struct ip4_addr {
+struct LwipIpv4Addr {
   uint32_t addr;
 };
-
-/** ip4_addr_t uses a struct for convenience only, so that the same defines can
- * operate both on ip4_addr_t as well as on ip4_addr_p_t. */
-typedef struct ip4_addr ip4_addr_t;
 
 /* Forward declaration to not include netif.h */
 struct netif;
@@ -148,10 +144,10 @@ struct netif;
 #define ip4_addr_isany(addr1) ((addr1) == NULL || ip4_addr_isany_val(*(addr1)))
 
 #define ip4_addr_isbroadcast(addr1, netif) ip4_addr_isbroadcast_u32((addr1)->addr, netif)
-u8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct netif *netif);
+uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct netif *netif);
 
 #define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
-u8_t ip4_addr_netmask_valid(uint32_t netmask);
+uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 
 #define ip4_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
 
@@ -173,14 +169,14 @@ u8_t ip4_addr_netmask_valid(uint32_t netmask);
                       ip4_addr4_16_val(ipaddr))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr_get_byte(ipaddr, idx) (((const u8_t*)(&(ipaddr)->addr))[idx])
+#define ip4_addr_get_byte(ipaddr, idx) (((const uint8_t*)(&(ipaddr)->addr))[idx])
 #define ip4_addr1(ipaddr) ip4_addr_get_byte(ipaddr, 0)
 #define ip4_addr2(ipaddr) ip4_addr_get_byte(ipaddr, 1)
 #define ip4_addr3(ipaddr) ip4_addr_get_byte(ipaddr, 2)
 #define ip4_addr4(ipaddr) ip4_addr_get_byte(ipaddr, 3)
 /* Get one byte from the 4-byte address, but argument is 'ip4_addr_t',
  * not a pointer */
-#define ip4_addr_get_byte_val(ipaddr, idx) ((u8_t)(((ipaddr).addr >> (idx * 8)) & 0xff))
+#define ip4_addr_get_byte_val(ipaddr, idx) ((uint8_t)(((ipaddr).addr >> (idx * 8)) & 0xff))
 #define ip4_addr1_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 0)
 #define ip4_addr2_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 1)
 #define ip4_addr3_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 2)
@@ -202,10 +198,10 @@ u8_t ip4_addr_netmask_valid(uint32_t netmask);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 uint32_t ipaddr_addr(const char *cp);
-int ip4addr_aton(const char *cp, ip4_addr_t *addr);
+int ip4addr_aton(const char *cp, LwipIpv4Addr *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ip4addr_ntoa(const ip4_addr_t *addr);
-char *ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen);
+char *ip4addr_ntoa(const LwipIpv4Addr *addr);
+char *ip4addr_ntoa_r(const LwipIpv4Addr *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }

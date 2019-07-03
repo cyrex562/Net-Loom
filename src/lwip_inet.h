@@ -37,8 +37,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_INET_H
-#define LWIP_HDR_INET_H
+#pragma once
 
 #include "opt.h"
 #include "def.h"
@@ -50,20 +49,20 @@
 extern "C" {
 #endif
 
-/* If your port already typedef's in_addr_t, define IN_ADDR_T_DEFINED
+/* If your port already typedef's LwipInAddr, define IN_ADDR_T_DEFINED
    to prevent this code from redefining it. */
-#if !defined(in_addr_t) && !defined(IN_ADDR_T_DEFINED)
-typedef uint32_t in_addr_t;
-#endif
+// #if !defined(LwipInAddr) && !defined(IN_ADDR_T_DEFINED)
+typedef uint32_t LwipInAddr;
+// #endif
 
-struct in_addr {
-  in_addr_t s_addr;
+struct LwipInAddrStruct {
+  LwipInAddr s_addr;
 };
 
-struct in6_addr {
+struct LwipIn6Addr {
   union {
     uint32_t u32_addr[4];
-    u8_t  u8_addr[16];
+    uint8_t  u8_addr[16];
   } un;
 #define s6_addr  un.u8_addr
 };
@@ -77,14 +76,14 @@ struct in6_addr {
 /** 255.255.255.255 */
 #define INADDR_BROADCAST    IPADDR_BROADCAST
 
-/** This macro can be used to initialize a variable of type struct in6_addr
+/** This macro can be used to initialize a variable of type struct LwipIn6Addr
     to the IPv6 wildcard address. */
 #define IN6ADDR_ANY_INIT {{{0,0,0,0}}}
-/** This macro can be used to initialize a variable of type struct in6_addr
+/** This macro can be used to initialize a variable of type struct LwipIn6Addr
     to the IPv6 loopback address. */
 #define IN6ADDR_LOOPBACK_INIT {{{0,0,0,PP_HTONL(1)}}}
 /** This variable is initialized by the system to contain the wildcard IPv6 address. */
-extern const struct in6_addr in6addr_any;
+extern const struct LwipIn6Addr kIn6AddrAny;
 
 /* Definitions of the bits in an (IPv4) Internet address integer.
 
@@ -125,13 +124,10 @@ extern const struct in6_addr in6addr_any;
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN     IP4ADDR_STRLEN_MAX
 #endif
-#if LWIP_IPV6
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN    IP6ADDR_STRLEN_MAX
 #endif
-#endif
 
-#if LWIP_IPV4
 
 #define inet_addr_from_ip4addr(target_inaddr, source_ipaddr) ((target_inaddr)->s_addr = ip4_addr_get_u32(source_ipaddr))
 #define inet_addr_to_ip4addr(target_ipaddr, source_inaddr)   (ip4_addr_set_u32(target_ipaddr, (source_inaddr)->s_addr))
@@ -142,9 +138,7 @@ extern const struct in6_addr in6addr_any;
 #define inet_ntoa(addr)                 ip4addr_ntoa((const ip4_addr_t*)&(addr))
 #define inet_ntoa_r(addr, buf, buflen)  ip4addr_ntoa_r((const ip4_addr_t*)&(addr), buf, buflen)
 
-#endif /* LWIP_IPV4 */
 
-#if LWIP_IPV6
 #define inet6_addr_from_ip6addr(target_in6addr, source_ip6addr) {(target_in6addr)->un.u32_addr[0] = (source_ip6addr)->addr[0]; \
                                                                  (target_in6addr)->un.u32_addr[1] = (source_ip6addr)->addr[1]; \
                                                                  (target_in6addr)->un.u32_addr[2] = (source_ip6addr)->addr[2]; \
@@ -160,11 +154,9 @@ extern const struct in6_addr in6addr_any;
 #define inet6_ntoa(addr)                ip6addr_ntoa((const ip6_addr_t*)&(addr))
 #define inet6_ntoa_r(addr, buf, buflen) ip6addr_ntoa_r((const ip6_addr_t*)&(addr), buf, buflen)
 
-#endif /* LWIP_IPV6 */
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_INET_H */

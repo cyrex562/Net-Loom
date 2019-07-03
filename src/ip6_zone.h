@@ -82,8 +82,7 @@
  * Author: David van Moolenbroek <david@minix3.org>
  *
  */
-#ifndef LWIP_HDR_IP6_ZONE_H
-#define LWIP_HDR_IP6_ZONE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,12 +94,8 @@ extern "C" {
  * @{
  */
 
-#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
-
 /** Identifier for "no zone". */
 #define IP6_NO_ZONE 0
-
-#if LWIP_IPV6_SCOPES
 
 /** Zone initializer for static IPv6 address initialization, including comma. */
 #define IPADDR6_ZONE_INIT , IP6_NO_ZONE
@@ -151,11 +146,7 @@ enum lwip_ipv6_scope_type
  * define IPV6_CUSTOM_SCOPES to 1 and supply its own definitions for the three
  * macros instead.
  */
-#ifndef IPV6_CUSTOM_SCOPES
-#define IPV6_CUSTOM_SCOPES 0
-#endif /* !IPV6_CUSTOM_SCOPES */
 
-#if !IPV6_CUSTOM_SCOPES
 
 /**
  * Determine whether an IPv6 address has a constrained scope, and as such is
@@ -221,7 +212,7 @@ enum lwip_ipv6_scope_type
 #define ip6_addr_test_zone(ip6addr, netif) \
     (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
 
-#endif /* !IPV6_CUSTOM_SCOPES */
+
 
 /** Does the given IPv6 address have a scope, and as such should also have a
  * zone to be meaningful, but does not actually have a zone? (0/1) */
@@ -256,26 +247,7 @@ enum lwip_ipv6_scope_type
  * @}
  */
 
-#else /* LWIP_IPV6_SCOPES */
 
-#define IPADDR6_ZONE_INIT
-#define ip6_addr_zone(ip6addr) (IP6_NO_ZONE)
-#define ip6_addr_has_zone(ip6addr) (0)
-#define ip6_addr_set_zone(ip6addr, zone_idx)
-#define ip6_addr_clear_zone(ip6addr)
-#define ip6_addr_copy_zone(ip6addr1, ip6addr2)
-#define ip6_addr_equals_zone(ip6addr, zone_idx) (1)
-#define ip6_addr_cmp_zone(ip6addr1, ip6addr2) (1)
-#define IPV6_CUSTOM_SCOPES 0
-#define ip6_addr_has_scope(ip6addr, type) (0)
-#define ip6_addr_assign_zone(ip6addr, type, netif)
-#define ip6_addr_test_zone(ip6addr, netif) (1)
-#define ip6_addr_lacks_zone(ip6addr, type) (0)
-#define ip6_addr_select_zone(ip6addr, src)
-
-#endif /* LWIP_IPV6_SCOPES */
-
-#if LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG
 
 /** Verify that the given IPv6 address is properly zoned. */
 #define IP6_ADDR_ZONECHECK(ip6addr) LWIP_ASSERT("IPv6 zone check failed", \
@@ -288,17 +260,7 @@ enum lwip_ipv6_scope_type
      (((netif) == NULL) || ip6_addr_test_zone((ip6addr), (netif)))) : \
     !ip6_addr_has_zone(ip6addr))
 
-#else /* LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG */
-
-#define IP6_ADDR_ZONECHECK(ip6addr)
-#define IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif)
-
-#endif /* LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG */
-
-#endif /* LWIP_IPV6 */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_IP6_ZONE_H */

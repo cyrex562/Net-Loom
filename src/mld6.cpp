@@ -84,7 +84,7 @@
 static struct mld_group *mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
 static err_t mld6_remove_group(struct netif *netif, struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, uint16_t maxresp);
-static void mld6_send(struct netif *netif, struct mld_group *group, u8_t type);
+static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type);
 
 
 /**
@@ -560,7 +560,7 @@ mld6_delayed_report(struct mld_group *group, uint16_t maxresp_in)
  * @param type ICMP6_TYPE_MLR (report) or ICMP6_TYPE_MLD (done)
  */
 static void
-mld6_send(struct netif *netif, struct mld_group *group, u8_t type)
+mld6_send(struct netif *netif, struct mld_group *group, uint8_t type)
 {
   struct mld_header *mld_hdr;
   struct pbuf *p;

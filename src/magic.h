@@ -119,7 +119,7 @@ void magic_random_bytes(unsigned char *buf, uint32_t buf_len);
 /*
  * Return a new random number between 0 and (2^pow)-1 included.
  */
-uint32_t magic_pow(u8_t pow);
+uint32_t magic_pow(uint8_t pow);
 
 #ifdef __cplusplus
 }

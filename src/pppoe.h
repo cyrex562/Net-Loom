@@ -85,8 +85,8 @@ extern "C" {
 #endif
 PACK_STRUCT_BEGIN
 struct pppoehdr {
-  PACK_STRUCT_FLD_8(u8_t vertype);
-  PACK_STRUCT_FLD_8(u8_t code);
+  PACK_STRUCT_FLD_8(uint8_t vertype);
+  PACK_STRUCT_FLD_8(uint8_t code);
   PACK_STRUCT_FIELD(uint16_t session);
   PACK_STRUCT_FIELD(uint16_t plen);
 } PACK_STRUCT_STRUCT;
@@ -147,20 +147,20 @@ struct pppoe_softc {
 
   struct eth_addr sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
-  u8_t sc_state;               /* discovery phase or session connected */
+  uint8_t sc_state;               /* discovery phase or session connected */
 
 #ifdef PPPOE_TODO
-  u8_t *sc_service_name;       /* if != NULL: requested name of service */
-  u8_t *sc_concentrator_name;  /* if != NULL: requested concentrator id */
+  uint8_t *sc_service_name;       /* if != NULL: requested name of service */
+  uint8_t *sc_concentrator_name;  /* if != NULL: requested concentrator id */
 #endif /* PPPOE_TODO */
-  u8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
-  u8_t sc_ac_cookie_len;       /* length of cookie data */
+  uint8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
+  uint8_t sc_ac_cookie_len;       /* length of cookie data */
 #ifdef PPPOE_SERVER
-  u8_t *sc_hunique;            /* content of host unique we must echo back */
-  u8_t sc_hunique_len;         /* length of host unique */
+  uint8_t *sc_hunique;            /* content of host unique we must echo back */
+  uint8_t sc_hunique_len;         /* length of host unique */
 #endif
-  u8_t sc_padi_retried;        /* number of PADI retries already done */
-  u8_t sc_padr_retried;        /* number of PADR retries already done */
+  uint8_t sc_padi_retried;        /* number of PADI retries already done */
+  uint8_t sc_padr_retried;        /* number of PADR retries already done */
 };
 
 

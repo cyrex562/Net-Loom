@@ -59,10 +59,10 @@ extern "C" {
 /** "Network buffer" - contains data and addressing info */
 struct netbuf {
   struct pbuf *p, *ptr;
-  ip_addr_t addr;
+  LwipIpAddr addr;
   uint16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
-  u8_t flags;
+  uint8_t flags;
   uint16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
   ip_addr_t toaddr;

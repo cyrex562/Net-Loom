@@ -397,17 +397,17 @@ demand_rexmit(proto, newip)
 		}
 
 		/* Log Packet */
-		strcpy(ipstr,inet_ntoa(*( (struct in_addr *) (pkt->data+16))));
+		strcpy(ipstr,inet_ntoa(*( (struct LwipInAddrStruct *) (pkt->data+16))));
 		if (pkt->data[13] == 1) {
 		    syslog(LOG_INFO,"Open ICMP %s -> %s\n",
 			ipstr,
-			inet_ntoa(*( (struct in_addr *) (pkt->data+20))));
+			inet_ntoa(*( (struct LwipInAddrStruct *) (pkt->data+20))));
 		} else {
 		    syslog(LOG_INFO,"Open %s %s:%d -> %s:%d\n",
 			pkt->data[13] == 6 ? "TCP" : "UDP",
 			ipstr,
 			ntohs(*( (short *) (pkt->data+iphdr+4))),
-			inet_ntoa(*( (struct in_addr *) (pkt->data+20))),
+			inet_ntoa(*( (struct LwipInAddrStruct *) (pkt->data+20))),
 			ntohs(*( (short *) (pkt->data+iphdr+6))));
                 }
             }

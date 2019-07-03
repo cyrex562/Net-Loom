@@ -53,7 +53,6 @@
 
 #include "pcapif.h"
 
-#include "snmp.h"
 #include "stats.h"
 
 #include "sys.h"
@@ -66,6 +65,8 @@
 #include "lwip_snmp.h"
 
 // #include "pcap.h"
+
+#include "pcapif_helper.h"
 
 #include "../npcap/Include/pcap/pcap.h"
 
@@ -151,8 +152,7 @@
 #define PCAPIF_GET_STATE_PTR(netif)   ((netif)->state)
 #endif
 
-#if PCAPIF_HANDLE_LINKSTATE
-#include "pcapif_helper.h"
+
 
 /* Define "PHY" delay when "link up" */
 #ifndef PCAPIF_LINKUP_DELAY
@@ -168,7 +168,6 @@
 #define PCAPIF_NOTIFY_LINKSTATE(netif, linkfunc) linkfunc(netif)
 #endif /* PHY_LINKUP_DELAY */
 
-#endif /* PCAPIF_HANDLE_LINKSTATE */
 
 /* Define PCAPIF_RX_LOCK_LWIP and PCAPIF_RX_UNLOCK_LWIP if you need to lock the lwIP core
    before/after pbuf_alloc() or netif->input() are called on RX. */
@@ -192,7 +191,7 @@
 struct pcapipf_pending_packet {
   struct pcapipf_pending_packet *next;
   uint16_t len;
-  u8_t data[ETH_MAX_FRAME_LEN];
+  uint8_t data[ETH_MAX_FRAME_LEN];
 };
 #endif /* PCAPIF_RECEIVE_PROMISCUOUS */
 
@@ -358,7 +357,7 @@ static void pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, co
  * @return index of the adapter or negative on error
  */
 static int
-get_adapter_index_from_addr(struct in_addr *netaddr, char *guid, size_t guid_len)
+get_adapter_index_from_addr(struct LwipInAddrStruct *netaddr, char *guid, size_t guid_len)
 {
    pcap_if_t *alldevs;
    pcap_if_t *d;
@@ -377,8 +376,8 @@ get_adapter_index_from_addr(struct in_addr *netaddr, char *guid, size_t guid_len
       pcap_addr_t *a;
       for(a = d->addresses; a != NULL; a = a->next) {
          if (a->addr->sa_family == AF_INET) {
-            ULONG a_addr = ((struct sockaddr_in *)a->addr)->sin_addr.s_addr;
-            ULONG a_netmask = ((struct sockaddr_in *)a->netmask)->sin_addr.s_addr;
+            ULONG a_addr = ((struct LwipSockaddrSockaddrIn *)a->addr)->sin_addr.s_addr;
+            ULONG a_netmask = ((struct LwipSockaddrSockaddrIn *)a->netmask)->sin_addr.s_addr;
             ULONG a_netaddr = a_addr & a_netmask;
             ULONG addr = (*netaddr).s_addr;
             if (a_netaddr == addr) {
@@ -727,7 +726,7 @@ pcapif_input_thread(void *arg)
 static void
 pcapif_low_level_init(struct netif *netif)
 {
-  u8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
+  uint8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
   struct pcapif_private *pa;
 #ifdef PACKET_LIB_GET_ADAPTER_NETADDRESS
@@ -751,7 +750,7 @@ pcapif_low_level_init(struct netif *netif)
 #ifdef PACKET_LIB_GET_ADAPTER_NETADDRESS
   memset(&guid, 0, sizeof(guid));
   PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
-  if (get_adapter_index_from_addr((struct in_addr *)&netaddr, guid, GUID_LEN) < 0) {
+  if (get_adapter_index_from_addr((struct LwipInAddrStruct *)&netaddr, guid, GUID_LEN) < 0) {
      printf("ERROR initializing network adapter, failed to get GUID for network address %s\n", ip4addr_ntoa(&netaddr));
      LWIP_ASSERT("ERROR initializing network adapter, failed to get GUID for network address!", 0);
      return;
@@ -904,9 +903,9 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
   const struct eth_addr *dest = (const struct eth_addr*)packet;
   int unicast;
 #if PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS
-  const u8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-  const u8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
-  const u8_t ipv6mcast[] = {0x33, 0x33};
+  const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+  const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
+  const uint8_t ipv6mcast[] = {0x33, 0x33};
 #endif /* PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS */
 
   if (pcaipf_is_tx_packet(netif, packet, packet_len)) {
@@ -1048,7 +1047,6 @@ err_t
 pcapif_init(struct netif *netif)
 {
   static int ethernetif_index;
-
   int local_index;
   SYS_ARCH_DECL_PROTECT(lev);
   SYS_ARCH_PROTECT(lev);
@@ -1060,26 +1058,14 @@ pcapif_init(struct netif *netif)
   netif->name[0] = IFNAME0;
   netif->name[1] = (char)(IFNAME1 + local_index);
   netif->linkoutput = pcapif_low_level_output;
-#if LWIP_IPV4
-#if LWIP_ARP
   netif->output = etharp_output;
-#else /* LWIP_ARP */
   netif->output = NULL; /* not used for PPPoE */
-#endif /* LWIP_ARP */
-#endif /* LWIP_IPV4 */
-#if LWIP_IPV6
   netif->output_ip6 = ethip6_output;
-#endif /* LWIP_IPV6 */
-#if LWIP_NETIF_HOSTNAME
   /* Initialize interface hostname */
   netif_set_hostname(netif, "lwip");
-#endif /* LWIP_NETIF_HOSTNAME */
-
   netif->mtu = 1500;
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP;
-#if LWIP_IPV6 && LWIP_IPV6_MLD
   netif->flags |= NETIF_FLAG_MLD6;
-#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
   netif->hwaddr_len = ETH_HWADDR_LEN;
 
   NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, 100000000);
@@ -1090,7 +1076,6 @@ pcapif_init(struct netif *netif)
   return ERR_OK;
 }
 
-#if !PCAPIF_RX_USE_THREAD
 void
 pcapif_poll(struct netif *netif)
 {
@@ -1110,6 +1095,5 @@ pcapif_poll(struct netif *netif)
   } while (ret > 0);
 
 }
-#endif /* !PCAPIF_RX_USE_THREAD */
 
-// #endif /* LWIP_ETHERNET */
+

@@ -169,10 +169,10 @@ static uint16_t tcp_port = TCP_LOCAL_PORT_RANGE_START;
 
 /* Incremented every coarse grained timer shot (typically every 500 ms). */
 uint32_t tcp_ticks;
-static const u8_t tcp_backoff[13] =
+static const uint8_t tcp_backoff[13] =
 { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
 /* Times per slowtmr hits */
-static const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
+static const uint8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 
 /* The TCP PCB lists. */
 
@@ -191,11 +191,11 @@ struct tcp_pcb **const tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcbs
          &tcp_active_pcbs, &tcp_tw_pcbs
 };
 
-u8_t tcp_active_pcbs_changed;
+uint8_t tcp_active_pcbs_changed;
 
 /** Timer counter to handle calling slow-timer from tcp_tmr() */
-static u8_t tcp_timer;
-static u8_t tcp_timer_ctr;
+static uint8_t tcp_timer;
+static uint8_t tcp_timer_ctr;
 static uint16_t tcp_new_port(void);
 
 static err_t tcp_close_shutdown_fin(struct tcp_pcb *pcb);
@@ -356,7 +356,7 @@ tcp_backlog_accepted(struct tcp_pcb *pcb)
  *         another err_t if closing failed and pcb is not freed
  */
 static err_t
-tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
+tcp_close_shutdown(struct tcp_pcb *pcb, uint8_t rst_on_unacked_data)
 {
   LWIP_ASSERT("tcp_close_shutdown: invalid pcb", pcb != NULL);
 
@@ -552,7 +552,7 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
       case SYN_RCVD:
       case ESTABLISHED:
       case CLOSE_WAIT:
-        return tcp_close_shutdown(pcb, (u8_t)shut_rx);
+        return tcp_close_shutdown(pcb, (uint8_t)shut_rx);
       default:
         /* Not (yet?) connected, cannot shutdown the TX side as that would bring us
           into CLOSED state, where the PCB is deallocated. */
@@ -669,7 +669,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *         ERR_OK if bound
  */
 err_t
-tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port)
+tcp_bind(struct tcp_pcb *pcb, const LwipIpAddr *ipaddr, uint16_t port)
 {
   int i;
   int max_pcb_list = NUM_TCP_PCB_LISTS;
@@ -728,7 +728,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port)
         if (cpcb->local_port == port) {
 #if SO_REUSE
           /* Omit checking for the same port if both pcbs have REUSEADDR set.
-             For SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
+             For LWIP_SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
              tcp_connect. */
           if (!ip_get_option(pcb, SOF_REUSEADDR) ||
               !ip_get_option(cpcb, SOF_REUSEADDR))
@@ -833,7 +833,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *             tpcb = tcp_listen_with_backlog(tpcb, backlog);
  */
 struct tcp_pcb *
-tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
+tcp_listen_with_backlog(struct tcp_pcb *pcb, uint8_t backlog)
 {
   LWIP_ASSERT_CORE_LOCKED();
   return tcp_listen_with_backlog_and_err(pcb, backlog, NULL);
@@ -856,7 +856,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
  *             tpcb = tcp_listen_with_backlog_and_err(tpcb, backlog, &err);
  */
 struct tcp_pcb *
-tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
+tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, uint8_t backlog, err_t *err)
 {
   struct tcp_pcb_listen *lpcb = NULL;
   err_t res;
@@ -1022,7 +1022,7 @@ tcp_recved(struct tcp_pcb *pcb, uint16_t len)
 static uint16_t
 tcp_new_port(void)
 {
-  u8_t i;
+  uint8_t i;
   uint16_t n = 0;
   struct tcp_pcb *pcb;
 
@@ -1076,7 +1076,7 @@ again:
  *         other err_t values if connect request couldn't be sent
  */
 err_t
-tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port,
+tcp_connect(struct tcp_pcb *pcb, const LwipIpAddr *ipaddr, uint16_t port,
             tcp_connected_fn connected)
 {
   struct netif *netif = NULL;
@@ -1108,7 +1108,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port,
 
   /* check if local IP has been assigned to pcb, if not, get one */
   if (ip_addr_isany(&pcb->local_ip)) {
-    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, ipaddr);
+    const LwipIpAddr *local_ip = ip_netif_get_local_ip(netif, ipaddr);
     if (local_ip == NULL) {
       return ERR_RTE;
     }
@@ -1205,8 +1205,8 @@ tcp_slowtmr(void)
 {
   struct tcp_pcb *pcb, *prev;
   tcpwnd_size_t eff_wnd;
-  u8_t pcb_remove;      /* flag if a PCB should be removed */
-  u8_t pcb_reset;       /* flag if a RST should be sent when removing */
+  uint8_t pcb_remove;      /* flag if a PCB should be removed */
+  uint8_t pcb_reset;       /* flag if a RST should be sent when removing */
   err_t err;
 
   err = ERR_OK;
@@ -1250,7 +1250,7 @@ tcp_slowtmr_start:
         if (pcb->persist_probe >= TCP_MAXRTX) {
           ++pcb_remove; /* max probes reached */
         } else {
-          u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff - 1];
+          uint8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff - 1];
           if (pcb->persist_cnt < backoff_cnt) {
             pcb->persist_cnt++;
           }
@@ -1296,7 +1296,7 @@ tcp_slowtmr_start:
             /* Double retransmission time-out unless we are trying to
              * connect to somebody (i.e., we are in SYN_SENT). */
             if (pcb->state != SYN_SENT) {
-              u8_t backoff_idx = LWIP_MIN(pcb->nrtx, sizeof(tcp_backoff) - 1);
+              uint8_t backoff_idx = LWIP_MIN(pcb->nrtx, sizeof(tcp_backoff) - 1);
               int calc_rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[backoff_idx];
               pcb->rto = (int16_t)LWIP_MIN(calc_rto, 0x7FFF);
             }
@@ -1561,7 +1561,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
 #endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
   {
     err_t err;
-    u8_t refused_flags = pcb->refused_data->flags;
+    uint8_t refused_flags = pcb->refused_data->flags;
     /* set pcb->refused_data to NULL in case the callback frees it and then
        closes the pcb */
     struct pbuf *refused_data = pcb->refused_data;
@@ -1654,7 +1654,7 @@ tcp_seg_free(struct tcp_seg *seg)
  * @param prio new priority
  */
 void
-tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
+tcp_setprio(struct tcp_pcb *pcb, uint8_t prio)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1683,7 +1683,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   if (cseg == NULL) {
     return NULL;
   }
-  SMEMCPY((u8_t *)cseg, (const u8_t *)seg, sizeof(struct tcp_seg));
+  SMEMCPY((uint8_t *)cseg, (const uint8_t *)seg, sizeof(struct tcp_seg));
   pbuf_ref(cseg->p);
   return cseg;
 }
@@ -1717,11 +1717,11 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
  * @param prio minimum priority
  */
 static void
-tcp_kill_prio(u8_t prio)
+tcp_kill_prio(uint8_t prio)
 {
   struct tcp_pcb *pcb, *inactive;
   uint32_t inactivity;
-  u8_t mprio;
+  uint8_t mprio;
 
   mprio = LWIP_MIN(TCP_PRIO_MAX, prio);
 
@@ -1845,7 +1845,7 @@ tcp_handle_closepend(void)
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_alloc(u8_t prio)
+tcp_alloc(uint8_t prio)
 {
   struct tcp_pcb *pcb;
 
@@ -1978,7 +1978,7 @@ tcp_new(void)
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_new_ip_type(u8_t type)
+tcp_new_ip_type(uint8_t type)
 {
   struct tcp_pcb *pcb;
   pcb = tcp_alloc(TCP_PRIO_NORMAL);
@@ -2122,7 +2122,7 @@ tcp_accept(struct tcp_pcb* pcb, tcp_accept_fn accept)
  * again when the connection has been idle for a while.
  */
 void
-tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
+tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, uint8_t interval)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -2255,7 +2255,7 @@ tcp_next_iss(struct tcp_pcb *pcb)
  * netif (if not NULL).
  */
 uint16_t
-tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif, const ip_addr_t *dest)
+tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif, const LwipIpAddr *dest)
 {
   uint16_t mss_s;
   uint16_t mtu;
@@ -2316,7 +2316,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif, const ip_addr_t *d
 
 /** Helper function for tcp_netif_ip_addr_changed() that iterates a pcb list */
 static void
-tcp_netif_ip_addr_changed_pcblist(const ip_addr_t *old_addr, struct tcp_pcb *pcb_list)
+tcp_netif_ip_addr_changed_pcblist(const LwipIpAddr *old_addr, struct tcp_pcb *pcb_list)
 {
   struct tcp_pcb *pcb;
   pcb = pcb_list;
@@ -2348,7 +2348,7 @@ tcp_netif_ip_addr_changed_pcblist(const ip_addr_t *old_addr, struct tcp_pcb *pcb
  * @param new_addr IP address of the netif after change or NULL if netif has been removed
  */
 void
-tcp_netif_ip_addr_changed(const ip_addr_t *old_addr, const ip_addr_t *new_addr)
+tcp_netif_ip_addr_changed(const LwipIpAddr *old_addr, const LwipIpAddr *new_addr)
 {
   struct tcp_pcb_listen *lpcb;
 
@@ -2377,7 +2377,7 @@ tcp_debug_state_str(enum tcp_state s)
 }
 
 err_t
-tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, uint16_t *port)
+tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, LwipIpAddr *addr, uint16_t *port)
 {
   if (pcb) {
     if (local) {
@@ -2469,7 +2469,7 @@ tcp_debug_print_state(enum tcp_state s)
  * @param flags tcp flags, all active flags are printed
  */
 void
-tcp_debug_print_flags(u8_t flags)
+tcp_debug_print_flags(uint8_t flags)
 {
   if (flags & TCP_FIN) {
     LWIP_DEBUGF(TCP_DEBUG, ("FIN "));
@@ -2567,7 +2567,7 @@ tcp_pcbs_sane(void)
  * to store and load arguments from this index for a given pcb.
  */
 
-static u8_t tcp_ext_arg_id;
+static uint8_t tcp_ext_arg_id;
 
 /**
  * @ingroup tcp_raw_extargs
@@ -2587,10 +2587,10 @@ static u8_t tcp_ext_arg_id;
  *
  * @return a unique index into struct tcp_pcb.ext_args
  */
-u8_t
+uint8_t
 tcp_ext_arg_alloc_id(void)
 {
-  u8_t result = tcp_ext_arg_id;
+  uint8_t result = tcp_ext_arg_id;
   tcp_ext_arg_id++;
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -2670,7 +2670,7 @@ tcp_ext_arg_invoke_callbacks_destroyed(struct tcp_pcb_ext_args *ext_args)
   for (i = 0; i < LWIP_TCP_PCB_NUM_EXT_ARGS; i++) {
     if (ext_args[i].callbacks != NULL) {
       if (ext_args[i].callbacks->destroy != NULL) {
-        ext_args[i].callbacks->destroy((u8_t)i, ext_args[i].data);
+        ext_args[i].callbacks->destroy((uint8_t)i, ext_args[i].data);
       }
     }
   }
@@ -2692,7 +2692,7 @@ tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct tc
   for (i = 0; i < LWIP_TCP_PCB_NUM_EXT_ARGS; i++) {
     if (lpcb->ext_args[i].callbacks != NULL) {
       if (lpcb->ext_args[i].callbacks->passive_open != NULL) {
-        err_t err = lpcb->ext_args[i].callbacks->passive_open((u8_t)i, lpcb, cpcb);
+        err_t err = lpcb->ext_args[i].callbacks->passive_open((uint8_t)i, lpcb, cpcb);
         if (err != ERR_OK) {
           return err;
         }

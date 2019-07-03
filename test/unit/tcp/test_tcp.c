@@ -27,7 +27,7 @@ static uint32_t seqnos[] = {
     SEQNO1 + (4 * TCP_MSS),
     SEQNO1 + (5 * TCP_MSS) };
 
-static u8_t test_tcp_timer;
+static uint8_t test_tcp_timer;
 
 /* our own version of tcp_tmr so we can reset fast/slow timer state */
 static void
@@ -607,7 +607,7 @@ START_TEST(test_tcp_fast_retx_recover)
 }
 END_TEST
 
-static u8_t tx_data[TCP_WND*2];
+static uint8_t tx_data[TCP_WND*2];
 
 static void
 check_seqnos(struct tcp_seg *segs, int num_expected, uint32_t *seqnos_expected)
@@ -637,7 +637,7 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -725,7 +725,7 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -788,7 +788,7 @@ END_TEST
 
 /** Provoke fast retransmission by duplicate ACKs and then recover by ACKing all sent data.
  * At the end, send more data. */
-static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
+static void test_tcp_tx_full_window_lost(uint8_t zero_window_probe_from_unsent)
 {
   struct netif netif;
   struct test_tcp_txcounters txcounters;
@@ -798,10 +798,10 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   err_t err;
   size_t i;
   uint16_t sent_total;
-  u8_t expected = 0xFE;
+  uint8_t expected = 0xFE;
 
   for (i = 0; i < sizeof(tx_data); i++) {
-    u8_t d = (u8_t)i;
+    uint8_t d = (uint8_t)i;
     if (d == 0xFE) {
       d = 0xF0;
     }
@@ -909,7 +909,7 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
     EXPECT(txcounters.num_tx_bytes == 1 + 40U);
     EXPECT(txcounters.tx_packets != NULL);
     if (txcounters.tx_packets != NULL) {
-      u8_t sent;
+      uint8_t sent;
       uint16_t ret;
       ret = pbuf_copy_partial(txcounters.tx_packets, &sent, 1, 40U);
       EXPECT(ret == 1);
@@ -1075,7 +1075,7 @@ START_TEST(test_tcp_rto_tracking)
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -1196,7 +1196,7 @@ static void test_tcp_rto_timeout_impl(int link_down)
 
   /* Setup data for a single segment */
   for (i = 0; i < TCP_MSS; i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -1294,7 +1294,7 @@ static void test_tcp_rto_timeout_syn_sent_impl(int link_down)
 
   /* Setup data for a single segment */
   for (i = 0; i < TCP_MSS; i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -1389,7 +1389,7 @@ static void test_tcp_zwp_timeout_impl(int link_down)
 
   /* Setup data for two segments */
   for (i = 0; i < 2*TCP_MSS; i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -1519,7 +1519,7 @@ START_TEST(test_tcp_persist_split)
 
   /* Setup data for four segments */
   for (i = 0; i < 4 * TCP_MSS; i++) {
-    tx_data[i] = (u8_t)i;
+    tx_data[i] = (uint8_t)i;
   }
 
   /* initialize local vars */
@@ -1614,7 +1614,7 @@ START_TEST(test_tcp_persist_split)
   /* verify first half segment */
   EXPECT(txcounters.tx_packets != NULL);
   if (txcounters.tx_packets != NULL) {
-    u8_t sent[TCP_MSS / 2];
+    uint8_t sent[TCP_MSS / 2];
     uint16_t ret;
     ret = pbuf_copy_partial(txcounters.tx_packets, &sent, TCP_MSS / 2, 40U);
     EXPECT(ret == TCP_MSS / 2);
@@ -1642,7 +1642,7 @@ START_TEST(test_tcp_persist_split)
   /* verify remainder segment */
   EXPECT(txcounters.tx_packets != NULL);
   if (txcounters.tx_packets != NULL) {
-    u8_t sent[TCP_MSS / 4];
+    uint8_t sent[TCP_MSS / 4];
     uint16_t ret;
     ret = pbuf_copy_partial(txcounters.tx_packets, &sent, TCP_MSS / 4, 40U);
     EXPECT(ret == TCP_MSS / 4);

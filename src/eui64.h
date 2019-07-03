@@ -48,11 +48,11 @@ extern "C" {
 /*
  * @todo:
  *
- * Maybe this should be done by processing struct in6_addr directly...
+ * Maybe this should be done by processing struct LwipIn6Addr directly...
  */
 typedef union
 {
-    u8_t e8[8];
+    uint8_t e8[8];
     uint16_t e16[4];
     uint32_t e32[2];
 } eui64_t;
