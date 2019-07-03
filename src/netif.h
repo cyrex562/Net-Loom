@@ -10,7 +10,7 @@
 #include "lwip_snmp.h"
 #include "opt.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include <cstdint>
 
@@ -122,17 +122,17 @@ enum netif_mac_filter_action {
  *
  * @param netif The netif to initialize
  */
-typedef err_t (*netif_init_fn)(struct netif *netif);
+typedef LwipError (*netif_init_fn)(struct netif *netif);
 /** Function prototype for netif->input functions. This function is saved as 'input'
  * callback function in the netif struct. Call it when a packet has been received.
  *
- * @param p The received packet, copied into a pbuf
+ * @param p The received packet, copied into a PacketBuffer
  * @param inp The netif which received the packet
  * @return ERR_OK if the packet was handled
  *         != ERR_OK is the packet was NOT handled, in this case, the caller has
- *                   to free the pbuf
+ *                   to free the PacketBuffer
  */
-typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
+typedef LwipError (*netif_input_fn)(struct PacketBuffer *p, struct netif *inp);
 
 /** Function prototype for netif->output functions. Called by lwIP when a packet
  * shall be sent. For ethernet netif, set this to 'etharp_output' and set
@@ -142,7 +142,7 @@ typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IP address to which the packet shall be sent
  */
-typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
+typedef LwipError (*netif_output_fn)(struct netif *netif, struct PacketBuffer *p,
        const LwipIpv4Addr *ipaddr);
 
 /** Function prototype for netif->output_ip6 functions. Called by lwIP when a packet
@@ -153,7 +153,7 @@ typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IPv6 address to which the packet shall be sent
  */
-typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p, const LwipIp6Addr *ipaddr);
+typedef LwipError (*netif_output_ip6_fn)(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *ipaddr);
 
 
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
@@ -162,14 +162,14 @@ typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p, const 
  * @param netif The netif which shall send a packet
  * @param p The packet to send (raw ethernet packet)
  */
-typedef err_t (*netif_linkoutput_fn)(struct netif *netif, struct pbuf *p);
+typedef LwipError (*netif_linkoutput_fn)(struct netif *netif, struct PacketBuffer *p);
 /** Function prototype for netif status- or link-callback functions. */
 typedef void (*netif_status_callback_fn)(struct netif *netif);
 /** Function prototype for netif igmp_mac_filter functions */
-typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
+typedef LwipError (*netif_igmp_mac_filter_fn)(struct netif *netif,
        const LwipIpv4Addr *group, enum netif_mac_filter_action action);
 /** Function prototype for netif mld_mac_filter functions */
-typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
+typedef LwipError (*netif_mld_mac_filter_fn)(struct netif *netif,
        const LwipIp6Addr *group, enum netif_mac_filter_action action);
 
 uint8_t netif_alloc_client_data_id(void);
@@ -218,7 +218,7 @@ struct netif {
   netif_output_fn output;
   /** This function is called by ethernet_output() when it wants
    *  to send a packet on the interface. This function outputs
-   *  the pbuf as-is on the link medium. */
+   *  the PacketBuffer as-is on the link medium. */
   netif_linkoutput_fn linkoutput;
   /** This function is called by the IPv6 module when it wants
    *  to send a packet on the interface. This function typically
@@ -266,7 +266,7 @@ struct netif {
   /** timestamp at last change made (up/down) */
   uint32_t ts;
   /** counters */
-  struct stats_mib2_netif_ctrs mib2_counters;
+  // struct stats_mib2_netif_ctrs mib2_counters;
   /** This function could be called to add or delete an entry in the multicast
       filter table of the ethernet MAC.*/
   netif_igmp_mac_filter_fn igmp_mac_filter;
@@ -275,8 +275,8 @@ struct netif {
   netif_mld_mac_filter_fn mld_mac_filter;
   struct NetifHint *hints;
   /* List of packets to be queued for ourselves. */
-  struct pbuf *loop_first;
-  struct pbuf *loop_last;
+  struct PacketBuffer *loop_first;
+  struct PacketBuffer *loop_last;
   uint16_t loop_cnt_current;
 };
 
@@ -391,27 +391,27 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 #if ENABLE_LOOPBACK
-err_t netif_loop_output(struct netif *netif, struct pbuf *p);
+LwipError netif_loop_output(struct netif *netif, struct PacketBuffer *p);
 void netif_poll(struct netif *netif);
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
 void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 
-err_t netif_input(struct pbuf *p, struct netif *inp);
+LwipError netif_input(struct PacketBuffer *p, struct netif *inp);
 
 
 /** @ingroup netif_ip6 */
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif_ip6 */
-#define netif_ip6_addr(netif, i)  ((const ip6_addr_t*)ip_2_ip6(&((netif)->ip6_addr[i])))
-void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6);
-void netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3);
+#define netif_ip6_addr(netif, i)  ((const LwipIp6Addr*)ip_2_ip6(&((netif)->ip6_addr[i])))
+void netif_ip6_addr_set(struct netif *netif, int8_t addr_idx, const LwipIp6Addr *addr6);
+void netif_ip6_addr_set_parts(struct netif *netif, int8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3);
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
-void netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, uint8_t state);
-s8_t netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr);
+void netif_ip6_addr_set_state(struct netif* netif, int8_t addr_idx, uint8_t state);
+int8_t netif_get_ip6_addr_match(struct netif *netif, const LwipIp6Addr *ip6addr);
 void netif_create_ip6_linklocal_address(struct netif *netif, uint8_t from_mac_48bit);
-err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chosen_idx);
+LwipError netif_add_ip6_address(struct netif *netif, const LwipIp6Addr *ip6addr, int8_t *chosen_idx);
 #define netif_set_ip6_autoconfig_enabled(netif, action) do { if(netif) { (netif)->ip6_autoconfig_enabled = (action); }}while(0)
 #if LWIP_IPV6_ADDRESS_LIFETIMES
 #define netif_ip6_addr_valid_life(netif, i)  \
@@ -506,14 +506,14 @@ typedef union {
   /** Args to LWIP_NSC_IPV6_SET callback */
   struct ipv6_set_s {
     /** Index of changed IPv6 address */
-    s8_t addr_index;
+    int8_t addr_index;
     /** Old IPv6 address */
     const LwipIpAddr* old_address;
   } ipv6_set;
   /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
   struct ipv6_addr_state_changed_s {
     /** Index of affected IPv6 address */
-    s8_t addr_index;
+    int8_t addr_index;
     /** Old IPv6 address state */
     uint8_t old_state;
     /** Affected IPv6 address */
@@ -556,4 +556,3 @@ void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, c
 }
 #endif
 
-#endif /* LWIP_HDR_NETIF_H */

@@ -86,7 +86,7 @@ struct api_msg {
       which is used to block the application thread until the function finished. */
   struct netconn *conn;
   /** The return value of the function executed in tcpip_thread. */
-  err_t err;
+  LwipError err;
   /** Depending on the executed function, one of these union members is used */
   union {
     /** used for lwip_netconn_do_send */
@@ -188,14 +188,14 @@ struct dns_api_msg {
       should wait on it. */
   sys_sem_t API_MSG_M_DEF_SEM(sem);
   /** Errors are given back here */
-  err_t API_MSG_M_DEF(err);
+  LwipError API_MSG_M_DEF(err);
 };
 #endif /* LWIP_DNS */
 
 #if LWIP_NETCONN_FULLDUPLEX
 int lwip_netconn_is_deallocated_msg(void *msg);
 #endif
-int lwip_netconn_is_err_msg(void *msg, err_t *err);
+int lwip_netconn_is_err_msg(void *msg, LwipError *err);
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);
 void lwip_netconn_do_bind            (void *m);
@@ -237,7 +237,7 @@ void netconn_free(struct netconn *conn);
 #endif /* LWIP_MPU_COMPATIBLE */
 
 typedef void (*netifapi_void_fn)(struct netif *netif);
-typedef err_t (*netifapi_errt_fn)(struct netif *netif);
+typedef LwipError (*netifapi_errt_fn)(struct netif *netif);
 
 struct netifapi_msg {
   struct tcpip_api_call_data call;

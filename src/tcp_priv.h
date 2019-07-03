@@ -40,7 +40,7 @@
 #include "opt.h"
 #include "tcp.h"
 #include "mem.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip.h"
 #include "icmp.h"
 #include "err.h"
@@ -75,19 +75,19 @@ void             tcp_fasttmr (void);
 void             tcp_txnow   (void);
 
 /* Only used by IP to pass a TCP segment to TCP: */
-void             tcp_input   (struct pbuf *p, struct netif *inp);
+void             tcp_input   (struct PacketBuffer *p, struct netif *inp);
 /* Used within the TCP code only: */
 struct tcp_pcb * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct tcp_pcb *pcb);
 void             tcp_abandon (struct tcp_pcb *pcb, int reset);
-err_t            tcp_send_empty_ack(struct tcp_pcb *pcb);
-err_t            tcp_rexmit  (struct tcp_pcb *pcb);
-err_t            tcp_rexmit_rto_prepare(struct tcp_pcb *pcb);
+LwipError            tcp_send_empty_ack(struct tcp_pcb *pcb);
+LwipError            tcp_rexmit  (struct tcp_pcb *pcb);
+LwipError            tcp_rexmit_rto_prepare(struct tcp_pcb *pcb);
 void             tcp_rexmit_rto_commit(struct tcp_pcb *pcb);
 void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 void             tcp_rexmit_fast (struct tcp_pcb *pcb);
 uint32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
-err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
+LwipError            tcp_process_refused_data(struct tcp_pcb *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
@@ -253,11 +253,11 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 /* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
   struct tcp_seg *next;    /* used when putting segments on a queue */
-  struct pbuf *p;          /* buffer containing data + TCP header */
+  struct PacketBuffer *p;          /* buffer containing data + TCP header */
   uint16_t len;               /* the TCP length of this segment */
 #if TCP_OVERSIZE_DBGCHECK
   uint16_t oversize_left;     /* Extra bytes available at the end of the last
-                              pbuf in unsent (used for asserting vs.
+                              PacketBuffer in unsent (used for asserting vs.
                               tcp_pcb.unsent_oversize only) */
 #endif /* TCP_OVERSIZE_DBGCHECK */
 #if TCP_CHECKSUM_ON_COPY
@@ -460,8 +460,8 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   tcp_set_flags(pcb, TF_ACK_NOW)
 
-err_t tcp_send_fin(struct tcp_pcb *pcb);
-err_t tcp_enqueue_flags(struct tcp_pcb *pcb, uint8_t flags);
+LwipError tcp_send_fin(struct tcp_pcb *pcb);
+LwipError tcp_enqueue_flags(struct tcp_pcb *pcb, uint8_t flags);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
@@ -471,9 +471,9 @@ void tcp_rst(const struct tcp_pcb* pcb, uint32_t seqno, uint32_t ackno,
 
 uint32_t tcp_next_iss(struct tcp_pcb *pcb);
 
-err_t tcp_keepalive(struct tcp_pcb *pcb);
-err_t tcp_split_unsent_seg(struct tcp_pcb *pcb, uint16_t split);
-err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
+LwipError tcp_keepalive(struct tcp_pcb *pcb);
+LwipError tcp_split_unsent_seg(struct tcp_pcb *pcb, uint16_t split);
+LwipError tcp_zero_window_probe(struct tcp_pcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
@@ -484,7 +484,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif,
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API
-err_t tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err);
+LwipError tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct PacketBuffer *p, LwipError err);
 #endif /* LWIP_CALLBACK_API */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
@@ -512,7 +512,7 @@ void tcp_free_ooseq(struct tcp_pcb *pcb);
 #endif
 
 #if LWIP_TCP_PCB_NUM_EXT_ARGS
-err_t tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
+LwipError tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
 #endif
 
 #ifdef __cplusplus

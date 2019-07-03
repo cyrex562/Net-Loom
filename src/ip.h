@@ -40,7 +40,7 @@
 #include "opt.h"
 
 #include "def.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip_addr.h"
 #include "err.h"
 #include "netif.h"
@@ -63,7 +63,7 @@ extern "C" {
 
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed
-   in the pbuf. This is used when TCP retransmits. */
+   in the PacketBuffer. This is used when TCP retransmits. */
 #define LWIP_IP_HDRINCL  NULL
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
@@ -281,7 +281,7 @@ extern struct ip_globals ip_data;
         ip4_netif_get_local_ip(netif))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 
-err_t ip_input(struct pbuf *p, struct netif *inp);
+LwipError ip_input(struct PacketBuffer *p, struct netif *inp);
 
 #elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */
 

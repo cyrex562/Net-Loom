@@ -136,9 +136,9 @@ struct vj_u16_t
  * compressed.
  */
 uint8_t
-vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
+vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
 {
-  struct pbuf *np = *pb;
+  struct PacketBuffer *np = *pb;
   struct ip_hdr *ip = (struct ip_hdr *)np->payload;
   struct cstate *cs = comp->last_cs->cs_next;
   uint16_t ilen = IPH_HL(ip);
@@ -502,7 +502,7 @@ vj_uncompress_err(struct vjcompress* comp)
  * Return 0 on success, -1 on failure.
  */
 int
-vj_uncompress_uncomp(struct pbuf* nb, struct vjcompress* comp)
+vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
 {
     uint32_t hlen;
     struct cstate* cs;
@@ -541,13 +541,13 @@ vj_uncompress_uncomp(struct pbuf* nb, struct vjcompress* comp)
  * header and returns the length of the VJ header.
  */
 int
-vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
+vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 {
   uint8_t *cp;
   struct tcp_hdr *th;
   struct cstate *cs;
   struct vj_u16_t *bp;
-  struct pbuf *n0 = *nb;
+  struct PacketBuffer *n0 = *nb;
   uint32_t tmp;
   uint32_t vjlen, hlen, changes;
 
@@ -712,7 +712,7 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
 
     if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
     {
-        struct pbuf* np;
+        struct PacketBuffer* np;
 
 #if IP_FORWARD
     /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
@@ -749,7 +749,7 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
 
     if (pbuf_add_header(n0, cs->cs_hlen))
     {
-        struct pbuf* np;
+        struct PacketBuffer* np;
 
         LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
         np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);

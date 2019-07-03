@@ -42,7 +42,7 @@
 #define LWIP_HDR_IP6_FRAG_H
 
 #include "opt.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip6_addr.h"
 #include "ip6.h"
 #include "netif.h"
@@ -89,7 +89,7 @@ extern "C" {
  */
 struct ip6_reassdata {
   struct ip6_reassdata *next;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct ip6_hdr *iphdr; /* pointer to the first (original) IPv6 header */
 #if IPV6_FRAG_COPYHEADER
   ip6_addr_p_t src; /* copy of the source address in the IP header */
@@ -113,7 +113,7 @@ struct ip6_reassdata {
 
 #define ip6_reass_init() /* Compatibility define */
 void ip6_reass_tmr(void);
-struct pbuf *ip6_reass(struct pbuf *p);
+struct PacketBuffer *ip6_reass(struct PacketBuffer *p);
 
 #endif /* LWIP_IPV6 && LWIP_IPV6_REASS */
 
@@ -121,18 +121,18 @@ struct pbuf *ip6_reass(struct pbuf *p);
 
 #ifndef LWIP_PBUF_CUSTOM_REF_DEFINED
 #define LWIP_PBUF_CUSTOM_REF_DEFINED
-/** A custom pbuf that holds a reference to another pbuf, which is freed
- * when this custom pbuf is freed. This is used to create a custom PBUF_REF
- * that points into the original pbuf. */
+/** A custom PacketBuffer that holds a reference to another PacketBuffer, which is freed
+ * when this custom PacketBuffer is freed. This is used to create a custom PBUF_REF
+ * that points into the original PacketBuffer. */
 struct pbuf_custom_ref {
   /** 'base class' */
   struct pbuf_custom pc;
-  /** pointer to the original pbuf that is referenced */
-  struct pbuf *original;
+  /** pointer to the original PacketBuffer that is referenced */
+  struct PacketBuffer *original;
 };
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 
-err_t ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest);
+LwipError ip6_frag(struct PacketBuffer *p, struct netif *netif, const LwipIp6Addr *dest);
 
 #endif /* LWIP_IPV6 && LWIP_IPV6_FRAG */
 

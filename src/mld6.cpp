@@ -62,7 +62,7 @@
 #include "ip6_addr.h"
 #include "ip.h"
 #include "inet_chksum.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 #include "memp.h"
 #include "stats.h"
@@ -81,8 +81,8 @@
 #define MLD6_GROUP_IDLE_MEMBER            2
 
 /* Forward declarations. */
-static struct mld_group *mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
-static err_t mld6_remove_group(struct netif *netif, struct mld_group *group);
+static struct mld_group *mld6_new_group(struct netif *ifp, const LwipIp6Addr *addr);
+static LwipError mld6_remove_group(struct netif *netif, struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, uint16_t maxresp);
 static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type);
 
@@ -92,7 +92,7 @@ static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type
  *
  * @param netif network interface on which stop MLD processing
  */
-err_t
+LwipError
 mld6_stop(struct netif *netif)
 {
   struct mld_group *group = netif_mld6_data(netif);
@@ -141,7 +141,7 @@ mld6_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct mld_group *
-mld6_lookfor_group(struct netif *ifp, const ip6_addr_t *addr)
+mld6_lookfor_group(struct netif *ifp, const LwipIp6Addr *addr)
 {
   struct mld_group *group = netif_mld6_data(ifp);
 
@@ -165,7 +165,7 @@ mld6_lookfor_group(struct netif *ifp, const ip6_addr_t *addr)
  *         NULL on memory error.
  */
 static struct mld_group *
-mld6_new_group(struct netif *ifp, const ip6_addr_t *addr)
+mld6_new_group(struct netif *ifp, const LwipIp6Addr *addr)
 {
   struct mld_group *group;
 
@@ -188,12 +188,12 @@ mld6_new_group(struct netif *ifp, const ip6_addr_t *addr)
  * Remove a group from the mld_group_list, but do not free it yet
  *
  * @param group the group to remove
- * @return ERR_OK if group was removed from the list, an err_t otherwise
+ * @return ERR_OK if group was removed from the list, an LwipError otherwise
  */
-static err_t
+static LwipError
 mld6_remove_group(struct netif *netif, struct mld_group *group)
 {
-  err_t err = ERR_OK;
+  LwipError err = ERR_OK;
 
   /* Is it the first group? */
   if (netif_mld6_data(netif) == group) {
@@ -224,7 +224,7 @@ mld6_remove_group(struct netif *netif, struct mld_group *group)
  * @param inp the netif on which this packet was received
  */
 void
-mld6_input(struct pbuf *p, struct netif *inp)
+mld6_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct mld_header *mld_hdr;
   struct mld_group *group;
@@ -309,12 +309,12 @@ mld6_input(struct pbuf *p, struct netif *inp)
  *                join a new group. If IP6_ADDR_ANY6, join on all netifs
  * @param groupaddr the ipv6 address of the group to join (possibly but not
  *                  necessarily zoned)
- * @return ERR_OK if group was joined on the netif(s), an err_t otherwise
+ * @return ERR_OK if group was joined on the netif(s), an LwipError otherwise
  */
-err_t
-mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
+LwipError
+mld6_joingroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
 {
-  err_t         err = ERR_VAL; /* no matching interface */
+  LwipError         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -341,14 +341,14 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
  * @param netif the network interface which should join a new group.
  * @param groupaddr the ipv6 address of the group to join (possibly but not
  *                  necessarily zoned)
- * @return ERR_OK if group was joined on the netif, an err_t otherwise
+ * @return ERR_OK if group was joined on the netif, an LwipError otherwise
  */
-err_t
-mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
+LwipError
+mld6_joingroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
-  ip6_addr_t ip6addr;
+  LwipIp6Addr ip6addr;
 
   /* If the address has a particular scope but no zone set, use the netif to
    * set one now. Within the mld6 module, all addresses are properly zoned. */
@@ -398,12 +398,12 @@ mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
  *                leave the group. If IP6_ADDR_ANY6, leave on all netifs
  * @param groupaddr the ipv6 address of the group to leave (possibly, but not
  *                  necessarily zoned)
- * @return ERR_OK if group was left on the netif(s), an err_t otherwise
+ * @return ERR_OK if group was left on the netif(s), an LwipError otherwise
  */
-err_t
-mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
+LwipError
+mld6_leavegroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
 {
-  err_t         err = ERR_VAL; /* no matching interface */
+  LwipError         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -413,7 +413,7 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
     /* Should we leave this interface ? */
     if (ip6_addr_isany(srcaddr) ||
         netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
-      err_t res = mld6_leavegroup_netif(netif, groupaddr);
+      LwipError res = mld6_leavegroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         /* Store this result if we have not yet gotten a success */
         err = res;
@@ -431,14 +431,14 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
  * @param netif the network interface which should leave the group.
  * @param groupaddr the ipv6 address of the group to leave (possibly, but not
  *                  necessarily zoned)
- * @return ERR_OK if group was left on the netif, an err_t otherwise
+ * @return ERR_OK if group was left on the netif, an LwipError otherwise
  */
-err_t
-mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
+LwipError
+mld6_leavegroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
-  ip6_addr_t ip6addr;
+  LwipIp6Addr ip6addr;
 
   if (ip6_addr_lacks_zone(groupaddr, IP6_MULTICAST)) {
     ip6_addr_set(&ip6addr, groupaddr);
@@ -563,8 +563,8 @@ static void
 mld6_send(struct netif *netif, struct mld_group *group, uint8_t type)
 {
   struct mld_header *mld_hdr;
-  struct pbuf *p;
-  const ip6_addr_t *src_addr;
+  struct PacketBuffer *p;
+  const LwipIp6Addr *src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + MLD6_HBH_HLEN, PBUF_RAM);

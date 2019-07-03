@@ -60,7 +60,7 @@ typedef struct bridgeif_dfdb_entry_s {
   uint8_t used;
   uint8_t port;
   uint32_t ts;
-  struct eth_addr addr;
+  struct EthernetAddress addr;
 } bridgeif_dfdb_entry_t;
 
 typedef struct bridgeif_dfdb_s {
@@ -78,7 +78,7 @@ typedef struct bridgeif_dfdb_s {
  * provide a better implementation :-)
  */
 void
-bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_idx)
+bridgeif_fdb_update_src(void *fdb_ptr, struct EthernetAddress *src_addr, uint8_t port_idx)
 {
   int i;
   bridgeif_dfdb_t *fdb = (bridgeif_dfdb_t *)fdb_ptr;
@@ -87,7 +87,7 @@ bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_i
   for (i = 0; i < fdb->max_fdb_entries; i++) {
     bridgeif_dfdb_entry_t *e = &fdb->fdb[i];
     if (e->used && e->ts) {
-      if (!memcmp(&e->addr, src_addr, sizeof(struct eth_addr))) {
+      if (!memcmp(&e->addr, src_addr, sizeof(struct EthernetAddress))) {
         LWIP_DEBUGF(BRIDGEIF_FDB_DEBUG, ("br: update src %02x:%02x:%02x:%02x:%02x:%02x (from %d) @ idx %d\n",
                                          src_addr->addr[0], src_addr->addr[1], src_addr->addr[2], src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
                                          port_idx, i));
@@ -110,7 +110,7 @@ bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_i
         LWIP_DEBUGF(BRIDGEIF_FDB_DEBUG, ("br: create src %02x:%02x:%02x:%02x:%02x:%02x (from %d) @ idx %d\n",
                                          src_addr->addr[0], src_addr->addr[1], src_addr->addr[2], src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
                                          port_idx, i));
-        memcpy(&e->addr, src_addr, sizeof(struct eth_addr));
+        memcpy(&e->addr, src_addr, sizeof(struct EthernetAddress));
         e->ts = BR_FDB_TIMEOUT_SEC;
         e->port = port_idx;
         e->used = 1;
@@ -130,7 +130,7 @@ bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_i
  * Walk our list of auto-learnt fdb entries and return a port to forward or BR_FLOOD if unknown 
  */
 bridgeif_portmask_t
-bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr)
+bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthernetAddress *dst_addr)
 {
   int i;
   bridgeif_dfdb_t *fdb = (bridgeif_dfdb_t *)fdb_ptr;
@@ -139,7 +139,7 @@ bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr)
   for (i = 0; i < fdb->max_fdb_entries; i++) {
     bridgeif_dfdb_entry_t *e = &fdb->fdb[i];
     if (e->used && e->ts) {
-      if (!memcmp(&e->addr, dst_addr, sizeof(struct eth_addr))) {
+      if (!memcmp(&e->addr, dst_addr, sizeof(struct EthernetAddress))) {
         bridgeif_portmask_t ret = (bridgeif_portmask_t)(1 << e->port);
         BRIDGEIF_READ_UNPROTECT(lev);
         return ret;

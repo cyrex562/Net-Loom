@@ -46,7 +46,7 @@ extern "C" {
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
 
-/* option bits for ccp_options.mppe */
+/* option bits for CcpOptions.mppe */
 #define MPPE_OPT_40		0x01	/* 40 bit */
 #define MPPE_OPT_128		0x02	/* 128 bit */
 #define MPPE_OPT_STATEFUL	0x04	/* stateful mode */
@@ -167,9 +167,9 @@ typedef struct ppp_mppe_state {
 void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key);
 void mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options);
 void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-err_t mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol);
+LwipError mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol);
 void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
+LwipError mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb);
 
 #ifdef __cplusplus
 }

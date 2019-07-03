@@ -38,7 +38,7 @@
 #define LWIP_HDR_ICMP_H
 
 #include "opt.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "arch.h"
@@ -128,22 +128,22 @@ void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
 #if LWIP_IPV4 && LWIP_IPV6
 #if LWIP_ICMP && LWIP_ICMP6
-#define icmp_port_unreach(isipv6, pbuf) ((isipv6) ? \
-                                         icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT) : \
-                                         icmp_dest_unreach(pbuf, ICMP_DUR_PORT))
+#define icmp_port_unreach(isipv6, PacketBuffer) ((isipv6) ? \
+                                         icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT) : \
+                                         icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT))
 #elif LWIP_ICMP
-#define icmp_port_unreach(isipv6, pbuf) do{ if(!(isipv6)) { icmp_dest_unreach(pbuf, ICMP_DUR_PORT);}}while(0)
+#define icmp_port_unreach(isipv6, PacketBuffer) do{ if(!(isipv6)) { icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT);}}while(0)
 #elif LWIP_ICMP6
-#define icmp_port_unreach(isipv6, pbuf) do{ if(isipv6) { icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT);}}while(0)
+#define icmp_port_unreach(isipv6, PacketBuffer) do{ if(isipv6) { icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT);}}while(0)
 #else
-#define icmp_port_unreach(isipv6, pbuf)
+#define icmp_port_unreach(isipv6, PacketBuffer)
 #endif
 #elif LWIP_IPV6 && LWIP_ICMP6
-#define icmp_port_unreach(isipv6, pbuf) icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT)
+#define icmp_port_unreach(isipv6, PacketBuffer) icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT)
 #elif LWIP_IPV4 && LWIP_ICMP
-#define icmp_port_unreach(isipv6, pbuf) icmp_dest_unreach(pbuf, ICMP_DUR_PORT)
+#define icmp_port_unreach(isipv6, pbuf) icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT)
 #else /* (LWIP_IPV6 && LWIP_ICMP6) || (LWIP_IPV4 && LWIP_ICMP) */
-#define icmp_port_unreach(isipv6, pbuf)
+#define icmp_port_unreach(isipv6, PacketBuffer)
 #endif /* (LWIP_IPV6 && LWIP_ICMP6) || (LWIP_IPV4 && LWIP_ICMP) LWIP_IPV4*/
 
 #ifdef __cplusplus

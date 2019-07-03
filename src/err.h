@@ -92,16 +92,16 @@ enum LwipErrCodes
 /** Define LWIP_ERR_T in cc.h if you want to use
  *  a different type for your platform (must be signed). */
 
-typedef int err_t;
+typedef int LwipError;
 
 /**
  * @}
  */
 
-extern const char* lwip_strerr(err_t err);
+extern const char* lwip_strerr(LwipError err);
 
 
-int err_to_errno(err_t err);
+int err_to_errno(LwipError err);
 
 #ifdef __cplusplus
 }

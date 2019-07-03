@@ -105,11 +105,11 @@ struct LinkCallbacks {
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (PppPcb *pcb, void *ctx);
   /* Free lower protocol control block */
-  err_t (*free) (PppPcb *pcb, void *ctx);
-  /* Write a pbuf to a ppp link, only used from PPP functions to send PPP packets. */
-  err_t (*write)(PppPcb *pcb, void *ctx, struct pbuf *p);
+  LwipError (*free) (PppPcb *pcb, void *ctx);
+  /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
+  LwipError (*write)(PppPcb *pcb, void *ctx, struct PacketBuffer *p);
   /* Send a packet from lwIP core (IPv4 or IPv6) */
-  err_t (*netif_output)(PppPcb *pcb, void *ctx, struct pbuf *p, u_short protocol);
+  LwipError (*netif_output)(PppPcb *pcb, void *ctx, struct PacketBuffer *p, u_short protocol);
   /* configure the transmit-side characteristics of the PPP interface */
   void (*send_config)(PppPcb *pcb, void *ctx, uint32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
@@ -230,7 +230,7 @@ void ppp_link_failed(PppPcb *pcb);
 void ppp_link_end(PppPcb *pcb);
 
 /* function called to process input packet */
-void ppp_input(PppPcb *pcb, struct pbuf *pb, fsm* lcp_fsm, Protent** protocols);
+void ppp_input(PppPcb *pcb, struct PacketBuffer *pb, fsm* lcp_fsm, Protent** protocols);
 
 
 /*
@@ -238,7 +238,7 @@ void ppp_input(PppPcb *pcb, struct pbuf *pb, fsm* lcp_fsm, Protent** protocols);
  */
 
 /* function called by all PPP subsystems to send packets */
-err_t ppp_write(PppPcb *pcb, struct pbuf *p);
+LwipError ppp_write(PppPcb *pcb, struct PacketBuffer *p);
 
 /* functions called by auth.c link_terminated() */
 void ppp_link_terminated(PppPcb *pcb);
@@ -253,7 +253,7 @@ int netif_get_mtu(ppp_pcb *pcb);
 
 #if CCP_SUPPORT
 #if 0 /* unused */
-int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit);
+int ccp_test(ppp_pcb *pcb, uint8_t *opt_ptr, int opt_len, int for_transmit);
 #endif /* unused */
 void ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
 void ccp_reset_comp(ppp_pcb *pcb);

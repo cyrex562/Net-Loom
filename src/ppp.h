@@ -282,7 +282,7 @@ struct ppp_addrs {
 #endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
-  ip6_addr_t our6_ipaddr, his6_ipaddr;
+  LwipIp6Addr our6_ipaddr, his6_ipaddr;
 #endif /* PPP_IPV6_SUPPORT */
 };
 
@@ -341,10 +341,10 @@ struct PppPcb {
 
 #if CCP_SUPPORT
   fsm ccp_fsm;                   /* CCP fsm structure */
-  ccp_options ccp_wantoptions;   /* what to request the peer to use */
-  ccp_options ccp_gotoptions;    /* what the peer agreed to do */
-  ccp_options ccp_allowoptions;  /* what we'll agree to do */
-  ccp_options ccp_hisoptions;    /* what we agreed to do */
+  CcpOptions ccp_wantoptions;   /* what to request the peer to use */
+  CcpOptions ccp_gotoptions;    /* what the peer agreed to do */
+  CcpOptions ccp_allowoptions;  /* what we'll agree to do */
+  CcpOptions ccp_hisoptions;    /* what we agreed to do */
   uint8_t ccp_localstate;           /* Local state (mainly for handling reset-reqs and reset-acks). */
   uint8_t ccp_receive_method;       /* Method chosen on receive path */
   uint8_t ccp_transmit_method;      /* Method chosen on transmit path */
@@ -552,7 +552,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
+LwipError ppp_connect(PppPcb *pcb, uint16_t holdoff);
 
 
 /*
@@ -563,7 +563,7 @@ err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(PppPcb *pcb);
+LwipError ppp_listen(PppPcb *pcb);
 
 
 /*
@@ -577,7 +577,7 @@ err_t ppp_listen(PppPcb *pcb);
  *
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_close(ppp_pcb *pcb, uint8_t nocarrier);
+LwipError ppp_close(ppp_pcb *pcb, uint8_t nocarrier);
 
 /*
  * Release the control block.
@@ -589,7 +589,7 @@ err_t ppp_close(ppp_pcb *pcb, uint8_t nocarrier);
  *
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_free(PppPcb *pcb);
+LwipError ppp_free(PppPcb *pcb);
 
 /*
  * PPP IOCTL commands.
@@ -614,7 +614,7 @@ err_t ppp_free(PppPcb *pcb);
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg);
+LwipError ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (ppp->netif)

@@ -187,7 +187,7 @@ static void ipv6cp_up(fsm *f); /* We're UP */
 static void ipv6cp_down(fsm *f); /* We're DOWN */
 static void ipv6cp_finished(fsm *f); /* Don't need lower layer */
 
-static const fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
+static const FsmCallbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
     ipv6cp_resetci,		/* Reset our Configuration Information */
     ipv6cp_cilen,		/* Length of our Configuration Information */
     ipv6cp_addci,		/* Add our Configuration Information */

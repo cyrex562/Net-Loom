@@ -52,7 +52,7 @@
 
 #include "opt.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include "tcpbase.h"
 
@@ -389,7 +389,7 @@ struct tcp_pcb {
   uint16_t snd_queuelen; /* Number of pbufs currently in the send buffer. */
 
 #if TCP_OVERSIZE
-  /* Extra bytes available at the end of the last pbuf in unsent. */
+  /* Extra bytes available at the end of the last PacketBuffer in unsent. */
   uint16_t unsent_oversize;
 #endif /* TCP_OVERSIZE */
 
@@ -460,11 +460,11 @@ enum lwip_event {
   LWIP_EVENT_ERR
 };
 
-err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
+LwipError lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
          enum lwip_event,
-         struct pbuf *p,
+         struct PacketBuffer *p,
          uint16_t size,
-         err_t err);
+         LwipError err);
 
 #endif /* LWIP_EVENT_API */
 

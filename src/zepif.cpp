@@ -64,7 +64,7 @@ zep_lowpan_timer(void* arg)
 
 /* Pass received pbufs into 6LowPAN netif */
 static void
-zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct pbuf* p,
+zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct PacketBuffer* p,
                const ip_addr_t* addr, uint16_t port)
 {
     auto netif_lowpan6 = static_cast<struct netif *>(arg);
@@ -128,13 +128,13 @@ err_return:
 }
 
 /* Send 6LoWPAN TX packets as UDP broadcast */
-static err_t
-zepif_linkoutput(struct netif* netif, struct pbuf* p)
+static LwipError
+zepif_linkoutput(struct netif* netif, struct PacketBuffer* p)
 {
-    struct pbuf* q;
+    struct PacketBuffer* q;
 
     LWIP_ASSERT("invalid netif", netif != NULL);
-    LWIP_ASSERT("invalid pbuf", p != NULL);
+    LWIP_ASSERT("invalid PacketBuffer", p != NULL);
 
     if (p->tot_len > kZepMaxDataLen)
     {
@@ -181,10 +181,10 @@ int zepif_default_udp_port = 9999;
  * Set up a raw 6LowPAN netif and surround it with input- and output
  * functions for ZEP
  */
-err_t
+LwipError
 zepif_init(struct netif* netif)
 {
-    err_t err;
+    LwipError err;
     auto init_state = static_cast<struct ZepifInit*>(netif->state);
     auto state = static_cast<struct ZepifState *>(mem_malloc(sizeof(struct ZepifState)));
 

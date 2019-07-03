@@ -191,7 +191,7 @@ struct netconn {
     struct raw_pcb *raw;
   } pcb;
   /** the last asynchronous unreported error this netconn had */
-  err_t pending_err;
+  LwipError pending_err;
 
   /** sem that is used to synchronously execute functions in the core context */
   sys_sem_t op_completed;
@@ -270,57 +270,57 @@ struct netvector {
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct netconn *netconn_new_with_proto_and_callback(enum netconn_type t, uint8_t proto,
                                              netconn_callback callback);
-err_t   netconn_prepare_delete(struct netconn *conn);
-err_t   netconn_delete(struct netconn *conn);
+LwipError   netconn_prepare_delete(struct netconn *conn);
+LwipError   netconn_delete(struct netconn *conn);
 /** Get the type of a netconn (as enum netconn_type). */
 #define netconn_type(conn) (conn->type)
 
-err_t   netconn_getaddr(struct netconn *conn, LwipIpAddr *addr,
+LwipError   netconn_getaddr(struct netconn *conn, LwipIpAddr *addr,
                         uint16_t *port, uint8_t local);
 /** @ingroup netconn_common */
 #define netconn_peer(c,i,p) netconn_getaddr(c,i,p,0)
 /** @ingroup netconn_common */
 #define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
 
-err_t   netconn_bind(struct netconn *conn, const LwipIpAddr *addr, uint16_t port);
-err_t   netconn_bind_if(struct netconn *conn, uint8_t if_idx);
-err_t   netconn_connect(struct netconn *conn, const LwipIpAddr *addr, uint16_t port);
-err_t   netconn_disconnect (struct netconn *conn);
-err_t   netconn_listen_with_backlog(struct netconn *conn, uint8_t backlog);
+LwipError   netconn_bind(struct netconn *conn, const LwipIpAddr *addr, uint16_t port);
+LwipError   netconn_bind_if(struct netconn *conn, uint8_t if_idx);
+LwipError   netconn_connect(struct netconn *conn, const LwipIpAddr *addr, uint16_t port);
+LwipError   netconn_disconnect (struct netconn *conn);
+LwipError   netconn_listen_with_backlog(struct netconn *conn, uint8_t backlog);
 /** @ingroup netconn_tcp */
 #define netconn_listen(conn) netconn_listen_with_backlog(conn, TCP_DEFAULT_LISTEN_BACKLOG)
-err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
-err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
-err_t   netconn_recv_udp_raw_netbuf(struct netconn *conn, struct netbuf **new_buf);
-err_t   netconn_recv_udp_raw_netbuf_flags(struct netconn *conn, struct netbuf **new_buf, uint8_t apiflags);
-err_t   netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf);
-err_t   netconn_recv_tcp_pbuf_flags(struct netconn *conn, struct pbuf **new_buf, uint8_t apiflags);
-err_t   netconn_tcp_recvd(struct netconn *conn, size_t len);
-err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
+LwipError   netconn_accept(struct netconn *conn, struct netconn **new_conn);
+LwipError   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
+LwipError   netconn_recv_udp_raw_netbuf(struct netconn *conn, struct netbuf **new_buf);
+LwipError   netconn_recv_udp_raw_netbuf_flags(struct netconn *conn, struct netbuf **new_buf, uint8_t apiflags);
+LwipError   netconn_recv_tcp_pbuf(struct netconn *conn, struct PacketBuffer **new_buf);
+LwipError   netconn_recv_tcp_pbuf_flags(struct netconn *conn, struct PacketBuffer **new_buf, uint8_t apiflags);
+LwipError   netconn_tcp_recvd(struct netconn *conn, size_t len);
+LwipError   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                              const LwipIpAddr *addr, uint16_t port);
-err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
-err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
+LwipError   netconn_send(struct netconn *conn, struct netbuf *buf);
+LwipError   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                              uint8_t apiflags, size_t *bytes_written);
-err_t   netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, uint16_t vectorcnt,
+LwipError   netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, uint16_t vectorcnt,
                                      uint8_t apiflags, size_t *bytes_written);
 /** @ingroup netconn_tcp */
 #define netconn_write(conn, dataptr, size, apiflags) \
           netconn_write_partly(conn, dataptr, size, apiflags, NULL)
-err_t   netconn_close(struct netconn *conn);
-err_t   netconn_shutdown(struct netconn *conn, uint8_t shut_rx, uint8_t shut_tx);
+LwipError   netconn_close(struct netconn *conn);
+LwipError   netconn_shutdown(struct netconn *conn, uint8_t shut_rx, uint8_t shut_tx);
 
-err_t   netconn_join_leave_group(struct netconn *conn, const ip_addr_t *multiaddr,
+LwipError   netconn_join_leave_group(struct netconn *conn, const ip_addr_t *multiaddr,
                              const ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
-err_t   netconn_join_leave_group_netif(struct netconn *conn, const ip_addr_t *multiaddr,
+LwipError   netconn_join_leave_group_netif(struct netconn *conn, const ip_addr_t *multiaddr,
                              uint8_t if_idx, enum netconn_igmp join_or_leave);
 
-err_t   netconn_gethostbyname_addrtype(const char *name, ip_addr_t *addr, uint8_t dns_addrtype);
+LwipError   netconn_gethostbyname_addrtype(const char *name, ip_addr_t *addr, uint8_t dns_addrtype);
 #define netconn_gethostbyname(name, addr) netconn_gethostbyname_addrtype(name, addr, NETCONN_DNS_DEFAULT)
-err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
+LwipError   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #define netconn_gethostbyname_addrtype(name, addr, dns_addrtype) netconn_gethostbyname(name, addr)
 
 
-err_t   netconn_err(struct netconn *conn);
+LwipError   netconn_err(struct netconn *conn);
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
 #define netconn_set_flags(conn, set_flags)     do { (conn)->flags = (uint8_t)((conn)->flags |  (set_flags)); } while(0)

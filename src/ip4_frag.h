@@ -40,7 +40,7 @@
 
 #include "opt.h"
 #include "err.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 #include "ip_addr.h"
 #include "ip.h"
@@ -60,7 +60,7 @@ extern "C" {
  */
 struct ip_reassdata {
   struct ip_reassdata *next;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct ip_hdr iphdr;
   uint16_t datagram_len;
   uint8_t flags;
@@ -69,26 +69,26 @@ struct ip_reassdata {
 
 void ip_reass_init(void);
 void ip_reass_tmr(void);
-struct pbuf * ip4_reass(struct pbuf *p);
+struct PacketBuffer * ip4_reass(struct PacketBuffer *p);
 #endif /* IP_REASSEMBLY */
 
 #if IP_FRAG
 #if !LWIP_NETIF_TX_SINGLE_PBUF
 #ifndef LWIP_PBUF_CUSTOM_REF_DEFINED
 #define LWIP_PBUF_CUSTOM_REF_DEFINED
-/** A custom pbuf that holds a reference to another pbuf, which is freed
- * when this custom pbuf is freed. This is used to create a custom PBUF_REF
- * that points into the original pbuf. */
+/** A custom PacketBuffer that holds a reference to another PacketBuffer, which is freed
+ * when this custom PacketBuffer is freed. This is used to create a custom PBUF_REF
+ * that points into the original PacketBuffer. */
 struct pbuf_custom_ref {
   /** 'base class' */
   struct pbuf_custom pc;
-  /** pointer to the original pbuf that is referenced */
-  struct pbuf *original;
+  /** pointer to the original PacketBuffer that is referenced */
+  struct PacketBuffer *original;
 };
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 #endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
 
-err_t ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest);
+LwipError ip4_frag(struct PacketBuffer *p, struct netif *netif, const LwipIpv4Addr *dest);
 #endif /* IP_FRAG */
 
 #ifdef __cplusplus

@@ -196,9 +196,9 @@ static void ccp_up(fsm*, PppPcb* pcb, Protent** protocols);
 static void ccp_down(fsm*, fsm* lcp_fsm, PppPcb* pcb);
 static int ccp_extcode(fsm*, int, int, uint8_t*, int, PppPcb* ppp_pcb);
 static void ccp_rack_timeout(void*);
-static const char* method_name(ccp_options*, ccp_options*);
+static const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
-static const FsmCallbacks kCcpCallbacks = {
+static const struct FsmCallbacks kCcpCallbacks = {
     ccp_resetci,
     ccp_cilen,
     ccp_addci,
@@ -219,7 +219,7 @@ static const FsmCallbacks kCcpCallbacks = {
 /*
  * Do we want / did we get any compression?
  */
-static int ccp_anycompress(ccp_options* opt)
+static int ccp_anycompress(CcpOptions* opt)
 {
     return (0
 #if DEFLATE_SUPPORT
@@ -411,7 +411,7 @@ ccp_set(PppPcb* pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8
 static void ccp_open(PppPcb* pcb)
 {
     fsm* f = &pcb->ccp_fsm;
-    ccp_options* go = &pcb->ccp_gotoptions;
+    CcpOptions* go = &pcb->ccp_gotoptions;
 
     if (f->state != PPP_FSM_OPENED)
         ccp_set(pcb, 1, 0, 0, 0);
@@ -528,7 +528,7 @@ static void ccp_protrej(PppPcb* pcb)
 {
     fsm* f = &pcb->ccp_fsm;
 #if MPPE_SUPPORT
-    ccp_options *go = &pcb->ccp_gotoptions;
+    CcpOptions *go = &pcb->ccp_gotoptions;
 #endif /* MPPE_SUPPORT */
 
     ccp_set(pcb, 0, 0, 0, 0);
@@ -548,9 +548,9 @@ static void ccp_protrej(PppPcb* pcb)
 static void ccp_resetci(fsm* f, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
-    ccp_options* wo = &pcb->ccp_wantoptions;
-    ccp_options* ao = &pcb->ccp_allowoptions;
+    CcpOptions* go = &pcb->ccp_gotoptions;
+    CcpOptions* wo = &pcb->ccp_wantoptions;
+    CcpOptions* ao = &pcb->ccp_allowoptions;
     uint8_t opt_buf[CCP_MAX_OPTION_LENGTH];
     int res;
 
@@ -761,7 +761,7 @@ static void ccp_resetci(fsm* f, PppPcb* pcb)
  */
 static size_t ccp_cilen(PppPcb* ppp_pcb)
 {
-    ccp_options* go = &ppp_pcb->ccp_gotoptions;
+    CcpOptions* go = &ppp_pcb->ccp_gotoptions;
 
     return 0
         + (go->bsd_compress ? CILEN_BSD_COMPRESS : 0)
@@ -778,7 +778,7 @@ static size_t ccp_cilen(PppPcb* ppp_pcb)
 static void ccp_addci(fsm* f, uint8_t* p, int* lenp, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
+    CcpOptions* go = &pcb->ccp_gotoptions;
     uint8_t* p0 = p;
 
     /*
@@ -847,7 +847,7 @@ static void ccp_addci(fsm* f, uint8_t* p, int* lenp, PppPcb* pcb)
 static int ccp_ackci(fsm* f, uint8_t* p, int len, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
+    CcpOptions* go = &pcb->ccp_gotoptions;
 
     uint8_t* p0 = p;
 
@@ -942,9 +942,9 @@ static int ccp_ackci(fsm* f, uint8_t* p, int len, PppPcb* pcb)
 static int ccp_nakci(fsm* f, uint8_t* p, int len, int treat_as_reject, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
-    ccp_options no; /* options we've seen already */
-    ccp_options try_; /* options to ask for next time */
+    CcpOptions* go = &pcb->ccp_gotoptions;
+    CcpOptions no; /* options we've seen already */
+    CcpOptions try_; /* options to ask for next time */
 
     memset(&no, 0, sizeof(no));
     try_ = *go;
@@ -1036,8 +1036,8 @@ static int ccp_nakci(fsm* f, uint8_t* p, int len, int treat_as_reject, PppPcb* p
 static int ccp_rejci(fsm* f, uint8_t* p, int len, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* go = &pcb->ccp_gotoptions;
-    ccp_options try_; /* options to request next time */
+    CcpOptions* go = &pcb->ccp_gotoptions;
+    CcpOptions try_; /* options to request next time */
 
     try_ = *go;
 
@@ -1121,12 +1121,12 @@ static int ccp_rejci(fsm* f, uint8_t* p, int len, PppPcb* pcb)
 static int ccp_reqci(fsm* f, uint8_t* p, size_t* lenp, int dont_nak, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* ho = &pcb->ccp_hisoptions;
-    ccp_options* ao = &pcb->ccp_allowoptions;
+    CcpOptions* ho = &pcb->ccp_hisoptions;
+    CcpOptions* ao = &pcb->ccp_allowoptions;
     int res;
     int nb;
 #endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT */
-    u_char *p0, *retp;
+    uint8_t *p0, *retp;
     int len, clen, type;
 #if MPPE_SUPPORT
     uint8_t rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
@@ -1137,7 +1137,7 @@ static int ccp_reqci(fsm* f, uint8_t* p, size_t* lenp, int dont_nak, PppPcb* pcb
     uint8_t* retp = p0 = p;
     size_t len = *lenp;
 
-    memset(ho, 0, sizeof(ccp_options));
+    memset(ho, 0, sizeof(CcpOptions));
     ho->method = (len > 0) ? p[0] : 0;
 
     while (len > 0)
@@ -1430,7 +1430,7 @@ static int ccp_reqci(fsm* f, uint8_t* p, size_t* lenp, int dont_nak, PppPcb* pcb
 /*
  * Make a string name for a compression method (or 2).
  */
-static const char* method_name(ccp_options* opt, ccp_options* opt2)
+static const char* method_name(CcpOptions* opt, CcpOptions* opt2)
 {
     static char result[64];
 #if !DEFLATE_SUPPORT && !BSDCOMPRESS_SUPPORT
@@ -1505,8 +1505,8 @@ static const char* method_name(ccp_options* opt, ccp_options* opt2)
  */
 static void ccp_up(fsm* f, PppPcb* pcb, Protent** protocols)
 {
-    ccp_options* go = &pcb->ccp_gotoptions;
-    ccp_options* ho = &pcb->ccp_hisoptions;
+    CcpOptions* go = &pcb->ccp_gotoptions;
+    CcpOptions* ho = &pcb->ccp_hisoptions;
     char method1[64];
 
     ccp_set(pcb, 1, 1, go->method, ho->method);
@@ -1575,7 +1575,7 @@ static void ccp_down(fsm* f, fsm* lcp_fsm, PppPcb* pcb)
 static void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len) {
     fsm *f;
 #if MPPE_SUPPORT
-    ccp_options *go = &pcb->ccp_gotoptions;
+    CcpOptions *go = &pcb->ccp_gotoptions;
 #endif /* MPPE_SUPPORT */
     LWIP_UNUSED_ARG(pkt);
     LWIP_UNUSED_ARG(len);

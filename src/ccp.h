@@ -32,6 +32,7 @@
 
 #pragma once
 #include "fsm.h"
+#include <servprov.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,26 +120,18 @@ extern "C" {
 #define CILEN_PREDICTOR_2	2	/* length of its config option */
 
 
-typedef struct ccp_options {
+struct CcpOptions {
     unsigned int deflate          :1; /* do Deflate? */
     unsigned int deflate_correct  :1; /* use correct code for deflate? */
     unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
     unsigned int bsd_compress     :1; /* do BSD Compress? */
     unsigned int predictor_1      :1; /* do Predictor-1? */
     unsigned int predictor_2      :1; /* do Predictor-2? */
-#endif /* PREDICTOR_SUPPORT */
-
-#if MPPE_SUPPORT
     uint8_t mppe;			/* MPPE bitfield */
-#endif /* MPPE_SUPPORT */
-#if BSDCOMPRESS_SUPPORT
-    u_short bsd_bits;		/* # bits/code for BSD Compress */
-#endif /* BSDCOMPRESS_SUPPORT */
-#if DEFLATE_SUPPORT
-    u_short deflate_size;	/* lg(window size) for Deflate */
-#endif /* DEFLATE_SUPPORT */
+    uint16_t bsd_bits;		/* # bits/code for BSD Compress */
+    uint16_t deflate_size;	/* lg(window size) for Deflate */
     uint8_t method;		/* code for chosen compression method */
-} ccp_options;
+};
 
 extern const struct Protent kCcpProtent;
 

@@ -44,7 +44,7 @@
 #if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
 
 #include "lowpan6_common.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip.h"
 #include "ip_addr.h"
 #include "netif.h"
@@ -53,17 +53,17 @@
 extern "C" {
 #endif
 
-err_t rfc7668_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr);
-err_t rfc7668_input(struct pbuf * p, struct netif *netif);
-err_t rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len);
-err_t rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
-err_t rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len);
-err_t rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
-err_t rfc7668_set_context(uint8_t index, const ip6_addr_t * context);
-err_t rfc7668_if_init(struct netif *netif);
+LwipError rfc7668_output(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr);
+LwipError rfc7668_input(struct PacketBuffer * p, struct netif *netif);
+LwipError rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len);
+LwipError rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
+LwipError rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len);
+LwipError rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
+LwipError rfc7668_set_context(uint8_t index, const LwipIp6Addr * context);
+LwipError rfc7668_if_init(struct netif *netif);
 
 #if !NO_SYS
-err_t tcpip_rfc7668_input(struct pbuf *p, struct netif *inp);
+LwipError tcpip_rfc7668_input(struct PacketBuffer *p, struct netif *inp);
 #endif
 
 void ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr);

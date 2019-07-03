@@ -69,7 +69,7 @@ typedef u64_t bridgeif_portmask_t;
  */
 typedef struct bridgeif_initdata_s {
   /** MAC address of the bridge (cannot use the netif's addresses) */
-  struct eth_addr ethaddr;
+  struct EthernetAddress ethaddr;
   /** Maximum number of ports in the bridge (ports are stored in an array, this
       influences memory allocated for netif->state of the bridge netif). */
   uint8_t            max_ports;
@@ -91,14 +91,14 @@ typedef struct bridgeif_initdata_s {
  */
 #define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
-err_t bridgeif_init(struct netif *netif);
-err_t bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
-err_t bridgeif_fdb_add(struct netif *bridgeif, const struct eth_addr *addr, bridgeif_portmask_t ports);
-err_t bridgeif_fdb_remove(struct netif *bridgeif, const struct eth_addr *addr);
+LwipError bridgeif_init(struct netif *netif);
+LwipError bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
+LwipError bridgeif_fdb_add(struct netif *bridgeif, const struct EthernetAddress *addr, bridgeif_portmask_t ports);
+LwipError bridgeif_fdb_remove(struct netif *bridgeif, const struct EthernetAddress *addr);
 
 /* FDB interface, can be replaced by own implementation */
-void                bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_idx);
-bridgeif_portmask_t bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr);
+void                bridgeif_fdb_update_src(void *fdb_ptr, struct EthernetAddress *src_addr, uint8_t port_idx);
+bridgeif_portmask_t bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthernetAddress *dst_addr);
 void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
 
 #if BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT

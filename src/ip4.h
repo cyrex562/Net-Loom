@@ -42,7 +42,7 @@
 #if LWIP_IPV4
 
 #include "def.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip4_addr.h"
 #include "err.h"
 #include "netif.h"
@@ -158,14 +158,14 @@ err_t ip4_output_if(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr 
 err_t ip4_output_if_src(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
 #if LWIP_NETIF_USE_HINTS
-err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+LwipError ip4_output_hinted(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint);
 #endif /* LWIP_NETIF_USE_HINTS */
 #if IP_OPTIONS_SEND
-err_t ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+LwipError ip4_output_if_opt(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
-err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+LwipError ip4_output_if_opt_src(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
 #endif /* IP_OPTIONS_SEND */
@@ -177,7 +177,7 @@ void  ip4_set_default_multicast_netif(struct netif* default_multicast_netif);
 #define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? netif_ip_addr4(netif) : NULL)
 
 #if IP_DEBUG
-void ip4_debug_print(struct pbuf *p);
+void ip4_debug_print(struct PacketBuffer *p);
 #else
 #define ip4_debug_print(p)
 #endif /* IP_DEBUG */

@@ -198,7 +198,7 @@
     <findStrings>
       <find>&lt;Windows</find>
       <find>&quot;snmp.h</find>
-      <find>ip6_addr_t</find>
+      <find>LwipIp6Addr</find>
       <find>IP6_ADDR_ZONECHECK</find>
       <find>nd6_get_next_hop_addr_or_queue</find>
       <find>lowpan6_link_addr</find>
@@ -434,7 +434,7 @@
     <entry file="file://$PROJECT_DIR$/src/pcapif.h">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/pbuf.h">
+    <entry file="file://$PROJECT_DIR$/src/PacketBuffer.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-408" />
       </provider>

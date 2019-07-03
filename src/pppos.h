@@ -86,7 +86,7 @@ struct pppos_pcb_s {
 
   /* PPPoS rx */
   ext_accm in_accm;                /* Async-Ctl-Char-Map for input. */
-  struct pbuf *in_head, *in_tail;  /* The input packet. */
+  struct PacketBuffer *in_head, *in_tail;  /* The input packet. */
   uint16_t in_protocol;               /* The input protocol code. */
   uint16_t in_fcs;                    /* Input Frame Check Sequence value. */
   uint8_t in_state;                   /* The input process state. */
@@ -99,7 +99,7 @@ PppPcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
 
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /* Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread. */
-err_t pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l);
+LwipError pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l);
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /* PPP over Serial: this is the input function to be called for received data. */
@@ -111,7 +111,7 @@ void pppos_input(ppp_pcb *ppp, uint8_t* data, int len);
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
-err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
+LwipError pppos_input_sys(struct PacketBuffer *p, struct netif *inp);
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 #ifdef __cplusplus

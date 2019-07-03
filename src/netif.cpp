@@ -110,18 +110,18 @@ static uint8_t netif_client_id;
 static void netif_issue_reports(struct netif *netif, uint8_t report_type);
 
 #if LWIP_IPV6
-static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr);
+static LwipError netif_null_output_ip6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *ipaddr);
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4
-static err_t netif_null_output_ip4(struct netif *netif, struct pbuf *p, const LwipIpv4Addr *ipaddr);
+static LwipError netif_null_output_ip4(struct netif *netif, struct PacketBuffer *p, const LwipIpv4Addr *ipaddr);
 #endif /* LWIP_IPV4 */
 
 #if LWIP_HAVE_LOOPIF
 #if LWIP_IPV4
-static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip4_addr_t *addr);
+static LwipError netif_loop_output_ipv4(struct netif *netif, struct PacketBuffer *p, const ip4_addr_t *addr);
 #endif
 #if LWIP_IPV6
-static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t *addr);
+static LwipError netif_loop_output_ipv6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *addr);
 #endif
 
 
@@ -134,7 +134,7 @@ static struct netif loop_netif;
  * @return ERR_OK if the loopif is initialized
  *         ERR_MEM if private data couldn't be allocated
  */
-static err_t
+static LwipError
 netif_loopif_init(struct netif *netif)
 {
   LWIP_ASSERT("netif_loopif_init: invalid netif", netif != NULL);
@@ -200,12 +200,12 @@ netif_init(void)
  * Only works if the netif driver correctly sets
  * NETIF_FLAG_ETHARP and/or NETIF_FLAG_ETHERNET flag!
  */
-err_t
-netif_input(struct pbuf *p, struct netif *inp)
+LwipError
+netif_input(struct PacketBuffer *p, struct netif *inp)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_input: invalid pbuf", p != NULL);
+  LWIP_ASSERT("netif_input: invalid PacketBuffer", p != NULL);
   LWIP_ASSERT("netif_input: invalid netif", inp != NULL);
 
 #if LWIP_ETHERNET
@@ -267,7 +267,7 @@ netif_add(struct netif *netif,
           void *state, netif_init_fn init, netif_input_fn input)
 {
 #if LWIP_IPV6
-  s8_t i;
+  int8_t i;
 #endif
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -1049,7 +1049,7 @@ netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callb
 /**
  * @ingroup netif
  * Send an IP packet to be received on the same netif (loopif-like).
- * The pbuf is simply copied and handed back to netif->input.
+ * The PacketBuffer is simply copied and handed back to netif->input.
  * In multithreaded mode, this is done directly since netif->input must put
  * the packet on a queue.
  * In callback mode, the packet is put on an internal queue and is fed to
@@ -1058,14 +1058,14 @@ netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callb
  * @param netif the lwip network interface structure
  * @param p the (IP) packet to 'send'
  * @return ERR_OK if the packet has been sent
- *         ERR_MEM if the pbuf used to copy the packet couldn't be allocated
+ *         ERR_MEM if the PacketBuffer used to copy the packet couldn't be allocated
  */
-err_t
-netif_loop_output(struct netif *netif, struct pbuf *p)
+LwipError
+netif_loop_output(struct netif *netif, struct PacketBuffer *p)
 {
-  struct pbuf *r;
-  err_t err;
-  struct pbuf *last;
+  struct PacketBuffer *r;
+  LwipError err;
+  struct PacketBuffer *last;
 #if LWIP_LOOPBACK_MAX_PBUFS
   uint16_t clen = 0;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
@@ -1084,9 +1084,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_ASSERT("netif_loop_output: invalid netif", netif != NULL);
-  LWIP_ASSERT("netif_loop_output: invalid pbuf", p != NULL);
+  LWIP_ASSERT("netif_loop_output: invalid PacketBuffer", p != NULL);
 
-  /* Allocate a new pbuf */
+  /* Allocate a new PacketBuffer */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
   if (r == NULL) {
     LINK_STATS_INC(link.memerr);
@@ -1096,7 +1096,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   }
 #if LWIP_LOOPBACK_MAX_PBUFS
   clen = pbuf_clen(r);
-  /* check for overflow or too many pbuf on queue */
+  /* check for overflow or too many PacketBuffer on queue */
   if (((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
       ((netif->loop_cnt_current + clen) > LWIP_MIN(LWIP_LOOPBACK_MAX_PBUFS, 0xFFFF))) {
     pbuf_free(r);
@@ -1108,7 +1108,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   netif->loop_cnt_current = (uint16_t)(netif->loop_cnt_current + clen);
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
-  /* Copy the whole pbuf queue p into the single pbuf r */
+  /* Copy the whole PacketBuffer queue p into the single PacketBuffer r */
   if ((err = pbuf_copy(r, p)) != ERR_OK) {
     pbuf_free(r);
     LINK_STATS_INC(link.memerr);
@@ -1120,9 +1120,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   /* Put the packet on a linked list which gets emptied through calling
      netif_poll(). */
 
-  /* let last point to the last pbuf in chain r */
+  /* let last point to the last PacketBuffer in chain r */
   for (last = r; last->next != NULL; last = last->next) {
-    /* nothing to do here, just get to the last pbuf */
+    /* nothing to do here, just get to the last PacketBuffer */
   }
 
   SYS_ARCH_PROTECT(lev);
@@ -1156,8 +1156,8 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 
 #if LWIP_HAVE_LOOPIF
 #if LWIP_IPV4
-static err_t
-netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip4_addr_t *addr)
+static LwipError
+netif_loop_output_ipv4(struct netif *netif, struct PacketBuffer *p, const ip4_addr_t *addr)
 {
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);
@@ -1165,8 +1165,8 @@ netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip4_addr_t *ad
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
-static err_t
-netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t *addr)
+static LwipError
+netif_loop_output_ipv6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *addr)
 {
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);
@@ -1200,14 +1200,14 @@ netif_poll(struct netif *netif)
   /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
   SYS_ARCH_PROTECT(lev);
   while (netif->loop_first != NULL) {
-    struct pbuf *in, *in_end;
+    struct PacketBuffer *in, *in_end;
 #if LWIP_LOOPBACK_MAX_PBUFS
     uint8_t clen = 1;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
     in = in_end = netif->loop_first;
     while (in_end->len != in_end->tot_len) {
-      LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
+      LWIP_ASSERT("bogus PacketBuffer: len != tot_len but next == NULL!", in_end->next != NULL);
       in_end = in_end->next;
 #if LWIP_LOOPBACK_MAX_PBUFS
       clen++;
@@ -1220,16 +1220,16 @@ netif_poll(struct netif *netif)
     netif->loop_cnt_current = (uint16_t)(netif->loop_cnt_current - clen);
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
-    /* 'in_end' now points to the last pbuf from 'in' */
+    /* 'in_end' now points to the last PacketBuffer from 'in' */
     if (in_end == netif->loop_last) {
-      /* this was the last pbuf in the list */
+      /* this was the last PacketBuffer in the list */
       netif->loop_first = netif->loop_last = NULL;
     } else {
-      /* pop the pbuf off the list */
+      /* pop the PacketBuffer off the list */
       netif->loop_first = in_end->next;
       LWIP_ASSERT("should not be null since first != last!", netif->loop_first != NULL);
     }
-    /* De-queue the pbuf from its successors on the 'loop_' list. */
+    /* De-queue the PacketBuffer from its successors on the 'loop_' list. */
     in_end->next = NULL;
     SYS_ARCH_UNPROTECT(lev);
 
@@ -1298,7 +1298,7 @@ netif_alloc_client_data_id(void)
  * @note call netif_ip6_addr_set_state() to set the address valid/temptative
  */
 void
-netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
+netif_ip6_addr_set(struct netif *netif, int8_t addr_idx, const LwipIp6Addr *addr6)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1320,7 +1320,7 @@ netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
  * @param i3 word3 of the new IPv6 address
  */
 void
-netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
+netif_ip6_addr_set_parts(struct netif *netif, int8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
 {
   ip_addr_t old_addr;
   ip_addr_t new_ipaddr;
@@ -1377,7 +1377,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, uint32_t i0, uint32
  * @param state the new IPv6 address state
  */
 void
-netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, uint8_t state)
+netif_ip6_addr_set_state(struct netif *netif, int8_t addr_idx, uint8_t state)
 {
   uint8_t old_state;
   LWIP_ASSERT_CORE_LOCKED();
@@ -1447,10 +1447,10 @@ netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, uint8_t state)
  * @return >= 0: address found, this is its index
  *         -1: address not found on this netif
  */
-s8_t
-netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
+int8_t
+netif_get_ip6_addr_match(struct netif *netif, const LwipIp6Addr *ip6addr)
 {
-  s8_t i;
+  int8_t i;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1458,7 +1458,7 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
   LWIP_ASSERT("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != NULL);
 
 #if LWIP_IPV6_SCOPES
-  if (ip6_addr_has_zone(ip6addr) && !ip6_addr_test_zone(ip6addr, netif)) {
+  if (ip6_addr_has_zone(ip6addr) && !LwipIp6Addrest_zone(ip6addr, netif)) {
     return -1; /* wrong zone, no match */
   }
 #endif /* LWIP_IPV6_SCOPES */
@@ -1548,10 +1548,10 @@ netif_create_ip6_linklocal_address(struct netif *netif, uint8_t from_mac_48bit)
  * @param ip6addr address to add
  * @param chosen_idx if != NULL, the chosen IPv6 address index will be stored here
  */
-err_t
-netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chosen_idx)
+LwipError
+netif_add_ip6_address(struct netif *netif, const LwipIp6Addr *ip6addr, int8_t *chosen_idx)
 {
-  s8_t i;
+  int8_t i;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1588,8 +1588,8 @@ netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chos
 
 /** Dummy IPv6 output function for netifs not supporting IPv6
  */
-static err_t
-netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr)
+static LwipError
+netif_null_output_ip6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *ipaddr)
 {
   LWIP_UNUSED_ARG(netif);
   LWIP_UNUSED_ARG(p);
@@ -1602,8 +1602,8 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
 #if LWIP_IPV4
 /** Dummy IPv4 output function for netifs not supporting IPv4
  */
-static err_t
-netif_null_output_ip4(struct netif *netif, struct pbuf *p, const LwipIpv4Addr *ipaddr)
+static LwipError
+netif_null_output_ip4(struct netif *netif, struct PacketBuffer *p, const LwipIpv4Addr *ipaddr)
 {
   LWIP_UNUSED_ARG(netif);
   LWIP_UNUSED_ARG(p);

@@ -285,21 +285,21 @@ extern "C" {
 #define ND6_RTR_SOLICITATION_INTERVAL  4000
 #endif
 
-struct pbuf;
+struct PacketBuffer;
 struct netif;
 
 void nd6_tmr(void);
-void nd6_input(struct pbuf *p, struct netif *inp);
+void nd6_input(struct PacketBuffer *p, struct netif *inp);
 void nd6_clear_destination_cache(void);
-struct netif *nd6_find_route(const ip6_addr_t *ip6addr);
-err_t nd6_get_next_hop_addr_or_queue(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr, const uint8_t **hwaddrp);
-uint16_t nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif);
+struct netif *nd6_find_route(const LwipIp6Addr *ip6addr);
+LwipError nd6_get_next_hop_addr_or_queue(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr, const uint8_t **hwaddrp);
+uint16_t nd6_get_destination_mtu(const LwipIp6Addr *ip6addr, struct netif *netif);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
-void nd6_reachability_hint(const ip6_addr_t *ip6addr);
+void nd6_reachability_hint(const LwipIp6Addr *ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 void nd6_cleanup_netif(struct netif *netif);
 #if LWIP_IPV6_MLD
-void nd6_adjust_mld_membership(struct netif *netif, s8_t addr_idx, uint8_t new_state);
+void nd6_adjust_mld_membership(struct netif *netif, int8_t addr_idx, uint8_t new_state);
 #endif /* LWIP_IPV6_MLD */
 void nd6_restart_netif(struct netif *netif);
 

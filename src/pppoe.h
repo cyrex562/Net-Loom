@@ -119,7 +119,7 @@ struct pppoe_softc {
   struct pppoe_softc *next;
   struct netif *sc_ethif;      /* ethernet interface we are using */
   PppPcb *pcb;                /* PPP PCB */
-  struct eth_addr sc_dest;     /* hardware address of concentrator */
+  struct EthernetAddress sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
   uint8_t sc_state;               /* discovery phase or session connected */
 
@@ -149,8 +149,8 @@ PppPcb *pppoe_create(struct netif *pppif,
  * Functions called from lwIP
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
-void pppoe_disc_input(struct netif *netif, struct pbuf *p);
-void pppoe_data_input(struct netif *netif, struct pbuf *p);
+void pppoe_disc_input(struct netif *netif, struct PacketBuffer *p);
+void pppoe_data_input(struct netif *netif, struct PacketBuffer *p);
 
 #ifdef __cplusplus
 }

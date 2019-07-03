@@ -98,12 +98,12 @@ static uint16_t tcplen;
 static uint8_t flags;
 
 static uint8_t recv_flags;
-static struct pbuf *recv_data;
+static struct PacketBuffer *recv_data;
 
 struct tcp_pcb *tcp_input_pcb;
 
 /* Forward declarations. */
-static err_t tcp_process(struct tcp_pcb *pcb);
+static LwipError tcp_process(struct tcp_pcb *pcb);
 static void tcp_receive(struct tcp_pcb *pcb);
 static void tcp_parseopt(struct tcp_pcb *pcb);
 
@@ -130,7 +130,7 @@ static void tcp_remove_sacks_gt(struct tcp_pcb *pcb, uint32_t seq);
  * @param inp network interface on which this segment was received
  */
 void
-tcp_input(struct pbuf *p, struct netif *inp)
+tcp_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
@@ -139,11 +139,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
   struct tcp_pcb_listen *lpcb_any = NULL;
 #endif /* SO_REUSE */
   uint8_t hdrlen_bytes;
-  err_t err;
+  LwipError err;
 
   LWIP_UNUSED_ARG(inp);
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("tcp_input: invalid pbuf", p != NULL);
+  LWIP_ASSERT("tcp_input: invalid PacketBuffer", p != NULL);
 
   PERF_START;
 
@@ -194,18 +194,18 @@ tcp_input(struct pbuf *p, struct netif *inp)
     goto dropped;
   }
 
-  /* Move the payload pointer in the pbuf so that it points to the
+  /* Move the payload pointer in the PacketBuffer so that it points to the
      TCP data instead of the TCP header. */
   tcphdr_optlen = (uint16_t)(hdrlen_bytes - TCP_HLEN);
   tcphdr_opt2 = nullptr;
   if (p->len >= hdrlen_bytes) {
-    /* all options are in the first pbuf */
+    /* all options are in the first PacketBuffer */
     tcphdr_opt1len = tcphdr_optlen;
     pbuf_remove_header(p, hdrlen_bytes); /* cannot fail */
   } else {
     uint16_t opt2len;
-    /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
-    /* there must be a next pbuf, due to hdrlen_bytes sanity check above */
+    /* TCP header fits into first PacketBuffer, options don't - data is in the next PacketBuffer */
+    /* there must be a next PacketBuffer, due to hdrlen_bytes sanity check above */
     LWIP_ASSERT("p->next != NULL", p->next != NULL);
 
     /* advance over the TCP header (cannot fail) */
@@ -215,14 +215,14 @@ tcp_input(struct pbuf *p, struct netif *inp)
     tcphdr_opt1len = p->len;
     opt2len = (uint16_t)(tcphdr_optlen - tcphdr_opt1len);
 
-    /* options continue in the next pbuf: set p to zero length and hide the
-        options in the next pbuf (adjusting p->tot_len) */
+    /* options continue in the next PacketBuffer: set p to zero length and hide the
+        options in the next PacketBuffer (adjusting p->tot_len) */
     pbuf_remove_header(p, tcphdr_opt1len);
 
-    /* check that the options fit in the second pbuf */
+    /* check that the options fit in the second PacketBuffer */
     if (opt2len > p->next->len) {
       /* drop short packets */
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: options overflow second pbuf (%"U16_F" bytes)\n", p->next->len));
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: options overflow second PacketBuffer (%"U16_F" bytes)\n", p->next->len));
       TCP_STATS_INC(tcp.lenerr);
       goto dropped;
     }
@@ -492,7 +492,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
         while (recv_data != NULL) {
-          struct pbuf *rest = NULL;
+          struct PacketBuffer *rest = NULL;
           pbuf_split_64k(recv_data, &rest);
 #else /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
         if (recv_data != nullptr) {
@@ -646,7 +646,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
   uint32_t iss;
-  err_t rc;
+  LwipError rc;
 
   if (flags & TCP_RST) {
     /* An incoming RST should be ignored. Return. */
@@ -676,7 +676,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        we don't do anything, but rely on the sender will retransmit the
        SYN at a time when we have more memory available. */
     if (npcb == nullptr) {
-      err_t err;
+      LwipError err;
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
       TCP_STATS_INC(tcp.memerr);
       TCP_EVENT_ACCEPT(pcb, NULL, pcb->callback_arg, ERR_MEM, err);
@@ -799,12 +799,12 @@ tcp_timewait_input(struct tcp_pcb *pcb)
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */
-static err_t
+static LwipError
 tcp_process(struct tcp_pcb *pcb)
 {
   struct tcp_seg *rseg;
   uint8_t acceptable = 0;
-  err_t err;
+  LwipError err;
 
   err = ERR_OK;
 
@@ -1144,7 +1144,7 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
  * data, and if so frees the memory of the buffered data. Next, it places the
  * segment on any of the receive queues (pcb->recved or pcb->ooseq). If the segment
- * is buffered, the pbuf is referenced by pbuf_ref so that it will not be freed until
+ * is buffered, the PacketBuffer is referenced by pbuf_ref so that it will not be freed until
  * it has been removed from the buffer.
  *
  * If the incoming segment constitutes an ACK for a segment that was used for RTT
@@ -1418,32 +1418,32 @@ tcp_receive(struct tcp_pcb *pcb)
           if (TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {*/
     if (TCP_SEQ_BETWEEN(pcb->rcv_nxt, seqno + 1, seqno + tcplen - 1)) {
       /* Trimming the first edge is done by pushing the payload
-         pointer in the pbuf downwards. This is somewhat tricky since
-         we do not want to discard the full contents of the pbuf up to
+         pointer in the PacketBuffer downwards. This is somewhat tricky since
+         we do not want to discard the full contents of the PacketBuffer up to
          the new starting point of the data since we have to keep the
-         TCP header which is present in the first pbuf in the chain.
+         TCP header which is present in the first PacketBuffer in the chain.
 
-         What is done is really quite a nasty hack: the first pbuf in
-         the pbuf chain is pointed to by inseg.p. Since we need to be
-         able to deallocate the whole pbuf, we cannot change this
+         What is done is really quite a nasty hack: the first PacketBuffer in
+         the PacketBuffer chain is pointed to by inseg.p. Since we need to be
+         able to deallocate the whole PacketBuffer, we cannot change this
          inseg.p pointer to point to any of the later pbufs in the
          chain. Instead, we point the ->payload pointer in the first
-         pbuf to data in one of the later pbufs. We also set the
+         PacketBuffer to data in one of the later pbufs. We also set the
          inseg.data pointer to point to the right place. This way, the
-         ->p pointer will still point to the first pbuf, but the
-         ->p->payload pointer will point to data in another pbuf.
+         ->p pointer will still point to the first PacketBuffer, but the
+         ->p->payload pointer will point to data in another PacketBuffer.
 
-         After we are done with adjusting the pbuf pointers we must
+         After we are done with adjusting the PacketBuffer pointers we must
          adjust the ->data pointer in the seg and the segment
          length.*/
 
-      struct pbuf *p = inseg.p;
+      struct PacketBuffer *p = inseg.p;
       uint32_t off32 = pcb->rcv_nxt - seqno;
       uint16_t new_tot_len, off;
       LWIP_ASSERT("inseg.p != NULL", inseg.p);
       LWIP_ASSERT("insane offset!", (off32 < 0xffff));
       off = (uint16_t)off32;
-      LWIP_ASSERT("pbuf too short!", (((s32_t)inseg.p->tot_len) >= off));
+      LWIP_ASSERT("PacketBuffer too short!", (((s32_t)inseg.p->tot_len) >= off));
       inseg.len -= off;
       new_tot_len = (uint16_t)(inseg.p->tot_len - off);
       while (p->len < off) {
@@ -1562,16 +1562,16 @@ tcp_receive(struct tcp_pcb *pcb)
 
         /* If there is data in the segment, we make preparations to
            pass this up to the application. The ->recv_data variable
-           is used for holding the pbuf that goes to the
+           is used for holding the PacketBuffer that goes to the
            application. The code for reassembling out-of-sequence data
-           chains its data on this pbuf as well.
+           chains its data on this PacketBuffer as well.
 
            If the segment was a FIN, we set the TF_GOT_FIN flag that will
            be used to indicate to the application that the remote side has
            closed its end of the connection. */
         if (inseg.p->tot_len > 0) {
           recv_data = inseg.p;
-          /* Since this pbuf now is the responsibility of the
+          /* Since this PacketBuffer now is the responsibility of the
              application, we delete our reference to it so that we won't
              (mistakingly) deallocate it. */
           inseg.p = nullptr;
@@ -1598,7 +1598,7 @@ tcp_receive(struct tcp_pcb *pcb)
           tcp_update_rcv_ann_wnd(pcb);
 
           if (cseg->p->tot_len > 0) {
-            /* Chain this pbuf onto the pbuf that we will pass to
+            /* Chain this PacketBuffer onto the PacketBuffer that we will pass to
                the application. */
             /* With window scaling, this can overflow recv_data->tot_len, but
                that's not a problem since we explicitly fix that before passing
@@ -1845,7 +1845,7 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif
           struct tcp_seg *next, *prev = NULL;
           for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
-            struct pbuf *p = next->p;
+            struct PacketBuffer *p = next->p;
             int stop_here = 0;
 #ifdef TCP_OOSEQ_BYTES_LIMIT
             ooseq_blen += p->tot_len;

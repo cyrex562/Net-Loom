@@ -72,8 +72,8 @@ constexpr auto HEADERLEN = 4;
  * Each FSM is described by an fsm structure and fsm callbacks.
  */
 typedef struct fsm {
-    ppp_pcb *pcb;		/* PPP Interface */
-    const struct fsm_callbacks *callbacks;	/* Callback routines */
+    PppPcb *pcb;		/* PPP Interface */
+    const struct FsmCallbacks *callbacks;	/* Callback routines */
     const char *term_reason;	/* Reason for closing protocol */
     uint8_t seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
 				  /* -- This is our only flag, we might use u_int :1 if we have more flags */
@@ -91,37 +91,37 @@ typedef struct fsm {
 } fsm;
 
 
-typedef struct fsm_callbacks {
-    void (*resetci)		/* Reset our Configuration Information */
-		(fsm *);
-    int  (*cilen)		/* Length of our Configuration Information */
-		(fsm *);
-    void (*addci) 		/* Add our Configuration Information */
-		(fsm *, u_char *, int *);
-    int  (*ackci)		/* ACK our Configuration Information */
-		(fsm *, u_char *, int);
-    int  (*nakci)		/* NAK our Configuration Information */
-		(fsm *, u_char *, int, int);
-    int  (*rejci)		/* Reject our Configuration Information */
-		(fsm *, u_char *, int);
-    int  (*reqci)		/* Request peer's Configuration Information */
-		(fsm *, u_char *, int *, int);
-    void (*up)			/* Called when fsm reaches PPP_FSM_OPENED state */
-		(fsm *);
-    void (*down)		/* Called when fsm leaves PPP_FSM_OPENED state */
-		(fsm *);
-    void (*starting)		/* Called when we want the lower layer */
-		(fsm *);
-    void (*finished)		/* Called when we don't want the lower layer */
-		(fsm *);
-    void (*protreject)		/* Called when Protocol-Reject received */
-		(int);
-    void (*retransmit)		/* Retransmission is necessary */
-		(fsm *);
-    int  (*extcode)		/* Called when unknown code received */
-		(fsm *, int, int, u_char *, int);
+struct FsmCallbacks {
+    /* Reset our Configuration Information */
+    void (*resetci)(fsm *, PppPcb*);
+    /* Length of our Configuration Information */
+    size_t  (*cilen)	 (PppPcb*);
+    /* Add our Configuration Information */
+    void (*addci) (fsm *, uint8_t *, int *, PppPcb*);
+    /* ACK our Configuration Information */
+    int  (*ackci) (fsm *, uint8_t *, int, PppPcb*);
+    /* NAK our Configuration Information */
+    int  (*nakci) (fsm *, uint8_t *, int, int, PppPcb*);
+    /* Reject our Configuration Information */
+    int  (*rejci) (fsm *, uint8_t *, int, PppPcb*);
+    /* Request peer's Configuration Information */
+    int  (*reqci)	 (fsm *, uint8_t *, size_t *, int, PppPcb*);
+    /* Called when fsm reaches PPP_FSM_OPENED state */
+    void (*up) (fsm *, PppPcb*, Protent**);
+    /* Called when fsm leaves PPP_FSM_OPENED state */
+    void (*down) (fsm *, fsm*, PppPcb*);
+    /* Called when we want the lower layer */
+    void (*starting)	 (fsm *);
+    /* Called when we don't want the lower layer */
+    void (*finished) (fsm *);
+    /* Called when Protocol-Reject received */
+    void (*protreject)	 (int);
+    /* Retransmission is necessary */
+    void (*retransmit)	 (fsm *);
+    /* Called when unknown code received */
+    int  (*extcode)	 (fsm *, int, int, uint8_t *, int, PppPcb*);
     const char *proto_name;	/* String name for protocol (for messages) */
-} fsm_callbacks;
+} ;
 
 
 /*

@@ -44,13 +44,13 @@
 #include "opt.h"
 #include "ip6_addr.h"
 #include "def.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 
 #include "err.h"
 
 
- /** This is the packed version of ip6_addr_t,
+ /** This is the packed version of LwipIp6Addr,
      used in network headers that are itself packed */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
@@ -241,28 +241,28 @@ PACK_STRUCT_END
 extern "C" {
 #endif
 
-struct netif *ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest);
-const ip_addr_t *ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest);
+struct netif *ip6_route(const LwipIp6Addr *src, const LwipIp6Addr *dest);
+const ip_addr_t *ip6_select_source_address(struct netif *netif, const LwipIp6Addr * dest);
 err_t         ip6_input(struct pbuf *p, struct netif *inp);
-err_t         ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
+err_t         ip6_output(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
                          uint8_t hl, uint8_t tc, uint8_t nexth);
-err_t         ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
+err_t         ip6_output_if(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
-err_t         ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
+err_t         ip6_output_if_src(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
 #if LWIP_NETIF_USE_HINTS
-err_t         ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
+LwipError         ip6_output_hinted(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
                                 uint8_t hl, uint8_t tc, uint8_t nexth, struct netif_hint *netif_hint);
 #endif /* LWIP_NETIF_USE_HINTS */
 #if LWIP_IPV6_MLD
-err_t         ip6_options_add_hbh_ra(struct pbuf * p, uint8_t nexth, uint8_t value);
+LwipError         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
 #endif /* LWIP_IPV6_MLD */
 
 #define ip6_netif_get_local_ip(netif, dest) (((netif) != NULL) ? \
   ip6_select_source_address(netif, dest) : NULL)
 
 #if IP6_DEBUG
-void ip6_debug_print(struct pbuf *p);
+void ip6_debug_print(struct PacketBuffer *p);
 #else
 #define ip6_debug_print(p)
 #endif /* IP6_DEBUG */

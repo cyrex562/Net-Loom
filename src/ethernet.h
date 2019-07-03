@@ -38,83 +38,56 @@
  *
  */
 
-#ifndef LWIP_HDR_NETIF_ETHERNET_H
-#define LWIP_HDR_NETIF_ETHERNET_H
+#pragma once
 
 #include "opt.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
-#include "ethernet.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef ETH_HWADDR_LEN
-#ifdef ETHARP_HWADDR_LEN
-#define ETH_HWADDR_LEN    ETHARP_HWADDR_LEN /* compatibility mode */
-#else
-#define ETH_HWADDR_LEN    6
-#endif
-#endif
+constexpr auto ETH_HWADDR_LEN = 6;
+
+// Ethernet MAC Address
+struct EthernetAddress
+{
+    uint8_t addr[ETH_HWADDR_LEN];
+};
 
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-    PACK_STRUCT_BEGIN
-        /** An Ethernet MAC address */
-        struct eth_addr {
-        PACK_STRUCT_FLD_8(uint8_t addr[ETH_HWADDR_LEN]);
-    } PACK_STRUCT_STRUCT;
-    PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-
-        /** Initialize a struct eth_addr with its 6 bytes (takes care of correct braces) */
+/** Initialize a struct EthernetAddress with its 6 bytes (takes care of correct braces) */
 #define ETH_ADDR(b0, b1, b2, b3, b4, b5) {{b0, b1, b2, b3, b4, b5}}
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-        PACK_STRUCT_BEGIN
-        /** Ethernet header */
-        struct eth_hdr {
-#if ETH_PAD_SIZE
-        PACK_STRUCT_FLD_8(uint8_t padding[ETH_PAD_SIZE]);
-#endif
-        PACK_STRUCT_FLD_S(struct eth_addr dest);
-        PACK_STRUCT_FLD_S(struct eth_addr src);
-        PACK_STRUCT_FIELD(uint16_t type);
-    } PACK_STRUCT_STRUCT;
-    PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+
+/** Ethernet header */
+struct eth_hdr
+{
+    //uint8_t padding[ETH_PAD_SIZE]
+    struct EthernetAddress dest;
+    struct EthernetAddress src;
+    uint16_t type;
+};
+
 
 #define SIZEOF_ETH_HDR (14 + ETH_PAD_SIZE)
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-        PACK_STRUCT_BEGIN
-        /** VLAN header inserted between ethernet header and payload
-         * if 'type' in ethernet header is ETHTYPE_VLAN.
-         * See IEEE802.Q */
-        struct eth_vlan_hdr {
-        PACK_STRUCT_FIELD(uint16_t prio_vid);
-        PACK_STRUCT_FIELD(uint16_t tpid);
-    } PACK_STRUCT_STRUCT;
-    PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+
+/** VLAN header inserted between ethernet header and payload
+ * if 'type' in ethernet header is ETHTYPE_VLAN.
+ * See IEEE802.Q */
+struct eth_vlan_hdr
+{
+    uint16_t prio_vid;
+    uint16_t tpid;
+};
+
 
 #define SIZEOF_VLAN_HDR 4
 #define VLAN_ID(vlan_hdr) (lwip_htons((vlan_hdr)->prio_vid) & 0xFFF)
 
-        /** The 24-bit IANA IPv4-multicast OUI is 01-00-5e: */
+/** The 24-bit IANA IPv4-multicast OUI is 01-00-5e: */
 #define LL_IP4_MULTICAST_ADDR_0 0x01
 #define LL_IP4_MULTICAST_ADDR_1 0x00
 #define LL_IP4_MULTICAST_ADDR_2 0x5e
@@ -126,9 +99,7 @@ extern "C" {
 #define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0)
 
 
-#if LWIP_ARP || LWIP_ETHERNET
-
-/** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(pbuf, netif, type)
+/** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(PacketBuffer, netif, type)
  * to a filter function that returns the correct netif when using multiple
  * netifs on one hardware interface where the netif's low-level receive
  * routine cannot decide for the correct netif (e.g. when mapping multiple
@@ -138,15 +109,16 @@ extern "C" {
 #define LWIP_ARP_FILTER_NETIF 0
 #endif
 
-err_t ethernet_input(struct pbuf *p, struct netif *netif);
-err_t ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src, const struct eth_addr* dst, uint16_t eth_type);
+LwipError ethernet_input(struct PacketBuffer* p, struct netif* netif);
+LwipError ethernet_output(struct netif* netif,
+                          struct PacketBuffer* p,
+                          const struct EthernetAddress* src,
+                          const struct EthernetAddress* dst,
+                          uint16_t eth_type);
 
-extern const struct eth_addr ethbroadcast, ethzero;
+extern const struct EthernetAddress ethbroadcast, ethzero;
 
-#endif /* LWIP_ARP || LWIP_ETHERNET */
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_HDR_NETIF_ETHERNET_H */

@@ -60,7 +60,7 @@ extern "C" {
 
 union lwip_sock_lastdata {
   struct netbuf *netbuf;
-  struct pbuf *pbuf;
+  struct PacketBuffer *pbuf;
 };
 
 /** Contains all internal pointers and states used for a socket */

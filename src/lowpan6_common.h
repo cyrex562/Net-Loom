@@ -46,7 +46,7 @@
 
 //#if LWIP_IPV6 /* don't build if IPv6 is disabled in lwipopts.h */
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip.h"
 #include "ip6_addr.h"
 #include "netif.h"
@@ -64,13 +64,13 @@ struct lowpan6_link_addr {
   uint8_t addr[8];
 };
 
-int8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
+int8_t lowpan6_get_address_mode(const LwipIp6Addr *ip6addr, const struct lowpan6_link_addr *mac_addr);
 
 #if LWIP_6LOWPAN_IPHC
-err_t lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
-                               uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
+LwipError lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
+                               uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, LwipIp6Addr *lowpan6_contexts,
                                const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst);
-struct pbuf *lowpan6_decompress(struct pbuf *p, uint16_t datagram_size, ip6_addr_t *lowpan6_contexts,
+struct PacketBuffer *lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, LwipIp6Addr *lowpan6_contexts,
                                 struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest);
 #endif /* LWIP_6LOWPAN_IPHC */
 

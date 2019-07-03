@@ -64,9 +64,8 @@
  * ATTENTION: this controls the maximum number of the implementation only!
  * The max. number of ports per bridge must still be passed via netif_add parameter!
  */
-#ifndef BRIDGEIF_MAX_PORTS
-#define BRIDGEIF_MAX_PORTS                  7
-#endif
+constexpr auto BRIDGEIF_MAX_PORTS = 7;
+
 
 /** BRIDGEIF_DEBUG: Enable generic debugging in bridgeif.c. */
 #ifndef BRIDGEIF_DEBUG

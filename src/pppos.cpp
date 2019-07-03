@@ -38,7 +38,7 @@
 
 #include "arch.h"
 #include "err.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "sys.h"
 #include "memp.h"
 #include "netif.h"
@@ -56,14 +56,14 @@
 // LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "PPPOS_PCB")
 
 /* callbacks called from PPP core */
-static err_t pppos_write(PppPcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppos_netif_output(PppPcb *ppp, void *ctx, struct pbuf *pb, uint16_t protocol);
+static LwipError pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
+static LwipError pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol);
 static void pppos_connect(PppPcb *ppp, void *ctx);
 #if PPP_SERVER
 static void pppos_listen(PppPcb *ppp, void *ctx);
 #endif /* PPP_SERVER */
 static void pppos_disconnect(PppPcb *ppp, void *ctx);
-static err_t pppos_destroy(PppPcb *ppp, void *ctx);
+static LwipError pppos_destroy(PppPcb *ppp, void *ctx);
 static void pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 static void pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 
@@ -73,8 +73,8 @@ static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_IRQ_SAFE */
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
-static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint8_t c, uint8_t accm, uint16_t *fcs);
-static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint16_t *fcs);
+static LwipError pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs);
+static LwipError pppos_output_last(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint16_t *fcs);
 
 /* Callbacks structure for PPP core */
 static const struct LinkCallbacks pppos_callbacks = {
@@ -197,18 +197,18 @@ PppPcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
 }
 
 /* Called by PPP core */
-static err_t
-pppos_write(PppPcb *ppp, void *ctx, struct pbuf *p)
+static LwipError
+pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   uint8_t *s;
-  struct pbuf *nb;
+  struct PacketBuffer *nb;
   uint16_t n;
   uint16_t fcs_out;
-  err_t err;
+  LwipError err;
   LWIP_UNUSED_ARG(ppp);
 
-  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the pbuf
+  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
      cannot starve rx. */
   nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
@@ -250,16 +250,16 @@ pppos_write(PppPcb *ppp, void *ctx, struct pbuf *p)
 }
 
 /* Called by PPP core */
-static err_t
-pppos_netif_output(PppPcb *ppp, void *ctx, struct pbuf *pb, uint16_t protocol)
+static LwipError
+pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  struct pbuf *nb, *p;
+  struct PacketBuffer *nb, *p;
   uint16_t fcs_out;
-  err_t err;
+  LwipError err;
   LWIP_UNUSED_ARG(ppp);
 
-  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the pbuf
+  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
      cannot starve rx. */
   nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
@@ -317,7 +317,7 @@ pppos_connect(PppPcb *ppp, void *ctx)
   PPPOS_DECL_PROTECT(lev);
 
 #if PPP_INPROC_IRQ_SAFE
-  /* input pbuf left over from last session? */
+  /* input PacketBuffer left over from last session? */
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
@@ -349,7 +349,7 @@ pppos_listen(PppPcb *ppp, void *ctx)
   PPPOS_DECL_PROTECT(lev);
 
 #if PPP_INPROC_IRQ_SAFE
-  /* input pbuf left over from last session? */
+  /* input PacketBuffer left over from last session? */
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
@@ -389,21 +389,21 @@ pppos_disconnect(PppPcb *ppp, void *ctx)
    * rx IRQ might still call pppos_input().
    */
 #if !PPP_INPROC_IRQ_SAFE
-  /* input pbuf left ? */
+  /* input PacketBuffer left ? */
   pppos_input_free_current_packet(pppos);
 #endif /* !PPP_INPROC_IRQ_SAFE */
 
   ppp_link_end(ppp); /* notify upper layers */
 }
 
-static err_t
+static LwipError
 pppos_destroy(PppPcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   LWIP_UNUSED_ARG(ppp);
 
 #if PPP_INPROC_IRQ_SAFE
-  /* input pbuf left ? */
+  /* input PacketBuffer left ? */
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
@@ -420,11 +420,11 @@ pppos_destroy(PppPcb *ppp, void *ctx)
  * @param s received data
  * @param l length of received data
  */
-err_t
+LwipError
 pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l)
 {
-  struct pbuf *p;
-  err_t err;
+  struct PacketBuffer *p;
+  LwipError err;
 
   p = pbuf_alloc(PBUF_RAW, l, PBUF_POOL);
   if (!p) {
@@ -440,9 +440,9 @@ pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l)
 }
 
 /* called from TCPIP thread */
-err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
+LwipError pppos_input_sys(struct PacketBuffer *p, struct netif *inp) {
   PppPcb *ppp = (PppPcb*)inp->state;
-  struct pbuf *n;
+  struct PacketBuffer *n;
   LWIP_ASSERT_CORE_LOCKED();
 
   for (n = p; n; n = n->next) {
@@ -454,7 +454,7 @@ err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /** PPPoS input helper struct, must be packed since it is stored
- * to pbuf->payload, which might be unaligned. */
+ * to PacketBuffer->payload, which might be unaligned. */
 #if PPP_INPROC_IRQ_SAFE
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
@@ -479,7 +479,7 @@ void
 pppos_input(ppp_pcb *ppp, uint8_t *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
-  struct pbuf *next_pbuf;
+  struct PacketBuffer *next_pbuf;
   uint8_t cur_char;
   uint8_t escaped;
   PPPOS_DECL_PROTECT(lev);
@@ -534,7 +534,7 @@ pppos_input(ppp_pcb *ppp, uint8_t *s, int l)
           pppos_input_drop(pppos);
         /* Otherwise it's a good packet so pass it on. */
         } else {
-          struct pbuf *inp;
+          struct PacketBuffer *inp;
           /* Trim off the checksum. */
           if(pppos->in_tail->len > 2) {
             pppos->in_tail->len -= 2;
@@ -677,7 +677,7 @@ pppos_input(ppp_pcb *ppp, uint8_t *s, int l)
             if (next_pbuf == nullptr) {
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
-               * the received pbuf chain in case a new packet starts. */
+               * the received PacketBuffer chain in case a new packet starts. */
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->netif->num));
               LINK_STATS_INC(link.memerr);
               pppos_input_drop(pppos);
@@ -715,7 +715,7 @@ pppos_input(ppp_pcb *ppp, uint8_t *s, int l)
 /* PPPoS input callback using one input pointer
  */
 static void pppos_input_callback(void *arg) {
-  struct pbuf *pb = (struct pbuf*)arg;
+  struct PacketBuffer *pb = (struct PacketBuffer*)arg;
   PppPcb *ppp;
 
   ppp = ((struct pppos_input_header*)pb->payload)->ppp;
@@ -803,7 +803,7 @@ pppos_input_drop(pppos_pcb *pppos)
 #if 0
     PPPDEBUG(LOG_INFO, ("pppos_input_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
 #endif
-    PPPDEBUG(LOG_INFO, ("pppos_input_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
+    PPPDEBUG(LOG_INFO, ("pppos_input_drop: PacketBuffer len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
   }
   pppos_input_free_current_packet(pppos);
 #if VJ_SUPPORT
@@ -815,13 +815,13 @@ pppos_input_drop(pppos_pcb *pppos)
 }
 
 /*
- * pppos_output_append - append given character to end of given pbuf.
+ * pppos_output_append - append given character to end of given PacketBuffer.
  * If out_accm is not 0 and the character needs to be escaped, do so.
- * If pbuf is full, send the pbuf and reuse it.
- * Return the current pbuf.
+ * If PacketBuffer is full, send the PacketBuffer and reuse it.
+ * Return the current PacketBuffer.
  */
-static err_t
-pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint8_t c, uint8_t accm, uint16_t *fcs)
+static LwipError
+pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs)
 {
   if (err != ERR_OK) {
     return err;
@@ -854,8 +854,8 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint8_t c, uin
   return ERR_OK;
 }
 
-static err_t
-pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint16_t *fcs)
+static LwipError
+pppos_output_last(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint16_t *fcs)
 {
   PppPcb *ppp = pppos->ppp;
 

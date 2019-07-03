@@ -86,7 +86,7 @@
  */
 
 #include "ppp_opts.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "stats.h"
 #include "sys.h"
 #include "tcpip.h"
@@ -146,10 +146,10 @@ const struct Protent* const kProtocols[] = {
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
-static err_t ppp_netif_init_cb(struct netif* netif);
-static err_t ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipaddr);
-static err_t ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const ip6_addr_t* ipaddr);
-static err_t ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol);
+static LwipError ppp_netif_init_cb(struct netif* netif);
+static LwipError ppp_netif_output_ip4(struct netif* netif, struct PacketBuffer* pb, const ip4_addr_t* ipaddr);
+static LwipError ppp_netif_output_ip6(struct netif* netif, struct PacketBuffer* pb, const LwipIp6Addr* ipaddr);
+static LwipError ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -208,7 +208,7 @@ ppp_set_notify_phase_callback(PppPcb* pcb, ppp_notify_phase_cb_fn notify_phase_c
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t
+LwipError
 ppp_connect(PppPcb* pcb, uint16_t holdoff)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -240,7 +240,7 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t
+LwipError
 ppp_listen(PppPcb* pcb)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -273,7 +273,7 @@ ppp_listen(PppPcb* pcb)
  *
  * Return 0 on success, an error code on failure.
  */
-err_t
+LwipError
 ppp_close(ppp_pcb *pcb, uint8_t nocarrier)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -341,10 +341,10 @@ ppp_close(ppp_pcb *pcb, uint8_t nocarrier)
  *
  * Return 0 on success, an error code on failure.
  */
-err_t
+LwipError
 ppp_free(PppPcb* pcb)
 {
-    err_t err;
+    LwipError err;
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb->phase != PPP_PHASE_DEAD)
     {
@@ -364,7 +364,7 @@ ppp_free(PppPcb* pcb)
 
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
-err_t
+LwipError
 ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -426,7 +426,7 @@ ppp_do_connect(void* arg)
 /*
  * ppp_netif_init_cb - netif init callback
  */
-static err_t
+static LwipError
 ppp_netif_init_cb(struct netif* netif)
 {
     netif->name[0] = 'p';
@@ -442,8 +442,8 @@ ppp_netif_init_cb(struct netif* netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static err_t
-ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipaddr)
+static LwipError
+ppp_netif_output_ip4(struct netif* netif, struct PacketBuffer* pb, const ip4_addr_t* ipaddr)
 {
     LWIP_UNUSED_ARG(ipaddr);
     return ppp_netif_output(netif, pb, PPP_IP);
@@ -452,19 +452,19 @@ ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipa
 /*
  * Send an IPv6 packet on the given connection.
  */
-static err_t
-ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const ip6_addr_t* ipaddr)
+static LwipError
+ppp_netif_output_ip6(struct netif* netif, struct PacketBuffer* pb, const LwipIp6Addr* ipaddr)
 {
     LWIP_UNUSED_ARG(ipaddr);
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
-static err_t
-ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
+static LwipError
+ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
-    err_t err;
-    struct pbuf* fpb = nullptr;
+    LwipError err;
+    struct PacketBuffer* fpb = nullptr;
 
     /* Check that the link is up. */
     if (0
@@ -496,14 +496,14 @@ ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
                protocol = PPP_IP; */
             break;
         case kTypeCompressedTcp:
-            /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
-             * our duplicated pbuf later */
+            /* vj_compress_tcp() returns a new allocated PacketBuffer, indicate we should free
+             * our duplicated PacketBuffer later */
             fpb = pb;
             protocol = PPP_VJC_COMP;
             break;
         case kTypeUncompressedTcp:
-            /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
-             * our duplicated pbuf later */
+            /* vj_compress_tcp() returns a new allocated PacketBuffer, indicate we should free
+             * our duplicated PacketBuffer later */
             fpb = pb;
             protocol = PPP_VJC_UNCOMP;
             break;
@@ -528,13 +528,13 @@ ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
             MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
             goto err;
         }
-        /* if VJ compressor returned a new allocated pbuf, free it */
+        /* if VJ compressor returned a new allocated PacketBuffer, free it */
         if (fpb)
         {
             pbuf_free(fpb);
         }
-        /* mppe_compress() returns a new allocated pbuf, indicate we should free
-         * our duplicated pbuf later */
+        /* mppe_compress() returns a new allocated PacketBuffer, indicate we should free
+         * our duplicated PacketBuffer later */
         fpb = pb;
         protocol = PPP_COMP;
         break;
@@ -717,7 +717,7 @@ ppp_link_end(PppPcb* pcb)
  * This function and all handlers run in the context of the tcpip_thread
  */
 void
-ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
+ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocols)
 {
     uint16_t protocol;
 #if PPP_DEBUG && PPP_PROTOCOLNAME
@@ -830,11 +830,11 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
     switch (protocol)
     {
     case PPP_IP: /* Internet Protocol */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         ip4_input(pb, pcb->netif);
         return;
     case PPP_IPV6: /* Internet Protocol Version 6 */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         ip6_input(pb, pcb->netif);
         return;
       }
@@ -865,7 +865,7 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
          * Process the TCP/IP header for VJ header compression and then pass
          * the packet to IP.
          */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0)
         {
             ip4_input(pb, pcb->netif);
@@ -921,15 +921,15 @@ out:
 }
 
 /*
- * Write a pbuf to a ppp link, only used from PPP functions
+ * Write a PacketBuffer to a ppp link, only used from PPP functions
  * to send PPP packets.
  *
  * IPv4 and IPv6 packets from lwIP are sent, respectively,
  * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
  * functions (which are callbacks of the netif PPP interface).
  */
-err_t
-ppp_write(PppPcb* pcb, struct pbuf* p)
+LwipError
+ppp_write(PppPcb* pcb, struct PacketBuffer* p)
 {
     return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
 }
@@ -1199,7 +1199,7 @@ get_mask(uint32_t addr)
 int
 sif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
 {
-    ip6_addr_t ip6;
+    LwipIp6Addr ip6;
     LWIP_UNUSED_ARG(his_eui64);
 
     IN6_LLADDR_FROM_EUI64(ip6, our_eui64);

@@ -528,7 +528,7 @@
 #endif
 
 /**
- * PBUF_POOL_SIZE: the number of buffers in the pbuf pool.
+ * PBUF_POOL_SIZE: the number of buffers in the PacketBuffer pool.
  */
 #if !defined PBUF_POOL_SIZE || defined __DOXYGEN__
 #define PBUF_POOL_SIZE                  16
@@ -775,7 +775,7 @@
  * out on the netif where it was received. This should only be used for
  * wireless networks.
  * ATTENTION: When this is 1, make sure your netif driver correctly marks incoming
- * link-layer-broadcast/multicast packets as such using the corresponding pbuf flags!
+ * link-layer-broadcast/multicast packets as such using the corresponding PacketBuffer flags!
  */
 #if !defined IP_FORWARD_ALLOW_TX_ON_RX_NETIF || defined __DOXYGEN__
 #define IP_FORWARD_ALLOW_TX_ON_RX_NETIF 0
@@ -1093,7 +1093,7 @@
  *                                    DNS_LOCAL_HOSTLIST_ELEM("host_ip6", IPADDR6_INIT_HOST(123, 234, 345, 456)}
  *
  *  Instead, you can also use an external function:
- *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern err_t my_lookup_function(const char *name, ip_addr_t *addr, uint8_t dns_addrtype)
+ *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern LwipError my_lookup_function(const char *name, ip_addr_t *addr, uint8_t dns_addrtype)
  *  that looks up the IP address and returns ERR_OK if found (LWIP_DNS_ADDRTYPE_xxx is passed in dns_addrtype).
  */
 #if !defined DNS_LOCAL_HOSTLIST || defined __DOXYGEN__
@@ -1284,7 +1284,7 @@
 #endif
 
 /**
- * TCP_SNDQUEUELOWAT: TCP writable bufs (pbuf count). This must be less
+ * TCP_SNDQUEUELOWAT: TCP writable bufs (PacketBuffer count). This must be less
  * than TCP_SND_QUEUELEN. If the number of pbufs queued on a pcb drops below
  * this number, select returns writable (combined with TCP_SNDLOWAT).
  */
@@ -1356,15 +1356,15 @@
 
 /**
  * TCP_OVERSIZE: The maximum number of bytes that tcp_write may
- * allocate ahead of time in an attempt to create shorter pbuf chains
+ * allocate ahead of time in an attempt to create shorter PacketBuffer chains
  * for transmission. The meaningful range is 0 to TCP_MSS. Some
  * suggested values are:
  *
  * 0:         Disable oversized allocation. Each tcp_write() allocates a new
-              pbuf (old behaviour).
+              PacketBuffer (old behaviour).
  * 1:         Allocate size-aligned pbufs with minimal excess. Use this if your
  *            scatter-gather DMA requires aligned fragments.
- * 128:       Limit the pbuf/memory overhead to 20%.
+ * 128:       Limit the PacketBuffer/memory overhead to 20%.
  * TCP_MSS:   Try to create unfragmented TCP packets.
  * TCP_MSS/4: Try to create 4 fragments or less per TCP packet.
  */
@@ -1492,8 +1492,8 @@
 #endif
 
 /**
- * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
- * designed to accommodate single full size TCP frame in one pbuf, including
+ * PBUF_POOL_BUFSIZE: the size of each PacketBuffer in the PacketBuffer pool. The default is
+ * designed to accommodate single full size TCP frame in one PacketBuffer, including
  * TCP_MSS, IP header, and link header.
  */
 #if !defined PBUF_POOL_BUFSIZE || defined __DOXYGEN__
@@ -1501,7 +1501,7 @@
 #endif
 
 /**
- * LWIP_PBUF_REF_T: Refcount type in pbuf.
+ * LWIP_PBUF_REF_T: Refcount type in PacketBuffer.
  * Default width of uint8_t can be increased if 255 refs are not enough for you.
  */
 #if !defined LWIP_PBUF_REF_T || defined __DOXYGEN__
@@ -1590,16 +1590,16 @@
 
 /**
  * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP *tries* to put all data
- * to be sent into one single pbuf. This is for compatibility with DMA-enabled
+ * to be sent into one single PacketBuffer. This is for compatibility with DMA-enabled
  * MACs that do not support scatter-gather.
  * Beware that this might involve CPU-memcpy before transmitting that would not
  * be needed without this flag! Use this only if you need to!
  *
  * ATTENTION: a driver should *NOT* rely on getting single pbufs but check TX
  * pbufs for being in one piece. If not, @ref pbuf_clone can be used to get
- * a single pbuf:
+ * a single PacketBuffer:
  *   if (p->next != NULL) {
- *     struct pbuf *q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
+ *     struct PacketBuffer *q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
  *     if (q == NULL) {
  *       return ERR_MEM;
  *     }
@@ -2697,7 +2697,7 @@
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
  * Signature:\code{.c}
- * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
+ * LwipError my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct PacketBuffer *p);
  * \endcode
  * Arguments:
  * - pcb: tcp_pcb selected for input of this packet (ATTENTION: this may be
@@ -2749,7 +2749,7 @@
  * Hook for adding custom options to outgoing tcp segments.
  * Space for these custom options has to be reserved via LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH.
  * Signature:\code{.c}
- * uint32_t *my_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, uint32_t *opts);
+ * uint32_t *my_hook_tcp_out_add_tcpopts(struct PacketBuffer *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, uint32_t *opts);
  * \endcode
  * Arguments:
  * - p: output packet, p->payload pointing to tcp header, data follows
@@ -2769,22 +2769,22 @@
 #endif
 
 /**
- * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
+ * LWIP_HOOK_IP4_INPUT(PacketBuffer, input_netif):
  * Called from ip_input() (IPv4)
  * Signature:\code{.c}
- *   int my_hook(struct pbuf *pbuf, struct netif *input_netif);
+ *   int my_hook(struct PacketBuffer *PacketBuffer, struct netif *input_netif);
  * \endcode
  * Arguments:
- * - pbuf: received struct pbuf passed to ip_input()
+ * - PacketBuffer: received struct PacketBuffer passed to ip_input()
  * - input_netif: struct netif on which the packet has been received
  * Return values:
  * - 0: Hook has not consumed the packet, packet is processed as normal
  * - != 0: Hook has consumed the packet.
- * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
+ * If the hook consumed the packet, 'PacketBuffer' is in the responsibility of the hook
  * (i.e. free it when done).
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_IP4_INPUT(pbuf, input_netif)
+#define LWIP_HOOK_IP4_INPUT(PacketBuffer, input_netif)
 #endif
 
 /**
@@ -2827,7 +2827,7 @@
  * - source address is available via ip4_current_src_addr()
  * - calling an output function in this context (e.g. multicast router) is allowed
  * Signature:\code{.c}
- *   int my_hook(struct pbuf *p, uint32_t dest_addr_hostorder);
+ *   int my_hook(struct PacketBuffer *p, uint32_t dest_addr_hostorder);
  * \endcode
  * Arguments:
  * - p: packet to forward
@@ -2864,29 +2864,29 @@
 #endif
 
 /**
- * LWIP_HOOK_IP6_INPUT(pbuf, input_netif):
+ * LWIP_HOOK_IP6_INPUT(PacketBuffer, input_netif):
  * Called from ip6_input() (IPv6)
  * Signature:\code{.c}
- *   int my_hook(struct pbuf *pbuf, struct netif *input_netif);
+ *   int my_hook(struct PacketBuffer *PacketBuffer, struct netif *input_netif);
  * \endcode
  * Arguments:
- * - pbuf: received struct pbuf passed to ip6_input()
+ * - PacketBuffer: received struct PacketBuffer passed to ip6_input()
  * - input_netif: struct netif on which the packet has been received
  * Return values:
  * - 0: Hook has not consumed the packet, packet is processed as normal
  * - != 0: Hook has consumed the packet.
- * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
+ * If the hook consumed the packet, 'PacketBuffer' is in the responsibility of the hook
  * (i.e. free it when done).
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_IP6_INPUT(pbuf, input_netif)
+#define LWIP_HOOK_IP6_INPUT(PacketBuffer, input_netif)
 #endif
 
 /**
  * LWIP_HOOK_IP6_ROUTE(src, dest):
  * Called from ip_route() (IPv6)
  * Signature:\code{.c}
- *   struct netif *my_hook(const ip6_addr_t *dest, const ip6_addr_t *src);
+ *   struct netif *my_hook(const LwipIp6Addr *dest, const LwipIp6Addr *src);
  * \endcode
  * Arguments:
  * - src: source IPv6 address
@@ -2903,7 +2903,7 @@
  * LWIP_HOOK_ND6_GET_GW(netif, dest):
  * Called from nd6_get_next_hop_entry() (IPv6)
  * Signature:\code{.c}
- *   const ip6_addr_t *my_hook(struct netif *netif, const ip6_addr_t *dest);
+ *   const LwipIp6Addr *my_hook(struct netif *netif, const LwipIp6Addr *dest);
  * \endcode
  * Arguments:
  * - netif: the netif used for sending
@@ -2945,11 +2945,11 @@
  * on per-netif basis to implement this callback, see @ref netif_cd.
  * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
  * Signature:\code{.c}
- *   s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, uint16_t eth_type);\n
+ *   s32_t my_hook_vlan_set(struct netif* netif, struct PacketBuffer* PacketBuffer, const struct EthernetAddress* src, const struct EthernetAddress* dst, uint16_t eth_type);\n
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
- * - p: struct pbuf packet to be sent
+ * - p: struct PacketBuffer packet to be sent
  * - src: source eth address
  * - dst: destination eth address
  * - eth_type: ethernet type to packet to be sent\n
@@ -2975,22 +2975,22 @@
 #endif
 
 /**
- * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif):
+ * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(PacketBuffer, netif):
  * Called from ethernet_input() when an unknown eth type is encountered.
  * Signature:\code{.c}
- *   err_t my_hook(struct pbuf* pbuf, struct netif* netif);
+ *   LwipError my_hook(struct PacketBuffer* PacketBuffer, struct netif* netif);
  * \endcode
  * Arguments:
  * - p: rx packet with unknown eth type
  * - netif: netif on which the packet has been received
  * Return values:
- * - ERR_OK if packet is accepted (hook function now owns the pbuf)
- * - any error code otherwise (pbuf is freed)
+ * - ERR_OK if packet is accepted (hook function now owns the PacketBuffer)
+ * - any error code otherwise (PacketBuffer is freed)
  *
  * Payload points to ethernet header!
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif)
+#define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(PacketBuffer, netif)
 #endif
 
 /**
@@ -3023,12 +3023,12 @@
 #endif
 
 /**
- * LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, option_value_offset):
+ * LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, PacketBuffer, option_value_offset):
  * Called from dhcp_parse_reply when receiving a DHCP message.
  * This hook is called for every option in the received message that is not handled internally.
  * Signature:\code{.c}
  *   void my_hook(struct netif *netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
- *                uint8_t msg_type, uint8_t option, uint8_t option_len, struct pbuf *pbuf, uint16_t option_value_offset);
+ *                uint8_t msg_type, uint8_t option, uint8_t option_len, struct PacketBuffer *PacketBuffer, uint16_t option_value_offset);
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
@@ -3039,15 +3039,15 @@
  *             the message type option has been parsed!)
  * - option: option value (uint8_t)
  * - len: option data length (uint8_t)
- * - pbuf: pbuf where option data is contained
- * - option_value_offset: offset in pbuf where option data begins
+ * - PacketBuffer: PacketBuffer where option data is contained
+ * - option_value_offset: offset in PacketBuffer where option data begins
  *
  * A nice way to get the option contents is pbuf_get_contiguous():
  *  uint8_t buf[32];
  *  uint8_t *ptr = (uint8_t*)pbuf_get_contiguous(p, buf, sizeof(buf), LWIP_MIN(option_len, sizeof(buf)), offset);
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset)
+#define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, PacketBuffer, offset)
 #endif
 
 /**
@@ -3129,7 +3129,7 @@
  * Called from netconn APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
  * Signature:\code{.c}
- *   int my_hook(const char *name, ip_addr_t *addr, uint8_t addrtype, err_t *err)
+ *   int my_hook(const char *name, ip_addr_t *addr, uint8_t addrtype, LwipError *err)
  * \endcode
  * Arguments:
  * - name: hostname to resolve
@@ -3194,7 +3194,7 @@
 #endif
 
 /**
- * PBUF_DEBUG: Enable debugging in pbuf.c.
+ * PBUF_DEBUG: Enable debugging in PacketBuffer.c.
  */
 #if !defined PBUF_DEBUG || defined __DOXYGEN__
 #define PBUF_DEBUG                      LWIP_DBG_OFF

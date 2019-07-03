@@ -132,9 +132,9 @@ typedef void (*lwip_thread_fn)(void *arg);
  * no real error handling is implemented.
  * 
  * @param mutex pointer to the mutex to create
- * @return ERR_OK if successful, another err_t otherwise
+ * @return ERR_OK if successful, another LwipError otherwise
  */
-err_t sys_mutex_new(sys_mutex_t *mutex);
+LwipError sys_mutex_new(sys_mutex_t *mutex);
 /**
  * @ingroup sys_mutex
  * Blocks the thread until the mutex can be grabbed.
@@ -190,9 +190,9 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex);
  *
  * @param sem pointer to the semaphore to create
  * @param count initial count of the semaphore
- * @return ERR_OK if successful, another err_t otherwise
+ * @return ERR_OK if successful, another LwipError otherwise
  */
-err_t sys_sem_new(sys_sem_t *sem, uint8_t count);
+LwipError sys_sem_new(sys_sem_t *sem, uint8_t count);
 /**
  * @ingroup sys_sem
  * Signals a semaphore
@@ -280,9 +280,9 @@ void sys_msleep(uint32_t ms); /* only has a (close to) 1 ms resolution. */
  * 
  * @param mbox pointer to the mbox to create
  * @param size (minimum) number of messages in this mbox
- * @return ERR_OK if successful, another err_t otherwise
+ * @return ERR_OK if successful, another LwipError otherwise
  */
-err_t sys_mbox_new(sys_mbox_t *mbox, int size);
+LwipError sys_mbox_new(sys_mbox_t *mbox, int size);
 /**
  * @ingroup sys_mbox
  * Post a message to an mbox - may not fail
@@ -301,7 +301,7 @@ void sys_mbox_post(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
+LwipError sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Try to post a message to an mbox - may fail if full.
@@ -311,7 +311,7 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-err_t sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
+LwipError sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Blocks the thread until a message arrives in the mailbox, but does

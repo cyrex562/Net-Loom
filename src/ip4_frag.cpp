@@ -101,7 +101,7 @@
 #endif
 PACK_STRUCT_BEGIN
 struct ip_reass_helper {
-  PACK_STRUCT_FIELD(struct pbuf *next_pbuf);
+  PACK_STRUCT_FIELD(struct PacketBuffer *next_pbuf);
   PACK_STRUCT_FIELD(uint16_t start);
   PACK_STRUCT_FIELD(uint16_t end);
 } PACK_STRUCT_STRUCT;
@@ -170,7 +170,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
 {
   uint16_t pbufs_freed = 0;
   uint16_t clen;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct ip_reass_helper *iprh;
 
   LWIP_ASSERT("prev != ipr", prev != ipr);
@@ -183,7 +183,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
   iprh = (struct ip_reass_helper *)ipr->p->payload;
   if (iprh->start == 0) {
     /* The first fragment was received, send ICMP time exceeded. */
-    /* First, de-queue the first pbuf from r->p. */
+    /* First, de-queue the first PacketBuffer from r->p. */
     p = ipr->p;
     ipr->p = iprh->next_pbuf;
     /* Then, copy the original header into it. */
@@ -200,7 +200,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
      separately as they have not yet been chained */
   p = ipr->p;
   while (p != nullptr) {
-    struct pbuf *pcur;
+    struct PacketBuffer *pcur;
     iprh = (struct ip_reass_helper *)p->payload;
     pcur = p;
     /* get the next pointer before freeing */
@@ -339,20 +339,20 @@ ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 }
 
 /**
- * Chain a new pbuf into the pbuf list that composes the datagram.  The pbuf list
+ * Chain a new PacketBuffer into the PacketBuffer list that composes the datagram.  The PacketBuffer list
  * will grow over time as  new pbufs are rx.
  * Also checks that the datagram passes basic continuity checks (if the last
  * fragment was received at least once).
  * @param ipr points to the reassembly state
- * @param new_p points to the pbuf for the current fragment
- * @param is_last is 1 if this pbuf has MF==0 (ipr->flags not updated yet)
+ * @param new_p points to the PacketBuffer for the current fragment
+ * @param is_last is 1 if this PacketBuffer has MF==0 (ipr->flags not updated yet)
  * @return see IP_REASS_VALIDATE_* defines
  */
 static int
-ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p, int is_last)
+ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct PacketBuffer *new_p, int is_last)
 {
   struct ip_reass_helper *iprh, *iprh_tmp, *iprh_prev = nullptr;
-  struct pbuf *q;
+  struct PacketBuffer *q;
   uint16_t offset, len;
   uint8_t hlen;
   struct ip_hdr *fraghdr;
@@ -369,7 +369,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   len = (uint16_t)(len - hlen);
   offset = IPH_OFFSET_BYTES(fraghdr);
 
-  /* overwrite the fragment's ip header from the pbuf with our helper struct,
+  /* overwrite the fragment's ip header from the PacketBuffer with our helper struct,
    * and setup the embedded helper structure. */
   /* make sure the struct ip_reass_helper fits into the IP header */
   LWIP_ASSERT("sizeof(struct ip_reass_helper) <= IP_HLEN",
@@ -388,7 +388,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   for (q = ipr->p; q != nullptr;) {
     iprh_tmp = (struct ip_reass_helper *)q->payload;
     if (iprh->start < iprh_tmp->start) {
-      /* the new pbuf should be inserted before this */
+      /* the new PacketBuffer should be inserted before this */
       iprh->next_pbuf = q;
       if (iprh_prev != nullptr) {
         /* not the fragment with the lowest offset */
@@ -504,13 +504,13 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 /**
  * Reassembles incoming IP fragments into an IP datagram.
  *
- * @param p points to a pbuf chain of the fragment
+ * @param p points to a PacketBuffer chain of the fragment
  * @return NULL if reassembly is incomplete, ? otherwise
  */
-struct pbuf *
-ip4_reass(struct pbuf *p)
+struct PacketBuffer *
+ip4_reass(struct PacketBuffer *p)
 {
-  struct pbuf *r;
+  struct PacketBuffer *r;
   struct ip_hdr *fraghdr;
   struct ip_reassdata *ipr;
   struct ip_reass_helper *iprh;
@@ -552,7 +552,7 @@ ip4_reass(struct pbuf *p)
                                    ip_reass_pbufcount, clen, IP_REASS_MAX_PBUFS));
       IPFRAG_STATS_INC(ip_frag.memerr);
       /* @todo: send ICMP time exceeded here? */
-      /* drop this pbuf */
+      /* drop this PacketBuffer */
       goto nullreturn;
     }
   }
@@ -601,13 +601,13 @@ ip4_reass(struct pbuf *p)
       goto nullreturn_ipr;
     }
   }
-  /* find the right place to insert this pbuf */
+  /* find the right place to insert this PacketBuffer */
   /* @todo: trim pbufs if fragments are overlapping */
   valid = ip_reass_chain_frag_into_datagram_and_validate(ipr, p, is_last);
   if (valid == IP_REASS_VALIDATE_PBUF_DROPPED) {
     goto nullreturn_ipr;
   }
-  /* if we come here, the pbuf has been enqueued */
+  /* if we come here, the PacketBuffer has been enqueued */
 
   /* Track the current number of pbufs current 'in-flight', in order to limit
      the number of fragments that may be enqueued at any one time
@@ -628,10 +628,10 @@ ip4_reass(struct pbuf *p)
      * once AND all fragments are received */
     uint16_t datagram_len = (uint16_t)(ipr->datagram_len + IP_HLEN);
 
-    /* save the second pbuf before copying the header over the pointer */
+    /* save the second PacketBuffer before copying the header over the pointer */
     r = ((struct ip_reass_helper *)ipr->p->payload)->next_pbuf;
 
-    /* copy the original ip header back to the first pbuf */
+    /* copy the original ip header back to the first PacketBuffer */
     fraghdr = (struct ip_hdr *)(ipr->p->payload);
     SMEMCPY(fraghdr, &ipr->iphdr, IP_HLEN);
     IPH_LEN_SET(fraghdr, lwip_htons(datagram_len));
@@ -677,7 +677,7 @@ ip4_reass(struct pbuf *p)
 
     MIB2_STATS_INC(mib2.ipreasmoks);
 
-    /* Return the pbuf chain */
+    /* Return the PacketBuffer chain */
     return p;
   }
   /* the datagram is not (yet?) reassembled completely */
@@ -687,7 +687,7 @@ ip4_reass(struct pbuf *p)
 nullreturn_ipr:
   LWIP_ASSERT("ipr != NULL", ipr != NULL);
   if (ipr->p == nullptr) {
-    /* dropped pbuf after creating a new datagram entry: remove the entry, too */
+    /* dropped PacketBuffer after creating a new datagram entry: remove the entry, too */
     LWIP_ASSERT("not firstalthough just enqueued", ipr == reassdatagrams);
     ip_reass_dequeue_datagram(ipr, nullptr);
   }
@@ -722,7 +722,7 @@ ip_frag_free_pbuf_custom_ref(struct pbuf_custom_ref *p)
 /** Free-callback function to free a 'struct pbuf_custom_ref', called by
  * pbuf_free. */
 static void
-ipfrag_free_pbuf_custom(struct pbuf *p)
+ipfrag_free_pbuf_custom(struct PacketBuffer *p)
 {
   struct pbuf_custom_ref *pcr = (struct pbuf_custom_ref *)p;
   LWIP_ASSERT("pcr != NULL", pcr != NULL);
@@ -744,14 +744,14 @@ ipfrag_free_pbuf_custom(struct pbuf *p)
  * @param netif the netif on which to send
  * @param dest destination ip address to which to send
  *
- * @return ERR_OK if sent successfully, err_t otherwise
+ * @return ERR_OK if sent successfully, LwipError otherwise
  */
-err_t
-ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
+LwipError
+ip4_frag(struct PacketBuffer *p, struct netif *netif, const LwipIpv4Addr *dest)
 {
-  struct pbuf *rambuf;
+  struct PacketBuffer *rambuf;
 #if !LWIP_NETIF_TX_SINGLE_PBUF
-  struct pbuf *newpbuf;
+  struct PacketBuffer *newpbuf;
   uint16_t newpbuflen = 0;
   uint16_t left_to_copy;
 #endif
@@ -771,7 +771,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
     /* ip4_frag() does not support IP options */
     return ERR_VAL;
   }
-  LWIP_ERROR("ip4_frag(): pbuf too short", p->len >= IP_HLEN, return ERR_VAL);
+  LWIP_ERROR("ip4_frag(): PacketBuffer too short", p->len >= IP_HLEN, return ERR_VAL);
 
   /* Save original offset */
   tmp = lwip_ntohs(IPH_OFFSET(iphdr));
@@ -790,7 +790,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
     if (rambuf == NULL) {
       goto memerr;
     }
-    LWIP_ASSERT("this needs a pbuf in one piece!",
+    LWIP_ASSERT("this needs a PacketBuffer in one piece!",
                 (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
     poff += pbuf_copy_partial(p, rambuf->payload, fragsize, poff);
     /* make room for the IP header */
@@ -804,14 +804,14 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
     /* When not using a static buffer, create a chain of pbufs.
      * The first will be a PBUF_RAM holding the link and IP header.
-     * The rest will be PBUF_REFs mirroring the pbuf chain to be fragged,
+     * The rest will be PBUF_REFs mirroring the PacketBuffer chain to be fragged,
      * but limited to the size of an mtu.
      */
     rambuf = pbuf_alloc(PBUF_LINK, IP_HLEN, PBUF_RAM);
     if (rambuf == nullptr) {
       goto memerr;
     }
-    LWIP_ASSERT("this needs a pbuf in one piece!",
+    LWIP_ASSERT("this needs a PacketBuffer in one piece!",
                 (rambuf->len >= (IP_HLEN)));
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
     iphdr = (struct ip_hdr *)rambuf->payload;
@@ -822,7 +822,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
       uint16_t plen = (uint16_t)(p->len - poff);
       LWIP_ASSERT("p->len >= poff", p->len >= poff);
       newpbuflen = LWIP_MIN(left_to_copy, plen);
-      /* Is this pbuf already empty? */
+      /* Is this PacketBuffer already empty? */
       if (!newpbuflen) {
         poff = 0;
         p = p->next;
@@ -833,7 +833,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
         pbuf_free(rambuf);
         goto memerr;
       }
-      /* Mirror this pbuf, although we might not need all of it. */
+      /* Mirror this PacketBuffer, although we might not need all of it. */
       newpbuf = pbuf_alloced_custom(PBUF_RAW, newpbuflen, PBUF_REF, &pcr->pc,
                                     (uint8_t *)p->payload + poff, newpbuflen);
       if (newpbuf == NULL) {
@@ -876,7 +876,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const LwipIpv4Addr *dest)
     }
 #endif /* CHECKSUM_GEN_IP */
 
-    /* No need for separate header pbuf - we allowed room for it in rambuf
+    /* No need for separate header PacketBuffer - we allowed room for it in rambuf
      * when allocated.
      */
     netif->output(netif, rambuf, dest);

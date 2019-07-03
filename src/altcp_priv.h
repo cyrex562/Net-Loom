@@ -58,17 +58,17 @@ void altcp_free(struct altcp_pcb *conn);
 /* Function prototypes for application layers */
 typedef void (*altcp_set_poll_fn)(struct altcp_pcb *conn, uint8_t interval);
 typedef void (*altcp_recved_fn)(struct altcp_pcb *conn, uint16_t len);
-typedef err_t (*altcp_bind_fn)(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port);
-typedef err_t (*altcp_connect_fn)(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port, altcp_connected_fn connected);
+typedef LwipError (*altcp_bind_fn)(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port);
+typedef LwipError (*altcp_connect_fn)(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port, altcp_connected_fn connected);
 
-typedef struct altcp_pcb *(*altcp_listen_fn)(struct altcp_pcb *conn, uint8_t backlog, err_t *err);
+typedef struct altcp_pcb *(*altcp_listen_fn)(struct altcp_pcb *conn, uint8_t backlog, LwipError *err);
 
 typedef void  (*altcp_abort_fn)(struct altcp_pcb *conn);
-typedef err_t (*altcp_close_fn)(struct altcp_pcb *conn);
-typedef err_t (*altcp_shutdown_fn)(struct altcp_pcb *conn, int shut_rx, int shut_tx);
+typedef LwipError (*altcp_close_fn)(struct altcp_pcb *conn);
+typedef LwipError (*altcp_shutdown_fn)(struct altcp_pcb *conn, int shut_rx, int shut_tx);
 
-typedef err_t (*altcp_write_fn)(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags);
-typedef err_t (*altcp_output_fn)(struct altcp_pcb *conn);
+typedef LwipError (*altcp_write_fn)(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags);
+typedef LwipError (*altcp_output_fn)(struct altcp_pcb *conn);
 
 typedef uint16_t (*altcp_mss_fn)(struct altcp_pcb *conn);
 typedef uint16_t (*altcp_sndbuf_fn)(struct altcp_pcb *conn);
@@ -81,7 +81,7 @@ typedef void  (*altcp_setprio_fn)(struct altcp_pcb *conn, uint8_t prio);
 
 typedef void  (*altcp_dealloc_fn)(struct altcp_pcb *conn);
 
-typedef err_t (*altcp_get_tcp_addrinfo_fn)(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port);
+typedef LwipError (*altcp_get_tcp_addrinfo_fn)(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port);
 typedef ip_addr_t *(*altcp_get_ip_fn)(struct altcp_pcb *conn, int local);
 typedef uint16_t (*altcp_get_port_fn)(struct altcp_pcb *conn, int local);
 
@@ -118,10 +118,10 @@ struct altcp_functions {
 
 void  altcp_default_set_poll(struct altcp_pcb *conn, uint8_t interval);
 void  altcp_default_recved(struct altcp_pcb *conn, uint16_t len);
-err_t altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port);
-err_t altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx);
-err_t altcp_default_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags);
-err_t altcp_default_output(struct altcp_pcb *conn);
+LwipError altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port);
+LwipError altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx);
+LwipError altcp_default_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags);
+LwipError altcp_default_output(struct altcp_pcb *conn);
 uint16_t altcp_default_mss(struct altcp_pcb *conn);
 uint16_t altcp_default_sndbuf(struct altcp_pcb *conn);
 uint16_t altcp_default_sndqueuelen(struct altcp_pcb *conn);
@@ -130,7 +130,7 @@ void  altcp_default_nagle_enable(struct altcp_pcb *conn);
 int   altcp_default_nagle_disabled(struct altcp_pcb *conn);
 void  altcp_default_setprio(struct altcp_pcb *conn, uint8_t prio);
 void  altcp_default_dealloc(struct altcp_pcb *conn);
-err_t altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port);
+LwipError altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port);
 ip_addr_t *altcp_default_get_ip(struct altcp_pcb *conn, int local);
 uint16_t altcp_default_get_port(struct altcp_pcb *conn, int local);
 #ifdef LWIP_DEBUG

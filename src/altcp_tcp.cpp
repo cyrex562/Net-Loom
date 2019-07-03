@@ -69,8 +69,8 @@ extern const struct altcp_functions altcp_tcp_functions;
 static void altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb);
 
 /* callback functions for TCP */
-static err_t
-altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, err_t err)
+static LwipError
+altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, LwipError err)
 {
   struct altcp_pcb *listen_conn = (struct altcp_pcb *)arg;
   if (listen_conn && listen_conn->accept) {
@@ -85,8 +85,8 @@ altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, err_t err)
   return ERR_ARG;
 }
 
-static err_t
-altcp_tcp_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
+static LwipError
+altcp_tcp_connected(void *arg, struct tcp_pcb *tpcb, LwipError err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
@@ -98,8 +98,8 @@ altcp_tcp_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
   return ERR_OK;
 }
 
-static err_t
-altcp_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+static LwipError
+altcp_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct PacketBuffer *p, LwipError err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
@@ -115,7 +115,7 @@ altcp_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
   return ERR_OK;
 }
 
-static err_t
+static LwipError
 altcp_tcp_sent(void *arg, struct tcp_pcb *tpcb, uint16_t len)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
@@ -128,7 +128,7 @@ altcp_tcp_sent(void *arg, struct tcp_pcb *tpcb, uint16_t len)
   return ERR_OK;
 }
 
-static err_t
+static LwipError
 altcp_tcp_poll(void *arg, struct tcp_pcb *tpcb)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
@@ -142,7 +142,7 @@ altcp_tcp_poll(void *arg, struct tcp_pcb *tpcb)
 }
 
 static void
-altcp_tcp_err(void *arg, err_t err)
+altcp_tcp_err(void *arg, LwipError err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
@@ -250,7 +250,7 @@ altcp_tcp_recved(struct altcp_pcb *conn, uint16_t len)
   }
 }
 
-static err_t
+static LwipError
 altcp_tcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port)
 {
   struct tcp_pcb *pcb;
@@ -262,7 +262,7 @@ altcp_tcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port)
   return tcp_bind(pcb, ipaddr, port);
 }
 
-static err_t
+static LwipError
 altcp_tcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port, altcp_connected_fn connected)
 {
   struct tcp_pcb *pcb;
@@ -276,7 +276,7 @@ altcp_tcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port
 }
 
 static struct altcp_pcb *
-altcp_tcp_listen(struct altcp_pcb *conn, uint8_t backlog, err_t *err)
+altcp_tcp_listen(struct altcp_pcb *conn, uint8_t backlog, LwipError *err)
 {
   struct tcp_pcb *pcb;
   struct tcp_pcb *lpcb;
@@ -306,7 +306,7 @@ altcp_tcp_abort(struct altcp_pcb *conn)
   }
 }
 
-static err_t
+static LwipError
 altcp_tcp_close(struct altcp_pcb *conn)
 {
   struct tcp_pcb *pcb;
@@ -316,7 +316,7 @@ altcp_tcp_close(struct altcp_pcb *conn)
   ALTCP_TCP_ASSERT_CONN(conn);
   pcb = (struct tcp_pcb *)conn->state;
   if (pcb) {
-    err_t err;
+    LwipError err;
     tcp_poll_fn oldpoll = pcb->poll;
     altcp_tcp_remove_callbacks(pcb);
     err = tcp_close(pcb);
@@ -333,7 +333,7 @@ altcp_tcp_close(struct altcp_pcb *conn)
   return ERR_OK;
 }
 
-static err_t
+static LwipError
 altcp_tcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
 {
   struct tcp_pcb *pcb;
@@ -345,7 +345,7 @@ altcp_tcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
   return tcp_shutdown(pcb, shut_rx, shut_tx);
 }
 
-static err_t
+static LwipError
 altcp_tcp_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags)
 {
   struct tcp_pcb *pcb;
@@ -357,7 +357,7 @@ altcp_tcp_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8
   return tcp_write(pcb, dataptr, len, apiflags);
 }
 
-static err_t
+static LwipError
 altcp_tcp_output(struct altcp_pcb *conn)
 {
   struct tcp_pcb *pcb;
@@ -454,7 +454,7 @@ altcp_tcp_dealloc(struct altcp_pcb *conn)
   /* no private state to clean up */
 }
 
-static err_t
+static LwipError
 altcp_tcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port)
 {
   if (conn) {

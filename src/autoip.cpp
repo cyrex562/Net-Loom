@@ -91,7 +91,7 @@
 #endif /* LWIP_AUTOIP_CREATE_SEED_ADDR */
 
 /* static functions */
-static err_t autoip_arp_announce(struct netif *netif);
+static LwipError autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
 
 /**
@@ -200,7 +200,7 @@ autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
  *
  * @param netif network interface used to send the probe
  */
-static err_t
+static LwipError
 autoip_arp_probe(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
@@ -213,7 +213,7 @@ autoip_arp_probe(struct netif *netif)
  *
  * @param netif network interface used to send the announce
  */
-static err_t
+static LwipError
 autoip_arp_announce(struct netif *netif)
 {
   return etharp_gratuitous(netif);
@@ -224,7 +224,7 @@ autoip_arp_announce(struct netif *netif)
  *
  * @param netif network interface to configure with current LL IP-Address
  */
-static err_t
+static LwipError
 autoip_bind(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
@@ -251,11 +251,11 @@ autoip_bind(struct netif *netif)
  *
  * @param netif network interface on which start the AutoIP client
  */
-err_t
+LwipError
 autoip_start(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
-  err_t result = ERR_OK;
+  LwipError result = ERR_OK;
 
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
@@ -345,7 +345,7 @@ autoip_network_changed(struct netif *netif)
  *
  * @param netif network interface on which stop the AutoIP client
  */
-err_t
+LwipError
 autoip_stop(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
@@ -462,7 +462,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
      * we have a conflict and must solve it
      */
     ip4_addr_t sipaddr, dipaddr;
-    struct eth_addr netifaddr;
+    struct EthernetAddress netifaddr;
     SMEMCPY(netifaddr.addr, netif->hwaddr, ETH_HWADDR_LEN);
 
     /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without

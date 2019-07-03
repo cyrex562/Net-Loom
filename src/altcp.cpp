@@ -299,7 +299,7 @@ altcp_recved(struct altcp_pcb *conn, uint16_t len)
  * @ingroup altcp
  * @see tcp_bind()
  */
-err_t
+LwipError
 altcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port)
 {
   if (conn && conn->fns && conn->fns->bind) {
@@ -312,7 +312,7 @@ altcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port)
  * @ingroup altcp
  * @see tcp_connect()
  */
-err_t
+LwipError
 altcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port, altcp_connected_fn connected)
 {
   if (conn && conn->fns && conn->fns->connect) {
@@ -326,7 +326,7 @@ altcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port, al
  * @see tcp_listen_with_backlog_and_err()
  */
 struct altcp_pcb *
-altcp_listen_with_backlog_and_err(struct altcp_pcb *conn, uint8_t backlog, err_t *err)
+altcp_listen_with_backlog_and_err(struct altcp_pcb *conn, uint8_t backlog, LwipError *err)
 {
   if (conn && conn->fns && conn->fns->listen) {
     return conn->fns->listen(conn, backlog, err);
@@ -350,7 +350,7 @@ altcp_abort(struct altcp_pcb *conn)
  * @ingroup altcp
  * @see tcp_close()
  */
-err_t
+LwipError
 altcp_close(struct altcp_pcb *conn)
 {
   if (conn && conn->fns && conn->fns->close) {
@@ -363,7 +363,7 @@ altcp_close(struct altcp_pcb *conn)
  * @ingroup altcp
  * @see tcp_shutdown()
  */
-err_t
+LwipError
 altcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
 {
   if (conn && conn->fns && conn->fns->shutdown) {
@@ -376,7 +376,7 @@ altcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
  * @ingroup altcp
  * @see tcp_write()
  */
-err_t
+LwipError
 altcp_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags)
 {
   if (conn && conn->fns && conn->fns->write) {
@@ -389,7 +389,7 @@ altcp_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t a
  * @ingroup altcp
  * @see tcp_output()
  */
-err_t
+LwipError
 altcp_output(struct altcp_pcb *conn)
 {
   if (conn && conn->fns && conn->fns->output) {
@@ -474,7 +474,7 @@ altcp_setprio(struct altcp_pcb *conn, uint8_t prio)
   }
 }
 
-err_t
+LwipError
 altcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port)
 {
   if (conn && conn->fns && conn->fns->addrinfo) {
@@ -530,7 +530,7 @@ altcp_default_recved(struct altcp_pcb *conn, uint16_t len)
   }
 }
 
-err_t
+LwipError
 altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t port)
 {
   if (conn && conn->inner_conn) {
@@ -539,7 +539,7 @@ altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, uint16_t por
   return ERR_VAL;
 }
 
-err_t
+LwipError
 altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
 {
   if (conn) {
@@ -554,7 +554,7 @@ altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
   return ERR_VAL;
 }
 
-err_t
+LwipError
 altcp_default_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, uint8_t apiflags)
 {
   if (conn && conn->inner_conn) {
@@ -563,7 +563,7 @@ altcp_default_write(struct altcp_pcb *conn, const void *dataptr, uint16_t len, u
   return ERR_VAL;
 }
 
-err_t
+LwipError
 altcp_default_output(struct altcp_pcb *conn)
 {
   if (conn && conn->inner_conn) {
@@ -639,7 +639,7 @@ altcp_default_dealloc(struct altcp_pcb *conn)
   /* nothing to do */
 }
 
-err_t
+LwipError
 altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, uint16_t *port)
 {
   if (conn && conn->inner_conn) {

@@ -1,10 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\npcap\\Include",
-    "\\npcap\\Include\\pcap",
     "\\src"
   ],
-  "SelectedNode": "\\src\\err.h",
+  "SelectedNode": "\\src\\netbuf.h",
   "PreviewInSolutionExplorer": false
 }

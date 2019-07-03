@@ -57,29 +57,29 @@ enum netifapi_arp_entry {
 };
 
 /** @ingroup netifapi_arp */
-err_t netifapi_arp_add(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr, enum netifapi_arp_entry type);
+LwipError netifapi_arp_add(const ip4_addr_t *ipaddr, struct EthernetAddress *ethaddr, enum netifapi_arp_entry type);
 /** @ingroup netifapi_arp */
-err_t netifapi_arp_remove(const ip4_addr_t *ipaddr, enum netifapi_arp_entry type);
+LwipError netifapi_arp_remove(const ip4_addr_t *ipaddr, enum netifapi_arp_entry type);
 #endif /* LWIP_ARP && LWIP_IPV4 */
 
-err_t netifapi_netif_add(struct netif *netif,
+LwipError netifapi_netif_add(struct netif *netif,
 #if LWIP_IPV4
                          const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
 #endif /* LWIP_IPV4 */
                          void *state, netif_init_fn init, netif_input_fn input);
 
 #if LWIP_IPV4
-err_t netifapi_netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr,
+LwipError netifapi_netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr,
                               const ip4_addr_t *netmask, const ip4_addr_t *gw);
 #endif /* LWIP_IPV4*/
 
-err_t netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
+LwipError netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
                             netifapi_errt_fn errtfunc);
 
 /** @ingroup netifapi_netif */
-err_t netifapi_netif_name_to_index(const char *name, uint8_t *index);
+LwipError netifapi_netif_name_to_index(const char *name, uint8_t *index);
 /** @ingroup netifapi_netif */
-err_t netifapi_netif_index_to_name(uint8_t index, char *name);
+LwipError netifapi_netif_index_to_name(uint8_t index, char *name);
 
 /** @ingroup netifapi_netif
   * @see netif_remove()

@@ -72,7 +72,7 @@
 
 #include "netdb.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include "ppp_opts.h"
 

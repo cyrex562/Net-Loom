@@ -39,7 +39,7 @@
 
 #include "opt.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip_addr.h"
 
 /** Swap the bytes in an uint16_t: much like lwip_htons() for little-endian */
@@ -72,29 +72,29 @@ extern "C" {
 #endif
 
 uint16_t inet_chksum(const void *dataptr, uint16_t len);
-uint16_t inet_chksum_pbuf(struct pbuf *p);
+uint16_t inet_chksum_pbuf(struct PacketBuffer *p);
 #if LWIP_CHKSUM_COPY_ALGORITHM
 uint16_t lwip_chksum_copy(void *dst, const void *src, uint16_t len);
 #endif /* LWIP_CHKSUM_COPY_ALGORITHM */
 
 #if LWIP_IPV4
-uint16_t inet_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
-uint16_t inet_chksum_pseudo_partial(struct pbuf *p, uint8_t proto,
+uint16_t inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
        uint16_t proto_len, uint16_t chksum_len, const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
-uint16_t ip6_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
-       const ip6_addr_t *src, const ip6_addr_t *dest);
-uint16_t ip6_chksum_pseudo_partial(struct pbuf *p, uint8_t proto, uint16_t proto_len,
-       uint16_t chksum_len, const ip6_addr_t *src, const ip6_addr_t *dest);
+uint16_t ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
+       const LwipIp6Addr *src, const LwipIp6Addr *dest);
+uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
+       uint16_t chksum_len, const LwipIp6Addr *src, const LwipIp6Addr *dest);
 #endif /* LWIP_IPV6 */
 
 
-uint16_t ip_chksum_pseudo(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+uint16_t ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        const LwipIpAddr *src, const LwipIpAddr *dest);
-uint16_t ip_chksum_pseudo_partial(struct pbuf *p, uint8_t proto, uint16_t proto_len,
+uint16_t ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        uint16_t chksum_len, const LwipIpAddr *src, const LwipIpAddr *dest);
 
 #ifdef __cplusplus

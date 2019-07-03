@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 
-/** This is the aligned version of ip6_addr_t,
+/** This is the aligned version of LwipIp6Addr,
     used as local variable, on the stack, etc. */
 struct LwipIp6Addr
 {

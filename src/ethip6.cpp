@@ -45,7 +45,7 @@
 
 #include "ethip6.h"
 #include "nd6.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"
@@ -69,18 +69,18 @@
  * @todo anycast addresses
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
- * @param q The pbuf(s) containing the IP packet to be sent.
+ * @param q The PacketBuffer(s) containing the IP packet to be sent.
  * @param ip6addr The IP address of the packet destination.
  *
  * @return
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
-err_t
-ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
+LwipError
+ethip6_output(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr)
 {
-  struct eth_addr dest;
+  struct EthernetAddress dest;
   const uint8_t *hwaddr;
-  err_t result;
+  LwipError result;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -98,7 +98,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     dest.addr[5] = ((const uint8_t *)(&(ip6addr->addr[3])))[3];
 
     /* Send out. */
-    return ethernet_output(netif, q, (const struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    return ethernet_output(netif, q, (const struct EthernetAddress*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
   }
 
   /* We have a unicast destination IP address */
@@ -117,7 +117,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 
   /* Send out the packet using the returned hardware address. */
   SMEMCPY(dest.addr, hwaddr, 6);
-  return ethernet_output(netif, q, (const struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+  return ethernet_output(netif, q, (const struct EthernetAddress*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
 }
 
 #endif /* LWIP_IPV6 && LWIP_ETHERNET */

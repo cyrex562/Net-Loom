@@ -63,7 +63,7 @@
 #include "mld6.h"
 
 #include "nd6.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include "sys.h"
 

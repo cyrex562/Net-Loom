@@ -49,7 +49,7 @@
 
 #include "mem.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include "pcapif.h"
 
@@ -328,7 +328,7 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 static int
 pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 {
-  const struct eth_addr *src = (const struct eth_addr *)packet + 1;
+  const struct EthernetAddress *src = (const struct EthernetAddress *)packet + 1;
   if (packet_len >= (ETH_HWADDR_LEN * 2)) {
     /* Don't let feedback packets through (limitation in winpcap?) */
     if(!memcmp(src, netif->hwaddr, ETH_HWADDR_LEN)) {
@@ -343,7 +343,7 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 struct pcapif_pbuf_custom
 {
    struct pbuf_custom pc;
-   struct pbuf* p;
+   struct PacketBuffer* p;
 };
 #endif /* PCAPIF_RX_REF */
 
@@ -810,17 +810,17 @@ pcapif_low_level_init(struct netif *netif)
   sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0);
 #endif
 
-  LWIP_DEBUGF(NETIF_DEBUG, ("pcapif: eth_addr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
+  LWIP_DEBUGF(NETIF_DEBUG, ("pcapif: EthernetAddress %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
 }
 
 /** low_level_output():
- * Transmit a packet. The packet is contained in the pbuf that is passed to
- * the function. This pbuf might be chained.
+ * Transmit a packet. The packet is contained in the PacketBuffer that is passed to
+ * the function. This PacketBuffer might be chained.
  */
-static err_t
-pcapif_low_level_output(struct netif *netif, struct pbuf *p)
+static LwipError
+pcapif_low_level_output(struct netif *netif, struct PacketBuffer *p)
 {
-  struct pbuf *q;
+  struct PacketBuffer *q;
   unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
   unsigned char *buf = buffer;
   unsigned char *ptr;
@@ -834,10 +834,10 @@ pcapif_low_level_output(struct netif *netif, struct pbuf *p)
 
   /* initiate transfer */
   if ((p->len == p->tot_len) && (p->len >= ETH_MIN_FRAME_LEN + ETH_PAD_SIZE)) {
-    /* no pbuf chain, don't have to copy -> faster */
+    /* no PacketBuffer chain, don't have to copy -> faster */
     buf = &((unsigned char*)p->payload)[ETH_PAD_SIZE];
   } else {
-    /* pbuf chain, copy into contiguous buffer */
+    /* PacketBuffer chain, copy into contiguous buffer */
     if (p->tot_len >= sizeof(buffer)) {
       LINK_STATS_INC(link.lenerr);
       LINK_STATS_INC(link.drop);
@@ -846,8 +846,8 @@ pcapif_low_level_output(struct netif *netif, struct pbuf *p)
     }
     ptr = buffer;
     for(q = p; q != nullptr; q = q->next) {
-      /* Send the data from the pbuf to the interface, one pbuf at a
-         time. The size of the data in each pbuf is kept in the ->len
+      /* Send the data from the PacketBuffer to the interface, one PacketBuffer at a
+         time. The size of the data in each PacketBuffer is kept in the ->len
          variable. */
       /* send data from(q->payload, q->len); */
       LWIP_DEBUGF(NETIF_DEBUG, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
@@ -891,16 +891,16 @@ pcapif_low_level_output(struct netif *netif, struct pbuf *p)
   return ERR_OK;
 }
 
-/** low_level_input(): Allocate a pbuf and transfer the bytes of the incoming
- * packet from the interface into the pbuf.
+/** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
+ * packet from the interface into the PacketBuffer.
  */
-static struct pbuf *
+static struct PacketBuffer *
 pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
 {
-  struct pbuf *p, *q;
+  struct PacketBuffer *p, *q;
   int start;
   int length = packet_len;
-  const struct eth_addr *dest = (const struct eth_addr*)packet;
+  const struct EthernetAddress *dest = (const struct EthernetAddress*)packet;
   int unicast;
 #if PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS
   const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -930,18 +930,18 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
   }
 #endif /* !PCAPIF_RECEIVE_PROMISCUOUS */
 
-  /* We allocate a pbuf chain of pbufs from the pool. */
+  /* We allocate a PacketBuffer chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE, PBUF_POOL);
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
 
   if (p != nullptr) {
-    /* We iterate over the pbuf chain until we have read the entire
-       packet into the pbuf. */
+    /* We iterate over the PacketBuffer chain until we have read the entire
+       packet into the PacketBuffer. */
     start = 0;
     for (q = p; q != nullptr; q = q->next) {
       uint16_t copy_len = q->len;
-      /* Read enough bytes to fill this pbuf in the chain. The
-         available data in the pbuf is given by the q->len
+      /* Read enough bytes to fill this PacketBuffer in the chain. The
+         available data in the PacketBuffer is given by the q->len
          variable. */
       /* read data into(q->payload, q->len); */
       LWIP_DEBUGF(NETIF_DEBUG, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
@@ -979,7 +979,7 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
 
 #if PCAPIF_RX_REF
 static void
-pcapif_rx_pbuf_free_custom(struct pbuf *p)
+pcapif_rx_pbuf_free_custom(struct PacketBuffer *p)
 {
   struct pcapif_pbuf_custom* ppc;
   LWIP_ASSERT("NULL pointer", p != NULL);
@@ -990,14 +990,14 @@ pcapif_rx_pbuf_free_custom(struct pbuf *p)
   mem_free(p);
 }
 
-static struct pbuf*
-pcapif_rx_ref(struct pbuf* p)
+static struct PacketBuffer*
+pcapif_rx_ref(struct PacketBuffer* p)
 {
   struct pcapif_pbuf_custom* ppc;
-  struct pbuf* q;
+  struct PacketBuffer* q;
 
   LWIP_ASSERT("NULL pointer", p != NULL);
-  LWIP_ASSERT("chained pbuf not supported here", p->next == NULL);
+  LWIP_ASSERT("chained PacketBuffer not supported here", p->next == NULL);
 
   ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
   LWIP_ASSERT("out of memory for RX", ppc != NULL);
@@ -1020,11 +1020,11 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
   struct pcapif_private *pa = (struct pcapif_private*)user;
   int packet_len = pkt_header->caplen;
   struct netif *netif = (struct netif *)pa->input_fn_arg;
-  struct pbuf *p;
+  struct PacketBuffer *p;
 
   PCAPIF_RX_LOCK_LWIP();
 
-  /* move received packet into a new pbuf */
+  /* move received packet into a new PacketBuffer */
   p = pcapif_low_level_input(netif, packet, packet_len);
   /* if no packet could be read, silently ignore this */
   if (p != nullptr) {
@@ -1043,7 +1043,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 /**
  * pcapif_init(): initialization function, pass to netif_add().
  */
-err_t
+LwipError
 pcapif_init(struct netif *netif)
 {
   static int ethernetif_index;

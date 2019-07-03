@@ -68,7 +68,7 @@ PACK_STRUCT_END
 
 #if LWIP_IPV6_MLD && LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 
 #ifdef __cplusplus
@@ -80,7 +80,7 @@ struct mld_group {
   /** next link */
   struct mld_group *next;
   /** multicast address */
-  ip6_addr_t         group_address;
+  LwipIp6Addr         group_address;
   /** signifies we were the last person to report */
   uint8_t               last_reporter_flag;
   /** current state of the group */
@@ -93,15 +93,15 @@ struct mld_group {
 
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
-err_t  mld6_stop(struct netif *netif);
+LwipError  mld6_stop(struct netif *netif);
 void   mld6_report_groups(struct netif *netif);
 void   mld6_tmr(void);
-struct mld_group *mld6_lookfor_group(struct netif *ifp, const ip6_addr_t *addr);
-void   mld6_input(struct pbuf *p, struct netif *inp);
-err_t  mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
-err_t  mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
-err_t  mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
-err_t  mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
+struct mld_group *mld6_lookfor_group(struct netif *ifp, const LwipIp6Addr *addr);
+void   mld6_input(struct PacketBuffer *p, struct netif *inp);
+LwipError  mld6_joingroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr);
+LwipError  mld6_joingroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr);
+LwipError  mld6_leavegroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr);
+LwipError  mld6_leavegroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr);
 
 /** @ingroup mld6
  * Get list head of MLD6 groups for netif.

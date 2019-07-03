@@ -196,7 +196,7 @@ struct threadlist {
 
 static struct threadlist *lwip_win32_threads = nullptr;
 
-err_t
+LwipError
 sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   HANDLE new_sem = nullptr;
@@ -288,7 +288,7 @@ sys_sem_signal(sys_sem_t *sem)
   LWIP_UNUSED_ARG(ret);
 }
 
-err_t
+LwipError
 sys_mutex_new(sys_mutex_t *mutex)
 {
   HANDLE new_mut = nullptr;
@@ -481,7 +481,7 @@ sys_check_core_locking(void)
 }
 #endif /* !NO_SYS */
 
-err_t
+LwipError
 sys_mbox_new(sys_mbox_t *mbox, int size)
 {
   LWIP_ASSERT("mbox != NULL", mbox != NULL);
@@ -546,7 +546,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
   SYS_ARCH_UNPROTECT(lev);
 }
 
-err_t
+LwipError
 sys_mbox_trypost(sys_mbox_t *q, void *msg)
 {
   uint32_t new_head;
@@ -581,7 +581,7 @@ sys_mbox_trypost(sys_mbox_t *q, void *msg)
   return ERR_OK;
 }
 
-err_t
+LwipError
 sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
 {
   return sys_mbox_trypost(q, msg);
@@ -673,7 +673,7 @@ void
 sys_arch_netconn_sem_alloc(void)
 {
   sys_sem_t *sem;
-  err_t err;
+  LwipError err;
   BOOL done;
 
   sem = (sys_sem_t*)malloc(sizeof(sys_sem_t));
