@@ -1,13 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\npcap",
     "\\npcap\\Include",
     "\\npcap\\Include\\pcap",
     "\\npcap\\Lib",
     "\\npcap\\Lib\\x64",
     "\\src"
   ],
-  "SelectedNode": "\\CMakeLists.txt",
+  "SelectedNode": "\\src\\err.h",
   "PreviewInSolutionExplorer": false
 }
