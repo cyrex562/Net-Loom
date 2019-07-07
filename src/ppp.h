@@ -33,22 +33,13 @@
 #pragma once
 
 #include "ppp_opts.h"
-#include "def.h"
-#include "stats.h"
-#include "mem.h"
 #include "netif.h"
-#include "sys.h"
-#include "timeouts.h"
 #include "ccp.h"
-// #include "upap.h"
-#include "chap-new.h"
-//#include "lcp.h"
 #include "ip6_addr.h"
 #include "mppe.h"
 #include "ipv6cp.h"
 #include "vj.h"
-
-
+#include "chap_new.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -170,30 +161,7 @@ typedef unsigned char  uint8_t;
 
 #include "fsm.h"
 #include "lcp.h"
-#if CCP_SUPPORT
-#include "ccp.h"
-#endif /* CCP_SUPPORT */
-#if MPPE_SUPPORT
-#include "mppe.h"
-#endif /* MPPE_SUPPORT */
-#if PPP_IPV4_SUPPORT
 #include "ipcp.h"
-#endif /* PPP_IPV4_SUPPORT */
-#if PPP_IPV6_SUPPORT
-#include "ipv6cp.h"
-#endif /* PPP_IPV6_SUPPORT */
-#if PAP_SUPPORT
-#include "upap.h"
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-#include "chap-new.h"
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
-#include "eap.h"
-#endif /* EAP_SUPPORT */
-#if VJ_SUPPORT
-#include "vj.h"
-#endif /* VJ_SUPPORT */
 
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
@@ -201,7 +169,7 @@ typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
 /*
  * PPP configuration.
  */
-typedef struct ppp_settings_s {
+struct PppSettings {
 
   unsigned int  auth_required       :1;      // Peer is required to authenticate */
   unsigned int  null_login          :1;      // Username of "" and a password of "" are acceptable 
@@ -253,18 +221,16 @@ typedef struct ppp_settings_s {
   uint8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
   uint8_t  lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
 
-} ppp_settings;
+};
 
-struct ppp_addrs {
-#if PPP_IPV4_SUPPORT
-  ip4_addr_t our_ipaddr, his_ipaddr, netmask;
-#if LWIP_DNS
-  ip4_addr_t dns1, dns2;
-#endif /* LWIP_DNS */
-#endif /* PPP_IPV4_SUPPORT */
-#if PPP_IPV6_SUPPORT
-  ip6_addr_t our6_ipaddr, his6_ipaddr;
-#endif /* PPP_IPV6_SUPPORT */
+struct PppAddrs {
+    ip4_addr_t our_ipaddr;
+    ip4_addr_t his_ipaddr;
+    ip4_addr_t netmask;
+    ip4_addr_t dns1;
+    ip4_addr_t dns2;
+    ip6_addr_t our6_ipaddr;
+    ip6_addr_t his6_ipaddr;
 };
 
 
@@ -272,7 +238,7 @@ struct ppp_addrs {
  * PPP interface control block.
  */
 struct PppPcb {
-  ppp_settings settings;
+  PppSettings settings;
   const struct LinkCallbacks *link_cb;
   void *link_ctx_cb;
   void (*link_status_cb)(PppPcb *pcb,
@@ -369,13 +335,13 @@ struct PppPcb {
  *
  * Default is none auth type, unset (NULL) user and passwd.
  */
-#define PPPAUTHTYPE_NONE      0x00
-#define PPPAUTHTYPE_PAP       0x01
-#define PPPAUTHTYPE_CHAP      0x02
-#define PPPAUTHTYPE_MSCHAP    0x04
-#define PPPAUTHTYPE_MSCHAP_V2 0x08
-#define PPPAUTHTYPE_EAP       0x10
-#define PPPAUTHTYPE_ANY       0xff
+constexpr auto PPPAUTHTYPE_NONE = 0x00;
+constexpr auto PPPAUTHTYPE_PAP = 0x01;
+constexpr auto PPPAUTHTYPE_CHAP = 0x02;
+constexpr auto PPPAUTHTYPE_MSCHAP = 0x04;
+constexpr auto PPPAUTHTYPE_MSCHAP_V2 = 0x08;
+constexpr auto PPPAUTHTYPE_EAP = 0x10;
+constexpr auto PPPAUTHTYPE_ANY = 0xff;
 void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *passwd);
 
 /*
@@ -383,7 +349,7 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is false.
  */
-#define ppp_set_auth_required(ppp, boolval) (ppp->settings.auth_required = boolval)
+#define PPP_SET_AUTH_REQUIRED(ppp, boolval) (ppp->settings.auth_required = (boolval))
 
 
 
@@ -393,9 +359,9 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is unset (0.0.0.0).
  */
-#define ppp_set_ipcp_ouraddr(ppp, addr) do { ppp->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr); \
-                                             ppp->ask_for_local = ppp->ipcp_wantoptions.ouraddr != 0; } while(0)
-#define ppp_set_ipcp_hisaddr(ppp, addr) (ppp->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
+#define PPP_SET_IPCP_OURADDR(ppp, addr) do { (ppp)->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr); \
+                                             (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0; } while(0)
+#define PPP_SET_IPCP_HISADDR(ppp, addr) ((ppp)->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
 
 /*
  * Set DNS server addresses that are sent if the peer asks for them. This is mostly necessary
@@ -403,7 +369,7 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is unset (0.0.0.0).
  */
-#define ppp_set_ipcp_dnsaddr(ppp, index, addr) (ppp->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
+#define PPP_SET_IPCP_DNSADDR(ppp, index, addr) ((ppp)->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
 
 /*
  * If set, we ask the peer for up to 2 DNS server addresses. Received DNS server addresses are
@@ -411,20 +377,20 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is false.
  */
-#define ppp_set_usepeerdns(ppp, boolval) (ppp->settings.usepeerdns = boolval)
+#define PPP_SET_USEPEERDNS(ppp, boolval) ((ppp)->settings.usepeerdns = (boolval))
 
 
 
 /* Disable MPPE (Microsoft Point to Point Encryption). This parameter is exclusive. */
-#define PPP_MPPE_DISABLE           0x00
+constexpr auto PPP_MPPE_DISABLE = 0x00;
 /* Require the use of MPPE (Microsoft Point to Point Encryption). */
-#define PPP_MPPE_ENABLE            0x01
+constexpr auto PPP_MPPE_ENABLE = 0x01;
 /* Allow MPPE to use stateful mode. Stateless mode is still attempted first. */
-#define PPP_MPPE_ALLOW_STATEFUL    0x02
+constexpr auto PPP_MPPE_ALLOW_STATEFUL = 0x02;
 /* Refuse the use of MPPE with 40-bit encryption. Conflict with PPP_MPPE_REFUSE_128. */
-#define PPP_MPPE_REFUSE_40         0x04
+constexpr auto PPP_MPPE_REFUSE_40 = 0x04;
 /* Refuse the use of MPPE with 128-bit encryption. Conflict with PPP_MPPE_REFUSE_40. */
-#define PPP_MPPE_REFUSE_128        0x08
+constexpr auto PPP_MPPE_REFUSE_128 = 0x08;
 /*
  * Set MPPE configuration
  *
@@ -440,7 +406,7 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is 0.
  */
-#define ppp_set_listen_time(ppp, intval) (ppp->settings.listen_time = intval)
+#define ppp_set_listen_time(ppp, intval) ((ppp)->settings.listen_time = (intval))
 
 /*
  * If set, we will attempt to initiate a connection but if no reply is received from
@@ -448,7 +414,7 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is false.
  */
-#define ppp_set_passive(ppp, boolval) (ppp->lcp_wantoptions.passive = boolval)
+#define ppp_set_passive(ppp, boolval) ((ppp)->lcp_wantoptions.passive = (boolval))
 
 /*
  * If set, we will not transmit LCP packets to initiate a connection until a valid
@@ -456,7 +422,7 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is false.
  */
-#define ppp_set_silent(ppp, boolval) (ppp->lcp_wantoptions.silent = boolval)
+#define ppp_set_silent(ppp, boolval) ((ppp)->lcp_wantoptions.silent = (boolval))
 
 /*
  * If set, enable protocol field compression negotiation in both the receive and
@@ -464,8 +430,8 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is true.
  */
-#define ppp_set_neg_pcomp(ppp, boolval) (ppp->lcp_wantoptions.neg_pcompression = \
-                                         ppp->lcp_allowoptions.neg_pcompression = boolval)
+#define ppp_set_neg_pcomp(ppp, boolval) ((ppp)->lcp_wantoptions.neg_pcompression = \
+                                         (ppp)->lcp_allowoptions.neg_pcompression = (boolval))
 
 /*
  * If set, enable Address/Control compression in both the receive and the transmit
@@ -473,8 +439,8 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is true.
  */
-#define ppp_set_neg_accomp(ppp, boolval) (ppp->lcp_wantoptions.neg_accompression = \
-                                          ppp->lcp_allowoptions.neg_accompression = boolval)
+#define ppp_set_neg_accomp(ppp, boolval) ((ppp)->lcp_wantoptions.neg_accompression = \
+                                          (ppp)->lcp_allowoptions.neg_accompression = (boolval))
 
 /*
  * If set, enable asyncmap negotiation. Otherwise forcing all control characters to
@@ -482,8 +448,8 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is true.
  */
-#define ppp_set_neg_asyncmap(ppp, boolval) (ppp->lcp_wantoptions.neg_asyncmap = \
-                                            ppp->lcp_allowoptions.neg_asyncmap = boolval)
+#define ppp_set_neg_asyncmap(ppp, boolval) ((ppp)->lcp_wantoptions.neg_asyncmap = \
+                                            (ppp)->lcp_allowoptions.neg_asyncmap = (boolval))
 
 /*
  * This option sets the Async-Control-Character-Map (ACCM) for this end of the link.
@@ -496,13 +462,13 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is 0.
  */
-#define ppp_set_asyncmap(ppp, intval) (ppp->lcp_wantoptions.asyncmap = intval)
+#define ppp_set_asyncmap(ppp, intval) ((ppp)->lcp_wantoptions.asyncmap = (intval))
 
 /*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */
-#define ppp_set_default(ppp)         netif_set_default(ppp->netif)
+#define ppp_set_default(ppp)         netif_set_default((ppp)->netif)
 
 /*
  * Set a PPP notify phase callback.
@@ -576,12 +542,12 @@ err_t ppp_free(PppPcb *pcb);
  * Get the PPP error code.  The argument must point to an int.
  * Returns a PPPERR_* value.
  */
-#define PPPCTLG_ERRCODE  1
+constexpr auto PPPCTLG_ERRCODE = 1;
 
 /*
  * Get the fd associated with a PPP over serial
  */
-#define PPPCTLG_FD       2
+constexpr auto PPPCTLG_FD = 2;
 
 /*
  * Get and set parameters for the given connection.
@@ -590,15 +556,15 @@ err_t ppp_free(PppPcb *pcb);
 err_t ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
 
 /* Get the PPP netif interface */
-#define ppp_netif(ppp)               (ppp->netif)
+#define ppp_netif(ppp)               ((ppp)->netif)
 
 /* Set an lwIP-style status-callback for the selected PPP device */
 #define ppp_set_netif_statuscallback(ppp, status_cb)       \
-        netif_set_status_callback(ppp->netif, status_cb);
+        netif_set_status_callback((ppp)->netif, status_cb);
 
 /* Set an lwIP-style link-callback for the selected PPP device */
 #define ppp_set_netif_linkcallback(ppp, link_cb)           \
-        netif_set_link_callback(ppp->netif, link_cb);
+        netif_set_link_callback((ppp)->netif, link_cb);
 
 #ifdef __cplusplus
 }

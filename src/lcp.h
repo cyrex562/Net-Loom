@@ -1,46 +1,5 @@
-/*
- * lcp.h - Link Control Protocol definitions.
- *
- * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The name "Carnegie Mellon University" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For permission or any legal
- *    details, please contact
- *      Office of Technology Transfer
- *      Carnegie Mellon University
- *      5000 Forbes Avenue
- *      Pittsburgh, PA  15213-3890
- *      (412) 268-4387, fax: (412) 268-7395
- *      tech-transfer@andrew.cmu.edu
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Computing Services
- *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
- *
- * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * $Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp $
- */
+// PPP LCP -- Link Control Protocol
+
 #pragma once
 
 #include "ppp_opts.h"
@@ -53,52 +12,49 @@ extern "C" {
 /*
  * Options.
  */
-#define CI_VENDOR	0	/* Vendor Specific */
-#define CI_MRU		1	/* Maximum Receive Unit */
-#define CI_ASYNCMAP	2	/* Async Control Character Map */
-#define CI_AUTHTYPE	3	/* Authentication Type */
-#define CI_QUALITY	4	/* Quality Protocol */
-#define CI_MAGICNUMBER	5	/* Magic Number */
-#define CI_PCOMPRESSION	7	/* Protocol Field Compression */
-#define CI_ACCOMPRESSION 8	/* Address/Control Field Compression */
-#define CI_FCSALTERN	9	/* FCS-Alternatives */
-#define CI_SDP		10	/* Self-Describing-Pad */
-#define CI_NUMBERED	11	/* Numbered-Mode */
-#define CI_CALLBACK	13	/* callback */
-#define CI_MRRU		17	/* max reconstructed receive unit; multilink */
-#define CI_SSNHF	18	/* short sequence numbers for multilink */
-#define CI_EPDISC	19	/* endpoint discriminator */
-#define CI_MPPLUS	22	/* Multi-Link-Plus-Procedure */
-#define CI_LDISC	23	/* Link-Discriminator */
-#define CI_LCPAUTH	24	/* LCP Authentication */
-#define CI_COBS		25	/* Consistent Overhead Byte Stuffing */
-#define CI_PREFELIS	26	/* Prefix Elision */
-#define CI_MPHDRFMT	27	/* MP Header Format */
-#define CI_I18N		28	/* Internationalization */
-#define CI_SDL		29	/* Simple Data Link */
+constexpr auto CI_VENDOR = 0	/* Vendor Specific */;
+constexpr auto CI_MRU = 1	/* Maximum Receive Unit */;
+constexpr auto CI_ASYNCMAP = 2	/* Async Control Character Map */;
+constexpr auto CI_AUTHTYPE = 3	/* Authentication Type */;
+constexpr auto CI_QUALITY = 4	/* Quality Protocol */;
+constexpr auto CI_MAGICNUMBER = 5	/* Magic Number */;
+constexpr auto CI_PCOMPRESSION = 7	/* Protocol Field Compression */;
+constexpr auto CI_ACCOMPRESSION = 8	/* Address/Control Field Compression */;
+constexpr auto CI_FCSALTERN = 9	/* FCS-Alternatives */;
+constexpr auto CI_SDP = 10	/* Self-Describing-Pad */;
+constexpr auto CI_NUMBERED = 11	/* Numbered-Mode */;
+constexpr auto CI_CALLBACK = 13	/* callback */;
+constexpr auto CI_MRRU = 17	/* max reconstructed receive unit; multilink */;
+constexpr auto CI_SSNHF = 18	/* short sequence numbers for multilink */;
+constexpr auto CI_EPDISC = 19	/* endpoint discriminator */;
+constexpr auto CI_MPPLUS = 22	/* Multi-Link-Plus-Procedure */;
+constexpr auto CI_LDISC = 23	/* Link-Discriminator */;
+constexpr auto CI_LCPAUTH = 24	/* LCP Authentication */;
+constexpr auto CI_COBS = 25	/* Consistent Overhead Byte Stuffing */;
+constexpr auto CI_PREFELIS = 26	/* Prefix Elision */;
+constexpr auto CI_MPHDRFMT = 27	/* MP Header Format */;
+constexpr auto CI_I18N = 28	/* Internationalization */;
+constexpr auto CI_SDL = 29	/* Simple Data Link */;
 
 /*
  * LCP-specific packet types (code numbers).
  */
-#define PROTREJ		8	/* Protocol Reject */
-#define ECHOREQ		9	/* Echo Request */
-#define ECHOREP		10	/* Echo Reply */
-#define DISCREQ		11	/* Discard Request */
-#define IDENTIF		12	/* Identification */
-#define TIMEREM		13	/* Time Remaining */
+constexpr auto PROTREJ = 8	/* Protocol Reject */;
+constexpr auto ECHOREQ = 9	/* Echo Request */;
+constexpr auto ECHOREP = 10	/* Echo Reply */;
+constexpr auto DISCREQ = 11	/* Discard Request */;
+constexpr auto IDENTIF = 12	/* Identification */;
+constexpr auto TIMEREM = 13	/* Time Remaining */;
 
 /* Value used as data for CI_CALLBACK option */
-#define CBCP_OPT	6	/* Use callback control protocol */
+constexpr auto CBCP_OPT = 6	/* Use callback control protocol */;
 
-#if 0 /* moved to ppp_opts.h */
-#define DEFMRU	1500		/* Try for this */
-#define MINMRU	128		/* No MRUs below this */
-#define MAXMRU	16384		/* Normally limit MRU to this */
-#endif /* moved to ppp_opts.h */
 
 /* An endpoint discriminator, used with multilink. */
-#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
-struct epdisc {
+constexpr auto MAX_ENDP_LEN = 20	/* maximum length of discriminator value */;
+
+
+struct Epdisc {
     unsigned char	class_; /* -- The word "class" is reserved in C++. */
     unsigned char	length;
     unsigned char	value[MAX_ENDP_LEN];
@@ -131,7 +87,7 @@ struct LcpOptions {
     uint32_t magicnumber;
     uint8_t  numloops;		/* Number of loops during magic number neg. */
     uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
-    struct epdisc endpoint;	/* endpoint discriminator */
+    struct Epdisc endpoint;	/* endpoint discriminator */
 };
 
 void lcp_open(PppPcb *pcb);

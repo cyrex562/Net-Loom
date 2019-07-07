@@ -34,10 +34,11 @@
  * Author: Adam Dunkels <adam@sics.se>
  */
 
-#ifndef LWIP_HDR_SYS_H
-#define LWIP_HDR_SYS_H
+#pragma once
 
 #include "opt.h"
+
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
@@ -465,7 +466,9 @@ uint32_t sys_now(void);
  * type sys_prot_t. If a particular port needs a different implementation, then
  * this macro may be defined in sys_arch.h.
  */
-#define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
+// #define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
+
+    
 /**
  * @ingroup sys_prot
  * SYS_ARCH_PROTECT
@@ -509,7 +512,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #ifndef SYS_ARCH_INC
 #define SYS_ARCH_INC(var, val) do { \
-                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                sys_prot_t old_level; \
                                 SYS_ARCH_PROTECT(old_level); \
                                 var += val; \
                                 SYS_ARCH_UNPROTECT(old_level); \
@@ -518,7 +521,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #ifndef SYS_ARCH_DEC
 #define SYS_ARCH_DEC(var, val) do { \
-                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                sys_prot_t lev; \
                                 SYS_ARCH_PROTECT(old_level); \
                                 var -= val; \
                                 SYS_ARCH_UNPROTECT(old_level); \
@@ -527,7 +530,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #ifndef SYS_ARCH_GET
 #define SYS_ARCH_GET(var, ret) do { \
-                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                sys_prot_t lev; \
                                 SYS_ARCH_PROTECT(old_level); \
                                 ret = var; \
                                 SYS_ARCH_UNPROTECT(old_level); \
@@ -536,7 +539,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #ifndef SYS_ARCH_SET
 #define SYS_ARCH_SET(var, val) do { \
-                                SYS_ARCH_DECL_PROTECT(old_level); \
+                               sys_prot_t lev); \
                                 SYS_ARCH_PROTECT(old_level); \
                                 var = val; \
                                 SYS_ARCH_UNPROTECT(old_level); \
@@ -545,7 +548,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #ifndef SYS_ARCH_LOCKED
 #define SYS_ARCH_LOCKED(code) do { \
-                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                sys_prot_t lev; \
                                 SYS_ARCH_PROTECT(old_level); \
                                 code; \
                                 SYS_ARCH_UNPROTECT(old_level); \
@@ -557,4 +560,4 @@ void sys_arch_unprotect(sys_prot_t pval);
 }
 #endif
 
-#endif /* LWIP_HDR_SYS_H */
+

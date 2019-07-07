@@ -57,7 +57,7 @@ enum netifapi_arp_entry {
 };
 
 /** @ingroup netifapi_arp */
-err_t netifapi_arp_add(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr, enum netifapi_arp_entry type);
+err_t netifapi_arp_add(const ip4_addr_t *ipaddr, struct EthAddr *ethaddr, enum netifapi_arp_entry type);
 /** @ingroup netifapi_arp */
 err_t netifapi_arp_remove(const ip4_addr_t *ipaddr, enum netifapi_arp_entry type);
 #endif /* LWIP_ARP && LWIP_IPV4 */

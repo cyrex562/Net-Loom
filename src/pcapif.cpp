@@ -328,7 +328,7 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 static int
 pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 {
-  const struct eth_addr *src = (const struct eth_addr *)packet + 1;
+  const struct EthAddr *src = (const struct EthAddr *)packet + 1;
   if (packet_len >= (ETH_HWADDR_LEN * 2)) {
     /* Don't let feedback packets through (limitation in winpcap?) */
     if(!memcmp(src, netif->hwaddr, ETH_HWADDR_LEN)) {
@@ -621,7 +621,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
 #endif /* PCAPIF_LIB_QUIET */
   /* set up the selected adapter */
 
-  LWIP_ASSERT("used_adapter != NULL", used_adapter != NULL);
+  LWIP_ASSERT("used_adapter != NULL", used_adapter != nullptr);
 
   /* Open the device */
   pa->adapter = pcapif_open_adapter(used_adapter->name, errbuf);
@@ -810,7 +810,7 @@ pcapif_low_level_init(struct netif *netif)
   sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0);
 #endif
 
-  LWIP_DEBUGF(NETIF_DEBUG, ("pcapif: eth_addr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
+  LWIP_DEBUGF(NETIF_DEBUG, ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
 }
 
 /** low_level_output():
@@ -824,7 +824,7 @@ pcapif_low_level_output(struct netif *netif, struct pbuf *p)
   unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
   unsigned char *buf = buffer;
   unsigned char *ptr;
-  struct eth_hdr *ethhdr;
+  struct EthHdr *ethhdr;
   uint16_t tot_len = p->tot_len - ETH_PAD_SIZE;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
 
@@ -880,7 +880,7 @@ pcapif_low_level_output(struct netif *netif, struct pbuf *p)
 
   LINK_STATS_INC(link.xmit);
   MIB2_STATS_NETIF_ADD(netif, ifoutoctets, tot_len);
-  ethhdr = (struct eth_hdr *)p->payload;
+  ethhdr = (struct EthHdr *)p->payload;
   if ((ethhdr->dest.addr[0] & 1) != 0) {
     /* broadcast or multicast packet*/
     MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
@@ -900,7 +900,7 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
   struct pbuf *p, *q;
   int start;
   int length = packet_len;
-  const struct eth_addr *dest = (const struct eth_addr*)packet;
+  const struct EthAddr *dest = (const struct EthAddr*)packet;
   int unicast;
 #if PCAPIF_FILTER_GROUP_ADDRESSES && !PCAPIF_RECEIVE_PROMISCUOUS
   const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -1049,12 +1049,12 @@ pcapif_init(struct netif *netif)
   static int ethernetif_index;
 
   int local_index;
-  SYS_ARCH_DECL_PROTECT(lev);
+  sys_prot_t lev;
   SYS_ARCH_PROTECT(lev);
   local_index = ethernetif_index++;
   SYS_ARCH_UNPROTECT(lev);
 
-  LWIP_ASSERT("pcapif needs an input callback", netif->input != NULL);
+  LWIP_ASSERT("pcapif needs an input callback", netif->input != nullptr);
 
   netif->name[0] = IFNAME0;
   netif->name[1] = (char)(IFNAME1 + local_index);
@@ -1075,7 +1075,7 @@ pcapif_init(struct netif *netif)
 #endif /* LWIP_NETIF_HOSTNAME */
 
   netif->mtu = 1500;
-  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP;
+  netif->flags = kNetifFlagBroadcast | kNetifFlagEtharp | kNetifFlagEthernet | kNetifFlagIgmp;
 #if LWIP_IPV6 && LWIP_IPV6_MLD
   netif->flags |= NETIF_FLAG_MLD6;
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */

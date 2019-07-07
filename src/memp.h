@@ -121,8 +121,10 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
  * @ingroup mempool
  * Allocate from a private memory pool
  */
-#define LWIP_MEMPOOL_ALLOC(name)   memp_malloc_pool(&memp_ ## name)
-/**
+// #define LWIP_MEMPOOL_ALLOC(name)   memp_malloc_pool(&memp_ ## name)
+
+    
+    /**
  * @ingroup mempool
  * Free element from a private memory pool
  */

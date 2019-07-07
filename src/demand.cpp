@@ -149,7 +149,7 @@ demand_discard()
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->demand_conf != NULL)
-	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_ERROR);
+	    sifnpmode(pcb, protp->protocol & ~0x8000, PppNetworkProtoMode);
     get_loop_output();
 
     /* discard all saved packets */

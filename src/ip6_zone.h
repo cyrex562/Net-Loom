@@ -1,89 +1,4 @@
-/**
- * @file
- *
- * IPv6 address scopes, zones, and scoping policy.
- *
- * This header provides the means to implement support for IPv6 address scopes,
- * as per RFC 4007. An address scope can be either global or more constrained.
- * In lwIP, we say that an address "has a scope" or "is scoped" when its scope
- * is constrained, in which case the address is meaningful only in a specific
- * "zone." For unicast addresses, only link-local addresses have a scope; in
- * that case, the scope is the link. For multicast addresses, there are various
- * scopes defined by RFC 4007 and others. For any constrained scope, a system
- * must establish a (potentially one-to-many) mapping between zones and local
- * interfaces. For example, a link-local address is valid on only one link (its
- * zone). That link may be attached to one or more local interfaces. The
- * decisions on which scopes are constrained and the mapping between zones and
- * interfaces is together what we refer to as the "scoping policy" - more on
- * this in a bit.
- *
- * In lwIP, each IPv6 address has an associated zone index. This zone index may
- * be set to "no zone" (IP6_NO_ZONE, 0) or an actual zone. We say that an
- * address "has a zone" or "is zoned" when its zone index is *not* set to "no
- * zone." In lwIP, in principle, each address should be "properly zoned," which
- * means that if the address has a zone if and only if has a scope. As such, it
- * is a rule that an unscoped (e.g., global) address must never have a zone.
- * Even though one could argue that there is always one zone even for global
- * scopes, this rule exists for implementation simplicity. Violation of the
- * rule will trigger assertions or otherwise result in undesired behavior.
- *
- * Backward compatibility prevents us from requiring that applications always
- * provide properly zoned addresses. We do enforce the rule that the in the
- * lwIP link layer (everything below netif->output_ip6() and in particular ND6)
- * *all* addresses are properly zoned. Thus, on the output paths down the
- * stack, various places deal with the case of addresses that lack a zone.
- * Some of them are best-effort for efficiency (e.g. the PCB bind and connect
- * API calls' attempts to add missing zones); ultimately the IPv6 output
- * handler (@ref ip6_output_if_src) will set a zone if necessary.
- *
- * Aside from dealing with scoped addresses lacking a zone, a proper IPv6
- * implementation must also ensure that a packet with a scoped source and/or
- * destination address does not leave its zone. This is currently implemented
- * in the input and forward functions. However, for output, these checks are
- * deliberately omitted in order to keep the implementation lightweight. The
- * routing algorithm in @ref ip6_route will take decisions such that it will
- * not cause zone violations unless the application sets bad addresses, though.
- *
- * In terms of scoping policy, lwIP implements the default policy from RFC 4007
- * using macros in this file. This policy considers link-local unicast
- * addresses and (only) interface-local and link-local multicast addresses as
- * having a scope. For all these addresses, the zone is equal to the interface.
- * As shown below in this file, it is possible to implement a custom policy.
- */
-
-/*
- * Copyright (c) 2017 The MINIX 3 Project.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: David van Moolenbroek <david@minix3.org>
- *
- */
-#ifndef LWIP_HDR_IP6_ZONE_H
-#define LWIP_HDR_IP6_ZONE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,9 +13,7 @@ extern "C" {
 //#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 /** Identifier for "no zone". */
-#define IP6_NO_ZONE 0
-
-#if LWIP_IPV6_SCOPES
+constexpr auto IP6_NO_ZONE = 0;
 
 /** Zone initializer for static IPv6 address initialization, including comma. */
 #define IPADDR6_ZONE_INIT , IP6_NO_ZONE
@@ -151,11 +64,10 @@ enum lwip_ipv6_scope_type
  * define IPV6_CUSTOM_SCOPES to 1 and supply its own definitions for the three
  * macros instead.
  */
-#ifndef IPV6_CUSTOM_SCOPES
-#define IPV6_CUSTOM_SCOPES 0
-#endif /* !IPV6_CUSTOM_SCOPES */
 
-#if !IPV6_CUSTOM_SCOPES
+#define IPV6_CUSTOM_SCOPES 0
+
+
 
 /**
  * Determine whether an IPv6 address has a constrained scope, and as such is
@@ -221,7 +133,7 @@ enum lwip_ipv6_scope_type
 #define ip6_addr_test_zone(ip6addr, netif) \
     (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
 
-#endif /* !IPV6_CUSTOM_SCOPES */
+
 
 /** Does the given IPv6 address have a scope, and as such should also have a
  * zone to be meaningful, but does not actually have a zone? (0/1) */
@@ -252,30 +164,6 @@ enum lwip_ipv6_scope_type
     ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif); \
   } } while (0)
 
-/**
- * @}
- */
-
-#else /* LWIP_IPV6_SCOPES */
-
-#define IPADDR6_ZONE_INIT
-#define ip6_addr_zone(ip6addr) (IP6_NO_ZONE)
-#define ip6_addr_has_zone(ip6addr) (0)
-#define ip6_addr_set_zone(ip6addr, zone_idx)
-#define ip6_addr_clear_zone(ip6addr)
-#define ip6_addr_copy_zone(ip6addr1, ip6addr2)
-#define ip6_addr_equals_zone(ip6addr, zone_idx) (1)
-#define ip6_addr_cmp_zone(ip6addr1, ip6addr2) (1)
-#define IPV6_CUSTOM_SCOPES 0
-#define ip6_addr_has_scope(ip6addr, type) (0)
-#define ip6_addr_assign_zone(ip6addr, type, netif)
-#define ip6_addr_test_zone(ip6addr, netif) (1)
-#define ip6_addr_lacks_zone(ip6addr, type) (0)
-#define ip6_addr_select_zone(ip6addr, src)
-
-#endif /* LWIP_IPV6_SCOPES */
-
-#if LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG
 
 /** Verify that the given IPv6 address is properly zoned. */
 #define IP6_ADDR_ZONECHECK(ip6addr) LWIP_ASSERT("IPv6 zone check failed", \
@@ -288,17 +176,8 @@ enum lwip_ipv6_scope_type
      (((netif) == NULL) || ip6_addr_test_zone((ip6addr), (netif)))) : \
     !ip6_addr_has_zone(ip6addr))
 
-#else /* LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG */
-
-#define IP6_ADDR_ZONECHECK(ip6addr)
-#define IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif)
-
-#endif /* LWIP_IPV6_SCOPES && LWIP_IPV6_SCOPES_DEBUG */
-
-//#endif /* LWIP_IPV6 */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_IP6_ZONE_H */

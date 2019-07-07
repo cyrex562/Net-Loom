@@ -78,7 +78,7 @@ struct lowpan6_reass_helper {
   struct pbuf *reass;
   struct pbuf *frags;
   uint8_t timer;
-  struct lowpan6_link_addr sender_addr;
+  struct Lowpan6LinkAddr sender_addr;
   uint16_t datagram_size;
   uint16_t datagram_tag;
 };
@@ -89,7 +89,7 @@ struct lowpan6_ieee802154_data {
   struct lowpan6_reass_helper *reass_list;
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   /** address context for compression */
-  ip6_addr_t lowpan6_context[LWIP_6LOWPAN_NUM_CONTEXTS];
+  Ip6Addr lowpan6_context[LWIP_6LOWPAN_NUM_CONTEXTS];
 #endif
   /** Datagram Tag for fragmentation */
   uint16_t tx_datagram_tag;
@@ -111,10 +111,10 @@ static struct lowpan6_ieee802154_data lowpan6_data;
 #define LWIP_6LOWPAN_CONTEXTS(netif) NULL
 #endif
 
-static const struct lowpan6_link_addr ieee_802154_broadcast = {2, {0xff, 0xff}};
+static const struct Lowpan6LinkAddr ieee_802154_broadcast = {2, {0xff, 0xff}};
 
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
-static struct lowpan6_link_addr short_mac_addr = {2, {0, 0}};
+static struct Lowpan6LinkAddr short_mac_addr = {2, {0, 0}};
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
 /* IEEE 802.15.4 specific functions: */
@@ -126,8 +126,8 @@ static struct lowpan6_link_addr short_mac_addr = {2, {0, 0}};
  * @returns the header length
  */
 static uint8_t
-lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct lowpan6_link_addr *src,
-                               const struct lowpan6_link_addr *dst)
+lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6LinkAddr *src,
+                               const struct Lowpan6LinkAddr *dst)
 {
   uint8_t ieee_header_len;
   uint8_t *buffer;
@@ -182,8 +182,8 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct lowpan6
  * @returns ERR_OK if successful
  */
 static err_t
-lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
-                               struct lowpan6_link_addr *dest)
+lowpan6_parse_iee802154_header(struct pbuf *p, struct Lowpan6LinkAddr *src,
+                               struct Lowpan6LinkAddr *dest)
 {
   uint8_t *puc;
   s8_t i;
@@ -305,7 +305,7 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *
     lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
   } else {
     /* it wasn't the first, so it must have a valid 'prev' */
-    LWIP_ASSERT("sanity check linked list", prev != NULL);
+    LWIP_ASSERT("sanity check linked list", prev != nullptr);
     prev->next_packet = lrh->next_packet;
   }
 }
@@ -339,7 +339,7 @@ lowpan6_tmr(void)
  * If configured, will compress IPv6 and or UDP headers.
  * */
 static err_t
-lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
+lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
 {
   struct pbuf *p_frag;
   uint16_t frag_len, remaining_len, max_data_len;
@@ -351,7 +351,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr
   uint16_t datagram_offset;
   err_t err = ERR_IF;
 
-  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
+  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != nullptr);
 
   /* We'll use a dedicated pbuf for building 6LowPAN fragments. */
   p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
@@ -495,7 +495,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr
  * Set context
  */
 err_t
-lowpan6_set_context(uint8_t idx, const ip6_addr_t *context)
+lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 {
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   if (idx >= LWIP_6LOWPAN_NUM_CONTEXTS) {
@@ -531,11 +531,17 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 
 /* Create IEEE 802.15.4 address from netif address */
 static err_t
-lowpan6_hwaddr_to_addr(struct netif *netif, struct lowpan6_link_addr *addr)
+lowpan6_hwaddr_to_addr(struct netif *netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
-    LWIP_ERROR("NETIF_MAX_HWADDR_LEN >= 8 required", sizeof(netif->hwaddr) >= 8, return ERR_VAL;);
+    // LWIP_ERROR("NETIF_MAX_HWADDR_LEN >= 8 required", sizeof(netif->hwaddr) >= 8, return ERR_VAL;);
+    if (sizeof(netif->hwaddr) < 8)
+    {
+        printf("netif hwaddr must be greater than 8\n");
+        return ERR_VAL;
+    }
+
     SMEMCPY(addr->addr, netif->hwaddr, 8);
   } else if (netif->hwaddr_len == 6) {
     /* Copy from MAC-48 */
@@ -562,13 +568,13 @@ lowpan6_hwaddr_to_addr(struct netif *netif, struct lowpan6_link_addr *addr)
  * @return err_t
  */
 err_t
-lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
+lowpan6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
 {
   err_t result;
   const uint8_t *hwaddr;
-  struct lowpan6_link_addr src, dest;
+  struct Lowpan6LinkAddr src, dest;
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
-  ip6_addr_t ip6_src;
+  Ip6Addr ip6_src;
   struct ip6_hdr *ip6_hdr;
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
@@ -646,7 +652,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 {
   uint8_t *puc, b;
   s8_t i;
-  struct lowpan6_link_addr src, dest;
+  struct Lowpan6LinkAddr src, dest;
   uint16_t datagram_size = 0;
   uint16_t datagram_offset, datagram_tag;
   struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = nullptr;
@@ -754,7 +760,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     }
     /* Insert new pbuf into list of fragments. Each fragment is a pbuf,
        this only works for unchained pbufs. */
-    LWIP_ASSERT("p->next == NULL", p->next == NULL);
+    LWIP_ASSERT("p->next == NULL", p->next == nullptr);
     if (lrh->reass != nullptr) {
       /* FRAG1 already received, check this offset against first len */
       if (datagram_offset < lrh->reass->len) {
@@ -883,7 +889,7 @@ lowpan6_if_init(struct netif *netif)
   netif->mtu = 1280;
 
   /* broadcast capability */
-  netif->flags = NETIF_FLAG_BROADCAST /* | NETIF_FLAG_LOWPAN6 */;
+  netif->flags = kNetifFlagBroadcast /* | NETIF_FLAG_LOWPAN6 */;
 
   return ERR_OK;
 }

@@ -147,8 +147,8 @@ const struct Protent* const kProtocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
 static err_t ppp_netif_init_cb(struct netif* netif);
-static err_t ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipaddr);
-static err_t ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const ip6_addr_t* ipaddr);
+static err_t ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
+static err_t ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
 static err_t ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol);
 
 /***********************************/
@@ -440,9 +440,8 @@ ppp_netif_init_cb(struct netif* netif)
  * Send an IPv4 packet on the given connection.
  */
 static err_t
-ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipaddr)
+ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
 {
-    LWIP_UNUSED_ARG(ipaddr);
     return ppp_netif_output(netif, pb, PPP_IP);
 }
 
@@ -450,9 +449,8 @@ ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const ip4_addr_t* ipa
  * Send an IPv6 packet on the given connection.
  */
 static err_t
-ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const ip6_addr_t* ipaddr)
+ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
 {
-    LWIP_UNUSED_ARG(ipaddr);
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
@@ -869,7 +867,7 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
             }
 
             auto pname = protocol_name(protocol);
-            if (pname != NULL)
+            if (pname != nullptr)
             {
                 ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
             }
@@ -1133,29 +1131,6 @@ sifdown(PppPcb* pcb)
 uint32_t
 get_mask(uint32_t addr)
 {
-#if 0
-  uint32_t mask, nmask;
-
-  addr = lwip_htonl(addr);
-  if (IP_CLASSA(addr)) { /* determine network mask for address class */
-    nmask = IP_CLASSA_NET;
-  } else if (IP_CLASSB(addr)) {
-    nmask = IP_CLASSB_NET;
-  } else {
-    nmask = IP_CLASSC_NET;
-  }
-
-  /* class D nets are disallowed by bad_ip_adrs */
-  mask = PP_HTONL(0xffffff00UL) | lwip_htonl(nmask);
-
-  /* XXX
-   * Scan through the system's network interfaces.
-   * Get each netmask and OR them into our mask.
-   */
-  /* return mask; */
-  return mask;
-#endif /* 0 */
-    LWIP_UNUSED_ARG(addr);
     return IPADDR_BROADCAST;
 }
 
@@ -1172,8 +1147,7 @@ get_mask(uint32_t addr)
 int
 sif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
 {
-    ip6_addr_t ip6;
-    LWIP_UNUSED_ARG(his_eui64);
+    Ip6Addr ip6;
 
     IN6_LLADDR_FROM_EUI64(ip6, our_eui64);
     netif_ip6_addr_set(pcb->netif, 0, &ip6);
@@ -1189,9 +1163,6 @@ sif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
 int
 cif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
 {
-    LWIP_UNUSED_ARG(our_eui64);
-    LWIP_UNUSED_ARG(his_eui64);
-
     netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_INVALID);
     netif_ip6_addr_set(pcb->netif, 0, IP6_ADDR_ANY6);
     return 1;
@@ -1240,7 +1211,7 @@ sif6down(PppPcb* pcb)
  * sifnpmode - Set the mode for handling packets for a given NP.
  */
 int
-sifnpmode(PppPcb* pcb, int proto, enum NPmode mode)
+sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode)
 {
     LWIP_UNUSED_ARG(pcb);
     LWIP_UNUSED_ARG(proto);

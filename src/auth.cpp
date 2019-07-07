@@ -1,86 +1,15 @@
-/*
- * auth.c - PPP authentication and phase control.
- *
- * Copyright (c) 1993-2002 Paul Mackerras. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
- *
- * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Derived from main.c, which is:
- *
- * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The name "Carnegie Mellon University" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For permission or any legal
- *    details, please contact
- *      Office of Technology Transfer
- *      Carnegie Mellon University
- *      5000 Forbes Avenue
- *      Pittsburgh, PA  15213-3890
- *      (412) 268-4387, fax: (412) 268-7395
- *      tech-transfer@andrew.cmu.edu
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Computing Services
- *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
- *
- * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 
 #include "ppp_opts.h"
 #include "ppp_impl.h"
-#include "fsm.h"
 #include "lcp.h"
 #include "ccp.h"
 #include "ecp.h"
-#include "ipcp.h"
 #include "upap.h"
-#include "chap-new.h"
+#include "chap_new.h"
 #include "eap.h"
 
 /* Hook for plugin to hear when an interface joins a multilink bundle */
-void (*multilink_join_hook)(void) = nullptr;
+void (*multilink_join_hook)() = nullptr;
 
 static void network_phase(PppPcb* pcb, Protent** protocols);
 static void check_idle(void* arg);
@@ -92,7 +21,7 @@ static void connect_time_expired(void* arg);
  */
 void link_required(PppPcb* pcb)
 {
-    LWIP_UNUSED_ARG(pcb);
+    
 }
 
 /*
@@ -179,7 +108,7 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
     //     set_allowed_addrs(unit, NULL, NULL);
 
 
-    if (pcb->settings.auth_required && !(0 || go->neg_upap || go->neg_chap || go->neg_eap))
+    if (pcb->settings.auth_required && !(go->neg_upap || go->neg_chap || go->neg_eap))
     {
         /*
          * We wanted the peer to authenticate itself, and it refused:
@@ -289,15 +218,8 @@ void start_networks(PppPcb* pcb, Protent** protocols)
 
     /* Start CCP and ECP */
     for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
-        if (
-            (0
-
-                || protp->protocol == PPP_ECP
-
-                || protp->protocol == PPP_CCP
-
-            )
-            && protp->open != nullptr)
+        if ((protp->protocol == PPP_ECP || protp->protocol == PPP_CCP) && protp->open !=
+            nullptr)
             (*protp->open)(pcb);
 
 
@@ -362,7 +284,7 @@ int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int 
  * The peer has failed to authenticate himself using `protocol'.
  */
 void auth_peer_fail(PppPcb *pcb, int protocol) {
-    LWIP_UNUSED_ARG(protocol);
+    
     /*
      * Authentication failure: take the link down
      */
@@ -430,7 +352,7 @@ void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *n
  */
 void auth_withpeer_fail(PppPcb* pcb, int protocol)
 {
-    LWIP_UNUSED_ARG(protocol);
+    
     /*
      * We've failed to authenticate ourselves to our peer.
      *
@@ -537,8 +459,8 @@ void np_up(PppPcb* pcb, int proto)
 	    TIMEOUT(connect_time_expired, (void*)pcb, pcb->settings.maxconnect);
 
 
-	if (maxoctets > 0)
-	    TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
+	// if (maxoctets > 0)
+	    // TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
 
 
     }
@@ -550,17 +472,17 @@ void np_up(PppPcb* pcb, int proto)
  */
 void np_down(PppPcb* pcb, int proto)
 {
-    LWIP_UNUSED_ARG(proto);
+    
     if (--pcb->num_np_up == 0)
     {
 
-	UNTIMEOUT(check_idle, (void*)pcb);
+	Untimeout(check_idle, (void*)pcb);
 
 
-	UNTIMEOUT(connect_time_expired, NULL);
+	Untimeout(connect_time_expired, NULL);
 
 
-	UNTIMEOUT(check_maxoctets, NULL);
+	// UNTIMEOUT(check_maxoctets, NULL);
 
         new_phase(pcb, PPP_PHASE_NETWORK);
     }
@@ -571,7 +493,7 @@ void np_down(PppPcb* pcb, int proto)
  */
 void np_finished(PppPcb* pcb, int proto)
 {
-    LWIP_UNUSED_ARG(proto);
+    
     if (--pcb->num_np_open <= 0)
     {
         /* no further use for the link: shut up shop. */
@@ -591,7 +513,7 @@ static void check_idle(void *arg) {
     time_t itime;
     int tlim;
 
-    // if (!get_idle_time(pcb, &idle))
+ //    if (!get_idle_time(pcb, &idle))
 	// return;
 
 	// itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
@@ -632,16 +554,12 @@ static void connect_time_expired(void *arg) {
  */
 int get_secret(PppPcb* pcb, const char* client, const char* server, char* secret, int* secret_len, int am_server)
 {
-    int len;
-    LWIP_UNUSED_ARG(server);
-    LWIP_UNUSED_ARG(am_server);
-
     if (!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user))
     {
         return 0;
     }
 
-    len = (int)strlen(pcb->settings.passwd);
+    auto len = strlen(pcb->settings.passwd);
     if (len > MAXSECRETLEN)
     {
         ppp_error("Secret for %s on %s is too long", client, server);

@@ -53,7 +53,7 @@
 #include "ppp_opts.h"
 //#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#include "err.h"
+#include "lwip_error.h"
 #include "memp.h"
 #include "netif.h"
 #include "udp.h"
@@ -94,14 +94,14 @@ static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb);
 static const struct LinkCallbacks pppol2tp_callbacks = {
   pppol2tp_connect,
 #if PPP_SERVER
-  NULL,
+  nullptr,
 #endif /* PPP_SERVER */
   pppol2tp_disconnect,
   pppol2tp_destroy,
   pppol2tp_write,
   pppol2tp_netif_output,
-  NULL,
-  NULL
+ nullptr,
+ nullptr
 };
 
 
@@ -311,7 +311,7 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
 
 #if PPPOL2TP_AUTH_SUPPORT
   /* Generate random vector */
-  if (l2tp->secret != NULL) {
+  if (l2tp->secret != nullptr) {
     magic_random_bytes(l2tp->secret_rv, sizeof(l2tp->secret_rv));
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
@@ -611,7 +611,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, 
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: Challenge length check failed\n"));
                return;
             }
-            if (l2tp->secret == NULL) {
+            if (l2tp->secret == nullptr) {
               PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge from peer and no secret key available\n"));
               pppol2tp_abort_connect(l2tp);
               return;
@@ -816,7 +816,7 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
   /* calculate UDP packet length */
   len = 12 +8 +8 +10 +10 +6+sizeof(PPPOL2TP_HOSTNAME)-1 +6+sizeof(PPPOL2TP_VENDORNAME)-1 +8 +8;
 #if PPPOL2TP_AUTH_SUPPORT
-  if (l2tp->secret != NULL) {
+  if (l2tp->secret != nullptr) {
     len += 6 + sizeof(l2tp->secret_rv);
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
@@ -890,7 +890,7 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
 
 #if PPPOL2TP_AUTH_SUPPORT
   /* AVP - Challenge */
-  if (l2tp->secret != NULL) {
+  if (l2tp->secret != nullptr) {
     PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6 + sizeof(l2tp->secret_rv), p); /* Mandatory flag + len field */
     PUTSHORT(0, p); /* Vendor ID */
     PUTSHORT(PPPOL2TP_AVPTYPE_CHALLENGE, p); /* Attribute type: Challenge */

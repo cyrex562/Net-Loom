@@ -103,9 +103,9 @@ struct FsmCallbacks
     /* ACK our Configuration Information */
     int (*ackci)(fsm*, uint8_t*, int, PppPcb*);
     /* NAK our Configuration Information */
-    int (*nakci)(fsm*, uint8_t*, int, int, PppPcb*);
+    int (*nakci)(fsm*, const uint8_t*, int, int, PppPcb*);
     /* Reject our Configuration Information */
-    int (*rejci)(fsm*, uint8_t*, int, PppPcb*);
+    int (*rejci)(fsm*, const uint8_t*, int, PppPcb*);
     /* Request peer's Configuration Information */
     int (*reqci)(fsm*, uint8_t*, size_t*, int, PppPcb*);
     /* Called when fsm reaches PPP_FSM_OPENED state */

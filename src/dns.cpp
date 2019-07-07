@@ -783,7 +783,7 @@ dns_send(uint8_t idx)
     memset(&hdr, 0, SIZEOF_DNS_HDR);
     hdr.id = lwip_htons(entry->txid);
     hdr.flags1 = DNS_FLAG1_RD;
-    hdr.numquestions = PP_HTONS(1);
+    hdr.numquestions = PpHtons(1);
     pbuf_take(p, &hdr, SIZEOF_DNS_HDR);
     hostname = entry->name;
     --hostname;
@@ -810,11 +810,11 @@ dns_send(uint8_t idx)
 
     /* fill dns query */
     if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype)) {
-      qry.type = PP_HTONS(DNS_RRTYPE_AAAA);
+      qry.type = PpHtons(DNS_RRTYPE_AAAA);
     } else {
-      qry.type = PP_HTONS(DNS_RRTYPE_A);
+      qry.type = PpHtons(DNS_RRTYPE_A);
     }
-    qry.cls = PP_HTONS(DNS_RRCLASS_IN);
+    qry.cls = PpHtons(DNS_RRCLASS_IN);
     pbuf_take_at(p, &qry, SIZEOF_DNS_QUERY, query_idx);
 
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0)
@@ -1235,9 +1235,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         if (pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx) != SIZEOF_DNS_QUERY) {
           goto ignore_packet; /* ignore this packet */
         }
-        if ((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
-            (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
-            (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
+        if ((qry.cls != PpHtons(DNS_RRCLASS_IN)) ||
+            (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PpHtons(DNS_RRTYPE_AAAA))) ||
+            (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PpHtons(DNS_RRTYPE_A)))) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
           goto ignore_packet; /* ignore this packet */
         }
@@ -1281,9 +1281,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             }
             res_idx = (uint16_t)(res_idx + SIZEOF_DNS_ANSWER);
 
-            if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
+            if (ans.cls == PpHtons(DNS_RRCLASS_IN)) {
 #if LWIP_IPV4
-              if ((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
+              if ((ans.type == PpHtons(DNS_RRTYPE_A)) && (ans.len == PpHtons(sizeof(ip4_addr_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
                 if (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
@@ -1302,7 +1302,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
               }
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
-              if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_p_t)))) {
+              if ((ans.type == PpHtons(DNS_RRTYPE_AAAA)) && (ans.len == PpHtons(sizeof(ip6_addr_p_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
                 if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */

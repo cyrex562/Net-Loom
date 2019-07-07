@@ -30,38 +30,39 @@
 
 #include "ppp_opts.h"
 #include "ppp_impl.h"
-#include "chap-new.h"
-#include "chap-md5.h"
+#include "chap_new.h"
+#include "chap_md5.h"
 #include "magic.h"
 #include "pppcrypt.h"
 
-#define MD5_HASH_SIZE		16
-#define MD5_MIN_CHALLENGE	17
-#define MD5_MAX_CHALLENGE	24
-#define MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE     3   /* 2^3-1 = 7, 17+7 = 24 */
+constexpr auto MD5_HASH_SIZE = 16;
+constexpr uint32_t MD5_MIN_CHALLENGE = 17;
+constexpr auto MD5_MAX_CHALLENGE = 24;
+constexpr auto MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE = 3   /* 2^3-1 = 7, 17+7 = 24 */;
 
-static void chap_md5_generate_challenge(PppPcb *pcb, unsigned char *cp) {
-	int clen;
-	LWIP_UNUSED_ARG(pcb);
-
-	clen = MD5_MIN_CHALLENGE + magic_pow(MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE);
-	*cp++ = clen;
-	magic_random_bytes(cp, clen);
+static void chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
+{
+    const auto clen = MD5_MIN_CHALLENGE + magic_pow(MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE);
+    *cp++ = clen;
+    magic_random_bytes(cp, clen);
 }
 
-static int chap_md5_verify_response(PppPcb *pcb, int id, const char *name,
-			 const unsigned char *secret, int secret_len,
-			 const unsigned char *challenge, const unsigned char *response,
-			 char *message, int message_space) {
+static int chap_md5_verify_response(PppPcb* pcb,
+                                    const int id,
+                                    const char* name,
+                                    const unsigned char* secret,
+                                    const int secret_len,
+                                    const unsigned char* challenge,
+                                    const unsigned char* response,
+                                    char* message,
+                                    const int message_space)
+{
 	lwip_md5_context ctx;
 	unsigned char idbyte = id;
 	unsigned char hash[MD5_HASH_SIZE];
-	int challenge_len, response_len;
-	LWIP_UNUSED_ARG(name);
-	LWIP_UNUSED_ARG(pcb);
 
-	challenge_len = *challenge++;
-	response_len = *response++;
+    const int challenge_len = *challenge++;
+    const int response_len = *response++;
 	if (response_len == MD5_HASH_SIZE) {
 		/* Generate hash of ID, secret, challenge */
 		lwip_md5_init(&ctx);
@@ -82,25 +83,26 @@ static int chap_md5_verify_response(PppPcb *pcb, int id, const char *name,
 	return 0;
 }
 
-
-static void chap_md5_make_response(PppPcb *pcb, unsigned char *response, int id, const char *our_name,
-		       const unsigned char *challenge, const char *secret, int secret_len,
-		       unsigned char *private_) {
-	lwip_md5_context ctx;
-	unsigned char idbyte = id;
-	int challenge_len = *challenge++;
-	LWIP_UNUSED_ARG(our_name);
-	LWIP_UNUSED_ARG(private_);
-	LWIP_UNUSED_ARG(pcb);
-
-	lwip_md5_init(&ctx);
-	lwip_md5_starts(&ctx);
-	lwip_md5_update(&ctx, &idbyte, 1);
-	lwip_md5_update(&ctx, (const uint8_t *)secret, secret_len);
-	lwip_md5_update(&ctx, challenge, challenge_len);
-	lwip_md5_finish(&ctx, &response[1]);
-	lwip_md5_free(&ctx);
-	response[0] = MD5_HASH_SIZE;
+static void chap_md5_make_response(PppPcb* pcb,
+                                   unsigned char* response,
+                                   const int id,
+                                   const char* our_name,
+                                   const unsigned char* challenge,
+                                   const char* secret,
+                                   const int secret_len,
+                                   unsigned char* private_)
+{
+    lwip_md5_context ctx;
+    unsigned char idbyte = id;
+    int challenge_len = *challenge++;
+    lwip_md5_init(&ctx);
+    lwip_md5_starts(&ctx);
+    lwip_md5_update(&ctx, &idbyte, 1);
+    lwip_md5_update(&ctx, reinterpret_cast<const uint8_t *>(secret), secret_len);
+    lwip_md5_update(&ctx, challenge, challenge_len);
+    lwip_md5_finish(&ctx, &response[1]);
+    lwip_md5_free(&ctx);
+    response[0] = MD5_HASH_SIZE;
 }
 
 const struct ChapDigestType kMd5Digest = {

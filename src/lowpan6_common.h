@@ -39,13 +39,9 @@
  * <delamer@inicotech.com>
  */
 
-#ifndef LWIP_HDR_LOWPAN6_COMMON_H
-#define LWIP_HDR_LOWPAN6_COMMON_H
+#pragma once
 
 #include "lowpan6_opts.h"
-
-//#if LWIP_IPV6 /* don't build if IPv6 is disabled in lwipopts.h */
-
 #include "pbuf.h"
 #include "ip.h"
 #include "ip6_addr.h"
@@ -57,27 +53,32 @@ extern "C" {
 #endif
 
 /** Helper define for a link layer address, which can be encoded as 0, 2 or 8 bytes */
-struct lowpan6_link_addr {
+struct Lowpan6LinkAddr {
   /* encoded length of the address */
   uint8_t addr_len;
   /* address bytes */
   uint8_t addr[8];
 };
 
-int8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
+int8_t lowpan6_get_address_mode(const Ip6Addr* ip6addr,
+                                const struct Lowpan6LinkAddr* mac_addr);
+err_t lowpan6_compress_headers(struct netif* netif,
+                               uint8_t* inbuf,
+                               size_t inbuf_size,
+                               uint8_t* outbuf,
+                               size_t outbuf_size,
+                               uint8_t* lowpan6_header_len_out,
+                               uint8_t* hidden_header_len_out,
+                               Ip6Addr* lowpan6_contexts,
+                               const struct Lowpan6LinkAddr* src,
+                               const struct Lowpan6LinkAddr* dst);
+struct pbuf* lowpan6_decompress(struct pbuf* p,
+                                uint16_t datagram_size,
+                                Ip6Addr* lowpan6_contexts,
+                                struct Lowpan6LinkAddr* src,
+                                struct Lowpan6LinkAddr* dest);
 
-#if LWIP_6LOWPAN_IPHC
-err_t lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
-                               uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
-                               const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst);
-struct pbuf *lowpan6_decompress(struct pbuf *p, uint16_t datagram_size, ip6_addr_t *lowpan6_contexts,
-                                struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest);
-#endif /* LWIP_6LOWPAN_IPHC */
 
 #ifdef __cplusplus
 }
 #endif
-
-//#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_LOWPAN6_COMMON_H */

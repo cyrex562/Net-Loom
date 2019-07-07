@@ -66,8 +66,8 @@ zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct pbuf* p,
 {
     auto netif_lowpan6 = static_cast<struct netif *>(arg);
 
-    LWIP_ASSERT("arg != NULL", arg != NULL);
-    LWIP_ASSERT("pcb != NULL", pcb != NULL);
+    LWIP_ASSERT("arg != NULL", arg != nullptr);
+    LWIP_ASSERT("pcb != NULL", pcb != nullptr);
     if (p == nullptr)
     {
         return;
@@ -130,17 +130,17 @@ zepif_linkoutput(struct netif* netif, struct pbuf* p)
 {
     struct pbuf* q;
 
-    LWIP_ASSERT("invalid netif", netif != NULL);
-    LWIP_ASSERT("invalid pbuf", p != NULL);
+    LWIP_ASSERT("invalid netif", netif != nullptr);
+    LWIP_ASSERT("invalid pbuf", p != nullptr);
 
     if (p->tot_len > kZepMaxDataLen)
     {
         return ERR_VAL;
     }
-    LWIP_ASSERT("TODO: support chained pbufs", p->next == NULL);
+    LWIP_ASSERT("TODO: support chained pbufs", p->next == nullptr);
 
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
-    LWIP_ASSERT("state->pcb != NULL", state->pcb != NULL);
+    LWIP_ASSERT("state->pcb != NULL", state->pcb != nullptr);
 
     q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len, PBUF_RAM);
     if (q == nullptr)
@@ -186,7 +186,7 @@ zepif_init(struct netif* netif)
     auto init_state = static_cast<struct ZepifInit*>(netif->state);
     auto state = static_cast<struct ZepifState *>(mem_malloc(sizeof(struct ZepifState)));
 
-    LWIP_ASSERT("zepif needs an input callback", netif->input != NULL);
+    LWIP_ASSERT("zepif needs an input callback", netif->input != nullptr);
 
     if (state == nullptr)
     {
@@ -235,7 +235,7 @@ zepif_init(struct netif* netif)
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);
-    LWIP_ASSERT("lowpan6_if_init set a state", netif->state == NULL);
+    LWIP_ASSERT("lowpan6_if_init set a state", netif->state == nullptr);
     if (err == ERR_OK)
     {
         netif->state = state;

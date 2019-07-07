@@ -56,10 +56,10 @@ constexpr auto kLowpan6TmrInterval = 1000;
 
 void lowpan6_tmr(void);
 
-err_t lowpan6_set_context(uint8_t idx, const ip6_addr_t * context);
+err_t lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
 err_t lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
 err_t lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr);
-err_t lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr);
+err_t lowpan6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr);
 err_t lowpan6_input(struct pbuf * p, struct netif *netif);
 err_t lowpan6_if_init(struct netif *netif);
 

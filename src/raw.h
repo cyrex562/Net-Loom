@@ -74,7 +74,16 @@ typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 /** the RAW protocol control block */
 struct raw_pcb {
   /* Common members of all PCB types */
-  IP_PCB;
+    ip_addr_t local_ip;
+    /* Bound netif index */
+    uint8_t netif_idx;
+    /* Socket options */
+    uint8_t so_options;
+    /* Type Of Service */
+    uint8_t tos;
+    /* Time To Live */
+    uint8_t ttl;
+    struct netif_hint netif_hints;;
 
   struct raw_pcb *next;
 

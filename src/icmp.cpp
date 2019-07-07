@@ -223,10 +223,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #if CHECKSUM_GEN_ICMP
         IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP) {
           /* adjust the checksum */
-          if (iecho->chksum > PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
-            iecho->chksum = (uint16_t)(iecho->chksum + PP_HTONS((uint16_t)(ICMP_ECHO << 8)) + 1);
+          if (iecho->chksum > PpHtons(0xffffU - (ICMP_ECHO << 8))) {
+            iecho->chksum = (uint16_t)(iecho->chksum + PpHtons((uint16_t)(ICMP_ECHO << 8)) + 1);
           } else {
-            iecho->chksum = (uint16_t)(iecho->chksum + PP_HTONS(ICMP_ECHO << 8));
+            iecho->chksum = (uint16_t)(iecho->chksum + PpHtons(ICMP_ECHO << 8));
           }
         }
 #if LWIP_CHECKSUM_CTRL_PER_NETIF

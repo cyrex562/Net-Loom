@@ -223,7 +223,7 @@ static void eap_client_timeout(void *arg) {
  */
 void eap_authwithpeer(PppPcb *pcb, const char *localname) {
 
-	if(NULL == localname)
+	if(nullptr == localname)
 		return;
 
 	/* Save the peer name we're given */
@@ -251,7 +251,7 @@ static void eap_send_failure(PppPcb *pcb) {
 	uint8_t *outp;
 
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + EAP_HEADERLEN), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -282,7 +282,7 @@ static void eap_send_success(PppPcb *pcb) {
 	uint8_t *outp;
 
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + EAP_HEADERLEN), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -683,7 +683,7 @@ static void eap_send_request(PppPcb *pcb) {
 	}
 
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -963,22 +963,22 @@ static void eap_lowerup(PppPcb *pcb) {
 static void eap_lowerdown(PppPcb *pcb) {
 
 	if (eap_client_active(pcb) && pcb->settings.eap_req_time > 0) {
-		UNTIMEOUT(eap_client_timeout, pcb);
+		Untimeout(eap_client_timeout, pcb);
 	}
 #if PPP_SERVER
 	if (eap_server_active(pcb)) {
 		if (pcb->settings.eap_timeout_time > 0) {
-			UNTIMEOUT(eap_server_timeout, pcb);
+			Untimeout(eap_server_timeout, pcb);
 		}
 	} else {
 		if ((pcb->eap.es_server.ea_state == eapOpen ||
 		    pcb->eap.es_server.ea_state == eapSRP4) &&
 		    pcb->eap.es_rechallenge > 0) {
-			UNTIMEOUT(eap_rechallenge, (void *)pcb);
+			Untimeout(eap_rechallenge, (void *)pcb);
 		}
 		if (pcb->eap.es_server.ea_state == eapOpen &&
 		    pcb->eap.es_lwrechallenge > 0) {
-			UNTIMEOUT(srp_lwrechallenge, (void *)pcb);
+			Untimeout(srp_lwrechallenge, (void *)pcb);
 		}
 	}
 
@@ -1018,7 +1018,7 @@ static void eap_send_response(PppPcb *pcb, uint8_t id, uint8_t typenum, const ui
 
 	msglen = EAP_HEADERLEN + sizeof (uint8_t) + lenstr;
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -1052,7 +1052,7 @@ static void eap_chap_response(PppPcb *pcb, uint8_t id, uint8_t *hash, const char
 	msglen = EAP_HEADERLEN + 2 * sizeof (uint8_t) + MD5_SIGNATURE_SIZE +
 	    namelen;
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -1170,7 +1170,7 @@ static void eap_send_nak(PppPcb *pcb, uint8_t id, uint8_t type) {
 
 	msglen = EAP_HEADERLEN + 2 * sizeof (uint8_t);
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-	if(NULL == p)
+	if(nullptr == p)
 		return;
 	if(p->tot_len != p->len) {
 		pbuf_free(p);
@@ -1335,7 +1335,7 @@ static void eap_request(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	    pcb->eap.es_client.ea_requests > pcb->settings.eap_allow_req) {
 		ppp_info("EAP: received too many Request messages");
 		if (pcb->settings.eap_req_time > 0) {
-			UNTIMEOUT(eap_client_timeout, pcb);
+			Untimeout(eap_client_timeout, pcb);
 		}
 		auth_withpeer_fail(pcb, PPP_EAP);
 		return;
@@ -1387,7 +1387,7 @@ static void eap_request(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	case EAPT_NOTIFICATION:
 		if (len > 0)
 			ppp_info("EAP: Notification \"%.*q\"", len, inp);
-		eap_send_response(pcb, id, typenum, NULL, 0);
+		eap_send_response(pcb, id, typenum, nullptr, 0);
 		break;
 
 	case EAPT_NAK:
@@ -1699,7 +1699,7 @@ static void eap_request(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	}
 
 	if (pcb->settings.eap_req_time > 0) {
-		UNTIMEOUT(eap_client_timeout, pcb);
+		Untimeout(eap_client_timeout, pcb);
 		TIMEOUT(eap_client_timeout, pcb,
 		    pcb->settings.eap_req_time);
 	}
@@ -1999,7 +1999,7 @@ static void eap_response(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	}
 
 	if (pcb->settings.eap_timeout_time > 0) {
-		UNTIMEOUT(eap_server_timeout, pcb);
+		Untimeout(eap_server_timeout, pcb);
 	}
 
 	if (pcb->eap.es_server.ea_state != eapBadAuth &&
@@ -2024,7 +2024,7 @@ static void eap_success(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	}
 
 	if (pcb->settings.eap_req_time > 0) {
-		UNTIMEOUT(eap_client_timeout, pcb);
+		Untimeout(eap_client_timeout, pcb);
 	}
 
 	if (len > 0) {
@@ -2049,7 +2049,7 @@ static void eap_failure(PppPcb *pcb, uint8_t *inp, int id, int len) {
 	}
 
 	if (pcb->settings.eap_req_time > 0) {
-		UNTIMEOUT(eap_client_timeout, pcb);
+		Untimeout(eap_client_timeout, pcb);
 	}
 
 	if (len > 0) {

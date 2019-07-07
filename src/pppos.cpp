@@ -157,7 +157,7 @@ ppp_get_fcs(uint8_t byte)
 #define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
 
 #if PPP_INPROC_IRQ_SAFE
-#define PPPOS_DECL_PROTECT(lev) SYS_ARCH_DECL_PROTECT(lev)
+#define PPPOS_DECL_PROTECT(lev) sys_prot_t lev
 #define PPPOS_PROTECT(lev) SYS_ARCH_PROTECT(lev)
 #define PPPOS_UNPROTECT(lev) SYS_ARCH_UNPROTECT(lev)
 #else
@@ -228,7 +228,7 @@ pppos_write(PppPcb *ppp, void *ctx, struct pbuf *p)
    * flush any noise. */
   err = ERR_OK;
   if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
-    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, nullptr);
+    err = pppos_output_append(pppos, err,  nb, kPppFlag, 0, nullptr);
   }
 
   /* Load output buffer. */
@@ -278,7 +278,7 @@ pppos_netif_output(PppPcb *ppp, void *ctx, struct pbuf *pb, uint16_t protocol)
    * flush any noise. */
   err = ERR_OK;
   if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
-    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, nullptr);
+    err = pppos_output_append(pppos, err,  nb, kPppFlag, 0, nullptr);
   }
 
   fcs_out = PPP_INITFCS;
@@ -510,10 +510,10 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
        * would appear as an escape character.  Since this is an ASCII ']'
        * and there is no reason that I know of to escape it, I won't complicate
        * the code to handle this case. GLL */
-      if (cur_char == PPP_ESCAPE) {
+      if (cur_char == kPppEscape) {
         pppos->in_escaped = 1;
       /* Check for the flag character. */
-      } else if (cur_char == PPP_FLAG) {
+      } else if (cur_char == kPppFlag) {
         /* If this is just an extra flag character, ignore it. */
         if (pppos->in_state <= PDADDRESS) {
           /* ignore it */;
@@ -588,7 +588,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
       /* Unencode escaped characters. */
       if (pppos->in_escaped) {
         pppos->in_escaped = 0;
-        cur_char ^= PPP_TRANS;
+        cur_char ^= kPppTrans;
       }
 
       /* Process character relative to current state. */
@@ -845,8 +845,8 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint8_t c, uin
 
   /* Copy to output buffer escaping special characters. */
   if (accm && ESCAPE_P(pppos->out_accm, c)) {
-    *((uint8_t*)nb->payload + nb->len++) = PPP_ESCAPE;
-    *((uint8_t*)nb->payload + nb->len++) = c ^ PPP_TRANS;
+    *((uint8_t*)nb->payload + nb->len++) = kPppEscape;
+    *((uint8_t*)nb->payload + nb->len++) = c ^ kPppTrans;
   } else {
     *((uint8_t*)nb->payload + nb->len++) = c;
   }
@@ -862,7 +862,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, uint16_t *fcs)
   /* Add FCS and trailing flag. */
   err = pppos_output_append(pppos, err,  nb, ~(*fcs) & 0xFF, 1, nullptr);
   err = pppos_output_append(pppos, err,  nb, (~(*fcs) >> 8) & 0xFF, 1, nullptr);
-  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, nullptr);
+  err = pppos_output_append(pppos, err,  nb, kPppFlag, 0, nullptr);
 
   if (err != ERR_OK) {
     goto failed;

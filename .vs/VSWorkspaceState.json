@@ -1,8 +1,6 @@
 {
   "ExpandedNodes": [
     "",
-    "\\npcap\\Include",
-    "\\npcap\\Include\\pcap",
     "\\src"
   ],
   "SelectedNode": "\\src\\pppcrypt.h",

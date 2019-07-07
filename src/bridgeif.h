@@ -34,12 +34,10 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
  */
-#ifndef LWIP_HDR_NETIF_BRIDGEIF_H
-#define LWIP_HDR_NETIF_BRIDGEIF_H
+#pragma once
 
 #include "bridgeif_opts.h"
-
-#include "err.h"
+#include "lwip_error.h"
 #include "ethernet.h"
 
 #ifdef __cplusplus
@@ -47,29 +45,18 @@ extern "C" {
 #endif
 
 struct netif;
+typedef uint64_t bridgeif_portmask_t;
 
-#if (BRIDGEIF_MAX_PORTS < 0) || (BRIDGEIF_MAX_PORTS >= 64)
-#error BRIDGEIF_MAX_PORTS must be [1..63]
-#elif BRIDGEIF_MAX_PORTS < 8
-typedef uint8_t bridgeif_portmask_t;
-#elif BRIDGEIF_MAX_PORTS < 16
-typedef uint16_t bridgeif_portmask_t;
-#elif BRIDGEIF_MAX_PORTS < 32
-typedef uint32_t bridgeif_portmask_t;
-#elif BRIDGEIF_MAX_PORTS < 64
-typedef u64_t bridgeif_portmask_t;
-#endif
-
-#define BR_FLOOD ((bridgeif_portmask_t)-1)
+constexpr auto kBrFlood = bridgeif_portmask_t(-1);
 
 /** @ingroup bridgeif
  * Initialisation data for @ref bridgeif_init.
  * An instance of this type must be passed as parameter 'state' to @ref netif_add
  * when the bridge is added.
  */
-typedef struct bridgeif_initdata_s {
+struct bridgeif_initdata_t {
   /** MAC address of the bridge (cannot use the netif's addresses) */
-  struct eth_addr ethaddr;
+  struct EthAddr ethaddr;
   /** Maximum number of ports in the bridge (ports are stored in an array, this
       influences memory allocated for netif->state of the bridge netif). */
   uint8_t            max_ports;
@@ -78,11 +65,11 @@ typedef struct bridgeif_initdata_s {
   uint16_t           max_fdb_dynamic_entries;
   /** Maximum number of static forwarding entries. Influences memory consumption! */
   uint16_t           max_fdb_static_entries;
-} bridgeif_initdata_t;
+} ;
 
 /** @ingroup bridgeif
  * Use this for constant initialization of a bridgeif_initdat_t
- * (ethaddr must be passed as ETH_ADDR())
+ * (ethaddr must be passed as MakeEthAddrFromBytes())
  */
 #define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, ethaddr) {ethaddr, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 /** @ingroup bridgeif
@@ -93,35 +80,22 @@ typedef struct bridgeif_initdata_s {
 
 err_t bridgeif_init(struct netif *netif);
 err_t bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
-err_t bridgeif_fdb_add(struct netif *bridgeif, const struct eth_addr *addr, bridgeif_portmask_t ports);
-err_t bridgeif_fdb_remove(struct netif *bridgeif, const struct eth_addr *addr);
+err_t bridgeif_fdb_add(struct netif *bridgeif, const struct EthAddr *addr, bridgeif_portmask_t ports);
+err_t bridgeif_fdb_remove(struct netif *bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
-void                bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, uint8_t port_idx);
-bridgeif_portmask_t bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr);
+void                bridgeif_fdb_update_src(void *fdb_ptr, struct EthAddr *src_addr, uint8_t port_idx);
+bridgeif_portmask_t bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthAddr *dst_addr);
 void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
 
-#if BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT
-#ifndef BRIDGEIF_DECL_PROTECT
-/* define bridgeif protection to sys_arch_protect... */
-#include "sys.h"
-#define BRIDGEIF_DECL_PROTECT(lev)    SYS_ARCH_DECL_PROTECT(lev)
+#define BRIDGEIF_DECL_PROTECT(lev)    sys_prot_t lev
 #define BRIDGEIF_READ_PROTECT(lev)    SYS_ARCH_PROTECT(lev)
 #define BRIDGEIF_READ_UNPROTECT(lev)  SYS_ARCH_UNPROTECT(lev)
 #define BRIDGEIF_WRITE_PROTECT(lev)
 #define BRIDGEIF_WRITE_UNPROTECT(lev)
-#endif
-#else /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
-#include "tcpip.h"
-#define BRIDGEIF_DECL_PROTECT(lev)
-#define BRIDGEIF_READ_PROTECT(lev)
-#define BRIDGEIF_READ_UNPROTECT(lev)
-#define BRIDGEIF_WRITE_PROTECT(lev)
-#define BRIDGEIF_WRITE_UNPROTECT(lev)
-#endif /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_NETIF_BRIDGEIF_H */

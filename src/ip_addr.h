@@ -34,10 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP_ADDR_H
-#define LWIP_HDR_IP_ADDR_H
+#pragma once
 
-#include "opt.h"
 
 #include "ip4_addr.h"
 #include "ip6_addr.h"
@@ -50,7 +48,7 @@ extern "C" {
  * IP address types for use in ip_addr_t.type member.
  * @see tcp_new_ip_type(), udp_new_ip_type(), raw_new_ip_type().
  */
-enum lwip_ip_addr_type {
+enum LwipIpAddrType {
   /** IPv4 */
   IPADDR_TYPE_V4 =   0U,
   /** IPv6 */
@@ -59,25 +57,22 @@ enum lwip_ip_addr_type {
   IPADDR_TYPE_ANY = 46U
 };
 
-#define LWIP_IPV4 1
-#define LWIP_IPV6 1
 
-#if LWIP_IPV4 && LWIP_IPV6
-/**
+    /**
  * @ingroup ipaddr
  * A union struct for both IP version's addresses.
  * ATTENTION: watch out for its size when adding IPv6 address scope!
  */
-typedef struct ip_addr {
+struct ip_addr_t {
   union {
-    ip6_addr_t ip6;
+      Ip6Addr ip6;
     ip4_addr_t ip4;
   } u_addr;
   /** @ref lwip_ip_addr_type */
-  uint8_t type;
-} ip_addr_t;
+  LwipIpAddrType type;
+};
 
-extern const ip_addr_t ip_addr_any_type;
+extern const struct ip_addr_t ip_addr_any_type;
 
 /** @ingroup ip4addr */
 #define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_V4 }
@@ -115,20 +110,24 @@ extern const ip_addr_t ip_addr_any_type;
 /** @ingroup ip6addr
  * Convert generic ip address to specific protocol version
  */
-#define ip_2_ip6(ipaddr)   (&((ipaddr)->u_addr.ip6))
+inline Ip6Addr* ip_2_ip6(ip_addr_t* ipaddr) {
+    return   (&((ipaddr)->u_addr.ip6));
+}
 /** @ingroup ip4addr
  * Convert generic ip address to specific protocol version
  */
-#define ip_2_ip4(ipaddr)   (&((ipaddr)->u_addr.ip4))
+inline ip4_addr* ip_2_ip4(ip_addr_t* ipaddr) {
+    return   (&((ipaddr)->u_addr.ip4));
+}
 
 /** @ingroup ip4addr */
 #define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V4); } while(0)
 /** @ingroup ip6addr */
-#define IP_ADDR6(ipaddr,i0,i1,i2,i3)  do { IP6_ADDR(ip_2_ip6(ipaddr),i0,i1,i2,i3); \
-                                           IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
+// #define IP_ADDR6(ipaddr,i0,i1,i2,i3)  do { IP6_ADDR(ip_2_ip6(ipaddr),i0,i1,i2,i3); \
+//                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
 /** @ingroup ip6addr */
-#define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)  IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
+// #define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)  IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
 
 #define ip_clear_no4(ipaddr)  do { ip_2_ip6(ipaddr)->addr[1] = \
                                    ip_2_ip6(ipaddr)->addr[2] = \
@@ -259,17 +258,12 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 #define IP46_ADDR_ANY(type) (((type) == IPADDR_TYPE_V6)? IP6_ADDR_ANY : IP4_ADDR_ANY)
 
-#else /* LWIP_IPV4 && LWIP_IPV6 */
-
 #define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)          1
 #define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)  1
 
 #define ip_addr_set_any_val(is_ipv6, ipaddr)          ip_addr_set_any(is_ipv6, &(ipaddr))
 #define ip_addr_set_loopback_val(is_ipv6, ipaddr)     ip_addr_set_loopback(is_ipv6, &(ipaddr))
 
-#if LWIP_IPV4
-
-typedef ip4_addr_t ip_addr_t;
 #define IPADDR4_INIT(u32val)                    { u32val }
 #define IPADDR4_INIT_BYTES(a,b,c,d)             IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 #define IP_IS_V4_VAL(ipaddr)                    1
@@ -315,9 +309,6 @@ typedef ip4_addr_t ip_addr_t;
 
 #define IP46_ADDR_ANY(type) (IP4_ADDR_ANY)
 
-#else /* LWIP_IPV4 */
-
-typedef ip6_addr_t ip_addr_t;
 #define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } IPADDR6_ZONE_INIT }
 #define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } IPADDR6_ZONE_INIT }
 #define IP_IS_V4_VAL(ipaddr)                    0
@@ -330,8 +321,16 @@ typedef ip6_addr_t ip_addr_t;
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V6
 #define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(ip6_addr_t)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
-#define IP_ADDR6(ipaddr,i0,i1,i2,i3)            IP6_ADDR(ipaddr,i0,i1,i2,i3)
-#define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)       IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
+
+inline void IP_ADDR6(ip_addr_t* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
+{
+    IP6_ADDR(&ipaddr->u_addr.ip6, i0, i1, i2, i3);
+}         
+
+inline void IP_ADDR6_HOST(struct ip_addr_t* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
+{
+    IP_ADDR6(ipaddr, PP_HTONL(i0), PP_HTONL(i1), PP_HTONL(i2), PP_HTONL(i3));
+}
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)
@@ -363,13 +362,8 @@ typedef ip6_addr_t ip_addr_t;
 
 #define IP46_ADDR_ANY(type) (IP6_ADDR_ANY)
 
-#endif /* LWIP_IPV4 */
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
-
-
-extern const ip_addr_t ip_addr_any;
-extern const ip_addr_t ip_addr_broadcast;
+extern const ip_addr_t kIpAddrAny;
+extern const ip_addr_t kIpAddrBroadcast;
 
 /**
  * @ingroup ip4addr
@@ -381,58 +375,44 @@ extern const ip_addr_t ip_addr_broadcast;
  * Use @ref IP4_ADDR_ANY or @ref IP6_ADDR_ANY when the IP
  * type matters.
  */
-#define IP_ADDR_ANY         IP4_ADDR_ANY
+
 /**
  * @ingroup ip4addr
  * Can be used as a fixed/const ip_addr_t
  * for the IPv4 wildcard and the broadcast address
  */
-#define IP4_ADDR_ANY        (&ip_addr_any)
+constexpr auto kIp4AddrAny = (&kIpAddrAny);
 /**
  * @ingroup ip4addr
  * Can be used as a fixed/const ip4_addr_t
  * for the wildcard and the broadcast address
  */
-#define IP4_ADDR_ANY4       (ip_2_ip4(&ip_addr_any))
+constexpr auto IP4_ADDR_ANY4 = (ip_2_ip4(&kIpAddrAny));
 
 /** @ingroup ip4addr */
-#define IP_ADDR_BROADCAST   (&ip_addr_broadcast)
+constexpr auto IP_ADDR_BROADCAST = (&kIpAddrBroadcast);
 /** @ingroup ip4addr */
-#define IP4_ADDR_BROADCAST  (ip_2_ip4(&ip_addr_broadcast))
+constexpr auto IP4_ADDR_BROADCAST = (ip_2_ip4(&kIpAddrBroadcast));
 
-
-
-
-
-extern const ip_addr_t ip6_addr_any;
+    extern const ip_addr_t ip6_addr_any;
 
 /** 
  * @ingroup ip6addr
  * IP6_ADDR_ANY can be used as a fixed ip_addr_t
  * for the IPv6 wildcard address
  */
-#define IP6_ADDR_ANY   (&ip6_addr_any)
+constexpr auto kIp6AddrAny = (&ip6_addr_any);
 /**
  * @ingroup ip6addr
  * IP6_ADDR_ANY6 can be used as a fixed ip6_addr_t
  * for the IPv6 wildcard address
  */
-#define IP6_ADDR_ANY6  (ip_2_ip6(&ip6_addr_any))
+constexpr auto kIp6AddrAny6 = (ip_2_ip6(&ip6_addr_any));
 
-#if !LWIP_IPV4
-/** IPv6-only configurations */
-#define IP_ADDR_ANY IP6_ADDR_ANY
-#endif /* !LWIP_IPV4 */
-
-
-
-
-/** @ingroup ipaddr */
-#define IP_ANY_TYPE    (&ip_addr_any_type)
+// 
+constexpr auto kIpAnyType = (&ip_addr_any_type);
 
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_HDR_IP_ADDR_H */

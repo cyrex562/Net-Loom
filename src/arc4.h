@@ -33,20 +33,16 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #pragma once
-
-#include "ppp_opts.h"
-
-
 /**
  * \brief          ARC4 context structure
  */
-typedef struct
+struct Arc4Context
 {
     int x;                      /*!< permutation index */
     int y;                      /*!< permutation index */
     unsigned char m[256];       /*!< permutation table */
 }
-arc4_context;
+;
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +55,7 @@ extern "C" {
  * \param key      the secret key
  * \param keylen   length of the key
  */
-void arc4_setup( arc4_context *ctx, unsigned char *key, int keylen );
+void arc4_setup( Arc4Context *ctx, unsigned char *key, int keylen );
 
 /**
  * \brief          ARC4 cipher function
@@ -68,7 +64,7 @@ void arc4_setup( arc4_context *ctx, unsigned char *key, int keylen );
  * \param buf      buffer to be processed
  * \param buflen   amount of data in buf
  */
-void arc4_crypt( arc4_context *ctx, unsigned char *buf, int buflen );
+void arc4_crypt( Arc4Context *ctx, unsigned char *buf, int buflen );
 
 #ifdef __cplusplus
 }

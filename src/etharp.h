@@ -62,9 +62,9 @@ PACK_STRUCT_END
     PACK_STRUCT_FLD_8(uint8_t  hwlen);
     PACK_STRUCT_FLD_8(uint8_t  protolen);
     PACK_STRUCT_FIELD(uint16_t opcode);
-    PACK_STRUCT_FLD_S(struct eth_addr shwaddr);
+    PACK_STRUCT_FLD_S(struct EthAddr shwaddr);
     PACK_STRUCT_FLD_S(struct ip4_addr_wordaligned sipaddr);
-    PACK_STRUCT_FLD_S(struct eth_addr dhwaddr);
+    PACK_STRUCT_FLD_S(struct EthAddr dhwaddr);
     PACK_STRUCT_FLD_S(struct ip4_addr_wordaligned dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -100,8 +100,8 @@ extern "C" {
 #define etharp_init() /* Compatibility define, no init needed. */
     void etharp_tmr(void);
     ssize_t etharp_find_addr(struct netif* netif, const ip4_addr_t* ipaddr,
-        struct eth_addr** eth_ret, const ip4_addr_t** ip_ret);
-    int etharp_get_entry(size_t i, ip4_addr_t** ipaddr, struct netif** netif, struct eth_addr** eth_ret);
+        struct EthAddr** eth_ret, const ip4_addr_t** ip_ret);
+    int etharp_get_entry(size_t i, ip4_addr_t** ipaddr, struct netif** netif, struct EthAddr** eth_ret);
     err_t etharp_output(struct netif* netif, struct pbuf* q, const ip4_addr_t* ipaddr);
     err_t etharp_query(struct netif* netif, const ip4_addr_t* ipaddr, struct pbuf* q);
     err_t etharp_request(struct netif* netif, const ip4_addr_t* ipaddr);
@@ -113,7 +113,7 @@ extern "C" {
     void etharp_cleanup_netif(struct netif* netif);
 
 #if ETHARP_SUPPORT_STATIC_ENTRIES
-    err_t etharp_add_static_entry(const ip4_addr_t* ipaddr, struct eth_addr* ethaddr);
+    err_t etharp_add_static_entry(const ip4_addr_t* ipaddr, struct EthAddr* ethaddr);
     err_t etharp_remove_static_entry(const ip4_addr_t* ipaddr);
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 

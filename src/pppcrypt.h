@@ -82,7 +82,7 @@ extern "C" {
 #define lwip_des_free(context)
 
 #include "arc4.h"
-#define lwip_arc4_context arc4_context
+#define lwip_arc4_context Arc4Context
 #define lwip_arc4_init(context)
 #define lwip_arc4_setup arc4_setup
 #define lwip_arc4_crypt arc4_crypt

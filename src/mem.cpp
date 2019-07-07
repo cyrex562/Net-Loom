@@ -58,31 +58,33 @@
 #include "def.h"
 #include "sys.h"
 #include "stats.h"
-#include "err.h"
-
-#include <string.h>
+#include "lwip_error.h"
+#include <cstring>
 #include "lwip_debug.h"
-
-#if MEM_LIBC_MALLOC
-#include <stdlib.h> /* for malloc()/free() */
-#endif
+#include <cstdlib> /* for malloc()/free() */
 
 /* This is overridable for tests only... */
-#ifndef LWIP_MEM_ILLEGAL_FREE
-#define LWIP_MEM_ILLEGAL_FREE(msg)         LWIP_ASSERT(msg, 0)
-#endif
+// #define LWIP_MEM_ILLEGAL_FREE(msg)         LWIP_ASSERT(msg, 0)
+
+inline void LwipMemIllegalFree(const char* msg)
+{
+    LWIP_ASSERT(msg, 0);
+}
 
 #define MEM_STATS_INC_LOCKED(x)         SYS_ARCH_LOCKED(MEM_STATS_INC(x))
+
+
 #define MEM_STATS_INC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_INC_USED(x, y))
+
+
 #define MEM_STATS_DEC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_DEC_USED(x, y))
 
-#if MEM_OVERFLOW_CHECK
+
 #define MEM_SANITY_OFFSET   MEM_SANITY_REGION_BEFORE_ALIGNED
+
+
 #define MEM_SANITY_OVERHEAD (MEM_SANITY_REGION_BEFORE_ALIGNED + MEM_SANITY_REGION_AFTER_ALIGNED)
-#else
-#define MEM_SANITY_OFFSET   0
-#define MEM_SANITY_OVERHEAD 0
-#endif
+
 
 #if MEM_OVERFLOW_CHECK || MEMP_OVERFLOW_CHECK
 /**
@@ -513,37 +515,37 @@ plug_holes(struct mem *mem)
 /**
  * Zero the heap and initialize start, end and lowest-free
  */
-void
-mem_init(void)
-{
-  struct mem *mem;
-
-  LWIP_ASSERT("Sanity check alignment",
-              (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT - 1)) == 0);
-
-  /* align the heap */
-  ram = (uint8_t *)LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);
-  /* initialize the start of the heap */
-  mem = (struct mem *)(void *)ram;
-  mem->next = MEM_SIZE_ALIGNED;
-  mem->prev = 0;
-  mem->used = 0;
-  /* initialize the end of the heap */
-  ram_end = ptr_to_mem(MEM_SIZE_ALIGNED);
-  ram_end->used = 1;
-  ram_end->next = MEM_SIZE_ALIGNED;
-  ram_end->prev = MEM_SIZE_ALIGNED;
-  MEM_SANITY();
-
-  /* initialize the lowest-free pointer to the start of the heap */
-  lfree = (struct mem *)(void *)ram;
-
-  MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
-
-  if (sys_mutex_new(&mem_mutex) != ERR_OK) {
-    LWIP_ASSERT("failed to create mem_mutex", 0);
-  }
-}
+// void
+// mem_init(void)
+// {
+//   struct mem *mem;
+//
+//   LWIP_ASSERT("Sanity check alignment",
+//               (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT - 1)) == 0);
+//
+//   /* align the heap */
+//   // ram = (uint8_t *)LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);
+//   /* initialize the start of the heap */
+//   mem = (struct mem *)(void *)ram;
+//   mem->next = MEM_SIZE_ALIGNED;
+//   mem->prev = 0;
+//   mem->used = 0;
+//   /* initialize the end of the heap */
+//   ram_end = ptr_to_mem(MEM_SIZE_ALIGNED);
+//   ram_end->used = 1;
+//   ram_end->next = MEM_SIZE_ALIGNED;
+//   ram_end->prev = MEM_SIZE_ALIGNED;
+//   MEM_SANITY();
+//
+//   /* initialize the lowest-free pointer to the start of the heap */
+//   lfree = (struct mem *)(void *)ram;
+//
+//   MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
+//
+//   if (sys_mutex_new(&mem_mutex) != ERR_OK) {
+//     LWIP_ASSERT("failed to create mem_mutex", 0);
+//   }
+// }
 
 /* Check if a struct mem is correctly linked.
  * If not, double-free is a possible reason.

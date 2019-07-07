@@ -47,30 +47,6 @@
 
 #include <windows.h>
 
-
-
-
-
-/** Set this to 1 to enable assertion checks that SYS_ARCH_PROTECT() is only
- * called once in a call stack (calling it nested might cause trouble in some
- * implementations, so let's avoid this in core code as long as we can).
- */
-#ifndef LWIP_SYS_ARCH_CHECK_NESTED_PROTECT
-#define LWIP_SYS_ARCH_CHECK_NESTED_PROTECT 1
-#endif
-
-/** Set this to 1 to enable assertion checks that SYS_ARCH_PROTECT() is *not*
- * called before functions potentiolly involving the OS scheduler.
- *
- * This scheme is currently broken only for non-core-locking when waking up
- * threads waiting on a socket via select/poll.
- */
-#ifndef LWIP_SYS_ARCH_CHECK_SCHEDULING_UNPROTECTED
-#define LWIP_SYS_ARCH_CHECK_SCHEDULING_UNPROTECTED LWIP_TCPIP_CORE_LOCKING
-#endif
-
-#define LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER (LWIP_SYS_ARCH_CHECK_NESTED_PROTECT || LWIP_SYS_ARCH_CHECK_SCHEDULING_UNPROTECTED)
-
 /* These functions are used from NO_SYS also, for precise timer triggering */
 static LARGE_INTEGER freq, sys_start_time;
 #define SYS_INITIALIZED() (freq.QuadPart != 0)
@@ -95,7 +71,7 @@ sys_win_rand_init(void)
 {
   if (!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, 0)) {
     DWORD err = GetLastError();
-    LWIP_PLATFORM_DIAG(("CryptAcquireContext failed with error %d, trying to create NEWKEYSET", (int)err));
+    LwipPlatformDiag(("CryptAcquireContext failed with error %d, trying to create NEWKEYSET", (int)err));
     if(!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
       char errbuf[128];
       err = GetLastError();
@@ -233,10 +209,10 @@ sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   HANDLE new_sem = nullptr;
 
-  LWIP_ASSERT("sem != NULL", sem != NULL);
+  LWIP_ASSERT("sem != NULL", sem != nullptr);
 
   new_sem = CreateSemaphore(nullptr, count, 100000, nullptr);
-  LWIP_ASSERT("Error creating semaphore", new_sem != NULL);
+  LWIP_ASSERT("Error creating semaphore", new_sem != nullptr);
   if(new_sem != nullptr) {
     if (SYS_INITIALIZED()) {
       SYS_ARCH_LOCKED(SYS_STATS_INC_USED(sem));
@@ -264,8 +240,8 @@ void
 sys_sem_free(sys_sem_t *sem)
 {
   /* parameter check */
-  LWIP_ASSERT("sem != NULL", sem != NULL);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != NULL);
+  LWIP_ASSERT("sem != NULL", sem != nullptr);
+  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
   LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   CloseHandle(sem->sem);
 
@@ -281,8 +257,8 @@ sys_arch_sem_wait(sys_sem_t *sem, uint32_t timeout)
 {
   DWORD ret;
   LONGLONG starttime, endtime;
-  LWIP_ASSERT("sem != NULL", sem != NULL);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != NULL);
+  LWIP_ASSERT("sem != NULL", sem != nullptr);
+  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
   LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   if (!timeout) {
     /* wait infinite */
@@ -312,8 +288,8 @@ sys_sem_signal(sys_sem_t *sem)
 {
   BOOL ret;
   sys_arch_check_not_protected();
-  LWIP_ASSERT("sem != NULL", sem != NULL);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != NULL);
+  LWIP_ASSERT("sem != NULL", sem != nullptr);
+  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
   LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   ret = ReleaseSemaphore(sem->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing semaphore", ret != 0);
@@ -325,10 +301,10 @@ sys_mutex_new(sys_mutex_t *mutex)
 {
   HANDLE new_mut = nullptr;
 
-  LWIP_ASSERT("mutex != NULL", mutex != NULL);
+  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
 
   new_mut = CreateMutex(nullptr, FALSE, nullptr);
-  LWIP_ASSERT("Error creating mutex", new_mut != NULL);
+  LWIP_ASSERT("Error creating mutex", new_mut != nullptr);
   if (new_mut != nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mutex));
 #if LWIP_STATS && SYS_STATS
@@ -348,8 +324,8 @@ void
 sys_mutex_free(sys_mutex_t *mutex)
 {
   /* parameter check */
-  LWIP_ASSERT("mutex != NULL", mutex != NULL);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != NULL);
+  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
+  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
   LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   CloseHandle(mutex->mut);
 
@@ -363,8 +339,8 @@ sys_mutex_free(sys_mutex_t *mutex)
 void sys_mutex_lock(sys_mutex_t *mutex)
 {
   DWORD ret;
-  LWIP_ASSERT("mutex != NULL", mutex != NULL);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != NULL);
+  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
+  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
   LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   /* wait infinite */
   ret = WaitForSingleObject(mutex->mut, INFINITE);
@@ -376,8 +352,8 @@ void
 sys_mutex_unlock(sys_mutex_t *mutex)
 {
   sys_arch_check_not_protected();
-  LWIP_ASSERT("mutex != NULL", mutex != NULL);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != NULL);
+  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
+  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
   LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   /* wait infinite */
   if (!ReleaseMutex(mutex->mut)) {
@@ -440,14 +416,10 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
 {
   struct threadlist *new_thread;
   HANDLE h;
-  SYS_ARCH_DECL_PROTECT(lev);
-
-  LWIP_UNUSED_ARG(name);
-  LWIP_UNUSED_ARG(stacksize);
-  LWIP_UNUSED_ARG(prio);
+  sys_prot_t lev;
 
   new_thread = (struct threadlist*)malloc(sizeof(struct threadlist));
-  LWIP_ASSERT("new_thread != NULL", new_thread != NULL);
+  LWIP_ASSERT("new_thread != NULL", new_thread != nullptr);
   if (new_thread != nullptr) {
     new_thread->function = function;
     new_thread->arg = arg;
@@ -458,7 +430,6 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
     h = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)sys_thread_function, new_thread, 0, &(new_thread->id));
     LWIP_ASSERT("h != 0", h != nullptr);
     LWIP_ASSERT("h != -1", h != INVALID_HANDLE_VALUE);
-    LWIP_UNUSED_ARG(h);
     SetThreadName(new_thread->id, name);
 
     SYS_ARCH_UNPROTECT(lev);
@@ -516,11 +487,11 @@ sys_check_core_locking(void)
 err_t
 sys_mbox_new(sys_mbox_t *mbox, int size)
 {
-  LWIP_ASSERT("mbox != NULL", mbox != NULL);
+  LWIP_ASSERT("mbox != NULL", mbox != nullptr);
   LWIP_UNUSED_ARG(size);
 
   mbox->sem = CreateSemaphore(nullptr, 0, MAX_QUEUE_ENTRIES, nullptr);
-  LWIP_ASSERT("Error creating semaphore", mbox->sem != NULL);
+  LWIP_ASSERT("Error creating semaphore", mbox->sem != nullptr);
   if (mbox->sem == nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC(mbox.err));
     return ERR_MEM;
@@ -539,8 +510,8 @@ void
 sys_mbox_free(sys_mbox_t *mbox)
 {
   /* parameter check */
-  LWIP_ASSERT("mbox != NULL", mbox != NULL);
-  LWIP_ASSERT("mbox->sem != NULL", mbox->sem != NULL);
+  LWIP_ASSERT("mbox != NULL", mbox != nullptr);
+  LWIP_ASSERT("mbox->sem != NULL", mbox->sem != nullptr);
   LWIP_ASSERT("mbox->sem != INVALID_HANDLE_VALUE", mbox->sem != INVALID_HANDLE_VALUE);
 
   CloseHandle(mbox->sem);
@@ -556,142 +527,156 @@ void
 sys_mbox_post(sys_mbox_t *q, void *msg)
 {
   BOOL ret;
-  SYS_ARCH_DECL_PROTECT(lev);
+  sys_prot_t lev;
   sys_arch_check_not_protected();
 
   /* parameter check */
-  LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != NULL", q->sem != NULL);
+  LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
+  LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
   LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
   SYS_ARCH_PROTECT(lev);
   q->q_mem[q->head] = msg;
   q->head++;
-  if (q->head >= MAX_QUEUE_ENTRIES) {
-    q->head = 0;
+  if (q->head >= MAX_QUEUE_ENTRIES)
+  {
+      q->head = 0;
   }
   LWIP_ASSERT("mbox is full!", q->head != q->tail);
   ret = ReleaseSemaphore(q->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing sem", ret != 0);
-  LWIP_UNUSED_ARG(ret);
+  
 
   SYS_ARCH_UNPROTECT(lev);
-}
-
-err_t
-sys_mbox_trypost(sys_mbox_t *q, void *msg)
-{
-  uint32_t new_head;
-  BOOL ret;
-  SYS_ARCH_DECL_PROTECT(lev);
-  sys_arch_check_not_protected();
-
-  /* parameter check */
-  LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != NULL", q->sem != NULL);
-  LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
-
-  SYS_ARCH_PROTECT(lev);
-
-  new_head = q->head + 1;
-  if (new_head >= MAX_QUEUE_ENTRIES) {
-    new_head = 0;
-  }
-  if (new_head == q->tail) {
-    SYS_ARCH_UNPROTECT(lev);
-    return ERR_MEM;
   }
 
-  q->q_mem[q->head] = msg;
-  q->head = new_head;
-  LWIP_ASSERT("mbox is full!", q->head != q->tail);
-  ret = ReleaseSemaphore(q->sem, 1, nullptr);
-  LWIP_ASSERT("Error releasing sem", ret != 0);
-  LWIP_UNUSED_ARG(ret);
+  err_t
+  sys_mbox_trypost(sys_mbox_t *q, void *msg)
+  {
+      uint32_t new_head;
+      BOOL ret;
+      sys_prot_t lev;
+      sys_arch_check_not_protected();
 
-  SYS_ARCH_UNPROTECT(lev);
-  return ERR_OK;
-}
+      /* parameter check */
+      LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
+      LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
+      LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
-err_t
-sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
-{
-  return sys_mbox_trypost(q, msg);
-}
+      SYS_ARCH_PROTECT(lev);
 
-uint32_t
-sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, uint32_t timeout)
-{
-  DWORD ret;
-  LONGLONG starttime, endtime;
-  SYS_ARCH_DECL_PROTECT(lev);
+      new_head = q->head + 1;
+      if (new_head >= MAX_QUEUE_ENTRIES)
+      {
+          new_head = 0;
+      }
+      if (new_head == q->tail)
+      {
+          SYS_ARCH_UNPROTECT(lev);
+          return ERR_MEM;
+      }
 
-  /* parameter check */
-  LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != NULL", q->sem != NULL);
-  LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+      q->q_mem[q->head] = msg;
+      q->head = new_head;
+      LWIP_ASSERT("mbox is full!", q->head != q->tail);
+      ret = ReleaseSemaphore(q->sem, 1, nullptr);
+      LWIP_ASSERT("Error releasing sem", ret != 0);
+      sys_prot_t lev;
 
-  if (timeout == 0) {
-    timeout = INFINITE;
-  }
-  starttime = sys_get_ms_longlong();
-  ret = WaitForSingleObject(q->sem, timeout);
-  if (ret == WAIT_OBJECT_0) {
-    SYS_ARCH_PROTECT(lev);
-    if (msg != nullptr) {
-      *msg  = q->q_mem[q->tail];
-    }
+      SYS_ARCH_UNPROTECT(lev);
+      return ERR_OK;
+      }
 
-    q->tail++;
-    if (q->tail >= MAX_QUEUE_ENTRIES) {
-      q->tail = 0;
-    }
-    SYS_ARCH_UNPROTECT(lev);
-    endtime = sys_get_ms_longlong();
-    return (uint32_t)(endtime - starttime);
-  } else {
-    LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
-    if (msg != nullptr) {
-      *msg  = nullptr;
-    }
+      err_t
+      sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
+      {
+          return sys_mbox_trypost(q, msg);
+      }
 
-    return SYS_ARCH_TIMEOUT;
-  }
-}
+      uint32_t
+      sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, uint32_t timeout)
+      {
+          DWORD ret;
+          LONGLONG starttime, endtime;
+          sys_prot_t lev;
 
-uint32_t
-sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
-{
-  DWORD ret;
-  SYS_ARCH_DECL_PROTECT(lev);
+          /* parameter check */
+          LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
+          LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
+          LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
-  /* parameter check */
-  LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != NULL", q->sem != NULL);
-  LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+          if (timeout == 0)
+          {
+              timeout = INFINITE;
+          }
+          starttime = sys_get_ms_longlong();
+          ret = WaitForSingleObject(q->sem, timeout);
+          if (ret == WAIT_OBJECT_0)
+          {
+              SYS_ARCH_PROTECT(lev);
+              if (msg != nullptr)
+              {
+                  *msg  = q->q_mem[q->tail];
+              }
 
-  ret = WaitForSingleObject(q->sem, 0);
-  if (ret == WAIT_OBJECT_0) {
-    SYS_ARCH_PROTECT(lev);
-    if (msg != nullptr) {
-      *msg  = q->q_mem[q->tail];
-    }
+              q->tail++;
+              if (q->tail >= MAX_QUEUE_ENTRIES)
+              {
+                  q->tail = 0;
+              }
+              SYS_ARCH_UNPROTECT(lev);
+              endtime = sys_get_ms_longlong();
+              return (uint32_t)(endtime - starttime);
+          } else
+          {
+              LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
+              if (msg != nullptr)
+              {
+                  *msg  = nullptr;
+              }
 
-    q->tail++;
-    if (q->tail >= MAX_QUEUE_ENTRIES) {
-      q->tail = 0;
-    }
-    SYS_ARCH_UNPROTECT(lev);
-    return 0;
-  } else {
-    LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
-    if (msg != nullptr) {
-      *msg  = nullptr;
-    }
+              return SYS_ARCH_TIMEOUT;
+          }
+          }
 
-    return SYS_ARCH_TIMEOUT;
-  }
-}
+          uint32_t
+          sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
+          {
+              DWORD ret;
+              sys_prot_t lev;
+
+              /* parameter check */
+              LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
+              LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
+              LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+
+              ret = WaitForSingleObject(q->sem, 0);
+              if (ret == WAIT_OBJECT_0)
+              {
+                  SYS_ARCH_PROTECT(lev);
+                  if (msg != nullptr)
+                  {
+                      *msg  = q->q_mem[q->tail];
+                  }
+
+                  q->tail++;
+                  if (q->tail >= MAX_QUEUE_ENTRIES)
+                  {
+                      q->tail = 0;
+                  }
+                  SYS_ARCH_UNPROTECT(lev);
+                  return 0;
+              } else
+              {
+                  LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
+                  if (msg != nullptr)
+                  {
+                      *msg  = nullptr;
+                  }
+
+                  return SYS_ARCH_TIMEOUT;
+              }
+              }
 
 #if LWIP_NETCONN_SEM_PER_THREAD
 sys_sem_t*
@@ -733,41 +718,45 @@ sys_arch_netconn_sem_free(void)
 
 #endif /* !NO_SYS */
 
-/* get keyboard state to terminate the debug app on any kbhit event using win32 API */
-int
-lwip_win32_keypressed(void)
-{
-  INPUT_RECORD rec;
-  DWORD num = 0;
-  HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-  BOOL ret = PeekConsoleInput(h, &rec, 1, &num);
-  if (ret && num) {
-    ReadConsoleInput(h, &rec, 1, &num);
-    if (rec.EventType == KEY_EVENT) {
-      if (rec.Event.KeyEvent.bKeyDown) {
-        /* not a special key? */
-        if (rec.Event.KeyEvent.uChar.AsciiChar != 0) {
-          return 1;
-        }
-      }
-    }
-  }
-  return 0;
-}
+              /* get keyboard state to terminate the debug app on any kbhit event using win32 API */
+              int
+              lwip_win32_keypressed(void)
+              {
+                  INPUT_RECORD rec;
+                  DWORD num = 0;
+                  HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+                  BOOL ret = PeekConsoleInput(h, &rec, 1, &num);
+                  if (ret && num)
+                  {
+                      ReadConsoleInput(h, &rec, 1, &num);
+                      if (rec.EventType == KEY_EVENT)
+                      {
+                          if (rec.Event.KeyEvent.bKeyDown)
+                          {
+                              /* not a special key? */
+                              if (rec.Event.KeyEvent.uChar.AsciiChar != 0)
+                              {
+                                  return 1;
+                              }
+                          }
+                      }
+                  }
+                  return 0;
+              }
 
-#include <stdarg.h>
+#include <cstdarg>
 
-/* This is an example implementation for LWIP_PLATFORM_DIAG:
+              /* This is an example implementation for LWIP_PLATFORM_DIAG:
  * format a string and pass it to your output function.
  */
-void
-lwip_win32_platform_diag(const char *format, ...)
-{
-  va_list ap;
-  /* get the varargs */
-  va_start(ap, format);
-  /* print via varargs; to use another output function, you could use
+              void
+              lwip_win32_platform_diag(const char *format, ...)
+              {
+                  va_list ap;
+                  /* get the varargs */
+                  va_start(ap, format);
+                  /* print via varargs; to use another output function, you could use
      vsnprintf here */
-  vprintf(format, ap);
-  va_end(ap);
-}
+                  vprintf(format, ap);
+                  va_end(ap);
+              }

@@ -39,7 +39,7 @@
 void
 vj_compress_init(struct Vjcompress* comp)
 {
-    struct Cstate* tstate = comp->tstate;
+    auto tstate = comp->tstate;
     comp->max_slot_index = MAX_SLOTS - 1;
     comp->compress_slot = 0; /* Disable slot ID compression by default. */
     for (uint8_t i = MAX_SLOTS - 1; i > 0; --i)
@@ -56,73 +56,90 @@ vj_compress_init(struct Vjcompress* comp)
 }
 
 
-/* ENCODE encodes a number that is known to be non-zero.  ENCODEZ
- * checks for zero (since zero has to be encoded in the long, 3 byte
- * form).
- */
-#define ENCODE(n) { \
-  if ((uint16_t)(n) >= 256) { \
-    *cp++ = 0; \
-    cp[1] = (uint8_t)(n); \
-    cp[0] = (uint8_t)((n) >> 8); \
-    cp += 2; \
-  } else { \
-    *cp++ = (uint8_t)(n); \
-  } \
-}
-#define ENCODEZ(n) { \
-  if ((uint16_t)(n) >= 256 || (uint16_t)(n) == 0) { \
-    *cp++ = 0; \
-    cp[1] = (uint8_t)(n); \
-    cp[0] = (uint8_t)((n) >> 8); \
-    cp += 2; \
-  } else { \
-    *cp++ = (uint8_t)(n); \
-  } \
+// ENCODE encodes a number that is known to be non-zero.  ENCODEZ
+// checks for zero (since zero has to be encoded in the long, 3 byte
+// form).
+//
+inline void Encode(const uint16_t n, uint8_t* cp)
+{
+    if (uint16_t(n) >= 256)
+    {
+        *cp++ = 0;
+        cp[1] = uint8_t(n);
+        cp[0] = uint8_t((n) >> 8);
+        cp += 2;
+    }
+    else
+    {
+        *cp++ = uint8_t(n);
+    }
 }
 
-#define DECODEL(f) { \
-  if (*cp == 0) {\
-    uint32_t tmp_ = lwip_ntohl(f) + ((cp[1] << 8) | cp[2]); \
-    (f) = lwip_htonl(tmp_); \
-    cp += 3; \
-  } else { \
-    uint32_t tmp_ = lwip_ntohl(f) + (uint32_t)*cp++; \
-    (f) = lwip_htonl(tmp_); \
-  } \
+inline void Encodez(const uint16_t n, uint8_t* cp)
+{
+    if (uint16_t(n) >= 256 || uint16_t(n) == 0)
+    {
+        *cp++ = 0;
+        cp[1] = uint8_t(n);
+        cp[0] = uint8_t((n) >> 8);
+        cp += 2;
+    }
+    else
+    {
+        *cp++ = uint8_t(n);
+    }
 }
 
-#define DECODES(f) { \
-  if (*cp == 0) {\
-    uint16_t tmp_ = lwip_ntohs(f) + (((uint16_t)cp[1] << 8) | cp[2]); \
-    (f) = lwip_htons(tmp_); \
-    cp += 3; \
-  } else { \
-    uint16_t tmp_ = lwip_ntohs(f) + (uint16_t)*cp++; \
-    (f) = lwip_htons(tmp_); \
-  } \
+inline void DecodeLong(uint32_t f, uint8_t* cp)
+{
+    if (*cp == 0)
+    {
+        auto tmp_ = lwip_ntohl(f) + ((cp[1] << 8) | cp[2]);
+        (f) = lwip_htonl(tmp_);
+        cp += 3;
+    }
+    else
+    {
+        auto tmp_ = lwip_ntohl(f) + uint32_t(*cp++);
+        (f) = lwip_htonl(tmp_);
+    }
 }
 
-#define DECODEU(f) { \
-  if (*cp == 0) {\
-    (f) = lwip_htons(((uint16_t)cp[1] << 8) | cp[2]); \
-    cp += 3; \
-  } else { \
-    (f) = lwip_htons((uint16_t)*cp++); \
-  } \
+inline void DecodeShort(uint16_t f, uint8_t* cp)
+{
+    if (*cp == 0)
+    {
+        uint16_t tmp_ = lwip_ntohs(f) + ((uint16_t(cp[1]) << 8) | cp[2]);
+        (f) = lwip_htons(tmp_);
+        cp += 3;
+    }
+    else
+    {
+        uint16_t tmp_ = lwip_ntohs(f) + uint16_t(*cp++);
+        (f) = lwip_htons(tmp_);
+    }
+}
+
+inline uint16_t DECODEU(uint16_t f, uint8_t* cp) { 
+  if (*cp == 0) {
+    f = lwip_htons(uint16_t(cp[1]) << 8 | cp[2]); 
+    cp += 3; 
+  } else { 
+    (f) = lwip_htons(uint16_t(*cp++)); 
+  } 
 }
 
 /* Helper structures for unaligned *uint32_t and *uint16_t accesses */
 
 struct vj_uint32_t
 {
-    PACK_STRUCT_FIELD(uint32_t v);
-} PACK_STRUCT_STRUCT;
+    uint32_t v;
+} ;
 
 struct vj_u16_t
 {
-    PACK_STRUCT_FIELD(uint16_t v);
-} PACK_STRUCT_STRUCT;
+    uint16_t v;
+} ;
 
 /*
  * vj_compress_tcp - Attempt to do Van Jacobson header compression on a
@@ -157,12 +174,12 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
      * `compressible' (i.e., ACK isn't set or some other control bit is
      * set).
      */
-    if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || np->tot_len < 40)
+    if ((IPH_OFFSET(ip) & PpHtons(0x3fff)) || np->tot_len < 40)
     {
         return (kTypeIp);
     }
-    auto th = reinterpret_cast<struct tcp_hdr *>(&reinterpret_cast<struct vj_uint32_t*>(ip)[ilen]);
-    if ((TCPH_FLAGS(th) & (TCP_SYN | TCP_FIN | TCP_RST | TCP_ACK)) != TCP_ACK)
+    auto th = reinterpret_cast<struct TcpHdr *>(&reinterpret_cast<struct vj_uint32_t*>(ip)[ilen]);
+    if ((TCPH_FLAGS(th) & (TCP_SYN | TCP_FIN | kTcpRst | kTcpAck)) != kTcpAck)
     {
         return (kTypeIp);
     }
@@ -256,7 +273,7 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
         }
     }
 
-    struct tcp_hdr* oth = (struct tcp_hdr *)&((struct vj_uint32_t*)&cs->cs_ip)[ilen];
+    struct TcpHdr* oth = (struct TcpHdr *)&((struct vj_uint32_t*)&cs->cs_ip)[ilen];
     uint16_t deltaS = ilen;
 
     /*
@@ -286,10 +303,10 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
      * ack, seq (the order minimizes the number of temporaries
      * needed in this section of code).
      */
-    if (TCPH_FLAGS(th) & TCP_URG)
+    if (TCPH_FLAGS(th) & kTcpUrg)
     {
         deltaS = lwip_ntohs(th->urgp);
-        ENCODEZ(deltaS);
+        Encodez(deltaS);
         changes |= NEW_U;
     }
     else if (th->urgp != oth->urgp)
@@ -303,7 +320,7 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
 
     if ((deltaS = (uint16_t)(lwip_ntohs(th->wnd) - lwip_ntohs(oth->wnd))) != 0)
     {
-        ENCODE(deltaS);
+        Encode(deltaS, cp);
         changes |= NEW_W;
     }
 
@@ -314,7 +331,7 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
             goto uncompressed;
         }
         deltaA = (uint16_t)delta_l;
-        ENCODE(deltaA);
+        Encode(deltaA, cp);
         changes |= NEW_A;
     }
 
@@ -325,7 +342,7 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
             goto uncompressed;
         }
         deltaS = (uint16_t)delta_l;
-        ENCODE(deltaS);
+        Encode(deltaS, cp);
         changes |= NEW_S;
     }
 
@@ -380,10 +397,10 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
     deltaS = (uint16_t)(lwip_ntohs(IPH_ID(ip)) - lwip_ntohs(IPH_ID(&cs->cs_ip)));
     if (deltaS != 1)
     {
-        ENCODEZ(deltaS);
+        Encodez(deltaS);
         changes |= NEW_I;
     }
-    if (TCPH_FLAGS(th) & TCP_PSH)
+    if (TCPH_FLAGS(th) & kTcpPsh)
     {
         changes |= TCP_PUSH_BIT;
     }
@@ -470,8 +487,8 @@ vj_uncompress_uncomp(struct pbuf* nb, struct vjcompress* comp)
     ip = (struct ip_hdr *)nb->payload;
     hlen = IPH_HL(ip) << 2;
     if (IPH_PROTO(ip) >= MAX_SLOTS
-        || hlen + sizeof(struct tcp_hdr) > nb->len
-        || (hlen += TCPH_HDRLEN_BYTES((struct tcp_hdr *)&((char *)ip)[hlen]))
+        || hlen + sizeof(struct TcpHdr) > nb->len
+        || (hlen += TcphHdrlenBytes((struct TcpHdr *)&((char *)ip)[hlen]))
         > nb->len
         || hlen > MAX_HDR)
     {
@@ -503,7 +520,7 @@ int
 vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
 {
     uint8_t* cp;
-    struct tcp_hdr* th;
+    struct TcpHdr* th;
     struct Cstate* cs;
     struct vj_u16_t* bp;
     struct pbuf* n0 = *nb;
@@ -545,16 +562,16 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
     }
     cs = &comp->rstate[comp->last_recv];
     hlen = IPH_HL(&cs->cs_ip) << 2;
-    th = (struct tcp_hdr *)&((uint8_t*)&cs->cs_ip)[hlen];
+    th = (struct TcpHdr *)&((uint8_t*)&cs->cs_ip)[hlen];
     th->chksum = lwip_htons((*cp << 8) | cp[1]);
     cp += 2;
     if (changes & TCP_PUSH_BIT)
     {
-        TCPH_SET_FLAG(th, TCP_PSH);
+        TCPH_SET_FLAG(th, kTcpPsh);
     }
     else
     {
-        TCPH_UNSET_FLAG(th, TCP_PSH);
+        TCPH_UNSET_FLAG(th, kTcpPsh);
     }
 
     switch (changes & SPECIALS_MASK)
@@ -579,30 +596,30 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
     default:
         if (changes & NEW_U)
         {
-            TCPH_SET_FLAG(th, TCP_URG);
+            TCPH_SET_FLAG(th, kTcpUrg);
             DECODEU(th->urgp);
         }
         else
         {
-            TCPH_UNSET_FLAG(th, TCP_URG);
+            TCPH_UNSET_FLAG(th, kTcpUrg);
         }
         if (changes & NEW_W)
         {
-            DECODES(th->wnd);
+            DecodeShort(th->wnd);
         }
         if (changes & NEW_A)
         {
-            DECODEL(th->ackno);
+            DecodeLong(th->ackno);
         }
         if (changes & NEW_S)
         {
-            DECODEL(th->seqno);
+            DecodeLong(th->seqno);
         }
         break;
     }
     if (changes & NEW_I)
     {
-        DECODES(cs->cs_ip._id);
+        DecodeShort(cs->cs_ip._id);
     }
     else
     {
@@ -653,42 +670,42 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
         goto bad;
     }
 
-    if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
-    {
-        struct pbuf* np;
-
-#if IP_FORWARD
-    /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
-     * the packet is being allocated with enough header space to be
-     * forwarded (to Ethernet for example).
-     */
-    np = pbuf_alloc(PBUF_LINK, n0->len + cs->cs_hlen, PBUF_POOL);
-#else /* IP_FORWARD */
-        np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
-#endif /* IP_FORWARD */
-        if (!np)
-        {
-            PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
-            goto bad;
-        }
-
-        if (pbuf_remove_header(np, cs->cs_hlen))
-        {
-            /* Can we cope with this failing?  Just assert for now */
-            LWIP_ASSERT("pbuf_remove_header failed\n", 0);
-            goto bad;
-        }
-
-        pbuf_take(np, n0->payload, n0->len);
-
-        if (n0->next)
-        {
-            pbuf_chain(np, n0->next);
-            pbuf_dechain(n0);
-        }
-        pbuf_free(n0);
-        n0 = np;
-    }
+//     if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
+//     {
+//         struct pbuf* np;
+//
+// #if IP_FORWARD
+//     /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
+//      * the packet is being allocated with enough header space to be
+//      * forwarded (to Ethernet for example).
+//      */
+//     np = pbuf_alloc(PBUF_LINK, n0->len + cs->cs_hlen, PBUF_POOL);
+// #else /* IP_FORWARD */
+//         np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
+// #endif /* IP_FORWARD */
+//         if (!np)
+//         {
+//             PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
+//             goto bad;
+//         }
+//
+//         if (pbuf_remove_header(np, cs->cs_hlen))
+//         {
+//             /* Can we cope with this failing?  Just assert for now */
+//             LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+//             goto bad;
+//         }
+//
+//         pbuf_take(np, n0->payload, n0->len);
+//
+//         if (n0->next)
+//         {
+//             pbuf_chain(np, n0->next);
+//             pbuf_dechain(n0);
+//         }
+//         pbuf_free(n0);
+//         n0 = np;
+//     }
 
     if (pbuf_add_header(n0, cs->cs_hlen))
     {

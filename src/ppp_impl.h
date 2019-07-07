@@ -1,41 +1,9 @@
-/*****************************************************************************
-* ppp.h - Network Point to Point Protocol header file.
-*
-* Copyright (c) 2003 by Marc Boucher, Services Informatiques (MBSI) inc.
-* portions Copyright (c) 1997 Global Election Systems Inc.
-*
-* The authors hereby grant permission to use, copy, modify, distribute,
-* and license this software and its documentation for any purpose, provided
-* that existing copyright notices are retained in all copies and that this
-* notice and the following disclaimer are included verbatim in any
-* distributions. No written agreement, license, or royalty fee is required
-* for any of the authorized uses.
-*
-* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS *AS IS* AND ANY EXPRESS OR
-* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-******************************************************************************
-* REVISION HISTORY
-*
-* 03-01-01 Marc Boucher <marc@mbsi.ca>
-*   Ported to lwIP.
-* 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-*   Original derived from BSD codes.
-*****************************************************************************/
 #pragma once
 
 #include "ppp_opts.h"
 #include <cstdarg>
 #include <cstring>
-#include <cstdlib> /* strtol() */
+#include <cstdlib>
 #include "netif.h"
 #include "def.h"
 #include "timeouts.h"
@@ -47,50 +15,39 @@
 extern "C" {
 #endif
 
-/*
- * Memory used for control packets.
- *
- * PPP_CTRL_PBUF_MAX_SIZE is the amount of memory we allocate when we
- * cannot figure out how much we are going to use before filling the buffer.
- */
-// #define PPP_CTRL_PBUF_TYPE       PBUF_RAM
 constexpr auto kPppCtrlPbufMaxSize = 512;
 
-
-/*
- * The basic PPP frame.
- */
-#define PPP_ADDRESS(p)	(((uint8_t *)(p))[0])
-#define PPP_CONTROL(p)	(((uint8_t *)(p))[1])
-#define PPP_PROTOCOL(p)	((((uint8_t *)(p))[2] << 8) + ((uint8_t *)(p))[3])
+// #define PPP_ADDRESS(p)	(((uint8_t *)(p))[0])
+// #define PPP_CONTROL(p)	(((uint8_t *)(p))[1])
+// #define PPP_PROTOCOL(p)	((((uint8_t *)(p))[2] << 8) + ((uint8_t *)(p))[3])
 
 /*
  * Significant octet values.
  */
 constexpr auto PPP_ALLSTATIONS = 0xff	/* All-Stations broadcast address */;
 constexpr auto PPP_UI = 0x03	/* Unnumbered Information */;
-constexpr auto PPP_FLAG = 0x7e	/* Flag Sequence */;
-constexpr auto PPP_ESCAPE = 0x7d	/* Asynchronous Control Escape */;
-constexpr auto PPP_TRANS = 0x20	/* Asynchronous transparency modifier */;
+constexpr auto kPppFlag = 0x7e	/* Flag Sequence */;
+constexpr auto kPppEscape = 0x7d	/* Asynchronous Control Escape */;
+constexpr auto kPppTrans = 0x20	/* Asynchronous transparency modifier */;
 
 /*
  * Protocol field values.
  */
-#define PPP_IP		0x21	/* Internet Protocol */
-#define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
-#define	PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
-#define PPP_IPV6	0x57	/* Internet Protocol Version 6 */
-#define PPP_COMP	0xfd	/* compressed packet */
-#define PPP_IPCP	0x8021	/* IP Control Protocol */
-#define PPP_IPV6CP	0x8057	/* IPv6 Control Protocol */
-#define PPP_CCP		0x80fd	/* Compression Control Protocol */
-#define PPP_ECP		0x8053	/* Encryption Control Protocol */
-#define PPP_LCP		0xc021	/* Link Control Protocol */
-#define PPP_PAP		0xc023	/* Password Authentication Protocol */
-#define PPP_LQR		0xc025	/* Link Quality Report protocol */
-#define PPP_CHAP	0xc223	/* Cryptographic Handshake Auth. Protocol */
-#define PPP_CBCP	0xc029	/* Callback Control Protocol */
-#define PPP_EAP		0xc227	/* Extensible Authentication Protocol */
+constexpr auto PPP_IP = 0x21	/* Internet Protocol */;
+constexpr auto PPP_VJC_COMP = 0x2d	/* VJ compressed TCP */;
+constexpr auto PPP_VJC_UNCOMP = 0x2f	/* VJ uncompressed TCP */;
+constexpr auto PPP_IPV6 = 0x57	/* Internet Protocol Version 6 */;
+constexpr auto PPP_COMP = 0xfd	/* compressed packet */;
+constexpr auto PPP_IPCP = 0x8021	/* IP Control Protocol */;
+constexpr auto PPP_IPV6CP = 0x8057	/* IPv6 Control Protocol */;
+constexpr auto PPP_CCP = 0x80fd	/* Compression Control Protocol */;
+constexpr auto PPP_ECP = 0x8053	/* Encryption Control Protocol */;
+constexpr auto PPP_LCP = 0xc021	/* Link Control Protocol */;
+constexpr auto PPP_PAP = 0xc023	/* Password Authentication Protocol */;
+constexpr auto PPP_LQR = 0xc025	/* Link Quality Report protocol */;
+constexpr auto PPP_CHAP = 0xc223	/* Cryptographic Handshake Auth. Protocol */;
+constexpr auto PPP_CBCP = 0xc029	/* Callback Control Protocol */;
+constexpr auto PPP_EAP = 0xc227	/* Extensible Authentication Protocol */;
 
 
 /*
@@ -119,7 +76,7 @@ struct LinkCallbacks {
 /*
  * What to do with network protocol (NP) packets.
  */
-enum NPmode {
+enum PppNetworkProtoMode {
     NPMODE_PASS,		/* pass the packet through */
     NPMODE_DROP,		/* silently drop the packet */
     NPMODE_ERROR,		/* return an error */
@@ -137,12 +94,12 @@ struct PppIdle {
 
 
 /* values for epdisc.class */
-#define EPD_NULL	0	/* null discriminator, no data */
-#define EPD_LOCAL	1
-#define EPD_IP		2
-#define EPD_MAC		3
-#define EPD_MAGIC	4
-#define EPD_PHONENUM	5
+constexpr auto EPD_NULL = 0	/* null discriminator, no data */;
+constexpr auto EPD_LOCAL = 1;
+constexpr auto EPD_IP = 2;
+constexpr auto EPD_MAC = 3;
+constexpr auto EPD_MAGIC = 4;
+constexpr auto EPD_PHONENUM = 5;
 
 /*
  * Global variables.
@@ -160,12 +117,12 @@ extern int       maxoctets_dir;      /* Direction :
 				      2 - out
 				      3 - max(in,out) */
 extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
-#define PPP_OCTETS_DIRECTION_SUM        0
-#define PPP_OCTETS_DIRECTION_IN         1
-#define PPP_OCTETS_DIRECTION_OUT        2
-#define PPP_OCTETS_DIRECTION_MAXOVERAL  3
+constexpr auto PPP_OCTETS_DIRECTION_SUM = 0;
+constexpr auto PPP_OCTETS_DIRECTION_IN = 1;
+constexpr auto PPP_OCTETS_DIRECTION_OUT = 2;
+constexpr auto PPP_OCTETS_DIRECTION_MAXOVERAL = 3;
 /* same as previos, but little different on RADIUS side */
-#define PPP_OCTETS_DIRECTION_MAXSESSION 4
+constexpr auto PPP_OCTETS_DIRECTION_MAXSESSION = 4;
 
 /* Data input may be used by CCP and ECP, remove this entry
  * from struct protent to save some flash
@@ -179,21 +136,21 @@ extern const struct Protent* const kProtocols[];
 
 
 /* Values for auth_pending, auth_done */
-#define PAP_WITHPEER	0x1
-#define PAP_PEER	0x2
-#define CHAP_WITHPEER	0x4
-#define CHAP_PEER	0x8
-#define EAP_WITHPEER	0x10
-#define EAP_PEER	0x20
+constexpr auto PAP_WITHPEER = 0x1;
+constexpr auto PAP_PEER = 0x2;
+constexpr auto CHAP_WITHPEER = 0x4;
+constexpr auto CHAP_PEER = 0x8;
+constexpr auto EAP_WITHPEER = 0x10;
+constexpr auto EAP_PEER = 0x20;
 
 /* Values for auth_done only */
-#define CHAP_MD5_WITHPEER	0x40
-#define CHAP_MD5_PEER		0x80
-#define CHAP_MS_SHIFT		8	/* LSB position for MS auths */
-#define CHAP_MS_WITHPEER	0x100
-#define CHAP_MS_PEER		0x200
-#define CHAP_MS2_WITHPEER	0x400
-#define CHAP_MS2_PEER		0x800
+constexpr auto CHAP_MD5_WITHPEER = 0x40;
+constexpr auto CHAP_MD5_PEER = 0x80;
+constexpr auto CHAP_MS_SHIFT = 8	/* LSB position for MS auths */;
+constexpr auto CHAP_MS_WITHPEER = 0x100;
+constexpr auto CHAP_MS_PEER = 0x200;
+constexpr auto CHAP_MS2_WITHPEER = 0x400;
+constexpr auto CHAP_MS2_PEER = 0x800;
 
 /* Supported CHAP protocols */
 #define CHAP_MDTYPE_SUPPORTED (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
@@ -325,10 +282,26 @@ const char * protocol_name(int proto);
 /*
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
  */
-#define TIMEOUT(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
-#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-#define UNTIMEOUT(f, a)         sys_untimeout((f), (a))
+// #define TIMEOUT(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
 
+inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t time)
+{
+    sys_untimeout(timeout_fn, arg);
+    sys_timeout(time * 1000, timeout_fn, arg);
+}
+
+
+//#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
+inline void Timeoutms(sys_timeout_handler time_fn, void* arg, const uint32_t time)
+{
+    sys_untimeout(time_fn, arg);
+    sys_timeout(time * 1000, time_fn, arg);
+}
+    
+    
+inline void Untimeout(sys_timeout_handler time_fn, void* arg) {
+    sys_untimeout((time_fn), (arg));
+}
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 
@@ -392,8 +365,8 @@ void mp_check_options (void); /* Check multilink-related options */
 int  mp_join_bundle (void);  /* join our link to an appropriate bundle */
 void mp_exit_bundle (void);  /* have disconnected our link from bundle */
 void mp_bundle_terminated (void);
-char *epdisc_to_str (struct epdisc *); /* string from endpoint discrim. */
-int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
+char *epdisc_to_str (struct Epdisc *); /* string from endpoint discrim. */
+int  str_to_epdisc (struct Epdisc *, char *); /* endpt disc. from str */
 
 
 /* Procedures exported from utils.c. */

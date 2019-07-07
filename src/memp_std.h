@@ -17,19 +17,19 @@
  * If the include'r doesn't require any special treatment of each of the types
  * above, then will declare #2 & #3 to be just standard mempools.
  */
-#ifndef LWIP_MALLOC_MEMPOOL
-/* This treats "malloc pools" just like any other pool.
-   The pools are a little bigger to provide 'size' as the amount of user data. */
-#define LWIP_MALLOC_MEMPOOL(num, size) LWIP_MEMPOOL(POOL_##size, num, (size + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper))), "MALLOC_"#size)
-#define LWIP_MALLOC_MEMPOOL_START
-#define LWIP_MALLOC_MEMPOOL_END
-#endif /* LWIP_MALLOC_MEMPOOL */
+// #ifndef LWIP_MALLOC_MEMPOOL
+// /* This treats "malloc pools" just like any other pool.
+//    The pools are a little bigger to provide 'size' as the amount of user data. */
+// #define LWIP_MALLOC_MEMPOOL(num, size) LWIP_MEMPOOL(POOL_##size, num, (size + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper))), "MALLOC_"#size)
+// #define LWIP_MALLOC_MEMPOOL_START
+// #define LWIP_MALLOC_MEMPOOL_END
+// #endif /* LWIP_MALLOC_MEMPOOL */
 
-#ifndef LWIP_PBUF_MEMPOOL
-/* This treats "pbuf pools" just like any other pool.
- * Allocates buffers for a pbuf struct AND a payload size */
-#define LWIP_PBUF_MEMPOOL(name, num, payload, desc) LWIP_MEMPOOL(name, num, (LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf)) + LWIP_MEM_ALIGN_SIZE(payload)), desc)
-#endif /* LWIP_PBUF_MEMPOOL */
+// #ifndef LWIP_PBUF_MEMPOOL
+// /* This treats "pbuf pools" just like any other pool.
+//  * Allocates buffers for a pbuf struct AND a payload size */
+// #define LWIP_PBUF_MEMPOOL(name, num, payload, desc) LWIP_MEMPOOL(name, num, (LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf)) + LWIP_MEM_ALIGN_SIZE(payload)), desc)
+// #endif /* LWIP_PBUF_MEMPOOL */
 
 
 /*
@@ -47,13 +47,13 @@ LWIP_MEMPOOL(RAW_PCB,        MEMP_NUM_RAW_PCB,         sizeof(struct raw_pcb),  
 #endif /* LWIP_UDP */
 
 #if LWIP_TCP
-// LWIP_MEMPOOL(TCP_PCB,        MEMP_NUM_TCP_PCB,         sizeof(struct tcp_pcb),        "TCP_PCB")
+// LWIP_MEMPOOL(TCP_PCB,        MEMP_NUM_TCP_PCB,         sizeof(struct TcpProtoCtrlBlk),        "TCP_PCB")
 // LWIP_MEMPOOL(TCP_PCB_LISTEN, MEMP_NUM_TCP_PCB_LISTEN,  sizeof(struct tcp_pcb_listen), "TCP_PCB_LISTEN")
 // LWIP_MEMPOOL(TCP_SEG,        MEMP_NUM_TCP_SEG,         sizeof(struct tcp_seg),        "TCP_SEG")
 #endif /* LWIP_TCP */
 
 #if LWIP_ALTCP && LWIP_TCP
-LWIP_MEMPOOL(ALTCP_PCB,      MEMP_NUM_ALTCP_PCB,       sizeof(struct altcp_pcb),      "ALTCP_PCB")
+LWIP_MEMPOOL(ALTCP_PCB,      MEMP_NUM_ALTCP_PCB,       sizeof(struct AltcpPcb),      "ALTCP_PCB")
 #endif /* LWIP_ALTCP && LWIP_TCP */
 
 #if LWIP_IPV4 && IP_REASSEMBLY
@@ -65,7 +65,7 @@ LWIP_MEMPOOL(ALTCP_PCB,      MEMP_NUM_ALTCP_PCB,       sizeof(struct altcp_pcb),
 
 #if LWIP_NETCONN || LWIP_SOCKET
 // LWIP_MEMPOOL(NETBUF,         MEMP_NUM_NETBUF,          sizeof(struct netbuf),         "NETBUF")
-// LWIP_MEMPOOL(NETCONN,        MEMP_NUM_NETCONN,         sizeof(struct netconn),        "NETCONN")
+// LWIP_MEMPOOL(NETCONN,        MEMP_NUM_NETCONN,         sizeof(struct NetconnDesc),        "NETCONN")
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #if NO_SYS==0

@@ -1,16 +1,9 @@
 /**
  * @file
- * Application layered TCP connection API (to be used from TCPIP thread)\n
- * This interface mimics the tcp callback API to the application while preventing
- * direct linking (much like virtual functions).
- * This way, an application can make use of other application layer protocols
- * on top of TCP without knowing the details (e.g. TLS, proxy connection).
- *
- * This file contains the base implementation calling into tcp.
+ * lwIP Error codes
  */
-
 /*
- * Copyright (c) 2017 Simon Goldschmidt
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -37,36 +30,64 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Simon Goldschmidt <goldsimon@gmx.de>
+ * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_ALTCP_TCP_H
-#define LWIP_HDR_ALTCP_TCP_H
+#pragma once
 
 #include "opt.h"
-
-#if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
-
-#include "altcp.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct altcp_pcb *altcp_tcp_new_ip_type(uint8_t ip_type);
+/** Definitions for error constants. */
+typedef enum {
+/** No error, everything OK. */
+  ERR_OK         = 0,
+/** Out of memory error.     */
+  ERR_MEM        = -1,
+/** Buffer error.            */
+  ERR_BUF        = -2,
+/** Timeout.                 */
+  ERR_TIMEOUT    = -3,
+/** Routing problem.         */
+  ERR_RTE        = -4,
+/** Operation in progress    */
+  ERR_INPROGRESS = -5,
+/** Illegal value.           */
+  ERR_VAL        = -6,
+/** Operation would block.   */
+  ERR_WOULDBLOCK = -7,
+/** Address in use.          */
+  ERR_USE        = -8,
+/** Already connecting.      */
+  ERR_ALREADY    = -9,
+/** Conn already established.*/
+  ERR_ISCONN     = -10,
+/** Not connected.           */
+  ERR_CONN       = -11,
+/** Low-level netif error    */
+  ERR_IF         = -12,
+/** Connection aborted.      */
+  ERR_ABRT       = -13,
+/** Connection reset.        */
+  ERR_RST        = -14,
+/** Connection closed.       */
+  ERR_CLSD       = -15,
+/** Illegal argument.        */
+  ERR_ARG        = -16
+} err_enum_t;
 
-#define altcp_tcp_new() altcp_tcp_new_ip_type(IPADDR_TYPE_V4)
-#define altcp_tcp_new_ip6() altcp_tcp_new_ip_type(IPADDR_TYPE_V6)
+/** Define LWIP_ERR_T in cc.h if you want to use
+ *  a different type for your platform (must be signed). */
+typedef int err_t;
 
-struct altcp_pcb *altcp_tcp_alloc(void *arg, uint8_t ip_type);
+extern const char *lwip_strerr(err_t err);
 
-struct tcp_pcb;
-struct altcp_pcb *altcp_tcp_wrap(struct tcp_pcb *tpcb);
+int err_to_errno(err_t err);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_ALTCP */
-
-#endif /* LWIP_HDR_ALTCP_TCP_H */

@@ -85,13 +85,13 @@
 
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
 /** context memory, containing IPv6 addresses */
-static ip6_addr_t rfc7668_context[LWIP_6LOWPAN_NUM_CONTEXTS];
+static Ip6Addr rfc7668_context[LWIP_6LOWPAN_NUM_CONTEXTS];
 #else
 #define rfc7668_context NULL
 #endif
 
-static struct lowpan6_link_addr rfc7668_local_addr;
-static struct lowpan6_link_addr rfc7668_peer_addr;
+static struct Lowpan6LinkAddr rfc7668_local_addr;
+static struct Lowpan6LinkAddr rfc7668_peer_addr;
 
 /**
  * @ingroup rfc7668if
@@ -148,7 +148,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
  * This expects an address of 6 or 8 bytes.
  */
 static err_t
-rfc7668_set_addr(struct lowpan6_link_addr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
+rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
   if ((in_addr == nullptr) || (addr == nullptr)) {
     return ERR_VAL;
@@ -298,7 +298,7 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
  * @return ERR_OK (if everything is fine), ERR_ARG (if the context id is out of range), ERR_VAL (if contexts disabled)
  */
 err_t
-rfc7668_set_context(uint8_t idx, const ip6_addr_t *context)
+rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
 {
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   /* check if the ID is possible */
@@ -326,11 +326,9 @@ rfc7668_set_context(uint8_t idx, const ip6_addr_t *context)
  * @return See rfc7668_compress
  */
 err_t
-rfc7668_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
+rfc7668_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
-  LWIP_UNUSED_ARG(ip6addr);
-
   return rfc7668_compress(netif, q);
 }
 

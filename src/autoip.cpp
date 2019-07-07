@@ -462,7 +462,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
      * we have a conflict and must solve it
      */
     ip4_addr_t sipaddr, dipaddr;
-    struct eth_addr netifaddr;
+    struct EthAddr netifaddr;
     SMEMCPY(netifaddr.addr, netif->hwaddr, ETH_HWADDR_LEN);
 
     /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without

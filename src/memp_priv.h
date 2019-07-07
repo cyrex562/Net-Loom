@@ -146,13 +146,13 @@ struct memp_desc {
 
 void memp_init_pool(const struct memp_desc *desc);
 
-#if MEMP_OVERFLOW_CHECK
-void *memp_malloc_pool_fn(const struct memp_desc* desc, const char* file, const int line);
-#define memp_malloc_pool(d) memp_malloc_pool_fn((d), __FILE__, __LINE__)
-#else
-void *memp_malloc_pool(const struct memp_desc *desc);
-#endif
-void  memp_free_pool(const struct memp_desc* desc, void *mem);
+// #if MEMP_OVERFLOW_CHECK
+// void *memp_malloc_pool_fn(const struct memp_desc* desc, const char* file, const int line);
+// #define memp_malloc_pool(d) memp_malloc_pool_fn((d), __FILE__, __LINE__)
+// #else
+// void *memp_malloc_pool(const struct memp_desc *desc);
+// #endif
+// void  memp_free_pool(const struct memp_desc* desc, void *mem);
 
 #ifdef __cplusplus
 }

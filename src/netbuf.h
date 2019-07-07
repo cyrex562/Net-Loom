@@ -1,6 +1,6 @@
 /**
  * @file
- * netbuf API (for netconn API)
+ * netbuf API (for NetconnDesc API)
  */
 
 /*

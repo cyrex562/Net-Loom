@@ -41,7 +41,7 @@
  */
 /**
  * NO_SYS==1: Use lwIP without OS-awareness (no thread, semaphores, mutexes or
- * mboxes). This means threaded APIs cannot be used (socket, netconn,
+ * mboxes). This means threaded APIs cannot be used (socket, NetconnDesc,
  * i.e. everything in the 'api' folder), only the callback-style raw API is
  * available (and you have to watch out for yourself that you don't access
  * lwIP functions/structures from more than one context at a time!)
@@ -407,7 +407,7 @@
 /**
  * MEMP_NUM_ALTCP_PCB: the number of simultaneously active altcp layer pcbs.
  * (requires the LWIP_ALTCP option)
- * Connections with multiple layers require more than one altcp_pcb (e.g. TLS
+ * Connections with multiple layers require more than one AltcpPcb (e.g. TLS
  * over TCP requires 2 altcp_pcbs, one for TLS and one for TCP).
  */
 #if !defined MEMP_NUM_ALTCP_PCB || defined __DOXYGEN__
@@ -535,7 +535,7 @@
 #endif
 
 /** MEMP_NUM_API_MSG: the number of concurrently active calls to various
- * socket, netconn, and tcpip functions
+ * socket, NetconnDesc, and tcpip functions
  */
 #if !defined MEMP_NUM_API_MSG || defined __DOXYGEN__
 #define MEMP_NUM_API_MSG                MEMP_NUM_TCPIP_MSG_API
@@ -622,7 +622,7 @@
  * Additionally, you can define ETHARP_VLAN_CHECK to an uint16_t VLAN ID to check.
  * If ETHARP_VLAN_CHECK is defined, only VLAN-traffic for this VLAN is accepted.
  * If ETHARP_VLAN_CHECK is not defined, all traffic is accepted.
- * Alternatively, define a function/define ETHARP_VLAN_CHECK_FN(eth_hdr, vlan)
+ * Alternatively, define a function/define ETHARP_VLAN_CHECK_FN(EthHdr, vlan)
  * that returns 1 to accept a packet or 0 to drop a packet.
  */
 #if !defined ETHARP_SUPPORT_VLAN || defined __DOXYGEN__
@@ -1417,19 +1417,14 @@
  * When LWIP_WND_SCALE is enabled but TCP_RCV_SCALE is 0, we can use a large
  * send window while having a small receive window only.
  */
-#if !defined LWIP_WND_SCALE || defined __DOXYGEN__
-#define LWIP_WND_SCALE                  0
-#define TCP_RCV_SCALE                   0
-#endif
 
 /**
  * LWIP_TCP_PCB_NUM_EXT_ARGS:
  * When this is > 0, every tcp pcb (including listen pcb) includes a number of
  * additional argument entries in an array (see tcp_ext_arg_alloc_id)
  */
-#if !defined LWIP_TCP_PCB_NUM_EXT_ARGS || defined __DOXYGEN__
-#define LWIP_TCP_PCB_NUM_EXT_ARGS       0
-#endif
+constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
+
 
 /** LWIP_ALTCP==1: enable the altcp API.
  * altcp is an abstraction layer that prevents applications linking against the
@@ -1849,8 +1844,8 @@
 #endif
 
 /** LWIP_NETCONN_SEM_PER_THREAD==1: Use one (thread-local) semaphore per
- * thread calling socket/netconn functions instead of allocating one
- * semaphore per netconn (and per select etc.)
+ * thread calling socket/NetconnDesc functions instead of allocating one
+ * semaphore per NetconnDesc (and per select etc.)
  * ATTENTION: a thread-local semaphore for API calls is needed:
  * - LWIP_NETCONN_THREAD_SEM_GET() returning a sys_sem_t*
  * - LWIP_NETCONN_THREAD_SEM_ALLOC() creating the semaphore
@@ -1865,7 +1860,7 @@
 /** LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread,
  * writing from a 2nd thread and closing from a 3rd thread at the same time.
  * ATTENTION: This is currently really alpha! Some requirements:
- * - LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from
+ * - LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/NetconnDesc from
  *   multiple threads at once
  * - sys_mbox_free() has to unblock receive tasks waiting on recvmbox/acceptmbox
  *   and prevent a task pending on this during/after deletion
@@ -1979,7 +1974,7 @@
 #endif
 
 /**
- * By default, TCP socket/netconn close waits 20 seconds max to send the FIN
+ * By default, TCP socket/NetconnDesc close waits 20 seconds max to send the FIN
  */
 #if !defined LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT || defined __DOXYGEN__
 #define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 20000
@@ -2014,9 +2009,9 @@
 #endif
 
 /**
- * LWIP_SOCKET_SELECT==1 (default): enable select() for sockets (uses a netconn
+ * LWIP_SOCKET_SELECT==1 (default): enable select() for sockets (uses a NetconnDesc
  * callback to keep track of events).
- * This saves RAM (counters per socket) and code (netconn event callback), which
+ * This saves RAM (counters per socket) and code (NetconnDesc event callback), which
  * should improve performance a bit).
  */
 #if !defined LWIP_SOCKET_SELECT || defined __DOXYGEN__
@@ -2321,9 +2316,7 @@
 /**
  * LWIP_IPV6==1: Enable IPv6
  */
-#if !defined LWIP_IPV6 || defined __DOXYGEN__
-#define LWIP_IPV6                       0
-#endif
+#define LWIP_IPV6
 
 /**
  * IPV6_REASS_MAXAGE: Maximum time (in multiples of IP6_REASS_TMR_INTERVAL - so seconds, normally)
@@ -2723,10 +2716,10 @@
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
  * Signature:\code{.c}
- * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
+ * err_t my_hook_tcp_inpkt(struct TcpProtoCtrlBlk *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
  * \endcode
  * Arguments:
- * - pcb: tcp_pcb selected for input of this packet (ATTENTION: this may be
+ * - pcb: TcpProtoCtrlBlk selected for input of this packet (ATTENTION: this may be
  *        struct tcp_pcb_listen if pcb->state == LISTEN)
  * - hdr: pointer to tcp header (ATTENTION: tcp options may not be in one piece!)
  * - optlen: tcp option length
@@ -2754,10 +2747,10 @@
  * Together with LWIP_HOOK_TCP_OUT_ADD_TCPOPTS, this can be used to add custom
  * options to outgoing tcp segments.
  * Signature:\code{.c}
- * uint8_t my_hook_tcp_out_tcpopt_length(const struct tcp_pcb *pcb, uint8_t internal_option_length);
+ * uint8_t my_hook_tcp_out_tcpopt_length(const struct TcpProtoCtrlBlk *pcb, uint8_t internal_option_length);
  * \endcode
  * Arguments:
- * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
+ * - pcb: TcpProtoCtrlBlk that transmits (ATTENTION: this may be NULL or
  *        struct tcp_pcb_listen if pcb->state == LISTEN)
  * - internal_option_length: tcp option length used by the stack internally
  * Return value:
@@ -2775,12 +2768,12 @@
  * Hook for adding custom options to outgoing tcp segments.
  * Space for these custom options has to be reserved via LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH.
  * Signature:\code{.c}
- * uint32_t *my_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, uint32_t *opts);
+ * uint32_t *my_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct TcpProtoCtrlBlk *pcb, uint32_t *opts);
  * \endcode
  * Arguments:
  * - p: output packet, p->payload pointing to tcp header, data follows
  * - hdr: tcp header
- * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
+ * - pcb: TcpProtoCtrlBlk that transmits (ATTENTION: this may be NULL or
  *        struct tcp_pcb_listen if pcb->state == LISTEN)
  * - opts: pointer where to add the custom options (there may already be options
  *         between the header and these)
@@ -2948,21 +2941,21 @@
 #endif
 
 /**
- * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
+ * LWIP_HOOK_VLAN_CHECK(netif, EthHdr, vlan_hdr):
  * Called from ethernet_input() if VLAN support is enabled
  * Signature:\code{.c}
- *   int my_hook(struct netif *netif, struct eth_hdr *eth_hdr, struct eth_vlan_hdr *vlan_hdr);
+ *   int my_hook(struct netif *netif, struct EthHdr *EthHdr, struct eth_vlan_hdr *vlan_hdr);
  * \endcode
  * Arguments:
  * - netif: struct netif on which the packet has been received
- * - eth_hdr: struct eth_hdr of the packet
+ * - EthHdr: struct EthHdr of the packet
  * - vlan_hdr: struct eth_vlan_hdr of the packet
  * Return values:
  * - 0: Packet must be dropped.
  * - != 0: Packet must be accepted.
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr)
+#define LWIP_HOOK_VLAN_CHECK(netif, EthHdr, vlan_hdr)
 #endif
 
 /**
@@ -2971,7 +2964,7 @@
  * on per-netif basis to implement this callback, see @ref netif_cd.
  * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
  * Signature:\code{.c}
- *   s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, uint16_t eth_type);\n
+ *   s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct EthAddr* src, const struct EthAddr* dst, uint16_t eth_type);\n
  * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
@@ -3152,7 +3145,7 @@
 
 /**
  * LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, addrtype, err)
- * Called from netconn APIs (not usable with callback apps) allowing an
+ * Called from NetconnDesc APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
  * Signature:\code{.c}
  *   int my_hook(const char *name, ip_addr_t *addr, uint8_t addrtype, err_t *err)

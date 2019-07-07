@@ -34,13 +34,10 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP4_ADDR_H
-#define LWIP_HDR_IP4_ADDR_H
+#pragma once
 
 #include "opt.h"
 #include "def.h"
-
-#if LWIP_IPV4
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,13 +57,13 @@ typedef struct ip4_addr ip4_addr_t;
 struct netif;
 
 /** 255.255.255.255 */
-#define IPADDR_NONE         ((uint32_t)0xffffffffUL)
+constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
 /** 127.0.0.1 */
-#define IPADDR_LOOPBACK     ((uint32_t)0x7f000001UL)
+constexpr uint32_t IPADDR_LOOPBACK = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
-#define IPADDR_ANY          ((uint32_t)0x00000000UL)
+constexpr uint32_t IPADDR_ANY = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
-#define IPADDR_BROADCAST    ((uint32_t)0xffffffffUL)
+constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
 
 /* Definitions of the bits in an Internet address integer.
 
@@ -101,7 +98,9 @@ struct netif;
 #define IP_LOOPBACKNET      127                 /* official! */
 
 /** Set an IP address given by the four byte-parts */
-#define IP4_ADDR(ipaddr, a,b,c,d)  (ipaddr)->addr = PP_HTONL(LWIP_MAKEU32(a,b,c,d))
+inline void IP4_ADDR(ip4_addr* ipaddr, uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+    (ipaddr)->addr = PP_HTONL(LwipMakeu32(a, b, c, d));
+}
 
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
 #define ip4_addr_copy(dest, src) ((dest).addr = (src).addr)
@@ -211,6 +210,3 @@ char *ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen);
 }
 #endif
 
-#endif /* LWIP_IPV4 */
-
-#endif /* LWIP_HDR_IP_ADDR_H */

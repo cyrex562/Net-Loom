@@ -59,14 +59,14 @@
 
 #include "stats.h"
 
-#include <string.h>
+#include <cstring>
 
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
 #endif
 
-const struct eth_addr ethbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
-const struct eth_addr ethzero = {{0, 0, 0, 0, 0, 0}};
+const struct EthAddr kEthbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
 
 /**
  * @ingroup lwip_nosys
@@ -85,15 +85,15 @@ const struct eth_addr ethzero = {{0, 0, 0, 0, 0, 0}};
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
 {
-  struct eth_hdr *ethhdr;
+  struct EthHdr *ethhdr;
   uint16_t type;
-#if LWIP_ARP || ETHARP_SUPPORT_VLAN || LWIP_IPV6
-  uint16_t next_hdr_offset = SIZEOF_ETH_HDR;
-#endif /* LWIP_ARP || ETHARP_SUPPORT_VLAN */
+
+  uint16_t next_hdr_offset = kSizeofEthHdr;
+
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (p->len <= SIZEOF_ETH_HDR) {
+  if (p->len <= kSizeofEthHdr) {
     /* a packet with only an ethernet header (or less) is not valid for us */
     ETHARP_STATS_INC(etharp.proterr);
     ETHARP_STATS_INC(etharp.drop);
@@ -107,43 +107,36 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   }
 
   /* points to packet payload, which starts with an Ethernet header */
-  ethhdr = (struct eth_hdr *)p->payload;
-//  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
-//              ("ethernet_input: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
-//               (unsigned char)ethhdr->dest.addr[0], (unsigned char)ethhdr->dest.addr[1], (unsigned char)ethhdr->dest.addr[2],
-//               (unsigned char)ethhdr->dest.addr[3], (unsigned char)ethhdr->dest.addr[4], (unsigned char)ethhdr->dest.addr[5],
-//               (unsigned char)ethhdr->src.addr[0],  (unsigned char)ethhdr->src.addr[1],  (unsigned char)ethhdr->src.addr[2],
-//               (unsigned char)ethhdr->src.addr[3],  (unsigned char)ethhdr->src.addr[4],  (unsigned char)ethhdr->src.addr[5],
-//               lwip_htons(ethhdr->type)));
+  ethhdr = (struct EthHdr *)p->payload;
 
   type = ethhdr->type;
-#if ETHARP_SUPPORT_VLAN
-  if (type == PP_HTONS(ETHTYPE_VLAN)) {
-    struct eth_vlan_hdr *vlan = (struct eth_vlan_hdr *)(((char *)ethhdr) + SIZEOF_ETH_HDR);
-    next_hdr_offset = SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR;
-    if (p->len <= SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) {
+
+  if (type == PpHtons(ETHTYPE_VLAN)) {
+    struct EthVlanHdr *vlan = (struct EthVlanHdr *)(((char *)ethhdr) + kSizeofEthHdr);
+    next_hdr_offset = kSizeofEthHdr + kSizeofVlanHdr;
+    if (p->len <= kSizeofEthHdr + kSizeofVlanHdr) {
       /* a packet with only an ethernet/vlan header (or less) is not valid for us */
       ETHARP_STATS_INC(etharp.proterr);
       ETHARP_STATS_INC(etharp.drop);
       MIB2_STATS_NETIF_INC(netif, ifinerrors);
       goto free_and_return;
     }
-#if defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) /* if not, allow all VLANs */
-#ifdef LWIP_HOOK_VLAN_CHECK
+
+
     if (!LWIP_HOOK_VLAN_CHECK(netif, ethhdr, vlan)) {
-#elif defined(ETHARP_VLAN_CHECK_FN)
+
     if (!ETHARP_VLAN_CHECK_FN(ethhdr, vlan)) {
-#elif defined(ETHARP_VLAN_CHECK)
-    if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
-#endif
+
+    if (VlanId(vlan) != ETHARP_VLAN_CHECK) {
+
       /* silently ignore this packet: not for our VLAN */
       pbuf_free(p);
       return ERR_OK;
     }
-#endif /* defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) */
+
     type = vlan->tpid;
   }
-#endif /* ETHARP_SUPPORT_VLAN */
+
 
 #if LWIP_ARP_FILTER_NETIF
   netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
@@ -167,7 +160,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       p->flags |= PBUF_FLAG_LLMCAST;
     }
 #endif /* LWIP_IPV6 */
-    else if (eth_addr_cmp(&ethhdr->dest, &ethbroadcast)) {
+    else if (eth_addr_cmp(&ethhdr->dest, &kEthbroadcast)) {
       /* mark the pbuf as link-layer broadcast */
       p->flags |= PBUF_FLAG_LLBCAST;
     }
@@ -176,8 +169,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   switch (type) {
 #if LWIP_IPV4 && LWIP_ARP
     /* IP packet? */
-    case PP_HTONS(ETHTYPE_IP):
-      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+    case PpHtons(ETHTYPE_IP):
+      if (!(netif->flags & kNetifFlagEtharp)) {
         goto free_and_return;
       }
       /* skip Ethernet header (min. size checked above) */
@@ -193,8 +186,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       }
       break;
 
-    case PP_HTONS(ETHTYPE_ARP):
-      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+    case PpHtons(ETHTYPE_ARP):
+      if (!(netif->flags & kNetifFlagEtharp)) {
         goto free_and_return;
       }
       /* skip Ethernet header (min. size checked above) */
@@ -213,17 +206,17 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       break;
 #endif /* LWIP_IPV4 && LWIP_ARP */
 #if PPPOE_SUPPORT
-    case PP_HTONS(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
+    case PpHtons(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
       pppoe_disc_input(netif, p);
       break;
 
-    case PP_HTONS(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
+    case PpHtons(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
       pppoe_data_input(netif, p);
       break;
 #endif /* PPPOE_SUPPORT */
 
 #if LWIP_IPV6
-    case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
+    case PpHtons(ETHTYPE_IPV6): /* IPv6 */
       /* skip Ethernet header */
       if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
@@ -274,9 +267,9 @@ free_and_return:
  */
 err_t
 ethernet_output(struct netif * netif, struct pbuf * p,
-                const struct eth_addr * src, const struct eth_addr * dst,
+                const struct EthAddr * src, const struct EthAddr * dst,
                 uint16_t eth_type) {
-  struct eth_hdr *ethhdr;
+  struct EthHdr *ethhdr;
   uint16_t eth_type_be = lwip_htons(eth_type);
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
@@ -293,18 +286,18 @@ ethernet_output(struct netif * netif, struct pbuf * p,
     vlanhdr->tpid     = eth_type_be;
     vlanhdr->prio_vid = lwip_htons((uint16_t)vlan_prio_vid);
 
-    eth_type_be = PP_HTONS(ETHTYPE_VLAN);
+    eth_type_be = PpHtons(ETHTYPE_VLAN);
   } else
 #endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   {
-    if (pbuf_add_header(p, SIZEOF_ETH_HDR) != 0) {
+    if (pbuf_add_header(p, kSizeofEthHdr) != 0) {
       goto pbuf_header_failed;
     }
   }
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  ethhdr = (struct eth_hdr *)p->payload;
+  ethhdr = (struct EthHdr *)p->payload;
   ethhdr->type = eth_type_be;
   SMEMCPY(&ethhdr->dest, dst, ETH_HWADDR_LEN);
   SMEMCPY(&ethhdr->src,  src, ETH_HWADDR_LEN);

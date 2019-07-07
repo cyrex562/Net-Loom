@@ -190,7 +190,7 @@ ip4_route(const ip4_addr_t *dest)
         return netif;
       }
       /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
-      if (((netif->flags & NETIF_FLAG_BROADCAST) == 0) && ip4_addr_cmp(dest, netif_ip4_gw(netif))) {
+      if (((netif->flags & kNetifFlagBroadcast) == 0) && ip4_addr_cmp(dest, netif_ip4_gw(netif))) {
         /* return netif on which to forward IP packet */
         return netif;
       }
@@ -344,10 +344,10 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   }
 
   /* Incrementally update the IP checksum. */
-  if (IPH_CHKSUM(iphdr) >= PP_HTONS(0xffffU - 0x100)) {
-    IPH_CHKSUM_SET(iphdr, (uint16_t)(IPH_CHKSUM(iphdr) + PP_HTONS(0x100) + 1));
+  if (IPH_CHKSUM(iphdr) >= PpHtons(0xffffU - 0x100)) {
+    IPH_CHKSUM_SET(iphdr, (uint16_t)(IPH_CHKSUM(iphdr) + PpHtons(0x100) + 1));
   } else {
-    IPH_CHKSUM_SET(iphdr, (uint16_t)(IPH_CHKSUM(iphdr) + PP_HTONS(0x100)));
+    IPH_CHKSUM_SET(iphdr, (uint16_t)(IPH_CHKSUM(iphdr) + PpHtons(0x100)));
   }
 
   LWIP_DEBUGF(IP_DEBUG, ("ip4_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -648,10 +648,10 @@ ip4_input(struct pbuf *p, struct netif *inp)
     return ERR_OK;
   }
   /* packet consists of multiple fragments? */
-  if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
+  if ((IPH_OFFSET(iphdr) & PpHtons(IP_OFFMASK | IP_MF)) != 0) {
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
 //    LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip4_reass()\n",
-//                           lwip_ntohs(IPH_ID(iphdr)), p->tot_len, lwip_ntohs(IPH_LEN(iphdr)), (uint16_t)!!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (uint16_t)((lwip_ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK) * 8)));
+//                           lwip_ntohs(IPH_ID(iphdr)), p->tot_len, lwip_ntohs(IPH_LEN(iphdr)), (uint16_t)!!(IPH_OFFSET(iphdr) & PpHtons(IP_MF)), (uint16_t)((lwip_ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK) * 8)));
     /* reassemble the packet*/
     p = ip4_reass(p);
     /* packet not fully reassembled yet? */
@@ -1094,7 +1094,7 @@ ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-  if ((netif = ip4_route_src(src, dest)) == NULL) {
+  if ((netif = ip4_route_src(src, dest)) == nullptr) {
     LWIP_DEBUGF(IP_DEBUG, ("ip4_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                            ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);

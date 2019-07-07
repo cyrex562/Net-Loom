@@ -34,34 +34,25 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP4_H
-#define LWIP_HDR_IP4_H
+#pragma once
 
 #include "opt.h"
-
-#if LWIP_IPV4
-
 #include "def.h"
 #include "pbuf.h"
 #include "ip4_addr.h"
-#include "err.h"
+#include "lwip_error.h"
 #include "netif.h"
 #include "arch.h"
 
 
  /** This is the packed version of ip4_addr_t,
      used in network headers that are itself packed */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
+
+
 struct ip4_addr_packed {
-    PACK_STRUCT_FIELD(uint32_t addr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+    uint32_t addr;
+} ;
+
 
 typedef struct ip4_addr_packed ip4_addr_p_t;
 
@@ -70,40 +61,34 @@ typedef struct ip4_addr_packed ip4_addr_p_t;
 /* Maximum size of the IPv4 header with options. */
 #define IP_HLEN_MAX 60
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-/* The IPv4 header */
-struct ip_hdr {
-    /* version / header length */
-    PACK_STRUCT_FLD_8(uint8_t _v_hl);
-    /* type of service */
-    PACK_STRUCT_FLD_8(uint8_t _tos);
-    /* total length */
-    PACK_STRUCT_FIELD(uint16_t _len);
-    /* identification */
-    PACK_STRUCT_FIELD(uint16_t _id);
-    /* fragment offset field */
-    PACK_STRUCT_FIELD(uint16_t _offset);
 #define IP_RF 0x8000U        /* reserved fragment flag */
 #define IP_DF 0x4000U        /* don't fragment flag */
 #define IP_MF 0x2000U        /* more fragments flag */
 #define IP_OFFMASK 0x1fffU   /* mask for fragmenting bits */
+
+/* The IPv4 header */
+struct ip_hdr {
+    /* version / header length */
+    uint8_t _v_hl;
+    /* type of service */
+    uint8_t _tos;
+    /* total length */
+    uint16_t _len;
+    /* identification */
+    int16_t _id;
+    /* fragment offset field */
+    uint16_t _offset;
+
     /* time to live */
-    PACK_STRUCT_FLD_8(uint8_t _ttl);
+    uint8_t _ttl;
     /* protocol*/
-    PACK_STRUCT_FLD_8(uint8_t _proto);
+    uint8_t _proto;
     /* checksum */
-    PACK_STRUCT_FIELD(uint16_t _chksum);
+    uint16_t _chksum;
     /* source and destination IP addresses */
-    PACK_STRUCT_FLD_S(ip4_addr_p_t src);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t dest);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#include "epstruct.h"
-#endif
+    ip4_addr_t src;
+    ip4_addr_t dest;
+};
 
 /* Macros to get struct ip_hdr fields: */
 #define IPH_V(hdr)  ((hdr)->_v_hl >> 4)
@@ -134,22 +119,17 @@ PACK_STRUCT_END
 extern "C" {
 #endif
 
-#ifdef LWIP_HOOK_IP4_ROUTE_SRC
 #define LWIP_IPV4_SRC_ROUTING   1
-#else
-#define LWIP_IPV4_SRC_ROUTING   0
-#endif
+
 
 /** Currently, the function ip_output_if_opt() is only used with IGMP */
 #define IP_OPTIONS_SEND   (LWIP_IPV4 && LWIP_IGMP)
 
 #define ip_init() /* Compatibility define, no init needed. */
 struct netif *ip4_route(const ip4_addr_t *dest);
-#if LWIP_IPV4_SRC_ROUTING
+
 struct netif *ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest);
-#else /* LWIP_IPV4_SRC_ROUTING */
-#define ip4_route_src(src, dest) ip4_route(dest)
-#endif /* LWIP_IPV4_SRC_ROUTING */
+
 err_t ip4_input(struct pbuf *p, struct netif *inp);
 err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto);
@@ -157,37 +137,30 @@ err_t ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *des
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
 err_t ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
-#if LWIP_NETIF_USE_HINTS
+
 err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint);
-#endif /* LWIP_NETIF_USE_HINTS */
-#if IP_OPTIONS_SEND
+
+
 err_t ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
 err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
-#endif /* IP_OPTIONS_SEND */
 
-#if LWIP_MULTICAST_TX_OPTIONS
 void  ip4_set_default_multicast_netif(struct netif* default_multicast_netif);
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
+
 
 #define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? netif_ip_addr4(netif) : NULL)
 
-#if IP_DEBUG
+
 void ip4_debug_print(struct pbuf *p);
-#else
-#define ip4_debug_print(p)
-#endif /* IP_DEBUG */
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_IPV4 */
-
-#endif /* LWIP_HDR_IP_H */
 
 

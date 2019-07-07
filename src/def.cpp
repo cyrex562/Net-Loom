@@ -1,117 +1,53 @@
-/**
- * @file
- * Common functions used throughout the stack.
- *
- * These are reference implementations of the byte swapping functions.
- * Again with the aim of being simple, correct and fully portable.
- * Byte swapping is the second thing you would want to optimize. You will
- * need to port it to your architecture and in your cc.h:
- *
- * \#define lwip_htons(x) your_htons
- * \#define lwip_htonl(x) your_htonl
- *
- * Note lwip_ntohs() and lwip_ntohl() are merely references to the htonx
- counterparts.
- *
- * If you \#define them to htons() and htonl(), you should
- * \#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS to prevent lwIP from
- * defining htonx/ntohx compatibility macros.
 
- * @defgroup sys_nonstandard Non-standard functions
- * @ingroup sys_layer
- * lwIP provides default implementations for non-standard functions.
- * These can be mapped to OS functions to reduce code footprint if desired.
- * All defines related to this section must not be placed in lwipopts.h,
- * but in cc.h!
- * These options cannot be \#defined in lwipopts.h since they are not options
- * of lwIP itself, but options of the lwIP port to your system.
- */
-
-/*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
- * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Simon Goldschmidt
- *
- */
 
 #include "def.h"
-#include "opt.h"
 #include <cstring>
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 
-#if !defined(lwip_htons)
 /**
  * Convert an uint16_t from host- to network byte order.
  *
  * @param n uint16_t in host byte order
  * @return n in network byte order
  */
-uint16_t lwip_htons(uint16_t n) { return PP_HTONS(n); }
-#endif /* lwip_htons */
+uint16_t lwip_htons(const uint16_t n) { return PpHtons(n); }
 
-uint32_t lwip_ntohl(uint32_t n) { return PP_NTOHL(n); }
+uint16_t lwip_ntohs(const uint16_t n) { return PpNtohs(n); }
 
-//
-// #if !defined(lwip_htonl)
+
+uint32_t lwip_ntohl(const uint32_t n) { return PpNtohl(n); }
+
+
 /**
  * Convert an uint32_t from host- to network byte order.
  *
  * @param n uint32_t in host byte order
  * @return n in network byte order
  */
-uint32_t lwip_htonl(uint32_t n) { return PP_HTONL(n); }
-// #endif /* lwip_htonl */
+uint32_t lwip_htonl(const uint32_t n) { return PP_HTONL(n); }
 
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 
-#ifndef lwip_strnstr
+
+
 /**
  * @ingroup sys_nonstandard
  * lwIP default implementation for strnstr() non-standard function.
  * This can be \#defined to strnstr() depending on your platform port.
  */
-char *lwip_strnstr(const char *buffer, const char *token, size_t n) {
-  const char *p;
-  size_t tokenlen = strlen(token);
+char *lwip_strnstr(char *buffer, char *token, const size_t n) {
+    const auto tokenlen = strlen(token);
   if (tokenlen == 0) {
-    return LWIP_CONST_CAST(char *, buffer);
+      return buffer;
   }
-  for (p = buffer; *p && (p + tokenlen <= buffer + n); p++) {
+  for (auto p = buffer; *p && (p + tokenlen <= buffer + n); p++) {
     if ((*p == *token) && (strncmp(p, token, tokenlen) == 0)) {
-      return LWIP_CONST_CAST(char *, p);
+        return p;
     }
   }
   return nullptr;
 }
-#endif
 
-#ifndef lwip_stricmp
+
 /**
  * @ingroup sys_nonstandard
  * lwIP default implementation for stricmp() non-standard function.
@@ -142,9 +78,9 @@ int lwip_stricmp(const char *str1, const char *str2) {
   } while (c1 != 0);
   return 0;
 }
-#endif
 
-#ifndef lwip_strnicmp
+
+
 /**
  * @ingroup sys_nonstandard
  * lwIP default implementation for strnicmp() non-standard function.
@@ -176,9 +112,9 @@ int lwip_strnicmp(const char *str1, const char *str2, size_t len) {
   } while ((len != 0) && (c1 != 0));
   return 0;
 }
-#endif
 
-#ifndef lwip_itoa
+
+
 /**
  * @ingroup sys_nonstandard
  * lwIP default implementation for itoa() non-standard function.
@@ -225,4 +161,3 @@ void lwip_itoa(char *result, size_t bufsize, int number) {
   /* move from temporary buffer to output buffer (sign is not moved) */
   memmove(res, tmp, (size_t)((result + bufsize) - tmp));
 }
-#endif

@@ -471,23 +471,19 @@ constexpr auto PPP_OUR_NAME = "lwIP";
 /**
  * LCP_ECHOINTERVAL: Interval in seconds between keepalive echo requests, 0 to disable.
  */
-#ifndef LCP_ECHOINTERVAL
-#define LCP_ECHOINTERVAL                0
-#endif
+constexpr auto LCP_ECHOINTERVAL = 0;
+
 
 /**
  * LCP_MAXECHOFAILS: Number of unanswered echo requests before failure.
  */
-#ifndef LCP_MAXECHOFAILS
-#define LCP_MAXECHOFAILS                3
-#endif
+constexpr auto LCP_MAXECHOFAILS = 3;
+
 
 /**
  * PPP_MAXIDLEFLAG: Max Xmit idle time (in ms) before resend flag char.
  */
-#ifndef PPP_MAXIDLEFLAG
-#define PPP_MAXIDLEFLAG                 100
-#endif
+constexpr auto PPP_MAXIDLEFLAG = 100;
 
 /**
  * PPP Packet sizes
@@ -496,30 +492,22 @@ constexpr auto PPP_OUR_NAME = "lwIP";
 /**
  * PPP_MRU: Default MRU
  */
-#ifndef PPP_MRU
-#define PPP_MRU                         1500
-#endif
+constexpr auto PPP_MRU = 1500;
 
 /**
  * PPP_DEFMRU: Default MRU to try
  */
-#ifndef PPP_DEFMRU
-#define PPP_DEFMRU                      1500
-#endif
+constexpr auto PPP_DEFMRU = 1500;
 
 /**
  * PPP_MAXMRU: Normally limit MRU to this (pppd default = 16384)
  */
-#ifndef PPP_MAXMRU
-#define PPP_MAXMRU                      1500
-#endif
+constexpr auto PPP_MAXMRU = 1500;
 
 /**
  * PPP_MINMRU: No MRUs below this
  */
-#ifndef PPP_MINMRU
-#define PPP_MINMRU                      128
-#endif
+constexpr auto PPP_MINMRU = 128;
 
 /**
  * PPPOL2TP_DEFMRU: Default MTU and MRU for L2TP
@@ -527,24 +515,20 @@ constexpr auto PPP_OUR_NAME = "lwIP";
  * - L2TP Header(6) - HDLC Header(2) - PPP Protocol(2) - MPPE Header(2) - PPP Protocol(2)
  */
 
-#ifndef PPPOL2TP_DEFMRU
-#define PPPOL2TP_DEFMRU                 1450
-#endif
+constexpr auto PPPOL2TP_DEFMRU = 1450;
+
 
 
 /**
  * MAXNAMELEN: max length of hostname or name for auth
  */
-#ifndef MAXNAMELEN
-#define MAXNAMELEN                      256
-#endif
+constexpr auto MAXNAMELEN = 256;
+
 
 /**
  * MAXSECRETLEN: max length of password or secret
  */
-#ifndef MAXSECRETLEN
-#define MAXSECRETLEN                    256
-#endif
+constexpr auto MAXSECRETLEN = 256;
 
 /* ------------------------------------------------------------------------- */
 

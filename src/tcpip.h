@@ -34,14 +34,10 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCPIP_H
-#define LWIP_HDR_TCPIP_H
+#pragma once
 
 #include "opt.h"
-
-#if !NO_SYS /* don't build if not configured for use in lwipopts.h */
-
-#include "err.h"
+#include "lwip_error.h"
 #include "timeouts.h"
 #include "netif.h"
 
@@ -107,7 +103,3 @@ int tcpip_thread_poll_one(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* !NO_SYS */
-
-#endif /* LWIP_HDR_TCPIP_H */

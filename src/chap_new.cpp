@@ -30,8 +30,8 @@
 
 #include "ppp_opts.h"
 #include "ppp_impl.h"
-#include "chap-new.h"
-#include "chap-md5.h"
+#include "chap_new.h"
+#include "chap_md5.h"
 #include "chap_ms.h"
 #include "magic.h"
 
@@ -74,7 +74,7 @@ static void chap_generate_challenge(PppPcb* pcb);
 static void chap_handle_response(PppPcb* pcb,
                                  int code,
                                  unsigned char* pkt,
-                                 int len,
+                                 size_t len,
                                  Protent** protocols);
 static int chap_verify_response(PppPcb* pcb,
                                 const char* name,
@@ -113,14 +113,7 @@ static const struct ChapDigestType* chap_digests[] = {
 static void
 chap_init(PppPcb* pcb)
 {
-    LWIP_UNUSED_ARG(pcb);
 
-#if 0 /* Not necessary, everything is cleared in ppp_new() */
-	memset(&pcb->chap_client, 0, sizeof(chap_client_state));
-#if PPP_SERVER
-	memset(&pcb->chap_server, 0, sizeof(chap_server_state));
-#endif /* PPP_SERVER */
-#endif /* 0 */
 }
 
 /*
@@ -141,7 +134,7 @@ chap_lowerdown(PppPcb* pcb)
 {
     pcb->chap_client.flags = 0;
     if (pcb->chap_server.flags & TIMEOUT_PENDING)
-        UNTIMEOUT(chap_timeout, pcb);
+        Untimeout(chap_timeout, pcb);
     pcb->chap_server.flags = 0;
 }
 
@@ -248,28 +241,24 @@ chap_timeout(void* arg)
     ppp_write(pcb, p);
     ++pcb->chap_server.challenge_xmits;
     pcb->chap_server.flags |= TIMEOUT_PENDING;
-    TIMEOUT(chap_timeout, arg, pcb->settings.chap_timeout_time);
+    Timeout(chap_timeout, arg, pcb->settings.chap_timeout_time);
 }
 
-/*
- * chap_generate_challenge - generate a challenge string and format
- * the challenge packet in pcb->chap_server.challenge_pkt.
- */
+//
+// chap_generate_challenge - generate a challenge string and format
+// the challenge packet in pcb->chap_server.challenge_pkt.
+//
 static void
 chap_generate_challenge(PppPcb* pcb)
 {
-    int clen = 1, nlen, len;
-    unsigned char* p;
-
-    p = pcb->chap_server.challenge;
+    auto p = pcb->chap_server.challenge;
     MAKEHEADER(p, PPP_CHAP);
-    p += CHAP_HDRLEN;
+    p += kChapHdrlen;
     pcb->chap_server.digest->generate_challenge(pcb, p);
-    clen = *p;
-    nlen = strlen(pcb->chap_server.name);
+    const auto clen = *p;
+    const auto nlen = strlen(pcb->chap_server.name);
     memcpy(p + 1 + clen, pcb->chap_server.name, nlen);
-
-    len = CHAP_HDRLEN + 1 + clen + nlen;
+    const int len = kChapHdrlen + 1 + clen + nlen;
     pcb->chap_server.challenge_pktlen = PPP_HDRLEN + len;
 
     p = pcb->chap_server.challenge + PPP_HDRLEN;
@@ -284,59 +273,52 @@ chap_generate_challenge(PppPcb* pcb)
  */
 static void
 chap_handle_response(PppPcb* pcb,
-                     int id,
+                     int code,
                      unsigned char* pkt,
-                     int len,
+                     size_t len,
                      Protent** protocols)
 {
-    int response_len, ok, mlen;
-    const unsigned char* response;
-    unsigned char* outp;
-    struct pbuf* p;
-    const char* name = NULL; /* initialized to shut gcc up */
+    int response_len;
+    const char* name = nullptr; /* initialized to shut gcc up */
 
     char rname[MAXNAMELEN + 1];
     char message[256];
 
     if ((pcb->chap_server.flags & LOWERUP) == 0)
         return;
-    if (id != pcb->chap_server.challenge[PPP_HDRLEN + 1] || len < 2)
+    if (code != pcb->chap_server.challenge[PPP_HDRLEN + 1] || len < 2)
         return;
     if (pcb->chap_server.flags & CHALLENGE_VALID)
     {
-        response = pkt;
+        const unsigned char* response = pkt;
         GETCHAR(response_len, pkt);
         len -= response_len + 1; /* length of name */
-        name = (char *)pkt + response_len;
-        if (len < 0)
-            return;
+        name = reinterpret_cast<char *>(pkt) + response_len;
 
         if (pcb->chap_server.flags & TIMEOUT_PENDING)
         {
             pcb->chap_server.flags &= ~TIMEOUT_PENDING;
-            UNTIMEOUT(chap_timeout, pcb);
+            Untimeout(chap_timeout, pcb);
         }
-#if PPP_REMOTENAME
-		if (pcb->settings.explicit_remote) {
-			name = pcb->remote_name;
-		} else
-#endif /* PPP_REMOTENAME */
+        if (pcb->settings.explicit_remote)
+        {
+            // name = pcb->remote_name;
+        }
+        else
         {
             /* Null terminate and clean remote name. */
-            ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
-            name = rname;
+            // ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
+            // name = rname;
         }
-
-
-        ok = chap_verify_response(pcb,
-                                  name,
-                                  pcb->chap_server.name,
-                                  id,
-                                  pcb->chap_server.digest,
-                                  pcb->chap_server.challenge + PPP_HDRLEN + CHAP_HDRLEN,
-                                  response,
-                                  message,
-                                  sizeof(message));
+        const auto ok = chap_verify_response(pcb,
+                                      name,
+                                      pcb->chap_server.name,
+                                      code,
+                                      pcb->chap_server.digest,
+                                      pcb->chap_server.challenge + PPP_HDRLEN + kChapHdrlen,
+                                      response,
+                                      message,
+                                      sizeof(message));
 
         if (!ok)
         {
@@ -348,10 +330,10 @@ chap_handle_response(PppPcb* pcb,
         return;
 
     /* send the response */
-    mlen = strlen(message);
-    len = CHAP_HDRLEN + mlen;
+    const auto mlen = strlen(message);
+    len = mlen + kChapHdrlen;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + len), PPP_CTRL_PBUF_TYPE);
-    p = new pbuf;
+    const auto p = new pbuf;
     if (nullptr == p)
         return;
     if (p->tot_len != p->len)
@@ -360,15 +342,15 @@ chap_handle_response(PppPcb* pcb,
         return;
     }
 
-    outp = (unsigned char *)p->payload;
+    auto outp = static_cast<unsigned char *>(p->payload);
     MAKEHEADER(outp, PPP_CHAP);
 
     outp[0] = (pcb->chap_server.flags & AUTH_FAILED) ? CHAP_FAILURE : CHAP_SUCCESS;
-    outp[1] = id;
+    outp[1] = code;
     outp[2] = len >> 8;
     outp[3] = len;
     if (mlen > 0)
-        memcpy(outp + CHAP_HDRLEN, message, mlen);
+        memcpy(outp + kChapHdrlen, message, mlen);
     ppp_write(pcb, p);
 
     if (pcb->chap_server.flags & CHALLENGE_VALID)
@@ -393,7 +375,7 @@ chap_handle_response(PppPcb* pcb,
             if (pcb->settings.chap_rechallenge_time)
             {
                 pcb->chap_server.flags |= TIMEOUT_PENDING;
-                TIMEOUT(chap_timeout,
+                Timeout(chap_timeout,
                         pcb,
                         pcb->settings.chap_rechallenge_time);
             }
@@ -411,7 +393,7 @@ static int
 chap_verify_response(PppPcb* pcb,
                      const char* name,
                      const char* ourname,
-                     int id,
+                     const int id,
                      ChapDigestType* digest,
                      const unsigned char* challenge,
                      const unsigned char* response,
@@ -491,7 +473,7 @@ chap_respond(PppPcb* pcb,
 
     auto outp = static_cast<uint8_t*>(p->payload);
     MAKEHEADER(outp, PPP_CHAP);
-    outp += CHAP_HDRLEN;
+    outp += kChapHdrlen;
 
     pcb->chap_client.digest->make_response(pcb,
                                            outp,
@@ -508,7 +490,7 @@ chap_respond(PppPcb* pcb,
     memcpy(outp + clen + 1, pcb->chap_client.name, nlen);
 
     outp = static_cast<uint8_t*>(p->payload) + PPP_HDRLEN;
-    len = CHAP_HDRLEN + clen + 1 + nlen;
+    len = kChapHdrlen + clen + 1 + nlen;
     outp[0] = CHAP_RESPONSE;
     outp[1] = id;
     outp[2] = len >> 8;
@@ -527,7 +509,7 @@ chap_handle_status(PppPcb* pcb,
                    Protent** protocols)
 {
     const char* msg = nullptr;
-    LWIP_UNUSED_ARG(id);
+
 
     if ((pcb->chap_client.flags & (AUTH_DONE | AUTH_STARTED | LOWERUP))
         != (AUTH_STARTED | LOWERUP))
@@ -575,14 +557,14 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
     unsigned char code, id;
     int len;
 
-    if (pktlen < CHAP_HDRLEN)
+    if (pktlen < kChapHdrlen)
         return;
     GETCHAR(code, pkt);
     GETCHAR(id, pkt);
     GETSHORT(len, pkt);
-    if (len < CHAP_HDRLEN || len > pktlen)
+    if (len < kChapHdrlen || len > pktlen)
         return;
-    len -= CHAP_HDRLEN;
+    len -= kChapHdrlen;
 
     switch (code)
     {
@@ -610,7 +592,7 @@ chap_protrej(PppPcb* pcb)
     if (pcb->chap_server.flags & TIMEOUT_PENDING)
     {
         pcb->chap_server.flags &= ~TIMEOUT_PENDING;
-        UNTIMEOUT(chap_timeout, pcb);
+        Untimeout(chap_timeout, pcb);
     }
     if (pcb->chap_server.flags & AUTH_STARTED)
     {

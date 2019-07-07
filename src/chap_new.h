@@ -41,7 +41,7 @@ extern "C" {
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
  */
-constexpr auto CHAP_HDRLEN = 4;
+constexpr auto kChapHdrlen = 4;
 
 /*
  * Values for the code field.
@@ -70,8 +70,8 @@ constexpr auto MAX_RESPONSE_LEN = 64;
  * These limits apply to challenge and response packets we send.
  * The +4 is the +1 that we actually need rounded up.
  */
-constexpr auto CHAL_MAX_PKTLEN = (PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_CHALLENGE_LEN + MAXNAMELEN);
-constexpr auto RESP_MAX_PKTLEN = (PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_RESPONSE_LEN + MAXNAMELEN);
+constexpr auto CHAL_MAX_PKTLEN = (PPP_HDRLEN + kChapHdrlen + 4 + MAX_CHALLENGE_LEN + MAXNAMELEN);
+constexpr auto RESP_MAX_PKTLEN = (PPP_HDRLEN + kChapHdrlen + 4 + MAX_RESPONSE_LEN + MAXNAMELEN);
 
 /* bitmask of supported algorithms */
 
