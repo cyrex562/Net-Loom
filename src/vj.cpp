@@ -149,17 +149,94 @@ struct vj_u16_t
  * compressed.
  */
 uint8_t
-vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
+vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
 {
-    auto np = *pb;
-    auto ip = static_cast<struct ip_hdr *>(np->payload);
-    auto cs = comp->last_cs->cs_next;
-    uint16_t ilen = IPH_HL(ip);
-    uint16_t deltaA = 0;
-    uint32_t delta_l;
-    uint32_t changes = 0;
-    uint8_t new_seq[16];
-    auto cp = new_seq;
+  struct PacketBuffer *np = *pb;
+  struct ip_hdr *ip = (struct ip_hdr *)np->payload;
+  struct cstate *cs = comp->last_cs->cs_next;
+  uint16_t ilen = IPH_HL(ip);
+  uint16_t hlen;
+  struct tcp_hdr *oth;
+  struct tcp_hdr *th;
+  uint16_t deltaS, deltaA = 0;
+  uint32_t deltaL;
+  uint32_t changes = 0;
+  uint8_t new_seq[16];
+  uint8_t *cp = new_seq;
+
+  /*
+   * Check that the packet is IP proto TCP.
+   */
+  if (IPH_PROTO(ip) != IP_PROTO_TCP) {
+    return (TYPE_IP);
+  }
+
+  /*
+   * Bail if this is an IP fragment or if the TCP packet isn't
+   * `compressible' (i.e., ACK isn't set or some other control bit is
+   * set).
+   */
+  if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || np->tot_len < 40) {
+    return (TYPE_IP);
+  }
+  th = (struct tcp_hdr *)&((struct vj_uint32_t*)ip)[ilen];
+  if ((TCPH_FLAGS(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
+    return (TYPE_IP);
+  }
+
+  /* Check that the TCP/IP headers are contained in the first buffer. */
+  hlen = ilen + TCPH_HDRLEN(th);
+  hlen <<= 2;
+  if (np->len < hlen) {
+    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
+    return (TYPE_IP);
+  }
+
+  /* TCP stack requires that we don't change the packet payload, therefore we copy
+   * the whole packet before compression. */
+  np = pbuf_clone(PBUF_RAW, PBUF_RAM, *pb);
+  if (!np) {
+    return (TYPE_IP);
+  }
+
+  *pb = np;
+  ip = (struct ip_hdr *)np->payload;
+
+  /*
+   * Packet is compressible -- we're going to send either a
+   * COMPRESSED_TCP or UNCOMPRESSED_TCP packet.  Either way we need
+   * to locate (or create) the connection state.  Special case the
+   * most recently used connection since it's most likely to be used
+   * again & we don't have to do any reordering if it's used.
+   */
+  INCR(vjs_packets);
+  if (!ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
+      || !ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
+      || (*(struct vj_uint32_t*)th).v != (((struct vj_uint32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]).v) {
+    /*
+     * Wasn't the first -- search for it.
+     *
+     * States are kept in a circularly linked list with
+     * last_cs pointing to the end of the list.  The
+     * list is kept in lru order by moving a state to the
+     * head of the list whenever it is referenced.  Since
+     * the list is short and, empirically, the connection
+     * we want is almost always near the front, we locate
+     * states via linear search.  If we don't find a state
+     * for the datagram, the oldest state is (re-)used.
+     */
+    struct cstate *lcs;
+    struct cstate *lastcs = comp->last_cs;
+
+    do {
+      lcs = cs; cs = cs->cs_next;
+      INCR(vjs_searches);
+      if (ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
+          && ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
+          && (*(struct vj_uint32_t*)th).v == (((struct vj_uint32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]).v) {
+        goto found;
+      }
+    } while (cs != lastcs);
 
     /*
      * Check that the packet is IP proto TCP.
@@ -434,28 +511,20 @@ vj_compress_tcp(struct Vjcompress* comp, struct pbuf** pb)
         *cp++ = (uint8_t)(changes | NEW_C);
         *cp++ = cs->cs_id;
     }
-    else
-    {
-        hlen -= deltaS + 3;
-        if (pbuf_remove_header(np, hlen))
-        {
-            /* Can we cope with this failing?  Just assert for now */
-            LWIP_ASSERT("pbuf_remove_header failed\n", 0);
-        }
-        cp = (uint8_t*)np->payload;
-        *cp++ = (uint8_t)changes;
-    }
-    *cp++ = (uint8_t)(deltaA >> 8);
-    *cp++ = (uint8_t)deltaA;
-    MEMCPY(cp, new_seq, deltaS);
-    INCR(vjs_compressed);
-    return (TYPE_COMPRESSED_TCP);
+    cp = (uint8_t*)np->payload;
+    *cp++ = (uint8_t)changes;
+  }
+  *cp++ = (uint8_t)(deltaA >> 8);
+  *cp++ = (uint8_t)deltaA;
+  MEMCPY(cp, new_seq, deltaS);
+  INCR(vjs_compressed);
+  return (TYPE_COMPRESSED_TCP);
 
-    /*
-     * Update connection state cs & send uncompressed packet (that is,
-     * a regular ip/tcp packet but with the 'conversation id' we hope
-     * to use on future compressed packets in the protocol field).
-     */
+  /*
+   * Update connection state cs & send uncompressed packet (that is,
+   * a regular ip/tcp packet but with the 'conversation id' we hope
+   * to use on future compressed packets in the protocol field).
+   */
 uncompressed:
     MEMCPY(&cs->cs_ip, ip, hlen);
     IPH_PROTO_SET(ip, cs->cs_id);
@@ -478,7 +547,7 @@ vj_uncompress_err(struct vjcompress* comp)
  * Return 0 on success, -1 on failure.
  */
 int
-vj_uncompress_uncomp(struct pbuf* nb, struct vjcompress* comp)
+vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
 {
     uint32_t hlen;
     struct cstate* cs;
@@ -517,7 +586,7 @@ vj_uncompress_uncomp(struct pbuf* nb, struct vjcompress* comp)
  * header and returns the length of the VJ header.
  */
 int
-vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
+vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 {
     uint8_t* cp;
     struct TcpHdr* th;
@@ -626,7 +695,22 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
         IPH_ID_SET(&cs->cs_ip, lwip_ntohs(IPH_ID(&cs->cs_ip)) + 1);
         IPH_ID_SET(&cs->cs_ip, lwip_htons(IPH_ID(&cs->cs_ip)));
     }
+    break;
+  }
+  if (changes & NEW_I) {
+    DECODES(cs->cs_ip._id);
+  } else {
+    IPH_ID_SET(&cs->cs_ip, lwip_ntohs(IPH_ID(&cs->cs_ip)) + 1);
+    IPH_ID_SET(&cs->cs_ip, lwip_htons(IPH_ID(&cs->cs_ip)));
+  }
 
+  /*
+   * At this point, cp points to the first byte of data in the
+   * packet.  Fill in the IP total length and update the IP
+   * header checksum.
+   */
+  vjlen = (uint16_t)(cp - (uint8_t*)n0->payload);
+  if (n0->len < vjlen) {
     /*
      * At this point, cp points to the first byte of data in the
      * packet.  Fill in the IP total length and update the IP
@@ -709,7 +793,7 @@ vj_uncompress_tcp(struct pbuf** nb, struct vjcompress* comp)
 
     if (pbuf_add_header(n0, cs->cs_hlen))
     {
-        struct pbuf* np;
+        struct PacketBuffer* np;
 
         LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
         np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);

@@ -122,10 +122,17 @@ struct pppoe_softc {
   struct EthAddr sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
   uint8_t sc_state;               /* discovery phase or session connected */
+
+#ifdef PPPOE_TODO
+  uint8_t *sc_service_name;       /* if != NULL: requested name of service */
+  uint8_t *sc_concentrator_name;  /* if != NULL: requested concentrator id */
+#endif /* PPPOE_TODO */
   uint8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
   uint8_t sc_ac_cookie_len;       /* length of cookie data */
+#ifdef PPPOE_SERVER
   uint8_t *sc_hunique;            /* content of host unique we must echo back */
   uint8_t sc_hunique_len;         /* length of host unique */
+#endif
   uint8_t sc_padi_retried;        /* number of PADI retries already done */
   uint8_t sc_padr_retried;        /* number of PADR retries already done */
 };
@@ -142,8 +149,8 @@ PppPcb *pppoe_create(struct netif *pppif,
  * Functions called from lwIP
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
-void pppoe_disc_input(struct netif *netif, struct pbuf *p);
-void pppoe_data_input(struct netif *netif, struct pbuf *p);
+void pppoe_disc_input(struct netif *netif, struct PacketBuffer *p);
+void pppoe_data_input(struct netif *netif, struct PacketBuffer *p);
 
 #ifdef __cplusplus
 }

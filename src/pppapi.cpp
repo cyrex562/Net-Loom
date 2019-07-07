@@ -347,7 +347,7 @@ pppapi_do_ppp_close(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_close(PppPcb *pcb, uint8_t nocarrier)
+pppapi_close(ppp_pcb *pcb, uint8_t nocarrier)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -410,7 +410,7 @@ pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
+pppapi_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);

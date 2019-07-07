@@ -45,7 +45,7 @@
 
 #include "ethip6.h"
 #include "nd6.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"
@@ -69,18 +69,18 @@
  * @todo anycast addresses
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
- * @param q The pbuf(s) containing the IP packet to be sent.
+ * @param q The PacketBuffer(s) containing the IP packet to be sent.
  * @param ip6addr The IP address of the packet destination.
  *
  * @return
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
-err_t
-ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
+LwipError
+ethip6_output(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr)
 {
   struct EthAddr dest;
   const uint8_t *hwaddr;
-  err_t result;
+  LwipError result;
 
   LWIP_ASSERT_CORE_LOCKED();
 

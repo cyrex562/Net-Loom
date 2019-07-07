@@ -122,17 +122,17 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
  * finds a corresponding RAW PCB and calls the corresponding receive
  * callback function.
  *
- * @param p pbuf to be demultiplexed to a RAW PCB.
+ * @param p PacketBuffer to be demultiplexed to a RAW PCB.
  * @param inp network interface on which the datagram was received.
  * @return - 1 if the packet has been eaten by a RAW PCB receive
  *           callback function. The caller MAY NOT not reference the
  *           packet any longer, and MAY NOT call pbuf_free().
- * @return - 0 if packet is not eaten (pbuf is still referenced by the
+ * @return - 0 if packet is not eaten (PacketBuffer is still referenced by the
  *           caller).
  *
  */
 raw_input_state_t
-raw_input(struct pbuf *p, struct netif *inp)
+raw_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct raw_pcb *pcb, *prev;
   int16_t proto;
@@ -188,8 +188,8 @@ raw_input(struct pbuf *p, struct netif *inp)
           }
           return RAW_INPUT_EATEN;
         } else {
-          /* sanity-check that the receive callback did not alter the pbuf */
-          LWIP_ASSERT("raw pcb recv callback altered pbuf payload pointer without eating packet",
+          /* sanity-check that the receive callback did not alter the PacketBuffer */
+          LWIP_ASSERT("raw pcb recv callback altered PacketBuffer payload pointer without eating packet",
                       p->payload == old_payload);
         }
       }
@@ -217,7 +217,7 @@ raw_input(struct pbuf *p, struct netif *inp)
  *
  * @see raw_disconnect()
  */
-err_t
+LwipError
 raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
@@ -274,7 +274,7 @@ raw_bind_netif(struct raw_pcb *pcb, const struct netif *netif)
  *
  * @see raw_disconnect() and raw_sendto()
  */
-err_t
+LwipError
 raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
@@ -350,8 +350,8 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  * @param ipaddr the destination address of the IP packet
  *
  */
-err_t
-raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
+LwipError
+raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *ipaddr)
 {
   struct netif *netif;
   const ip_addr_t *src_ip;
@@ -416,12 +416,12 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
  * @param netif the netif used for sending
  * @param src_ip source IP address
  */
-err_t
-raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
+LwipError
+raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip,
                   struct netif *netif, const ip_addr_t *src_ip)
 {
-  err_t err;
-  struct pbuf *q; /* q will be sent down the stack */
+  LwipError err;
+  struct PacketBuffer *q; /* q will be sent down the stack */
   uint16_t header_size;
   uint8_t ttl;
 
@@ -444,7 +444,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   /* Handle the HDRINCL option as an exception: none of the code below applies
    * to this case, and sending the packet needs to be done differently too. */
   if (pcb->flags & RAW_FLAGS_HDRINCL) {
-    /* A full header *must* be present in the first pbuf of the chain, as the
+    /* A full header *must* be present in the first PacketBuffer of the chain, as the
      * output routines may access its fields directly. */
     if (p->len < header_size) {
       return ERR_VAL;
@@ -460,23 +460,23 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   if ((uint16_t)(p->tot_len + header_size) < p->tot_len) {
     return ERR_MEM;
   }
-  /* not enough space to add an IP header to first pbuf in given p chain? */
+  /* not enough space to add an IP header to first PacketBuffer in given p chain? */
   if (pbuf_add_header(p, header_size)) {
-    /* allocate header in new pbuf */
+    /* allocate header in new PacketBuffer */
     q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
-    /* new header pbuf could not be allocated? */
+    /* new header PacketBuffer could not be allocated? */
     if (q == NULL) {
       LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\n"));
       return ERR_MEM;
     }
     if (p->tot_len != 0) {
-      /* chain header q in front of given pbuf p */
+      /* chain header q in front of given PacketBuffer p */
       pbuf_chain(q, p);
     }
-    /* { first pbuf q points to header pbuf } */
-    LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
+    /* { first PacketBuffer q points to header PacketBuffer } */
+    LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
   } else {
-    /* first pbuf q equals given pbuf */
+    /* first PacketBuffer q equals given PacketBuffer */
     q = p;
     if (pbuf_remove_header(q, header_size)) {
       LWIP_ASSERT("Can't restore header we just removed!", 0);
@@ -489,7 +489,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
       LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
-      /* free any temporary header pbuf allocated by pbuf_header() */
+      /* free any temporary header PacketBuffer allocated by pbuf_header() */
       if (q != p) {
         pbuf_free(q);
       }
@@ -510,7 +510,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
      compute the checksum and update the checksum in the payload. */
   if (IP_IS_V6(dst_ip) && pcb->chksum_reqd) {
     uint16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
-    LWIP_ASSERT("Checksum must fit into first pbuf", p->len >= (pcb->chksum_offset + 2));
+    LWIP_ASSERT("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
     SMEMCPY(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
   }
 #endif
@@ -542,8 +542,8 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
  * @param p the IP payload to send
  *
  */
-err_t
-raw_send(struct raw_pcb *pcb, struct pbuf *p)
+LwipError
+raw_send(struct raw_pcb *pcb, struct PacketBuffer *p)
 {
   return raw_sendto(pcb, p, &pcb->remote_ip);
 }

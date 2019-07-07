@@ -133,13 +133,13 @@ struct Vjstat {
 /*
  * all the state data for one serial line (we need one of these per line).
  */
-struct Vjcompress {
-  struct Cstate *last_cs;          /* most recently used tstate */
+struct vjcompress {
+  struct cstate *last_cs;          /* most recently used tstate */
   uint8_t last_recv;                /* last rcvd conn. id */
   uint8_t last_xmit;                /* last sent conn. id */
   uint16_t flags;
-  uint8_t max_slot_index;
-  uint8_t compress_slot;             /* Flag indicating OK to compress slot ID. */
+  uint8_t maxSlotIndex;
+  uint8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
 #if LINK_STATS
   struct Vjstat stats;
 #endif
@@ -150,11 +150,11 @@ struct Vjcompress {
 /* flag values */
 constexpr auto kVjfToss = 1U /* tossing rcvd frames because of input err */;
 
-extern void  vj_compress_init    (struct Vjcompress *comp);
-extern uint8_t  vj_compress_tcp     (struct Vjcompress *comp, struct pbuf **pb);
-extern void  vj_uncompress_err   (struct Vjcompress *comp);
-extern int   vj_uncompress_uncomp(struct pbuf *nb, struct Vjcompress *comp);
-extern int   vj_uncompress_tcp   (struct pbuf **nb, struct Vjcompress *comp);
+extern void  vj_compress_init    (struct vjcompress *comp);
+extern uint8_t  vj_compress_tcp     (struct vjcompress *comp, struct PacketBuffer **pb);
+extern void  vj_uncompress_err   (struct vjcompress *comp);
+extern int   vj_uncompress_uncomp(struct PacketBuffer *nb, struct vjcompress *comp);
+extern int   vj_uncompress_tcp   (struct PacketBuffer **nb, struct vjcompress *comp);
 
 #ifdef __cplusplus
 }

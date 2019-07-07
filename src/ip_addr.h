@@ -102,7 +102,7 @@ extern const struct ip_addr_t ip_addr_any_type;
 #define IP_SET_TYPE(ipaddr, iptype)     do { if((ipaddr) != NULL) { IP_SET_TYPE_VAL(*(ipaddr), iptype); }}while(0)
 #define IP_GET_TYPE(ipaddr)           ((ipaddr)->type)
 
-#define IP_ADDR_RAW_SIZE(ipaddr)      (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_V4 ? sizeof(ip4_addr_t) : sizeof(ip6_addr_t))
+#define IP_ADDR_RAW_SIZE(ipaddr)      (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_V4 ? sizeof(ip4_addr_t) : sizeof(LwipIp6Addr))
 
 #define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr) (IP_GET_TYPE(&pcb->local_ip) == IP_GET_TYPE(ipaddr))
 #define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (IP_IS_ANY_TYPE_VAL(pcb->local_ip) || IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr))
@@ -237,12 +237,12 @@ inline ip4_addr* ip_2_ip4(ip_addr_t* ipaddr) {
 #define ip_addr_debug_print_val(debug, ipaddr) do { if(IP_IS_V6_VAL(ipaddr)) { \
   ip6_addr_debug_print_val(debug, *ip_2_ip6(&(ipaddr))); } else { \
   ip4_addr_debug_print_val(debug, *ip_2_ip4(&(ipaddr))); }}while(0)
-char *ipaddr_ntoa(const ip_addr_t *addr);
-char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
-int ipaddr_aton(const char *cp, ip_addr_t *addr);
+char *ipaddr_ntoa(const LwipIpAddr *addr);
+char *ipaddr_ntoa_r(const LwipIpAddr*addr, char *buf, int buflen);
+int ipaddr_aton(const char *cp, LwipIpAddr*addr);
 
 /** @ingroup ipaddr */
-#define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
+// #define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
 
 /** @ingroup ipaddr */
 #define ip4_2_ipv4_mapped_ipv6(ip6addr, ip4addr) do { \
@@ -319,7 +319,7 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V6
-#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(ip6_addr_t)
+#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(LwipIp6Addr)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
 
 inline void IP_ADDR6(ip_addr_t* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
@@ -404,7 +404,7 @@ constexpr auto IP4_ADDR_BROADCAST = (ip_2_ip4(&kIpAddrBroadcast));
 constexpr auto kIp6AddrAny = (&ip6_addr_any);
 /**
  * @ingroup ip6addr
- * IP6_ADDR_ANY6 can be used as a fixed ip6_addr_t
+ * IP6_ADDR_ANY6 can be used as a fixed LwipIp6Addr
  * for the IPv6 wildcard address
  */
 constexpr auto kIp6AddrAny6 = (ip_2_ip6(&ip6_addr_any));

@@ -59,7 +59,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define UNLOCK_TCPIP_CORE()
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-struct pbuf;
+struct PacketBuffer;
 struct netif;
 
 /** Function prototype for the init_done function passed to tcpip_init */
@@ -72,11 +72,11 @@ struct tcpip_callback_msg;
 
 void   tcpip_init(tcpip_init_done_fn tcpip_init_done, void *arg);
 
-err_t  tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn);
-err_t  tcpip_input(struct pbuf *p, struct netif *inp);
+LwipError  tcpip_inpkt(struct PacketBuffer *p, struct netif *inp, netif_input_fn input_fn);
+LwipError  tcpip_input(struct PacketBuffer *p, struct netif *inp);
 
-err_t  tcpip_try_callback(tcpip_callback_fn function, void *ctx);
-err_t  tcpip_callback(tcpip_callback_fn function, void *ctx);
+LwipError  tcpip_try_callback(tcpip_callback_fn function, void *ctx);
+LwipError  tcpip_callback(tcpip_callback_fn function, void *ctx);
 /**  @ingroup lwip_os
  * @deprecated use tcpip_try_callback() or tcpip_callback() instead
  */
@@ -84,16 +84,16 @@ err_t  tcpip_callback(tcpip_callback_fn function, void *ctx);
 
 struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx);
 void   tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg);
-err_t  tcpip_callbackmsg_trycallback(struct tcpip_callback_msg* msg);
-err_t  tcpip_callbackmsg_trycallback_fromisr(struct tcpip_callback_msg* msg);
+LwipError  tcpip_callbackmsg_trycallback(struct tcpip_callback_msg* msg);
+LwipError  tcpip_callbackmsg_trycallback_fromisr(struct tcpip_callback_msg* msg);
 
 /* free pbufs or heap memory from another context without blocking */
-err_t  pbuf_free_callback(struct pbuf *p);
-err_t  mem_free_callback(void *m);
+LwipError  pbuf_free_callback(struct PacketBuffer *p);
+LwipError  mem_free_callback(void *m);
 
 #if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
-err_t  tcpip_timeout(uint32_t msecs, sys_timeout_handler h, void *arg);
-err_t  tcpip_untimeout(sys_timeout_handler h, void *arg);
+LwipError  tcpip_timeout(uint32_t msecs, sys_timeout_handler h, void *arg);
+LwipError  tcpip_untimeout(sys_timeout_handler h, void *arg);
 #endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
 #ifdef TCPIP_THREAD_TEST

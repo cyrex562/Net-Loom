@@ -190,16 +190,16 @@ LWIP_ASSERT("udp_input_local_match: invalid pcb", pcb != nullptr);
  * Process an incoming UDP datagram.
  *
  * Given an incoming UDP datagram (as a chain of pbufs) this function
- * finds a corresponding UDP PCB and hands over the pbuf to the pcbs
+ * finds a corresponding UDP PCB and hands over the PacketBuffer to the pcbs
  * recv function. If no pcb is found or the datagram is incorrect, the
- * pbuf is freed.
+ * PacketBuffer is freed.
  *
- * @param p pbuf to be demultiplexed to a UDP PCB (p->payload pointing to the UDP header)
+ * @param p PacketBuffer to be demultiplexed to a UDP PCB (p->payload pointing to the UDP header)
  * @param inp network interface on which the datagram was received.
  *
  */
 void
-udp_input(struct pbuf *p, struct netif *inp)
+udp_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct udp_hdr *udphdr;
   struct udp_pcb *pcb, *prev;
@@ -395,7 +395,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                 (udp_input_local_match(mpcb, inp, broadcast) != 0)) {
               /* pass a copy of the packet to all local matches */
               if (mpcb->recv != NULL) {
-                struct pbuf *q;
+                struct PacketBuffer *q;
                 q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
                 if (q != NULL) {
                   mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
@@ -411,7 +411,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         /* now the recv function is responsible for freeing p */
         pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);
       } else {
-        /* no recv function registered? then we have to free the pbuf! */
+        /* no recv function registered? then we have to free the PacketBuffer! */
         pbuf_free(p);
         goto end;
       }
@@ -452,11 +452,11 @@ chkerr:
 
 /**
  * @ingroup udp_raw
- * Sends the pbuf p using UDP. The pbuf is not deallocated.
+ * Sends the PacketBuffer p using UDP. The PacketBuffer is not deallocated.
  *
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of PacketBuffer's to be sent.
  *
  * The datagram will be sent to the current remote_ip & remote_port
  * stored in pcb. If the pcb is not bound to a port, it will
@@ -471,8 +471,8 @@ chkerr:
  *
  * @see udp_disconnect() udp_sendto()
  */
-err_t
-udp_send(struct udp_pcb *pcb, struct pbuf *p)
+LwipError
+udp_send(struct udp_pcb *pcb, struct PacketBuffer *p)
 {
   LWIP_ERROR("udp_send: invalid pcb", pcb != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_send: invalid pbuf", p != nullptr, return ERR_ARG);
@@ -489,12 +489,12 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 /** @ingroup udp_raw
  * Same as udp_send() but with checksum
  */
-err_t
-udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
+LwipError
+udp_send_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
                 uint8_t have_chksum, uint16_t chksum)
 {
   LWIP_ERROR("udp_send_chksum: invalid pcb", pcb != NULL, return ERR_ARG);
-  LWIP_ERROR("udp_send_chksum: invalid pbuf", p != NULL, return ERR_ARG);
+  LWIP_ERROR("udp_send_chksum: invalid PacketBuffer", p != NULL, return ERR_ARG);
 
   if (IP_IS_ANY_TYPE_VAL(pcb->remote_ip)) {
     return ERR_VAL;
@@ -511,7 +511,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  * Send data to a specified address using UDP.
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of PacketBuffer's to be sent.
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  *
@@ -524,9 +524,9 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  *
  * @see udp_disconnect() udp_send()
  */
-err_t
-udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
-           const ip_addr_t *dst_ip, uint16_t dst_port)
+LwipError
+udp_sendto(struct udp_pcb *pcb, struct PacketBuffer *p,
+           const LwipIpAddr *dst_ip, uint16_t dst_port)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
@@ -534,8 +534,8 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
 
 /** @ingroup udp_raw
  * Same as udp_sendto(), but with checksum */
-err_t
-udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
+LwipError
+udp_sendto_chksum(struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip,
                   uint16_t dst_port, uint8_t have_chksum, uint16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
@@ -617,7 +617,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
  * on a netif that is still down.
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of PacketBuffer's to be sent.
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  * @param netif the netif used for sending.
@@ -628,22 +628,22 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
  *
  * @see udp_disconnect() udp_send()
  */
-err_t
-udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
-              const ip_addr_t *dst_ip, uint16_t dst_port, struct netif *netif)
+LwipError
+udp_sendto_if(struct udp_pcb *pcb, struct PacketBuffer *p,
+              const LwipIpAddr *dst_ip, uint16_t dst_port, struct netif *netif)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0);
 }
 
 /** Same as udp_sendto_if(), but with checksum */
-err_t
-udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
+LwipError
+udp_sendto_if_chksum(struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip,
                      uint16_t dst_port, struct netif *netif, uint8_t have_chksum,
                      uint16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
-  const ip_addr_t *src_ip;
+  const LwipIpAddr *src_ip;
 
   LWIP_ERROR("udp_sendto_if: invalid pcb", pcb != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_sendto_if: invalid pbuf", p != nullptr, return ERR_ARG);
@@ -703,24 +703,24 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 
 /** @ingroup udp_raw
  * Same as @ref udp_sendto_if, but with source address */
-err_t
-udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
-                  const ip_addr_t *dst_ip, uint16_t dst_port, struct netif *netif, const ip_addr_t *src_ip)
+LwipError
+udp_sendto_if_src(struct udp_pcb *pcb, struct PacketBuffer *p,
+                  const LwipIpAddr *dst_ip, uint16_t dst_port, struct netif *netif, const LwipIpAddr *src_ip)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
 }
 
 /** Same as udp_sendto_if_src(), but with checksum */
-err_t
-udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
+LwipError
+udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip,
                          uint16_t dst_port, struct netif *netif, uint8_t have_chksum,
                          uint16_t chksum, const ip_addr_t *src_ip)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   struct udp_hdr *udphdr;
-  err_t err;
-  struct pbuf *q; /* q will be sent down the stack */
+  LwipError err;
+  struct PacketBuffer *q; /* q will be sent down the stack */
   uint8_t ip_proto;
   uint8_t ttl;
 
@@ -764,29 +764,29 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   if ((uint16_t)(p->tot_len + UDP_HLEN) < p->tot_len) {
     return ERR_MEM;
   }
-  /* not enough space to add an UDP header to first pbuf in given p chain? */
+  /* not enough space to add an UDP header to first PacketBuffer in given p chain? */
   if (pbuf_add_header(p, UDP_HLEN)) {
-    /* allocate header in a separate new pbuf */
+    /* allocate header in a separate new PacketBuffer */
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
-    /* new header pbuf could not be allocated? */
+    /* new header PacketBuffer could not be allocated? */
     if (q == nullptr) {
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: could not allocate header\n"));
       return ERR_MEM;
     }
     if (p->tot_len != 0) {
-      /* chain header q in front of given pbuf p (only if p contains data) */
+      /* chain header q in front of given PacketBuffer p (only if p contains data) */
       pbuf_chain(q, p);
     }
-    /* first pbuf q points to header pbuf */
+    /* first PacketBuffer q points to header PacketBuffer */
     LWIP_DEBUGF(UDP_DEBUG,
-                ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
+                ("udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
   } else {
     /* adding space for header within p succeeded */
-    /* first pbuf q equals given pbuf */
+    /* first PacketBuffer q equals given PacketBuffer */
     q = p;
-    LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
+    LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (void *)p));
   }
-  LWIP_ASSERT("check that first pbuf can hold struct udp_hdr",
+  LWIP_ASSERT("check that first PacketBuffer can hold struct udp_hdr",
               (q->len >= sizeof(struct udp_hdr)));
   /* q now represents the packet to be sent */
   udphdr = (struct udp_hdr *)q->payload;
@@ -904,9 +904,9 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   /* @todo: must this be increased even if error occurred? */
   MIB2_STATS_INC(mib2.udpoutdatagrams);
 
-  /* did we chain a separate header pbuf earlier? */
+  /* did we chain a separate header PacketBuffer earlier? */
   if (q != p) {
-    /* free the header pbuf */
+    /* free the header PacketBuffer */
     pbuf_free(q);
     q = nullptr;
     /* p is still referenced by the caller, and will live on */
@@ -936,8 +936,8 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
  *
  * @see udp_disconnect()
  */
-err_t
-udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port)
+LwipError
+udp_bind(struct udp_pcb *pcb, const LwipIpAddr *ipaddr, uint16_t port)
 {
   struct udp_pcb *ipcb;
   uint8_t rebind;
@@ -1075,8 +1075,8 @@ udp_bind_netif(struct udp_pcb *pcb, const struct netif *netif)
  *
  * @see udp_disconnect()
  */
-err_t
-udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port)
+LwipError
+udp_connect(struct udp_pcb *pcb, const LwipIpAddr *ipaddr, uint16_t port)
 {
   struct udp_pcb *ipcb;
 
@@ -1086,7 +1086,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, uint16_t port)
   LWIP_ERROR("udp_connect: invalid ipaddr", ipaddr != nullptr, return ERR_ARG);
 
   if (pcb->local_port == 0) {
-    err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
+    LwipError err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if (err != ERR_OK) {
       return err;
     }
@@ -1285,7 +1285,7 @@ udp_new_ip_type(uint8_t type)
  * @param old_addr IP address of the netif before change
  * @param new_addr IP address of the netif after change
  */
-void udp_netif_ip_addr_changed(const ip_addr_t *old_addr, const ip_addr_t *new_addr)
+void udp_netif_ip_addr_changed(const LwipIpAddr *old_addr, const LwipIpAddr *new_addr)
 {
   struct udp_pcb *upcb;
 

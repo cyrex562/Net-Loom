@@ -46,7 +46,7 @@ extern "C" {
 /*
  * @todo:
  *
- * Maybe this should be done by processing struct in6_addr directly...
+ * Maybe this should be done by processing struct LwipIn6Addr directly...
  */
 typedef union
 {

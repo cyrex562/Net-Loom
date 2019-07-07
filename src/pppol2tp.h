@@ -163,7 +163,7 @@ extern "C" {
  */
 typedef struct pppol2tp_pcb_s pppol2tp_pcb;
 struct pppol2tp_pcb_s {
-  PppPcb *ppp;                /* PPP PCB */
+  ppp_pcb *ppp;                /* PPP PCB */
   uint8_t phase;                  /* L2TP phase */
   struct udp_pcb *udp;         /* UDP L2TP Socket */
   struct netif *netif;         /* Output interface, used as a default route */

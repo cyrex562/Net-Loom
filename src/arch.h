@@ -67,9 +67,7 @@
  * Needed for conversion of network data to host byte order.
  * Allowed values: LITTLE_ENDIAN and BIG_ENDIAN
  */
-#ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
-#endif
 
 /** Define random number generator function of your system */
 inline uint32_t LwipRand() {

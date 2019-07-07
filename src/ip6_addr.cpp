@@ -68,7 +68,7 @@ const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
  * @return 1 if cp could be converted to addr, 0 on failure
  */
 int
-ip6addr_aton(const char *cp, ip6_addr_t *addr)
+ip6addr_aton(const char *cp, LwipIp6Addr *addr)
 {
   uint32_t addr_index, zero_blocks, current_block_index, current_block_value;
   const char *s;
@@ -203,7 +203,7 @@ fix_byte_order_and_return:
  *         representation of addr
  */
 char *
-ip6addr_ntoa(const ip6_addr_t *addr)
+ip6addr_ntoa(const LwipIp6Addr *addr)
 {
   static char str[40];
   return ip6addr_ntoa_r(addr, str, 40);
@@ -219,7 +219,7 @@ ip6addr_ntoa(const ip6_addr_t *addr)
  *         representation of addr or NULL if buf was too small
  */
 char *
-ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
+ip6addr_ntoa_r(const LwipIp6Addr *addr, char *buf, int buflen)
 {
   uint32_t current_block_index, current_block_value, next_block_value;
   s32_t i;

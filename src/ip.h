@@ -2,7 +2,7 @@
 
 #include "opt.h"
 #include "def.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip_addr.h"
 #include "lwip_error.h"
 #include "netif.h"
@@ -25,7 +25,7 @@ extern "C" {
 
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed
-   in the pbuf. This is used when TCP retransmits. */
+   in the PacketBuffer. This is used when TCP retransmits. */
 #define LWIP_IP_HDRINCL  NULL
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
@@ -76,9 +76,9 @@ struct ip_globals
   /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP header starts) */
   uint16_t current_ip_header_tot_len;
   /** Source IP address of current_header */
-  ip_addr_t current_iphdr_src;
+  LwipIpAddr current_iphdr_src;
   /** Destination IP address of current_header */
-  ip_addr_t current_iphdr_dest;
+  LwipIpAddr current_iphdr_dest;
 };
 extern struct ip_globals ip_data;
 
@@ -192,7 +192,7 @@ extern struct ip_globals ip_data;
         ip4_netif_get_local_ip(netif))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 
-err_t ip_input(struct pbuf *p, struct netif *inp);
+LwipError ip_input(struct PacketBuffer *p, struct netif *inp);
 
 
 #define ip_route_get_local_ip(src, dest, netif, ipaddr) do { \

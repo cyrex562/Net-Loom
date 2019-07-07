@@ -62,11 +62,11 @@ struct LinkCallbacks {
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (PppPcb *pcb, void *ctx);
   /* Free lower protocol control block */
-  err_t (*free) (PppPcb *pcb, void *ctx);
-  /* Write a pbuf to a ppp link, only used from PPP functions to send PPP packets. */
-  err_t (*write)(PppPcb *pcb, void *ctx, struct pbuf *p);
+  LwipError (*free) (PppPcb *pcb, void *ctx);
+  /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
+  LwipError (*write)(PppPcb *pcb, void *ctx, struct PacketBuffer *p);
   /* Send a packet from lwIP core (IPv4 or IPv6) */
-  err_t (*netif_output)(PppPcb *pcb, void *ctx, struct pbuf *p, u_short protocol);
+  LwipError (*netif_output)(PppPcb *pcb, void *ctx, struct PacketBuffer *p, u_short protocol);
   /* configure the transmit-side characteristics of the PPP interface */
   void (*send_config)(PppPcb *pcb, void *ctx, uint32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
@@ -104,11 +104,13 @@ constexpr auto EPD_PHONENUM = 5;
 /*
  * Global variables.
  */
+#ifdef HAVE_MULTILINK
 extern uint8_t	multilink;	/* enable multilink operation */
 extern uint8_t	doing_multilink;
 extern uint8_t	multilink_master;
 extern uint8_t	bundle_eof;
 extern uint8_t	bundle_terminating;
+#endif
 
 extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
 extern int       maxoctets_dir;      /* Direction :
@@ -185,7 +187,7 @@ void ppp_link_failed(PppPcb *pcb);
 void ppp_link_end(PppPcb *pcb);
 
 /* function called to process input packet */
-void ppp_input(PppPcb *pcb, struct pbuf *pb, fsm* lcp_fsm, Protent** protocols);
+void ppp_input(PppPcb *pcb, struct PacketBuffer *pb, fsm* lcp_fsm, Protent** protocols);
 
 
 /*
@@ -193,7 +195,7 @@ void ppp_input(PppPcb *pcb, struct pbuf *pb, fsm* lcp_fsm, Protent** protocols);
  */
 
 /* function called by all PPP subsystems to send packets */
-err_t ppp_write(PppPcb *pcb, struct pbuf *p);
+LwipError ppp_write(PppPcb *pcb, struct PacketBuffer *p);
 
 /* functions called by auth.c link_terminated() */
 void ppp_link_terminated(PppPcb *pcb);
@@ -203,25 +205,16 @@ void new_phase(PppPcb *pcb, int p);
 int ppp_send_config(PppPcb *pcb, int mtu, uint32_t accm, int pcomp, int accomp);
 int ppp_recv_config(PppPcb *pcb, int mru, uint32_t accm, int pcomp, int accomp);
 
-int sifaddr(PppPcb *pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask);
-int cifaddr(PppPcb *pcb, uint32_t our_adr, uint32_t his_adr);
-int sdns(PppPcb*pcb, uint32_t ns1, uint32_t ns2);
-int cdns(PppPcb*pcb, uint32_t ns1, uint32_t ns2);
-int sifvjcomp(PppPcb*pcb, int vjcomp, int cidcomp, int maxcid);
-int sifup(PppPcb *pcb);
-int sifdown (PppPcb *pcb);
-uint32_t get_mask(uint32_t addr);
-int sif6addr(PppPcb*pcb, Eui64T our_eui64, Eui64T his_eui64);
-int cif6addr(PppPcb*pcb, Eui64T our_eui64, Eui64T his_eui64);
-int sif6up(PppPcb*pcb);
-int sif6down (PppPcb*pcb);
+void netif_set_mtu(ppp_pcb *pcb, int mtu);
+int netif_get_mtu(ppp_pcb *pcb);
 
-void netif_set_mtu(PppPcb *pcb, int mtu);
-int netif_get_mtu(PppPcb *pcb);
-int ccp_test(PppPcb *pcb, uint8_t *opt_ptr, int opt_len, int for_transmit);
-void ccp_set(PppPcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
-void ccp_reset_comp(PppPcb *pcb);
-void ccp_reset_decomp(PppPcb *pcb);
+#if CCP_SUPPORT
+#if 0 /* unused */
+int ccp_test(ppp_pcb *pcb, uint8_t *opt_ptr, int opt_len, int for_transmit);
+#endif /* unused */
+void ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
+void ccp_reset_comp(ppp_pcb *pcb);
+void ccp_reset_decomp(ppp_pcb *pcb);
 #if 0 /* unused */
 int ccp_fatal_error(PppPcb *pcb);
 #endif /* unused */

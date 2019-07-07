@@ -41,10 +41,9 @@
  */
 #pragma once
 
-#include "opt.h"
 #include "def.h"
 
-//#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
+#include "opt.h"
 
 #include "ip6_zone.h"
 
@@ -54,7 +53,7 @@ extern "C"
 #endif
 
 
-/** This is the aligned version of ip6_addr_t,
+/** This is the aligned version of LwipIp6Addr,
     used as local variable, on the stack, etc. */
 struct Ip6Addr {
     uint32_t addr[4];

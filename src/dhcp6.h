@@ -168,8 +168,8 @@ void dhcp6_set_struct(struct netif *netif, struct dhcp6 *dhcp6);
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
 void dhcp6_cleanup(struct netif *netif);
 
-err_t dhcp6_enable_stateful(struct netif *netif);
-err_t dhcp6_enable_stateless(struct netif *netif);
+LwipError dhcp6_enable_stateful(struct netif *netif);
+LwipError dhcp6_enable_stateless(struct netif *netif);
 void dhcp6_disable(struct netif *netif);
 
 void dhcp6_tmr(void);

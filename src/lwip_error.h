@@ -37,6 +37,9 @@
 
 #include "opt.h"
 
+#include "opt.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

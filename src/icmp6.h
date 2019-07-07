@@ -42,7 +42,7 @@
 #define LWIP_HDR_ICMP6_H
 
 #include "opt.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip6_addr.h"
 #include "netif.h"
 #include "arch.h"
@@ -174,13 +174,13 @@ extern "C" {
 
 #if LWIP_ICMP6 && LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
 
-void icmp6_input(struct pbuf *p, struct netif *inp);
-void icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c);
-void icmp6_packet_too_big(struct pbuf *p, uint32_t mtu);
-void icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c);
-void icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
-    const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr);
-void icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, const void *pointer);
+void icmp6_input(struct PacketBuffer *p, struct netif *inp);
+void icmp6_dest_unreach(struct PacketBuffer *p, enum icmp6_dur_code c);
+void icmp6_packet_too_big(struct PacketBuffer *p, uint32_t mtu);
+void icmp6_time_exceeded(struct PacketBuffer *p, enum icmp6_te_code c);
+void icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum icmp6_te_code c,
+    const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr);
+void icmp6_param_problem(struct PacketBuffer *p, enum icmp6_pp_code c, const void *pointer);
 
 #endif /* LWIP_ICMP6 && LWIP_IPV6 */
 

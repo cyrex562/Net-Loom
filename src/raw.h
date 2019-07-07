@@ -42,7 +42,7 @@
 
 #if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "def.h"
 #include "ip.h"
 #include "ip_addr.h"
@@ -65,10 +65,10 @@ struct raw_pcb;
  * @param addr the remote IP address from which the packet was received
  * @return 1 if the packet was 'eaten' (aka. deleted),
  *         0 if the packet lives on
- * If returning 1, the callback is responsible for freeing the pbuf
+ * If returning 1, the callback is responsible for freeing the PacketBuffer
  * if it's not used any more.
  */
-typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
+typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct PacketBuffer *p,
     const ip_addr_t *addr);
 
 /** the RAW protocol control block */
@@ -113,14 +113,14 @@ struct raw_pcb {
 struct raw_pcb * raw_new        (uint8_t proto);
 struct raw_pcb * raw_new_ip_type(uint8_t type, uint8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
-err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+LwipError            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 void             raw_bind_netif (struct raw_pcb *pcb, const struct netif *netif);
-err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+LwipError            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 void             raw_disconnect (struct raw_pcb *pcb);
 
-err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr);
-err_t            raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip, struct netif *netif, const ip_addr_t *src_ip);
-err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
+LwipError            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *ipaddr);
+LwipError            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip, struct netif *netif, const ip_addr_t *src_ip);
+LwipError            raw_send       (struct raw_pcb *pcb, struct PacketBuffer *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
 

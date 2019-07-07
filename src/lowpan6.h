@@ -42,7 +42,7 @@
 #pragma once
 #include "lowpan6_opts.h"
 #include "lowpan6_common.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip.h"
 #include "ip_addr.h"
 #include "netif.h"
@@ -64,9 +64,9 @@ err_t lowpan6_input(struct pbuf * p, struct netif *netif);
 err_t lowpan6_if_init(struct netif *netif);
 
 /* pan_id in network byte order. */
-err_t lowpan6_set_pan_id(uint16_t pan_id);
+LwipError lowpan6_set_pan_id(uint16_t pan_id);
 uint16_t lowpan6_calc_crc(const void *buf, uint16_t len);
-err_t tcpip_6lowpan_input(struct pbuf *p, struct netif *inp);
+LwipError tcpip_6lowpan_input(struct PacketBuffer *p, struct netif *inp);
 
 
 #ifdef __cplusplus

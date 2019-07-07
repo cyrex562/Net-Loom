@@ -86,7 +86,7 @@
  */
 
 #include "ppp_opts.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "stats.h"
 #include "sys.h"
 #include "tcpip.h"
@@ -154,30 +154,33 @@ static err_t ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t pro
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
-
-void
-ppp_set_auth(PppPcb* pcb, uint8_t authtype, const char* user, const char* passwd)
-{
-    LWIP_ASSERT_CORE_LOCKED();
-    pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
-    pcb->settings.refuse_chap = !(authtype & PPPAUTHTYPE_CHAP);
-    pcb->settings.refuse_mschap = !(authtype & PPPAUTHTYPE_MSCHAP);
-    pcb->settings.refuse_mschap_v2 = !(authtype & PPPAUTHTYPE_MSCHAP_V2);
-    pcb->settings.refuse_eap = !(authtype & PPPAUTHTYPE_EAP);
-    pcb->settings.user = user;
-    pcb->settings.passwd = passwd;
+#if PPP_AUTH_SUPPORT
+void ppp_set_auth(ppp_pcb *pcb, uint8_t authtype, const char *user, const char *passwd) {
+  LWIP_ASSERT_CORE_LOCKED();
+#if PAP_SUPPORT
+  pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+  pcb->settings.refuse_chap = !(authtype & PPPAUTHTYPE_CHAP);
+#if MSCHAP_SUPPORT
+  pcb->settings.refuse_mschap = !(authtype & PPPAUTHTYPE_MSCHAP);
+  pcb->settings.refuse_mschap_v2 = !(authtype & PPPAUTHTYPE_MSCHAP_V2);
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+  pcb->settings.refuse_eap = !(authtype & PPPAUTHTYPE_EAP);
+#endif /* EAP_SUPPORT */
+  pcb->settings.user = user;
+  pcb->settings.passwd = passwd;
 }
 
 
 /* Set MPPE configuration */
-void
-ppp_set_mppe(PppPcb* pcb, uint8_t flags)
-{
-    if (flags == PPP_MPPE_DISABLE)
-    {
-        pcb->settings.require_mppe = 0;
-        return;
-    }
+void ppp_set_mppe(ppp_pcb *pcb, uint8_t flags) {
+  if (flags == PPP_MPPE_DISABLE) {
+    pcb->settings.require_mppe = 0;
+    return;
+  }
 
     pcb->settings.require_mppe = 1;
     pcb->settings.refuse_mppe_stateful = !(flags & PPP_MPPE_ALLOW_STATEFUL);
@@ -205,7 +208,7 @@ ppp_set_notify_phase_callback(PppPcb* pcb, ppp_notify_phase_cb_fn notify_phase_c
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t
+LwipError
 ppp_connect(PppPcb* pcb, uint16_t holdoff)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -237,7 +240,7 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t
+LwipError
 ppp_listen(PppPcb* pcb)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -270,8 +273,8 @@ ppp_listen(PppPcb* pcb)
  *
  * Return 0 on success, an error code on failure.
  */
-err_t
-ppp_close(PppPcb* pcb, uint8_t nocarrier)
+LwipError
+ppp_close(ppp_pcb *pcb, uint8_t nocarrier)
 {
     LWIP_ASSERT_CORE_LOCKED();
 
@@ -338,10 +341,10 @@ ppp_close(PppPcb* pcb, uint8_t nocarrier)
  *
  * Return 0 on success, an error code on failure.
  */
-err_t
+LwipError
 ppp_free(PppPcb* pcb)
 {
-    err_t err;
+    LwipError err;
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb->phase != PPP_PHASE_DEAD)
     {
@@ -361,8 +364,8 @@ ppp_free(PppPcb* pcb)
 
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
-err_t
-ppp_ioctl(PppPcb* pcb, uint8_t cmd, void* arg)
+LwipError
+ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb == nullptr)
@@ -423,7 +426,7 @@ ppp_do_connect(void* arg)
 /*
  * ppp_netif_init_cb - netif init callback
  */
-static err_t
+static LwipError
 ppp_netif_init_cb(struct netif* netif)
 {
     netif->name[0] = 'p';
@@ -454,12 +457,12 @@ ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
-static err_t
-ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
+static LwipError
+ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
-    err_t err;
-    struct pbuf* fpb = nullptr;
+    LwipError err;
+    struct PacketBuffer* fpb = nullptr;
 
     /* Check that the link is up. */
     if (0
@@ -491,14 +494,14 @@ ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
                protocol = PPP_IP; */
             break;
         case kTypeCompressedTcp:
-            /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
-             * our duplicated pbuf later */
+            /* vj_compress_tcp() returns a new allocated PacketBuffer, indicate we should free
+             * our duplicated PacketBuffer later */
             fpb = pb;
             protocol = PPP_VJC_COMP;
             break;
         case kTypeUncompressedTcp:
-            /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
-             * our duplicated pbuf later */
+            /* vj_compress_tcp() returns a new allocated PacketBuffer, indicate we should free
+             * our duplicated PacketBuffer later */
             fpb = pb;
             protocol = PPP_VJC_UNCOMP;
             break;
@@ -523,13 +526,13 @@ ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol)
             MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
             goto err;
         }
-        /* if VJ compressor returned a new allocated pbuf, free it */
+        /* if VJ compressor returned a new allocated PacketBuffer, free it */
         if (fpb)
         {
             pbuf_free(fpb);
         }
-        /* mppe_compress() returns a new allocated pbuf, indicate we should free
-         * our duplicated pbuf later */
+        /* mppe_compress() returns a new allocated PacketBuffer, indicate we should free
+         * our duplicated PacketBuffer later */
         fpb = pb;
         protocol = PPP_COMP;
         break;
@@ -712,14 +715,30 @@ ppp_link_end(PppPcb* pcb)
  * This function and all handlers run in the context of the tcpip_thread
  */
 void
-ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
+ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocols)
 {
     uint16_t protocol;
 #if PPP_DEBUG && PPP_PROTOCOLNAME
     const char *pname;
 #endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
 
-    magic_randomize();
+  magic_randomize();
+
+  if (pb->len < 2) {
+    PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
+    goto drop;
+  }
+  protocol = (((uint8_t *)pb->payload)[0] << 8) | ((uint8_t*)pb->payload)[1];
+
+#if PRINTPKT_SUPPORT
+  ppp_dump_packet(pcb, "rcvd", (unsigned char *)pb->payload, pb->len);
+#endif /* PRINTPKT_SUPPORT */
+
+  pbuf_remove_header(pb, sizeof(protocol));
+
+  LINK_STATS_INC(link.recv);
+  MIB2_STATS_NETIF_INC(pcb->netif, ifinucastpkts);
+  MIB2_STATS_NETIF_ADD(pcb->netif, ifinoctets, pb->tot_len);
 
     if (pb->len < 2)
     {
@@ -731,9 +750,8 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
 
     pbuf_remove_header(pb, sizeof(protocol));
 
-    LINK_STATS_INC(link.recv);
-    MIB2_STATS_NETIF_INC(pcb->netif, ifinucastpkts);
-    MIB2_STATS_NETIF_ADD(pcb->netif, ifinoctets, pb->tot_len);
+  if (protocol == PPP_COMP) {
+    uint8_t *pl;
 
     /*
      * Toss all non-LCP packets unless LCP is OPEN.
@@ -759,16 +777,15 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
         ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
         goto drop;
     }
-    /*
-     * MPPE is required and unencrypted data has arrived (this
-     * should never happen!). We should probably drop the link if
-     * the protocol is in the range of what should be encrypted.
-     * At the least, we drop this packet.
-     */
-    if (pcb->settings.require_mppe && protocol != PPP_COMP && protocol < 0x8000)
-    {
-        // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: MPPE required, received unencrypted data!\n", pcb->netif->num));
-        goto drop;
+
+    /* Extract and hide protocol (do PFC decompression if necessary) */
+    pl = (uint8_t*)pb->payload;
+    if (pl[0] & 0x01) {
+      protocol = pl[0];
+      pbuf_remove_header(pb, 1);
+    } else {
+      protocol = (pl[0] << 8) | pl[1];
+      pbuf_remove_header(pb, 2);
     }
 
     if (protocol == PPP_COMP)
@@ -811,23 +828,31 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
     switch (protocol)
     {
     case PPP_IP: /* Internet Protocol */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         ip4_input(pb, pcb->netif);
         return;
     case PPP_IPV6: /* Internet Protocol Version 6 */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         ip6_input(pb, pcb->netif);
         return;
-    case PPP_VJC_COMP: /* VJ compressed TCP */
-        /*
-         * Clip off the VJ header and prepend the rebuilt TCP/IP header and
-         * pass the result to IP.
-         */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
-        if (pcb->vj_enabled && vj_uncompress_tcp(&pb, &pcb->vj_comp) >= 0)
-        {
-            ip4_input(pb, pcb->netif);
-            return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
+      break;
+#endif /* VJ_SUPPORT */
+
+    default: {
+      int i;
+      const struct protent *protp;
+
+      /*
+       * Upcall the proper protocol input routine.
+       */
+      for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+        if (protp->protocol == protocol) {
+          pb = pbuf_coalesce(pb, PBUF_RAW);
+          (*protp->input)(pcb, (uint8_t*)pb->payload, pb->len);
+          goto out;
         }
         /* Something's wrong so drop it. */
         // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->netif->num));
@@ -838,7 +863,7 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
          * Process the TCP/IP header for VJ header compression and then pass
          * the packet to IP.
          */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
+        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
         if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0)
         {
             ip4_input(pb, pcb->netif);
@@ -880,8 +905,10 @@ ppp_input(PppPcb* pcb, struct pbuf* pb, fsm* lcp_fsm, Protent** protocols)
             }
             lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
         }
-        break;
-    }
+        lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
+      }
+      break;
+  }
 
 drop:
     LINK_STATS_INC(link.drop);
@@ -892,15 +919,15 @@ out:
 }
 
 /*
- * Write a pbuf to a ppp link, only used from PPP functions
+ * Write a PacketBuffer to a ppp link, only used from PPP functions
  * to send PPP packets.
  *
  * IPv4 and IPv6 packets from lwIP are sent, respectively,
  * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
  * functions (which are callbacks of the netif PPP interface).
  */
-err_t
-ppp_write(PppPcb* pcb, struct pbuf* p)
+LwipError
+ppp_write(PppPcb* pcb, struct PacketBuffer* p)
 {
     return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
 }
@@ -1238,6 +1265,19 @@ netif_get_mtu(PppPcb* pcb)
     return pcb->netif->mtu;
 }
 
+/*
+ * ccp_set - inform about the current state of CCP.
+ */
+void
+ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method)
+{
+  LWIP_UNUSED_ARG(isopen);
+  LWIP_UNUSED_ARG(isup);
+  pcb->ccp_receive_method = receive_method;
+  pcb->ccp_transmit_method = transmit_method;
+  PPPDEBUG(LOG_DEBUG, ("ccp_set[%d]: is_open=%d, is_up=%d, receive_method=%u, transmit_method=%u\n",
+           pcb->netif->num, isopen, isup, receive_method, transmit_method));
+}
 
 
 

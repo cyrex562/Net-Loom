@@ -54,7 +54,7 @@
  * - set the link output function, which transmits output data to an established L2CAP channel
  * - If data arrives (HCI event "L2CAP_DATA_PACKET"):
  *   - allocate a @ref PBUF_RAW buffer
- *   - let the pbuf struct point to the incoming data or copy it to the buffer
+ *   - let the PacketBuffer struct point to the incoming data or copy it to the buffer
  *   - call netif->input
  *
  * @todo:
@@ -71,7 +71,7 @@
 //#if LWIP_IPV6
 
 #include "ip.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "nd6.h"
@@ -150,7 +150,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
 static err_t
 rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
-  if ((in_addr == nullptr) || (addr == nullptr)) {
+  if ((LwipInAddrStruct == NULL) || (addr == NULL)) {
     return ERR_VAL;
   }
   if (is_mac_48) {
@@ -158,13 +158,13 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
       return ERR_VAL;
     }
     addr->addr_len = 8;
-    ble_addr_to_eui64(addr->addr, in_addr, is_public_addr);
+    ble_addr_to_eui64(addr->addr, LwipInAddrStruct, is_public_addr);
   } else {
     if (in_addr_len != 8) {
       return ERR_VAL;
     }
     addr->addr_len = 8;
-    memcpy(addr->addr, in_addr, 8);
+    memcpy(addr->addr, LwipInAddrStruct, 8);
   }
   return ERR_OK;
 }
@@ -173,7 +173,7 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
 /** Set the local address used for stateful compression.
  * This expects an address of 8 bytes.
  */
-err_t
+LwipError
 rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
@@ -184,7 +184,7 @@ rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, siz
 /** Set the local address used for stateful compression.
  * This expects an address of 6 bytes.
  */
-err_t
+LwipError
 rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
@@ -195,7 +195,7 @@ rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, siz
 /** Set the peer address used for stateful compression.
  * This expects an address of 8 bytes.
  */
-err_t
+LwipError
 rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
@@ -206,7 +206,7 @@ rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_
 /** Set the peer address used for stateful compression.
  * This expects an address of 6 bytes.
  */
-err_t
+LwipError
 rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
@@ -220,28 +220,28 @@ rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_
  *  *) According to RFC6282
  *  *) See Figure 2, contains base format of bit positions
  *  *) Fragmentation not necessary (done at L2CAP layer of BLE)
- * @note Currently the pbuf allocation uses 256 bytes. If longer packets are used (possible due to MTU=1480Bytes), increase it here!
+ * @note Currently the PacketBuffer allocation uses 256 bytes. If longer packets are used (possible due to MTU=1480Bytes), increase it here!
  * 
  * @param p Pbuf struct, containing the payload data
  * @param netif Output network interface. Should be of RFC7668 type
  * 
  * @return Same as netif->output.
  */
-static err_t
-rfc7668_compress(struct netif *netif, struct pbuf *p)
+static LwipError
+rfc7668_compress(struct netif *netif, struct PacketBuffer *p)
 {
-  struct pbuf *p_frag;
+  struct PacketBuffer *p_frag;
   uint16_t remaining_len;
   uint8_t *buffer;
   uint8_t lowpan6_header_len;
   uint8_t hidden_header_len;
-  err_t err;
+  LwipError err;
 
 //  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
 #if LWIP_6LOWPAN_IPHC
 
-  /* We'll use a dedicated pbuf for building BLE fragments.
+  /* We'll use a dedicated PacketBuffer for building BLE fragments.
    * We'll over-allocate it by the bytes saved for header compression.
    */
   p_frag = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
@@ -249,7 +249,7 @@ rfc7668_compress(struct netif *netif, struct pbuf *p)
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
-//  LWIP_ASSERT("this needs a pbuf in one piece", p_frag->len == p_frag->tot_len);
+//  LWIP_ASSERT("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IP6 header (with IPHC). */
   buffer = (uint8_t*)p_frag->payload;
@@ -320,7 +320,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  * Compress outgoing IPv6 packet and pass it on to netif->linkoutput
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
- * @param q The pbuf(s) containing the IP packet to be sent.
+ * @param q The PacketBuffer(s) containing the IP packet to be sent.
  * @param ip6addr The IP address of the packet destination.
  *
  * @return See rfc7668_compress
@@ -342,8 +342,8 @@ rfc7668_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
  * 
  * @return ERR_OK if everything was fine
  */
-err_t
-rfc7668_input(struct pbuf * p, struct netif *netif)
+LwipError
+rfc7668_input(struct PacketBuffer * p, struct netif *netif)
 {
   uint8_t * puc;
 
@@ -362,7 +362,7 @@ rfc7668_input(struct pbuf * p, struct netif *netif)
 //    LWIP_DEBUGF(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, decompress dispatch: 0x%2x \n", *puc));
     /* IPv6 headers are compressed using IPHC. */
     p = lowpan6_decompress(p, 0, rfc7668_context, &rfc7668_peer_addr, &rfc7668_local_addr);
-    /* if no pbuf is returned, handle as discarded packet */
+    /* if no PacketBuffer is returned, handle as discarded packet */
     if (p == nullptr) {
       MIB2_STATS_NETIF_INC(netif, ifindiscards);
       return ERR_OK;
@@ -405,7 +405,7 @@ rfc7668_input(struct pbuf * p, struct netif *netif)
  * 
  * @return ERR_OK if everything went fine
  */
-err_t
+LwipError
 rfc7668_if_init(struct netif *netif)
 {
   netif->name[0] = 'b';
@@ -435,8 +435,8 @@ rfc7668_if_init(struct netif *netif)
  * 
  * @return see @ref tcpip_inpkt, same return values
  */
-err_t
-tcpip_rfc7668_input(struct pbuf *p, struct netif *inp)
+LwipError
+tcpip_rfc7668_input(struct PacketBuffer *p, struct netif *inp)
 {
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);

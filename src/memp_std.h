@@ -12,7 +12,7 @@
  * We have create three types of pools:
  *   1) MEMPOOL - standard pools
  *   2) MALLOC_MEMPOOL - to be used by mem_malloc in mem.c
- *   3) PBUF_MEMPOOL - a mempool of pbuf's, so include space for the pbuf struct
+ *   3) PBUF_MEMPOOL - a mempool of PacketBuffer's, so include space for the PacketBuffer struct
  *
  * If the include'r doesn't require any special treatment of each of the types
  * above, then will declare #2 & #3 to be just standard mempools.
@@ -123,14 +123,14 @@ LWIP_MEMPOOL(LOCALHOSTLIST,  MEMP_NUM_LOCALHOSTLIST,   LOCALHOSTLIST_ELEM_SIZE, 
 
 
 /*
- * A list of pools of pbuf's used by LWIP.
+ * A list of pools of PacketBuffer's used by LWIP.
  *
  * LWIP_PBUF_MEMPOOL(pool_name, number_elements, pbuf_payload_size, pool_description)
  *     creates a pool name MEMP_pool_name. description is used in stats.c
- *     This allocates enough space for the pbuf struct and a payload.
+ *     This allocates enough space for the PacketBuffer struct and a payload.
  *     (Example: pbuf_payload_size=0 allocates only size for the struct)
  */
-// LWIP_MEMPOOL(PBUF,           MEMP_NUM_PBUF,            sizeof(struct pbuf),           "PBUF_REF/ROM")
+// LWIP_MEMPOOL(PBUF,           MEMP_NUM_PBUF,            sizeof(struct PacketBuffer),           "PBUF_REF/ROM")
 // LWIP_PBUF_MEMPOOL(PBUF_POOL, PBUF_POOL_SIZE,           PBUF_POOL_BUFSIZE,             "PBUF_POOL")
 
 

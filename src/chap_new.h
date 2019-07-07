@@ -138,27 +138,23 @@ struct ChapDigestType
 /*
  * Each interface is described by chap structure.
  */
-
-typedef struct chap_client_state
-{
-    uint8_t flags;
-    const char* name;
-    const struct ChapDigestType* digest;
-    uint8_t priv[64]; /* private area for digest's use */
+#if CHAP_SUPPORT
+typedef struct chap_client_state {
+	uint8_t flags;
+	const char *name;
+	const struct chap_digest_type *digest;
+	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
 
-
-typedef struct chap_server_state
-{
-    uint8_t flags;
-    uint8_t id;
-    const char* name;
-    const struct ChapDigestType* digest;
-    int challenge_xmits;
-    int challenge_pktlen;
-    // unsigned char challenge[CHAL_MAX_PKTLEN];
-    uint8_t* challenge;
-    size_t challenge_len;
+#if PPP_SERVER
+typedef struct chap_server_state {
+	uint8_t flags;
+	uint8_t id;
+	const char *name;
+	const struct chap_digest_type *digest;
+	int challenge_xmits;
+	int challenge_pktlen;
+	unsigned char challenge[CHAL_MAX_PKTLEN];
 } chap_server_state;
 
 

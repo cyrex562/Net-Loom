@@ -201,21 +201,40 @@ struct PppSettings {
   const char  *user;                   /* Username for PAP */
   const char  *passwd;                 /* Password for PAP, secret for CHAP */
   char  remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+#endif /* PPP_REMOTENAME */
 
+#if PAP_SUPPORT
   uint8_t  pap_timeout_time;        /* Timeout (seconds) for auth-req retrans. */
   uint8_t  pap_max_transmits;       /* Number of auth-reqs sent */
+#if PPP_SERVER
   uint8_t  pap_req_timeout;         /* Time to wait for auth-req from peer */
+#endif /* PPP_SERVER */
+#endif /* PAP_SUPPPORT */
+
+#if CHAP_SUPPORT
   uint8_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
   uint8_t  chap_max_transmits;      /* max # times to send challenge */
+#if PPP_SERVER
   uint8_t  chap_rechallenge_time;   /* Time to wait for auth-req from peer */
+#endif /* PPP_SERVER */
+#endif /* CHAP_SUPPPORT */
+
+#if EAP_SUPPORT
   uint8_t  eap_req_time;            /* Time to wait (for retransmit/fail) */
   uint8_t  eap_allow_req;           /* Max Requests allowed */
+#if PPP_SERVER
   uint8_t  eap_timeout_time;        /* Time to wait (for retransmit/fail) */
   uint8_t  eap_max_transmits;       /* Max Requests allowed */
+#endif /* PPP_SERVER */
+#endif /* EAP_SUPPORT */
+
+#endif /* PPP_AUTH_SUPPORT */
+
   uint8_t  fsm_timeout_time;            /* Timeout time in seconds */
   uint8_t  fsm_max_conf_req_transmits;  /* Maximum Configure-Request transmissions */
   uint8_t  fsm_max_term_transmits;      /* Maximum Terminate-Request transmissions */
   uint8_t  fsm_max_nak_loops;           /* Maximum number of nak loops tolerated */
+
   uint8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
                                  before deciding the link is looped-back. */
   uint8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
@@ -241,14 +260,15 @@ struct PppPcb {
   PppSettings settings;
   const struct LinkCallbacks *link_cb;
   void *link_ctx_cb;
-  void (*link_status_cb)(PppPcb *pcb,
-                         int err_code,
-                         void *ctx);  /* Status change callback */
-  void (*notify_phase_cb)(PppPcb *pcb, uint8_t phase, void *ctx);   /* Notify phase callback */
+  void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
+#if PPP_NOTIFY_PHASE
+  void (*notify_phase_cb)(ppp_pcb *pcb, uint8_t phase, void *ctx);   /* Notify phase callback */
+#endif /* PPP_NOTIFY_PHASE */
   void *ctx_cb;                  /* Callbacks optional pointer */
   struct netif *netif;           /* PPP interface */
   uint8_t phase;                    /* where the link is at */
   uint8_t err_code;                 /* Code indicating why interface is down. */
+
   /* flags */
   unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
@@ -277,17 +297,24 @@ struct PppPcb {
   uint16_t peer_mru;                /* currently negotiated peer MRU */
   uint8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   uint8_t lcp_echo_number;          /* ID number of next echo frame */
+
   uint8_t num_np_open;              /* Number of network protocols which we have opened. */
   uint8_t num_np_up;                /* Number of network protocols which have come up. */
-  Vjcompress vj_comp;     /* Van Jacobson compression header. */
+
+#if VJ_SUPPORT
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* VJ_SUPPORT */
+
+#if CCP_SUPPORT
   fsm ccp_fsm;                   /* CCP fsm structure */
-  ccp_options ccp_wantoptions;   /* what to request the peer to use */
-  ccp_options ccp_gotoptions;    /* what the peer agreed to do */
-  ccp_options ccp_allowoptions;  /* what we'll agree to do */
-  ccp_options ccp_hisoptions;    /* what we agreed to do */
+  CcpOptions ccp_wantoptions;   /* what to request the peer to use */
+  CcpOptions ccp_gotoptions;    /* what the peer agreed to do */
+  CcpOptions ccp_allowoptions;  /* what we'll agree to do */
+  CcpOptions ccp_hisoptions;    /* what we agreed to do */
   uint8_t ccp_localstate;           /* Local state (mainly for handling reset-reqs and reset-acks). */
   uint8_t ccp_receive_method;       /* Method chosen on receive path */
   uint8_t ccp_transmit_method;      /* Method chosen on transmit path */
+#if MPPE_SUPPORT
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
   fsm ipcp_fsm;                   /* IPCP fsm structure */
@@ -396,8 +423,8 @@ constexpr auto PPP_MPPE_REFUSE_128 = 0x08;
  *
  * Default is disabled.
  */
-void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
-
+void ppp_set_mppe(ppp_pcb *pcb, uint8_t flags);
+#endif /* MPPE_SUPPORT */
 
 /*
  * Wait for up to intval milliseconds for a valid PPP packet from the peer.
@@ -476,9 +503,9 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  * This can be used for example to set a LED pattern depending on the
  * current phase of the PPP session.
  */
-typedef void (*ppp_notify_phase_cb_fn)(PppPcb *pcb, uint8_t phase, void *ctx);
-void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
-
+typedef void (*ppp_notify_phase_cb_fn)(ppp_pcb *pcb, uint8_t phase, void *ctx);
+void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
+#endif /* PPP_NOTIFY_PHASE */
 
 /*
  * Initiate a PPP connection.
@@ -491,7 +518,7 @@ void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_ph
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
+LwipError ppp_connect(PppPcb *pcb, uint16_t holdoff);
 
 
 /*
@@ -502,7 +529,7 @@ err_t ppp_connect(PppPcb *pcb, uint16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(PppPcb *pcb);
+LwipError ppp_listen(PppPcb *pcb);
 
 
 /*
@@ -516,7 +543,7 @@ err_t ppp_listen(PppPcb *pcb);
  *
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_close(PppPcb *pcb, uint8_t nocarrier);
+LwipError ppp_close(ppp_pcb *pcb, uint8_t nocarrier);
 
 /*
  * Release the control block.
@@ -528,7 +555,7 @@ err_t ppp_close(PppPcb *pcb, uint8_t nocarrier);
  *
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_free(PppPcb *pcb);
+LwipError ppp_free(PppPcb *pcb);
 
 /*
  * PPP IOCTL commands.
@@ -553,7 +580,7 @@ constexpr auto PPPCTLG_FD = 2;
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure.
  */
-err_t ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
+LwipError ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               ((ppp)->netif)

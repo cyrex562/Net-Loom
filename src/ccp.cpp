@@ -50,9 +50,9 @@ static void ccp_up(fsm*, PppPcb* pcb, Protent** protocols);
 static void ccp_down(fsm*, fsm* lcp_fsm, PppPcb* pcb);
 static int ccp_extcode(fsm*, int, int, uint8_t*, int, PppPcb* ppp_pcb);
 static void ccp_rack_timeout(void*);
-static const char* method_name(ccp_options*, ccp_options*);
+static const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
-static const FsmCallbacks kCcpCallbacks = {
+static const struct FsmCallbacks kCcpCallbacks = {
     ccp_resetci,
     ccp_cilen,
     ccp_addci,
@@ -73,7 +73,7 @@ static const FsmCallbacks kCcpCallbacks = {
 /*
  * Do we want / did we get any compression?
  */
-static int ccp_anycompress(ccp_options* opt)
+static int ccp_anycompress(CcpOptions* opt)
 {
     return ((opt)->deflate || (opt)->bsd_compress || (opt)->predictor_1 || (opt)->
         predictor_2 || (opt)->mppe);
@@ -839,20 +839,23 @@ static int ccp_rejci(fsm* f, const uint8_t* p, int len, PppPcb* pcb)
 static int ccp_reqci(fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPcb* pcb)
 {
     // PppPcb* pcb = f->pcb;
-    ccp_options* ho = &pcb->ccp_hisoptions;
-    ccp_options* ao = &pcb->ccp_allowoptions;
+    CcpOptions* ho = &pcb->ccp_hisoptions;
+    CcpOptions* ao = &pcb->ccp_allowoptions;
     int res;
     int nb;
-    uint8_t* p0;
-    size_t clen;
-    uint8_t rej_for_ci_mppe = 1; /* Are we rejecting based on a bad/missing */
-    /* CI_MPPE, or due to other options?       */
+#endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT */
+    uint8_t *p0, *retp;
+    int len, clen, type;
+#if MPPE_SUPPORT
+    uint8_t rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
+				/* CI_MPPE, or due to other options?       */
+#endif /* MPPE_SUPPORT */
 
     int ret = CONFACK;
     uint8_t* retp = p0 = p;
     size_t len = *lenp;
 
-    memset(ho, 0, sizeof(ccp_options));
+    memset(ho, 0, sizeof(CcpOptions));
     ho->method = (len > 0) ? p[0] : 0;
 
     while (len > 0)
@@ -1143,7 +1146,7 @@ static int ccp_reqci(fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
 /*
  * Make a string name for a compression method (or 2).
  */
-static const char* method_name(ccp_options* opt, ccp_options* opt2)
+static const char* method_name(CcpOptions* opt, CcpOptions* opt2)
 {
     static char result[64];
 

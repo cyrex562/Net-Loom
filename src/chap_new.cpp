@@ -229,7 +229,7 @@ chap_timeout(void* arg)
     }
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(pcb->chap_server.challenge_pktlen), PPP_CTRL_PBUF_TYPE);
-    auto p = new pbuf;
+    auto p = new PacketBuffer;
     if (nullptr == p)
         return;
     if (p->tot_len != p->len)
@@ -438,7 +438,7 @@ chap_respond(PppPcb* pcb,
     char secret[MAXSECRETLEN + 1];
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(RESP_MAX_PKTLEN), PPP_CTRL_PBUF_TYPE);
-    auto p = new pbuf;
+    auto p = new PacketBuffer;
     if (nullptr == p)
         return;
     if (p->tot_len != p->len)

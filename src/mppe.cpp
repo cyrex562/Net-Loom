@@ -94,7 +94,7 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
  * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
  * don't have to keep multiple copies of keys.
  */
-void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
+void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key) {
 	LWIP_UNUSED_ARG(pcb);
 	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
@@ -103,7 +103,7 @@ void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
  * Initialize (de)compressor state.
  */
 void
-mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
+mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options)
 {
 #if PPP_DEBUG
 	const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";
@@ -186,12 +186,12 @@ void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
  * It's strange to call this a compressor, since the output is always
  * MPPE_OVHD + 2 bytes larger than the input.
  */
-err_t
-mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t protocol)
+LwipError
+mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol)
 {
-	struct pbuf *n, *np;
+	struct PacketBuffer *n, *np;
 	uint8_t *pl;
-	err_t err;
+	LwipError err;
 
 	LWIP_UNUSED_ARG(pcb);
 
@@ -246,7 +246,7 @@ mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb, uint16_t pro
 	pbuf_remove_header(np, MPPE_OVHD);
 
 	/* Encrypt packet */
-	for (n = np; n != nullptr; n = n->next) {
+	for (n = np; n != NULL; n = n->next) {
 		lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;
@@ -272,10 +272,10 @@ void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
 /*
  * Decompress (decrypt) an MPPE packet.
  */
-err_t
-mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
+LwipError
+mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb)
 {
-	struct pbuf *n0 = *pb, *n;
+	struct PacketBuffer *n0 = *pb, *n;
 	uint8_t *pl;
 	uint16_t ccount;
 	uint8_t flushed;
@@ -382,7 +382,7 @@ mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	pbuf_remove_header(n0, MPPE_OVHD);
 
 	/* Decrypt the packet. */
-	for (n = n0; n != nullptr; n = n->next) {
+	for (n = n0; n != NULL; n = n->next) {
 		lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;

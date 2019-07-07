@@ -187,7 +187,7 @@ static void ipv6cp_up(fsm *f); /* We're UP */
 static void ipv6cp_down(fsm *f); /* We're DOWN */
 static void ipv6cp_finished(fsm *f); /* Don't need lower layer */
 
-static const fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
+static const FsmCallbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
     ipv6cp_resetci,		/* Reset our Configuration Information */
     ipv6cp_cilen,		/* Length of our Configuration Information */
     ipv6cp_addci,		/* Add our Configuration Information */
@@ -340,7 +340,7 @@ setifaceid(argv)
 {
     char *comma, *arg, c;
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
-    struct in6_addr addr;
+    struct LwipIn6Addr addr;
     static int prio_local, prio_remote;
 
 #define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \

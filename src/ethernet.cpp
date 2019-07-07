@@ -82,8 +82,8 @@ const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
  * @see ETHARP_SUPPORT_VLAN
  * @see LWIP_HOOK_VLAN_CHECK
  */
-err_t
-ethernet_input(struct pbuf *p, struct netif *netif)
+LwipError
+ethernet_input(struct PacketBuffer *p, struct netif *netif)
 {
   struct EthHdr *ethhdr;
   uint16_t type;
@@ -148,7 +148,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_IPV4
       if ((ethhdr->dest.addr[1] == LL_IP4_MULTICAST_ADDR_1) &&
           (ethhdr->dest.addr[2] == LL_IP4_MULTICAST_ADDR_2)) {
-        /* mark the pbuf as link-layer multicast */
+        /* mark the PacketBuffer as link-layer multicast */
         p->flags |= PBUF_FLAG_LLMCAST;
       }
 #endif /* LWIP_IPV4 */
@@ -156,7 +156,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_IPV6
     else if ((ethhdr->dest.addr[0] == LL_IP6_MULTICAST_ADDR_0) &&
              (ethhdr->dest.addr[1] == LL_IP6_MULTICAST_ADDR_1)) {
-      /* mark the pbuf as link-layer multicast */
+      /* mark the PacketBuffer as link-layer multicast */
       p->flags |= PBUF_FLAG_LLMCAST;
     }
 #endif /* LWIP_IPV6 */
@@ -242,7 +242,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       goto free_and_return;
   }
 
-  /* This means the pbuf is freed or consumed,
+  /* This means the PacketBuffer is freed or consumed,
      so the caller doesn't have to free it again */
   return ERR_OK;
 
@@ -259,11 +259,11 @@ free_and_return:
  * @see LWIP_HOOK_VLAN_SET
  *
  * @param netif the lwIP network interface on which to send the packet
- * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.
+ * @param p the packet to send. PacketBuffer layer must be @ref PBUF_LINK.
  * @param src the source MAC address to be copied into the ethernet header
  * @param dst the destination MAC address to be copied into the ethernet header
  * @param eth_type ethernet type (@ref lwip_ieee_eth_type)
- * @return ERR_OK if the packet was sent, any other err_t on failure
+ * @return ERR_OK if the packet was sent, any other LwipError on failure
  */
 err_t
 ethernet_output(struct netif * netif, struct pbuf * p,

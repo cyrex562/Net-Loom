@@ -277,12 +277,12 @@ DNS_LOCAL_HOSTLIST_STORAGE_PRE struct local_hostlist_entry local_hostlist_static
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 
 static void dns_init_local(void);
-static err_t dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
+static LwipError dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
 #endif /* DNS_LOCAL_HOSTLIST */
 
 
 /* forward declarations */
-static void dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, uint16_t port);
+static void dns_recv(void *s, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port);
 static void dns_check_entries(void);
 static void dns_call_found(uint8_t idx, ip_addr_t *addr);
 
@@ -473,7 +473,7 @@ dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  * @return ERR_OK if found, ERR_ARG if not found
  */
-err_t
+LwipError
 dns_local_lookup(const char *hostname, ip_addr_t *addr, uint8_t dns_addrtype)
 {
   LWIP_UNUSED_ARG(dns_addrtype);
@@ -481,7 +481,7 @@ dns_local_lookup(const char *hostname, ip_addr_t *addr, uint8_t dns_addrtype)
 }
 
 /* Internal implementation for dns_local_lookup and dns_lookup */
-static err_t
+static LwipError
 dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
@@ -558,7 +558,7 @@ dns_local_removehost(const char *hostname, const ip_addr_t *addr)
  * @param addr IP address of the new entry
  * @return ERR_OK if succeeded or ERR_MEM on memory error
  */
-err_t
+LwipError
 dns_local_addhost(const char *hostname, const ip_addr_t *addr)
 {
   struct local_hostlist_entry *entry;
@@ -598,7 +598,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
  *         was not found in the cached dns_table.
  * @return ERR_OK if found, ERR_ARG if not found
  */
-static err_t
+static LwipError
 dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
   uint8_t i;
@@ -643,12 +643,12 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_a
  * Currently, the request is sent exactly as passed in by he user request.
  *
  * @param query hostname (not encoded) from the dns_table
- * @param p pbuf containing the encoded hostname in the DNS response
+ * @param p PacketBuffer containing the encoded hostname in the DNS response
  * @param start_offset offset into p where the name starts
  * @return 0xFFFF: names differ, other: names equal -> offset behind name
  */
 static uint16_t
-dns_compare_name(const char *query, struct pbuf *p, uint16_t start_offset)
+dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offset)
 {
   int n;
   uint16_t response_offset = start_offset;
@@ -700,12 +700,12 @@ dns_compare_name(const char *query, struct pbuf *p, uint16_t start_offset)
 /**
  * Walk through a compact encoded DNS name and return the end of the name.
  *
- * @param p pbuf containing the name
+ * @param p PacketBuffer containing the name
  * @param query_idx start index into p pointing to encoded DNS name in the DNS server response
  * @return index to end of the name
  */
 static uint16_t
-dns_skip_name(struct pbuf *p, uint16_t query_idx)
+dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
 {
   int n;
   uint16_t offset = query_idx;
@@ -742,15 +742,15 @@ dns_skip_name(struct pbuf *p, uint16_t query_idx)
  * Send a DNS query packet.
  *
  * @param idx the DNS table entry index for which to send a request
- * @return ERR_OK if packet is sent; an err_t indicating the problem otherwise
+ * @return ERR_OK if packet is sent; an LwipError indicating the problem otherwise
  */
-static err_t
+static LwipError
 dns_send(uint8_t idx)
 {
-  err_t err;
+  LwipError err;
   struct dns_hdr hdr;
   struct dns_query qry;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   uint16_t query_idx, copy_len;
   const char *hostname, *hostname_part;
   uint8_t n;
@@ -849,7 +849,7 @@ dns_send(uint8_t idx)
     }
     err = udp_sendto(dns_pcbs[pcb_idx], p, dst, dst_port);
 
-    /* free pbuf */
+    /* free PacketBuffer */
     pbuf_free(p);
   } else {
     err = ERR_MEM;
@@ -865,7 +865,7 @@ overflow_return:
 static struct udp_pcb *
 dns_alloc_random_port(void)
 {
-  err_t err;
+  LwipError err;
   struct udp_pcb *pcb;
 
   pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
@@ -1046,7 +1046,7 @@ dns_backupserver_available(struct dns_table_entry *pentry)
 static void
 dns_check_entry(uint8_t i)
 {
-  err_t err;
+  LwipError err;
   struct dns_table_entry *entry = &dns_table[i];
 
   LWIP_ASSERT("array index out of bounds", i < DNS_TABLE_SIZE);
@@ -1167,7 +1167,7 @@ dns_correct_response(uint8_t idx, uint32_t ttl)
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
  */
 static void
-dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, uint16_t port)
+dns_recv(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port)
 {
   uint8_t i;
   uint16_t txid;
@@ -1183,8 +1183,8 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 
   /* is the dns message big enough ? */
   if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY)) {
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
-    /* free pbuf and return */
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: PacketBuffer too small\n"));
+    /* free PacketBuffer and return */
     goto ignore_packet;
   }
 
@@ -1369,9 +1369,9 @@ ignore_packet:
  * @param hostnamelen length of the hostname
  * @param found a callback function to be called on success, failure or timeout
  * @param callback_arg argument to pass to the callback function
- * @return err_t return code.
+ * @return LwipError return code.
  */
-static err_t
+static LwipError
 dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
             void *callback_arg LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype) LWIP_DNS_ISMDNS_ARG(uint8_t is_mdns))
 {
@@ -1507,7 +1507,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
  * Resolve a hostname (string) into an IP address.
  * NON-BLOCKING callback version for use with raw API!!!
  *
- * Returns immediately with one of err_t return codes:
+ * Returns immediately with one of LwipError return codes:
  * - ERR_OK if hostname is a valid IP address string or the host
  *   name is already in the local names table.
  * - ERR_INPROGRESS enqueue a request to be sent to the DNS server
@@ -1520,9 +1520,9 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
  * @param found a callback function to be called on success, failure or timeout (only if
  *              ERR_INPROGRESS is returned!)
  * @param callback_arg argument to pass to the callback function
- * @return a err_t return code.
+ * @return a LwipError return code.
  */
-err_t
+LwipError
 dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback found,
                   void *callback_arg)
 {
@@ -1543,7 +1543,7 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
  *                     - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  */
-err_t
+LwipError
 dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_callback found,
                            void *callback_arg, uint8_t dns_addrtype)
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "opt.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 #include "ethernet.h"
 #include <cstring>

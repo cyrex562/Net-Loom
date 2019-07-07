@@ -108,17 +108,17 @@ enum NetifMacFilterAction {
  *
  * @param netif The netif to initialize
  */
-typedef err_t (*netif_init_fn)(struct netif *netif);
+typedef LwipError (*netif_init_fn)(struct netif *netif);
 /** Function prototype for netif->input functions. This function is saved as 'input'
  * callback function in the netif struct. Call it when a packet has been received.
  *
- * @param p The received packet, copied into a pbuf
+ * @param p The received packet, copied into a PacketBuffer
  * @param inp The netif which received the packet
  * @return ERR_OK if the packet was handled
  *         != ERR_OK is the packet was NOT handled, in this case, the caller has
- *                   to free the pbuf
+ *                   to free the PacketBuffer
  */
-typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
+typedef LwipError (*netif_input_fn)(struct PacketBuffer *p, struct netif *inp);
 
 
 /** Function prototype for netif->output functions. Called by lwIP when a packet
@@ -150,7 +150,7 @@ typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p,
  * @param netif The netif which shall send a packet
  * @param p The packet to send (raw ethernet packet)
  */
-typedef err_t (*netif_linkoutput_fn)(struct netif *netif, struct pbuf *p);
+typedef LwipError (*netif_linkoutput_fn)(struct netif *netif, struct PacketBuffer *p);
 /** Function prototype for netif status- or link-callback functions. */
 typedef void (*netif_status_callback_fn)(struct netif *netif);
 
@@ -194,11 +194,11 @@ struct netif {
   /** pointer to next in linked list */
   struct netif *next;
   /** IP address configuration in network byte order */
-  ip_addr_t ip_addr;
-  ip_addr_t netmask;
-  ip_addr_t gw;
+  LwipIpAddr ip_addr;
+  LwipIpAddr netmask;
+  LwipIpAddr gw;
   /** Array of IPv6 addresses for this netif. */
-  ip_addr_t ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
+  LwipIpAddr ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
   /** The state of each IPv6 address (Tentative, Preferred, etc).
    * @see ip6_addr.h */
   uint8_t ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
@@ -207,21 +207,19 @@ struct netif {
    * indicates the address is static and has no lifetimes. */
   uint32_t ip6_addr_valid_life[LWIP_IPV6_NUM_ADDRESSES];
   uint32_t ip6_addr_pref_life[LWIP_IPV6_NUM_ADDRESSES];
+
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */
   netif_input_fn input;
-
   /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet.
    *  For ethernet physical layer, this is usually etharp_output() */
   netif_output_fn output;
-
   /** This function is called by ethernet_output() when it wants
    *  to send a packet on the interface. This function outputs
-   *  the pbuf as-is on the link medium. */
+   *  the PacketBuffer as-is on the link medium. */
   netif_linkoutput_fn linkoutput;
-
   /** This function is called by the IPv6 module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet.
@@ -242,20 +240,14 @@ struct netif {
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
-
-  void *client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
-
+  void* client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
   /* the hostname for this netif, NULL is a valid value */
-  const char *hostname;
-
+  const char*  hostname;
   uint16_t chksum_flags;
-
   /** maximum transfer unit (in bytes) */
   uint16_t mtu;
-
   /** maximum transfer unit (in bytes), updated by RA */
   uint16_t mtu6;
-
   /** link level hardware address of this interface */
   uint8_t hwaddr[kNetifMaxHwaddrLen];
   /** number of bytes used in hwaddr */
@@ -267,13 +259,10 @@ struct netif {
   /** number of this interface. Used for @ref if_api and @ref netifapi_netif, 
    * as well as for IPv6 zones */
   uint8_t num;
-
   /** is this netif enabled for IPv6 autoconfiguration */
   uint8_t ip6_autoconfig_enabled;
-
   /** Number of Router Solicitation messages that remain to be sent. */
   uint8_t rs_count;
-
   /** link type (from "snmp_ifType" enum from snmp_mib2.h) */
   uint8_t link_type;
   /** (estimate) link speed */
@@ -296,11 +285,9 @@ struct netif {
 
 
   /* List of packets to be queued for ourselves. */
-  struct pbuf *loop_first;
-  struct pbuf *loop_last;
-
+  struct PacketBuffer *loop_first;
+  struct PacketBuffer *loop_last;
   uint16_t loop_cnt_current;
-
 };
 
 #define NETIF_SET_CHECKSUM_CTRL(netif, chksumflags) do { \
@@ -406,7 +393,7 @@ void netif_poll(struct netif *netif);
 void netif_poll_all(void);
 
 
-err_t netif_input(struct pbuf *p, struct netif *inp);
+LwipError netif_input(struct PacketBuffer *p, struct netif *inp);
 
 
 /** @ingroup netif_ip6 */
@@ -440,8 +427,8 @@ err_t netif_add_ip6_address(struct netif *netif, const Ip6Addr*ip6addr, s8_t *ch
 
 
 uint8_t netif_name_to_index(const char *name);
-char *netif_index_to_name(uint8_t idx, char *name);
-struct netif *netif_get_by_index(uint8_t idx);
+char * netif_index_to_name(uint8_t idx, char *name);
+struct netif* netif_get_by_index(uint8_t idx);
 
 /* Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 (internal index is 0..254)*/
 #define netif_get_index(netif)      ((uint8_t)((netif)->num + 1))
@@ -503,18 +490,18 @@ constexpr auto LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x0200;
   /** Args to LWIP_NSC_IPV6_SET callback */
   struct ipv6_set {
     /** Index of changed IPv6 address */
-    s8_t addr_index;
+    int8_t addr_index;
     /** Old IPv6 address */
     const ip_addr_t *old_address;
   } ;
   /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
   struct ipv6_addr_state_changed_s {
     /** Index of affected IPv6 address */
-    s8_t addr_index;
+    int8_t addr_index;
     /** Old IPv6 address state */
     uint8_t old_state;
     /** Affected IPv6 address */
-    const ip_addr_t *address;
+    const LwipIpAddr* address;
   } ipv6_addr_state_changed;
 } ;
 

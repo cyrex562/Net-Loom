@@ -10,8 +10,6 @@ extern "C" {
  * @{
  */
 
-//#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
-
 /** Identifier for "no zone". */
 constexpr auto IP6_NO_ZONE = 0;
 
@@ -58,7 +56,7 @@ enum lwip_ipv6_scope_type
 
 /** IPV6_CUSTOM_SCOPES: together, the following three macro definitions,
  * @ref ip6_addr_has_scope, @ref ip6_addr_assign_zone, and
- * @ref ip6_addr_test_zone, completely define the lwIP scoping policy.
+ * @ref LwipIp6Addrest_zone, completely define the lwIP scoping policy.
  * The definitions below implement the default policy from RFC 4007 Sec. 6.
  * Should an implementation desire to implement a different policy, it can
  * define IPV6_CUSTOM_SCOPES to 1 and supply its own definitions for the three
@@ -130,7 +128,7 @@ enum lwip_ipv6_scope_type
  * @param netif the network interface (const).
  * @return 1 if the address is scope-compatible with the netif, 0 if not.
  */
-#define ip6_addr_test_zone(ip6addr, netif) \
+#define LwipIp6Addrest_zone(ip6addr, netif) \
     (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
 
 
@@ -173,7 +171,7 @@ enum lwip_ipv6_scope_type
 #define IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif) LWIP_ASSERT("IPv6 netif zone check failed", \
     ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) ? \
     (ip6_addr_has_zone(ip6addr) && \
-     (((netif) == NULL) || ip6_addr_test_zone((ip6addr), (netif)))) : \
+     (((netif) == NULL) || LwipIp6Addrest_zone((ip6addr), (netif)))) : \
     !ip6_addr_has_zone(ip6addr))
 
 

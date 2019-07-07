@@ -18,26 +18,26 @@ constexpr uint32_t kPbufIpHlen = 40;
 
 
 /**
- * @ingroup pbuf
- * Enumeration of pbuf layers
+ * @ingroup PacketBuffer
+ * Enumeration of PacketBuffer layers
  */
 enum PbufLayer {
   /** Includes spare room for transport layer header, e.g. UDP header.
-   * Use this if you intend to pass the pbuf to functions like udp_send().
+   * Use this if you intend to pass the PacketBuffer to functions like udp_send().
    */
   PBUF_TRANSPORT = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + kPbufIpHlen + kPbufTransportHlen,
   /** Includes spare room for IP header.
-   * Use this if you intend to pass the pbuf to functions like raw_send().
+   * Use this if you intend to pass the PacketBuffer to functions like raw_send().
    */
   PBUF_IP = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + kPbufIpHlen,
   /** Includes spare room for link layer header (ethernet header).
-   * Use this if you intend to pass the pbuf to functions like ethernet_output().
+   * Use this if you intend to pass the PacketBuffer to functions like ethernet_output().
    * @see PBUF_LINK_HLEN
    */
   PBUF_LINK = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN,
   /** Includes spare room for additional encapsulation header before ethernet
    * headers (e.g. 802.11).
-   * Use this if you intend to pass the pbuf to functions like netif->linkoutput().
+   * Use this if you intend to pass the PacketBuffer to functions like netif->linkoutput().
    * @see PBUF_LINK_ENCAPSULATION_HLEN
    */
   PBUF_RAW_TX = PBUF_LINK_ENCAPSULATION_HLEN,
@@ -49,7 +49,7 @@ enum PbufLayer {
 
 /* Base flags for pbuf_type definitions: */
 
-/** Indicates that the payload directly follows the struct pbuf.
+/** Indicates that the payload directly follows the struct PacketBuffer.
  *  This makes @ref pbuf_header work in both directions. */
 constexpr auto kPbufTypeFlagStructDataContiguous = 0x80;
 /** Indicates the data stored in this pbuf can change. If this pbuf needs
@@ -74,13 +74,13 @@ constexpr auto kPbufTypeAllocSrcMaskAppMin = 0x03;
 constexpr int kPbufTypeAllocSrcMaskAppMax = kPbufTypeAllocSrcMask;
 
 /**
- * @ingroup pbuf
- * Enumeration of pbuf types
+ * @ingroup PacketBuffer
+ * Enumeration of PacketBuffer types
  */
 typedef enum {
-  /** pbuf data is stored in RAM, used for TX mostly, struct pbuf and its payload
+  /** PacketBuffer data is stored in RAM, used for TX mostly, struct PacketBuffer and its payload
       are allocated in one piece of contiguous memory (so the first payload byte
-      can be calculated from struct pbuf).
+      can be calculated from struct PacketBuffer).
       pbuf_alloc() allocates PBUF_RAM pbufs as unchained pbufs (although that might
       change in future versions).
       This should be used for all OUTGOING packets (TX).*/
@@ -95,8 +95,8 @@ typedef enum {
   PBUF_REF = (kPbufTypeFlagDataVolatile | kPbufTypeAllocSrcMaskStdMempPbuf),
   /** pbuf payload refers to RAM. This one comes from a pool and should be used
       for RX. Payload can be chained (scatter-gather RX) but like PBUF_RAM, struct
-      pbuf and its payload are allocated in one piece of contiguous memory (so
-      the first payload byte can be calculated from struct pbuf).
+      PacketBuffer and its payload are allocated in one piece of contiguous memory (so
+      the first payload byte can be calculated from struct PacketBuffer).
       Don't use this for TX, if the pool becomes empty e.g. because of TCP queuing,
       you are unable to receive TCP acks! */
   PBUF_POOL = (kPbufAllocFlagRx | kPbufTypeFlagStructDataContiguous | kPbufTypeAllocSrcMaskStdMempPbufPool)
@@ -118,9 +118,9 @@ constexpr auto PBUF_FLAG_LLMCAST = 0x10U;
 constexpr auto PBUF_FLAG_TCP_FIN = 0x20U;
 
 /** Main packet buffer struct */
-struct pbuf {
-  /** next pbuf in singly linked pbuf chain */
-  struct pbuf *next;
+struct PacketBuffer {
+  /** next PacketBuffer in singly linked PacketBuffer chain */
+  struct PacketBuffer *next;
 
   /** pointer to the actual data in the buffer */
   void *payload;
@@ -132,12 +132,12 @@ struct pbuf {
    * For non-queue packet chains this is the invariant:
    * p->tot_len == p->len + (p->next? p->next->tot_len: 0)
    */
-  uint16_t tot_len;
+  size_t tot_len;
 
   /** length of this buffer */
-  uint16_t len;
+  size_t len;
 
-  /** a bit field indicating pbuf type and allocation sources
+  /** a bit field indicating PacketBuffer type and allocation sources
       (see PBUF_TYPE_FLAG_*, PBUF_ALLOC_FLAG_* and PBUF_TYPE_ALLOC_SRC_MASK)
     */
   uint8_t type_internal;
@@ -147,13 +147,13 @@ struct pbuf {
 
   /**
    * the reference count always equals the number of pointers
-   * that refer to this pbuf. This can be pointers from an application,
-   * the stack itself, or pbuf->next pointers from a chain.
+   * that refer to this PacketBuffer. This can be pointers from an application,
+   * the stack itself, or PacketBuffer->next pointers from a chain.
    */
-  LWIP_PBUF_REF_T ref;
+  uint32_t ref;
 
   /** For incoming packets, this contains the input netif's index */
-  uint8_t if_idx;
+  uint32_t if_idx;
 };
 
 
@@ -166,8 +166,8 @@ inline bool PbufNeedsCopy(struct pbuf* p) {
  * for PBUF_ROM type.
  */
 struct pbuf_rom {
-  /** next pbuf in singly linked pbuf chain */
-  struct pbuf *next;
+  /** next PacketBuffer in singly linked PacketBuffer chain */
+  struct PacketBuffer *next;
 
   /** pointer to the actual data in the buffer */
   const void *payload;
@@ -177,11 +177,11 @@ struct pbuf_rom {
 /** Prototype for a function to free a custom pbuf */
 typedef void (*pbuf_free_custom_fn)(struct pbuf *p);
 
-/** A custom pbuf: like a pbuf, but following a function pointer to free it. */
+/** A custom PacketBuffer: like a PacketBuffer, but following a function pointer to free it. */
 struct pbuf_custom {
-  /** The actual pbuf */
-  struct pbuf pbuf;
-  /** This function is called when pbuf_free deallocates this pbuf(_custom) */
+  /** The actual PacketBuffer */
+  struct PacketBuffer pbuf;
+  /** This function is called when pbuf_free deallocates this PacketBuffer(_custom) */
   pbuf_free_custom_fn custom_free_function;
 };
 
@@ -204,7 +204,7 @@ inline void PbufCheckFreeOoseq()
 }
 
 
-/* Initializes the pbuf module. This call is empty for now, but may not be in future. */
+/* Initializes the PacketBuffer module. This call is empty for now, but may not be in future. */
 #define pbuf_init()
 struct pbuf* pbuf_alloc(PbufLayer l, uint16_t length, pbuf_type type);
 struct pbuf* pbuf_alloc_reference(void* payload, uint16_t length, pbuf_type type);
@@ -268,12 +268,12 @@ err_t pbuf_fill_chksum(struct pbuf* p,
 void pbuf_split_64k(struct pbuf *p, struct pbuf **rest);
 
 
-uint8_t pbuf_get_at(const struct pbuf* p, uint16_t offset);
-int pbuf_try_get_at(const struct pbuf* p, uint16_t offset);
-void pbuf_put_at(struct pbuf* p, uint16_t offset, uint8_t data);
-uint16_t pbuf_memcmp(const struct pbuf* p, uint16_t offset, const void* s2, uint16_t n);
-uint16_t pbuf_memfind(const struct pbuf* p, const void* mem, uint16_t mem_len, uint16_t start_offset);
-uint16_t pbuf_strstr(const struct pbuf* p, const char* substr);
+uint8_t pbuf_get_at(const struct PacketBuffer* p, uint16_t offset);
+int pbuf_try_get_at(const struct PacketBuffer* p, uint16_t offset);
+void pbuf_put_at(struct PacketBuffer* p, uint16_t offset, uint8_t data);
+uint16_t pbuf_memcmp(const struct PacketBuffer* p, uint16_t offset, const void* s2, uint16_t n);
+uint16_t pbuf_memfind(const struct PacketBuffer* p, const void* mem, uint16_t mem_len, uint16_t start_offset);
+uint16_t pbuf_strstr(const struct PacketBuffer* p, const char* substr);
 
 #ifdef __cplusplus
 }

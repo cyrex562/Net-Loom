@@ -247,7 +247,7 @@ void eap_authwithpeer(PppPcb *pcb, const char *localname) {
  * (Server operation)
  */
 static void eap_send_failure(PppPcb *pcb) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + EAP_HEADERLEN), PPP_CTRL_PBUF_TYPE);
@@ -278,7 +278,7 @@ static void eap_send_failure(PppPcb *pcb) {
  * (Server operation)
  */
 static void eap_send_success(PppPcb *pcb) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 
 	p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + EAP_HEADERLEN), PPP_CTRL_PBUF_TYPE);
@@ -635,7 +635,7 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
  * type depends on current state.  (Server operation)
  */
 static void eap_send_request(PppPcb *pcb) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	uint8_t *lenloc;
 	int outlen;
@@ -1012,7 +1012,7 @@ static void eap_protrej(PppPcb *pcb) {
  * Format and send a regular EAP Response message.
  */
 static void eap_send_response(PppPcb *pcb, uint8_t id, uint8_t typenum, const uint8_t *str, int lenstr) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	int msglen;
 
@@ -1045,7 +1045,7 @@ static void eap_send_response(PppPcb *pcb, uint8_t id, uint8_t typenum, const ui
  * Format and send an MD5-Challenge EAP Response message.
  */
 static void eap_chap_response(PppPcb *pcb, uint8_t id, uint8_t *hash, const char *name, int namelen) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	int msglen;
 
@@ -1091,7 +1091,7 @@ uint8_t *str;
 int lenstr;
 {
 	PppPcb *pcb = &PppPcb_list[pcb->eap.es_unit];
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	int msglen;
 
@@ -1132,7 +1132,7 @@ uint32_t flags;
 uint8_t *str;
 {
 	PppPcb *pcb = &PppPcb_list[pcb->eap.es_unit];
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	int msglen;
 
@@ -1164,7 +1164,7 @@ uint8_t *str;
 #endif /* USE_SRP */
 
 static void eap_send_nak(PppPcb *pcb, uint8_t id, uint8_t type) {
-	struct pbuf *p;
+	struct PacketBuffer *p;
 	uint8_t *outp;
 	int msglen;
 

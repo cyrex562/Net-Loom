@@ -82,10 +82,14 @@ struct LcpOptions {
     unsigned int neg_endpoint      :1; /* negotiate endpoint discriminator */
     uint16_t mru;			/* Value of MRU */
     uint16_t mrru;			/* Value of MRRU, and multilink enable */
+#endif /* MULTILINK */
+#if CHAP_SUPPORT
     uint8_t chap_mdtype;		/* which MD types (hashing algorithm) */
+#endif /* CHAP_SUPPORT */
     uint32_t asyncmap;		/* Value of async map */
     uint32_t magicnumber;
     uint8_t  numloops;		/* Number of loops during magic number neg. */
+#if LQR_SUPPORT
     uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
     struct Epdisc endpoint;	/* endpoint discriminator */
 };

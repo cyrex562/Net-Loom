@@ -19,7 +19,7 @@ const ip_addr_t kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
 uint8_t
 ip4_addr_isbroadcast_u32(const uint32_t addr, const struct netif *netif)
 {
-  ip4_addr_t ipaddr;
+  LwipIpv4Addr ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
@@ -238,7 +238,7 @@ int ip4addr_aton(const char* cp, ip4_addr_t* addr)
  *         representation of addr
  */
 char *
-ip4addr_ntoa(const ip4_addr_t *addr)
+ip4addr_ntoa(const LwipIpv4Addr *addr)
 {
   static char str[IP4ADDR_STRLEN_MAX];
   return ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);

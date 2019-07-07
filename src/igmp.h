@@ -43,7 +43,7 @@
 #include "opt.h"
 #include "ip_addr.h"
 #include "netif.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip4.h"
 
 
@@ -130,15 +130,15 @@ struct igmp_group {
 
 /*  Prototypes */
 void   igmp_init(void);
-err_t  igmp_start(struct netif *netif);
-err_t  igmp_stop(struct netif *netif);
+LwipError  igmp_start(struct netif *netif);
+LwipError  igmp_stop(struct netif *netif);
 void   igmp_report_groups(struct netif *netif);
 struct igmp_group *igmp_lookfor_group(struct netif *ifp, const ip4_addr_t *addr);
-void   igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest);
-err_t  igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
-err_t  igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
-err_t  igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
-err_t  igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
+void   igmp_input(struct PacketBuffer *p, struct netif *inp, const ip4_addr_t *dest);
+LwipError  igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
+LwipError  igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
+LwipError  igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
+LwipError  igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
 void   igmp_tmr(void);
 
 /** @ingroup igmp 

@@ -49,7 +49,7 @@
 extern "C" {
 #endif
 
-struct pbuf;
+struct PacketBuffer;
 struct netif;
 
 #if LWIP_MPU_COMPATIBLE
@@ -94,12 +94,12 @@ struct netif;
 #define API_MSG_M_DEF_C(t, m)           const t * m
 #endif /* LWIP_MPU_COMPATIBLE */
 
-err_t tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
+LwipError tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 
 struct tcpip_api_call_data
 {
 #if !LWIP_TCPIP_CORE_LOCKING
-  err_t err;
+  LwipError err;
 #if !LWIP_NETCONN_SEM_PER_THREAD
   sys_sem_t sem;
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
@@ -107,8 +107,8 @@ struct tcpip_api_call_data
   uint8_t dummy; /* avoid empty struct :-( */
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
-typedef err_t (*tcpip_api_call_fn)(struct tcpip_api_call_data* call);
-err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call);
+typedef LwipError (*tcpip_api_call_fn)(struct tcpip_api_call_data* call);
+LwipError tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call);
 
 enum tcpip_msg_type {
 #if !LWIP_TCPIP_CORE_LOCKING
@@ -142,7 +142,7 @@ struct tcpip_msg {
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     struct {
-      struct pbuf *p;
+      struct PacketBuffer *p;
       struct netif *netif;
       netif_input_fn input_fn;
     } inp;

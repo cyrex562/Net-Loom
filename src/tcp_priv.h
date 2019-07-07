@@ -40,7 +40,7 @@
 #include "opt.h"
 #include "tcp.h"
 #include "mem.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip.h"
 #include "icmp.h"
 #include "err.h"
@@ -75,7 +75,7 @@ void             tcp_fasttmr (void);
 void             tcp_txnow   (void);
 
 /* Only used by IP to pass a TCP segment to TCP: */
-void             tcp_input   (struct pbuf *p, struct netif *inp);
+void             tcp_input   (struct PacketBuffer *p, struct netif *inp);
 /* Used within the TCP code only: */
 struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
@@ -253,7 +253,7 @@ err_t            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 /* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
   struct tcp_seg *next;    /* used when putting segments on a queue */
-  struct pbuf *p;          /* buffer containing data + TCP header */
+  struct PacketBuffer *p;          /* buffer containing data + TCP header */
   uint16_t len;               /* the TCP length of this segment */
 #if TCP_OVERSIZE_DBGCHECK
   uint16_t oversize_left;     /* Extra bytes available at the end of the last
@@ -478,7 +478,7 @@ void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif,
-                             const ip_addr_t *dest);
+                             const LwipIpAddr *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -505,7 +505,7 @@ int16_t tcp_pcbs_sane(void);
  * that a timer is needed (i.e. active- or time-wait-pcb found). */
 void tcp_timer_needed(void);
 
-void tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr);
+void tcp_netif_ip_addr_changed(const LwipIpAddr* old_addr, const LwipIpAddr* new_addr);
 
 #if TCP_QUEUE_OOSEQ
 void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);

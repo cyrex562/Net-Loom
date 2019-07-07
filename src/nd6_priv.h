@@ -48,7 +48,7 @@
 
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip6_addr.h"
 #include "netif.h"
 
@@ -63,13 +63,13 @@ extern "C" {
   */
 struct nd6_q_entry {
   struct nd6_q_entry *next;
-  struct pbuf *p;
+  struct PacketBuffer *p;
 };
 #endif /* LWIP_ND6_QUEUEING */
 
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
-  ip6_addr_t next_hop_address;
+  LwipIp6Addr next_hop_address;
   struct netif *netif;
   uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
@@ -78,7 +78,7 @@ struct nd6_neighbor_cache_entry {
   struct nd6_q_entry *q;
 #else /* LWIP_ND6_QUEUEING */
   /** Pointer to a single pending outgoing packet on this entry. */
-  struct pbuf *q;
+  struct PacketBuffer *q;
 #endif /* LWIP_ND6_QUEUEING */
   uint8_t state;
   uint8_t isrouter;
@@ -91,14 +91,14 @@ struct nd6_neighbor_cache_entry {
 };
 
 struct nd6_destination_cache_entry {
-  ip6_addr_t destination_addr;
-  ip6_addr_t next_hop_addr;
+  LwipIp6Addr destination_addr;
+  LwipIp6Addr next_hop_addr;
   uint16_t pmtu;
   uint32_t age;
 };
 
 struct nd6_prefix_list_entry {
-  ip6_addr_t prefix;
+  LwipIp6Addr prefix;
   struct netif *netif;
   uint32_t invalidation_timer; /* in seconds */
 };

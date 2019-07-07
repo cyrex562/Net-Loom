@@ -55,7 +55,7 @@ extern "C" {
  */
 struct ip_reassdata {
   struct ip_reassdata *next;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct ip_hdr iphdr;
   uint16_t datagram_len;
   uint8_t flags;
@@ -76,8 +76,8 @@ struct pbuf * ip4_reass(struct pbuf *p);
 struct PbufCustomRef {
   /** 'base class' */
   struct pbuf_custom pc;
-  /** pointer to the original pbuf that is referenced */
-  struct pbuf *original;
+  /** pointer to the original PacketBuffer that is referenced */
+  struct PacketBuffer *original;
 };
 
 

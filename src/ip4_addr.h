@@ -45,13 +45,9 @@ extern "C" {
 
 /** This is the aligned version of ip4_addr_t,
    used as local variable, on the stack, etc. */
-struct ip4_addr {
+struct LwipIpv4Addr {
   uint32_t addr;
 };
-
-/** ip4_addr_t uses a struct for convenience only, so that the same defines can
- * operate both on ip4_addr_t as well as on ip4_addr_p_t. */
-typedef struct ip4_addr ip4_addr_t;
 
 /* Forward declaration to not include netif.h */
 struct netif;
@@ -201,10 +197,10 @@ uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 uint32_t ipaddr_addr(const char *cp);
-int ip4addr_aton(const char *cp, ip4_addr_t *addr);
+int ip4addr_aton(const char *cp, LwipIpv4Addr *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ip4addr_ntoa(const ip4_addr_t *addr);
-char *ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen);
+char *ip4addr_ntoa(const LwipIpv4Addr *addr);
+char *ip4addr_ntoa_r(const LwipIpv4Addr *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }

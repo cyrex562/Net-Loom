@@ -38,7 +38,7 @@
 
 #include "opt.h"
 #include "def.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "ip4_addr.h"
 #include "lwip_error.h"
 #include "netif.h"
@@ -131,11 +131,11 @@ struct netif *ip4_route(const ip4_addr_t *dest);
 struct netif *ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest);
 
 err_t ip4_input(struct pbuf *p, struct netif *inp);
-err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+err_t ip4_output(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto);
-err_t ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+err_t ip4_output_if(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
-err_t ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+err_t ip4_output_if_src(struct pbuf *p, const LwipIpv4Addr *src, const LwipIpv4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif);
 
 err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
@@ -145,7 +145,7 @@ err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t 
 err_t ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
-err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
+LwipError ip4_output_if_opt_src(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
        uint16_t optlen);
 

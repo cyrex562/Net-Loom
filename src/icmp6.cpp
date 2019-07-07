@@ -48,7 +48,7 @@
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"
-#include "pbuf.h"
+#include "PacketBuffer.h"
 #include "netif.h"
 #include "nd6.h"
 #include "mld6.h"
@@ -63,11 +63,11 @@
 #endif
 
 /* Forward declarations */
-static void icmp6_send_response(struct pbuf *p, uint8_t code, uint32_t data, uint8_t type);
-static void icmp6_send_response_with_addrs(struct pbuf *p, uint8_t code, uint32_t data,
-    uint8_t type, const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr);
-static void icmp6_send_response_with_addrs_and_netif(struct pbuf *p, uint8_t code, uint32_t data,
-    uint8_t type, const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr, struct netif *netif);
+static void icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type);
+static void icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t data,
+    uint8_t type, const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr);
+static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data,
+    uint8_t type, const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr, struct netif *netif);
 
 
 /**
@@ -80,11 +80,11 @@ static void icmp6_send_response_with_addrs_and_netif(struct pbuf *p, uint8_t cod
  * @param inp the netif on which this packet was received
  */
 void
-icmp6_input(struct pbuf *p, struct netif *inp)
+icmp6_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct icmp6_hdr *icmp6hdr;
-  struct pbuf *r;
-  const ip6_addr_t *reply_src;
+  struct PacketBuffer *r;
+  const LwipIp6Addr *reply_src;
 
   ICMP6_STATS_INC(icmp6.recv);
 
@@ -217,7 +217,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
  * @param c ICMPv6 code for the unreachable type
  */
 void
-icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
+icmp6_dest_unreach(struct PacketBuffer *p, enum icmp6_dur_code c)
 {
   icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR);
 }
@@ -233,7 +233,7 @@ icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
  * @param mtu the maximum mtu that we can accept
  */
 void
-icmp6_packet_too_big(struct pbuf *p, uint32_t mtu)
+icmp6_packet_too_big(struct PacketBuffer *p, uint32_t mtu)
 {
   icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB);
 }
@@ -249,7 +249,7 @@ icmp6_packet_too_big(struct pbuf *p, uint32_t mtu)
  * @param c ICMPv6 code for the time exceeded type
  */
 void
-icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
+icmp6_time_exceeded(struct PacketBuffer *p, enum icmp6_te_code c)
 {
   icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
 }
@@ -270,8 +270,8 @@ icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
  *                  information
  */
 void
-icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
-    const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
+icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum icmp6_te_code c,
+    const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr)
 {
   icmp6_send_response_with_addrs(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
 }
@@ -289,7 +289,7 @@ icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
  * @param pointer the pointer to the byte where the parameter is found
  */
 void
-icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, const void *pointer)
+icmp6_param_problem(struct PacketBuffer *p, enum icmp6_pp_code c, const void *pointer)
 {
   uint32_t pointer_u32 = (uint32_t)((const uint8_t *)pointer - (const uint8_t *)ip6_current_header());
   icmp6_send_response(p, c, pointer_u32, ICMP6_TYPE_PP);
@@ -306,7 +306,7 @@ icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, const void *pointer)
  * @param type Type of the ICMPv6 header
  */
 static void
-icmp6_send_response(struct pbuf *p, uint8_t code, uint32_t data, uint8_t type)
+icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type)
 {
   const struct ip6_addr *reply_src, *reply_dest;
   struct netif *netif = ip_current_netif();
@@ -343,8 +343,8 @@ icmp6_send_response(struct pbuf *p, uint8_t code, uint32_t data, uint8_t type)
  * @param dest_addr original destination address
  */
 static void
-icmp6_send_response_with_addrs(struct pbuf *p, uint8_t code, uint32_t data, uint8_t type,
-    const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
+icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type,
+    const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr)
 {
   const struct ip6_addr *reply_src, *reply_dest;
   struct netif *netif;
@@ -382,21 +382,21 @@ icmp6_send_response_with_addrs(struct pbuf *p, uint8_t code, uint32_t data, uint
  * @param netif netif to send the packet
  */
 static void
-icmp6_send_response_with_addrs_and_netif(struct pbuf *p, uint8_t code, uint32_t data, uint8_t type,
-    const ip6_addr_t *reply_src, const ip6_addr_t *reply_dest, struct netif *netif)
+icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type,
+    const LwipIp6Addr *reply_src, const LwipIp6Addr *reply_dest, struct netif *netif)
 {
-  struct pbuf *q;
+  struct PacketBuffer *q;
   struct icmp6_hdr *icmp6hdr;
 
   /* ICMPv6 header + IPv6 header + data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMPv6 packet.\n"));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMPv6 packet.\n"));
     ICMP6_STATS_INC(icmp6.memerr);
     return;
   }
-  LWIP_ASSERT("check that first pbuf can hold icmp 6message",
+  LWIP_ASSERT("check that first PacketBuffer can hold icmp 6message",
              (q->len >= (sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE)));
 
   icmp6hdr = (struct icmp6_hdr *)q->payload;

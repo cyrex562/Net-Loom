@@ -60,7 +60,7 @@ extern "C" {
 
 union lwip_sock_lastdata {
   struct netbuf *netbuf;
-  struct pbuf *pbuf;
+  struct PacketBuffer *pbuf;
 };
 
 /** Contains all internal pointers and states used for a socket */
@@ -119,7 +119,7 @@ struct lwip_setgetsockopt_data {
   } optval;
 #endif
   /** size of *optval */
-  socklen_t optlen;
+  LwipSocklen optlen;
   /** if an error occurs, it is temporarily stored here */
   int err;
   /** semaphore to wake up the calling task */
@@ -151,15 +151,15 @@ struct lwip_select_cb {
   struct lwip_select_cb *prev;
 #if LWIP_SOCKET_SELECT
   /** readset passed to select */
-  fd_set *readset;
+  LwipFdSet *readset;
   /** writeset passed to select */
-  fd_set *writeset;
+  LwipFdSet *writeset;
   /** unimplemented: exceptset passed to select */
-  fd_set *exceptset;
+  LwipFdSet *exceptset;
 #endif /* LWIP_SOCKET_SELECT */
 #if LWIP_SOCKET_POLL
   /** fds passed to poll; NULL if select */
-  struct pollfd *poll_fds;
+  struct LwipPolllfd *poll_fds;
   /** nfds passed to poll; 0 if select */
   nfds_t poll_nfds;
 #endif /* LWIP_SOCKET_POLL */

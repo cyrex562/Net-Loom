@@ -62,7 +62,7 @@
 
 #include "netif.h"
 
-#include "pbuf.h"
+#include "PacketBuffer.h"
 
 #include "raw.h"
 
