@@ -35,64 +35,24 @@
  */
 
 #pragma once
-
-#include "opt.h"
-
 #include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if NO_SYS
+typedef int sys_prot_t;
 
-/* For a totally minimal and standalone system, we provide null
-   definitions of the sys_ functions. */
-typedef uint8_t sys_sem_t;
-typedef uint8_t sys_mutex_t;
-typedef uint8_t sys_mbox_t;
-
-#define sys_sem_new(s, c) ERR_OK
-#define sys_sem_signal(s)
-#define sys_sem_wait(s)
-#define sys_arch_sem_wait(s,t)
-#define sys_sem_free(s)
-#define sys_sem_valid(s) 0
-#define sys_sem_valid_val(s) 0
-#define sys_sem_set_invalid(s)
-#define sys_sem_set_invalid_val(s)
-#define sys_mutex_new(mu) ERR_OK
-#define sys_mutex_lock(mu)
-#define sys_mutex_unlock(mu)
-#define sys_mutex_free(mu)
-#define sys_mutex_valid(mu) 0
-#define sys_mutex_set_invalid(mu)
-#define sys_mbox_new(m, s) ERR_OK
-#define sys_mbox_fetch(m,d)
-#define sys_mbox_tryfetch(m,d)
-#define sys_mbox_post(m,d)
-#define sys_mbox_trypost(m,d)
-#define sys_mbox_free(m)
-#define sys_mbox_valid(m)
-#define sys_mbox_valid_val(m)
-#define sys_mbox_set_invalid(m)
-#define sys_mbox_set_invalid_val(m)
-
-#define sys_thread_new(n,t,a,s,p)
-
-#define sys_msleep(t)
-
-#else /* NO_SYS */
 
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
-#define SYS_ARCH_TIMEOUT 0xffffffffUL
+constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
 #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
-#include "err.h"
+#include "lwip_error.h"
 #include "sys_arch.h"
 
 /** Function prototype for thread functions */
@@ -420,8 +380,6 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox);
  * @param prio priority of the new thread (may be ignored by ports) */
 sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio);
 
-#endif /* NO_SYS */
-
 /**
  * @ingroup sys_misc
  * sys_init() must be called before anything else.
@@ -457,7 +415,6 @@ uint32_t sys_now(void);
  * for certain critical regions during buffer allocation, deallocation and memory
  * allocation and deallocation.
  */
-#if SYS_LIGHTWEIGHT_PROT
 
 /**
  * @ingroup sys_prot
@@ -495,13 +452,6 @@ uint32_t sys_now(void);
 sys_prot_t sys_arch_protect(void);
 void sys_arch_unprotect(sys_prot_t pval);
 
-#else
-
-#define SYS_ARCH_DECL_PROTECT(lev)
-#define SYS_ARCH_PROTECT(lev)
-#define SYS_ARCH_UNPROTECT(lev)
-
-#endif /* SYS_LIGHTWEIGHT_PROT */
 
 #endif /* SYS_ARCH_PROTECT */
 

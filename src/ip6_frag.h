@@ -42,7 +42,7 @@
 #define LWIP_HDR_IP6_FRAG_H
 
 #include "opt.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip6_addr.h"
 #include "ip6.h"
 #include "netif.h"

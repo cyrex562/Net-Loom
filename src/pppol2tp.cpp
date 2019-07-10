@@ -77,7 +77,7 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx);    /* Be a LAC, connect to
 static void pppol2tp_disconnect(PppPcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port);
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, struct PacketBuffer *p, uint16_t ns, uint16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
@@ -106,8 +106,8 @@ static const struct LinkCallbacks pppol2tp_callbacks = {
 
 
 /* Create a new L2TP session. */
-PppPcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, const ip_addr_t *ipaddr, uint16_t port,
+PppPcb *pppol2tp_create(struct NetIfc *pppif,
+       struct NetIfc *netif, const IpAddr *ipaddr, uint16_t port,
        const uint8_t *secret, uint8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   PppPcb *ppp;
@@ -342,7 +342,7 @@ static void pppol2tp_disconnect(PppPcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port) {
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   uint16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   uint8_t *inp;

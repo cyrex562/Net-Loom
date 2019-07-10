@@ -14,7 +14,7 @@ constexpr auto kDeflateMinWorks = 9;
 /*
  * Protocol entry points from main code.
  */
-static void ccp_init(PppPcb* ppp_pcb);
+static void ccp_init(PppPcb* PppPcb);
 static void ccp_open(PppPcb* pcb);
 static void ccp_close(PppPcb* pcb, const char* reason);
 static void ccp_lowerup(PppPcb* pcb);
@@ -40,7 +40,7 @@ const struct Protent kCcpProtent = {
  * Callbacks for fsm code.
  */
 static void ccp_resetci(fsm*, PppPcb* pcb);
-static size_t ccp_cilen(PppPcb* ppp_pcb);
+static size_t ccp_cilen(PppPcb* PppPcb);
 static void ccp_addci(fsm*, uint8_t*, int*, PppPcb* pcb);
 static int ccp_ackci(fsm*, uint8_t*, int, PppPcb* pcb);
 static int ccp_nakci(fsm*, const uint8_t*, int, int, PppPcb* pcb);
@@ -48,7 +48,7 @@ static int ccp_rejci(fsm*, const uint8_t*, int, PppPcb* pcb);
 static int ccp_reqci(fsm*, uint8_t*, size_t*, int, PppPcb* pcb);
 static void ccp_up(fsm*, PppPcb* pcb, Protent** protocols);
 static void ccp_down(fsm*, fsm* lcp_fsm, PppPcb* pcb);
-static int ccp_extcode(fsm*, int, int, uint8_t*, int, PppPcb* ppp_pcb);
+static int ccp_extcode(fsm*, int, int, uint8_t*, int, PppPcb* PppPcb);
 static void ccp_rack_timeout(void*);
 static const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
@@ -89,13 +89,13 @@ constexpr auto kRacktimeout = 1	/* second */;
 /*
  * ccp_init - initialize CCP.
  */
-static void ccp_init(PppPcb* ppp_pcb)
+static void ccp_init(PppPcb* PppPcb)
 {
-    ppp_pcb->ccp_fsm.protocol = PPP_CCP;
-    ppp_pcb->ccp_fsm.callbacks = &kCcpCallbacks;
-    fsm_init(&ppp_pcb->ccp_fsm);
-    const auto wo = &ppp_pcb->ccp_wantoptions;
-    const auto ao = &ppp_pcb->ccp_allowoptions;
+    PppPcb->ccp_fsm.protocol = PPP_CCP;
+    PppPcb->ccp_fsm.callbacks = &kCcpCallbacks;
+    fsm_init(&PppPcb->ccp_fsm);
+    const auto wo = &PppPcb->ccp_wantoptions;
+    const auto ao = &PppPcb->ccp_allowoptions;
     wo->deflate = 1;
     wo->deflate_size = DEFLATE_MAX_SIZE;
     wo->deflate_correct = 1;
@@ -233,25 +233,25 @@ static int ccp_extcode(fsm* f,
                        const int id,
                        uint8_t* p,
                        int len,
-                       PppPcb* ppp_pcb)
+                       PppPcb* PppPcb)
 {
     switch (code)
     {
     case CCP_RESETREQ:
         if (f->state != PPP_FSM_OPENED)
             break;
-        ccp_reset_comp(ppp_pcb);
+        ccp_reset_comp(PppPcb);
         /* send a reset-ack, which the transmitter will see and
            reset its compression state. */
         fsm_sdata(f, CCP_RESETACK, id, nullptr, 0);
         break;
 
     case CCP_RESETACK:
-        if ((ppp_pcb->ccp_localstate & kRackPending) && id == f->reqid)
+        if ((PppPcb->ccp_localstate & kRackPending) && id == f->reqid)
         {
-            ppp_pcb->ccp_localstate &= ~(kRackPending | kRreqRepeat);
+            PppPcb->ccp_localstate &= ~(kRackPending | kRreqRepeat);
             Untimeout(ccp_rack_timeout, f);
-            ccp_reset_decomp(ppp_pcb);
+            ccp_reset_decomp(PppPcb);
         }
         break;
 
@@ -493,9 +493,9 @@ static void ccp_resetci(fsm* f, PppPcb* pcb)
 /*
  * ccp_cilen - Return total length of our configuration info.
  */
-static size_t ccp_cilen(PppPcb* ppp_pcb)
+static size_t ccp_cilen(PppPcb* PppPcb)
 {
-    auto go = &ppp_pcb->ccp_gotoptions;
+    auto go = &PppPcb->ccp_gotoptions;
 
     return 0
         + (go->bsd_compress ? CILEN_BSD_COMPRESS : 0)

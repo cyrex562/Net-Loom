@@ -152,7 +152,7 @@ uint8_t
 vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
 {
   struct PacketBuffer *np = *pb;
-  struct ip_hdr *ip = (struct ip_hdr *)np->payload;
+  struct Ip4Hdr *ip = (struct Ip4Hdr *)np->payload;
   struct cstate *cs = comp->last_cs->cs_next;
   uint16_t ilen = IPH_HL(ip);
   uint16_t hlen;
@@ -200,7 +200,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
   }
 
   *pb = np;
-  ip = (struct ip_hdr *)np->payload;
+  ip = (struct Ip4Hdr *)np->payload;
 
   /*
    * Packet is compressible -- we're going to send either a
@@ -279,7 +279,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
     }
 
     *pb = np;
-    ip = static_cast<struct ip_hdr *>(np->payload);
+    ip = static_cast<struct Ip4Hdr *>(np->payload);
 
     /*
      * Packet is compressible -- we're going to send either a
@@ -551,9 +551,9 @@ vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
 {
     uint32_t hlen;
     struct cstate* cs;
-    struct ip_hdr* ip;
+    struct Ip4Hdr* ip;
 
-    ip = (struct ip_hdr *)nb->payload;
+    ip = (struct Ip4Hdr *)nb->payload;
     hlen = IPH_HL(ip) << 2;
     if (IPH_PROTO(ip) >= MAX_SLOTS
         || hlen + sizeof(struct TcpHdr) > nb->len

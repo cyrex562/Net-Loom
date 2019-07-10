@@ -51,7 +51,7 @@
 //#if LWIP_IPV6
 #include "lowpan6.h"
 #include "ip.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "nd6.h"
@@ -181,7 +181,7 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6
  * @param dest pointer to destination address filled from the header
  * @returns ERR_OK if successful
  */
-static err_t
+static LwipError
 lowpan6_parse_iee802154_header(struct pbuf *p, struct Lowpan6LinkAddr *src,
                                struct Lowpan6LinkAddr *dest)
 {
@@ -338,8 +338,8 @@ lowpan6_tmr(void)
  * Fragments an IPv6 datagram into 6LowPAN units, which fit into IEEE 802.15.4 frames.
  * If configured, will compress IPv6 and or UDP headers.
  * */
-static err_t
-lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
+static LwipError
+lowpan6_frag(struct NetIfc *netif, struct pbuf *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
 {
   struct PacketBuffer *p_frag;
   uint16_t frag_len, remaining_len, max_data_len;
@@ -429,7 +429,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *
 
     /* send the packet */
     MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
-    LWIP_DEBUGF(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
 
     while ((remaining_len > 0) && (err == ERR_OK)) {
@@ -460,7 +460,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *
 
       /* send the packet */
       MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
-      LWIP_DEBUGF(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+      Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
       err = netif->linkoutput(netif, p_frag);
     }
   } else {
@@ -481,7 +481,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *
 
     /* send the packet */
     MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
-    LWIP_DEBUGF(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
   }
 
@@ -494,7 +494,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct Lowpan6LinkAddr *
  * @ingroup sixlowpan
  * Set context
  */
-err_t
+LwipError
 lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 {
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
@@ -530,8 +530,8 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
 /* Create IEEE 802.15.4 address from netif address */
-static err_t
-lowpan6_hwaddr_to_addr(struct netif *netif, struct Lowpan6LinkAddr *addr)
+static LwipError
+lowpan6_hwaddr_to_addr(struct NetIfc *netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
@@ -567,8 +567,8 @@ lowpan6_hwaddr_to_addr(struct netif *netif, struct Lowpan6LinkAddr *addr)
  *
  * @return LwipError
  */
-err_t
-lowpan6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
+LwipError
+lowpan6_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr)
 {
   LwipError result;
   const uint8_t *hwaddr;
@@ -648,10 +648,10 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
  * NETIF input function: don't free the input PacketBuffer when returning != ERR_OK!
  */
 LwipError
-lowpan6_input(struct PacketBuffer *p, struct netif *netif)
+lowpan6_input(struct PacketBuffer *p, struct NetIfc *netif)
 {
   uint8_t *puc, b;
-  s8_t i;
+  int8_t i;
   struct Lowpan6LinkAddr src, dest;
   uint16_t datagram_size = 0;
   uint16_t datagram_offset, datagram_tag;
@@ -877,7 +877,7 @@ lowpan6_input_discard:
  * @ingroup sixlowpan
  */
 LwipError
-lowpan6_if_init(struct netif *netif)
+lowpan6_if_init(struct NetIfc *netif)
 {
   netif->name[0] = 'L';
   netif->name[1] = '6';
@@ -916,7 +916,7 @@ lowpan6_set_pan_id(uint16_t pan_id)
  * @param inp the network interface on which the packet was received
  */
 LwipError
-tcpip_6lowpan_input(struct PacketBuffer *p, struct netif *inp)
+tcpip_6lowpan_input(struct PacketBuffer *p, struct NetIfc *inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);
 }

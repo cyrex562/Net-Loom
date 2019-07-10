@@ -163,11 +163,11 @@ extern "C" {
  */
 typedef struct pppol2tp_pcb_s pppol2tp_pcb;
 struct pppol2tp_pcb_s {
-  ppp_pcb *ppp;                /* PPP PCB */
+  PppPcb *ppp;                /* PPP PCB */
   uint8_t phase;                  /* L2TP phase */
   struct udp_pcb *udp;         /* UDP L2TP Socket */
-  struct netif *netif;         /* Output interface, used as a default route */
-  ip_addr_t remote_ip;         /* LNS IP Address */
+  struct NetIfc *netif;         /* Output interface, used as a default route */
+  IpAddr remote_ip;         /* LNS IP Address */
   uint16_t remote_port;           /* LNS port */
 #if PPPOL2TP_AUTH_SUPPORT
   const uint8_t *secret;          /* Secret string */
@@ -193,8 +193,8 @@ struct pppol2tp_pcb_s {
 
 
 /* Create a new L2TP session. */
-PppPcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, const ip_addr_t *ipaddr, uint16_t port,
+PppPcb *pppol2tp_create(struct NetIfc *pppif,
+       struct NetIfc *netif, const IpAddr *ipaddr, uint16_t port,
        const uint8_t *secret, uint8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 

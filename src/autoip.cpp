@@ -166,7 +166,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * @param ipaddr ip address to initialize
  */
 static void
-autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
+autoip_create_addr(struct netif *netif, Ip4Addr *ipaddr)
 {
   struct autoip *autoip = netif_autoip_data(netif);
 
@@ -228,7 +228,7 @@ static LwipError
 autoip_bind(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
-  ip4_addr_t sn_mask, gw_addr;
+  Ip4Addr sn_mask, gw_addr;
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
               ("autoip_bind(netif=%p) %c%c%"U16_F" %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -236,8 +236,8 @@ autoip_bind(struct netif *netif)
                ip4_addr1_16(&autoip->llipaddr), ip4_addr2_16(&autoip->llipaddr),
                ip4_addr3_16(&autoip->llipaddr), ip4_addr4_16(&autoip->llipaddr)));
 
-  IP4_ADDR(&sn_mask, 255, 255, 0, 0);
-  IP4_ADDR(&gw_addr, 0, 0, 0, 0);
+  Ipv4AddrFromBytes(&sn_mask, 255, 255, 0, 0);
+  Ipv4AddrFromBytes(&gw_addr, 0, 0, 0, 0);
 
   netif_set_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
   /* interface is used by routing now that an address is set */
@@ -461,7 +461,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
      * when probing  ip.dst == llipaddr && hw.src != netif->hwaddr
      * we have a conflict and must solve it
      */
-    ip4_addr_t sipaddr, dipaddr;
+    Ip4Addr sipaddr, dipaddr;
     struct EthAddr netifaddr;
     SMEMCPY(netifaddr.addr, netif->hwaddr, ETH_HWADDR_LEN);
 
@@ -518,7 +518,7 @@ autoip_supplied_address(const struct netif *netif)
 }
 
 uint8_t
-autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
+autoip_accept_packet(struct netif *netif, const Ip4Addr *addr)
 {
   struct autoip *autoip = netif_autoip_data(netif);
   return (autoip != NULL) && ip4_addr_cmp(addr, &(autoip->llipaddr));

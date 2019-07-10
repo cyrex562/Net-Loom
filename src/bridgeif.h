@@ -44,7 +44,7 @@
 extern "C" {
 #endif
 
-struct netif;
+struct NetIfc;
 typedef uint64_t bridgeif_portmask_t;
 
 constexpr auto kBrFlood = bridgeif_portmask_t(-1);
@@ -78,10 +78,10 @@ struct bridgeif_initdata_t {
  */
 #define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
-err_t bridgeif_init(struct netif *netif);
-err_t bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
-err_t bridgeif_fdb_add(struct netif *bridgeif, const struct EthAddr *addr, bridgeif_portmask_t ports);
-err_t bridgeif_fdb_remove(struct netif *bridgeif, const struct EthAddr *addr);
+LwipError bridgeif_init(struct NetIfc *netif);
+LwipError bridgeif_add_port(struct NetIfc *bridgeif, struct NetIfc *portif);
+LwipError bridgeif_fdb_add(struct NetIfc *bridgeif, const struct EthAddr *addr, bridgeif_portmask_t ports);
+LwipError bridgeif_fdb_remove(struct NetIfc *bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 void                bridgeif_fdb_update_src(void *fdb_ptr, struct EthAddr *src_addr, uint8_t port_idx);

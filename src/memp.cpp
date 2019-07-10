@@ -72,7 +72,7 @@
 
 #include "netdb.h"
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 
 #include "ppp_opts.h"
 
@@ -316,7 +316,7 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char *file, const int
     desc->stats->err++;
 #endif
     SYS_ARCH_UNPROTECT(old_level);
-    LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", desc->desc));
+    Logf(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", desc->desc));
   }
 
   return nullptr;

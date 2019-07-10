@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 struct PacketBuffer;
-struct netif;
+struct NetIfc;
 
 #if LWIP_MPU_COMPATIBLE
 #define API_VAR_REF(name)               (*(name))
@@ -143,7 +143,7 @@ struct tcpip_msg {
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     struct {
       struct PacketBuffer *p;
-      struct netif *netif;
+      struct NetIfc *netif;
       netif_input_fn input_fn;
     } inp;
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */

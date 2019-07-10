@@ -42,7 +42,7 @@
 #pragma once
 
 #include "lowpan6_opts.h"
-#include "pbuf.h"
+#include "packet_buffer.h"
 #include "ip.h"
 #include "ip6_addr.h"
 #include "netif.h"
@@ -62,7 +62,7 @@ struct Lowpan6LinkAddr {
 
 int8_t lowpan6_get_address_mode(const Ip6Addr* ip6addr,
                                 const struct Lowpan6LinkAddr* mac_addr);
-err_t lowpan6_compress_headers(struct netif* netif,
+LwipError lowpan6_compress_headers(struct NetIfc* netif,
                                uint8_t* inbuf,
                                size_t inbuf_size,
                                uint8_t* outbuf,

@@ -44,7 +44,7 @@
 #if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
 
 #include "lowpan6_common.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip.h"
 #include "ip_addr.h"
 #include "netif.h"

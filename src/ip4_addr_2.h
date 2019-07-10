@@ -45,7 +45,7 @@ extern "C" {
 
 /** This is the aligned version of Ip4Addr,
    used as local variable, on the stack, etc. */
-struct Ip4Addr {
+struct LwipIpv4Addr {
   uint32_t addr;
 };
 
@@ -94,7 +94,7 @@ constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
 #define IP_LOOPBACKNET      127                 /* official! */
 
 /** Set an IP address given by the four byte-parts */
-inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
+inline void IP4_ADDR(ip4_addr* ipaddr, uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
     (ipaddr)->addr = PP_HTONL(LwipMakeu32(a, b, c, d));
 }
 
@@ -197,14 +197,12 @@ uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 uint32_t ipaddr_addr(const char *cp);
-int ip4addr_aton(const char *cp, Ip4Addr *addr);
+int ip4addr_aton(const char *cp, LwipIpv4Addr *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ip4addr_ntoa(const Ip4Addr *addr);
-char *ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
+char *ip4addr_ntoa(const LwipIpv4Addr *addr);
+char *ip4addr_ntoa_r(const LwipIpv4Addr *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }
 #endif
-
-// END OF FILE
 

@@ -46,27 +46,27 @@ extern "C" {
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 /** General MAC frame format
  * This shows the full featured header, mainly for documentation.
  * Some fields are omitted or shortened to achieve frame compression.
  */
 struct ieee_802154_hdr {
   /** See IEEE_802154_FC_* defines */
-  PACK_STRUCT_FIELD(uint16_t frame_control);
+  (uint16_t frame_control);
   /** Sequence number is omitted if IEEE_802154_FC_SEQNO_SUPPR is set in frame_control */
-  PACK_STRUCT_FLD_8(uint8_t  sequence_number);
+  (uint8_t  sequence_number);
   /** Destination PAN ID is omitted if Destination Addressing Mode is 0 */
-  PACK_STRUCT_FIELD(uint16_t destination_pan_id);
+  (uint16_t destination_pan_id);
   /** Destination Address is omitted if Destination Addressing Mode is 0 */
-  PACK_STRUCT_FLD_8(uint8_t destination_address[8]);
+  (uint8_t destination_address[8]);
   /** Source PAN ID is omitted if Source Addressing Mode is 0
       or if IEEE_802154_FC_PANID_COMPR is set in frame control*/
-  PACK_STRUCT_FIELD(uint16_t source_pan_id);
+  (uint16_t source_pan_id);
   /** Source Address is omitted if Source Addressing Mode is 0 */
-  PACK_STRUCT_FLD_8(uint8_t source_address[8]);
+  (uint8_t source_address[8]);
   /* The rest is variable */
-} PACK_STRUCT_STRUCT;
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"

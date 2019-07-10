@@ -83,7 +83,7 @@ const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
  * @see LWIP_HOOK_VLAN_CHECK
  */
 LwipError
-ethernet_input(struct PacketBuffer *p, struct netif *netif)
+ethernet_input(struct PacketBuffer *p, struct NetIfc *netif)
 {
   struct EthHdr *ethhdr;
   uint16_t type;
@@ -265,8 +265,8 @@ free_and_return:
  * @param eth_type ethernet type (@ref lwip_ieee_eth_type)
  * @return ERR_OK if the packet was sent, any other LwipError on failure
  */
-err_t
-ethernet_output(struct netif * netif, struct pbuf * p,
+LwipError
+ethernet_output(struct NetIfc * netif, struct pbuf * p,
                 const struct EthAddr * src, const struct EthAddr * dst,
                 uint16_t eth_type) {
   struct EthHdr *ethhdr;
@@ -304,14 +304,14 @@ ethernet_output(struct netif * netif, struct pbuf * p,
 
   LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
               (netif->hwaddr_len == ETH_HWADDR_LEN));
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
+  Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
               ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
   return netif->linkoutput(netif, p);
 
 pbuf_header_failed:
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
+  Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
               ("ethernet_output: could not allocate room for header.\n"));
   LINK_STATS_INC(link.lenerr);
   return ERR_BUF;

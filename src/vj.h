@@ -112,7 +112,7 @@ struct Cstate {
   uint8_t cs_filler;
   union {
     char csu_hdr[kMaxHdr];
-    struct ip_hdr csu_ip;     /* ip/tcp hdr from most recent packet */
+    struct Ip4Hdr csu_ip;     /* ip/tcp hdr from most recent packet */
   } vjcs_u;
 };
 #define CS_IP vjcs_u.csu_ip

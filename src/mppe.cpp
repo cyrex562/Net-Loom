@@ -25,7 +25,7 @@
 
 #include "ppp_opts.h"
 #include <cstring>
-#include "err.h"
+#include "lwip_error.h"
 #include "ppp_impl.h"
 #include "ccp.h"
 #include "mppe.h"
@@ -94,7 +94,7 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
  * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
  * don't have to keep multiple copies of keys.
  */
-void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key) {
+void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
 	LWIP_UNUSED_ARG(pcb);
 	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
@@ -103,7 +103,7 @@ void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key) {
  * Initialize (de)compressor state.
  */
 void
-mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options)
+mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
 {
 #if PPP_DEBUG
 	const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";

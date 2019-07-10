@@ -55,7 +55,7 @@ enum {
 };
 
 /* PPPoS serial output callback function prototype */
-typedef uint32_t (*pppos_output_cb_fn)(ppp_pcb *pcb, uint8_t *data, uint32_t len, void *ctx);
+typedef uint32_t (*pppos_output_cb_fn)(PppPcb *pcb, uint8_t *data, uint32_t len, void *ctx);
 
 /*
  * Extended asyncmap - allows any character to be escaped.
@@ -94,16 +94,16 @@ struct pppos_pcb_s {
 };
 
 /* Create a new PPPoS session. */
-PppPcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
+PppPcb *pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /* Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread. */
-LwipError pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l);
+LwipError pppos_input_tcpip(PppPcb *ppp, uint8_t *s, int l);
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /* PPP over Serial: this is the input function to be called for received data. */
-void pppos_input(ppp_pcb *ppp, uint8_t* data, int len);
+void pppos_input(PppPcb *ppp, uint8_t* data, int len);
 
 
 /*

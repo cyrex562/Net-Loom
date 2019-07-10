@@ -518,7 +518,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
   SYS_ARCH_UNPROTECT(lev);
   }
 
-  err_t
+  LwipError
   sys_mbox_trypost(sys_mbox_t *q, void *msg)
   {
       uint32_t new_head;
@@ -555,7 +555,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
       return ERR_OK;
       }
 
-      err_t
+      LwipError
       sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
       {
           return sys_mbox_trypost(q, msg);

@@ -44,10 +44,10 @@
 #include "opt.h"
 #include "ip6_addr.h"
 #include "def.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 
-#include "err.h"
+#include "lwip_error.h"
 
 
  /** This is the packed version of LwipIp6Addr,
@@ -55,10 +55,10 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_addr_packed {
-    PACK_STRUCT_FIELD(uint32_t addr[4]);
-} PACK_STRUCT_STRUCT;
+    (uint32_t addr[4]);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -82,20 +82,20 @@ typedef struct ip6_addr_packed ip6_addr_p_t;
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_hdr {
     /** version / traffic class / flow label */
-    PACK_STRUCT_FIELD(uint32_t _v_tc_fl);
+    (uint32_t _v_tc_fl);
     /** payload length */
-    PACK_STRUCT_FIELD(uint16_t _plen);
+    (uint16_t _plen);
     /** next header */
-    PACK_STRUCT_FLD_8(uint8_t _nexth);
+    (uint8_t _nexth);
     /** hop limit */
-    PACK_STRUCT_FLD_8(uint8_t _hoplim);
+    (uint8_t _hoplim);
     /** source and destination IP addresses */
     PACK_STRUCT_FLD_S(ip6_addr_p_t src);
     PACK_STRUCT_FLD_S(ip6_addr_p_t dest);
-} PACK_STRUCT_STRUCT;
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -124,13 +124,13 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_opt_hdr {
     /* router alert option type */
-    PACK_STRUCT_FLD_8(uint8_t _opt_type);
+    (uint8_t _opt_type);
     /* router alert option data len */
-    PACK_STRUCT_FLD_8(uint8_t _opt_dlen);
-} PACK_STRUCT_STRUCT;
+    (uint8_t _opt_dlen);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -147,13 +147,13 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_hbh_hdr {
     /* next header */
-    PACK_STRUCT_FLD_8(uint8_t _nexth);
+    (uint8_t _nexth);
     /* header length in 8-octet units */
-    PACK_STRUCT_FLD_8(uint8_t _hlen);
-} PACK_STRUCT_STRUCT;
+    (uint8_t _hlen);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -166,13 +166,13 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_dest_hdr {
     /* next header */
-    PACK_STRUCT_FLD_8(uint8_t _nexth);
+    (uint8_t _nexth);
     /* header length in 8-octet units */
-    PACK_STRUCT_FLD_8(uint8_t _hlen);
-} PACK_STRUCT_STRUCT;
+    (uint8_t _hlen);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -186,17 +186,17 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_rout_hdr {
     /* next header */
-    PACK_STRUCT_FLD_8(uint8_t _nexth);
+    (uint8_t _nexth);
     /* reserved */
-    PACK_STRUCT_FLD_8(uint8_t _hlen);
+    (uint8_t _hlen);
     /* fragment offset */
-    PACK_STRUCT_FIELD(uint8_t _routing_type);
+    (uint8_t _routing_type);
     /* fragmented packet identification */
-    PACK_STRUCT_FIELD(uint8_t _segments_left);
-} PACK_STRUCT_STRUCT;
+    (uint8_t _segments_left);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -213,17 +213,17 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_frag_hdr {
     /* next header */
-    PACK_STRUCT_FLD_8(uint8_t _nexth);
+    (uint8_t _nexth);
     /* reserved */
-    PACK_STRUCT_FLD_8(uint8_t reserved);
+    (uint8_t reserved);
     /* fragment offset */
-    PACK_STRUCT_FIELD(uint16_t _fragment_offset);
+    (uint16_t _fragment_offset);
     /* fragmented packet identification */
-    PACK_STRUCT_FIELD(uint32_t _identification);
-} PACK_STRUCT_STRUCT;
+    (uint32_t _identification);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"

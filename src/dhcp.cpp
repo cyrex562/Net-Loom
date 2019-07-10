@@ -199,7 +199,7 @@ static LwipError dhcp_reboot(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, uint8_t new_state);
 
 /* receive, unfold, parse and free incoming messages */
-static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port);
+static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 
 /* set the DHCP timers */
 static void dhcp_timeout(struct netif *netif);
@@ -604,7 +604,7 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
   uint8_t n;
 #endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS || LWIP_DHCP_GET_NTP_SRV */
 #if LWIP_DHCP_GET_NTP_SRV
-  ip4_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
+  Ip4Addr ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
 #endif
 
   /* clear options we might not get from the ACK */
@@ -671,7 +671,7 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
 #if LWIP_DHCP_PROVIDE_DNS_SERVERS
   /* DNS servers */
   for (n = 0; (n < LWIP_DHCP_PROVIDE_DNS_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
-    ip_addr_t dns_addr;
+    IpAddr dns_addr;
     ip_addr_set_ip4_u32_val(dns_addr, lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n)));
     dns_setserver(n, &dns_addr);
   }
@@ -900,7 +900,7 @@ dhcp_network_changed(struct netif *netif)
  * @param addr The IP address we received a reply from
  */
 void
-dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
+dhcp_arp_reply(struct netif *netif, const Ip4Addr *addr)
 {
   struct dhcp *dhcp;
 
@@ -1041,7 +1041,7 @@ dhcp_bind(struct netif *netif)
 {
   uint32_t timeout;
   struct dhcp *dhcp;
-  ip4_addr_t sn_mask, gw_addr;
+  Ip4Addr sn_mask, gw_addr;
   LWIP_ERROR("dhcp_bind: netif != NULL", (netif != NULL), return;);
   dhcp = netif_dhcp_data(netif);
   LWIP_ERROR("dhcp_bind: dhcp != NULL", (dhcp != NULL), return;);
@@ -1318,7 +1318,7 @@ void
 dhcp_release_and_stop(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
-  ip_addr_t server_ip_addr;
+  IpAddr server_ip_addr;
 
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release_and_stop()\n"));
@@ -1751,7 +1751,7 @@ decode_next:
  * If an incoming DHCP message is in response to us, then trigger the state machine
  */
 static void
-dhcp_recv(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *addr, uint16_t port)
+dhcp_recv(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port)
 {
   struct netif *netif = ip_current_input_netif();
   struct dhcp *dhcp = netif_dhcp_data(netif);

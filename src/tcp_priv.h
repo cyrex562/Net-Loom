@@ -40,10 +40,10 @@
 #include "opt.h"
 #include "tcp.h"
 #include "mem.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip.h"
 #include "icmp.h"
-#include "err.h"
+#include "lwip_error.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "tcp.h"
@@ -75,19 +75,19 @@ void             tcp_fasttmr (void);
 void             tcp_txnow   (void);
 
 /* Only used by IP to pass a TCP segment to TCP: */
-void             tcp_input   (struct PacketBuffer *p, struct netif *inp);
+void             tcp_input   (struct PacketBuffer *p, struct NetIfc *inp);
 /* Used within the TCP code only: */
 struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
 void             tcp_abandon (struct TcpProtoCtrlBlk *pcb, int reset);
-err_t            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
-err_t            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
-err_t            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
+LwipError            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
+LwipError            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
+LwipError            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_rto_commit(struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_rto  (struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_fast (struct TcpProtoCtrlBlk *pcb);
 uint32_t            tcp_update_rcv_ann_wnd(struct TcpProtoCtrlBlk *pcb);
-err_t            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
+LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
@@ -460,31 +460,31 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   tcp_set_flags(pcb, TF_ACK_NOW)
 
-err_t tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
-err_t tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
+LwipError tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
+LwipError tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
 
 void tcp_rexmit_seg(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg);
 
 void tcp_rst(const struct TcpProtoCtrlBlk* pcb, uint32_t seqno, uint32_t ackno,
-       const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
+       const IpAddr *local_ip, const IpAddr *remote_ip,
        uint16_t local_port, uint16_t remote_port);
 
 uint32_t tcp_next_iss(struct TcpProtoCtrlBlk *pcb);
 
-err_t tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
-err_t tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
-err_t tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
+LwipError tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
+LwipError tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
+LwipError tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct netif *outif,
-                             const LwipIpAddr *dest);
+uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct NetIfc *outif,
+                             const IpAddr *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API
-err_t tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct pbuf *p, err_t err);
+LwipError tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct pbuf *p, LwipError err);
 #endif /* LWIP_CALLBACK_API */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
@@ -505,14 +505,14 @@ int16_t tcp_pcbs_sane(void);
  * that a timer is needed (i.e. active- or time-wait-pcb found). */
 void tcp_timer_needed(void);
 
-void tcp_netif_ip_addr_changed(const LwipIpAddr* old_addr, const LwipIpAddr* new_addr);
+void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
 #if TCP_QUEUE_OOSEQ
 void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);
 #endif
 
 #if LWIP_TCP_PCB_NUM_EXT_ARGS
-err_t tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
+LwipError tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
 #endif
 
 #ifdef __cplusplus

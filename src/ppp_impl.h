@@ -5,11 +5,10 @@
 #include <cstring>
 #include <cstdlib>
 #include "netif.h"
-#include "def.h"
 #include "timeouts.h"
 #include "ppp.h"
 #include "protent.h"
-#include "eui64.h"
+#include "lwip_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,13 +103,13 @@ constexpr auto EPD_PHONENUM = 5;
 /*
  * Global variables.
  */
-#ifdef HAVE_MULTILINK
+
 extern uint8_t	multilink;	/* enable multilink operation */
 extern uint8_t	doing_multilink;
 extern uint8_t	multilink_master;
 extern uint8_t	bundle_eof;
 extern uint8_t	bundle_terminating;
-#endif
+
 
 extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
 extern int       maxoctets_dir;      /* Direction :
@@ -123,21 +122,14 @@ constexpr auto PPP_OCTETS_DIRECTION_SUM = 0;
 constexpr auto PPP_OCTETS_DIRECTION_IN = 1;
 constexpr auto PPP_OCTETS_DIRECTION_OUT = 2;
 constexpr auto PPP_OCTETS_DIRECTION_MAXOVERAL = 3;
-/* same as previos, but little different on RADIUS side */
+// same as previos, but little different on RADIUS side
 constexpr auto PPP_OCTETS_DIRECTION_MAXSESSION = 4;
 
-/* Data input may be used by CCP and ECP, remove this entry
- * from struct protent to save some flash
- */
-#define PPP_DATAINPUT 0
-
-
-
-/* Table of pointers to supported protocols */
+// Table of pointers to supported protocols 
 extern const struct Protent* const kProtocols[];
 
 
-/* Values for auth_pending, auth_done */
+// Values for auth_pending, auth_done
 constexpr auto PAP_WITHPEER = 0x1;
 constexpr auto PAP_PEER = 0x2;
 constexpr auto CHAP_WITHPEER = 0x4;
@@ -145,7 +137,7 @@ constexpr auto CHAP_PEER = 0x8;
 constexpr auto EAP_WITHPEER = 0x10;
 constexpr auto EAP_PEER = 0x20;
 
-/* Values for auth_done only */
+// Values for auth_done only
 constexpr auto CHAP_MD5_WITHPEER = 0x40;
 constexpr auto CHAP_MD5_PEER = 0x80;
 constexpr auto CHAP_MS_SHIFT = 8	/* LSB position for MS auths */;
@@ -154,17 +146,14 @@ constexpr auto CHAP_MS_PEER = 0x200;
 constexpr auto CHAP_MS2_WITHPEER = 0x400;
 constexpr auto CHAP_MS2_PEER = 0x800;
 
-/* Supported CHAP protocols */
-#define CHAP_MDTYPE_SUPPORTED (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
-
-/*
- * PPP private functions
- */
+//
+// PPP private functions
+//
 
  
-/*
- * Functions called from lwIP core.
- */
+//
+// Functions called from lwIP core.
+//
 
 /* initialize the PPP subsystem */
 int ppp_init(void);
@@ -174,7 +163,7 @@ int ppp_init(void);
  */
 
 /* Create a new PPP control block */
-PppPcb *ppp_new(struct netif *pppif, const struct LinkCallbacks *callbacks, void *link_ctx_cb,
+PppPcb *ppp_new(struct NetIfc *pppif, const struct LinkCallbacks *callbacks, void *link_ctx_cb,
                  ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* Initiate LCP open request */
@@ -205,19 +194,14 @@ void new_phase(PppPcb *pcb, int p);
 int ppp_send_config(PppPcb *pcb, int mtu, uint32_t accm, int pcomp, int accomp);
 int ppp_recv_config(PppPcb *pcb, int mru, uint32_t accm, int pcomp, int accomp);
 
-void netif_set_mtu(ppp_pcb *pcb, int mtu);
-int netif_get_mtu(ppp_pcb *pcb);
+void netif_set_mtu(PppPcb *pcb, int mtu);
+int netif_get_mtu(PppPcb*pcb);
 
-#if CCP_SUPPORT
-#if 0 /* unused */
-int ccp_test(ppp_pcb *pcb, uint8_t *opt_ptr, int opt_len, int for_transmit);
-#endif /* unused */
-void ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
-void ccp_reset_comp(ppp_pcb *pcb);
-void ccp_reset_decomp(ppp_pcb *pcb);
-#if 0 /* unused */
-int ccp_fatal_error(PppPcb *pcb);
-#endif /* unused */
+
+void ccp_set(PppPcb*pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
+void ccp_reset_comp(PppPcb*pcb);
+void ccp_reset_decomp(PppPcb*pcb);
+
 
 
 
@@ -314,7 +298,7 @@ void link_terminated(PppPcb *pcb);   /* we are finished with the link */
 void link_down(PppPcb *pcb, Protent** protocols);	      /* the LCP layer has left the Opened state */
 void upper_layers_down(PppPcb *pcb, Protent** protocols); /* take all NCPs down */
 void link_established(PppPcb *pcb, Protent** protocols, bool auth_required);  /* the link is up; authenticate now */
-void start_networks(PppPcb *pcb, Protent** protocols);    /* start all the network control protos */
+void start_networks(PppPcb *pcb, Protent** protocols, bool* multilink);    /* start all the network control protos */
 void continue_networks(PppPcb *pcb, Protent** protocols); /* start network [ip, etc] control protos */
 #if PPP_AUTH_SUPPORT
 #if PPP_SERVER
@@ -354,8 +338,16 @@ int  loop_frame (unsigned char *, int); /* should we bring link up? */
 
 /* Procedures exported from multilink.c */
 
-void mp_check_options (void); /* Check multilink-related options */
-int  mp_join_bundle (void);  /* join our link to an appropriate bundle */
+void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /* Check multilink-related options */
+int  mp_join_bundle (PppPcb* pcb,
+                     LcpOptions* go,
+                     LcpOptions* ho,
+                     LcpOptions* ao,
+                     bool demand,
+                     char*
+                     peer_authname,
+                     bool* doing_multilink,
+                     char* bundle_name);  /* join our link to an appropriate bundle */
 void mp_exit_bundle (void);  /* have disconnected our link from bundle */
 void mp_bundle_terminated (void);
 char *epdisc_to_str (struct Epdisc *); /* string from endpoint discrim. */
@@ -374,10 +366,7 @@ void ppp_notice(const char *fmt, ...);    /* log a notice-level message */
 void ppp_warn(const char *fmt, ...);      /* log a warning message */
 void ppp_error(const char *fmt, ...);     /* log an error message */
 void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
-#if PRINTPKT_SUPPORT
-void ppp_dump_packet(PppPcb *pcb, const char *tag, unsigned char *p, int len);
-                                /* dump packet to debug log if interesting */
-#endif /* PRINTPKT_SUPPORT */
+
 
 /*
  * Number of necessary timers analysis.

@@ -62,7 +62,7 @@
 
 #include "netif.h"
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 
 #include "raw.h"
 
@@ -88,11 +88,11 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct packed_struct_test {
-  PACK_STRUCT_FLD_8(uint8_t  dummy1);
-  PACK_STRUCT_FIELD(uint32_t dummy2);
-} PACK_STRUCT_STRUCT;
+  (uint8_t  dummy1);
+  (uint32_t dummy2);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"

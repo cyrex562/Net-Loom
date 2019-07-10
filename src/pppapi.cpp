@@ -139,7 +139,7 @@ pppapi_do_pppos_create(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
+pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
                ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   PppPcb* result;
@@ -181,7 +181,7 @@ pppapi_do_pppoe_create(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *service_name,
+pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *service_name,
                             const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                             void *ctx_cb)
 {
@@ -233,7 +233,7 @@ pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, uint16_t port,
+pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, ip_addr_t *ipaddr, uint16_t port,
                         const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
@@ -347,7 +347,7 @@ pppapi_do_ppp_close(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_close(ppp_pcb *pcb, uint8_t nocarrier)
+pppapi_close(PppPcb *pcb, uint8_t nocarrier)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
@@ -410,7 +410,7 @@ pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
+pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);

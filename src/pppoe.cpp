@@ -121,12 +121,12 @@ static LwipError pppoe_send_padr(struct pppoe_softc *);
 static LwipError pppoe_send_pado(struct pppoe_softc *);
 static LwipError pppoe_send_pads(struct pppoe_softc *);
 #endif
-static LwipError pppoe_send_padt(struct netif *, u_int, const uint8_t *);
+static LwipError pppoe_send_padt(struct NetIfc *, u_int, const uint8_t *);
 
 /* internal helper functions */
 static LwipError pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb);
-static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif);
-static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct netif *rcvif);
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct NetIfc *rcvif);
+static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct NetIfc *rcvif);
 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
@@ -148,8 +148,8 @@ static const struct LinkCallbacks pppoe_callbacks = {
  *
  * Return 0 on success, an error code on failure.
  */
-PppPcb *pppoe_create(struct netif *pppif,
-       struct netif *ethif,
+PppPcb *pppoe_create(struct NetIfc *pppif,
+       struct NetIfc *ethif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
@@ -299,7 +299,7 @@ pppoe_destroy(PppPcb *ppp, void *ctx)
  * and lean implementation, so number of open sessions typically should
  * be 1.
  */
-static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif) {
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct NetIfc *rcvif) {
     for (struct pppoe_softc* sc = pppoe_softc_list; sc != nullptr; sc = sc->next) {
     if (sc->sc_state == PPPOE_STATE_SESSION
         && sc->sc_session == session
@@ -312,7 +312,7 @@ static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct net
 
 /* Check host unique token passed and return appropriate softc pointer,
  * or NULL if token is bogus. */
-static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct netif *rcvif) {
+static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct NetIfc *rcvif) {
   struct pppoe_softc *sc, *t;
 
   if (len != sizeof sc) {
@@ -347,7 +347,7 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t le
 
 /* analyze and handle a single received packet while not in session state */
 void
-pppoe_disc_input(struct netif *netif, struct PacketBuffer *pb)
+pppoe_disc_input(struct NetIfc *netif, struct PacketBuffer *pb)
 {
   uint16_t tag, len, off;
   uint16_t session, plen;
@@ -625,7 +625,7 @@ done:
 }
 
 void
-pppoe_data_input(struct netif *netif, struct PacketBuffer *pb)
+pppoe_data_input(struct NetIfc *netif, struct PacketBuffer *pb)
 {
   uint16_t session, plen;
   struct pppoe_softc *sc;
@@ -1003,7 +1003,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* send a PADT packet */
 static LwipError
-pppoe_send_padt(struct netif *outgoing_if, u_int session, const uint8_t *dest)
+pppoe_send_padt(struct NetIfc *outgoing_if, u_int session, const uint8_t *dest)
 {
   struct PacketBuffer *pb;
   struct eth_hdr *ethhdr;

@@ -623,12 +623,12 @@ mem_free(void *rmem)
   LWIP_MEM_FREE_DECL_PROTECT();
 
   if (rmem == nullptr) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\n"));
     return;
   }
   if ((((mem_ptr_t)rmem) & (MEM_ALIGNMENT - 1)) != 0) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: sanity check alignment");
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: sanity check alignment\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: sanity check alignment\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -640,7 +640,7 @@ mem_free(void *rmem)
 
   if ((uint8_t *)mem < ram || (uint8_t *)rmem + MIN_SIZE_ALIGNED > (uint8_t *)ram_end) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory");
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -654,7 +654,7 @@ mem_free(void *rmem)
   if (!mem->used) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: double free");
     LWIP_MEM_FREE_UNPROTECT();
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -663,7 +663,7 @@ mem_free(void *rmem)
   if (!mem_link_valid(mem)) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: non-linked: double free");
     LWIP_MEM_FREE_UNPROTECT();
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -725,7 +725,7 @@ mem_trim(void *rmem, mem_size_t new_size)
               (uint8_t *)rmem < (uint8_t *)ram_end);
 
   if ((uint8_t *)rmem < (uint8_t *)ram || (uint8_t *)rmem >= (uint8_t *)ram_end) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\n"));
+    Logf(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return rmem;

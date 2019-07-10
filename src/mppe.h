@@ -164,12 +164,12 @@ typedef struct ppp_mppe_state {
 	unsigned int discard   :1;  /* stateful mode packet loss flag */
 } ppp_mppe_state;
 
-void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t *key);
-void mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, uint8_t options);
-void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-LwipError mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol);
-void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
-LwipError mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb);
+void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key);
+void mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options);
+void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state);
+LwipError mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol);
+void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state);
+LwipError mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb);
 
 #ifdef __cplusplus
 }

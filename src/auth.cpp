@@ -191,18 +191,18 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
  */
 static void network_phase(PppPcb* pcb, Protent** protocols)
 {
-    start_networks(pcb, protocols);
+    start_networks(pcb, protocols,);
 }
 
-void start_networks(PppPcb* pcb, Protent** protocols)
+void start_networks(PppPcb* pcb, Protent** protocols, bool* multilink)
 {
     const struct Protent* protp;
 
     new_phase(pcb, PPP_PHASE_NETWORK);
 
-    if (multilink)
+    if (*multilink == true)
     {
-        if (mp_join_bundle())
+        if (mp_join_bundle(,,,,,,,))
         {
             if (multilink_join_hook)
                 (*multilink_join_hook)();
@@ -434,20 +434,15 @@ void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor, Protent**
  */
 void np_up(PppPcb* pcb, int proto)
 {
-    int tlim;
-
     if (pcb->num_np_up == 0)
     {
         /*
          * At this point we consider that the link has come up successfully.
          */
         new_phase(pcb, PPP_PHASE_RUNNING);
-
-
-
-	    tlim = pcb->settings.idle_time_limit;
+        const int tlim = pcb->settings.idle_time_limit;
 	if (tlim > 0)
-	    TIMEOUT(check_idle, (void*)pcb, tlim);
+	    Timeout(check_idle, static_cast<void*>(pcb), tlim);
 
 
 
@@ -456,7 +451,7 @@ void np_up(PppPcb* pcb, int proto)
 	 * connect time has expired.
 	 */
 	if (pcb->settings.maxconnect > 0)
-	    TIMEOUT(connect_time_expired, (void*)pcb, pcb->settings.maxconnect);
+        Timeout(connect_time_expired, static_cast<void*>(pcb), pcb->settings.maxconnect);
 
 
 	// if (maxoctets > 0)

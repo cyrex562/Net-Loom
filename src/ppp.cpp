@@ -1,96 +1,8 @@
-/*****************************************************************************
-* ppp.c - Network Point to Point Protocol program file.
-*
-* Copyright (c) 2003 by Marc Boucher, Services Informatiques (MBSI) inc.
-* portions Copyright (c) 1997 by Global Election Systems Inc.
-*
-* The authors hereby grant permission to use, copy, modify, distribute,
-* and license this software and its documentation for any purpose, provided
-* that existing copyright notices are retained in all copies and that this
-* notice and the following disclaimer are included verbatim in any
-* distributions. No written agreement, license, or royalty fee is required
-* for any of the authorized uses.
-*
-* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS *AS IS* AND ANY EXPRESS OR
-* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-******************************************************************************
-* REVISION HISTORY
-*
-* 03-01-01 Marc Boucher <marc@mbsi.ca>
-*   Ported to lwIP.
-* 97-11-05 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-*   Original.
-*****************************************************************************/
-
-/*
- * ppp_defs.h - PPP definitions.
- *
- * if_pppvar.h - private structures and declarations for PPP.
- *
- * Copyright (c) 1994 The Australian National University.
- * All rights reserved.
- *
- * Permission to use, copy, modify, and distribute this software and its
- * documentation is hereby granted, provided that the above copyright
- * notice appears in all copies.  This software is provided without any
- * warranty, express or implied. The Australian National University
- * makes no representations about the suitability of this software for
- * any purpose.
- *
- * IN NO EVENT SHALL THE AUSTRALIAN NATIONAL UNIVERSITY BE LIABLE TO ANY
- * PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
- * THE AUSTRALIAN NATIONAL UNIVERSITY HAVE BEEN ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * THE AUSTRALIAN NATIONAL UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE AUSTRALIAN NATIONAL UNIVERSITY HAS NO
- * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
- * OR MODIFICATIONS.
- */
-
-/*
- * if_ppp.h - Point-to-Point Protocol definitions.
- *
- * Copyright (c) 1989 Carnegie Mellon University.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by Carnegie Mellon University.  The name of the
- * University may not be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/**
- * @defgroup ppp PPP
- * @ingroup netifs
- * @verbinclude "ppp.txt"
- */
-
 #include "ppp_opts.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "stats.h"
 #include "sys.h"
 #include "tcpip.h"
-#include "api.h"
 #include "lwip_snmp.h"
 #include "ip4.h" /* for ip4_input() */
 #include "ip6.h" /* for ip6_input() */
@@ -101,7 +13,7 @@
 #include "lcp.h"
 #include "magic.h"
 #include "upap.h"
-#include "chap-new.h"
+#include "chap_new.h"
 #include "eap.h"
 #include "ccp.h"
 #include "mppe.h"
@@ -146,37 +58,29 @@ const struct Protent* const kProtocols[] = {
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
-static err_t ppp_netif_init_cb(struct netif* netif);
-static err_t ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
-static err_t ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
-static err_t ppp_netif_output(struct netif* netif, struct pbuf* pb, uint16_t protocol);
+static LwipError ppp_netif_init_cb(struct NetIfc* netif);
+static LwipError ppp_netif_output_ip4(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
+static LwipError ppp_netif_output_ip6(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
+static LwipError ppp_netif_output(struct NetIfc* netif, struct pbuf* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
-#if PPP_AUTH_SUPPORT
-void ppp_set_auth(ppp_pcb *pcb, uint8_t authtype, const char *user, const char *passwd) {
+
+void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *passwd) {
   LWIP_ASSERT_CORE_LOCKED();
-#if PAP_SUPPORT
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
   pcb->settings.refuse_chap = !(authtype & PPPAUTHTYPE_CHAP);
-#if MSCHAP_SUPPORT
   pcb->settings.refuse_mschap = !(authtype & PPPAUTHTYPE_MSCHAP);
   pcb->settings.refuse_mschap_v2 = !(authtype & PPPAUTHTYPE_MSCHAP_V2);
-#endif /* MSCHAP_SUPPORT */
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
   pcb->settings.refuse_eap = !(authtype & PPPAUTHTYPE_EAP);
-#endif /* EAP_SUPPORT */
   pcb->settings.user = user;
   pcb->settings.passwd = passwd;
 }
 
 
 /* Set MPPE configuration */
-void ppp_set_mppe(ppp_pcb *pcb, uint8_t flags) {
+void ppp_set_mppe(PppPcb *pcb, uint8_t flags) {
   if (flags == PPP_MPPE_DISABLE) {
     pcb->settings.require_mppe = 0;
     return;
@@ -274,7 +178,7 @@ ppp_listen(PppPcb* pcb)
  * Return 0 on success, an error code on failure.
  */
 LwipError
-ppp_close(ppp_pcb *pcb, uint8_t nocarrier)
+ppp_close(PppPcb *pcb, uint8_t nocarrier)
 {
     LWIP_ASSERT_CORE_LOCKED();
 
@@ -365,7 +269,7 @@ ppp_free(PppPcb* pcb)
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 LwipError
-ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
+ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb == nullptr)
@@ -390,7 +294,7 @@ ppp_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg)
         );
         return ERR_OK;
 
-    case PPPCTLG_ERRCODE: /* Get the PPP error code. */
+    case kPppctlgErrcode: /* Get the PPP error code. */
         if (!arg)
         {
             goto fail;
@@ -427,7 +331,7 @@ ppp_do_connect(void* arg)
  * ppp_netif_init_cb - netif init callback
  */
 static LwipError
-ppp_netif_init_cb(struct netif* netif)
+ppp_netif_init_cb(struct NetIfc* netif)
 {
     netif->name[0] = 'p';
     netif->name[1] = 'p';
@@ -442,8 +346,8 @@ ppp_netif_init_cb(struct netif* netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static err_t
-ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
+static LwipError
+ppp_netif_output_ip4(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IP);
 }
@@ -451,14 +355,14 @@ ppp_netif_output_ip4(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr
 /*
  * Send an IPv6 packet on the given connection.
  */
-static err_t
-ppp_netif_output_ip6(struct netif* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
+static LwipError
+ppp_netif_output_ip6(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
 static LwipError
-ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol)
+ppp_netif_output(struct NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
     LwipError err;
@@ -507,9 +411,9 @@ ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol
             break;
         default:
             // PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad IP packet\n", pcb->netif->num));
-            LINK_STATS_INC(link.proterr);
-            LINK_STATS_INC(link.drop);
-            MIB2_STATS_NETIF_INC(pcb->netif, ifoutdiscards);
+            // LINK_STATS_INC(link.proterr);
+            // LINK_STATS_INC(link.drop);
+            // MIB2_STATS_NETIF_INC(pcb->netif, ifoutdiscards);
             return ERR_VAL;
         }
     }
@@ -521,9 +425,9 @@ ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol
     case CI_MPPE:
         if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != ERR_OK)
         {
-            LINK_STATS_INC(link.memerr);
-            LINK_STATS_INC(link.drop);
-            MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+            // LINK_STATS_INC(link.memerr);
+            // LINK_STATS_INC(link.drop);
+            // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
             goto err;
         }
         /* if VJ compressor returned a new allocated PacketBuffer, free it */
@@ -546,9 +450,9 @@ ppp_netif_output(struct netif* netif, struct PacketBuffer* pb, uint16_t protocol
 
 err_rte_drop:
     err = ERR_RTE;
-    LINK_STATS_INC(link.rterr);
-    LINK_STATS_INC(link.drop);
-    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+    // LINK_STATS_INC(link.rterr);
+    // LINK_STATS_INC(link.drop);
+    // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
 err:
     if (fpb)
     {
@@ -586,7 +490,7 @@ ppp_init(void)
  * on success or a null pointer on failure.
  */
 PppPcb*
-ppp_new(struct netif* pppif,
+ppp_new(struct NetIfc* pppif,
         const struct LinkCallbacks* callbacks,
         void* link_ctx_cb,
         ppp_link_status_cb_fn link_status_cb,
@@ -1003,7 +907,7 @@ ppp_recv_config(PppPcb* pcb, int mru, uint32_t accm, int pcomp, int accomp)
 int
 sifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask)
 {
-    ip4_addr_t ip, nm, gw;
+    Ip4Addr ip, nm, gw;
 
     ip4_addr_set_u32(&ip, our_adr);
     ip4_addr_set_u32(&nm, netmask);
@@ -1057,7 +961,7 @@ int cifproxyarp(PppPcb *pcb, uint32_t his_adr) {
 int
 sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
-    ip_addr_t ns;
+    IpAddr ns;
     LWIP_UNUSED_ARG(pcb);
 
     ip_addr_set_ip4_u32_val(ns, ns1);
@@ -1074,8 +978,8 @@ sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 int
 cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
-    const ip_addr_t* nsa;
-    ip_addr_t nsb;
+    const IpAddr* nsa;
+    IpAddr nsb;
     LWIP_UNUSED_ARG(pcb);
 
     nsa = dns_getserver(0);
@@ -1269,7 +1173,7 @@ netif_get_mtu(PppPcb* pcb)
  * ccp_set - inform about the current state of CCP.
  */
 void
-ccp_set(ppp_pcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method)
+ccp_set(PppPcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method)
 {
   LWIP_UNUSED_ARG(isopen);
   LWIP_UNUSED_ARG(isup);

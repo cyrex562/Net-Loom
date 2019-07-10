@@ -49,7 +49,7 @@
 #include "priv/nd6_priv.h"
 #include "prot/nd6.h"
 #include "prot/icmp6.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "mem.h"
 #include "memp.h"
 #include "ip6.h"
@@ -767,11 +767,11 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
         rdnss_opt = (struct rdnss_option *)buffer;
         num = (rdnss_opt->length - 1) / 2;
         for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
-          ip_addr_t rdnss_address;
+          IpAddr rdnss_address;
 
           /* Copy directly from PacketBuffer to get an aligned, zoned copy of the prefix. */
           if (pbuf_copy_partial(p, &rdnss_address, sizeof(ip6_addr_p_t), copy_offset) == sizeof(ip6_addr_p_t)) {
-            IP_SET_TYPE_VAL(rdnss_address, IPADDR_TYPE_V6);
+            IpAdderSetTypeVal(rdnss_address, IPADDR_TYPE_V6);
             ip6_addr_assign_zone(ip_2_ip6(&rdnss_address), IP6_UNKNOWN, inp);
 
             if (htonl(rdnss_opt->lifetime) > 0) {
@@ -781,7 +781,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
               /* TODO implement DNS removal in dns.c */
               uint8_t s;
               for (s = 0; s < DNS_MAX_SERVERS; s++) {
-                const ip_addr_t *addr = dns_getserver(s);
+                const IpAddr *addr = dns_getserver(s);
                 if(ip_addr_cmp(addr, &rdnss_address)) {
                   dns_setserver(s, NULL);
                 }
@@ -894,13 +894,13 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
   }
   case ICMP6_TYPE_PTB: /* Packet too big */
   {
-    struct icmp6_hdr *icmp6hdr; /* Packet too big message */
+    struct Icmp6Hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
     uint32_t pmtu;
     LwipIp6Addr destination_address;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
-    if (p->len < (sizeof(struct icmp6_hdr) + IP6_HLEN)) {
+    if (p->len < (sizeof(struct Icmp6Hdr) + IP6_HLEN)) {
       /* drop short packets */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
@@ -908,8 +908,8 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
       return;
     }
 
-    icmp6hdr = (struct icmp6_hdr *)p->payload;
-    ip6hdr = (struct ip6_hdr *)((uint8_t*)p->payload + sizeof(struct icmp6_hdr));
+    icmp6hdr = (struct Icmp6Hdr *)p->payload;
+    ip6hdr = (struct ip6_hdr *)((uint8_t*)p->payload + sizeof(struct Icmp6Hdr));
 
     /* Create an aligned, zoned copy of the destination address. */
     ip6_addr_copy_from_packed(destination_address, ip6hdr->dest);

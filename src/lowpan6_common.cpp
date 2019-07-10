@@ -53,7 +53,7 @@
 #if LWIP_IPV6
 
 #include "ip.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "udp.h"
@@ -138,7 +138,7 @@ lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size,
   uint8_t hidden_header_len = 0;
   int8_t i;
   struct ip6_hdr *ip6hdr;
-  ip_addr_t ip6src, ip6dst;
+  IpAddr ip6src, ip6dst;
 
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("inbuf != NULL", inbuf != NULL);

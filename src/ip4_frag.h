@@ -38,7 +38,7 @@
 
 #include "opt.h"
 #include "lwip_error.h"
-#include "pbuf.h"
+#include "packet_buffer.h"
 #include "netif.h"
 #include "ip_addr.h"
 #include "ip.h"
@@ -56,7 +56,7 @@ extern "C" {
 struct ip_reassdata {
   struct ip_reassdata *next;
   struct PacketBuffer *p;
-  struct ip_hdr iphdr;
+  struct Ip4Hdr iphdr;
   uint16_t datagram_len;
   uint8_t flags;
   uint8_t timer;
@@ -81,7 +81,7 @@ struct PbufCustomRef {
 };
 
 
-err_t ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest);
+LwipError ip4_frag(struct pbuf *p, struct NetIfc *netif, const Ip4Addr *dest);
 
 
 #ifdef __cplusplus

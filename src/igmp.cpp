@@ -96,16 +96,16 @@ Steve Reynolds
 
 #include <string.h>
 
-static struct igmp_group *igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr);
+static struct igmp_group *igmp_lookup_group(struct netif *ifp, const Ip4Addr *addr);
 static LwipError  igmp_remove_group(struct netif *netif, struct igmp_group *group);
 static void   igmp_timeout(struct netif *netif, struct igmp_group *group);
 static void   igmp_start_timer(struct igmp_group *group, uint8_t max_time);
 static void   igmp_delaying_member(struct igmp_group *group, uint8_t maxresp);
-static LwipError  igmp_ip_output_if(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest, struct netif *netif);
+static LwipError  igmp_ip_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest, struct netif *netif);
 static void   igmp_send(struct netif *netif, struct igmp_group *group, uint8_t type);
 
-static ip4_addr_t     allsystems;
-static ip4_addr_t     allrouters;
+static Ip4Addr     allsystems;
+static Ip4Addr     allrouters;
 
 /**
  * Initialize the IGMP module
@@ -115,8 +115,8 @@ igmp_init(void)
 {
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_init: initializing\n"));
 
-  IP4_ADDR(&allsystems, 224, 0, 0, 1);
-  IP4_ADDR(&allrouters, 224, 0, 0, 2);
+  Ipv4AddrFromBytes(&allsystems, 224, 0, 0, 1);
+  Ipv4AddrFromBytes(&allrouters, 224, 0, 0, 2);
 }
 
 /**
@@ -215,7 +215,7 @@ igmp_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct igmp_group *
-igmp_lookfor_group(struct netif *ifp, const ip4_addr_t *addr)
+igmp_lookfor_group(struct netif *ifp, const Ip4Addr *addr)
 {
   struct igmp_group *group = netif_igmp_data(ifp);
 
@@ -241,7 +241,7 @@ igmp_lookfor_group(struct netif *ifp, const ip4_addr_t *addr)
  *         NULL on memory error.
  */
 static struct igmp_group *
-igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
+igmp_lookup_group(struct netif *ifp, const Ip4Addr *addr)
 {
   struct igmp_group *group;
   struct igmp_group *list_head = netif_igmp_data(ifp);
@@ -320,7 +320,7 @@ igmp_remove_group(struct netif *netif, struct igmp_group *group)
  * @param dest destination ip address of the igmp packet
  */
 void
-igmp_input(struct PacketBuffer *p, struct netif *inp, const ip4_addr_t *dest)
+igmp_input(struct PacketBuffer *p, struct netif *inp, const Ip4Addr *dest)
 {
   struct igmp_msg   *igmp;
   struct igmp_group *group;
@@ -396,7 +396,7 @@ igmp_input(struct PacketBuffer *p, struct netif *inp, const ip4_addr_t *dest)
           LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_MEMB_QUERY to a specific group "));
           ip4_addr_debug_print_val(IGMP_DEBUG, igmp->igmp_group_address);
           if (ip4_addr_cmp(dest, &allsystems)) {
-            ip4_addr_t groupaddr;
+            Ip4Addr groupaddr;
             LWIP_DEBUGF(IGMP_DEBUG, (" using \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
             /* we first need to re-look for the group since we used dest last time */
             ip4_addr_copy(groupaddr, igmp->igmp_group_address);
@@ -446,7 +446,7 @@ igmp_input(struct PacketBuffer *p, struct netif *inp, const ip4_addr_t *dest)
  * @return ERR_OK if group was joined on the netif(s), an LwipError otherwise
  */
 LwipError
-igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
+igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
 {
   LwipError err = ERR_VAL; /* no matching interface */
   struct netif *netif;
@@ -482,7 +482,7 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
  * @return ERR_OK if group was joined on the netif, an LwipError otherwise
  */
 LwipError
-igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
+igmp_joingroup_netif(struct netif *netif, const Ip4Addr *groupaddr)
 {
   struct igmp_group *group;
 
@@ -543,7 +543,7 @@ igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
  * @return ERR_OK if group was left on the netif(s), an LwipError otherwise
  */
 LwipError
-igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
+igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
 {
   LwipError err = ERR_VAL; /* no matching interface */
   struct netif *netif;
@@ -578,7 +578,7 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
  * @return ERR_OK if group was left on the netif, an LwipError otherwise
  */
 LwipError
-igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
+igmp_leavegroup_netif(struct netif *netif, const Ip4Addr *groupaddr)
 {
   struct igmp_group *group;
 
@@ -738,7 +738,7 @@ igmp_delaying_member(struct igmp_group *group, uint8_t maxresp)
  *         returns errors returned by netif->output
  */
 static LwipError
-igmp_ip_output_if(struct PacketBuffer *p, const ip4_addr_t *src, const ip4_addr_t *dest, struct netif *netif)
+igmp_ip_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest, struct netif *netif)
 {
   /* This is the "router alert" option */
   uint16_t ra[2];
@@ -759,8 +759,8 @@ igmp_send(struct netif *netif, struct igmp_group *group, uint8_t type)
 {
   struct PacketBuffer     *p    = NULL;
   struct igmp_msg *igmp = NULL;
-  ip4_addr_t   src  = *IP4_ADDR_ANY4;
-  ip4_addr_t  *dest = NULL;
+  Ip4Addr   src  = *IP4_ADDR_ANY4;
+  Ip4Addr  *dest = NULL;
 
   /* IP header + "router alert" option + IGMP header */
   p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);

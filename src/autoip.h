@@ -90,7 +90,7 @@ extern "C" {
 struct autoip
 {
   /** the currently selected, probed, announced or used LL IP-Address */
-  ip4_addr_t llipaddr;
+  Ip4Addr llipaddr;
   /** current AutoIP state machine state */
   uint8_t state;
   /** sent number of probes or announces, dependent on state */
@@ -115,7 +115,7 @@ void autoip_network_changed(struct netif *netif);
 uint8_t autoip_supplied_address(const struct netif *netif);
 
 /* for lwIP internal use by ip4.c */
-uint8_t autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr);
+uint8_t autoip_accept_packet(struct netif *netif, const Ip4Addr *addr);
 
 #define netif_autoip_data(netif) ((struct autoip*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP))
 

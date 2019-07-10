@@ -39,7 +39,7 @@
 
 #include "opt.h"
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 
 /** Swap the bytes in an uint16_t: much like lwip_htons() for little-endian */
@@ -79,9 +79,9 @@ uint16_t lwip_chksum_copy(void *dst, const void *src, uint16_t len);
 
 #if LWIP_IPV4
 uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
+       const Ip4Addr *src, const Ip4Addr *dest);
 uint16_t inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
-       uint16_t proto_len, uint16_t chksum_len, const LwipIpv4Addr *src, const LwipIpv4Addr *dest);
+       uint16_t proto_len, uint16_t chksum_len, const Ip4Addr *src, const Ip4Addr *dest);
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
@@ -93,9 +93,9 @@ uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16
 
 
 uint16_t ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       const LwipIpAddr *src, const LwipIpAddr *dest);
+       const IpAddr *src, const IpAddr *dest);
 uint16_t ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       uint16_t chksum_len, const LwipIpAddr *src, const LwipIpAddr *dest);
+       uint16_t chksum_len, const IpAddr *src, const IpAddr *dest);
 
 #ifdef __cplusplus
 }

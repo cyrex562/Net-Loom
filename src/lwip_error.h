@@ -34,18 +34,12 @@
  *
  */
 #pragma once
-
-#include "opt.h"
-
-#include "opt.h"
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** Definitions for error constants. */
-typedef enum {
+enum LwipErrorCode {
 /** No error, everything OK. */
   ERR_OK         = 0,
 /** Out of memory error.     */
@@ -80,15 +74,15 @@ typedef enum {
   ERR_CLSD       = -15,
 /** Illegal argument.        */
   ERR_ARG        = -16
-} err_enum_t;
+} ;
 
 /** Define LWIP_ERR_T in cc.h if you want to use
  *  a different type for your platform (must be signed). */
-typedef int err_t;
+typedef int LwipError;
 
-extern const char *lwip_strerr(err_t err);
+extern const char *lwip_strerr(LwipError err);
 
-int err_to_errno(err_t err);
+int err_to_errno(LwipError err);
 
 #ifdef __cplusplus
 }

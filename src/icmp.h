@@ -34,11 +34,10 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_ICMP_H
-#define LWIP_HDR_ICMP_H
+#pragma once
 
 #include "opt.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "arch.h"
@@ -58,26 +57,20 @@
 #define ICMP_AM  17    /* address mask request */
 #define ICMP_AMR 18    /* address mask reply */
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
  /** This is the standard ICMP header only that the uint32_t data
   *  is split to two uint16_t like ICMP echo needs it.
   *  This header is also used for other ICMP types that do not
   *  use the data part.
   */
-PACK_STRUCT_BEGIN
+
 struct icmp_echo_hdr {
-    PACK_STRUCT_FLD_8(uint8_t type);
-    PACK_STRUCT_FLD_8(uint8_t code);
-    PACK_STRUCT_FIELD(uint16_t chksum);
-    PACK_STRUCT_FIELD(uint16_t id);
-    PACK_STRUCT_FIELD(uint16_t seqno);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+    uint8_t type;
+    uint8_t code;
+    uint16_t chksum;
+    uint16_t id;
+    uint16_t seqno;
+} ;
+
 
 /* Compatibility defines, old versions used to combine type and code to an uint16_t */
 #define ICMPH_TYPE(hdr) ((hdr)->type)
@@ -85,10 +78,8 @@ PACK_STRUCT_END
 #define ICMPH_TYPE_SET(hdr, t) ((hdr)->type = (t))
 #define ICMPH_CODE_SET(hdr, c) ((hdr)->code = (c))
 
-
-#if LWIP_IPV6 && LWIP_ICMP6
 #include "icmp6.h"
-#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -118,36 +109,16 @@ enum icmp_te_type {
   ICMP_TE_FRAG = 1
 };
 
-#if LWIP_IPV4 && LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
-
-void icmp_input(struct pbuf *p, struct netif *inp);
+void icmp_input(struct pbuf *p, struct NetIfc *inp);
 void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
-#endif /* LWIP_IPV4 && LWIP_ICMP */
-
-#if LWIP_IPV4 && LWIP_IPV6
-#if LWIP_ICMP && LWIP_ICMP6
 #define icmp_port_unreach(isipv6, PacketBuffer) ((isipv6) ? \
                                          icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT) : \
                                          icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT))
-#elif LWIP_ICMP
-#define icmp_port_unreach(isipv6, PacketBuffer) do{ if(!(isipv6)) { icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT);}}while(0)
-#elif LWIP_ICMP6
-#define icmp_port_unreach(isipv6, PacketBuffer) do{ if(isipv6) { icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT);}}while(0)
-#else
-#define icmp_port_unreach(isipv6, PacketBuffer)
-#endif
-#elif LWIP_IPV6 && LWIP_ICMP6
+
 #define icmp_port_unreach(isipv6, PacketBuffer) icmp6_dest_unreach(PacketBuffer, ICMP6_DUR_PORT)
-#elif LWIP_IPV4 && LWIP_ICMP
-#define icmp_port_unreach(isipv6, pbuf) icmp_dest_unreach(PacketBuffer, ICMP_DUR_PORT)
-#else /* (LWIP_IPV6 && LWIP_ICMP6) || (LWIP_IPV4 && LWIP_ICMP) */
-#define icmp_port_unreach(isipv6, PacketBuffer)
-#endif /* (LWIP_IPV6 && LWIP_ICMP6) || (LWIP_IPV4 && LWIP_ICMP) LWIP_IPV4*/
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_HDR_ICMP_H */

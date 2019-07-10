@@ -71,7 +71,7 @@
 //#if LWIP_IPV6
 
 #include "ip.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "nd6.h"
@@ -147,7 +147,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
 /** Set an address used for stateful compression.
  * This expects an address of 6 or 8 bytes.
  */
-static err_t
+static LwipError
 rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
   if ((LwipInAddrStruct == NULL) || (addr == NULL)) {
@@ -174,7 +174,7 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
  * This expects an address of 8 bytes.
  */
 LwipError
-rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len)
+rfc7668_set_local_addr_eui64(struct NetIfc *netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -185,7 +185,7 @@ rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, siz
  * This expects an address of 6 bytes.
  */
 LwipError
-rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
+rfc7668_set_local_addr_mac48(struct NetIfc *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -196,7 +196,7 @@ rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, siz
  * This expects an address of 8 bytes.
  */
 LwipError
-rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len)
+rfc7668_set_peer_addr_eui64(struct NetIfc *netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -207,7 +207,7 @@ rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_
  * This expects an address of 6 bytes.
  */
 LwipError
-rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
+rfc7668_set_peer_addr_mac48(struct NetIfc *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   LWIP_UNUSED_ARG(netif);
@@ -228,7 +228,7 @@ rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_
  * @return Same as netif->output.
  */
 static LwipError
-rfc7668_compress(struct netif *netif, struct PacketBuffer *p)
+rfc7668_compress(struct NetIfc *netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *p_frag;
   uint16_t remaining_len;
@@ -297,7 +297,7 @@ rfc7668_compress(struct netif *netif, struct PacketBuffer *p)
  *
  * @return ERR_OK (if everything is fine), ERR_ARG (if the context id is out of range), ERR_VAL (if contexts disabled)
  */
-err_t
+LwipError
 rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
 {
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
@@ -325,8 +325,8 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  *
  * @return See rfc7668_compress
  */
-err_t
-rfc7668_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
+LwipError
+rfc7668_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
   return rfc7668_compress(netif, q);
@@ -343,7 +343,7 @@ rfc7668_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr)
  * @return ERR_OK if everything was fine
  */
 LwipError
-rfc7668_input(struct PacketBuffer * p, struct netif *netif)
+rfc7668_input(struct PacketBuffer * p, struct NetIfc *netif)
 {
   uint8_t * puc;
 
@@ -406,7 +406,7 @@ rfc7668_input(struct PacketBuffer * p, struct netif *netif)
  * @return ERR_OK if everything went fine
  */
 LwipError
-rfc7668_if_init(struct netif *netif)
+rfc7668_if_init(struct NetIfc *netif)
 {
   netif->name[0] = 'b';
   netif->name[1] = 't';
@@ -436,7 +436,7 @@ rfc7668_if_init(struct netif *netif)
  * @return see @ref tcpip_inpkt, same return values
  */
 LwipError
-tcpip_rfc7668_input(struct PacketBuffer *p, struct netif *inp)
+tcpip_rfc7668_input(struct PacketBuffer *p, struct NetIfc *inp)
 {
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);

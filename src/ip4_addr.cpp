@@ -6,8 +6,8 @@
 #include <cctype>
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const ip_addr_t kIpAddrAny = {{{{IPADDR_ANY}}}};
-const ip_addr_t kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
+const IpAddr kIpAddrAny = {{{{IPADDR_ANY}}}};
+const IpAddr kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
 
 /**
  * Determine if an address is a broadcast address on a network interface
@@ -17,9 +17,9 @@ const ip_addr_t kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
  * @return returns non-zero if the address is a broadcast address
  */
 uint8_t
-ip4_addr_isbroadcast_u32(const uint32_t addr, const struct netif *netif)
+ip4_addr_isbroadcast_u32(const uint32_t addr, const struct NetIfc *netif)
 {
-  LwipIpv4Addr ipaddr;
+  Ip4Addr ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
@@ -88,7 +88,7 @@ uint8_t ip4_addr_netmask_valid(const uint32_t netmask)
  */
 uint32_t ipaddr_addr(const char* cp)
 {
-    ip4_addr_t val;
+    Ip4Addr val;
     if (ip4addr_aton(cp, &val))
     {
         return ip4_addr_get_u32(&val);
@@ -107,7 +107,7 @@ uint32_t ipaddr_addr(const char* cp)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int ip4addr_aton(const char* cp, ip4_addr_t* addr)
+int ip4addr_aton(const char* cp, Ip4Addr* addr)
 {
     uint32_t val;
     uint32_t parts[4];
@@ -238,7 +238,7 @@ int ip4addr_aton(const char* cp, ip4_addr_t* addr)
  *         representation of addr
  */
 char *
-ip4addr_ntoa(const LwipIpv4Addr *addr)
+ip4addr_ntoa(const Ip4Addr *addr)
 {
   static char str[IP4ADDR_STRLEN_MAX];
   return ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);
@@ -253,7 +253,7 @@ ip4addr_ntoa(const LwipIpv4Addr *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char* ip4addr_ntoa_r(const ip4_addr_t* addr, char* buf, const int buflen)
+char* ip4addr_ntoa_r(const Ip4Addr* addr, char* buf, const int buflen)
 {
     uint32_t s_addr;
     char inv[3];

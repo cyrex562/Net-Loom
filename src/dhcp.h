@@ -55,25 +55,25 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 /** minimum set of fields of any DHCP message */
 struct dhcp_msg
 {
-    PACK_STRUCT_FLD_8(uint8_t op);
-    PACK_STRUCT_FLD_8(uint8_t htype);
-    PACK_STRUCT_FLD_8(uint8_t hlen);
-    PACK_STRUCT_FLD_8(uint8_t hops);
-    PACK_STRUCT_FIELD(uint32_t xid);
-    PACK_STRUCT_FIELD(uint16_t secs);
-    PACK_STRUCT_FIELD(uint16_t flags);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t ciaddr);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t yiaddr);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t siaddr);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t giaddr);
-    PACK_STRUCT_FLD_8(uint8_t chaddr[DHCP_CHADDR_LEN]);
-    PACK_STRUCT_FLD_8(uint8_t sname[DHCP_SNAME_LEN]);
-    PACK_STRUCT_FLD_8(uint8_t file[DHCP_FILE_LEN]);
-    PACK_STRUCT_FIELD(uint32_t cookie);
+    (uint8_t op);
+    (uint8_t htype);
+    (uint8_t hlen);
+    (uint8_t hops);
+    (uint32_t xid);
+    (uint16_t secs);
+    (uint16_t flags);
+    PACK_STRUCT_FLD_S(Ip4AddrPT ciaddr);
+    PACK_STRUCT_FLD_S(Ip4AddrPT yiaddr);
+    PACK_STRUCT_FLD_S(Ip4AddrPT siaddr);
+    PACK_STRUCT_FLD_S(Ip4AddrPT giaddr);
+    (uint8_t chaddr[DHCP_CHADDR_LEN]);
+    (uint8_t sname[DHCP_SNAME_LEN]);
+    (uint8_t file[DHCP_FILE_LEN]);
+    (uint32_t cookie);
 #define DHCP_MIN_OPTIONS_LEN 68U
     /** make sure user does not configure this too small */
 #if ((defined(DHCP_OPTIONS_LEN)) && (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
@@ -84,8 +84,8 @@ struct dhcp_msg
 /** set this to be sufficient for your options in outgoing DHCP msgs */
 #  define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
 #endif
-    PACK_STRUCT_FLD_8(uint8_t options[DHCP_OPTIONS_LEN]);
-} PACK_STRUCT_STRUCT;
+    (uint8_t options[DHCP_OPTIONS_LEN]);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -214,16 +214,16 @@ struct dhcp
   uint16_t t2_rebind_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next rebind try */
   uint16_t lease_used; /* #ticks with period DHCP_COARSE_TIMER_SECS since last received DHCP ack */
   uint16_t t0_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for lease time */
-  ip_addr_t server_ip_addr; /* dhcp server address that offered this lease (ip_addr_t because passed to UDP) */
-  ip4_addr_t offered_ip_addr;
-  ip4_addr_t offered_sn_mask;
-  ip4_addr_t offered_gw_addr;
+  IpAddr server_ip_addr; /* dhcp server address that offered this lease (IpAddr because passed to UDP) */
+  Ip4Addr offered_ip_addr;
+  Ip4Addr offered_sn_mask;
+  Ip4Addr offered_gw_addr;
 
   uint32_t offered_t0_lease; /* lease period (in seconds) */
   uint32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
   uint32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
 #if LWIP_DHCP_BOOTP_FILE
-  ip4_addr_t offered_si_addr;
+  Ip4Addr offered_si_addr;
   char boot_file_name[DHCP_BOOT_FILE_LEN];
 #endif /* LWIP_DHCP_BOOTPFILE */
 };
@@ -241,7 +241,7 @@ void dhcp_release_and_stop(struct netif *netif);
 void dhcp_inform(struct netif *netif);
 void dhcp_network_changed(struct netif *netif);
 #if DHCP_DOES_ARP_CHECK
-void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr);
+void dhcp_arp_reply(struct netif *netif, const Ip4Addr *addr);
 #endif
 uint8_t dhcp_supplied_address(const struct netif *netif);
 /* to be called every minute */
@@ -253,7 +253,7 @@ void dhcp_fine_tmr(void);
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP_MAX_NTP_SERVERS */
-extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
+extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
 #endif /* LWIP_DHCP_GET_NTP_SRV */
 
 #define netif_dhcp_data(netif) ((struct dhcp*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP))

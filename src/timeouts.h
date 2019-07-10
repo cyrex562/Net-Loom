@@ -39,7 +39,7 @@
 #define LWIP_HDR_TIMEOUTS_H
 
 #include "opt.h"
-#include "err.h"
+#include "lwip_error.h"
 #if !NO_SYS
 #include "sys.h"
 #endif

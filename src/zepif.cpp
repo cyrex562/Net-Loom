@@ -20,27 +20,24 @@
 #include "udp.h"
 #include "timeouts.h"
 #include <cstring>
-#include <lowpan6.cpp>
+#include <cstdint>
 
 constexpr auto kZepMaxDataLen = 127;
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct zep_hdr {
-  PACK_STRUCT_FLD_8(uint8_t prot_id[2]);
-  PACK_STRUCT_FLD_8(uint8_t prot_version);
-  PACK_STRUCT_FLD_8(uint8_t type);
-  PACK_STRUCT_FLD_8(uint8_t channel_id);
-  PACK_STRUCT_FIELD(uint16_t device_id);
-  PACK_STRUCT_FLD_8(uint8_t crc_mode);
-  PACK_STRUCT_FLD_8(uint8_t unknown_1);
-  PACK_STRUCT_FIELD(uint32_t timestamp[2]);
-  PACK_STRUCT_FIELD(uint32_t seq_num);
-  PACK_STRUCT_FLD_8(uint8_t unknown_2[10]);
-  PACK_STRUCT_FLD_8(uint8_t len);
-} PACK_STRUCT_STRUCT;
+
+struct ZepHdr {
+  uint8_t prot_id[2];
+  uint8_t prot_version;
+  uint8_t type;
+  uint8_t channel_id;
+  uint16_t device_id;
+  uint8_t crc_mode;
+  uint8_t unknown_1;
+  uint32_t timestamp[2];
+  uint32_t seq_num;
+  uint8_t unknown_2[10];
+  uint8_t len;
+} ;
 
 struct ZepifState
 {
@@ -49,7 +46,7 @@ struct ZepifState
     uint32_t seqno;
 };
 
-static uint8_t zep_lowpan_timer_running;
+static bool zep_lowpan_timer_running;
 
 /* Helper function that calls the 6LoWPAN timer and reschedules itself */
 static void
@@ -65,9 +62,9 @@ zep_lowpan_timer(void* arg)
 /* Pass received pbufs into 6LowPAN netif */
 static void
 zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct PacketBuffer* p,
-               const ip_addr_t* addr, uint16_t port)
+               const IpAddr* addr, uint16_t port)
 {
-    auto netif_lowpan6 = static_cast<struct netif *>(arg);
+    auto netif_lowpan6 = static_cast<struct NetIfc *>(arg);
 
     LWIP_ASSERT("arg != NULL", arg != nullptr);
     LWIP_ASSERT("pcb != NULL", pcb != nullptr);
@@ -79,7 +76,7 @@ zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct PacketBuffer* p,
     /* Parse and hide the ZEP header */
     if (p->len < sizeof(struct ZepHdr))
     {
-        /* need the zep_hdr in one piece */
+        /* need the ZepHdr in one piece */
         goto err_return;
     }
     auto zep = static_cast<struct ZepHdr *>(p->payload);
@@ -129,7 +126,7 @@ err_return:
 
 /* Send 6LoWPAN TX packets as UDP broadcast */
 static LwipError
-zepif_linkoutput(struct netif* netif, struct PacketBuffer* p)
+zepif_linkoutput(struct NetIfc* netif, struct PacketBuffer* p)
 {
     struct PacketBuffer* q;
 
@@ -145,12 +142,12 @@ zepif_linkoutput(struct netif* netif, struct PacketBuffer* p)
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
     LWIP_ASSERT("state->pcb != NULL", state->pcb != nullptr);
 
-  q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct zep_hdr) + p->tot_len, PBUF_RAM);
+  q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len, PBUF_RAM);
   if (q == NULL) {
     return ERR_MEM;
   }
-  zep = (struct zep_hdr *)q->payload;
-  memset(zep, 0, sizeof(struct zep_hdr));
+  zep = (struct ZepHdr *)q->payload;
+  memset(zep, 0, sizeof(struct ZepHdr));
   zep->prot_id[0] = 'E';
   zep->prot_id[1] = 'X';
   zep->prot_version = 2;
@@ -182,7 +179,7 @@ int zepif_default_udp_port = 9999;
  * functions for ZEP
  */
 LwipError
-zepif_init(struct netif* netif)
+zepif_init(struct NetIfc* netif)
 {
     LwipError err;
     auto init_state = static_cast<struct ZepifInit*>(netif->state);

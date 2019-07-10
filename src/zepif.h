@@ -25,16 +25,16 @@ struct ZepifInit {
   /** The UDP port used to ZEP frames to (0 = default) */
   uint16_t               zep_dst_udp_port;
   /** The IP address to sed ZEP frames from (NULL = ANY) */
-  const ip_addr_t    *zep_src_ip_addr;
+  const IpAddr    *zep_src_ip_addr;
   /** The IP address to sed ZEP frames to (NULL = BROADCAST) */
-  const ip_addr_t    *zep_dst_ip_addr;
+  const IpAddr    *zep_dst_ip_addr;
   /** If != NULL, the udp pcb is bound to this netif */
-  const struct netif *zep_netif;
+  const struct NetIfc *zep_netif;
   /** MAC address of the 6LowPAN device */
   uint8_t                addr[6];
 };
 
-LwipError zepif_init(struct netif *netif);
+LwipError zepif_init(struct NetIfc *netif);
 
 #ifdef __cplusplus
 }

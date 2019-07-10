@@ -134,9 +134,9 @@ extern const struct LwipIn6Addr kIn6AddrAny;
 
 /* directly map this to the lwip internal functions */
 #define inet_addr(cp)                   ipaddr_addr(cp)
-#define inet_aton(cp, addr)             ip4addr_aton(cp, (ip4_addr_t*)addr)
-#define inet_ntoa(addr)                 ip4addr_ntoa((const ip4_addr_t*)&(addr))
-#define inet_ntoa_r(addr, buf, buflen)  ip4addr_ntoa_r((const ip4_addr_t*)&(addr), buf, buflen)
+#define inet_aton(cp, addr)             ip4addr_aton(cp, (Ip4Addr*)addr)
+#define inet_ntoa(addr)                 ip4addr_ntoa((const Ip4Addr*)&(addr))
+#define inet_ntoa_r(addr, buf, buflen)  ip4addr_ntoa_r((const Ip4Addr*)&(addr), buf, buflen)
 
 
 #define inet6_addr_from_ip6addr(target_in6addr, source_ip6addr) {(target_in6addr)->un.u32_addr[0] = (source_ip6addr)->addr[0]; \

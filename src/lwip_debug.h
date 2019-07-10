@@ -59,15 +59,22 @@ inline void LWIP_PLATFORM_ERROR(char* msg)
     LWIP_PLATFORM_ASSERT(msg);
 }
 
-inline void LWIP_DEBUGF(const bool debug, char* message)
+// TODO: add log level and filter
+inline void Logf(const bool debug, char* message, ...)
 {
-    if (((debug) & LWIP_DBG_ON) && ((debug) & LWIP_DBG_TYPES_ON) && (int16_t(
-        (debug) & kLwipDbgMaskLevel) >= LWIP_DBG_MIN_LEVEL))
-    {
-        LwipPlatformDiag(message);
-        if ((debug) & LWIP_DBG_HALT)
-        {
-            while (true);
-        }
-    }
+
+    va_list args;
+    va_start(args, message);
+    vprintf(message, args);
+    va_end(args);
+
+    // if (((debug) & LWIP_DBG_ON) && ((debug) & LWIP_DBG_TYPES_ON) && (int16_t(
+    //     (debug) & kLwipDbgMaskLevel) >= LWIP_DBG_MIN_LEVEL))
+    // {
+    //     LwipPlatformDiag(message);
+    //     if ((debug) & LWIP_DBG_HALT)
+    //     {
+    //         while (true);
+    //     }
+    // }
 }

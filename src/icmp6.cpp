@@ -48,7 +48,7 @@
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 #include "nd6.h"
 #include "mld6.h"
@@ -82,14 +82,14 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uin
 void
 icmp6_input(struct PacketBuffer *p, struct netif *inp)
 {
-  struct icmp6_hdr *icmp6hdr;
+  struct Icmp6Hdr *icmp6hdr;
   struct PacketBuffer *r;
   const LwipIp6Addr *reply_src;
 
   ICMP6_STATS_INC(icmp6.recv);
 
   /* Check that ICMPv6 header fits in payload */
-  if (p->len < sizeof(struct icmp6_hdr)) {
+  if (p->len < sizeof(struct Icmp6Hdr)) {
     /* drop short packets */
     pbuf_free(p);
     ICMP6_STATS_INC(icmp6.lenerr);
@@ -97,7 +97,7 @@ icmp6_input(struct PacketBuffer *p, struct netif *inp)
     return;
   }
 
-  icmp6hdr = (struct icmp6_hdr *)p->payload;
+  icmp6hdr = (struct Icmp6Hdr *)p->payload;
 
 #if CHECKSUM_CHECK_ICMP6
   IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_ICMP6) {
@@ -180,11 +180,11 @@ icmp6_input(struct PacketBuffer *p, struct netif *inp)
     }
 
     /* Set fields in reply. */
-    ((struct icmp6_echo_hdr *)(r->payload))->type = ICMP6_TYPE_EREP;
-    ((struct icmp6_echo_hdr *)(r->payload))->chksum = 0;
+    ((struct Icmp6EchoHdr *)(r->payload))->type = ICMP6_TYPE_EREP;
+    ((struct Icmp6EchoHdr *)(r->payload))->chksum = 0;
 #if CHECKSUM_GEN_ICMP6
     IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP6) {
-      ((struct icmp6_echo_hdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
+      ((struct Icmp6EchoHdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
           IP6_NEXTH_ICMP6, r->tot_len, reply_src, ip6_current_src_addr());
     }
 #endif /* CHECKSUM_GEN_ICMP6 */
@@ -249,7 +249,7 @@ icmp6_packet_too_big(struct PacketBuffer *p, uint32_t mtu)
  * @param c ICMPv6 code for the time exceeded type
  */
 void
-icmp6_time_exceeded(struct PacketBuffer *p, enum icmp6_te_code c)
+icmp6_time_exceeded(struct PacketBuffer *p, enum Icmp6TeCode c)
 {
   icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
 }
@@ -270,7 +270,7 @@ icmp6_time_exceeded(struct PacketBuffer *p, enum icmp6_te_code c)
  *                  information
  */
 void
-icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum icmp6_te_code c,
+icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum Icmp6TeCode c,
     const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr)
 {
   icmp6_send_response_with_addrs(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
@@ -386,10 +386,10 @@ icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, u
     const LwipIp6Addr *reply_src, const LwipIp6Addr *reply_dest, struct netif *netif)
 {
   struct PacketBuffer *q;
-  struct icmp6_hdr *icmp6hdr;
+  struct Icmp6Hdr *icmp6hdr;
 
   /* ICMPv6 header + IPv6 header + data */
-  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
+  q = pbuf_alloc(PBUF_IP, sizeof(struct Icmp6Hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMPv6 packet.\n"));
@@ -397,15 +397,15 @@ icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, u
     return;
   }
   LWIP_ASSERT("check that first PacketBuffer can hold icmp 6message",
-             (q->len >= (sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE)));
+             (q->len >= (sizeof(struct Icmp6Hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE)));
 
-  icmp6hdr = (struct icmp6_hdr *)q->payload;
+  icmp6hdr = (struct Icmp6Hdr *)q->payload;
   icmp6hdr->type = type;
   icmp6hdr->code = code;
   icmp6hdr->data = lwip_htonl(data);
 
   /* copy fields from original packet */
-  SMEMCPY((uint8_t *)q->payload + sizeof(struct icmp6_hdr), (uint8_t *)p->payload,
+  SMEMCPY((uint8_t *)q->payload + sizeof(struct Icmp6Hdr), (uint8_t *)p->payload,
           IP6_HLEN + LWIP_ICMP6_DATASIZE);
 
   /* calculate checksum */

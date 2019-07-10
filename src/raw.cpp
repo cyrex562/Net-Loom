@@ -47,63 +47,53 @@
 
 #include "opt.h"
 
-#if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
-
 #include "def.h"
 #include "memp.h"
 #include "ip_addr.h"
 #include "netif.h"
 #include "raw.h"
-#include "priv/raw_priv.h"
+#include "raw_priv.h"
 #include "stats.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"
-
-#include <string.h>
-
+#include <cstring>
+#include "ip.h"
 /** The list of RAW PCBs */
 static struct raw_pcb *raw_pcbs;
 
 static uint8_t
 raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
 {
-  LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
-
   /* check if PCB is bound to specific netif */
   if ((pcb->netif_idx != NETIF_NO_INDEX) &&
       (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
     return 0;
   }
 
-#if LWIP_IPV4 && LWIP_IPV6
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
-  if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
-#if IP_SOF_BROADCAST_RECV
+  if (IpIsAnyTypeVal(pcb->local_ip)) {
+
     if ((broadcast != 0) && !ip_get_option(pcb, SOF_BROADCAST)) {
       return 0;
     }
-#endif /* IP_SOF_BROADCAST_RECV */
     return 1;
   }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if (IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
-#if LWIP_IPV4
     /* Special case: IPv4 broadcast: receive all broadcasts
      * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
     if (broadcast != 0) {
-#if IP_SOF_BROADCAST_RECV
       if (ip_get_option(pcb, SOF_BROADCAST))
-#endif /* IP_SOF_BROADCAST_RECV */
+
       {
         if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
           return 1;
         }
       }
     } else
-#endif /* LWIP_IPV4 */
+
       /* Handle IPv4 and IPv6: catch all or exact match */
       if (ip_addr_isany(&pcb->local_ip) ||
           ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
@@ -132,7 +122,7 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
  *
  */
 raw_input_state_t
-raw_input(struct PacketBuffer *p, struct netif *inp)
+raw_input(struct PacketBuffer *p, struct NetIfc *inp)
 {
   struct raw_pcb *pcb, *prev;
   int16_t proto;
@@ -141,23 +131,16 @@ raw_input(struct PacketBuffer *p, struct netif *inp)
 
   LWIP_UNUSED_ARG(inp);
 
-#if LWIP_IPV6
-#if LWIP_IPV4
+
   if (IP_HDR_GET_VERSION(p->payload) == 6)
-#endif /* LWIP_IPV4 */
   {
     struct ip6_hdr *ip6hdr = (struct ip6_hdr *)p->payload;
     proto = IP6H_NEXTH(ip6hdr);
   }
-#if LWIP_IPV4
   else
-#endif /* LWIP_IPV4 */
-#endif /* LWIP_IPV6 */
-#if LWIP_IPV4
   {
-    proto = IPH_PROTO((struct ip_hdr *)p->payload);
+    proto = IPH_PROTO((struct Ip4Hdr *)p->payload);
   }
-#endif /* LWIP_IPV4 */
 
   prev = NULL;
   pcb = raw_pcbs;
@@ -170,9 +153,8 @@ raw_input(struct PacketBuffer *p, struct netif *inp)
       /* receive callback function available? */
       if (pcb->recv != NULL) {
         uint8_t eaten;
-#ifndef LWIP_NOASSERT
+
         void *old_payload = p->payload;
-#endif
         ret = RAW_INPUT_DELIVERED;
         /* the receive callback function did not eat the packet? */
         eaten = pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr());
@@ -218,22 +200,21 @@ raw_input(struct PacketBuffer *p, struct netif *inp)
  * @see raw_disconnect()
  */
 LwipError
-raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
+raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
-#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+
   /* If the given IP address should have a zone but doesn't, assign one now.
    * This is legacy support: scope-aware callers should always provide properly
    * zoned source addresses. */
-  if (IP_IS_V6(&pcb->local_ip) &&
+  if (IpIsV6(&pcb->local_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->local_ip), IP6_UNKNOWN)) {
     ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), ip_2_ip6(&pcb->local_ip));
   }
-#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
   return ERR_OK;
 }
 
@@ -250,7 +231,7 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
  * @see raw_disconnect()
  */
 void
-raw_bind_netif(struct raw_pcb *pcb, const struct netif *netif)
+raw_bind_netif(struct raw_pcb *pcb, const struct NetIfc *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if (netif != NULL) {
@@ -275,21 +256,20 @@ raw_bind_netif(struct raw_pcb *pcb, const struct netif *netif)
  * @see raw_disconnect() and raw_sendto()
  */
 LwipError
-raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
+raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
-#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+
   /* If the given IP address should have a zone but doesn't, assign one now,
    * using the bound address to make a more informed decision when possible. */
-  if (IP_IS_V6(&pcb->remote_ip) &&
+  if (IpIsV6(&pcb->remote_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
     ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
   }
-#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
   raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
   return ERR_OK;
 }
@@ -305,15 +285,12 @@ raw_disconnect(struct raw_pcb *pcb)
 {
   LWIP_ASSERT_CORE_LOCKED();
   /* reset remote address association */
-#if LWIP_IPV4 && LWIP_IPV6
   if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
     ip_addr_copy(pcb->remote_ip, *IP_ANY_TYPE);
   } else {
-#endif
     ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
-#if LWIP_IPV4 && LWIP_IPV6
+
   }
-#endif
   pcb->netif_idx = NETIF_NO_INDEX;
   /* mark PCB as unconnected */
   raw_clear_flags(pcb, RAW_FLAGS_CONNECTED);
@@ -351,10 +328,10 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  *
  */
 LwipError
-raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *ipaddr)
+raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
 {
-  struct netif *netif;
-  const ip_addr_t *src_ip;
+  struct NetIfc *netif;
+  const IpAddr *src_ip;
 
   if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
@@ -417,8 +394,8 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *ipaddr)
  * @param src_ip source IP address
  */
 LwipError
-raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip,
-                  struct netif *netif, const ip_addr_t *src_ip)
+raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
+                  struct NetIfc *netif, const IpAddr *src_ip)
 {
   LwipError err;
   struct PacketBuffer *q; /* q will be sent down the stack */
@@ -434,7 +411,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *
 
   header_size = (
 #if LWIP_IPV4 && LWIP_IPV6
-                  IP_IS_V6(dst_ip) ? IP6_HLEN : IP_HLEN);
+                  IpIsV6(dst_ip) ? IP6_HLEN : IP_HLEN);
 #elif LWIP_IPV4
                   IP_HLEN);
 #else
@@ -508,7 +485,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *
 #if LWIP_IPV6
   /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-  if (IP_IS_V6(dst_ip) && pcb->chksum_reqd) {
+  if (IpIsV6(dst_ip) && pcb->chksum_reqd) {
     uint16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
     LWIP_ASSERT("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
     SMEMCPY(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
@@ -636,14 +613,11 @@ raw_new_ip_type(uint8_t type, uint8_t proto)
   struct raw_pcb *pcb;
   LWIP_ASSERT_CORE_LOCKED();
   pcb = raw_new(proto);
-#if LWIP_IPV4 && LWIP_IPV6
+
   if (pcb != NULL) {
-    IP_SET_TYPE_VAL(pcb->local_ip,  type);
-    IP_SET_TYPE_VAL(pcb->remote_ip, type);
+    IpAdderSetTypeVal(pcb->local_ip,  type);
+    IpAdderSetTypeVal(pcb->remote_ip, type);
   }
-#else /* LWIP_IPV4 && LWIP_IPV6 */
-  LWIP_UNUSED_ARG(type);
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
   return pcb;
 }
 
@@ -652,7 +626,7 @@ raw_new_ip_type(uint8_t type, uint8_t proto)
  * @param old_addr IP address of the netif before change
  * @param new_addr IP address of the netif after change
  */
-void raw_netif_ip_addr_changed(const ip_addr_t *old_addr, const ip_addr_t *new_addr)
+void raw_netif_ip_addr_changed(const IpAddr *old_addr, const IpAddr *new_addr)
 {
   struct raw_pcb *rpcb;
 
@@ -667,5 +641,3 @@ void raw_netif_ip_addr_changed(const ip_addr_t *old_addr, const ip_addr_t *new_a
     }
   }
 }
-
-#endif /* LWIP_RAW */

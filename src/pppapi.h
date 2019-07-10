@@ -54,7 +54,7 @@ struct pppapi_msg_msg {
 #endif /* PPP_NOTIFY_PHASE */
 #if PPPOS_SUPPORT
     struct {
-      struct netif *pppif;
+      struct NetIfc *pppif;
       pppos_output_cb_fn output_cb;
       ppp_link_status_cb_fn link_status_cb;
       void *ctx_cb;
@@ -62,8 +62,8 @@ struct pppapi_msg_msg {
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
     struct {
-      struct netif *pppif;
-      struct netif *ethif;
+      struct NetIfc *pppif;
+      struct NetIfc *ethif;
       const char *service_name;
       const char *concentrator_name;
       ppp_link_status_cb_fn link_status_cb;
@@ -72,9 +72,9 @@ struct pppapi_msg_msg {
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
     struct {
-      struct netif *pppif;
-      struct netif *netif;
-      API_MSG_M_DEF_C(ip_addr_t, ipaddr);
+      struct NetIfc *pppif;
+      struct NetIfc *netif;
+      API_MSG_M_DEF_C(IpAddr, ipaddr);
       uint16_t port;
 #if PPPOL2TP_AUTH_SUPPORT
       const uint8_t *secret;
@@ -108,15 +108,15 @@ LwipError pppapi_set_default(PppPcb *pcb);
 LwipError pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 #endif /* PPP_NOTIFY_PHASE */
 #if PPPOS_SUPPORT
-PppPcb *pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+PppPcb *pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
-PppPcb *pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *service_name,
+PppPcb *pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *service_name,
                                 const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                                 void *ctx_cb);
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
-ppp_pcb *pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, uint16_t port,
+PppPcb *pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, IpAddr *ipaddr, uint16_t port,
                             const uint8_t *secret, uint8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
@@ -124,9 +124,9 @@ LwipError pppapi_connect(PppPcb *pcb, uint16_t holdoff);
 #if PPP_SERVER
 LwipError pppapi_listen(PppPcb *pcb);
 #endif /* PPP_SERVER */
-LwipError pppapi_close(ppp_pcb *pcb, uint8_t nocarrier);
-LwipError pppapi_free(ppp_pcb *pcb);
-LwipError pppapi_ioctl(ppp_pcb *pcb, uint8_t cmd, void *arg);
+LwipError pppapi_close(PppPcb *pcb, uint8_t nocarrier);
+LwipError pppapi_free(PppPcb *pcb);
+LwipError pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
 
 #ifdef __cplusplus
 }

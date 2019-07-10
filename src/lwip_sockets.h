@@ -38,7 +38,7 @@
 
 #pragma once
 
-#include "err.h"
+#include "lwip_error.h"
 
 #include "ip_addr.h"
 

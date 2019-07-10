@@ -35,14 +35,11 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_RAW_H
-#define LWIP_HDR_RAW_H
+#pragma once
 
 #include "opt.h"
 
-#if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
-
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "def.h"
 #include "ip.h"
 #include "ip_addr.h"
@@ -69,12 +66,12 @@ struct raw_pcb;
  * if it's not used any more.
  */
 typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct PacketBuffer *p,
-    const ip_addr_t *addr);
+    const IpAddr *addr);
 
 /** the RAW protocol control block */
 struct raw_pcb {
   /* Common members of all PCB types */
-    ip_addr_t local_ip;
+    IpAddr local_ip;
     /* Bound netif index */
     uint8_t netif_idx;
     /* Socket options */
@@ -90,22 +87,22 @@ struct raw_pcb {
   uint8_t protocol;
   uint8_t flags;
 
-#if LWIP_MULTICAST_TX_OPTIONS
+
   /** outgoing network interface for multicast packets, by interface index (if nonzero) */
   uint8_t mcast_ifindex;
   /** TTL for outgoing multicast packets */
   uint8_t mcast_ttl;
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
+
 
   /** receive callback function */
   raw_recv_fn recv;
   /* user-supplied argument for the recv callback */
   void *recv_arg;
-#if LWIP_IPV6
+
   /* fields for handling checksum computations as per RFC3542. */
   uint16_t chksum_offset;
   uint8_t  chksum_reqd;
-#endif
+
 };
 
 /* The following functions is the application layer interface to the
@@ -113,13 +110,13 @@ struct raw_pcb {
 struct raw_pcb * raw_new        (uint8_t proto);
 struct raw_pcb * raw_new_ip_type(uint8_t type, uint8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
-LwipError            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
-void             raw_bind_netif (struct raw_pcb *pcb, const struct netif *netif);
-LwipError            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+LwipError            raw_bind       (struct raw_pcb *pcb, const IpAddr *ipaddr);
+void             raw_bind_netif (struct raw_pcb *pcb, const struct NetIfc *netif);
+LwipError            raw_connect    (struct raw_pcb *pcb, const IpAddr *ipaddr);
 void             raw_disconnect (struct raw_pcb *pcb);
 
-LwipError            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *ipaddr);
-LwipError            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const ip_addr_t *dst_ip, struct netif *netif, const ip_addr_t *src_ip);
+LwipError            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr);
+LwipError            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, struct NetIfc *netif, const IpAddr *src_ip);
 LwipError            raw_send       (struct raw_pcb *pcb, struct PacketBuffer *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
@@ -136,17 +133,13 @@ void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *re
 /* for compatibility with older implementation */
 #define raw_new_ip6(proto) raw_new_ip_type(IPADDR_TYPE_V6, proto)
 
-#if LWIP_MULTICAST_TX_OPTIONS
 #define raw_set_multicast_netif_index(pcb, idx) ((pcb)->mcast_ifindex = (idx))
 #define raw_get_multicast_netif_index(pcb)      ((pcb)->mcast_ifindex)
 #define raw_set_multicast_ttl(pcb, value)       ((pcb)->mcast_ttl = (value))
 #define raw_get_multicast_ttl(pcb)              ((pcb)->mcast_ttl)
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_RAW */
-
-#endif /* LWIP_HDR_RAW_H */

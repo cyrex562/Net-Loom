@@ -45,7 +45,7 @@
 
 #include "ethip6.h"
 #include "nd6.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "inet_chksum.h"

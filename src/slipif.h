@@ -71,8 +71,8 @@
 extern "C" {
 #endif
 
-LwipError slipif_init(struct netif * netif);
-void slipif_poll(struct netif *netif);
+LwipError slipif_init(struct NetIfc * netif);
+void slipif_poll(struct NetIfc *netif);
 #if SLIP_RX_FROM_ISR
 void slipif_process_rxqueue(struct netif *netif);
 void slipif_received_byte(struct netif *netif, uint8_t data);

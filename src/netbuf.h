@@ -43,7 +43,7 @@
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip_addr.h"
 #include "ip6_addr.h"
 
@@ -59,13 +59,13 @@ extern "C" {
 /** "Network buffer" - contains data and addressing info */
 struct netbuf {
   struct PacketBuffer *p, *ptr;
-  LwipIpAddr addr;
+  IpAddr addr;
   uint16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
   uint8_t flags;
   uint16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
-  ip_addr_t toaddr;
+  IpAddr toaddr;
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
 };

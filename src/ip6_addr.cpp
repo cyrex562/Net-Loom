@@ -54,7 +54,7 @@
 #endif /* LWIP_IPV4 */
 
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
-const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
+const IpAddr ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
 #define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
@@ -117,7 +117,7 @@ ip6addr_aton(const char *cp, LwipIp6Addr *addr)
 #if LWIP_IPV4
       if (check_ipv4_mapped) {
         if (current_block_index == 6) {
-          ip4_addr_t ip4;
+          Ip4Addr ip4;
           int ret = ip4addr_aton(s + 1, &ip4);
           if (ret) {
             if (addr) {
@@ -228,7 +228,7 @@ ip6addr_ntoa_r(const LwipIp6Addr *addr, char *buf, int buflen)
 #if LWIP_IPV4
   if (ip6_addr_isipv4mappedipv6(addr)) {
     /* This is an IPv4 mapped address */
-    ip4_addr_t addr4;
+    Ip4Addr addr4;
     char *ret;
 #define IP4MAPPED_HEADER "::FFFF:"
     char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;

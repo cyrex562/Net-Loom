@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "err.h"
+#include "lwip_error.h"
 
 /** Set to 1 to let rx use an own thread (only for NO_SYS==0).
  * If set to 0, ethernetif_poll is used to poll for packets.
@@ -17,10 +17,10 @@ extern "C" {
 #error "Can't create a dedicated RX thread with NO_SYS==1"
 #endif
 
-struct netif;
+struct NetIfc;
 
-LwipError pcapif_init    (struct netif *netif);
-void  pcapif_shutdown(struct netif *netif);
+LwipError pcapif_init    (struct NetIfc *netif);
+void  pcapif_shutdown(struct NetIfc *netif);
 #if !PCAPIF_RX_USE_THREAD
 void  pcapif_poll    (struct netif *netif);
 #endif /* !PCAPIF_RX_USE_THREAD */

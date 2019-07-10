@@ -138,7 +138,7 @@ struct ChapDigestType
 /*
  * Each interface is described by chap structure.
  */
-#if CHAP_SUPPORT
+
 typedef struct chap_client_state {
 	uint8_t flags;
 	const char *name;
@@ -146,7 +146,6 @@ typedef struct chap_client_state {
 	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
 
-#if PPP_SERVER
 typedef struct chap_server_state {
 	uint8_t flags;
 	uint8_t id;

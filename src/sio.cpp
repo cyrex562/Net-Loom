@@ -152,7 +152,7 @@ sio_fd_t sio_open(uint8_t devnum)
 {
   HANDLE fileHandle = (PVOID*)-1ll; // INVALID_HANDLE_VALUE
   char   fileName[256];
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu)\n", (DWORD)devnum));
+  Logf(SIO_DEBUG, ("sio_open(%lu)\n", (DWORD)devnum));
 #if SIO_USE_COMPORT
   snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(devnum));
 #else /* SIO_USE_COMPORT */
@@ -182,16 +182,16 @@ sio_fd_t sio_open(uint8_t devnum)
 #if SIO_USE_COMPORT
     if(!sio_setup(fileHandle)) {
       CloseHandle(fileHandle);
-      LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu): sio_setup failed. GetLastError() returns %lu\n",
+      Logf(SIO_DEBUG, ("sio_open(%lu): sio_setup failed. GetLastError() returns %lu\n",
                   (DWORD)devnum, GetLastError()));
       return nullptr;
     }
 #endif /* SIO_USE_COMPORT */
-    LWIP_DEBUGF(SIO_DEBUG, ("sio_open: file \"%s\" successfully opened.\n", fileName));
+    Logf(SIO_DEBUG, ("sio_open: file \"%s\" successfully opened.\n", fileName));
     printf("sio_open: file \"%s\" (%d) successfully opened: 0x%08x\n", fileName, devnum, LWIP_PTR_NUMERIC_CAST(unsigned int, fileHandle));
     return (sio_fd_t)(fileHandle);
   }
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
+  Logf(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
               (DWORD)devnum, GetLastError()));
   printf("sio_open(%lu) failed. GetLastError() returns %lu\n",
               (DWORD)devnum, GetLastError());
@@ -209,7 +209,7 @@ sio_fd_t sio_open(uint8_t devnum)
 void sio_send(uint8_t c, sio_fd_t fd)
 {
   DWORD dwNbBytesWritten = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_send(%lu)\n", (DWORD)c));
+  Logf(SIO_DEBUG, ("sio_send(%lu)\n", (DWORD)c));
   while ((!WriteFile((HANDLE)(fd), &c, 1, &dwNbBytesWritten, nullptr)) || (dwNbBytesWritten < 1)) {
   }
 }
@@ -225,9 +225,9 @@ uint8_t sio_recv(sio_fd_t fd)
 {
   DWORD dwNbBytesReadden = 0;
   uint8_t byte = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()\n"));
+  Logf(SIO_DEBUG, ("sio_recv()\n"));
   while ((sio_abort == 0) && ((!ReadFile((HANDLE)(fd), &byte, 1, &dwNbBytesReadden, nullptr)) || (dwNbBytesReadden < 1)));
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()=%lu\n", (DWORD)byte));
+  Logf(SIO_DEBUG, ("sio_recv()=%lu\n", (DWORD)byte));
   return byte;
 }
 
@@ -246,9 +246,9 @@ uint32_t sio_read(sio_fd_t fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_read()...\n"));
+  Logf(SIO_DEBUG, ("sio_read()...\n"));
   ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, nullptr);
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
+  Logf(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
   LWIP_UNUSED_ARG(ret);
   return dwNbBytesReadden;
 }
@@ -267,9 +267,9 @@ uint32_t sio_tryread(sio_fd_t fd, uint8_t* data, uint32_t len)
   /* @todo: implement non-blocking read */
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_read()...\n"));
+  Logf(SIO_DEBUG, ("sio_read()...\n"));
   ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, nullptr);
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
+  Logf(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
   LWIP_UNUSED_ARG(ret);
   return dwNbBytesReadden;
 }
@@ -288,9 +288,9 @@ uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesWritten = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_write()...\n"));
+  Logf(SIO_DEBUG, ("sio_write()...\n"));
   ret = WriteFile((HANDLE)(fd), data, len, &dwNbBytesWritten, nullptr);
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_write()=%lu bytes -> %d\n", dwNbBytesWritten, ret));
+  Logf(SIO_DEBUG, ("sio_write()=%lu bytes -> %d\n", dwNbBytesWritten, ret));
   LWIP_UNUSED_ARG(ret);
   return dwNbBytesWritten;
 }
@@ -304,7 +304,7 @@ uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
 void sio_read_abort(sio_fd_t fd)
 {
   LWIP_UNUSED_ARG(fd);
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_read_abort() !!!!!...\n"));
+  Logf(SIO_DEBUG, ("sio_read_abort() !!!!!...\n"));
   sio_abort = 1;
   return;
 }

@@ -62,7 +62,7 @@
 #include "slipif.h"
 #include "opt.h"
 #include "def.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "stats.h"
 //#include "snmp.h"
 #include "sys.h"
@@ -114,7 +114,7 @@ struct slipif_priv {
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipError
-slipif_output(struct netif *netif, struct PacketBuffer *p)
+slipif_output(struct NetIfc *netif, struct PacketBuffer *p)
 {
   struct slipif_priv *priv;
   struct PacketBuffer *q;
@@ -170,7 +170,7 @@ slipif_output(struct netif *netif, struct PacketBuffer *p)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipError
-slipif_output_v4(struct netif *netif, struct PacketBuffer *p, const LwipIpv4Addr *ipaddr)
+slipif_output_v4(struct NetIfc *netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
 {
   LWIP_UNUSED_ARG(ipaddr);
   return slipif_output(netif, p);
@@ -205,7 +205,7 @@ slipif_output_v6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr 
  * @return The IP packet when SLIP_END is received
  */
 static struct PacketBuffer *
-slipif_rxbyte(struct netif *netif, uint8_t c)
+slipif_rxbyte(struct NetIfc *netif, uint8_t c)
 {
   struct slipif_priv *priv;
   struct PacketBuffer *t;
@@ -262,12 +262,12 @@ slipif_rxbyte(struct netif *netif, uint8_t c)
   /* byte received, packet not yet completely received */
   if (priv->p == nullptr) {
     /* allocate a new PacketBuffer */
-    LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
+    Logf(SLIP_DEBUG, ("slipif_input: alloc\n"));
     priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN), PBUF_POOL);
 
     if (priv->p == nullptr) {
       LINK_STATS_INC(link.drop);
-      LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new PacketBuffer! (DROP)\n"));
+      Logf(SLIP_DEBUG, ("slipif_input: no new PacketBuffer! (DROP)\n"));
       /* don't process any further since we got no PacketBuffer to receive to */
       return nullptr;
     }
@@ -308,7 +308,7 @@ slipif_rxbyte(struct netif *netif, uint8_t c)
  * @param c received character
  */
 static void
-slipif_rxbyte_input(struct netif *netif, uint8_t c)
+slipif_rxbyte_input(struct NetIfc *netif, uint8_t c)
 {
   struct PacketBuffer *p;
   p = slipif_rxbyte(netif, c);
@@ -331,7 +331,7 @@ static void
 slipif_loop_thread(void *nf)
 {
   uint8_t c;
-  struct netif *netif = (struct netif *)nf;
+  struct NetIfc *netif = (struct NetIfc *)nf;
   struct slipif_priv *priv = (struct slipif_priv *)netif->state;
 
   while (1) {
@@ -358,7 +358,7 @@ slipif_loop_thread(void *nf)
  *
  */
 LwipError
-slipif_init(struct netif *netif)
+slipif_init(struct NetIfc *netif)
 {
   struct slipif_priv *priv;
   uint8_t sio_num;
@@ -424,7 +424,7 @@ slipif_init(struct netif *netif)
  * @param netif The lwip network interface structure for this slipif
  */
 void
-slipif_poll(struct netif *netif)
+slipif_poll(struct NetIfc *netif)
 {
   uint8_t c;
   struct slipif_priv *priv;

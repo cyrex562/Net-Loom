@@ -48,13 +48,13 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct udp_hdr {
-    PACK_STRUCT_FIELD(uint16_t src);
-    PACK_STRUCT_FIELD(uint16_t dest);  /* src/dest UDP ports */
-    PACK_STRUCT_FIELD(uint16_t len);
-    PACK_STRUCT_FIELD(uint16_t chksum);
-} PACK_STRUCT_STRUCT;
+    (uint16_t src);
+    (uint16_t dest);  /* src/dest UDP ports */
+    (uint16_t len);
+    (uint16_t chksum);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -63,7 +63,7 @@ PACK_STRUCT_END
 
 #if LWIP_UDP /* don't build if not configured for use in lwipopts.h */
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 #include "ip_addr.h"
 #include "ip.h"
@@ -96,12 +96,12 @@ struct udp_pcb;
  * @param port the remote port from which the packet was received
  */
 typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p,
-    const LwipIpAddr *addr, uint16_t port);
+    const IpAddr *addr, uint16_t port);
 
 /** the UDP protocol control block */
 struct udp_pcb {
 /** Common members of all PCB types */
-    ip_addr_t local_ip;
+    IpAddr local_ip;
     /* Bound netif index */
     uint8_t netif_idx;
     /* Socket options */
@@ -123,7 +123,7 @@ struct udp_pcb {
 #if LWIP_MULTICAST_TX_OPTIONS
 #if LWIP_IPV4
   /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
-  ip4_addr_t mcast_ip4;
+  Ip4Addr mcast_ip4;
 #endif /* LWIP_IPV4 */
   /** outgoing network interface for multicast packets, by interface index (if nonzero) */
   uint8_t mcast_ifindex;
@@ -149,37 +149,37 @@ extern struct udp_pcb *udp_pcbs;
 struct udp_pcb * udp_new        (void);
 struct udp_pcb * udp_new_ip_type(uint8_t type);
 void             udp_remove     (struct udp_pcb *pcb);
-LwipError            udp_bind       (struct udp_pcb *pcb, const LwipIpAddr *ipaddr,
+LwipError            udp_bind       (struct udp_pcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
-void             udp_bind_netif (struct udp_pcb *pcb, const struct netif* netif);
-LwipError            udp_connect    (struct udp_pcb *pcb, const LwipIpAddr *ipaddr,
+void             udp_bind_netif (struct udp_pcb *pcb, const struct NetIfc* netif);
+LwipError            udp_connect    (struct udp_pcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct udp_pcb *pcb);
 void             udp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
                                  void *recv_arg);
 LwipError            udp_sendto_if  (struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const LwipIpAddr *dst_ip, uint16_t dst_port,
-                                 struct netif *netif);
+                                 const IpAddr *dst_ip, uint16_t dst_port,
+                                 struct NetIfc *netif);
 LwipError            udp_sendto_if_src(struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const LwipIpAddr *dst_ip, uint16_t dst_port,
-                                 struct netif *netif, const LwipIpAddr *src_ip);
+                                 const IpAddr *dst_ip, uint16_t dst_port,
+                                 struct NetIfc *netif, const IpAddr *src_ip);
 LwipError            udp_sendto     (struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const LwipIpAddr *dst_ip, uint16_t dst_port);
+                                 const IpAddr *dst_ip, uint16_t dst_port);
 LwipError            udp_send       (struct udp_pcb *pcb, struct PacketBuffer *p);
 
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
 LwipError            udp_sendto_if_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const ip_addr_t *dst_ip, uint16_t dst_port,
+                                 const IpAddr *dst_ip, uint16_t dst_port,
                                  struct netif *netif, uint8_t have_chksum,
                                  uint16_t chksum);
 LwipError            udp_sendto_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const ip_addr_t *dst_ip, uint16_t dst_port,
+                                 const IpAddr *dst_ip, uint16_t dst_port,
                                  uint8_t have_chksum, uint16_t chksum);
 LwipError            udp_send_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
 LwipError            udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
-                                 const ip_addr_t *dst_ip, uint16_t dst_port, struct netif *netif,
-                                 uint8_t have_chksum, uint16_t chksum, const ip_addr_t *src_ip);
+                                 const IpAddr *dst_ip, uint16_t dst_port, struct netif *netif,
+                                 uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 
 #define          udp_flags(pcb) ((pcb)->flags)
@@ -190,7 +190,7 @@ LwipError            udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct Packet
 #define          udp_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
 
 /* The following functions are the lower layer interface to UDP. */
-void             udp_input      (struct PacketBuffer *p, struct netif *inp);
+void             udp_input      (struct PacketBuffer *p, struct NetIfc *inp);
 
 void             udp_init       (void);
 
@@ -214,7 +214,7 @@ void udp_debug_print(struct udp_hdr *udphdr);
 #define udp_debug_print(udphdr)
 #endif
 
-void udp_netif_ip_addr_changed(const LwipIpAddr* old_addr, const LwipIpAddr* new_addr);
+void udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
 #ifdef __cplusplus
 }

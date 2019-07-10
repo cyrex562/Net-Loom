@@ -41,8 +41,7 @@
 #define LWIP_HDR_IP6_DHCP6_H
 
 #include "opt.h"
-
-
+#include <cstdint>
 #define DHCP6_CLIENT_PORT  546
 #define DHCP6_SERVER_PORT  547
 
@@ -50,21 +49,13 @@
  /* DHCPv6 message item offsets and length */
 #define DHCP6_TRANSACTION_ID_LEN   3
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 /** minimum set of fields of any DHCPv6 message */
 struct dhcp6_msg
 {
-    PACK_STRUCT_FLD_8(uint8_t msgtype);
-    PACK_STRUCT_FLD_8(uint8_t transaction_id[DHCP6_TRANSACTION_ID_LEN]);
-    /* options follow */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+    uint8_t msgtype;
+    uint8_t transaction_id[DHCP6_TRANSACTION_ID_LEN]; /* options follow */
+};
+
 
 
 /* DHCP6 client states */
@@ -134,7 +125,7 @@ typedef enum {
 
 #if LWIP_IPV6_DHCP6  /* don't build if not configured for use in lwipopts.h */
 
-#include "err.h"
+#include "lwip_error.h"
 #include "netif.h"
 
 #ifdef __cplusplus
@@ -180,7 +171,7 @@ void dhcp6_nd6_ra_trigger(struct netif *netif, uint8_t managed_addr_config, uint
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP6_MAX_NTP_SERVERS */
-extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const ip_addr_t* ntp_server_addrs);
+extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_server_addrs);
 #endif /* LWIP_DHCP6_GET_NTP_SRV */
 
 #define netif_dhcp6_data(netif) ((struct dhcp6*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6))

@@ -279,10 +279,10 @@ ip6_route(const LwipIp6Addr *src, const LwipIp6Addr *dest)
  * @return the most suitable source address to use, or NULL if no suitable
  *         source address is found
  */
-const ip_addr_t *
+const IpAddr *
 ip6_select_source_address(struct netif *netif, const LwipIp6Addr *dest)
 {
-  const ip_addr_t *best_addr;
+  const IpAddr *best_addr;
   const LwipIp6Addr *cand_addr;
   int8_t dest_scope, cand_scope;
   int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;

@@ -49,7 +49,7 @@
 
 #include "mem.h"
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 
 #include "pcapif.h"
 
@@ -326,7 +326,7 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 #define pcapif_init_tx_packets(priv)
 #define pcapif_add_tx_packet(priv, buf, tot_len)
 static int
-pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
+pcaipf_is_tx_packet(struct NetIfc *netif, const void *packet, int packet_len)
 {
   const struct EthAddr *src = (const struct EthAddr *)packet + 1;
   if (packet_len >= (ETH_HWADDR_LEN * 2)) {
@@ -647,7 +647,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
 static void
 pcapif_check_linkstate(void *netif_ptr)
 {
-  struct netif *netif = (struct netif*)netif_ptr;
+  struct NetIfc *netif = (struct NetIfc*)netif_ptr;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   enum pcapifh_link_event le;
 
@@ -680,7 +680,7 @@ pcapif_check_linkstate(void *netif_ptr)
  * @param netif netif to shutdown
  */
 void
-pcapif_shutdown(struct netif *netif)
+pcapif_shutdown(struct NetIfc *netif)
 {
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   if (pa) {
@@ -707,7 +707,7 @@ pcapif_shutdown(struct netif *netif)
 static void
 pcapif_input_thread(void *arg)
 {
-  struct netif *netif = (struct netif *)arg;
+  struct NetIfc *netif = (struct NetIfc *)arg;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   do
   {
@@ -724,13 +724,13 @@ pcapif_input_thread(void *arg)
 /** Low-level initialization: find the correct adapter and initialize it.
  */
 static void
-pcapif_low_level_init(struct netif *netif)
+pcapif_low_level_init(struct NetIfc *netif)
 {
   uint8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
   struct pcapif_private *pa;
 #ifdef PACKET_LIB_GET_ADAPTER_NETADDRESS
-  ip4_addr_t netaddr;
+  Ip4Addr netaddr;
 #define GUID_LEN 128
   char guid[GUID_LEN + 1];
 #endif /* PACKET_LIB_GET_ADAPTER_NETADDRESS */
@@ -810,7 +810,7 @@ pcapif_low_level_init(struct netif *netif)
   sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0);
 #endif
 
-  LWIP_DEBUGF(NETIF_DEBUG, ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
+  Logf(NETIF_DEBUG, ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
 }
 
 /** low_level_output():
@@ -818,7 +818,7 @@ pcapif_low_level_init(struct netif *netif)
  * the function. This PacketBuffer might be chained.
  */
 static LwipError
-pcapif_low_level_output(struct netif *netif, struct PacketBuffer *p)
+pcapif_low_level_output(struct NetIfc *netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *q;
   unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
@@ -850,7 +850,7 @@ pcapif_low_level_output(struct netif *netif, struct PacketBuffer *p)
          time. The size of the data in each PacketBuffer is kept in the ->len
          variable. */
       /* send data from(q->payload, q->len); */
-      LWIP_DEBUGF(NETIF_DEBUG, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
+      Logf(NETIF_DEBUG, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
         MEMCPY(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
         ptr += q->len - ETH_PAD_SIZE;
@@ -895,7 +895,7 @@ pcapif_low_level_output(struct netif *netif, struct PacketBuffer *p)
  * packet from the interface into the PacketBuffer.
  */
 static struct PacketBuffer *
-pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
+pcapif_low_level_input(struct NetIfc *netif, const void *packet, int packet_len)
 {
   struct PacketBuffer *p, *q;
   int start;
@@ -932,7 +932,7 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
 
   /* We allocate a PacketBuffer chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE, PBUF_POOL);
-  LWIP_DEBUGF(NETIF_DEBUG, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
+  Logf(NETIF_DEBUG, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
 
   if (p != nullptr) {
     /* We iterate over the PacketBuffer chain until we have read the entire
@@ -944,7 +944,7 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
          available data in the PacketBuffer is given by the q->len
          variable. */
       /* read data into(q->payload, q->len); */
-      LWIP_DEBUGF(NETIF_DEBUG, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
+      Logf(NETIF_DEBUG, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
 #if ETH_PAD_SIZE
         LWIP_ASSERT("q->len >= ETH_PAD_SIZE", q->len >= ETH_PAD_SIZE);
@@ -1019,7 +1019,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 {
   struct pcapif_private *pa = (struct pcapif_private*)user;
   int packet_len = pkt_header->caplen;
-  struct netif *netif = (struct netif *)pa->input_fn_arg;
+  struct NetIfc *netif = (struct NetIfc *)pa->input_fn_arg;
   struct PacketBuffer *p;
 
   PCAPIF_RX_LOCK_LWIP();
@@ -1033,7 +1033,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 #endif
     /* pass all packets to ethernet_input, which decides what packets it supports */
     if (netif->input(p, netif) != ERR_OK) {
-      LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+      Logf(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
       pbuf_free(p);
     }
   }
@@ -1044,7 +1044,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
  * pcapif_init(): initialization function, pass to netif_add().
  */
 LwipError
-pcapif_init(struct netif *netif)
+pcapif_init(struct NetIfc *netif)
 {
   static int ethernetif_index;
   int local_index;

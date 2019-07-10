@@ -1,66 +1,12 @@
-/*
- * lcp.c - PPP Link Control Protocol.
- *
- * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The name "Carnegie Mellon University" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For permission or any legal
- *    details, please contact
- *      Office of Technology Transfer
- *      Carnegie Mellon University
- *      5000 Forbes Avenue
- *      Pittsburgh, PA  15213-3890
- *      (412) 268-4387, fax: (412) 268-7395
- *      tech-transfer@andrew.cmu.edu
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Computing Services
- *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
- *
- * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-/*
- * @todo:
- */
-
-#if 0 /* UNUSED */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#endif /* UNUSED */
-
-#include "ppp/ppp_impl.h"
-
-#include "ppp/fsm.h"
-#include "ppp/lcp.h"
-#if CHAP_SUPPORT
-#include "ppp/chap-new.h"
-#endif /* CHAP_SUPPORT */
-#include "ppp/magic.h"
+#include "fsm.h"
+#include "lcp.h"
+#include "ppp_impl.h"
+#include "ppp_impl.h"
+#include "fsm.h"
+#include "lcp.h"
+#include "chap_new.h"
+#include "magic.h"
 
 /*
  * When the link comes up we want to be able to wait for a short while,
@@ -68,149 +14,18 @@
  * configure-requests.  We do this by delaying the fsm_lowerup call.
  */
 /* steal a bit in fsm flags word */
-#define DELAYED_UP	0x80
+constexpr auto DELAYED_UP = 0x80;
 
 static void lcp_delayed_up(void *arg);
 
 /*
  * LCP-related command-line options.
  */
-#if 0 /* UNUSED */
-int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
-int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
-#endif /* UNUSED */
 
-#if 0 /* UNUSED */
-/* options */
-static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
-static u_int lcp_echo_fails         = LCP_MAXECHOFAILS; /* Tolerance to unanswered echo-requests */
-#endif /* UNUSED */
-
-#if 0 /* UNUSED */
-#if PPP_LCP_ADAPTIVE
-bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
-#endif
-bool	lax_recv = 0;		/* accept control chars in asyncmap */
-bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
-#endif /* UNUSED */
-
-#if PPP_OPTIONS
-static int noopt (char **);
-#endif /* PPP_OPTIONS */
-
-#ifdef HAVE_MULTILINK
 static int setendpoint (char **);
 static void printendpoint (option_t *, void (*)(void *, char *, ...),
 			       void *);
-#endif /* HAVE_MULTILINK */
 
-#if PPP_OPTIONS
-static option_t lcp_option_list[] = {
-    /* LCP options */
-    { "-all", o_special_noarg, (void *)noopt,
-      "Don't request/allow any LCP options" },
-
-    { "noaccomp", o_bool, &lcp_wantoptions[0].neg_accompression,
-      "Disable address/control compression",
-      OPT_A2CLR, &lcp_allowoptions[0].neg_accompression },
-    { "-ac", o_bool, &lcp_wantoptions[0].neg_accompression,
-      "Disable address/control compression",
-      OPT_ALIAS | OPT_A2CLR, &lcp_allowoptions[0].neg_accompression },
-
-    { "asyncmap", o_uint32, &lcp_wantoptions[0].asyncmap,
-      "Set asyncmap (for received packets)",
-      OPT_OR, &lcp_wantoptions[0].neg_asyncmap },
-    { "-as", o_uint32, &lcp_wantoptions[0].asyncmap,
-      "Set asyncmap (for received packets)",
-      OPT_ALIAS | OPT_OR, &lcp_wantoptions[0].neg_asyncmap },
-    { "default-asyncmap", o_uint32, &lcp_wantoptions[0].asyncmap,
-      "Disable asyncmap negotiation",
-      OPT_OR | OPT_NOARG | OPT_VAL(~0U) | OPT_A2CLR,
-      &lcp_allowoptions[0].neg_asyncmap },
-    { "-am", o_uint32, &lcp_wantoptions[0].asyncmap,
-      "Disable asyncmap negotiation",
-      OPT_ALIAS | OPT_OR | OPT_NOARG | OPT_VAL(~0U) | OPT_A2CLR,
-      &lcp_allowoptions[0].neg_asyncmap },
-
-    { "nomagic", o_bool, &lcp_wantoptions[0].neg_magicnumber,
-      "Disable magic number negotiation (looped-back line detection)",
-      OPT_A2CLR, &lcp_allowoptions[0].neg_magicnumber },
-    { "-mn", o_bool, &lcp_wantoptions[0].neg_magicnumber,
-      "Disable magic number negotiation (looped-back line detection)",
-      OPT_ALIAS | OPT_A2CLR, &lcp_allowoptions[0].neg_magicnumber },
-
-    { "mru", o_int, &lcp_wantoptions[0].mru,
-      "Set MRU (maximum received packet size) for negotiation",
-      OPT_PRIO, &lcp_wantoptions[0].neg_mru },
-    { "default-mru", o_bool, &lcp_wantoptions[0].neg_mru,
-      "Disable MRU negotiation (use default 1500)",
-      OPT_PRIOSUB | OPT_A2CLR, &lcp_allowoptions[0].neg_mru },
-    { "-mru", o_bool, &lcp_wantoptions[0].neg_mru,
-      "Disable MRU negotiation (use default 1500)",
-      OPT_ALIAS | OPT_PRIOSUB | OPT_A2CLR, &lcp_allowoptions[0].neg_mru },
-
-    { "mtu", o_int, &lcp_allowoptions[0].mru,
-      "Set our MTU", OPT_LIMITS, NULL, MAXMRU, MINMRU },
-
-    { "nopcomp", o_bool, &lcp_wantoptions[0].neg_pcompression,
-      "Disable protocol field compression",
-      OPT_A2CLR, &lcp_allowoptions[0].neg_pcompression },
-    { "-pc", o_bool, &lcp_wantoptions[0].neg_pcompression,
-      "Disable protocol field compression",
-      OPT_ALIAS | OPT_A2CLR, &lcp_allowoptions[0].neg_pcompression },
-
-    { "passive", o_bool, &lcp_wantoptions[0].passive,
-      "Set passive mode", 1 },
-    { "-p", o_bool, &lcp_wantoptions[0].passive,
-      "Set passive mode", OPT_ALIAS | 1 },
-
-    { "silent", o_bool, &lcp_wantoptions[0].silent,
-      "Set silent mode", 1 },
-
-    { "lcp-echo-failure", o_int, &lcp_echo_fails,
-      "Set number of consecutive echo failures to indicate link failure",
-      OPT_PRIO },
-    { "lcp-echo-interval", o_int, &lcp_echo_interval,
-      "Set time in seconds between LCP echo requests", OPT_PRIO },
-#if PPP_LCP_ADAPTIVE
-    { "lcp-echo-adaptive", o_bool, &lcp_echo_adaptive,
-      "Suppress LCP echo requests if traffic was received", 1 },
-#endif
-    { "lcp-restart", o_int, &lcp_fsm[0].timeouttime,
-      "Set time in seconds between LCP retransmissions", OPT_PRIO },
-    { "lcp-max-terminate", o_int, &lcp_fsm[0].maxtermtransmits,
-      "Set maximum number of LCP terminate-request transmissions", OPT_PRIO },
-    { "lcp-max-configure", o_int, &lcp_fsm[0].maxconfreqtransmits,
-      "Set maximum number of LCP configure-request transmissions", OPT_PRIO },
-    { "lcp-max-failure", o_int, &lcp_fsm[0].maxnakloops,
-      "Set limit on number of LCP configure-naks", OPT_PRIO },
-
-    { "receive-all", o_bool, &lax_recv,
-      "Accept all received control characters", 1 },
-
-#ifdef HAVE_MULTILINK
-    { "mrru", o_int, &lcp_wantoptions[0].mrru,
-      "Maximum received packet size for multilink bundle",
-      OPT_PRIO, &lcp_wantoptions[0].neg_mrru },
-
-    { "mpshortseq", o_bool, &lcp_wantoptions[0].neg_ssnhf,
-      "Use short sequence numbers in multilink headers",
-      OPT_PRIO | 1, &lcp_allowoptions[0].neg_ssnhf },
-    { "nompshortseq", o_bool, &lcp_wantoptions[0].neg_ssnhf,
-      "Don't use short sequence numbers in multilink headers",
-      OPT_PRIOSUB | OPT_A2CLR, &lcp_allowoptions[0].neg_ssnhf },
-
-    { "endpoint", o_special, (void *) setendpoint,
-      "Endpoint discriminator for multilink",
-      OPT_PRIO | OPT_A2PRINTER, (void *) printendpoint },
-#endif /* HAVE_MULTILINK */
-
-    { "noendpoint", o_bool, &noendpoint,
-      "Don't send or accept multilink endpoint discriminator", 1 },
-
-    {NULL}
-};
-#endif /* PPP_OPTIONS */
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -234,7 +49,7 @@ static void lcp_rprotrej(fsm *f, uint8_t *inp, int len);
  */
 
 static void lcp_echo_lowerup(PppPcb *pcb);
-static void lcp_echo_lowerdown(PppPcb *pcb);
+static void lcp_echo_lowerdown(PppPcb *pcb, <unknown>);
 static void LcpEchoTimeout(void *arg);
 static void lcp_received_echo_reply(fsm *f, int id, uint8_t *inp, int len);
 static void LcpSendEchoRequest(fsm *f);
@@ -267,10 +82,7 @@ static const fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
 static void lcp_init(PppPcb *pcb);
 static void lcp_input(PppPcb *pcb, uint8_t *p, int len);
 static void lcp_protrej(PppPcb *pcb);
-#if PRINTPKT_SUPPORT
-static int lcp_printpkt(const uint8_t *p, int plen,
-		void (*printer) (void *, const char *, ...), void *arg);
-#endif /* PRINTPKT_SUPPORT */
+
 
 const struct protent lcp_protent = {
     PPP_LCP,
@@ -281,24 +93,9 @@ const struct protent lcp_protent = {
     lcp_lowerdown,
     lcp_open,
     lcp_close,
-#if PRINTPKT_SUPPORT
-    lcp_printpkt,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_DATAINPUT
     NULL,
-#endif /* PPP_DATAINPUT */
-#if PRINTPKT_SUPPORT
-    "LCP",
-    NULL,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_OPTIONS
-    lcp_option_list,
-    NULL,
-#endif /* PPP_OPTIONS */
-#if DEMAND_SUPPORT
     NULL,
     NULL
-#endif /* DEMAND_SUPPORT */
 };
 
 /*
@@ -319,22 +116,6 @@ const struct protent lcp_protent = {
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
-#if PPP_OPTIONS
-/*
- * noopt - Disable all options (why?).
- */
-static int
-noopt(argv)
-    char **argv;
-{
-    BZERO((char *) &lcp_wantoptions[0], sizeof (struct lcp_options));
-    BZERO((char *) &lcp_allowoptions[0], sizeof (struct lcp_options));
-
-    return (1);
-}
-#endif /* PPP_OPTIONS */
-
-#ifdef HAVE_MULTILINK
 static int
 setendpoint(argv)
     char **argv;
@@ -355,7 +136,7 @@ printendpoint(opt, printer, arg)
 {
 	printer(arg, "%s", epdisc_to_str(&lcp_wantoptions[0].endpoint));
 }
-#endif /* HAVE_MULTILINK */
+
 
 /*
  * lcp_init - Initialize LCP.
@@ -654,113 +435,102 @@ static void lcp_resetci(fsm *f) {
     lcp_options *go = &pcb->lcp_gotoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
 
-#if PPP_AUTH_SUPPORT
+
 
     /* note: default value is true for allow options */
     if (pcb->settings.user && pcb->settings.passwd) {
-#if PAP_SUPPORT
+
       if (pcb->settings.refuse_pap) {
         ao->neg_upap = 0;
       }
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
+
       if (pcb->settings.refuse_chap) {
         ao->chap_mdtype &= ~MDTYPE_MD5;
       }
-#if MSCHAP_SUPPORT
+
       if (pcb->settings.refuse_mschap) {
         ao->chap_mdtype &= ~MDTYPE_MICROSOFT;
       }
       if (pcb->settings.refuse_mschap_v2) {
         ao->chap_mdtype &= ~MDTYPE_MICROSOFT_V2;
       }
-#endif /* MSCHAP_SUPPORT */
+
       ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
+
       if (pcb->settings.refuse_eap) {
         ao->neg_eap = 0;
       }
-#endif /* EAP_SUPPORT */
 
-#if PPP_SERVER
       /* note: default value is false for wanted options */
       if (pcb->settings.auth_required) {
-#if PAP_SUPPORT
+
         if (!pcb->settings.refuse_pap) {
           wo->neg_upap = 1;
         }
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
+
         if (!pcb->settings.refuse_chap) {
           wo->chap_mdtype |= MDTYPE_MD5;
         }
-#if MSCHAP_SUPPORT
+
         if (!pcb->settings.refuse_mschap) {
           wo->chap_mdtype |= MDTYPE_MICROSOFT;
         }
         if (!pcb->settings.refuse_mschap_v2) {
           wo->chap_mdtype |= MDTYPE_MICROSOFT_V2;
         }
-#endif /* MSCHAP_SUPPORT */
+
         wo->neg_chap = (wo->chap_mdtype != MDTYPE_NONE);
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
+
         if (!pcb->settings.refuse_eap) {
           wo->neg_eap = 1;
         }
-#endif /* EAP_SUPPORT */
+
       }
-#endif /* PPP_SERVER */
+
 
     } else {
-#if PAP_SUPPORT
+
       ao->neg_upap = 0;
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
+
       ao->neg_chap = 0;
       ao->chap_mdtype = MDTYPE_NONE;
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
+
+
       ao->neg_eap = 0;
-#endif /* EAP_SUPPORT */
+
     }
 
     PPPDEBUG(LOG_DEBUG, ("ppp: auth protocols:"));
-#if PAP_SUPPORT
+
     PPPDEBUG(LOG_DEBUG, (" PAP=%d", ao->neg_upap));
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
+
     PPPDEBUG(LOG_DEBUG, (" CHAP=%d CHAP_MD5=%d", ao->neg_chap, !!(ao->chap_mdtype&MDTYPE_MD5)));
-#if MSCHAP_SUPPORT
+
     PPPDEBUG(LOG_DEBUG, (" CHAP_MS=%d CHAP_MS2=%d", !!(ao->chap_mdtype&MDTYPE_MICROSOFT), !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)));
-#endif /* MSCHAP_SUPPORT */
-#endif /* CHAP_SUPPORT */
+
 #if EAP_SUPPORT
     PPPDEBUG(LOG_DEBUG, (" EAP=%d", ao->neg_eap));
-#endif /* EAP_SUPPORT */
+
     PPPDEBUG(LOG_DEBUG, ("\n"));
 
-#endif /* PPP_AUTH_SUPPORT */
+
 
     wo->magicnumber = magic();
     wo->numloops = 0;
     *go = *wo;
-#ifdef HAVE_MULTILINK
+
     if (!multilink) {
 	go->neg_mrru = 0;
-#endif /* HAVE_MULTILINK */
+
 	go->neg_ssnhf = 0;
 	go->neg_endpoint = 0;
-#ifdef HAVE_MULTILINK
+
     }
-#endif /* HAVE_MULTILINK */
+
     if (pcb->settings.noendpoint)
 	ao->neg_endpoint = 0;
     pcb->peer_mru = PPP_MRU;
-#if 0 /* UNUSED */
-    auth_reset(pcb);
-#endif /* UNUSED */
+
 }
 
 
@@ -2340,7 +2110,7 @@ static void lcp_down(fsm *f) {
     PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
 
-    lcp_echo_lowerdown(f->pcb);
+    lcp_echo_lowerdown(f->pcb,);
 
     link_down(pcb);
 
@@ -2778,11 +2548,9 @@ static void lcp_echo_lowerup(PppPcb *pcb) {
  * lcp_echo_lowerdown - Stop the timer for the LCP frame
  */
 
-static void lcp_echo_lowerdown(PppPcb *pcb) {
-    fsm *f = &pcb->lcp_fsm;
-
+static void LcpEchoLowerDown(PppPcb *pcb, fsm* f) {
     if (pcb->lcp_echo_timer_running != 0) {
-        UNTIMEOUT (LcpEchoTimeout, f);
+        Untimeout(LcpEchoTimeout, f);
         pcb->lcp_echo_timer_running = 0;
     }
 }

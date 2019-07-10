@@ -193,7 +193,7 @@ bridgeif_fdb_init(uint16_t max_fdb_entries)
   size_t alloc_len_sizet = sizeof(BridgeIfDfDb) + (max_fdb_entries * sizeof(BridgeIfDfDbEntry));
   mem_size_t alloc_len = (mem_size_t)alloc_len_sizet;
   LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-  LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len));
+  Logf(BRIDGEIF_DEBUG, "bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len);
   fdb = (BridgeIfDfDb *)mem_calloc(1, alloc_len);
   if (fdb == nullptr) {
     return nullptr;

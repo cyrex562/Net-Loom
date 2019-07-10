@@ -42,7 +42,7 @@
 #pragma once
 #include "lowpan6_opts.h"
 #include "lowpan6_common.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip.h"
 #include "ip_addr.h"
 #include "netif.h"
@@ -56,17 +56,17 @@ constexpr auto kLowpan6TmrInterval = 1000;
 
 void lowpan6_tmr(void);
 
-err_t lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
-err_t lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
-err_t lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr);
-err_t lowpan6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr);
-err_t lowpan6_input(struct pbuf * p, struct netif *netif);
-err_t lowpan6_if_init(struct netif *netif);
+LwipError lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
+LwipError lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
+LwipError lowpan4_output(struct NetIfc *netif, struct pbuf *q, const Ip4Addr *ipaddr);
+LwipError lowpan6_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr);
+LwipError lowpan6_input(struct pbuf * p, struct NetIfc *netif);
+LwipError lowpan6_if_init(struct NetIfc *netif);
 
 /* pan_id in network byte order. */
 LwipError lowpan6_set_pan_id(uint16_t pan_id);
 uint16_t lowpan6_calc_crc(const void *buf, uint16_t len);
-LwipError tcpip_6lowpan_input(struct PacketBuffer *p, struct netif *inp);
+LwipError tcpip_6lowpan_input(struct PacketBuffer *p, struct NetIfc *inp);
 
 
 #ifdef __cplusplus

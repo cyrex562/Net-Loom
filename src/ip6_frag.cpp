@@ -46,7 +46,7 @@
 #include "nd6.h"
 #include "ip.h"
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "memp.h"
 #include "stats.h"
 
@@ -88,12 +88,12 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct ip6_reass_helper {
-  PACK_STRUCT_FIELD(struct PacketBuffer *next_pbuf);
-  PACK_STRUCT_FIELD(uint16_t start);
-  PACK_STRUCT_FIELD(uint16_t end);
-} PACK_STRUCT_STRUCT;
+  (struct PacketBuffer *next_pbuf);
+  (uint16_t start);
+  (uint16_t end);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"

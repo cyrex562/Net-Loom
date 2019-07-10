@@ -43,7 +43,7 @@
 #include "opt.h"
 #include "ip_addr.h"
 #include "netif.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "ip4.h"
 
 
@@ -74,13 +74,13 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct igmp_msg {
-    PACK_STRUCT_FLD_8(uint8_t         igmp_msgtype);
-    PACK_STRUCT_FLD_8(uint8_t         igmp_maxresp);
-    PACK_STRUCT_FIELD(uint16_t        igmp_checksum);
-    PACK_STRUCT_FLD_S(ip4_addr_p_t igmp_group_address);
-} PACK_STRUCT_STRUCT;
+    (uint8_t         igmp_msgtype);
+    (uint8_t         igmp_maxresp);
+    (uint16_t        igmp_checksum);
+    PACK_STRUCT_FLD_S(Ip4AddrPT igmp_group_address);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -117,7 +117,7 @@ struct igmp_group {
   /** next link */
   struct igmp_group *next;
   /** multicast address */
-  ip4_addr_t         group_address;
+  Ip4Addr         group_address;
   /** signifies we were the last person to report */
   uint8_t               last_reporter_flag;
   /** current state of the group */
@@ -133,12 +133,12 @@ void   igmp_init(void);
 LwipError  igmp_start(struct netif *netif);
 LwipError  igmp_stop(struct netif *netif);
 void   igmp_report_groups(struct netif *netif);
-struct igmp_group *igmp_lookfor_group(struct netif *ifp, const ip4_addr_t *addr);
-void   igmp_input(struct PacketBuffer *p, struct netif *inp, const ip4_addr_t *dest);
-LwipError  igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
-LwipError  igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
-LwipError  igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr);
-LwipError  igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
+struct igmp_group *igmp_lookfor_group(struct netif *ifp, const Ip4Addr *addr);
+void   igmp_input(struct PacketBuffer *p, struct netif *inp, const Ip4Addr *dest);
+LwipError  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
+LwipError  igmp_joingroup_netif(struct netif *netif, const Ip4Addr *groupaddr);
+LwipError  igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
+LwipError  igmp_leavegroup_netif(struct netif *netif, const Ip4Addr *groupaddr);
 void   igmp_tmr(void);
 
 /** @ingroup igmp 

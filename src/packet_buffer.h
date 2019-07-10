@@ -35,11 +35,11 @@
  *
  */
 
-#ifndef LWIP_HDR_PBUF_H
-#define LWIP_HDR_PBUF_H
+#pragma once
 
 #include "opt.h"
-#include "err.h"
+#include "lwip_error.h"
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,11 +76,8 @@ extern "C" {
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
 
 #define PBUF_TRANSPORT_HLEN 20
-#if LWIP_IPV6
 #define PBUF_IP_HLEN        40
-#else
-#define PBUF_IP_HLEN        20
-#endif
+
 
 /**
  * @ingroup pbuf
@@ -319,4 +316,3 @@ uint16_t pbuf_strstr(const struct pbuf* p, const char* substr);
 }
 #endif
 
-#endif /* LWIP_HDR_PBUF_H */

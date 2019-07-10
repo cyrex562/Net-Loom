@@ -269,7 +269,7 @@ inet_cksum_pseudo_base(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len
 
   /* iterate through all PacketBuffer in chain */
   for (q = p; q != nullptr; q = q->next) {
-    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
+    Logf(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
                              (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
     /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
@@ -313,7 +313,7 @@ inet_cksum_pseudo_base(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len
  */
 uint16_t
 inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                   const LwipIpv4Addr *src, const LwipIpv4Addr *dest)
+                   const Ip4Addr *src, const Ip4Addr *dest)
 {
   uint32_t acc;
   uint32_t addr;
@@ -382,10 +382,10 @@ ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
  */
 uint16_t
 ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                 const LwipIpAddr *src, const LwipIpAddr *dest)
+                 const IpAddr *src, const IpAddr *dest)
 {
 #if LWIP_IPV6
-  if (IP_IS_V6(dest)) {
+  if (IpIsV6(dest)) {
     return ip6_chksum_pseudo(p, proto, proto_len, ip_2_ip6(src), ip_2_ip6(dest));
   }
 #endif /* LWIP_IPV6 */
@@ -410,7 +410,7 @@ inet_cksum_pseudo_partial_base(struct PacketBuffer *p, uint8_t proto, uint16_t p
 
   /* iterate through all PacketBuffer in chain */
   for (q = p; (q != nullptr) && (chksum_len > 0); q = q->next) {
-    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
+    Logf(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
                              (void *)q, (void *)q->next));
     chklen = q->len;
     if (chklen > chksum_len) {
@@ -459,7 +459,7 @@ inet_cksum_pseudo_partial_base(struct PacketBuffer *p, uint8_t proto, uint16_t p
  */
 uint16_t
 inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                           uint16_t chksum_len, const LwipIpv4Addr *src, const LwipIpv4Addr *dest)
+                           uint16_t chksum_len, const Ip4Addr *src, const Ip4Addr *dest)
 {
   uint32_t acc;
   uint32_t addr;
@@ -529,10 +529,10 @@ ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_
  */
 uint16_t
 ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                         uint16_t chksum_len, const LwipIpAddr *src, const LwipIpAddr *dest)
+                         uint16_t chksum_len, const IpAddr *src, const IpAddr *dest)
 {
 #if LWIP_IPV6
-  if (IP_IS_V6(dest)) {
+  if (IpIsV6(dest)) {
     return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip6(src), ip_2_ip6(dest));
   }
 #endif /* LWIP_IPV6 */

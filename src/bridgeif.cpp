@@ -26,7 +26,7 @@ struct bridgeif_private_t;
 struct bridgeif_port_t
 {
     struct bridgeif_private_t* bridge;
-    struct netif* port_netif;
+    struct NetIfc* port_netif;
     uint8_t port_num;
 };
 
@@ -39,7 +39,7 @@ struct bridgeif_fdb_static_entry_t
 
 struct bridgeif_private_t
 {
-    struct netif* netif;
+    struct NetIfc* netif;
     struct EthAddr ethaddr;
     uint8_t max_ports;
     uint8_t num_ports;
@@ -62,8 +62,8 @@ uint8_t bridgeif_netif_client_id = 0xff;
  * bit [BRIDGEIF_MAX_PORTS]: cpu port
  * 0: drop
  */
-err_t
-bridgeif_fdb_add(struct netif* bridgeif, const struct EthAddr* addr, bridgeif_portmask_t ports)
+LwipError
+bridgeif_fdb_add(struct NetIfc* bridgeif, const struct EthAddr* addr, bridgeif_portmask_t ports)
 {
     // BRIDGEIF_DECL_PROTECT(lev);
     LWIP_ASSERT("invalid netif", bridgeif != nullptr);
@@ -96,8 +96,8 @@ bridgeif_fdb_add(struct netif* bridgeif, const struct EthAddr* addr, bridgeif_po
  * @ingroup bridgeif
  * Remove a static entry from the forwarding database
  */
-err_t
-bridgeif_fdb_remove(struct netif* bridgeif, const struct EthAddr* addr)
+LwipError
+bridgeif_fdb_remove(struct NetIfc* bridgeif, const struct EthAddr* addr)
 {
     // BRIDGEIF_DECL_PROTECT(lev);
     LWIP_ASSERT("invalid netif", bridgeif != nullptr);
@@ -200,7 +200,7 @@ bridgeif_send_to_port(bridgeif_private_t *br, struct PacketBuffer *p, uint8_t ds
                 {
                     if (netif_is_link_up(portif))
                     {
-                        LWIP_DEBUGF(BRIDGEIF_FW_DEBUG,
+                        Logf(BRIDGEIF_FW_DEBUG,
                                     ("br -> flood(%p:%d) -> %d\n", (void *)p, p->if_idx, netif_get_index(portif)));
                         return portif->linkoutput(portif, p);
                     }
@@ -222,7 +222,7 @@ bridgeif_send_to_ports(bridgeif_private_t* br,
                        struct PacketBuffer* p,
                        bridgeif_portmask_t dstports)
 {
-    err_t ret_err = ERR_OK;
+    LwipError ret_err = ERR_OK;
     bridgeif_portmask_t mask = 1;
     // BRIDGEIF_DECL_PROTECT(lev);
     // BRIDGEIF_READ_PROTECT(lev);
@@ -248,7 +248,7 @@ bridgeif_send_to_ports(bridgeif_private_t* br,
  * from the FDB.
  */
 LwipError
-bridgeif_output(struct netif* netif, struct PacketBuffer* p)
+bridgeif_output(struct NetIfc* netif, struct PacketBuffer* p)
 {
     auto br = static_cast<bridgeif_private_t *>(netif->state);
     auto dst = static_cast<struct EthAddr *>(p->payload);
@@ -278,7 +278,7 @@ bridgeif_output(struct netif* netif, struct PacketBuffer* p)
  * here. This function decides where the frame is forwarded.
  */
 static LwipError
-bridgeif_input(struct PacketBuffer* p, struct netif* netif)
+bridgeif_input(struct PacketBuffer* p, struct NetIfc* netif)
 {
     bridgeif_portmask_t dstports;
     if (p == nullptr || netif == nullptr)
@@ -313,7 +313,7 @@ bridgeif_input(struct PacketBuffer* p, struct netif* netif)
         if (dstports & (1 << BRIDGEIF_MAX_PORTS))
         {
             /* we pass the reference to ->input or have to free it */
-            LWIP_DEBUGF(BRIDGEIF_FW_DEBUG, ("br -> input(%p)\n", (void *)p));
+            Logf(BRIDGEIF_FW_DEBUG, ("br -> input(%p)\n", (void *)p));
             if (br->netif->input(p, br->netif) != ERR_OK)
             {
                 pbuf_free(p);
@@ -333,7 +333,7 @@ bridgeif_input(struct PacketBuffer* p, struct netif* netif)
         if (bridgeif_is_local_mac(br, dst))
         {
             /* yes, send to cpu port only */
-            LWIP_DEBUGF(BRIDGEIF_FW_DEBUG, ("br -> input(%p)\n", (void *)p));
+            Logf(BRIDGEIF_FW_DEBUG, ("br -> input(%p)\n", (void *)p));
             return br->netif->input(p, br->netif);
         }
 
@@ -351,7 +351,7 @@ bridgeif_input(struct PacketBuffer* p, struct netif* netif)
 /** Input function for port netifs used to synchronize into tcpip_thread.
  */
 static LwipError
-bridgeif_tcpip_input(struct PacketBuffer* p, struct netif* netif)
+bridgeif_tcpip_input(struct PacketBuffer* p, struct NetIfc* netif)
 {
     return tcpip_inpkt(p, netif, bridgeif_input);
 }
@@ -370,7 +370,7 @@ bridgeif_tcpip_input(struct PacketBuffer* p, struct netif* netif)
  *         any other LwipError on error
  */
 LwipError
-bridgeif_init(struct netif* netif)
+bridgeif_init(struct NetIfc* netif)
 {
     bridgeif_initdata_t* init_data;
     bridgeif_private_t* br;
@@ -382,7 +382,7 @@ bridgeif_init(struct netif* netif)
 #if !BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT
     if (netif->input == tcpip_input)
     {
-        LWIP_DEBUGF(BRIDGEIF_DEBUG | LWIP_DBG_ON,
+        Logf(BRIDGEIF_DEBUG | LWIP_DBG_ON,
                     ("bridgeif does not need tcpip_input, use netif_input/ethernet_input instead"));
     }
 #endif
@@ -399,10 +399,10 @@ bridgeif_init(struct netif* netif)
   alloc_len_sizet = sizeof(bridgeif_private_t) + (init_data->max_ports * sizeof(bridgeif_port_t) + (init_data->max_fdb_static_entries * sizeof(bridgeif_fdb_static_entry_t)));
   alloc_len = (mem_size_t)alloc_len_sizet;
   LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-  LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
+  Logf(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
   br = (bridgeif_private_t *)mem_calloc(1, alloc_len);
   if (br == NULL) {
-    LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
+    Logf(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
     return ERR_MEM;
   }
   memcpy(&br->ethaddr, &init_data->ethaddr, sizeof(br->ethaddr));
@@ -423,11 +423,11 @@ bridgeif_init(struct netif* netif)
         max_fdb_static_entries * sizeof(bridgeif_fdb_static_entry_t)));
     alloc_len = static_cast<mem_size_t>(alloc_len_sizet);
     LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-    LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
+    Logf(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
     br = static_cast<bridgeif_private_t *>(mem_calloc(1, alloc_len));
     if (br == nullptr)
     {
-        LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
+        Logf(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
         return ERR_MEM;
     }
     memcpy(&br->ethaddr, &init_data->ethaddr, sizeof(br->ethaddr));
@@ -445,7 +445,7 @@ bridgeif_init(struct netif* netif)
     br->fdbd = bridgeif_fdb_init(init_data->max_fdb_dynamic_entries);
     if (br->fdbd == nullptr)
     {
-        LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory in fdb_init\n"));
+        Logf(NETIF_DEBUG, ("bridgeif_init: out of memory in fdb_init\n"));
         mem_free(br);
         return ERR_MEM;
     }
@@ -500,7 +500,7 @@ bridgeif_init(struct netif* netif)
  * Add a port to the bridge
  */
 LwipError
-bridgeif_add_port(struct netif* bridgeif, struct netif* portif)
+bridgeif_add_port(struct NetIfc* bridgeif, struct NetIfc* portif)
 {
     LWIP_ASSERT("bridgeif != NULL", bridgeif != nullptr);
     LWIP_ASSERT("bridgeif->state != NULL", bridgeif->state != nullptr);

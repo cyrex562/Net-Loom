@@ -37,8 +37,8 @@
 #include <cstring>
 
 #include "arch.h"
-#include "err.h"
-#include "PacketBuffer.h"
+#include "lwip_error.h"
+#include "packet_buffer.h"
 #include "sys.h"
 #include "memp.h"
 #include "netif.h"
@@ -172,7 +172,7 @@ ppp_get_fcs(uint8_t byte)
  *
  * Return 0 on success, an error code on failure.
  */
-PppPcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
+PppPcb *pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   pppos_pcb *pppos;
@@ -421,7 +421,7 @@ pppos_destroy(PppPcb *ppp, void *ctx)
  * @param l length of received data
  */
 LwipError
-pppos_input_tcpip(ppp_pcb *ppp, uint8_t *s, int l)
+pppos_input_tcpip(PppPcb *ppp, uint8_t *s, int l)
 {
   struct PacketBuffer *p;
   LwipError err;
@@ -459,10 +459,10 @@ LwipError pppos_input_sys(struct PacketBuffer *p, struct netif *inp) {
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct pppos_input_header {
-  PACK_STRUCT_FIELD(PppPcb *ppp);
-} PACK_STRUCT_STRUCT;
+  (PppPcb *ppp);
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -476,7 +476,7 @@ PACK_STRUCT_END
  * @param l length of received data
  */
 void
-pppos_input(ppp_pcb *ppp, uint8_t *s, int l)
+pppos_input(PppPcb *ppp, uint8_t *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
   struct PacketBuffer *next_pbuf;

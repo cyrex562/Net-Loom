@@ -52,7 +52,7 @@
 #include "memp.h"
 #include "mld6.h"
 #include "nd6.h"
-#include "pbuf.h"
+#include "packet_buffer.h"
 #include "sys.h"
 #include "tcp_priv.h"
 #include "tcpip_priv.h"
@@ -74,7 +74,7 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
        is triggered to start from TCP using tcp_timer_needed() */
     {TCP_TMR_INTERVAL, HANDLER(tcp_tmr)},
     {IP_TMR_INTERVAL, HANDLER(ip_reass_tmr)},
-    {ARP_TMR_INTERVAL, HANDLER(etharp_tmr)},
+    {kArpTmrInterval, HANDLER(etharp_tmr)},
     {DHCP_COARSE_TIMER_MSECS, HANDLER(dhcp_coarse_tmr)},
     {DHCP_FINE_TIMER_MSECS, HANDLER(dhcp_fine_tmr)},
     {AUTOIP_TMR_INTERVAL, HANDLER(autoip_tmr)},

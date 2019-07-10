@@ -41,7 +41,7 @@
 
 
 #pragma once
-#include "pbuf.h"
+#include "packet_buffer.h"
 #include "ip6.h"
 #include "ip6_addr.h"
 
@@ -51,7 +51,7 @@ extern "C" {
 #endif
 
 
-err_t ethip6_output(struct netif *netif, struct pbuf *q, const Ip6Addr*ip6addr);
+LwipError ethip6_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr);
 
 #ifdef __cplusplus
 }

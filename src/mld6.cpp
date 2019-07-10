@@ -62,7 +62,7 @@
 #include "ip6_addr.h"
 #include "ip.h"
 #include "inet_chksum.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 #include "memp.h"
 #include "stats.h"

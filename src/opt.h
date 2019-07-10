@@ -892,7 +892,7 @@
 /**
  * LWIP_DHCP_GETS_NTP==1: Request NTP servers with discover/select. For each
  * response packet, an callback is called, which has to be provided by the port:
- * void dhcp_set_ntp_servers(uint8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+ * void dhcp_set_ntp_servers(uint8_t num_ntp_servers, IpAddr* ntp_server_addrs);
 */
 #if !defined LWIP_DHCP_GET_NTP_SRV || defined __DOXYGEN__
 #define LWIP_DHCP_GET_NTP_SRV           0
@@ -1059,7 +1059,7 @@
 
 /** The maximum of DNS servers
  * The first server can be initialized automatically by defining
- * DNS_SERVER_ADDRESS(ipaddr), where 'ipaddr' is an 'ip_addr_t*'
+ * DNS_SERVER_ADDRESS(ipaddr), where 'ipaddr' is an 'IpAddr*'
  */
 #if !defined DNS_MAX_SERVERS || defined __DOXYGEN__
 #define DNS_MAX_SERVERS                 2
@@ -1093,7 +1093,7 @@
  *                                    DNS_LOCAL_HOSTLIST_ELEM("host_ip6", IPADDR6_INIT_HOST(123, 234, 345, 456)}
  *
  *  Instead, you can also use an external function:
- *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern LwipError my_lookup_function(const char *name, ip_addr_t *addr, uint8_t dns_addrtype)
+ *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern LwipError my_lookup_function(const char *name, IpAddr *addr, uint8_t dns_addrtype)
  *  that looks up the IP address and returns ERR_OK if found (LWIP_DNS_ADDRTYPE_xxx is passed in dns_addrtype).
  */
 #if !defined DNS_LOCAL_HOSTLIST || defined __DOXYGEN__
@@ -2290,7 +2290,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 /**
  * LWIP_IPV6==1: Enable IPv6
  */
-#define LWIP_IPV6
+// #define LWIP_IPV6
 
 /**
  * IPV6_REASS_MAXAGE: Maximum time (in multiples of IP6_REASS_TMR_INTERVAL - so seconds, normally)
@@ -2613,7 +2613,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 /**
  * LWIP_DHCP6_GETS_NTP==1: Request NTP servers via DHCPv6. For each
  * response packet, a callback is called, which has to be provided by the port:
- * void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+ * void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, IpAddr* ntp_server_addrs);
 */
 #if !defined LWIP_DHCP6_GET_NTP_SRV || defined __DOXYGEN__
 #define LWIP_DHCP6_GET_NTP_SRV          0
@@ -2670,9 +2670,9 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * Called from tcp_connect() and tcp_listen_input() when an ISN is needed for
  * a new TCP connection, if TCP support (@ref LWIP_TCP) is enabled.\n
  * Signature:\code{.c}
- * uint32_t my_hook_tcp_isn(const ip_addr_t* local_ip, uint16_t local_port, const ip_addr_t* remote_ip, uint16_t remote_port);
+ * uint32_t my_hook_tcp_isn(const IpAddr* local_ip, uint16_t local_port, const IpAddr* remote_ip, uint16_t remote_port);
  * \endcode
- * - it may be necessary to use "struct ip_addr" (ip4_addr, ip6_addr) instead of "ip_addr_t" in function declarations\n
+ * - it may be necessary to use "struct ip_addr" (ip4_addr, ip6_addr) instead of "IpAddr" in function declarations\n
  * Arguments:
  * - local_ip: pointer to the local IP address of the connection
  * - local_port: local port number of the connection (host-byte order)
@@ -2690,7 +2690,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
  * Signature:\code{.c}
- * err_t my_hook_tcp_inpkt(struct TcpProtoCtrlBlk *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
+ * LwipError my_hook_tcp_inpkt(struct TcpProtoCtrlBlk *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
  * \endcode
  * Arguments:
  * - pcb: TcpProtoCtrlBlk selected for input of this packet (ATTENTION: this may be
@@ -2784,7 +2784,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP4_ROUTE(dest):
  * Called from ip_route() (IPv4)
  * Signature:\code{.c}
- *   struct netif *my_hook(const ip4_addr_t *dest);
+ *   struct netif *my_hook(const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - dest: destination IPv4 address
@@ -2800,7 +2800,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
  * Source-based routing for IPv4 - called from ip_route() (IPv4)
  * Signature:\code{.c}
- *   struct netif *my_hook(const ip4_addr_t *src, const ip4_addr_t *dest);
+ *   struct netif *my_hook(const Ip4Addr *src, const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - src: local/source IPv4 address
@@ -2838,7 +2838,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
  * Called from etharp_output() (IPv4)
  * Signature:\code{.c}
- *   const ip4_addr_t *my_hook(struct netif *netif, const ip4_addr_t *dest);
+ *   const Ip4Addr *my_hook(struct netif *netif, const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - netif: the netif used for sending
@@ -3122,7 +3122,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * Called from NetconnDesc APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
  * Signature:\code{.c}
- *   int my_hook(const char *name, ip_addr_t *addr, uint8_t addrtype, LwipError *err)
+ *   int my_hook(const char *name, IpAddr *addr, uint8_t addrtype, LwipError *err)
  * \endcode
  * Arguments:
  * - name: hostname to resolve

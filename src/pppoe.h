@@ -79,16 +79,16 @@ extern "C" {
 #endif
 
 struct pppoehdr {
-  PACK_STRUCT_FLD_8(uint8_t vertype);
-  PACK_STRUCT_FLD_8(uint8_t code);
-  PACK_STRUCT_FIELD(uint16_t session);
-  PACK_STRUCT_FIELD(uint16_t plen);
-} PACK_STRUCT_STRUCT;
+  (uint8_t vertype);
+  (uint8_t code);
+  (uint16_t session);
+  (uint16_t plen);
+} ;
 
 struct pppoetag {
-  PACK_STRUCT_FIELD(uint16_t tag);
-  PACK_STRUCT_FIELD(uint16_t len);
-} PACK_STRUCT_STRUCT;
+  (uint16_t tag);
+  (uint16_t len);
+} ;
 
 constexpr auto PPPOE_STATE_INITIAL = 0;
 constexpr auto PPPOE_STATE_PADI_SENT = 1;
@@ -117,7 +117,7 @@ constexpr auto PPPOE_MAX_AC_COOKIE_LEN = 64;
 
 struct pppoe_softc {
   struct pppoe_softc *next;
-  struct netif *sc_ethif;      /* ethernet interface we are using */
+  struct NetIfc *sc_ethif;      /* ethernet interface we are using */
   PppPcb *pcb;                /* PPP PCB */
   struct EthAddr sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
@@ -140,8 +140,8 @@ struct pppoe_softc {
 
 #define pppoe_init() /* compatibility define, no initialization needed */
 
-PppPcb *pppoe_create(struct netif *pppif,
-       struct netif *ethif,
+PppPcb *pppoe_create(struct NetIfc *pppif,
+       struct NetIfc *ethif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
@@ -149,8 +149,8 @@ PppPcb *pppoe_create(struct netif *pppif,
  * Functions called from lwIP
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
-void pppoe_disc_input(struct netif *netif, struct PacketBuffer *p);
-void pppoe_data_input(struct netif *netif, struct PacketBuffer *p);
+void pppoe_disc_input(struct NetIfc *netif, struct PacketBuffer *p);
+void pppoe_data_input(struct NetIfc *netif, struct PacketBuffer *p);
 
 #ifdef __cplusplus
 }

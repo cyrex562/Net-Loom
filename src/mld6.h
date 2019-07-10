@@ -51,16 +51,16 @@
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN
+
 struct mld_header {
-    PACK_STRUCT_FLD_8(uint8_t type);
-    PACK_STRUCT_FLD_8(uint8_t code);
-    PACK_STRUCT_FIELD(uint16_t chksum);
-    PACK_STRUCT_FIELD(uint16_t max_resp_delay);
-    PACK_STRUCT_FIELD(uint16_t reserved);
+    (uint8_t type);
+    (uint8_t code);
+    (uint16_t chksum);
+    (uint16_t max_resp_delay);
+    (uint16_t reserved);
     PACK_STRUCT_FLD_S(ip6_addr_p_t multicast_address);
     /* Options follow. */
-} PACK_STRUCT_STRUCT;
+} ;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "epstruct.h"
@@ -68,7 +68,7 @@ PACK_STRUCT_END
 
 #if LWIP_IPV6_MLD && LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 
 #ifdef __cplusplus

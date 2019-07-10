@@ -1,6 +1,6 @@
 #pragma once
 #include "opt.h"
-#include "PacketBuffer.h"
+#include "packet_buffer.h"
 #include "netif.h"
 #include "ethernet.h"
 #include <cstring>
@@ -61,8 +61,8 @@ inline bool eth_addr_cmp(EthAddr* addr1, EthAddr* addr2)
     return (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0);
 }
 
-err_t ethernet_input(struct pbuf* p, struct netif* netif);
-err_t ethernet_output(struct netif* netif,
+LwipError ethernet_input(struct pbuf* p, struct NetIfc* netif);
+LwipError ethernet_output(struct NetIfc* netif,
                       struct pbuf* p,
                       const struct EthAddr* src,
                       const struct EthAddr* dst,
