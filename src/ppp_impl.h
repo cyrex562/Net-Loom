@@ -293,14 +293,14 @@ inline void Untimeout(sys_timeout_handler time_fn, void* arg) {
     PUTSHORT(t, p); }
 
 /* Procedures exported from auth.c */
-void link_required(PppPcb *pcb);     /* we are starting to use the link */
-void link_terminated(PppPcb *pcb);   /* we are finished with the link */
-void link_down(PppPcb *pcb, Protent** protocols);	      /* the LCP layer has left the Opened state */
-void upper_layers_down(PppPcb *pcb, Protent** protocols); /* take all NCPs down */
-void link_established(PppPcb *pcb, bool auth_required);  /* the link is up; authenticate now */
-void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
-                    unknown>) noexcept;    /* start all the network control protos */
-bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
+// bool link_required(PppPcb* pcb);     /* we are starting to use the link */
+// void link_terminated(PppPcb *pcb);   /* we are finished with the link */
+// void link_down(PppPcb *pcb, Protent** protocols);	      /* the LCP layer has left the Opened state */
+// void upper_layers_down(PppPcb *pcb, Protent** protocols); /* take all NCPs down */
+// void link_established(PppPcb *pcb, bool auth_required);  /* the link is up; authenticate now */
+// void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
+//                     unknown>) noexcept;    /* start all the network control protos */
+// bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
 #if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen);

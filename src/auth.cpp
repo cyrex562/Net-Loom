@@ -1,30 +1,35 @@
 
 #include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "lcp.h"
-#include "ccp.h"
-#include "ecp.h"
-#include "upap.h"
-#include "chap_new.h"
-#include "eap.h"
 #include "auth.h"
+
+#include "ccp.h"
+
+#include "chap_new.h"
+
+#include "eap.h"
+
+#include "ecp.h"
+
+#include "lcp.h"
+
+#include "ppp_impl.h"
+
+#include "upap.h"
+
 
 #include <string>
 
 /* Hook for plugin to hear when an interface joins a multilink bundle */
 void (*multilink_join_hook)() = nullptr;
 
-static bool enter_network_phase(PppPcb* pcb);
-static void check_idle(void* arg);
-static void connect_time_expired(void* arg);
-// static void check_maxoctets(void*);
+
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
  */
-void link_required(PppPcb* pcb)
+bool link_required(PppPcb* pcb)
 {
-    
+    return false;
 }
 
 /*
@@ -44,7 +49,10 @@ void link_terminated(PppPcb* pcb)
         ppp_notice("Connection terminated.");
     }
     else
+    {
         ppp_notice("Link terminated.");
+    }
+        
 
     lcp_lowerdown(pcb);
 
@@ -59,7 +67,7 @@ void link_down(PppPcb* pcb, Protent** protocols)
     // notify(link_down_notifier, 0);
     if (!doing_multilink)
     {
-        upper_layers_down(pcb, protocols);
+        upper_layers_down(pcb);
         if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
         {
             new_phase(pcb, PPP_PHASE_ESTABLISH);
@@ -69,33 +77,34 @@ void link_down(PppPcb* pcb, Protent** protocols)
        network-layer traffic on the link */
 }
 
-void upper_layers_down(PppPcb* pcb, Protent** protocols)
+bool upper_layers_down(PppPcb* pcb)
 {
-    const struct Protent* protp;
+    // TODO: figure out which lower layer protocols to call/signal for lowerdown()/close()
+    return false;
 
-    for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
-    {
-        if (protp->protocol != PPP_LCP && protp->lowerdown != nullptr)
-            (*protp->lowerdown)(pcb);
-        if (protp->protocol < 0xC000 && protp->close != nullptr)
-            (*protp->close)(pcb, "LCP down");
-    }
-    pcb->num_np_open = 0;
-    pcb->num_np_up = 0;
+    // for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
+    // {
+    //     if (protp->protocol != PPP_LCP && protp->lowerdown != nullptr)
+    //         (*protp->lowerdown)(pcb);
+    //     if (protp->protocol < 0xC000 && protp->close != nullptr)
+    //         (*protp->close)(pcb, "LCP down");
+    // }
+    // pcb->num_np_open = 0;
+    // pcb->num_np_up = 0;
 }
 
 /*
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-void link_established(PppPcb* pcb, bool auth_required)
+bool link_established(PppPcb* pcb, bool auth_required)
 {
     auto wo = &pcb->lcp_wantoptions;
     auto go = &pcb->lcp_gotoptions;
     auto ho = &pcb->lcp_hisoptions;
-    const struct Protent* protp; /*
-     * Tell higher-level protocols that LCP is up.
-     */ // TODO: send notification that LCP is up
+    // const struct Protent* protp; /*
+    // TODO: send notification that LCP is up
+
     // if (!doing_multilink)
     // {
     //     for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
@@ -122,7 +131,7 @@ void link_established(PppPcb* pcb, bool auth_required)
             ppp_warn("peer refused to authenticate: terminating link");
             pcb->err_code = PPPERR_AUTHFAIL;
             lcp_close(pcb, "peer refused to authenticate");
-            return;
+            return false;
         }
     }
     new_phase(pcb, PPP_PHASE_AUTHENTICATE);
@@ -167,6 +176,8 @@ void link_established(PppPcb* pcb, bool auth_required)
     pcb->auth_done = 0;
     if (!auth)
         enter_network_phase(pcb);
+
+    return true;
 }
 
 //
@@ -180,7 +191,7 @@ bool enter_network_phase(PppPcb* pcb)
 //
 // Start networks?
 //
-bool start_networks(PppPcb* pcb, const bool multilink = true)
+bool start_networks(PppPcb* pcb, const bool multilink)
 {
     new_phase(pcb, PPP_PHASE_NETWORK);
     if (multilink)
@@ -562,3 +573,6 @@ int get_secret(PppPcb* pcb, const char* client, const char* server, char* secret
     return 1;
 }
 
+//
+// END OF FILE
+//
