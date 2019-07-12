@@ -2,6 +2,7 @@
 
 #include "def.h"
 #include <cstring>
+#include <process.h>
 
 
 /**
@@ -16,6 +17,13 @@ uint16_t lwip_ntohs(const uint16_t n) { return PpNtohs(n); }
 
 
 uint32_t lwip_ntohl(const uint32_t n) { return PpNtohl(n); }
+
+int lwip_getpid()
+{
+    #if defined _MSC_VER 
+        return _getpid();
+    #endif
+}
 
 
 /**

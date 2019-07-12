@@ -34,10 +34,6 @@
 #include "fsm.h"
 #include <servprov.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
     struct PppPcb;
 
 /*
@@ -143,7 +139,10 @@ struct CcpRackTimeoutArgs
     PppPcb* pcb;
 };
 
-#ifdef __cplusplus
-}
-#endif
+
+/*
+ * ccp_open - CCP is allowed to come up.
+ */
+bool ccp_open(PppPcb* pcb);
+
 

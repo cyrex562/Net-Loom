@@ -64,7 +64,7 @@ struct ip_reassdata {
 
 void ip_reass_init(void);
 void ip_reass_tmr(void);
-struct pbuf * ip4_reass(struct pbuf *p);
+struct PacketBuffer * ip4_reass(struct PacketBuffer *p);
 
 #ifndef LWIP_PBUF_CUSTOM_REF_DEFINED
 #define LWIP_PBUF_CUSTOM_REF_DEFINED
@@ -81,7 +81,7 @@ struct PbufCustomRef {
 };
 
 
-LwipError ip4_frag(struct pbuf *p, struct NetIfc *netif, const Ip4Addr *dest);
+LwipError ip4_frag(struct PacketBuffer *p, struct NetIfc *netif, const Ip4Addr *dest);
 
 
 #ifdef __cplusplus

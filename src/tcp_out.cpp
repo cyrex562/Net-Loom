@@ -169,7 +169,7 @@ tcp_route(const struct TcpProtoCtrlBlk *pcb, const IpAddr *src, const IpAddr *ds
  * p is freed on failure.
  */
 static struct tcp_seg *
-tcp_create_segment(const struct TcpProtoCtrlBlk *pcb, struct pbuf *p, uint8_t hdrflags, uint32_t seqno, uint8_t optflags)
+tcp_create_segment(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, uint8_t hdrflags, uint32_t seqno, uint8_t optflags)
 {
   struct tcp_seg *seg;
   uint8_t optlen;
@@ -236,7 +236,7 @@ tcp_create_segment(const struct TcpProtoCtrlBlk *pcb, struct pbuf *p, uint8_t hd
  * @param first_seg true when this PacketBuffer will be used in the first enqueued segment.
  */
 #if TCP_OVERSIZE
-static struct pbuf *
+static struct PacketBuffer *
 tcp_pbuf_prealloc(PbufLayer layer, uint16_t length, uint16_t max_length,
                   uint16_t *oversize, const struct TcpProtoCtrlBlk *pcb, uint8_t apiflags,
                   uint8_t first_seg)
@@ -1835,7 +1835,7 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
                         uint16_t src_port, uint16_t dst_port, uint8_t flags, uint16_t wnd)
 {
   struct TcpHdr *tcphdr;
-  struct pbuf *p;
+  struct PacketBuffer *p;
 
   p = pbuf_alloc(PBUF_IP, kTcpHdrLen + optlen + datalen, PBUF_RAM);
   if (p != nullptr) {
@@ -1864,7 +1864,7 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
  * @param seqno_be seqno in network byte order (big-endian)
  * @return PacketBuffer with p->payload being the tcp_hdr
  */
-static struct pbuf *
+static struct PacketBuffer *
 tcp_output_alloc_header(struct TcpProtoCtrlBlk *pcb, uint16_t optlen, uint16_t datalen,
                         uint32_t seqno_be /* already in network byte order */)
 {
@@ -1884,7 +1884,7 @@ tcp_output_alloc_header(struct TcpProtoCtrlBlk *pcb, uint16_t optlen, uint16_t d
 
 /* Fill in options for control segments */
 static void
-tcp_output_fill_options(const struct TcpProtoCtrlBlk *pcb, struct pbuf *p, uint8_t optflags, uint8_t num_sacks)
+tcp_output_fill_options(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, uint8_t optflags, uint8_t num_sacks)
 {
   struct TcpHdr *tcphdr;
   uint32_t *opts;
@@ -1933,7 +1933,7 @@ tcp_output_fill_options(const struct TcpProtoCtrlBlk *pcb, struct pbuf *p, uint8
  * header checksum and calling ip_output_if while handling netif hints and stats.
  */
 static LwipError
-tcp_output_control_segment(const struct TcpProtoCtrlBlk *pcb, struct pbuf *p,
+tcp_output_control_segment(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p,
                            const IpAddr *src, const IpAddr *dst)
 {
   LwipError err;
@@ -2131,7 +2131,7 @@ LwipError
 tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb)
 {
   LwipError err;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct TcpHdr *tcphdr;
   struct tcp_seg *seg;
   uint16_t len;

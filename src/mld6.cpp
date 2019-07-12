@@ -81,7 +81,7 @@
 #define MLD6_GROUP_IDLE_MEMBER            2
 
 /* Forward declarations. */
-static struct mld_group *mld6_new_group(struct netif *ifp, const LwipIp6Addr *addr);
+static struct mld_group *mld6_new_group(struct netif *ifp, const Ip6Addr *addr);
 static LwipError mld6_remove_group(struct netif *netif, struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, uint16_t maxresp);
 static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type);
@@ -141,7 +141,7 @@ mld6_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct mld_group *
-mld6_lookfor_group(struct netif *ifp, const LwipIp6Addr *addr)
+mld6_lookfor_group(struct netif *ifp, const Ip6Addr *addr)
 {
   struct mld_group *group = netif_mld6_data(ifp);
 
@@ -165,7 +165,7 @@ mld6_lookfor_group(struct netif *ifp, const LwipIp6Addr *addr)
  *         NULL on memory error.
  */
 static struct mld_group *
-mld6_new_group(struct netif *ifp, const LwipIp6Addr *addr)
+mld6_new_group(struct netif *ifp, const Ip6Addr *addr)
 {
   struct mld_group *group;
 
@@ -312,7 +312,7 @@ mld6_input(struct PacketBuffer *p, struct netif *inp)
  * @return ERR_OK if group was joined on the netif(s), an LwipError otherwise
  */
 LwipError
-mld6_joingroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
+mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
 {
   LwipError         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
@@ -344,11 +344,11 @@ mld6_joingroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
  * @return ERR_OK if group was joined on the netif, an LwipError otherwise
  */
 LwipError
-mld6_joingroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr)
+mld6_joingroup_netif(struct netif *netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
-  LwipIp6Addr ip6addr;
+  Ip6Addr ip6addr;
 
   /* If the address has a particular scope but no zone set, use the netif to
    * set one now. Within the mld6 module, all addresses are properly zoned. */
@@ -401,7 +401,7 @@ mld6_joingroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr)
  * @return ERR_OK if group was left on the netif(s), an LwipError otherwise
  */
 LwipError
-mld6_leavegroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
+mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
 {
   LwipError         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
@@ -434,11 +434,11 @@ mld6_leavegroup(const LwipIp6Addr *srcaddr, const LwipIp6Addr *groupaddr)
  * @return ERR_OK if group was left on the netif, an LwipError otherwise
  */
 LwipError
-mld6_leavegroup_netif(struct netif *netif, const LwipIp6Addr *groupaddr)
+mld6_leavegroup_netif(struct netif *netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
-  LwipIp6Addr ip6addr;
+  Ip6Addr ip6addr;
 
   if (ip6_addr_lacks_zone(groupaddr, IP6_MULTICAST)) {
     ip6_addr_set(&ip6addr, groupaddr);
@@ -564,7 +564,7 @@ mld6_send(struct netif *netif, struct mld_group *group, uint8_t type)
 {
   struct mld_header *mld_hdr;
   struct PacketBuffer *p;
-  const LwipIp6Addr *src_addr;
+  const Ip6Addr *src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + MLD6_HBH_HLEN, PBUF_RAM);

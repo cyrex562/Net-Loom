@@ -182,7 +182,7 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6
  * @returns ERR_OK if successful
  */
 static LwipError
-lowpan6_parse_iee802154_header(struct pbuf *p, struct Lowpan6LinkAddr *src,
+lowpan6_parse_iee802154_header(struct PacketBuffer *p, struct Lowpan6LinkAddr *src,
                                struct Lowpan6LinkAddr *dest)
 {
   uint8_t *puc;
@@ -339,7 +339,7 @@ lowpan6_tmr(void)
  * If configured, will compress IPv6 and or UDP headers.
  * */
 static LwipError
-lowpan6_frag(struct NetIfc *netif, struct pbuf *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
+lowpan6_frag(struct NetIfc *netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
 {
   struct PacketBuffer *p_frag;
   uint16_t frag_len, remaining_len, max_data_len;
@@ -568,19 +568,19 @@ lowpan6_hwaddr_to_addr(struct NetIfc *netif, struct Lowpan6LinkAddr *addr)
  * @return LwipError
  */
 LwipError
-lowpan6_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr)
+lowpan6_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   LwipError result;
   const uint8_t *hwaddr;
   struct Lowpan6LinkAddr src, dest;
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   Ip6Addr ip6_src;
-  struct ip6_hdr *ip6_hdr;
+  struct Ip6Hdr *ip6_hdr;
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   /* Check if we can compress source address (use aligned copy) */
-  ip6_hdr = (struct ip6_hdr *)q->payload;
+  ip6_hdr = (struct Ip6Hdr *)q->payload;
   ip6_addr_copy_from_packed(ip6_src, ip6_hdr->src);
   ip6_addr_assign_zone(&ip6_src, IP6_UNICAST, netif);
   if (lowpan6_get_address_mode(&ip6_src, &short_mac_addr) == 3) {

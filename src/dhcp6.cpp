@@ -365,7 +365,7 @@ dhcp6_disable(struct NetIfc *netif)
  * @param options_out_len option length on exit
  * @return a PacketBuffer for the message
  */
-static struct pbuf* dhcp6_create_msg(struct NetIfc* netif,
+static struct PacketBuffer* dhcp6_create_msg(struct NetIfc* netif,
                                      struct dhcp6* dhcp6,
                                      uint8_t message_type,
                                      uint16_t opt_len_alloc,
@@ -379,7 +379,7 @@ static struct pbuf* dhcp6_create_msg(struct NetIfc* netif,
     {
         return nullptr;
     }
-    struct pbuf* p_out = pbuf_alloc(PBUF_TRANSPORT,
+    struct PacketBuffer* p_out = pbuf_alloc(PBUF_TRANSPORT,
                                     sizeof(struct dhcp6_msg) + opt_len_alloc,
                                     PBUF_RAM);
     if (p_out == nullptr)
@@ -518,7 +518,7 @@ dhcp6_handle_config_reply(struct netif *netif, struct PacketBuffer *p_msg_in)
 #if LWIP_DHCP6_PROVIDE_DNS_SERVERS
   if (dhcp6_option_given(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER)) {
     IpAddr dns_addr;
-    LwipIp6Addr *dns_addr6;
+    Ip6Addr *dns_addr6;
     uint16_t op_start = dhcp6_get_option_start(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER);
     uint16_t op_len = dhcp6_get_option_length(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER);
     uint16_t idx;
@@ -552,7 +552,7 @@ dhcp6_handle_config_reply(struct netif *netif, struct PacketBuffer *p_msg_in)
     for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_MAX_NTP_SERVERS);
          n++, idx += sizeof(struct ip6_addr_packed)) {
       uint16_t copied;
-      LwipIp6Addr *ntp_addr6 = ip_2_ip6(&ntp_server_addrs[n]);
+      Ip6Addr *ntp_addr6 = ip_2_ip6(&ntp_server_addrs[n]);
       ip_addr_set_zero_ip6(&ntp_server_addrs[n]);
       copied = pbuf_copy_partial(p_msg_in, ntp_addr6, sizeof(struct ip6_addr_packed), idx);
       if (copied != sizeof(struct ip6_addr_packed)) {

@@ -76,7 +76,7 @@
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
 LwipError
-ethip6_output(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr)
+ethip6_output(struct netif *netif, struct PacketBuffer *q, const Ip6Addr *ip6addr)
 {
   struct EthAddr dest;
   const uint8_t *hwaddr;

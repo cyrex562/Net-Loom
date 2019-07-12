@@ -86,8 +86,8 @@ void etharp_tmr(void);
 ssize_t etharp_find_addr(struct NetIfc* netif, const Ip4Addr* ipaddr,
     struct EthAddr** eth_ret, const Ip4Addr** ip_ret);
 int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetIfc** netif, struct EthAddr** eth_ret);
-LwipError etharp_output(struct NetIfc* netif, struct pbuf* q, const Ip4Addr* ipaddr);
-LwipError etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct pbuf* q);
+LwipError etharp_output(struct NetIfc* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr);
+LwipError etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q);
 LwipError etharp_request(struct NetIfc* netif, const Ip4Addr* ipaddr);
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
  *  this is an ARP packet sent by a node in order to spontaneously cause other

@@ -171,7 +171,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     else {
       /* Reconstruct the zoned source and destination addresses, so that we do
        * not end up sending the ICMP response over the wrong link. */
-      LwipIp6Addr src_addr, dest_addr;
+      Ip6Addr src_addr, dest_addr;
       ip6_addr_copy_from_packed(src_addr, IPV6_FRAG_SRC(ipr));
       ip6_addr_set_zone(&src_addr, ipr->src_zone);
       ip6_addr_copy_from_packed(dest_addr, IPV6_FRAG_DEST(ipr));
@@ -717,7 +717,7 @@ ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
  * @return ERR_OK if sent successfully, LwipError otherwise
  */
 LwipError
-ip6_frag(struct PacketBuffer *p, struct netif *netif, const LwipIp6Addr *dest)
+ip6_frag(struct PacketBuffer *p, struct netif *netif, const Ip6Addr *dest)
 {
   struct ip6_hdr *original_ip6hdr;
   struct ip6_hdr *ip6hdr;

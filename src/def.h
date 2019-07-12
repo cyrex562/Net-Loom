@@ -86,6 +86,8 @@ constexpr auto kNetifMaxHwaddrLen = 6;
 
 typedef uintptr_t HCRYPTPROV;
 
+int lwip_getpid();
+
 #ifdef __cplusplus
 }
 #endif

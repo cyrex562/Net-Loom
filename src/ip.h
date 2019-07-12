@@ -83,7 +83,7 @@ struct ip_globals
   const struct Ip4Hdr *current_ip4_header;
 
   /** Header of the input IPv6 packet currently being processed. */
-  struct ip6_hdr *current_ip6_header;
+  struct Ip6Hdr *current_ip6_header;
 
   /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP header starts) */
   uint16_t current_ip_header_tot_len;

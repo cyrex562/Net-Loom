@@ -36,12 +36,13 @@
  *
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  */
-
-#ifndef LWIP_HDR_IP6_DHCP6_H
-#define LWIP_HDR_IP6_DHCP6_H
+#pragma once
 
 #include "opt.h"
+#include "lwip_error.h"
+#include "netif.h"
 #include <cstdint>
+
 #define DHCP6_CLIENT_PORT  546
 #define DHCP6_SERVER_PORT  547
 
@@ -123,11 +124,6 @@ typedef enum {
 
 
 
-#if LWIP_IPV6_DHCP6  /* don't build if not configured for use in lwipopts.h */
-
-#include "lwip_error.h"
-#include "netif.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -167,19 +163,20 @@ void dhcp6_tmr(void);
 
 void dhcp6_nd6_ra_trigger(struct netif *netif, uint8_t managed_addr_config, uint8_t other_config);
 
-#if LWIP_DHCP6_GET_NTP_SRV
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP6_MAX_NTP_SERVERS */
 extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_server_addrs);
-#endif /* LWIP_DHCP6_GET_NTP_SRV */
 
-#define netif_dhcp6_data(netif) ((struct dhcp6*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6))
+
+inline dhcp6* netif_dhcp6_data(NetIfc* netif)
+{
+    return static_cast<struct dhcp6 *>(NETIF_GET_CLIENT_DATA(
+        netif,
+        LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
+}
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_IPV6_DHCP6 */
-
-#endif /* LWIP_HDR_IP6_DHCP6_H */

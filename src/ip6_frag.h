@@ -132,7 +132,7 @@ struct pbuf_custom_ref {
 };
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 
-LwipError ip6_frag(struct PacketBuffer *p, struct netif *netif, const LwipIp6Addr *dest);
+LwipError ip6_frag(struct PacketBuffer *p, struct netif *netif, const Ip6Addr *dest);
 
 #endif /* LWIP_IPV6 && LWIP_IPV6_FRAG */
 

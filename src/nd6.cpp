@@ -88,7 +88,7 @@ static uint8_t nd6_cached_neighbor_index;
 static netif_addr_idx_t nd6_cached_destination_index;
 
 /* Multicast address holder. */
-static LwipIp6Addr multicast_address;
+static Ip6Addr multicast_address;
 
 static uint8_t nd6_tmr_rs_reduction;
 
@@ -104,25 +104,25 @@ union ra_options {
 static union ra_options nd6_ra_buffer;
 
 /* Forward declarations. */
-static int8_t nd6_find_neighbor_cache_entry(const LwipIp6Addr *ip6addr);
+static int8_t nd6_find_neighbor_cache_entry(const Ip6Addr *ip6addr);
 static int8_t nd6_new_neighbor_cache_entry(void);
 static void nd6_free_neighbor_cache_entry(int8_t i);
-static int16_t nd6_find_destination_cache_entry(const LwipIp6Addr *ip6addr);
+static int16_t nd6_find_destination_cache_entry(const Ip6Addr *ip6addr);
 static int16_t nd6_new_destination_cache_entry(void);
-static int nd6_is_prefix_in_netif(const LwipIp6Addr *ip6addr, struct netif *netif);
-static int8_t nd6_select_router(const LwipIp6Addr *ip6addr, struct netif *netif);
-static int8_t nd6_get_router(const LwipIp6Addr *router_addr, struct netif *netif);
-static int8_t nd6_new_router(const LwipIp6Addr *router_addr, struct netif *netif);
-static int8_t nd6_get_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif);
-static int8_t nd6_new_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif);
-static int8_t nd6_get_next_hop_entry(const LwipIp6Addr *ip6addr, struct netif *netif);
+static int nd6_is_prefix_in_netif(const Ip6Addr *ip6addr, struct netif *netif);
+static int8_t nd6_select_router(const Ip6Addr *ip6addr, struct netif *netif);
+static int8_t nd6_get_router(const Ip6Addr *router_addr, struct netif *netif);
+static int8_t nd6_new_router(const Ip6Addr *router_addr, struct netif *netif);
+static int8_t nd6_get_onlink_prefix(const Ip6Addr *prefix, struct netif *netif);
+static int8_t nd6_new_onlink_prefix(const Ip6Addr *prefix, struct netif *netif);
+static int8_t nd6_get_next_hop_entry(const Ip6Addr *ip6addr, struct netif *netif);
 static LwipError nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer *q);
 
 #define ND6_SEND_FLAG_MULTICAST_DEST 0x01
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
 #define ND6_SEND_FLAG_ANY_SRC 0x04
-static void nd6_send_ns(struct netif *netif, const LwipIp6Addr *target_addr, uint8_t flags);
-static void nd6_send_na(struct netif *netif, const LwipIp6Addr *target_addr, uint8_t flags);
+static void nd6_send_ns(struct netif *netif, const Ip6Addr *target_addr, uint8_t flags);
+static void nd6_send_na(struct netif *netif, const Ip6Addr *target_addr, uint8_t flags);
 static void nd6_send_neighbor_cache_probe(struct nd6_neighbor_cache_entry *entry, uint8_t flags);
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
 static LwipError nd6_send_rs(struct netif *netif);
@@ -184,9 +184,9 @@ nd6_duplicate_addr_detected(struct netif *netif, int8_t addr_idx)
  */
 static void
 nd6_process_autoconfig_prefix(struct netif *netif,
-  struct prefix_option *prefix_opt, const LwipIp6Addr *prefix_addr)
+  struct prefix_option *prefix_opt, const Ip6Addr *prefix_addr)
 {
-  LwipIp6Addr ip6addr;
+  Ip6Addr ip6addr;
   uint32_t valid_life, pref_life;
   uint8_t addr_state;
   int8_t i, free_idx;
@@ -298,7 +298,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
   {
     struct na_header *na_hdr;
     struct lladdr_option *lladdr_opt;
-    LwipIp6Addr target_address;
+    Ip6Addr target_address;
 
     /* Check that na header fits in packet. */
     if (p->len < (sizeof(struct na_header))) {
@@ -428,7 +428,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
   {
     struct ns_header *ns_hdr;
     struct lladdr_option *lladdr_opt;
-    LwipIp6Addr target_address;
+    Ip6Addr target_address;
     uint8_t accepted;
 
     /* Check that ns header fits in packet. */
@@ -708,7 +708,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
       case ND6_OPTION_TYPE_PREFIX_INFO:
       {
         struct prefix_option *prefix_opt;
-        LwipIp6Addr prefix_addr;
+        Ip6Addr prefix_addr;
         if (option_len < sizeof(struct prefix_option)) {
           goto lenerr_drop_free_return;
         }
@@ -807,7 +807,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
   {
     struct redirect_header *redir_hdr;
     struct lladdr_option *lladdr_opt;
-    LwipIp6Addr destination_address, target_address;
+    Ip6Addr destination_address, target_address;
 
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct redirect_header)) {
@@ -897,7 +897,7 @@ nd6_input(struct PacketBuffer *p, struct netif *inp)
     struct Icmp6Hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
     uint32_t pmtu;
-    LwipIp6Addr destination_address;
+    Ip6Addr destination_address;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct Icmp6Hdr) + IP6_HLEN)) {
@@ -1178,11 +1178,11 @@ nd6_send_neighbor_cache_probe(struct nd6_neighbor_cache_entry *entry, uint8_t fl
  * @param flags one of ND6_SEND_FLAG_*
  */
 static void
-nd6_send_ns(struct netif *netif, const LwipIp6Addr *target_addr, uint8_t flags)
+nd6_send_ns(struct netif *netif, const Ip6Addr *target_addr, uint8_t flags)
 {
   struct ns_header *ns_hdr;
   struct PacketBuffer *p;
-  const LwipIp6Addr *src_addr;
+  const Ip6Addr *src_addr;
   uint16_t lladdr_opt_len;
 
   LWIP_ASSERT("target address is required", target_addr != NULL);
@@ -1251,13 +1251,13 @@ nd6_send_ns(struct netif *netif, const LwipIp6Addr *target_addr, uint8_t flags)
  * @param flags one of ND6_SEND_FLAG_*
  */
 static void
-nd6_send_na(struct netif *netif, const LwipIp6Addr *target_addr, uint8_t flags)
+nd6_send_na(struct netif *netif, const Ip6Addr *target_addr, uint8_t flags)
 {
   struct na_header *na_hdr;
   struct lladdr_option *lladdr_opt;
   struct PacketBuffer *p;
-  const LwipIp6Addr *src_addr;
-  const LwipIp6Addr *dest_addr;
+  const Ip6Addr *src_addr;
+  const Ip6Addr *dest_addr;
   uint16_t lladdr_opt_len;
 
   LWIP_ASSERT("target address is required", target_addr != NULL);
@@ -1331,7 +1331,7 @@ nd6_send_rs(struct netif *netif)
   struct rs_header *rs_hdr;
   struct lladdr_option *lladdr_opt;
   struct PacketBuffer *p;
-  const LwipIp6Addr *src_addr;
+  const Ip6Addr *src_addr;
   LwipError err;
   uint16_t lladdr_opt_len = 0;
 
@@ -1398,7 +1398,7 @@ nd6_send_rs(struct netif *netif)
  * entry is found
  */
 static int8_t
-nd6_find_neighbor_cache_entry(const LwipIp6Addr *ip6addr)
+nd6_find_neighbor_cache_entry(const Ip6Addr *ip6addr)
 {
   int8_t i;
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
@@ -1557,7 +1557,7 @@ nd6_free_neighbor_cache_entry(int8_t i)
  * entry is found
  */
 static int16_t
-nd6_find_destination_cache_entry(const LwipIp6Addr *ip6addr)
+nd6_find_destination_cache_entry(const Ip6Addr *ip6addr)
 {
   int16_t i;
 
@@ -1627,7 +1627,7 @@ nd6_clear_destination_cache(void)
  * @return 1 if the address is on-link, 0 otherwise
  */
 static int
-nd6_is_prefix_in_netif(const LwipIp6Addr *ip6addr, struct netif *netif)
+nd6_is_prefix_in_netif(const Ip6Addr *ip6addr, struct netif *netif)
 {
   int8_t i;
 
@@ -1667,7 +1667,7 @@ nd6_is_prefix_in_netif(const LwipIp6Addr *ip6addr, struct netif *netif)
  *         router is found
  */
 static int8_t
-nd6_select_router(const LwipIp6Addr *ip6addr, struct netif *netif)
+nd6_select_router(const Ip6Addr *ip6addr, struct netif *netif)
 {
   struct netif *router_netif;
   int8_t i, j, valid_router;
@@ -1739,7 +1739,7 @@ nd6_select_router(const LwipIp6Addr *ip6addr, struct netif *netif)
  * @return the netif to use for the destination, or NULL if none found
  */
 struct netif *
-nd6_find_route(const LwipIp6Addr *ip6addr)
+nd6_find_route(const Ip6Addr *ip6addr)
 {
   struct netif *netif;
   int8_t i;
@@ -1775,7 +1775,7 @@ nd6_find_route(const LwipIp6Addr *ip6addr)
  * @return the index of the router entry, or -1 if not found
  */
 static int8_t
-nd6_get_router(const LwipIp6Addr *router_addr, struct netif *netif)
+nd6_get_router(const Ip6Addr *router_addr, struct netif *netif)
 {
   int8_t i;
 
@@ -1802,7 +1802,7 @@ nd6_get_router(const LwipIp6Addr *router_addr, struct netif *netif)
  * @return the index on the router table, or -1 if could not be created
  */
 static int8_t
-nd6_new_router(const LwipIp6Addr *router_addr, struct netif *netif)
+nd6_new_router(const Ip6Addr *router_addr, struct netif *netif)
 {
   int8_t router_index;
   int8_t free_router_index;
@@ -1865,7 +1865,7 @@ nd6_new_router(const LwipIp6Addr *router_addr, struct netif *netif)
  * @return the index on the prefix table, or -1 if not found
  */
 static int8_t
-nd6_get_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif)
+nd6_get_onlink_prefix(const Ip6Addr *prefix, struct netif *netif)
 {
   int8_t i;
 
@@ -1889,7 +1889,7 @@ nd6_get_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif)
  * @return the index on the prefix table, or -1 if not created
  */
 static int8_t
-nd6_new_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif)
+nd6_new_onlink_prefix(const Ip6Addr *prefix, struct netif *netif)
 {
   int8_t i;
 
@@ -1921,10 +1921,10 @@ nd6_new_onlink_prefix(const LwipIp6Addr *prefix, struct netif *netif)
  *         could be created
  */
 static int8_t
-nd6_get_next_hop_entry(const LwipIp6Addr *ip6addr, struct netif *netif)
+nd6_get_next_hop_entry(const Ip6Addr *ip6addr, struct netif *netif)
 {
 #ifdef LWIP_HOOK_ND6_GET_GW
-  const LwipIp6Addr *next_hop_addr;
+  const Ip6Addr *next_hop_addr;
 #endif /* LWIP_HOOK_ND6_GET_GW */
   int8_t i;
   int16_t dst_idx;
@@ -2176,7 +2176,7 @@ static void
 nd6_send_q(int8_t i)
 {
   struct ip6_hdr *ip6hdr;
-  LwipIp6Addr dest;
+  Ip6Addr dest;
 #if LWIP_ND6_QUEUEING
   struct nd6_q_entry *q;
 #endif /* LWIP_ND6_QUEUEING */
@@ -2244,7 +2244,7 @@ nd6_send_q(int8_t i)
  * or ERR_MEM if low memory conditions prohibit sending the packet at all.
  */
 LwipError
-nd6_get_next_hop_addr_or_queue(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr, const uint8_t **hwaddrp)
+nd6_get_next_hop_addr_or_queue(struct netif *netif, struct PacketBuffer *q, const Ip6Addr *ip6addr, const uint8_t **hwaddrp)
 {
   int8_t i;
 
@@ -2285,7 +2285,7 @@ nd6_get_next_hop_addr_or_queue(struct netif *netif, struct PacketBuffer *q, cons
  * @return the Path MTU, if known, or the netif default MTU
  */
 uint16_t
-nd6_get_destination_mtu(const LwipIp6Addr *ip6addr, struct netif *netif)
+nd6_get_destination_mtu(const Ip6Addr *ip6addr, struct netif *netif)
 {
   int16_t i;
 
@@ -2315,7 +2315,7 @@ nd6_get_destination_mtu(const LwipIp6Addr *ip6addr, struct netif *netif)
  *                by an upper layer protocol (TCP)
  */
 void
-nd6_reachability_hint(const LwipIp6Addr *ip6addr)
+nd6_reachability_hint(const Ip6Addr *ip6addr)
 {
   int8_t i;
   int16_t dst_idx;

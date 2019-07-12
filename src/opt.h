@@ -2879,7 +2879,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP6_ROUTE(src, dest):
  * Called from ip_route() (IPv6)
  * Signature:\code{.c}
- *   struct netif *my_hook(const LwipIp6Addr *dest, const LwipIp6Addr *src);
+ *   struct netif *my_hook(const Ip6Addr *dest, const Ip6Addr *src);
  * \endcode
  * Arguments:
  * - src: source IPv6 address
@@ -2896,7 +2896,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_ND6_GET_GW(netif, dest):
  * Called from nd6_get_next_hop_entry() (IPv6)
  * Signature:\code{.c}
- *   const LwipIp6Addr *my_hook(struct netif *netif, const LwipIp6Addr *dest);
+ *   const Ip6Addr *my_hook(struct netif *netif, const Ip6Addr *dest);
  * \endcode
  * Arguments:
  * - netif: the netif used for sending

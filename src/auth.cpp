@@ -7,11 +7,14 @@
 #include "upap.h"
 #include "chap_new.h"
 #include "eap.h"
+#include "auth.h"
+
+#include <string>
 
 /* Hook for plugin to hear when an interface joins a multilink bundle */
 void (*multilink_join_hook)() = nullptr;
 
-static void network_phase(PppPcb* pcb, Protent** protocols);
+static bool enter_network_phase(PppPcb* pcb);
 static void check_idle(void* arg);
 static void connect_time_expired(void* arg);
 // static void check_maxoctets(void*);
@@ -85,29 +88,23 @@ void upper_layers_down(PppPcb* pcb, Protent** protocols)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
+void link_established(PppPcb* pcb, bool auth_required)
 {
     auto wo = &pcb->lcp_wantoptions;
     auto go = &pcb->lcp_gotoptions;
     auto ho = &pcb->lcp_hisoptions;
-    const struct Protent* protp;
-
-    /*
+    const struct Protent* protp; /*
      * Tell higher-level protocols that LCP is up.
-     */
-    if (!doing_multilink)
-    {
-        for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
-            if (protp->protocol != PPP_LCP
-                && protp->lowerup != nullptr)
-                (*protp->lowerup)(pcb);
-    }
-
-
+     */ // TODO: send notification that LCP is up
+    // if (!doing_multilink)
+    // {
+    //     for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
+    //         if (protp->protocol != PPP_LCP
+    //             && protp->lowerup != nullptr)
+    //             (*protp->lowerup)(pcb);
+    // }
     // if (!auth_required)
     //     set_allowed_addrs(unit, NULL, NULL);
-
-
     if (pcb->settings.auth_required && !(go->neg_upap || go->neg_chap || go->neg_eap))
     {
         /*
@@ -116,16 +113,11 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
          * otherwise treat it as though it authenticated with PAP using
          * a username of "" and a password of "".  If that's not OK,
          * boot it out.
-         */
-        // if (noauth_addrs != NULL)
+         */ // if (noauth_addrs != NULL)
         // {
         //     set_allowed_addrs(unit, NULL, NULL);
         // }
-        if (!pcb->settings.null_login
-
-            || !wo->neg_upap
-
-        )
+        if (!pcb->settings.null_login || !wo->neg_upap)
         {
             ppp_warn("peer refused to authenticate: terminating link");
             pcb->err_code = PPPERR_AUTHFAIL;
@@ -133,11 +125,8 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
             return;
         }
     }
-
-
     new_phase(pcb, PPP_PHASE_AUTHENTICATE);
     auto auth = 0;
-
     if (go->neg_eap)
     {
         eap_authpeer(pcb, PPP_OUR_NAME);
@@ -154,14 +143,11 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
         auth |= PAP_PEER;
     }
     else
-
     {
     }
-
-
     if (ho->neg_eap)
     {
-        eap_authwithpeer(pcb, pcb->settings.user);
+        eap_authwithpeer(pcb);
         auth |= EAP_WITHPEER;
     }
     else if (ho->neg_chap)
@@ -175,79 +161,88 @@ void link_established(PppPcb* pcb, Protent** protocols, bool auth_required)
         auth |= PAP_WITHPEER;
     }
     else
-
     {
     }
-
     pcb->auth_pending = auth;
     pcb->auth_done = 0;
-
     if (!auth)
-        network_phase(pcb, protocols);
+        enter_network_phase(pcb);
 }
 
-/*
- * Proceed to the network phase.
- */
-static void network_phase(PppPcb* pcb, Protent** protocols)
+//
+// Enter the network phase
+//
+bool enter_network_phase(PppPcb* pcb)
 {
-    start_networks(pcb, protocols,);
+    return start_networks(pcb);
 }
 
-void start_networks(PppPcb* pcb, Protent** protocols, bool* multilink)
+//
+// Start networks?
+//
+bool start_networks(PppPcb* pcb, const bool multilink = true)
 {
-    const struct Protent* protp;
-
     new_phase(pcb, PPP_PHASE_NETWORK);
-
-    if (*multilink == true)
+    if (multilink)
     {
-        if (mp_join_bundle(,,,,,,,))
+        // TODO: figure out what bundle name should be used.
+        std::string bundle_name = "bundle_name";
+        if (mp_join_bundle(pcb, pcb->settings.remote_name, bundle_name.c_str()))
         {
             if (multilink_join_hook)
-                (*multilink_join_hook)();
-            // if (updetach && !nodetach)
+                (*multilink_join_hook)(); // if (updetach && !nodetach)
             //     detach();
-            return;
+            return false; // TODO: what should the return value be here?
         }
-    }
-
-
-    // if (!demand)
+    } // if (!demand)
     //     set_filters(&pass_filter, &active_filter);
-
-    /* Start CCP and ECP */
-    for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
-        if ((protp->protocol == PPP_ECP || protp->protocol == PPP_CCP) && protp->open !=
-            nullptr)
-            (*protp->open)(pcb);
-
-
-    /*
+    // TODO: determine if we're using CCP and ECP
+    bool start_ccp = true;
+    bool start_ecp = true; // TODO: check bool result
+    ccp_open(pcb); // TODO: check bool result
+    int ecp_open_unit = 0;
+    ecp_open(pcb, ecp_open_unit); /*
      * Bring up other network protocols iff encryption is not required.
      */
     if (!ecp_gotoptions[0].required && !pcb->ccp_gotoptions.mppe)
-        continue_networks(pcb, protocols);
+    {
+        // TODO: check result
+        continue_networks(pcb);
+    }
+
+    // TODO: update output result
+
+    return true;
 }
 
-void continue_networks(PppPcb* pcb, Protent** protocols)
+bool continue_networks(PppPcb* pcb)
 {
-    const struct Protent* protp;
+    // TODO: determine which network protocols to start and start them.
+
+    bool none_started = true;
 
     // Start the "real" network protocols.
-    for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
-        if (protp->protocol < 0xC000
-            && protp->protocol != PPP_CCP
-            && protp->protocol != PPP_ECP
-            && protp->open != nullptr)
-        {
-            (*protp->open)(pcb);
-            ++pcb->num_np_open;
-        }
+    // for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
+    //     if (protp->protocol < 0xC000
+    //         && protp->protocol != PPP_CCP
+    //         && protp->protocol != PPP_ECP
+    //         && protp->open != nullptr)
+    //     {
+    //         (*protp->open)(pcb);
+    //         ++pcb->num_np_open;
+    //     }
 
-    if (pcb->num_np_open == 0)
-        /* nothing to do */
-        lcp_close(pcb, "No network protocols running");
+    // if (pcb->num_np_open == 0)
+    //     /* nothing to do */
+    //     lcp_close(pcb, "No network protocols running");
+
+    if (none_started)
+    {
+        lcp_close(pcb, "no network protocols running");
+        return false;
+    }
+
+    return true;
 }
 
 /*
@@ -344,7 +339,7 @@ void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *n
      * proceed to the network (or callback) phase.
      */
     if ((pcb->auth_pending &= ~bit) == 0)
-        network_phase(pcb, protocols);
+        enter_network_phase(pcb);
 }
 
 /*
@@ -424,7 +419,7 @@ void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor, Protent**
      * proceed to the network (or callback) phase.
      */
     if ((pcb->auth_pending &= ~bit) == 0)
-        network_phase(pcb, protocols);
+        enter_network_phase(pcb);
 }
 
 
@@ -523,7 +518,7 @@ static void check_idle(void *arg) {
 	need_holdoff = 0;
 #endif /* UNUSED */
     } else {
-	TIMEOUT(check_idle, (void*)pcb, tlim);
+	Timeout(check_idle, (void*)pcb, tlim);
     }
 }
 
@@ -536,7 +531,8 @@ static void connect_time_expired(void *arg) {
     PppPcb *pcb = (PppPcb*)arg;
     ppp_info("Connect time expired");
     pcb->err_code = PPPERR_CONNECTTIME;
-    lcp_close(pcb, "Connect time expired");	/* Close connection */
+    /* Close connection */
+    lcp_close(pcb, "Connect time expired");	
 }
 
 

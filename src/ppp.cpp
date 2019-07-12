@@ -44,7 +44,7 @@ int link_stats_valid;
  * The last entry must be NULL.
  */
 const struct Protent* const kProtocols[] = {
-    &lcp_protent,
+    &kLcpProtent,
     &pap_protent,
     &kChapProtent,
     nullptr,
@@ -59,23 +59,24 @@ const struct Protent* const kProtocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
 static LwipError ppp_netif_init_cb(struct NetIfc* netif);
-static LwipError ppp_netif_output_ip4(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
-static LwipError ppp_netif_output_ip6(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr);
-static LwipError ppp_netif_output(struct NetIfc* netif, struct pbuf* pb, uint16_t protocol);
+static LwipError ppp_netif_output_ip4(struct NetIfc* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+static LwipError ppp_netif_output_ip6(struct NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+static LwipError ppp_netif_output(struct NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
 
-void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *passwd) {
-  LWIP_ASSERT_CORE_LOCKED();
+void ppp_set_auth(PppPcb *pcb, const uint8_t authtype, const char *user, const char *password) {
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
   pcb->settings.refuse_chap = !(authtype & PPPAUTHTYPE_CHAP);
   pcb->settings.refuse_mschap = !(authtype & PPPAUTHTYPE_MSCHAP);
   pcb->settings.refuse_mschap_v2 = !(authtype & PPPAUTHTYPE_MSCHAP_V2);
   pcb->settings.refuse_eap = !(authtype & PPPAUTHTYPE_EAP);
-  pcb->settings.user = user;
-  pcb->settings.passwd = passwd;
+    strncpy(pcb->settings.user, user, 0xff);
+  // pcb->settings.user = user;
+  // pcb->settings.passwd = passwd;
+    strncpy(pcb->settings.passwd, password, 0xff);
 }
 
 
@@ -346,8 +347,9 @@ ppp_netif_init_cb(struct NetIfc* netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static LwipError
-ppp_netif_output_ip4(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
+static LwipError ppp_netif_output_ip4(struct NetIfc* netif,
+                                      struct PacketBuffer* pb,
+                                      const Ip4Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IP);
 }
@@ -356,7 +358,7 @@ ppp_netif_output_ip4(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipadd
  * Send an IPv6 packet on the given connection.
  */
 static LwipError
-ppp_netif_output_ip6(struct NetIfc* netif, struct pbuf* pb, const Ip6Addr* ipaddr)
+ppp_netif_output_ip6(struct NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
@@ -496,10 +498,7 @@ ppp_new(struct NetIfc* pppif,
         ppp_link_status_cb_fn link_status_cb,
         void* ctx_cb)
 {
-    const struct Protent* protp;
-    int i;
-
-    /* PPP is single-threaded: without a callback,
+    const struct Protent* protp; /* PPP is single-threaded: without a callback,
      * there is no way to know when the link is up. */
     if (link_status_cb == nullptr)
     {
@@ -539,7 +538,7 @@ ppp_new(struct NetIfc* pppif,
     pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
     pcb->netif = pppif;
-    MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
+    // MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
     if (!netif_add(pcb->netif,
                    IP4_ADDR_ANY4,
                    IP4_ADDR_BROADCAST,
@@ -562,10 +561,11 @@ ppp_new(struct NetIfc* pppif,
     /*
      * Initialize each protocol.
      */
-    for (i = 0; (protp = kProtocols[i]) != nullptr; ++i)
-    {
-        (*protp->init)(pcb);
-    }
+    // TODO: call init for protocols
+    // for (auto i = 0; (protp = kProtocols[i]) != nullptr; ++i)
+    // {
+    //     (*protp->init)(pcb);
+    // }
 
     new_phase(pcb, PPP_PHASE_DEAD);
     return pcb;

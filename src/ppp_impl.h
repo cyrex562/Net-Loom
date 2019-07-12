@@ -297,9 +297,10 @@ void link_required(PppPcb *pcb);     /* we are starting to use the link */
 void link_terminated(PppPcb *pcb);   /* we are finished with the link */
 void link_down(PppPcb *pcb, Protent** protocols);	      /* the LCP layer has left the Opened state */
 void upper_layers_down(PppPcb *pcb, Protent** protocols); /* take all NCPs down */
-void link_established(PppPcb *pcb, Protent** protocols, bool auth_required);  /* the link is up; authenticate now */
-void start_networks(PppPcb *pcb, Protent** protocols, bool* multilink);    /* start all the network control protos */
-void continue_networks(PppPcb *pcb, Protent** protocols); /* start network [ip, etc] control protos */
+void link_established(PppPcb *pcb, bool auth_required);  /* the link is up; authenticate now */
+void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
+                    unknown>) noexcept;    /* start all the network control protos */
+bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
 #if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen);
@@ -339,15 +340,17 @@ int  loop_frame (unsigned char *, int); /* should we bring link up? */
 /* Procedures exported from multilink.c */
 
 void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /* Check multilink-related options */
-int  mp_join_bundle (PppPcb* pcb,
-                     LcpOptions* go,
-                     LcpOptions* ho,
-                     LcpOptions* ao,
-                     bool demand,
-                     char*
-                     peer_authname,
-                     bool* doing_multilink,
-                     char* bundle_name);  /* join our link to an appropriate bundle */
+
+
+// 
+// Join link to an appropriate bundle
+//
+bool mp_join_bundle(PppPcb* pcb,
+                    const char* peer_authname,
+                    const char* bundle_name,
+                    const bool doing_multilink = true,
+                    const bool demand = true);  
+
 void mp_exit_bundle (void);  /* have disconnected our link from bundle */
 void mp_bundle_terminated (void);
 char *epdisc_to_str (struct Epdisc *); /* string from endpoint discrim. */

@@ -29,6 +29,7 @@
  */
 
 #include "ppp_opts.h"
+#include "def.h"
 
 /* Multilink support
  *
@@ -63,7 +64,7 @@ char *blinks_id;		/* key for the list of links */
 // extern TDB_CONTEXT *pppdb;
 extern char db_key[];
 
-static void make_bundle_links (int append);
+static bool make_bundle_links(int append);
 static void remove_bundle_link (void);
 static void iterate_bundle_links (void (*func) (char *));
 
@@ -114,14 +115,11 @@ void mp_check_options(LcpOptions* wo, LcpOptions* ao, bool* doing_multilink)
  * Make a new bundle or join us to an existing bundle
  * if we are doing multilink.
  */
-int mp_join_bundle(PppPcb* pcb,
-                   LcpOptions* go,
-                   LcpOptions* ho,
-                   LcpOptions* ao,
-                   const bool demand,
-                   char* peer_authname,
-                   bool* doing_multilink,
-                   char* bundle_name)
+bool mp_join_bundle(PppPcb* pcb,
+                    const char* peer_authname,
+                    const char* bundle_name,
+                    const bool doing_multilink = true,
+                    const bool demand = true)
 {
     int pppd_pid; // lcp_options *ho = &lcp_hisoptions[0];
     int mtu;
@@ -129,36 +127,36 @@ int mp_join_bundle(PppPcb* pcb,
 
 	if (doing_multilink) {
 		/* have previously joined a bundle */
-		if (!go->neg_mrru || !ho->neg_mrru) {
+		if (!pcb->lcp_gotoptions.neg_mrru || !pcb->lcp_hisoptions.neg_mrru) {
 			// notice("oops, didn't get multilink on renegotiation");
 			lcp_close(pcb, "multilink required");
-			return 0;
+			return false;
 		}
 		/* XXX should check the peer_authname and ho->endpoint
 		   are the same as previously */
-		return 0;
+		return false;
 	}
 
-	if (!go->neg_mrru || !ho->neg_mrru) {
+	if (!pcb->lcp_gotoptions.neg_mrru || !pcb->lcp_hisoptions.neg_mrru) {
 		/* not doing multilink */
 		// if (go->neg_mrru)
 			// notice("oops, multilink negotiated only for receive");
-		mtu = ho->neg_mru? ho->mru: PPP_MRU;
-		if (mtu > ao->mru)
-			mtu = ao->mru;
+		mtu = pcb->lcp_hisoptions.neg_mru?pcb->lcp_hisoptions.mru: PPP_MRU;
+		if (mtu > pcb->lcp_gotoptions.mru)
+			mtu = pcb->lcp_allowoptions.mru;
 		if (demand) {
 			/* already have a bundle */
 			// cfg_bundle(0, 0, 0, 0);
 			netif_set_mtu(pcb, mtu);
-			return 0;
+			return false;
 		}
 		// make_new_bundle(0, 0, 0, 0);
 		// set_ifunit(1);
 		netif_set_mtu(pcb, mtu);
-		return 0;
+		return false;
 	}
 
-	*doing_multilink = true;
+	// *doing_multilink = true;
 
 	/*
 	 * Find the appropriate bundle or join a new one.
@@ -167,19 +165,19 @@ int mp_join_bundle(PppPcb* pcb,
 	 * character has to be quoted.
 	 */
 	size_t bundle_id_len = 4 * strlen(peer_authname) + 10;
-	if (ho->neg_endpoint)
-		bundle_id_len += 3 * ho->endpoint.length + 8;
+	if (pcb->lcp_hisoptions.neg_endpoint)
+		bundle_id_len += 3 * pcb->lcp_hisoptions.endpoint.length + 8;
 	if (bundle_name)
 		bundle_id_len += 3 * strlen(bundle_name) + 2;
 	bundle_id = new char[bundle_id_len];
     memset(bundle_id, 0, bundle_id_len);
     auto p = bundle_id;
 	p += snprintf(p, bundle_id_len-1, "BUNDLE=\"%q\"", peer_authname);
-	if (ho->neg_endpoint || bundle_name)
+	if (pcb->lcp_hisoptions.neg_endpoint || bundle_name)
 		*p++ = '/';
-	if (ho->neg_endpoint)
+	if (pcb->lcp_hisoptions.neg_endpoint)
 		p += snprintf(p, bundle_id+bundle_id_len-p, "%s",
-			      epdisc_to_str(&ho->endpoint));
+			      epdisc_to_str(&pcb->lcp_hisoptions.endpoint));
 	if (bundle_name)
 		p += snprintf(p, bundle_id+bundle_id_len-p, "/%v", bundle_name);
 
@@ -194,13 +192,13 @@ int mp_join_bundle(PppPcb* pcb,
 	 * For demand mode, we only need to configure the bundle
 	 * and attach the link.
 	 */
-	mtu = LWIP_MIN(ho->mrru, ao->mru);
-	if (demand) {
-		// cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
-		netif_set_mtu(pcb, mtu);
-		// script_setenv("BUNDLE", bundle_id + 7, 1);
-		return 0;
-	}
+	mtu = LWIP_MIN(pcb->lcp_hisoptions.mrru, pcb->lcp_allowoptions.mru);
+    if (demand)
+    {
+        // cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
+        netif_set_mtu(pcb, mtu); // script_setenv("BUNDLE", bundle_id + 7, 1);
+        return true;
+    }
 
 	/*
 	 * Check if the bundle ID is already in the database.
@@ -246,11 +244,15 @@ int mp_join_bundle(PppPcb* pcb,
 	// set_ifunit(1);
 	netif_set_mtu(pcb, mtu);
 	// script_setenv("BUNDLE", bundle_id + 7, 1);
-	make_bundle_links(pcb);
+	if (!make_bundle_links(0))
+	{
+	    printf("failed to make bundle links\n");
+        return false;
+	}
 	// unlock_db();
 	// info("New bundle %s created", ifname);
 	multilink_master = 1;
-	return 0;
+	return true;
 }
 
 void mp_exit_bundle()
@@ -264,10 +266,20 @@ static void sendhup(char *str)
 {
 	int pid;
 
-	if (parse_num(str, "PPPD_PID=", &pid) && pid != getpid()) {
-		if (debug)
-			dbglog("sending SIGHUP to process %d", pid);
-		kill(pid, SIGHUP);
+	if (parse_num(str, "PPPD_PID=", &pid) && pid != lwip_getpid()) {
+		// if (debug)
+		// 	dbglog("sending SIGHUP to process %d", pid);
+
+        #ifdef _MSC_VER
+        HANDLE explorer = nullptr;
+        explorer = OpenProcess(PROCESS_ALL_ACCESS,false,pid);
+        if (!TerminateProcess(explorer,1)
+        {
+            return false;
+        }
+        #else
+        kill(pid, SIGHUP);
+        #endif
 	}
 }
 
@@ -300,44 +312,47 @@ void mp_bundle_terminated()
 	multilink_master = 0;
 }
 
-static void make_bundle_links(int append)
+static bool make_bundle_links(int append)
 {
-	TDB_DATA key, rec;
+	// TDB_DATA key, rec;
 	char *p;
 	char entry[32];
 	int l;
 
-	key.dptr = blinks_id;
-	key.dsize = strlen(blinks_id);
-	slprintf(entry, sizeof(entry), "%s;", db_key);
-	p = entry;
-	if (append) {
-		rec = tdb_fetch(pppdb, key);
-		if (rec.dptr != NULL && rec.dsize > 0) {
-			rec.dptr[rec.dsize-1] = 0;
-			if (strstr(rec.dptr, db_key) != NULL) {
-				/* already in there? strange */
-				warn("link entry already exists in tdb");
-				return;
-			}
-			l = rec.dsize + strlen(entry);
-			p = malloc(l);
-			if (p == NULL)
-				novm("bundle link list");
-			slprintf(p, l, "%s%s", rec.dptr, entry);
-		} else {
-			warn("bundle link list not found");
-		}
-		if (rec.dptr != NULL)
-			free(rec.dptr);
-	}
-	rec.dptr = p;
-	rec.dsize = strlen(p) + 1;
-	if (tdb_store(pppdb, key, rec, TDB_REPLACE))
-		error("couldn't %s bundle link list",
-		      append? "update": "create");
-	if (p != entry)
-		free(p);
+	// key.dptr = blinks_id;
+	// key.dsize = strlen(blinks_id);
+	// slprintf(entry, sizeof(entry), "%s;", db_key);
+	// p = entry;
+	// if (append) {
+	// 	rec = tdb_fetch(pppdb, key);
+	// 	if (rec.dptr != NULL && rec.dsize > 0) {
+	// 		rec.dptr[rec.dsize-1] = 0;
+	// 		if (strstr(rec.dptr, db_key) != NULL) {
+	// 			/* already in there? strange */
+	// 			warn("link entry already exists in tdb");
+	// 			return;
+	// 		}
+	// 		l = rec.dsize + strlen(entry);
+	// 		p = malloc(l);
+	// 		if (p == NULL)
+	// 			novm("bundle link list");
+	// 		slprintf(p, l, "%s%s", rec.dptr, entry);
+	// 	} else {
+	// 		warn("bundle link list not found");
+	// 	}
+	// 	if (rec.dptr != NULL)
+	// 		free(rec.dptr);
+	// }
+	// rec.dptr = p;
+	// rec.dsize = strlen(p) + 1;
+	// if (tdb_store(pppdb, key, rec, TDB_REPLACE))
+	// 	error("couldn't %s bundle link list",
+	// 	      append? "update": "create");
+	// if (p != entry)
+	// 	free(p);
+
+    printf("not implemented!\n");
+    return false;
 }
 
 static void remove_bundle_link()

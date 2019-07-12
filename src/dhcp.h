@@ -51,45 +51,34 @@
 #define DHCP_FILE_LEN     128U
 #define DHCP_MSG_LEN      236U
 #define DHCP_OPTIONS_OFS  (DHCP_MSG_LEN + 4U) /* 4 byte: cookie */
+#define DHCP_MIN_OPTIONS_LEN 68U
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
+/** set this to be sufficient for your options in outgoing DHCP msgs */
+#define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
+    
+
 
 /** minimum set of fields of any DHCP message */
 struct dhcp_msg
 {
-    (uint8_t op);
-    (uint8_t htype);
-    (uint8_t hlen);
-    (uint8_t hops);
-    (uint32_t xid);
-    (uint16_t secs);
-    (uint16_t flags);
-    PACK_STRUCT_FLD_S(Ip4AddrPT ciaddr);
-    PACK_STRUCT_FLD_S(Ip4AddrPT yiaddr);
-    PACK_STRUCT_FLD_S(Ip4AddrPT siaddr);
-    PACK_STRUCT_FLD_S(Ip4AddrPT giaddr);
-    (uint8_t chaddr[DHCP_CHADDR_LEN]);
-    (uint8_t sname[DHCP_SNAME_LEN]);
-    (uint8_t file[DHCP_FILE_LEN]);
-    (uint32_t cookie);
-#define DHCP_MIN_OPTIONS_LEN 68U
-    /** make sure user does not configure this too small */
-#if ((defined(DHCP_OPTIONS_LEN)) && (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
-#  undef DHCP_OPTIONS_LEN
-#endif
-/** allow this to be configured in lwipopts.h, but not too small */
-#if (!defined(DHCP_OPTIONS_LEN))
-/** set this to be sufficient for your options in outgoing DHCP msgs */
-#  define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
-#endif
-    (uint8_t options[DHCP_OPTIONS_LEN]);
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+    uint8_t op;
+    uint8_t htype;
+    uint8_t hlen;
+    uint8_t hops;
+    uint32_t xid;
+    uint16_t secs;
+    uint16_t flags;
+    Ip4AddrPT ciaddr;
+    Ip4AddrPT yiaddr;
+    Ip4AddrPT siaddr;
+    Ip4AddrPT giaddr;
+    uint8_t chaddr[DHCP_CHADDR_LEN];
+    uint8_t sname[DHCP_SNAME_LEN];
+    uint8_t file[DHCP_FILE_LEN];
+    uint32_t cookie;
+    uint8_t options[DHCP_OPTIONS_LEN];
+};
+
 
 
 /* DHCP client states */

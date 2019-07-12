@@ -62,7 +62,7 @@
 
 /* Determine compression mode for unicast address. */
 int8_t
-lowpan6_get_address_mode(const LwipIp6Addr *ip6addr, const struct lowpan6_link_addr *mac_addr)
+lowpan6_get_address_mode(const Ip6Addr *ip6addr, const struct lowpan6_link_addr *mac_addr)
 {
   if (mac_addr->addr_len == 2) {
     if ((ip6addr->addr[2] == (uint32_t)PP_HTONL(0x000000ff)) &&
@@ -90,7 +90,7 @@ lowpan6_get_address_mode(const LwipIp6Addr *ip6addr, const struct lowpan6_link_a
 
 /* Determine compression mode for multicast address. */
 static int8_t
-lowpan6_get_address_mode_mc(const LwipIp6Addr *ip6addr)
+lowpan6_get_address_mode_mc(const Ip6Addr *ip6addr)
 {
   if ((ip6addr->addr[0] == PP_HTONL(0xff020000)) &&
       (ip6addr->addr[1] == 0) &&
@@ -112,7 +112,7 @@ lowpan6_get_address_mode_mc(const LwipIp6Addr *ip6addr)
 
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
 static int8_t
-lowpan6_context_lookup(const LwipIp6Addr *lowpan6_contexts, const LwipIp6Addr *ip6addr)
+lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
 {
   int8_t i;
 
@@ -130,7 +130,7 @@ lowpan6_context_lookup(const LwipIp6Addr *lowpan6_contexts, const LwipIp6Addr *i
  * */
 LwipError
 lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
-                         uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, LwipIp6Addr *lowpan6_contexts,
+                         uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, Ip6Addr *lowpan6_contexts,
                          const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
 {
   uint8_t *buffer, *inptr;
@@ -392,7 +392,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
                        uint8_t *decomp_buffer, size_t decomp_bufsize,
                        uint16_t *hdr_size_comp, uint16_t *hdr_size_decomp,
                        uint16_t datagram_size, uint16_t compressed_size,
-                       LwipIp6Addr *lowpan6_contexts,
+                       Ip6Addr *lowpan6_contexts,
                        struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest)
 {
   uint16_t lowpan6_offset;
@@ -776,7 +776,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 }
 
 struct PacketBuffer *
-lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, LwipIp6Addr *lowpan6_contexts,
+lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowpan6_contexts,
                    struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest)
 {
   struct PacketBuffer *q;

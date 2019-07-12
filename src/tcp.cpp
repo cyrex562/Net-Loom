@@ -1695,7 +1695,7 @@ tcp_seg_copy(struct tcp_seg *seg)
  * a recv callback for the pcb.
  */
 LwipError
-tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct pbuf *p, LwipError err)
+tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipError err)
 {
   LWIP_UNUSED_ARG(arg);
 

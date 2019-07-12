@@ -6,7 +6,7 @@
 #include <cctype>
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const IpAddr kIpAddrAny = {{{{IPADDR_ANY}}}};
+const IpAddr kIpAddrAny = {{{{kIp4AddrAny4}}}};
 const IpAddr kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
 
 /**
@@ -23,8 +23,8 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const struct NetIfc *netif)
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((~addr == IPADDR_ANY) ||
-      (addr == IPADDR_ANY)) {
+  if ((~addr == kIp4AddrAny4) ||
+      (addr == kIp4AddrAny4)) {
     return 1;
     /* no broadcast support on this network interface? */
   }

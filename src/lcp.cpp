@@ -1600,7 +1600,7 @@ static int lcp_reqci(fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
     int orc;			/* Individual option return code */
     uint8_t *p;			/* Pointer to next char to parse */
     uint8_t *rejp;		/* Pointer to next char in reject frame */
-    struct pbuf *nakp;          /* Nak buffer */
+    struct PacketBuffer *nakp;          /* Nak buffer */
     uint8_t *nakoutp;		/* Pointer to next char in Nak frame */
     int l = *lenp;		/* Length left */
 

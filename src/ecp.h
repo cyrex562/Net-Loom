@@ -32,10 +32,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct EcpOptions {
     bool required;		/* Is ECP required? */
     unsigned enctype;		/* Encryption type */
@@ -47,9 +43,8 @@ extern EcpOptions ecp_gotoptions[];
 extern EcpOptions ecp_allowoptions[];
 extern EcpOptions ecp_hisoptions[];
 
-extern const struct Protent kEcpProtent;
+// extern const struct Protent kEcpProtent;
 
-#ifdef __cplusplus
-}
-#endif
+bool ecp_open(PppPcb* ppp_pcb, int unit);
+
 

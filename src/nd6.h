@@ -292,7 +292,7 @@ void nd6_tmr(void);
 void nd6_input(struct PacketBuffer *p, struct NetIfc *inp);
 void nd6_clear_destination_cache(void);
 struct NetIfc *nd6_find_route(const Ip6Addr*ip6addr);
-LwipError nd6_get_next_hop_addr_or_queue(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr, const uint8_t **hwaddrp);
+LwipError nd6_get_next_hop_addr_or_queue(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6addr, const uint8_t **hwaddrp);
 uint16_t nd6_get_destination_mtu(const Ip6Addr*ip6addr, struct NetIfc *netif);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 void nd6_reachability_hint(const Ip6Addr*ip6addr);

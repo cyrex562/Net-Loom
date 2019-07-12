@@ -326,7 +326,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  * @return See rfc7668_compress
  */
 LwipError
-rfc7668_output(struct NetIfc *netif, struct pbuf *q, const Ip6Addr*ip6addr)
+rfc7668_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
   return rfc7668_compress(netif, q);

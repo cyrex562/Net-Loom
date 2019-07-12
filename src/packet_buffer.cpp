@@ -177,7 +177,7 @@ static void pbuf_pool_is_empty(void) {
 /* Initialize members of struct PacketBuffer after allocation */
 static void pbuf_init_alloced_pbuf(struct PacketBuffer *p, void *payload,
                                    uint16_t tot_len, uint16_t len,
-                                   pbuf_type type, uint8_t flags) {
+                                   PbufType type, uint8_t flags) {
   p->next = NULL;
   p->payload = payload;
   p->tot_len = tot_len;
@@ -220,8 +220,8 @@ static void pbuf_init_alloced_pbuf(struct PacketBuffer *p, void *payload,
  * @return the allocated PacketBuffer. If multiple pbufs where allocated, this
  * is the first PacketBuffer of a PacketBuffer chain.
  */
-struct pbuf *pbuf_alloc(PbufLayer layer, uint16_t length, pbuf_type type) {
-  struct pbuf *p;
+struct PacketBuffer *pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type) {
+  struct PacketBuffer *p;
   uint16_t offset = (uint16_t)layer;
   Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
               ("pbuf_alloc(length=%" U16_F ")\n", length));
@@ -332,7 +332,7 @@ struct pbuf *pbuf_alloc(PbufLayer layer, uint16_t length, pbuf_type type) {
  * @return the allocated PacketBuffer.
  */
 struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
-                                  pbuf_type type) {
+                                  PbufType type) {
   struct PacketBuffer *p;
   LWIP_ASSERT("invalid pbuf_type", (type == PBUF_REF) || (type == PBUF_ROM));
   /* only allocate memory for the PacketBuffer structure */
@@ -411,8 +411,8 @@ struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_typ
  *
  * @note Despite its name, pbuf_realloc cannot grow the size of a PacketBuffer (chain).
  */
-void pbuf_realloc(struct pbuf *p, size_t size) {
-  struct pbuf *q;
+void pbuf_realloc(struct PacketBuffer *p, size_t size) {
+  struct PacketBuffer *q;
   uint16_t rem_len; /* remaining length */
   uint16_t shrink;
 
@@ -1037,9 +1037,9 @@ LwipError pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from
  * bytes
  * @return the number of bytes copied, or 0 on failure
  */
-uint16_t pbuf_copy_partial(const struct pbuf* buf, void* dataptr, uint16_t len, uint16_t offset)
+uint16_t pbuf_copy_partial(const struct PacketBuffer* buf, void* dataptr, uint16_t len, uint16_t offset)
 {
-  const struct pbuf *p;
+  const struct PacketBuffer *p;
   uint16_t left = 0;
   uint16_t buf_copy_len;
   uint16_t copied_total = 0;
@@ -1291,8 +1291,8 @@ LwipError pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t l
  * @return a new, single PacketBuffer (p->next is NULL)
  *         or the old PacketBuffer if allocation fails
  */
-struct pbuf *pbuf_coalesce(struct pbuf *p, PbufLayer layer) {
-  struct pbuf *q;
+struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
+  struct PacketBuffer *q;
   if (p->next == nullptr) {
     return p;
   }
@@ -1317,8 +1317,8 @@ struct pbuf *pbuf_coalesce(struct pbuf *p, PbufLayer layer) {
  *
  * @return a new PacketBuffer or NULL if allocation fails
  */
-struct pbuf *pbuf_clone(PbufLayer layer, pbuf_type type, struct pbuf *p) {
-  struct pbuf *q;
+struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuffer *p) {
+  struct PacketBuffer *q;
   LwipError err;
   q = pbuf_alloc(layer, p->tot_len, type);
   if (q == nullptr) {

@@ -134,7 +134,7 @@ raw_input(struct PacketBuffer *p, struct NetIfc *inp)
 
   if (IP_HDR_GET_VERSION(p->payload) == 6)
   {
-    struct ip6_hdr *ip6hdr = (struct ip6_hdr *)p->payload;
+    struct Ip6Hdr *ip6hdr = (struct Ip6Hdr *)p->payload;
     proto = IP6H_NEXTH(ip6hdr);
   }
   else

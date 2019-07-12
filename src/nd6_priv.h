@@ -69,7 +69,7 @@ struct nd6_q_entry {
 
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
-  LwipIp6Addr next_hop_address;
+  Ip6Addr next_hop_address;
   struct netif *netif;
   uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
@@ -91,14 +91,14 @@ struct nd6_neighbor_cache_entry {
 };
 
 struct nd6_destination_cache_entry {
-  LwipIp6Addr destination_addr;
-  LwipIp6Addr next_hop_addr;
+  Ip6Addr destination_addr;
+  Ip6Addr next_hop_addr;
   uint16_t pmtu;
   uint32_t age;
 };
 
 struct nd6_prefix_list_entry {
-  LwipIp6Addr prefix;
+  Ip6Addr prefix;
   struct netif *netif;
   uint32_t invalidation_timer; /* in seconds */
 };

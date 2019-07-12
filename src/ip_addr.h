@@ -38,6 +38,7 @@
 
 #include "ip6_addr.h"
 #include "ip4_addr.h"
+#include <cstring>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -160,6 +161,16 @@ inline Ip6Addr* ip_2_ip6(IpAddr* ipaddr) {
  */
 inline Ip4Addr* ip_2_ip4(IpAddr* ipaddr) {
     return   (&((ipaddr)->u_addr.ip4));
+}
+
+
+
+
+inline IpAddr make_new_any_ip_addr()
+{
+    IpAddr new_addr = {};
+    memcpy(&new_addr, &kIpAddrAnyType, sizeof(IpAddr));
+    return new_addr;
 }
 
 /** @ingroup ip4addr */
@@ -317,7 +328,6 @@ int ipaddr_aton(const char* cp, IpAddr* addr);
 #define IP_SET_TYPE(ipaddr, iptype)
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V4
 #define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(Ip4Addr)
-#define ip_2_ip4(ipaddr)                        (ipaddr)
 #define IP_ADDR4(ipaddr,a,b,c,d)                Ipv4AddrFromBytes(ipaddr,a,b,c,d)
 
 #define ip_addr_copy(dest, src)                 ip4_addr_copy(dest, src)
@@ -361,7 +371,7 @@ int ipaddr_aton(const char* cp, IpAddr* addr);
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V6
-#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(LwipIp6Addr)
+#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(Ip6Addr)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
 
 inline void IP_ADDR6(IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
@@ -446,7 +456,7 @@ constexpr auto IP4_ADDR_BROADCAST = (ip_2_ip4(&kIpAddrBroadcast));
 constexpr auto kIp6AddrAny = (&ip6_addr_any);
 /**
  * @ingroup ip6addr
- * IP6_ADDR_ANY6 can be used as a fixed LwipIp6Addr
+ * IP6_ADDR_ANY6 can be used as a fixed Ip6Addr
  * for the IPv6 wildcard address
  */
 constexpr auto kIp6AddrAny6 = (ip_2_ip6(&ip6_addr_any));

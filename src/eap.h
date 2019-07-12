@@ -23,9 +23,10 @@
 #pragma once
 
 #include "ppp_opts.h"
-#include "ppp.h"
-
+#include <cstdint>
 #ifdef	__cplusplus
+struct PppPcb;
+
 extern "C" {
 #endif
 
@@ -85,7 +86,7 @@ extern "C" {
 	"Initial", "Pending", "Closed", "Listen", "Identify", \
 	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
 
-// #define	eap_client_active(pcb)	((pcb)->eap.es_client.ea_state == eapListen)
+
 #if PPP_SERVER
 #define	eap_server_active(pcb)	\
 	((pcb)->eap.es_server.ea_state >= eapIdentify && \
@@ -99,7 +100,7 @@ enum eap_state_code {
 	eapInitial = 0,	/* No EAP authentication yet requested */
 	eapPending,	/* Waiting for LCP (no timer) */
 	eapClosed,	/* Authentication not in use */
-	eapListen,	/* Client ready (and timer running) */
+	kEapListen,	/* Client ready (and timer running) */
 	eapIdentify,	/* EAP Identify sent */
 	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
 	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
@@ -115,8 +116,8 @@ struct eap_auth {
 	char ea_peer[MAXNAMELEN +1];	/* Peer's name */
 	void *ea_session;	/* Authentication library linkage */
 	uint8_t *ea_skey;	/* Shared encryption key */
-	u_short ea_namelen;	/* Length of our name */
-	u_short ea_peerlen;	/* Length of peer's name */
+	uint16_t ea_namelen;	/* Length of our name */
+	uint16_t ea_peerlen;	/* Length of peer's name */
 	enum eap_state_code ea_state;
 	uint8_t ea_id;		/* Current id */
 	uint8_t ea_requests;	/* Number of Requests sent/received */
@@ -125,24 +126,27 @@ struct eap_auth {
 	uint32_t ea_keyflags;	/* SRP shared key usage flags */
 };
 
-#ifndef EAP_MAX_CHALLENGE_LENGTH
 #define EAP_MAX_CHALLENGE_LENGTH	24
-#endif
-typedef struct eap_state {
-	struct eap_auth es_client;	/* Client (authenticatee) data */
-#if PPP_SERVER
-	struct eap_auth es_server;	/* Server (authenticator) data */
-#endif /* PPP_SERVER */
-	int es_savedtime;		/* Saved timeout */
-	int es_rechallenge;		/* EAP rechallenge interval */
-	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */
-	uint8_t es_usepseudo;		/* Use SRP Pseudonym if offered one */
-	int es_usedpseudo;		/* Set if we already sent PN */
-	int es_challen;			/* Length of challenge string */
-	uint8_t es_challenge[EAP_MAX_CHALLENGE_LENGTH];
-} eap_state;
 
-void eap_authwithpeer(PppPcb *pcb, const char *localname);
+struct EapState
+{
+    struct eap_auth es_client; /* Client (authenticatee) data */
+    struct eap_auth es_server; /* Server (authenticator) data */
+    int es_savedtime; /* Saved timeout */
+    int es_rechallenge; /* EAP rechallenge interval */
+    int es_lwrechallenge; /* SRP lightweight rechallenge inter */
+    uint8_t es_usepseudo; /* Use SRP Pseudonym if offered one */
+    int es_usedpseudo; /* Set if we already sent PN */
+    int es_challen; /* Length of challenge string */
+    uint8_t es_challenge[EAP_MAX_CHALLENGE_LENGTH];
+};
+
+inline bool eap_client_active(EapState* eap)
+{
+    return (eap->es_client.ea_state == kEapListen);
+}
+
+void eap_authwithpeer(PppPcb *pcb);
 void eap_authpeer(PppPcb *pcb, const char *localname);
 
 extern const struct Protent eap_protent;

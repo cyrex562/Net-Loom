@@ -129,8 +129,9 @@ typedef LwipError (*netif_input_fn)(struct PacketBuffer *p, struct NetIfc *inp);
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IP address to which the packet shall be sent
  */
-typedef LwipError (*netif_output_fn)(struct NetIfc *netif, struct pbuf *p,
-                                 const Ip4Addr *ipaddr);
+typedef LwipError (*netif_output_fn)(struct NetIfc* netif,
+                                     struct PacketBuffer* p,
+                                     const Ip4Addr* ipaddr);
 
 
 /** Function prototype for netif->output_ip6 functions. Called by lwIP when a packet
@@ -141,7 +142,7 @@ typedef LwipError (*netif_output_fn)(struct NetIfc *netif, struct pbuf *p,
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IPv6 address to which the packet shall be sent
  */
-typedef LwipError (*netif_output_ip6_fn)(struct NetIfc *netif, struct pbuf *p,
+typedef LwipError (*netif_output_ip6_fn)(struct NetIfc *netif, struct PacketBuffer *p,
                                      const Ip6Addr*ipaddr);
 
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
@@ -308,7 +309,10 @@ void netif_set_ipaddr(struct NetIfc *netif, const Ip4Addr *ipaddr);
 void netif_set_netmask(struct NetIfc *netif, const Ip4Addr *netmask);
 void netif_set_gw(struct NetIfc *netif, const Ip4Addr *gw);
 /** @ingroup netif_ip4 */
-#define netif_ip4_addr(netif)    ((const Ip4Addr*)ip_2_ip4(&((netif)->ip_addr)))
+inline Ip4Addr *netif_ip4_addr(NetIfc *netif) {
+  return (ip_2_ip4(&((netif)->ip_addr)));
+}
+
 /** @ingroup netif_ip4 */
 #define netif_ip4_netmask(netif) ((const Ip4Addr*)ip_2_ip4(&((netif)->netmask)))
 /** @ingroup netif_ip4 */
@@ -360,7 +364,7 @@ void netif_set_link_callback(struct NetIfc *netif, netif_status_callback_fn link
 #define netif_get_mld_mac_filter(netif) (((netif) != NULL) ? ((netif)->mld_mac_filter) : NULL)
 #define netif_mld_mac_filter(netif, addr, action) do { if((netif) && (netif)->mld_mac_filter) { (netif)->mld_mac_filter((netif), (addr), (action)); }}while(0)
 
-LwipError netif_loop_output(struct NetIfc *netif, struct pbuf *p);
+LwipError netif_loop_output(struct NetIfc *netif, struct PacketBuffer *p);
 void netif_poll(struct NetIfc *netif);
 
 void netif_poll_all(void);

@@ -31,8 +31,6 @@
 *   Original derived from BSD codes.
 *****************************************************************************/
 #pragma once
-
-#include "ppp_opts.h"
 #include "netif.h"
 #include "ccp.h"
 #include "ip6_addr.h"
@@ -41,9 +39,8 @@
 #include "vj.h"
 #include "chap_new.h"
 #include "ip4_addr.h"
-#include "ip6_addr.h"
-
-
+#include "eap.h"
+#include "upap.h"
 #ifdef __cplusplus
 extern "C" 
 {
@@ -218,11 +215,11 @@ struct PppPcb {
   char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
   uint16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   uint16_t auth_done;           /* Records which authentication operations have been completed. */
-  // upap_state upap;           /* PAP data */
+  upap_state upap;           /* PAP data */
   chap_client_state chap_client;  /* CHAP client data */
   chap_server_state chap_server;  /* CHAP server data */
-  // eap_state eap;            /* EAP data */
-  // fsm lcp_fsm;                   /* LCP fsm structure */
+  EapState eap;            /* EAP data */
+  fsm lcp_fsm;                   /* LCP fsm structure */
   LcpOptions lcp_wantoptions;   /* Options that we want to request */
   LcpOptions lcp_gotoptions;    /* Options that peer ack'd */
   LcpOptions lcp_allowoptions;  /* Options we allow peer to request */
@@ -244,10 +241,10 @@ struct PppPcb {
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
   fsm ipcp_fsm;                   /* IPCP fsm structure */
-  ipcp_options ipcp_wantoptions;  /* Options that we want to request */
-  ipcp_options ipcp_gotoptions;   /* Options that peer ack'd */
-  ipcp_options ipcp_allowoptions; /* Options we allow peer to request */
-  ipcp_options ipcp_hisoptions;   /* Options that we ack'd */
+  IpcpOptions ipcp_wantoptions;  /* Options that we want to request */
+  IpcpOptions ipcp_gotoptions;   /* Options that peer ack'd */
+  IpcpOptions ipcp_allowoptions; /* Options we allow peer to request */
+  IpcpOptions ipcp_hisoptions;   /* Options that we ack'd */
   fsm ipv6cp_fsm;                     /* IPV6CP fsm structure */
   ipv6cp_options ipv6cp_wantoptions;  /* Options that we want to request */
   ipv6cp_options ipv6cp_gotoptions;   /* Options that peer ack'd */
@@ -295,14 +292,16 @@ constexpr auto PPPAUTHTYPE_MSCHAP = 0x04;
 constexpr auto PPPAUTHTYPE_MSCHAP_V2 = 0x08;
 constexpr auto PPPAUTHTYPE_EAP = 0x10;
 constexpr auto PPPAUTHTYPE_ANY = 0xff;
-void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *passwd);
+void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *password);
 
 /*
  * If set, peer is required to authenticate. This is mostly necessary for PPP server support.
  *
  * Default is false.
  */
-#define PPP_SET_AUTH_REQUIRED(ppp, boolval) (ppp->settings.auth_required = (boolval))
+inline void PppSetAuthRequired(PppPcb *ppp, const bool boolval) {
+  (ppp->settings.auth_required = (boolval));
+}
 
 
 
@@ -312,9 +311,16 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is unset (0.0.0.0).
  */
-#define PPP_SET_IPCP_OURADDR(ppp, addr) do { (ppp)->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr); \
-                                             (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0; } while(0)
-#define PPP_SET_IPCP_HISADDR(ppp, addr) ((ppp)->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
+inline void PppSetIpcpOuraddr(PppPcb* ppp, Ip4Addr* addr)
+{
+    (ppp)->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr);
+    (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0;
+}
+
+inline void PPP_SET_IPCP_HISADDR(PppPcb* ppp, Ip4Addr* addr)
+{
+    ((ppp)->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr));
+}
 
 /*
  * Set DNS server addresses that are sent if the peer asks for them. This is mostly necessary
@@ -322,7 +328,9 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is unset (0.0.0.0).
  */
-#define PPP_SET_IPCP_DNSADDR(ppp, index, addr) ((ppp)->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
+inline void PPP_SET_IPCP_DNSADDR(PppPcb *ppp, uint32_t index, Ip4Addr *addr) {
+  ((ppp)->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr));
+}
 
 /*
  * If set, we ask the peer for up to 2 DNS server addresses. Received DNS server addresses are
@@ -350,7 +358,7 @@ constexpr auto PPP_MPPE_REFUSE_128 = 0x08;
  * Default is disabled.
  */
 void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
-#endif /* MPPE_SUPPORT */
+
 
 /*
  * Wait for up to intval milliseconds for a valid PPP packet from the peer.

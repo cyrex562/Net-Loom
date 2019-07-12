@@ -83,7 +83,7 @@
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip6_route(const LwipIp6Addr *src, const LwipIp6Addr *dest)
+ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
 {
 #if LWIP_SINGLE_NETIF
   LWIP_UNUSED_ARG(src);
@@ -280,10 +280,10 @@ ip6_route(const LwipIp6Addr *src, const LwipIp6Addr *dest)
  *         source address is found
  */
 const IpAddr *
-ip6_select_source_address(struct netif *netif, const LwipIp6Addr *dest)
+ip6_select_source_address(struct netif *netif, const Ip6Addr *dest)
 {
   const IpAddr *best_addr;
-  const LwipIp6Addr *cand_addr;
+  const Ip6Addr *cand_addr;
   int8_t dest_scope, cand_scope;
   int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
   uint8_t i, cand_pref, cand_bits;
@@ -565,7 +565,7 @@ ip6_input(struct PacketBuffer *p, struct netif *inp)
    * but we'll do it anyway just to be sure that its done. */
   pbuf_realloc(p, (uint16_t)(IP6_HLEN + IP6H_PLEN(ip6hdr)));
 
-  /* copy IP addresses to aligned LwipIp6Addr */
+  /* copy IP addresses to aligned Ip6Addr */
   ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_dest, ip6hdr->dest);
   ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_src, ip6hdr->src);
 
@@ -1146,11 +1146,11 @@ ip6_input_cleanup:
  *         returns errors returned by netif->output_ip6
  */
 LwipError
-ip6_output_if(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
              uint8_t nexth, struct netif *netif)
 {
-  const LwipIp6Addr *src_used = src;
+  const Ip6Addr *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
     if (src != NULL && ip6_addr_isany(src)) {
       src_used = ip_2_ip6(ip6_select_source_address(netif, dest));
@@ -1170,12 +1170,12 @@ ip6_output_if(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr 
  * when it is 'any'.
  */
 LwipError
-ip6_output_if_src(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
              uint8_t nexth, struct netif *netif)
 {
   struct ip6_hdr *ip6hdr;
-  LwipIp6Addr dest_addr;
+  Ip6Addr dest_addr;
 
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
@@ -1288,12 +1288,12 @@ ip6_output_if_src(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6A
  *         see ip_output_if() for more return values
  */
 LwipError
-ip6_output(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
           uint8_t hl, uint8_t tc, uint8_t nexth)
 {
   struct netif *netif;
   struct ip6_hdr *ip6hdr;
-  LwipIp6Addr src_addr, dest_addr;
+  Ip6Addr src_addr, dest_addr;
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
@@ -1346,12 +1346,12 @@ ip6_output(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *de
  *         see ip_output_if() for more return values
  */
 LwipError
-ip6_output_hinted(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
           uint8_t hl, uint8_t tc, uint8_t nexth, struct netif_hint *netif_hint)
 {
   struct netif *netif;
   struct ip6_hdr *ip6hdr;
-  LwipIp6Addr src_addr, dest_addr;
+  Ip6Addr src_addr, dest_addr;
   LwipError err;
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);

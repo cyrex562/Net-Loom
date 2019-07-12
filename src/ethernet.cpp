@@ -266,7 +266,7 @@ free_and_return:
  * @return ERR_OK if the packet was sent, any other LwipError on failure
  */
 LwipError
-ethernet_output(struct NetIfc * netif, struct pbuf * p,
+ethernet_output(struct NetIfc * netif, struct PacketBuffer * p,
                 const struct EthAddr * src, const struct EthAddr * dst,
                 uint16_t eth_type) {
   struct EthHdr *ethhdr;

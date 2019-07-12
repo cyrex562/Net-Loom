@@ -864,8 +864,8 @@ pppoe_connect(PppPcb *ppp, void *ctx)
   LcpOptions *lcp_wo;
   LcpOptions *lcp_ao;
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
-  ipcp_options *ipcp_wo;
-  ipcp_options *ipcp_ao;
+  IpcpOptions *ipcp_wo;
+  IpcpOptions *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   sc->sc_session = 0;

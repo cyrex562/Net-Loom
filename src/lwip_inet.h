@@ -150,9 +150,9 @@ extern const struct LwipIn6Addr kIn6AddrAny;
                                                                  ip6_addr_clear_zone(target_ip6addr);}
 
 /* directly map this to the lwip internal functions */
-#define inet6_aton(cp, addr)            ip6addr_aton(cp, (LwipIp6Addr*)addr)
-#define inet6_ntoa(addr)                ip6addr_ntoa((const LwipIp6Addr*)&(addr))
-#define inet6_ntoa_r(addr, buf, buflen) ip6addr_ntoa_r((const LwipIp6Addr*)&(addr), buf, buflen)
+#define inet6_aton(cp, addr)            ip6addr_aton(cp, (Ip6Addr*)addr)
+#define inet6_ntoa(addr)                ip6addr_ntoa((const Ip6Addr*)&(addr))
+#define inet6_ntoa_r(addr, buf, buflen) ip6addr_ntoa_r((const Ip6Addr*)&(addr), buf, buflen)
 
 
 

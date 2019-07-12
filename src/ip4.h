@@ -54,35 +54,27 @@ struct Ip4AddrPacked {
 typedef struct Ip4AddrPacked Ip4AddrPT;
 
 /* Size of the IPv4 header. Same as 'sizeof(struct Ip4Hdr)'. */
-#define IP_HLEN 20
+constexpr auto IP_HLEN = 20;
 /* Maximum size of the IPv4 header with options. */
-#define IP_HLEN_MAX 60
+constexpr auto IP_HLEN_MAX = 60;
 
-#define IP_RF 0x8000U        /* reserved fragment flag */
-#define IP_DF 0x4000U        /* don't fragment flag */
+constexpr auto IP_RF = 0x8000U        /* reserved fragment flag */;
+constexpr auto IP_DF = 0x4000U        /* don't fragment flag */;
 #define IP_MF 0x2000U        /* more fragments flag */
 #define IP_OFFMASK 0x1fffU   /* mask for fragmenting bits */
 
 /* The IPv4 header */
-struct Ip4Hdr {
+struct Ip4Hdr
+{
     /* version / header length */
-    uint8_t _v_hl;
-    /* type of service */
-    uint8_t _tos;
-    /* total length */
-    uint16_t _len;
-    /* identification */
-    int16_t _id;
-    /* fragment offset field */
-    uint16_t _offset;
-
-    /* time to live */
-    uint8_t _ttl;
-    /* protocol*/
-    uint8_t _proto;
-    /* checksum */
-    uint16_t _chksum;
-    /* source and destination IP addresses */
+    uint8_t _v_hl; /* type of service */
+    uint8_t _tos; /* total length */
+    uint16_t _len; /* identification */
+    int16_t _id; /* fragment offset field */
+    uint16_t _offset; /* time to live */
+    uint8_t _ttl; /* protocol*/
+    uint8_t _proto; /* checksum */
+    uint16_t _chksum; /* source and destination IP addresses */
     Ip4Addr src;
     Ip4Addr dest;
 };
@@ -116,7 +108,7 @@ struct Ip4Hdr {
 extern "C" {
 #endif
 
-constexpr auto LWIP_IPV4_SRC_ROUTING = 1;
+constexpr auto kLwipIpv4SrcRouting = 1;
 
 
 /** Currently, the function ip_output_if_opt() is only used with IGMP */
@@ -127,19 +119,19 @@ struct NetIfc *ip4_route(const Ip4Addr *dest);
 
 struct NetIfc *ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
 
-LwipError ip4_input(struct pbuf *p, struct NetIfc *inp);
-LwipError ip4_output(struct pbuf *p, const Ip4Addr *src, const Ip4Addr *dest,
+LwipError ip4_input(struct PacketBuffer *p, struct NetIfc *inp);
+LwipError ip4_output(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto);
-LwipError ip4_output_if(struct pbuf *p, const Ip4Addr *src, const Ip4Addr *dest,
+LwipError ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif);
-LwipError ip4_output_if_src(struct pbuf *p, const Ip4Addr *src, const Ip4Addr *dest,
+LwipError ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif);
 
-LwipError ip4_output_hinted(struct pbuf *p, const Ip4Addr *src, const Ip4Addr *dest,
+LwipError ip4_output_hinted(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint);
 
 
-LwipError ip4_output_if_opt(struct pbuf *p, const Ip4Addr *src, const Ip4Addr *dest,
+LwipError ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif, void *ip_options,
        uint16_t optlen);
 LwipError ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
@@ -152,7 +144,7 @@ void  ip4_set_default_multicast_netif(struct NetIfc* default_multicast_netif);
 #define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? netif_ip_addr4(netif) : NULL)
 
 
-void ip4_debug_print(struct pbuf *p);
+void ip4_debug_print(struct PacketBuffer *p);
 
 
 #ifdef __cplusplus

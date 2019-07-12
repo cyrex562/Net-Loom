@@ -189,7 +189,7 @@ slipif_output_v4(struct NetIfc *netif, struct PacketBuffer *p, const Ip4Addr *ip
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipError
-slipif_output_v6(struct netif *netif, struct PacketBuffer *p, const LwipIp6Addr *ipaddr)
+slipif_output_v6(struct netif *netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
 {
   LWIP_UNUSED_ARG(ipaddr);
   return slipif_output(netif, p);

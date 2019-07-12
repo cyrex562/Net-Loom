@@ -261,8 +261,8 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
   LcpOptions *lcp_wo;
   LcpOptions *lcp_ao;
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
-  ipcp_options *ipcp_wo;
-  ipcp_options *ipcp_ao;
+  IpcpOptions *ipcp_wo;
+  IpcpOptions *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   l2tp->tunnel_port = l2tp->remote_port;

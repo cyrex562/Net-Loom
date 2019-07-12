@@ -39,7 +39,6 @@
 
 #include "opt.h"
 #include "tcp.h"
-#include "mem.h"
 #include "packet_buffer.h"
 #include "ip.h"
 #include "icmp.h"
@@ -484,7 +483,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct NetIfc *outif,
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API
-LwipError tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct pbuf *p, LwipError err);
+LwipError tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipError err);
 #endif /* LWIP_CALLBACK_API */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG

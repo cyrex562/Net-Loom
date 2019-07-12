@@ -333,7 +333,7 @@ chap_handle_response(PppPcb* pcb,
     const auto mlen = strlen(message);
     len = mlen + kChapHdrlen;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + len), PPP_CTRL_PBUF_TYPE);
-    const auto p = new pbuf;
+    const auto p = new PacketBuffer;
     if (nullptr == p)
         return;
     if (p->tot_len != p->len)

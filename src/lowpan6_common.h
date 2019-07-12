@@ -72,7 +72,7 @@ LwipError lowpan6_compress_headers(struct NetIfc* netif,
                                Ip6Addr* lowpan6_contexts,
                                const struct Lowpan6LinkAddr* src,
                                const struct Lowpan6LinkAddr* dst);
-struct pbuf* lowpan6_decompress(struct pbuf* p,
+struct PacketBuffer* lowpan6_decompress(struct PacketBuffer* p,
                                 uint16_t datagram_size,
                                 Ip6Addr* lowpan6_contexts,
                                 struct Lowpan6LinkAddr* src,

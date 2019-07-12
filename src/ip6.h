@@ -38,8 +38,7 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_IP6_H
-#define LWIP_HDR_IP6_H
+#pragma once
 
 #include "opt.h"
 #include "ip6_addr.h"
@@ -50,23 +49,15 @@
 #include "lwip_error.h"
 
 
- /** This is the packed version of LwipIp6Addr,
+ /** This is the packed version of Ip6Addr,
      used in network headers that are itself packed */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
 
-struct ip6_addr_packed {
-    (uint32_t addr[4]);
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-typedef struct ip6_addr_packed ip6_addr_p_t;
+struct Ip6AddrPacked {
+    uint32_t addr[4];
+};
+typedef struct Ip6AddrPacked ip6_addr_p_t;
 
 #define IP6_HLEN 40
-
 #define IP6_NEXTH_HOPBYHOP  0
 #define IP6_NEXTH_TCP       6
 #define IP6_NEXTH_UDP       17
@@ -79,27 +70,21 @@ typedef struct ip6_addr_packed ip6_addr_p_t;
 #define IP6_NEXTH_UDPLITE   136
 
 /** The IPv6 header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
 
-struct ip6_hdr {
+struct Ip6Hdr {
     /** version / traffic class / flow label */
-    (uint32_t _v_tc_fl);
+    uint32_t _v_tc_fl;
     /** payload length */
-    (uint16_t _plen);
+    uint16_t _plen;
     /** next header */
-    (uint8_t _nexth);
+    uint8_t _nexth;
     /** hop limit */
-    (uint8_t _hoplim);
+    uint8_t _hoplim;
     /** source and destination IP addresses */
-    PACK_STRUCT_FLD_S(ip6_addr_p_t src);
-    PACK_STRUCT_FLD_S(ip6_addr_p_t dest);
+    ip6_addr_p_t src;
+    ip6_addr_p_t dest;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+
 #define IP6H_V(hdr)  ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f)
 #define IP6H_TC(hdr) ((lwip_ntohl((hdr)->_v_tc_fl) >> 20) & 0xff)
 #define IP6H_FL(hdr) (lwip_ntohl((hdr)->_v_tc_fl) & 0x000fffff)
@@ -121,20 +106,13 @@ PACK_STRUCT_END
 #define IP6_ROUTER_ALERT_DLEN       2
 #define IP6_ROUTER_ALERT_VALUE_MLD  0
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
 struct ip6_opt_hdr {
     /* router alert option type */
-    (uint8_t _opt_type);
+    uint8_t _opt_type;
     /* router alert option data len */
-    (uint8_t _opt_dlen);
+    int8_t _opt_dlen;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+
 #define IP6_OPT_HLEN 2
 #define IP6_OPT_TYPE_ACTION(hdr) ((((hdr)->_opt_type) >> 6) & 0x3)
 #define IP6_OPT_TYPE_CHANGE(hdr) ((((hdr)->_opt_type) >> 5) & 0x1)
@@ -144,63 +122,40 @@ PACK_STRUCT_END
 /* Hop-by-Hop header. */
 #define IP6_HBH_HLEN    2
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
 struct ip6_hbh_hdr {
     /* next header */
-    (uint8_t _nexth);
+    uint8_t _nexth;
     /* header length in 8-octet units */
-    (uint8_t _hlen);
+    uint8_t _hlen;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+
 #define IP6_HBH_NEXTH(hdr) ((hdr)->_nexth)
 
 /* Destination header. */
 #define IP6_DEST_HLEN   2
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
 struct ip6_dest_hdr {
     /* next header */
-    (uint8_t _nexth);
+    uint8_t _nexth;
     /* header length in 8-octet units */
-    (uint8_t _hlen);
+    uint8_t _hlen;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
 #define IP6_DEST_NEXTH(hdr) ((hdr)->_nexth)
 
 /* Routing header */
 #define IP6_ROUT_TYPE2  2
 #define IP6_ROUT_RPL    3
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
 struct ip6_rout_hdr {
     /* next header */
-    (uint8_t _nexth);
+    uint8_t _next;
     /* reserved */
-    (uint8_t _hlen);
+    uint8_t _hlen;
     /* fragment offset */
-    (uint8_t _routing_type);
+    uint8_t _routing_type;
     /* fragmented packet identification */
-    (uint8_t _segments_left);
+    uint8_t _segments_left;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
 #define IP6_ROUT_NEXTH(hdr) ((hdr)->_nexth)
 #define IP6_ROUT_TYPE(hdr) ((hdr)->_routing_type)
 #define IP6_ROUT_SEG_LEFT(hdr) ((hdr)->_segments_left)
@@ -210,24 +165,15 @@ PACK_STRUCT_END
 #define IP6_FRAG_OFFSET_MASK    0xfff8
 #define IP6_FRAG_MORE_FLAG      0x0001
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
-struct ip6_frag_hdr {
+struct Ip6FragHdr
+{
     /* next header */
-    (uint8_t _nexth);
-    /* reserved */
-    (uint8_t reserved);
-    /* fragment offset */
-    (uint16_t _fragment_offset);
-    /* fragmented packet identification */
-    (uint32_t _identification);
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+    uint8_t _nexth; /* reserved */
+    uint8_t reserved; /* fragment offset */
+    uint16_t _fragment_offset; /* fragmented packet identification */
+    uint32_t _identification;
+};
+
 #define IP6_FRAG_NEXTH(hdr) ((hdr)->_nexth)
 #define IP6_FRAG_MBIT(hdr) (lwip_ntohs((hdr)->_fragment_offset) & 0x1)
 #define IP6_FRAG_ID(hdr) (lwip_ntohl((hdr)->_identification))
@@ -241,17 +187,17 @@ PACK_STRUCT_END
 extern "C" {
 #endif
 
-struct netif *ip6_route(const LwipIp6Addr *src, const LwipIp6Addr *dest);
-const ip_addr_t *ip6_select_source_address(struct netif *netif, const LwipIp6Addr * dest);
-err_t         ip6_input(struct pbuf *p, struct netif *inp);
-err_t         ip6_output(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+struct netif *ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
+const ip_addr_t *ip6_select_source_address(struct netif *netif, const Ip6Addr * dest);
+err_t         ip6_input(struct PacketBuffer *p, struct netif *inp);
+err_t         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                          uint8_t hl, uint8_t tc, uint8_t nexth);
-err_t         ip6_output_if(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+err_t         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
-err_t         ip6_output_if_src(struct pbuf *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+err_t         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
 #if LWIP_NETIF_USE_HINTS
-LwipError         ip6_output_hinted(struct PacketBuffer *p, const LwipIp6Addr *src, const LwipIp6Addr *dest,
+LwipError         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                                 uint8_t hl, uint8_t tc, uint8_t nexth, struct netif_hint *netif_hint);
 #endif /* LWIP_NETIF_USE_HINTS */
 #if LWIP_IPV6_MLD
@@ -272,6 +218,3 @@ void ip6_debug_print(struct PacketBuffer *p);
 }
 #endif
 
-//#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_IP6_H */

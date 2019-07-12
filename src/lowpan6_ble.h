@@ -53,13 +53,13 @@
 extern "C" {
 #endif
 
-LwipError rfc7668_output(struct netif *netif, struct PacketBuffer *q, const LwipIp6Addr *ip6addr);
+LwipError rfc7668_output(struct netif *netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
 LwipError rfc7668_input(struct PacketBuffer * p, struct netif *netif);
 LwipError rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len);
 LwipError rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
 LwipError rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len);
 LwipError rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
-LwipError rfc7668_set_context(uint8_t index, const LwipIp6Addr * context);
+LwipError rfc7668_set_context(uint8_t index, const Ip6Addr * context);
 LwipError rfc7668_if_init(struct netif *netif);
 
 #if !NO_SYS

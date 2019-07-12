@@ -90,7 +90,7 @@ icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
 #ifdef LWIP_DEBUG
   uint8_t code;
 #endif /* LWIP_DEBUG */
-  struct icmp_echo_hdr *iecho;
+  struct IcmpEchoHdr *iecho;
   const struct Ip4Hdr *iphdr_in;
   uint16_t hlen;
   const Ip4Addr *src;
@@ -145,7 +145,7 @@ icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
 #endif /* LWIP_BROADCAST_PING */
       }
       Logf(ICMP_DEBUG, ("icmp_input: ping\n"));
-      if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
+      if (p->tot_len < sizeof(struct IcmpEchoHdr)) {
         Logf(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
         goto lenerr;
       }
@@ -177,7 +177,7 @@ icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
           Logf(ICMP_DEBUG, ("icmp_input: allocating new PacketBuffer failed\n"));
           goto icmperr;
         }
-        if (r->len < hlen + sizeof(struct icmp_echo_hdr)) {
+        if (r->len < hlen + sizeof(struct IcmpEchoHdr)) {
           Logf(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("first PacketBuffer cannot hold the ICMP header"));
           pbuf_free(r);
           goto icmperr;
@@ -211,7 +211,7 @@ icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
       /* At this point, all checks are OK. */
       /* We generate an answer by switching the dest and src ip addresses,
        * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
-      iecho = (struct icmp_echo_hdr *)p->payload;
+      iecho = (struct IcmpEchoHdr *)p->payload;
       if (pbuf_add_header(p, hlen)) {
         Logf(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Can't move over header in packet"));
       } else {
@@ -359,7 +359,7 @@ icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code)
   struct PacketBuffer *q;
   struct Ip4Hdr *iphdr;
   /* we can use the echo header here */
-  struct icmp_echo_hdr *icmphdr;
+  struct IcmpEchoHdr *icmphdr;
   Ip4Addr iphdr_src;
   struct NetIfc *netif;
 
@@ -367,7 +367,7 @@ icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code)
   MIB2_STATS_INC(mib2.icmpoutmsgs);
 
   /* ICMP header + IP header + 8 bytes of data */
-  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
+  q = pbuf_alloc(PBUF_IP, sizeof(struct IcmpEchoHdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
     Logf(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMP packet.\n"));
@@ -375,7 +375,7 @@ icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code)
     return;
   }
   LWIP_ASSERT("check that first PacketBuffer can hold icmp message",
-              (q->len >= (sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
+              (q->len >= (sizeof(struct IcmpEchoHdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
 
   iphdr = (struct Ip4Hdr *)p->payload;
   Logf(ICMP_DEBUG, ("icmp_time_exceeded from "));
@@ -384,14 +384,14 @@ icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code)
   ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->dest);
   Logf(ICMP_DEBUG, ("\n"));
 
-  icmphdr = (struct icmp_echo_hdr *)q->payload;
+  icmphdr = (struct IcmpEchoHdr *)q->payload;
   icmphdr->type = type;
   icmphdr->code = code;
   icmphdr->id = 0;
   icmphdr->seqno = 0;
 
   /* copy fields from original packet */
-  SMEMCPY((uint8_t *)q->payload + sizeof(struct icmp_echo_hdr), (uint8_t *)p->payload,
+  SMEMCPY((uint8_t *)q->payload + sizeof(struct IcmpEchoHdr), (uint8_t *)p->payload,
           IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
 
   ip4_addr_copy(iphdr_src, iphdr->src);

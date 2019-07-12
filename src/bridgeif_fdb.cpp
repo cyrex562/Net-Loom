@@ -43,15 +43,11 @@
 
 #include "bridgeif.h"
 #include "lwip_debug.h"
-
-#include "mem.h"
 #include "sys.h"
-
 #include "timeouts.h"
-
 #include <cstring>
-constexpr auto kBridgeifAgeTimerMs = 1000;
 
+constexpr auto kBridgeifAgeTimerMs = 1000; 
 constexpr auto kBrFdbTimeoutSec = (60*5) /* 5 minutes FDB timeout */;
 
 struct BridgeIfDfDbEntry {
@@ -174,7 +170,7 @@ bridgeif_fdb_age_one_second(void *fdb_ptr)
 static void
 bridgeif_age_tmr(void *arg)
 {
-  BridgeIfDfDb *fdb = (BridgeIfDfDb *)arg;
+    const auto fdb = static_cast<BridgeIfDfDb *>(arg);
 
   LWIP_ASSERT("invalid arg", arg != nullptr);
 
@@ -187,19 +183,18 @@ bridgeif_age_tmr(void *arg)
  * Init our simple fdb list
  */
 void *
-bridgeif_fdb_init(uint16_t max_fdb_entries)
+bridgeif_fdb_init(const uint16_t max_fdb_entries)
 {
-  BridgeIfDfDb *fdb;
-  size_t alloc_len_sizet = sizeof(BridgeIfDfDb) + (max_fdb_entries * sizeof(BridgeIfDfDbEntry));
-  mem_size_t alloc_len = (mem_size_t)alloc_len_sizet;
+    auto alloc_len_sizet = sizeof(BridgeIfDfDb) + (max_fdb_entries * sizeof(BridgeIfDfDbEntry));
+    auto alloc_len = size_t(alloc_len_sizet);
   LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-  Logf(BRIDGEIF_DEBUG, "bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len);
-  fdb = (BridgeIfDfDb *)mem_calloc(1, alloc_len);
+  Logf(BRIDGEIF_DEBUG, "bridgeif_fdb_init: allocating %d bytes for private FDB data\n", int(alloc_len));
+    const auto fdb = new BridgeIfDfDb;
   if (fdb == nullptr) {
     return nullptr;
   }
   fdb->max_fdb_entries = max_fdb_entries;
-  fdb->fdb = (BridgeIfDfDbEntry *)(fdb + 1);
+  fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
 
   sys_timeout(kBridgeifAgeTimerMs, bridgeif_age_tmr, fdb);
 

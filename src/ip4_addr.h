@@ -57,7 +57,7 @@ constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
 /** 127.0.0.1 */
 constexpr uint32_t IPADDR_LOOPBACK = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
-constexpr uint32_t IPADDR_ANY = uint32_t(0x00000000UL);
+constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
 constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
 
@@ -120,7 +120,10 @@ inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b,
 /** IPv4 only: set the IP address given as an uint32_t */
 #define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addr = (src_u32))
 /** IPv4 only: get the IP address as an uint32_t */
-#define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
+inline uint32_t ip4_addr_get_u32(Ip4Addr* src_ipaddr)
+{
+    return ((src_ipaddr)->addr);
+}
 
 /** Get the network address by combining host address with netmask */
 #define ip4_addr_get_network(target, host, netmask) do { ((target)->addr = ((host)->addr) & ((netmask)->addr)); } while(0)

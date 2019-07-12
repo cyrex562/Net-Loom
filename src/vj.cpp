@@ -592,7 +592,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     struct TcpHdr* th;
     struct Cstate* cs;
     struct vj_u16_t* bp;
-    struct pbuf* n0 = *nb;
+    struct PacketBuffer* n0 = *nb;
     uint32_t tmp;
     uint32_t hlen;
     uint32_t changes;

@@ -26,7 +26,7 @@
  */
 
 struct IpReassHelper {
-    struct pbuf* next_pbuf;
+    struct PacketBuffer* next_pbuf;
     uint16_t start;
     uint16_t end;
 };
@@ -92,7 +92,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
 {
   uint16_t pbufs_freed = 0;
   uint16_t clen;
-  struct pbuf *p;
+  struct PacketBuffer *p;
   struct IpReassHelper *iprh;
 
   LWIP_ASSERT("prev != ipr", prev != ipr);
@@ -122,7 +122,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
      separately as they have not yet been chained */
   p = ipr->p;
   while (p != nullptr) {
-    struct pbuf *pcur;
+    struct PacketBuffer *pcur;
     iprh = (struct IpReassHelper *)p->payload;
     pcur = p;
     /* get the next pointer before freeing */
@@ -274,7 +274,7 @@ static int
 ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct PacketBuffer *new_p, int is_last)
 {
   struct IpReassHelper *iprh, *iprh_tmp, *iprh_prev = nullptr;
-  struct pbuf *q;
+  struct PacketBuffer *q;
   uint16_t offset, len;
   uint8_t hlen;
   struct Ip4Hdr *fraghdr;

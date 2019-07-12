@@ -46,8 +46,6 @@
 
 #include "ppp_opts.h"
 
-#include "ppp.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

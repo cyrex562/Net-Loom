@@ -346,7 +346,7 @@ inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
  */
 uint16_t
 ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                  const LwipIp6Addr *src, const LwipIp6Addr *dest)
+                  const Ip6Addr *src, const Ip6Addr *dest)
 {
   uint32_t acc = 0;
   uint32_t addr;
@@ -494,7 +494,7 @@ inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto
  */
 uint16_t
 ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                          uint16_t chksum_len, const LwipIp6Addr *src, const LwipIp6Addr *dest)
+                          uint16_t chksum_len, const Ip6Addr *src, const Ip6Addr *dest)
 {
   uint32_t acc = 0;
   uint32_t addr;

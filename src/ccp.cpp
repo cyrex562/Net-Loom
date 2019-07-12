@@ -15,7 +15,7 @@ constexpr auto kDeflateMinWorks = 9;
  * Protocol entry points from main code.
  */
 static void ccp_init(PppPcb* PppPcb);
-static void ccp_open(PppPcb* pcb);
+static bool ccp_open(PppPcb* pcb);
 static void ccp_close(PppPcb* pcb, const char* reason);
 static void ccp_lowerup(PppPcb* pcb);
 static void ccp_lowerdown(PppPcb* pcb);
@@ -24,17 +24,17 @@ static void ccp_protrej(PppPcb* pcb);
 static void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
 
 
-const struct Protent kCcpProtent = {
-    PPP_CCP,
-    ccp_init,
-    ccp_input,
-    ccp_protrej,
-    ccp_lowerup,
-    ccp_lowerdown,
-    ccp_open,
-    ccp_close,
-    ccp_datainput,
-};
+// const struct Protent kCcpProtent = {
+//     PPP_CCP,
+//     ccp_init,
+//     ccp_input,
+//     ccp_protrej,
+//     ccp_lowerup,
+//     ccp_lowerdown,
+//     ccp_open,
+//     ccp_close,
+//     ccp_datainput,
+// };
 
 /*
  * Callbacks for fsm code.
@@ -152,7 +152,7 @@ void ccp_set(PppPcb* pcb,
 /*
  * ccp_open - CCP is allowed to come up.
  */
-static void ccp_open(PppPcb* pcb)
+static bool ccp_open(PppPcb* pcb)
 {
     auto f = &pcb->ccp_fsm;
     const auto go = &pcb->ccp_gotoptions;
@@ -1243,7 +1243,7 @@ static void ccp_up(fsm* f, PppPcb* pcb, Protent** protocols)
         ppp_notice("%s transmit compression enabled", method_name(ho, nullptr));
     if (go->mppe)
     {
-        continue_networks(pcb, protocols); /* Bring up IP et al */
+        continue_networks(pcb); /* Bring up IP et al */
     }
 }
 

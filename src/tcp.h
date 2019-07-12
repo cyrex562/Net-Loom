@@ -80,7 +80,7 @@ extern "C" {
         *            Only return ERR_ABRT if you have called tcp_abort from within the
         *            callback function!
         */
-    typedef LwipError(*tcp_recv_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb, struct pbuf* p, LwipError err);
+    typedef LwipError(*tcp_recv_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb, struct PacketBuffer* p, LwipError err);
     /** Function prototype for tcp sent callback functions. Called when sent data has
         * been acknowledged by the remote side. Use it to free corresponding resources.
         * This also means that the pcb has now space available to send new data.
@@ -280,7 +280,7 @@ struct TcpProtoCtrlBlk
     struct tcp_seg* unsent; /* Unsent (queued) segments. */
     struct tcp_seg* unacked; /* Sent but unacknowledged segments. */
     struct tcp_seg* ooseq; /* Received out of sequence segments. */
-    struct pbuf* refused_data;
+    struct PacketBuffer* refused_data;
     /* Data previously received but not yet taken by upper layer */
     struct tcp_pcb_listen* listener;
     /* Function to be called when more send buffer space is available. */

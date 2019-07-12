@@ -3,13 +3,13 @@
 #include "etharp.h"
 #include "lwip_debug.h"
 #include "lwipopts.h"
-#include "mem.h"
 #include "netif.h"
 #include "opt.h"
 #include <cstring>
 #include "ethip6.h"
 #include "lwip_error.h"
 #include "tcpip.h"
+#include "packet_buffer.h"
 
 
 // #if LWIP_NUM_NETIF_CLIENT_DATA
@@ -201,7 +201,10 @@ bridgeif_send_to_port(bridgeif_private_t *br, struct PacketBuffer *p, uint8_t ds
                     if (netif_is_link_up(portif))
                     {
                         Logf(BRIDGEIF_FW_DEBUG,
-                                    ("br -> flood(%p:%d) -> %d\n", (void *)p, p->if_idx, netif_get_index(portif)));
+                             "br -> flood(%p:%d) -> %d\n",
+                             static_cast<void *>(p),
+                             p->if_idx,
+                             netif_get_index(portif));
                         return portif->linkoutput(portif, p);
                     }
                 }

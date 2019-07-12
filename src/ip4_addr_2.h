@@ -57,7 +57,7 @@ constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
 /** 127.0.0.1 */
 constexpr uint32_t IPADDR_LOOPBACK = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
-constexpr uint32_t IPADDR_ANY = uint32_t(0x00000000UL);
+constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
 constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
 

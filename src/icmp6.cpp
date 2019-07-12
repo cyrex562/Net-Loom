@@ -65,9 +65,9 @@
 /* Forward declarations */
 static void icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type);
 static void icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t data,
-    uint8_t type, const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr);
+    uint8_t type, const Ip6Addr *src_addr, const Ip6Addr *dest_addr);
 static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data,
-    uint8_t type, const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr, struct netif *netif);
+    uint8_t type, const Ip6Addr *src_addr, const Ip6Addr *dest_addr, struct netif *netif);
 
 
 /**
@@ -84,7 +84,7 @@ icmp6_input(struct PacketBuffer *p, struct netif *inp)
 {
   struct Icmp6Hdr *icmp6hdr;
   struct PacketBuffer *r;
-  const LwipIp6Addr *reply_src;
+  const Ip6Addr *reply_src;
 
   ICMP6_STATS_INC(icmp6.recv);
 
@@ -271,7 +271,7 @@ icmp6_time_exceeded(struct PacketBuffer *p, enum Icmp6TeCode c)
  */
 void
 icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum Icmp6TeCode c,
-    const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr)
+    const Ip6Addr *src_addr, const Ip6Addr *dest_addr)
 {
   icmp6_send_response_with_addrs(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
 }
@@ -344,7 +344,7 @@ icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t
  */
 static void
 icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type,
-    const LwipIp6Addr *src_addr, const LwipIp6Addr *dest_addr)
+    const Ip6Addr *src_addr, const Ip6Addr *dest_addr)
 {
   const struct ip6_addr *reply_src, *reply_dest;
   struct netif *netif;
@@ -383,7 +383,7 @@ icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t da
  */
 static void
 icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type,
-    const LwipIp6Addr *reply_src, const LwipIp6Addr *reply_dest, struct netif *netif)
+    const Ip6Addr *reply_src, const Ip6Addr *reply_dest, struct netif *netif)
 {
   struct PacketBuffer *q;
   struct Icmp6Hdr *icmp6hdr;
