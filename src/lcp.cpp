@@ -1213,7 +1213,7 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
 		   );
     }
 #else /* HAVE_MULTILINK */
-    LWIP_UNUSED_ARG(treat_as_reject);
+    ;
 #endif /* HAVE_MULTILINK */
 
     /*
@@ -2457,7 +2457,7 @@ static void lcp_received_echo_reply(Fsm *f, int id, uint8_t *inp, int len) {
     PppPcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     uint32_t magic_val;
-    LWIP_UNUSED_ARG(id);
+    ;
 
     /* Check the magic number - don't count replies from ourselves. */
     if (len < 4) {

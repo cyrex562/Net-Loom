@@ -1574,7 +1574,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 
 /**
  * LWIP_NETIF_HWADDRHINT==1: Cache link-layer-address hints (e.g. table
- * indices) in struct netif. TCP and UDP can make use of this to prevent
+ * indices) in NetIfc*. TCP and UDP can make use of this to prevent
  * scanning the ARP table for every sent packet. While this is faster for big
  * ARP tables or many concurrent connections, it might be counterproductive
  * if you have a tiny ARP table or if there never are concurrent connections.
@@ -1607,7 +1607,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 
 /**
  * LWIP_NUM_NETIF_CLIENT_DATA: Number of clients that may store
- * data in client_data member array of struct netif (max. 256).
+ * data in client_data member array of NetIfc* (max. 256).
  */
 #if !defined LWIP_NUM_NETIF_CLIENT_DATA || defined __DOXYGEN__
 #define LWIP_NUM_NETIF_CLIENT_DATA      1
@@ -2765,11 +2765,11 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP4_INPUT(PacketBuffer, input_netif):
  * Called from ip_input() (IPv4)
  * Signature:\code{.c}
- *   int my_hook(struct PacketBuffer *PacketBuffer, struct netif *input_netif);
+ *   int my_hook(struct PacketBuffer *PacketBuffer, NetIfc*input_netif);
  * \endcode
  * Arguments:
  * - PacketBuffer: received struct PacketBuffer passed to ip_input()
- * - input_netif: struct netif on which the packet has been received
+ * - input_netif: NetIfc* on which the packet has been received
  * Return values:
  * - 0: Hook has not consumed the packet, packet is processed as normal
  * - != 0: Hook has consumed the packet.
@@ -2784,7 +2784,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP4_ROUTE(dest):
  * Called from ip_route() (IPv4)
  * Signature:\code{.c}
- *   struct netif *my_hook(const Ip4Addr *dest);
+ *   NetIfc*my_hook(const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - dest: destination IPv4 address
@@ -2800,7 +2800,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
  * Source-based routing for IPv4 - called from ip_route() (IPv4)
  * Signature:\code{.c}
- *   struct netif *my_hook(const Ip4Addr *src, const Ip4Addr *dest);
+ *   NetIfc*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - src: local/source IPv4 address
@@ -2838,7 +2838,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
  * Called from etharp_output() (IPv4)
  * Signature:\code{.c}
- *   const Ip4Addr *my_hook(struct netif *netif, const Ip4Addr *dest);
+ *   const Ip4Addr *my_hook(NetIfc*netif, const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - netif: the netif used for sending
@@ -2860,11 +2860,11 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP6_INPUT(PacketBuffer, input_netif):
  * Called from ip6_input() (IPv6)
  * Signature:\code{.c}
- *   int my_hook(struct PacketBuffer *PacketBuffer, struct netif *input_netif);
+ *   int my_hook(struct PacketBuffer *PacketBuffer, NetIfc*input_netif);
  * \endcode
  * Arguments:
  * - PacketBuffer: received struct PacketBuffer passed to ip6_input()
- * - input_netif: struct netif on which the packet has been received
+ * - input_netif: NetIfc* on which the packet has been received
  * Return values:
  * - 0: Hook has not consumed the packet, packet is processed as normal
  * - != 0: Hook has consumed the packet.
@@ -2879,7 +2879,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_IP6_ROUTE(src, dest):
  * Called from ip_route() (IPv6)
  * Signature:\code{.c}
- *   struct netif *my_hook(const Ip6Addr *dest, const Ip6Addr *src);
+ *   NetIfc*my_hook(const Ip6Addr *dest, const Ip6Addr *src);
  * \endcode
  * Arguments:
  * - src: source IPv6 address
@@ -2896,7 +2896,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_ND6_GET_GW(netif, dest):
  * Called from nd6_get_next_hop_entry() (IPv6)
  * Signature:\code{.c}
- *   const Ip6Addr *my_hook(struct netif *netif, const Ip6Addr *dest);
+ *   const Ip6Addr *my_hook(NetIfc*netif, const Ip6Addr *dest);
  * \endcode
  * Arguments:
  * - netif: the netif used for sending
@@ -2918,19 +2918,17 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_VLAN_CHECK(netif, EthHdr, vlan_hdr):
  * Called from ethernet_input() if VLAN support is enabled
  * Signature:\code{.c}
- *   int my_hook(struct netif *netif, struct EthHdr *EthHdr, struct eth_vlan_hdr *vlan_hdr);
+ *   int my_hook(NetIfc*netif, struct EthHdr *EthHdr, struct eth_vlan_hdr *vlan_hdr);
  * \endcode
  * Arguments:
- * - netif: struct netif on which the packet has been received
+ * - netif: NetIfc* on which the packet has been received
  * - EthHdr: struct EthHdr of the packet
  * - vlan_hdr: struct eth_vlan_hdr of the packet
  * Return values:
  * - 0: Packet must be dropped.
  * - != 0: Packet must be accepted.
  */
-#ifdef __DOXYGEN__
 #define LWIP_HOOK_VLAN_CHECK(netif, EthHdr, vlan_hdr)
-#endif
 
 /**
  * LWIP_HOOK_VLAN_SET:
@@ -2938,10 +2936,10 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * on per-netif basis to implement this callback, see @ref netif_cd.
  * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
  * Signature:\code{.c}
- *   s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct EthAddr* src, const struct EthAddr* dst, uint16_t eth_type);\n
+ *   s32_t my_hook_vlan_set(NetIfc** netif, struct pbuf* pbuf, const struct EthAddr* src, const struct EthAddr* dst, uint16_t eth_type);\n
  * \endcode
  * Arguments:
- * - netif: struct netif that the packet will be sent through
+ * - netif: NetIfc* that the packet will be sent through
  * - p: struct PacketBuffer packet to be sent
  * - src: source eth address
  * - dst: destination eth address
@@ -2971,7 +2969,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(PacketBuffer, netif):
  * Called from ethernet_input() when an unknown eth type is encountered.
  * Signature:\code{.c}
- *   LwipError my_hook(struct PacketBuffer* PacketBuffer, struct netif* netif);
+ *   LwipError my_hook(struct PacketBuffer* PacketBuffer, NetIfc** netif);
  * \endcode
  * Arguments:
  * - p: rx packet with unknown eth type
@@ -2992,11 +2990,11 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * This hook is called just before the DHCP message trailer is added, so the
  * options are at the end of a DHCP message.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
+ *   void my_hook(NetIfc*netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
  *                uint8_t msg_type, uint16_t *options_len_ptr);
  * \endcode
  * Arguments:
- * - netif: struct netif that the packet will be sent through
+ * - netif: NetIfc* that the packet will be sent through
  * - dhcp: struct dhcp on that netif
  * - state: current dhcp state (dhcp_state_enum_t as an uint8_t)
  * - msg: struct dhcp_msg that will be sent
@@ -3020,11 +3018,11 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * Called from dhcp_parse_reply when receiving a DHCP message.
  * This hook is called for every option in the received message that is not handled internally.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
+ *   void my_hook(NetIfc*netif, struct dhcp *dhcp, uint8_t state, struct dhcp_msg *msg,
  *                uint8_t msg_type, uint8_t option, uint8_t option_len, struct PacketBuffer *PacketBuffer, uint16_t option_value_offset);
  * \endcode
  * Arguments:
- * - netif: struct netif that the packet will be sent through
+ * - netif: NetIfc* that the packet will be sent through
  * - dhcp: struct dhcp on that netif
  * - state: current dhcp state (dhcp_state_enum_t as an uint8_t)
  * - msg: struct dhcp_msg that was received
@@ -3049,11 +3047,11 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * This hook is called just before the DHCP6 message is sent, so the
  * options are at the end of a DHCP6 message.
  * Signature:\code{.c}
- *   void my_hook(struct netif *netif, struct dhcp6 *dhcp, uint8_t state, struct dhcp6_msg *msg,
+ *   void my_hook(NetIfc*netif, struct dhcp6 *dhcp, uint8_t state, struct dhcp6_msg *msg,
  *                uint8_t msg_type, uint16_t *options_len_ptr);
  * \endcode
  * Arguments:
- * - netif: struct netif that the packet will be sent through
+ * - netif: NetIfc* that the packet will be sent through
  * - dhcp6: struct dhcp6 on that netif
  * - state: current dhcp6 state (dhcp6_state_enum_t as an uint8_t)
  * - msg: struct dhcp6_msg that will be sent

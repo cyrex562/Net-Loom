@@ -41,7 +41,7 @@ struct IpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl; /* link layer address resolution hint */
-    struct netif_hint netif_hints;
+    NetIfc*cHint netif_hints;
 };
 
 
@@ -75,9 +75,9 @@ inline bool IP_ADDR_PCB_VERSION_MATCH(IpPcb *pcb, IpAddr *ipaddr)
 struct ip_globals
 {
   /** The interface that accepted the packet for the current callback invocation. */
-  struct NetIfc *current_netif;
+  NetIfc*current_netif;
   /** The interface that received the packet for the current callback invocation. */
-  struct NetIfc *current_input_netif;
+  NetIfc*current_input_netif;
 
   /** Header of the input packet currently being processed. */
   const struct Ip4Hdr *current_ip4_header;
@@ -204,7 +204,7 @@ extern struct ip_globals ip_data;
         ip4_netif_get_local_ip(netif))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 
-LwipError ip_input(struct PacketBuffer *p, struct NetIfc *inp);
+LwipError ip_input(struct PacketBuffer *p, NetIfc*inp);
 
 
 #define ip_route_get_local_ip(src, dest, netif, ipaddr) do { \

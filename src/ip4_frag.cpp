@@ -206,7 +206,7 @@ ip_reass_enqueue_new_datagram(struct Ip4Hdr *fraghdr, int clen)
 {
   struct ip_reassdata *ipr;
 #if ! IP_REASS_FREE_OLDEST
-  LWIP_UNUSED_ARG(clen);
+  ;
 #endif
 
   /* No matching previous fragment found, allocate a new reassdata struct */
@@ -669,7 +669,7 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
  * @return ERR_OK if sent successfully, LwipError otherwise
  */
 LwipError
-ip4_frag(struct PacketBuffer *p, struct NetIfc *netif, const Ip4Addr *dest)
+ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
 {
   struct PacketBuffer *rambuf;
 #if !LWIP_NETIF_TX_SINGLE_PBUF

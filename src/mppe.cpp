@@ -95,7 +95,7 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
  * don't have to keep multiple copies of keys.
  */
 void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
-	LWIP_UNUSED_ARG(pcb);
+	;
 	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
 
@@ -177,7 +177,7 @@ mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
  */
 void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
 {
-	LWIP_UNUSED_ARG(pcb);
+	;
 	state->bits |= MPPE_BIT_FLUSHED;
 }
 
@@ -193,7 +193,7 @@ mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint
 	uint8_t *pl;
 	LwipError err;
 
-	LWIP_UNUSED_ARG(pcb);
+	;
 
 	/* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.
@@ -264,8 +264,8 @@ mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint
  */
 void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
 {
-	LWIP_UNUSED_ARG(pcb);
-	LWIP_UNUSED_ARG(state);
+	;
+	;
 	return;
 }
 

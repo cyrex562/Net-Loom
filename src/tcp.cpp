@@ -287,7 +287,7 @@ tcp_listen_closed(struct TcpProtoCtrlBlk *pcb)
     tcp_remove_listener(*tcp_pcb_lists[i], (struct tcp_pcb_listen *)pcb);
   }
 #endif
-  LWIP_UNUSED_ARG(pcb);
+  ;
 }
 
 #if TCP_LISTEN_BACKLOG
@@ -771,7 +771,7 @@ tcp_bind(struct TcpProtoCtrlBlk *pcb, const IpAddr *ipaddr, uint16_t port)
  * @param netif the netif to bind to. Can be NULL.
  */
 void
-tcp_bind_netif(struct TcpProtoCtrlBlk *pcb, const struct NetIfc *netif)
+tcp_bind_netif(struct TcpProtoCtrlBlk *pcb, const NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if (netif != nullptr) {
@@ -788,8 +788,8 @@ tcp_bind_netif(struct TcpProtoCtrlBlk *pcb, const struct NetIfc *netif)
 static LwipError
 tcp_accept_null(void *arg, struct TcpProtoCtrlBlk *pcb, LwipError err)
 {
-  LWIP_UNUSED_ARG(arg);
-  LWIP_UNUSED_ARG(err);
+  ;
+  ;
 
   LWIP_ASSERT("tcp_accept_null: invalid pcb", pcb != nullptr);
 
@@ -861,7 +861,7 @@ tcp_listen_with_backlog_and_err(struct TcpProtoCtrlBlk *pcb, uint8_t backlog, Lw
   struct tcp_pcb_listen *lpcb = nullptr;
   LwipError res;
 
-  LWIP_UNUSED_ARG(backlog);
+  ;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1079,7 +1079,7 @@ LwipError
 tcp_connect(struct TcpProtoCtrlBlk *pcb, const IpAddr *ipaddr, uint16_t port,
             tcp_connected_fn connected)
 {
-  struct NetIfc *netif = nullptr;
+  NetIfc*netif = nullptr;
   LwipError ret;
   uint32_t iss;
   uint16_t old_local_port;
@@ -1174,7 +1174,7 @@ tcp_connect(struct TcpProtoCtrlBlk *pcb, const IpAddr *ipaddr, uint16_t port,
 #if LWIP_CALLBACK_API
   pcb->connected = connected;
 #else /* LWIP_CALLBACK_API */
-  LWIP_UNUSED_ARG(connected);
+  ;
 #endif /* LWIP_CALLBACK_API */
 
   /* Send a SYN together with the MSS option. */
@@ -1697,7 +1697,7 @@ tcp_seg_copy(struct tcp_seg *seg)
 LwipError
 tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipError err)
 {
-  LWIP_UNUSED_ARG(arg);
+  ;
 
   LWIP_ERROR("tcp_recv_null: invalid pcb", pcb != nullptr, return ERR_ARG);
 
@@ -1988,7 +1988,7 @@ tcp_new_ip_type(uint8_t type)
     IpAdderSetTypeVal(pcb->remote_ip, type);
   }
 #else
-  LWIP_UNUSED_ARG(type);
+  ;
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
   return pcb;
 }
@@ -2132,7 +2132,7 @@ tcp_poll(struct TcpProtoCtrlBlk *pcb, tcp_poll_fn poll, uint8_t interval)
 #if LWIP_CALLBACK_API
   pcb->poll = poll;
 #else /* LWIP_CALLBACK_API */
-  LWIP_UNUSED_ARG(poll);
+  ;
 #endif /* LWIP_CALLBACK_API */
   pcb->pollinterval = interval;
 }
@@ -2241,7 +2241,7 @@ tcp_next_iss(struct TcpProtoCtrlBlk *pcb)
   static uint32_t iss = 6510;
 
   LWIP_ASSERT("tcp_next_iss: invalid pcb", pcb != nullptr);
-  LWIP_UNUSED_ARG(pcb);
+  ;
 
   iss += tcp_ticks;       /* XXX */
   return iss;
@@ -2255,12 +2255,12 @@ tcp_next_iss(struct TcpProtoCtrlBlk *pcb)
  * netif (if not NULL).
  */
 uint16_t
-tcp_eff_send_mss_netif(uint16_t sendmss, struct NetIfc *outif, const IpAddr *dest)
+tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif, const IpAddr *dest)
 {
   uint16_t mss_s;
   uint16_t mtu;
 
-  LWIP_UNUSED_ARG(dest); /* in case IPv6 is disabled */
+  ; /* in case IPv6 is disabled */
 
   LWIP_ASSERT("tcp_eff_send_mss_netif: invalid dst_ip", dest != nullptr);
 

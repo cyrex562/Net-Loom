@@ -82,14 +82,14 @@
  * @param dest the destination IPv6 address for which to find the route
  * @return the netif on which to send to reach dest
  */
-struct netif *
+NetIfc*
 ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
 {
 #if LWIP_SINGLE_NETIF
-  LWIP_UNUSED_ARG(src);
-  LWIP_UNUSED_ARG(dest);
+  ;
+  ;
 #else /* LWIP_SINGLE_NETIF */
-  struct netif *netif;
+  NetIfc*netif;
   int8_t i;
 
   LWIP_ASSERT_CORE_LOCKED();
@@ -280,7 +280,7 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
  *         source address is found
  */
 const IpAddr *
-ip6_select_source_address(struct netif *netif, const Ip6Addr *dest)
+ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
 {
   const IpAddr *best_addr;
   const Ip6Addr *cand_addr;
@@ -363,9 +363,9 @@ ip6_select_source_address(struct netif *netif, const Ip6Addr *dest)
  * @param inp the netif on which this packet was received
  */
 static void
-ip6_forward(struct PacketBuffer *p, struct ip6_hdr *iphdr, struct netif *inp)
+ip6_forward(struct PacketBuffer *p, struct ip6_hdr *iphdr, NetIfc*inp)
 {
-  struct netif *netif;
+  NetIfc*netif;
 
   /* do not forward link-local or loopback addresses */
   if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
@@ -466,7 +466,7 @@ ip6_forward(struct PacketBuffer *p, struct ip6_hdr *iphdr, struct netif *inp)
 
 /** Return true if the current input packet should be accepted on this netif */
 static int
-ip6_input_accept(struct netif *netif)
+ip6_input_accept(NetIfc*netif)
 {
   /* interface is up? */
   if (netif_is_up(netif)) {
@@ -506,10 +506,10 @@ ip6_input_accept(struct netif *netif)
  *         processed, but currently always returns ERR_OK)
  */
 LwipError
-ip6_input(struct PacketBuffer *p, struct netif *inp)
+ip6_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct ip6_hdr *ip6hdr;
-  struct netif *netif;
+  NetIfc*netif;
   const uint8_t *nexth;
   uint16_t hlen, hlen_tot; /* the current header length */
 #if 0 /*IP_ACCEPT_LINK_LAYER_ADDRESSING*/
@@ -1148,7 +1148,7 @@ ip6_input_cleanup:
 LwipError
 ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
-             uint8_t nexth, struct netif *netif)
+             uint8_t nexth, NetIfc*netif)
 {
   const Ip6Addr *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
@@ -1172,7 +1172,7 @@ ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
 LwipError
 ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
-             uint8_t nexth, struct netif *netif)
+             uint8_t nexth, NetIfc*netif)
 {
   struct ip6_hdr *ip6hdr;
   Ip6Addr dest_addr;
@@ -1291,7 +1291,7 @@ LwipError
 ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
           uint8_t hl, uint8_t tc, uint8_t nexth)
 {
-  struct netif *netif;
+  NetIfc*netif;
   struct ip6_hdr *ip6hdr;
   Ip6Addr src_addr, dest_addr;
 
@@ -1347,9 +1347,9 @@ ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
  */
 LwipError
 ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
-          uint8_t hl, uint8_t tc, uint8_t nexth, struct netif_hint *netif_hint)
+          uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*_hint *netif_hint)
 {
-  struct netif *netif;
+  NetIfc*netif;
   struct ip6_hdr *ip6hdr;
   Ip6Addr src_addr, dest_addr;
   LwipError err;

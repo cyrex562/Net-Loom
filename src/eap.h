@@ -23,9 +23,12 @@
 #pragma once
 
 #include "ppp_opts.h"
+#include "eap_state.h"
 #include <cstdint>
 #ifdef	__cplusplus
 struct PppPcb;
+
+constexpr auto SHA_DIGESTSIZE = 20;
 
 extern "C" {
 #endif
@@ -33,35 +36,81 @@ extern "C" {
 /*
  * Packet header = Code, id, length.
  */
-#define	EAP_HEADERLEN	4
+constexpr auto EAP_HEADERLEN = 4;
 
+
+static const uint8_t wkmodulus[] = {
+0xAC, 0x6B, 0xDB, 0x41, 0x32, 0x4A, 0x9A, 0x9B, 0xF1, 0x66, 0xDE, 0x5E,
+0x13, 0x89, 0x58, 0x2F, 0xAF, 0x72, 0xB6, 0x65, 0x19, 0x87, 0xEE, 0x07,
+0xFC, 0x31, 0x92, 0x94, 0x3D, 0xB5, 0x60, 0x50, 0xA3, 0x73, 0x29, 0xCB,
+0xB4, 0xA0, 0x99, 0xED, 0x81, 0x93, 0xE0, 0x75, 0x77, 0x67, 0xA1, 0x3D,
+0xD5, 0x23, 0x12, 0xAB, 0x4B, 0x03, 0x31, 0x0D, 0xCD, 0x7F, 0x48, 0xA9,
+0xDA, 0x04, 0xFD, 0x50, 0xE8, 0x08, 0x39, 0x69, 0xED, 0xB7, 0x67, 0xB0,
+0xCF, 0x60, 0x95, 0x17, 0x9A, 0x16, 0x3A, 0xB3, 0x66, 0x1A, 0x05, 0xFB,
+0xD5, 0xFA, 0xAA, 0xE8, 0x29, 0x18, 0xA9, 0x96, 0x2F, 0x0B, 0x93, 0xB8,
+0x55, 0xF9, 0x79, 0x93, 0xEC, 0x97, 0x5E, 0xEA, 0xA8, 0x0D, 0x74, 0x0A,
+0xDB, 0xF4, 0xFF, 0x74, 0x73, 0x59, 0xD0, 0x41, 0xD5, 0xC3, 0x3E, 0xA7,
+0x1D, 0x28, 0x1E, 0x44, 0x6B, 0x14, 0x77, 0x3B, 0xCA, 0x97, 0xB4, 0x3A,
+0x23, 0xFB, 0x80, 0x16, 0x76, 0xBD, 0x20, 0x7A, 0x43, 0x6C, 0x64, 0x81,
+0xF1, 0xD2, 0xB9, 0x07, 0x87, 0x17, 0x46, 0x1A, 0x5B, 0x9D, 0x32, 0xE6,
+0x88, 0xF8, 0x77, 0x48, 0x54, 0x45, 0x23, 0xB5, 0x24, 0xB0, 0xD5, 0x7D,
+0x5E, 0xA7, 0x7A, 0x27, 0x75, 0xD2, 0xEC, 0xFA, 0x03, 0x2C, 0xFB, 0xDB,
+0xF5, 0x2F, 0xB3, 0x78, 0x61, 0x60, 0x27, 0x90, 0x04, 0xE5, 0x7A, 0xE6,
+0xAF, 0x87, 0x4E, 0x73, 0x03, 0xCE, 0x53, 0x29, 0x9C, 0xCC, 0x04, 0x1C,
+0x7B, 0xC3, 0x08, 0xD8, 0x2A, 0x56, 0x98, 0xF3, 0xA8, 0xD0, 0xC3, 0x82,
+0x71, 0xAE, 0x35, 0xF8, 0xE9, 0xDB, 0xFB, 0xB6, 0x94, 0xB5, 0xC8, 0x03,
+0xD8, 0x9F, 0x7A, 0xE4, 0x35, 0xDE, 0x23, 0x6D, 0x52, 0x5F, 0x54, 0x75,
+0x9B, 0x65, 0xE3, 0x72, 0xFC, 0xD6, 0x8E, 0xF2, 0x0F, 0xA7, 0x11, 0x1F,
+0x9E, 0x4A, 0xFF, 0x73};
 
 /* EAP message codes. */
-#define	EAP_REQUEST	1
-#define	EAP_RESPONSE	2
-#define	EAP_SUCCESS	3
-#define	EAP_FAILURE	4
+enum EapMsgCode
+{
+    EAP_REQUEST =1,
+    EAP_RESPONSE= 2,
+    EAP_SUCCESS =3,
+    EAP_FAILURE =4,
+};
+
 
 /* EAP types */
-#define	EAPT_IDENTITY		1
-#define	EAPT_NOTIFICATION	2
-#define	EAPT_NAK		3	/* (response only) */
-#define	EAPT_MD5CHAP		4
-#define	EAPT_OTP		5	/* One-Time Password; RFC 1938 */
-#define	EAPT_TOKEN		6	/* Generic Token Card */
-/* 7 and 8 are unassigned. */
-#define	EAPT_RSA		9	/* RSA Public Key Authentication */
-#define	EAPT_DSS		10	/* DSS Unilateral */
-#define	EAPT_KEA		11	/* KEA */
-#define	EAPT_KEA_VALIDATE	12	/* KEA-VALIDATE	*/
-#define	EAPT_TLS		13	/* EAP-TLS */
-#define	EAPT_DEFENDER		14	/* Defender Token (AXENT) */
-#define	EAPT_W2K		15	/* Windows 2000 EAP */
-#define	EAPT_ARCOT		16	/* Arcot Systems */
-#define	EAPT_CISCOWIRELESS	17	/* Cisco Wireless */
-#define	EAPT_NOKIACARD		18	/* Nokia IP smart card */
-#define	EAPT_SRP		19	/* Secure Remote Password */
-/* 20 is deprecated */
+enum EapType
+{
+    EAPT_IDENTITY = 1,
+    EAPT_NOTIFICATION= 2,
+    EAPT_NAK = 3,
+    /* (response only) */
+    EAPT_MD5CHAP = 4,
+    EAPT_OTP = 5,
+    /* One-Time Password; RFC 1938 */
+    EAPT_TOKEN = 6,
+    /* Generic Token Card */
+    /* 7 and 8 are unassigned. */
+    EAPT_RSA = 9,
+    /* RSA Public Key Authentication */
+    EAPT_DSS = 10,
+    /* DSS Unilateral */
+    EAPT_KEA =11,
+    /* KEA */
+    EAPT_KEA_VALIDATE =12,
+    /* KEA-VALIDATE	*/
+    EAPT_TLS =13,
+    /* EAP-TLS */
+    EAPT_DEFENDER = 14,
+    /* Defender Token (AXENT) */
+    EAPT_W2K = 15,
+    /* Windows 2000 EAP */
+    EAPT_ARCOT = 16,
+    /* Arcot Systems */
+    EAPT_CISCOWIRELESS =17,
+    /* Cisco Wireless */
+    EAPT_NOKIACARD = 18,
+    /* Nokia IP smart card */
+    EAPT_SRP =19,
+    /* Secure Remote Password */
+    /* 20 is deprecated */
+};
+
 
 /* EAP SRP-SHA1 Subtypes */
 #define	EAPSRP_CHALLENGE	1	/* Request 1 - Challenge */
@@ -93,58 +142,14 @@ extern "C" {
 	 (pcb)->eap.es_server.ea_state <= eapMD5Chall)
 #endif /* PPP_SERVER */
 
-/*
- * Complete EAP state for one PPP session.
- */
-enum eap_state_code {
-	eapInitial = 0,	/* No EAP authentication yet requested */
-	eapPending,	/* Waiting for LCP (no timer) */
-	eapClosed,	/* Authentication not in use */
-	kEapListen,	/* Client ready (and timer running) */
-	eapIdentify,	/* EAP Identify sent */
-	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
-	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
-	eapSRP3,	/* Sent EAP SRP-SHA1 Subtype 3 */
-	eapMD5Chall,	/* Sent MD5-Challenge */
-	eapOpen,	/* Completed authentication */
-	eapSRP4,	/* Sent EAP SRP-SHA1 Subtype 4 */
-	eapBadAuth	/* Failed authentication */
-};
-
-struct eap_auth {
-	const char *ea_name;	/* Our name */
-	char ea_peer[MAXNAMELEN +1];	/* Peer's name */
-	void *ea_session;	/* Authentication library linkage */
-	uint8_t *ea_skey;	/* Shared encryption key */
-	uint16_t ea_namelen;	/* Length of our name */
-	uint16_t ea_peerlen;	/* Length of peer's name */
-	enum eap_state_code ea_state;
-	uint8_t ea_id;		/* Current id */
-	uint8_t ea_requests;	/* Number of Requests sent/received */
-	uint8_t ea_responses;	/* Number of Responses */
-	uint8_t ea_type;		/* One of EAPT_* */
-	uint32_t ea_keyflags;	/* SRP shared key usage flags */
-};
-
-#define EAP_MAX_CHALLENGE_LENGTH	24
-
-struct EapState
+struct Base64State
 {
-    struct eap_auth es_client; /* Client (authenticatee) data */
-    struct eap_auth es_server; /* Server (authenticator) data */
-    int es_savedtime; /* Saved timeout */
-    int es_rechallenge; /* EAP rechallenge interval */
-    int es_lwrechallenge; /* SRP lightweight rechallenge inter */
-    uint8_t es_usepseudo; /* Use SRP Pseudonym if offered one */
-    int es_usedpseudo; /* Set if we already sent PN */
-    int es_challen; /* Length of challenge string */
-    uint8_t es_challenge[EAP_MAX_CHALLENGE_LENGTH];
+    uint32_t bs_bits;
+    int bs_offs;
 };
 
-inline bool eap_client_active(EapState* eap)
-{
-    return (eap->es_client.ea_state == kEapListen);
-}
+static char base64[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 void eap_authwithpeer(PppPcb *pcb);
 void eap_authpeer(PppPcb *pcb, const char *localname);

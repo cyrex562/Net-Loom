@@ -2,6 +2,8 @@
 
 #include "def.h"
 #include "opt.h"
+#include "netif.h"
+#include "lwip_debug.h"
 
 #ifdef __cplusplus
 extern "C" 
@@ -175,7 +177,7 @@ enum lwip_ipv6_scope_type
  * @param dest the IPv6 address for which to select and set a zone.
  * @param src source IPv6 address (const); may be equal to dest.
  */
-#define ip6_addr_select_zone(dest, src) do { struct netif *selected_netif; \
+#define ip6_addr_select_zone(dest, src) do { NetIfc*selected_netif; \
   selected_netif = ip6_route((src), (dest)); \
   if (selected_netif != NULL) { \
     ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif); \
@@ -187,11 +189,14 @@ enum lwip_ipv6_scope_type
     ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) == ip6_addr_has_zone(ip6addr))
 
 /** Verify that the given IPv6 address is properly zoned for the given netif. */
-#define IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif) LWIP_ASSERT("IPv6 netif zone check failed", \
-    ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) ? \
-    (ip6_addr_has_zone(ip6addr) && \
-     (((netif) == NULL) || LwipIp6Addrest_zone((ip6addr), (netif)))) : \
-    !ip6_addr_has_zone(ip6addr))
+inline bool IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif)
+{
+    return LWIP_ASSERT("IPv6 netif zone check failed",
+                       ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
+                           ? (ip6_addr_has_zone(ip6addr) &&
+                               (((netif) == NULL) || LwipIp6Addrest_zone((ip6addr), (netif))))
+                           : !ip6_addr_has_zone(ip6addr));
+}
 
 inline bool ip6_addr_cmp_zoneless(const Ip6Addr* addr1, const Ip6Addr* addr2)
 {

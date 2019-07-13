@@ -130,7 +130,7 @@ static void tcp_remove_sacks_gt(struct TcpProtoCtrlBlk *pcb, uint32_t seq);
  * @param inp network interface on which this segment was received
  */
 void
-tcp_input(struct PacketBuffer *p, struct NetIfc *inp)
+tcp_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct TcpProtoCtrlBlk *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
@@ -141,7 +141,7 @@ tcp_input(struct PacketBuffer *p, struct NetIfc *inp)
   uint8_t hdrlen_bytes;
   LwipError err;
 
-  LWIP_UNUSED_ARG(inp);
+  ;
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("tcp_input: invalid pbuf", p != nullptr);
 
@@ -680,7 +680,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       Logf(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
       TCP_STATS_INC(tcp.memerr);
       TCP_EVENT_ACCEPT(pcb, NULL, pcb->callback_arg, ERR_MEM, err);
-      LWIP_UNUSED_ARG(err); /* err not useful here */
+      ; /* err not useful here */
       return;
     }
 #if TCP_LISTEN_BACKLOG
@@ -1106,8 +1106,8 @@ tcp_free_acked_segments(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg_list, c
   struct tcp_seg *next;
   uint16_t clen;
 
-  LWIP_UNUSED_ARG(dbg_list_name);
-  LWIP_UNUSED_ARG(dbg_other_seg_list);
+  ;
+  ;
 
   while (seg_list != nullptr &&
          TCP_SEQ_LEQ(lwip_ntohl(seg_list->tcphdr->seqno) +

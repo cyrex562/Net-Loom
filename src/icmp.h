@@ -73,7 +73,7 @@ enum icmp_te_type {
   ICMP_TE_FRAG = 1
 };
 
-void icmp_input(struct PacketBuffer *p, struct NetIfc *inp);
+void icmp_input(struct PacketBuffer *p, NetIfc*inp);
 void icmp_dest_unreach(struct PacketBuffer *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct PacketBuffer *p, enum icmp_te_type t);
 

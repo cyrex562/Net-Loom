@@ -115,30 +115,30 @@ constexpr auto kLwipIpv4SrcRouting = 1;
 #define IP_OPTIONS_SEND   (LWIP_IPV4 && LWIP_IGMP)
 
 #define ip_init() /* Compatibility define, no init needed. */
-struct NetIfc *ip4_route(const Ip4Addr *dest);
+NetIfc*ip4_route(const Ip4Addr *dest);
 
-struct NetIfc *ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
+NetIfc*ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
 
-LwipError ip4_input(struct PacketBuffer *p, struct NetIfc *inp);
+LwipError ip4_input(struct PacketBuffer *p, NetIfc*inp);
 LwipError ip4_output(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto);
 LwipError ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif);
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif);
 LwipError ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif);
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif);
 
 LwipError ip4_output_hinted(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, struct netif_hint *netif_hint);
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*cHint *netif_hint);
 
 
 LwipError ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
        uint16_t optlen);
 LwipError ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, struct NetIfc *netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
        uint16_t optlen);
 
-void  ip4_set_default_multicast_netif(struct NetIfc* default_multicast_netif);
+void  ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
 
 
 #define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? netif_ip_addr4(netif) : NULL)

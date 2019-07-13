@@ -39,21 +39,17 @@
 #include "vj.h"
 #include "chap_new.h"
 #include "ip4_addr.h"
-#include "eap.h"
+#include "fsm.h"
+#include "lcp.h"
+#include "ipcp.h"
+#include "eap_state.h"
 #include "upap.h"
+
+
 #ifdef __cplusplus
 extern "C" 
 {
 #endif
-
-// Public defs
-
-
-//
-// The basic PPP frame.
-
-
-
 
 // Values for phase.
 enum PppPhase
@@ -118,9 +114,7 @@ enum PppErrorCode
  */
 struct PppPcb;
 
-#include "fsm.h"
-#include "lcp.h"
-#include "ipcp.h"
+
 
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
@@ -202,7 +196,7 @@ struct PppPcb
     void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx);
     /* Notify phase callback */
     void* ctx_cb; /* Callbacks optional pointer */
-    struct NetIfc* netif; /* PPP interface */
+    NetIfc** netif; /* PPP interface */
     uint8_t phase; /* where the link is at */
     uint8_t err_code; /* Code indicating why interface is down. */ /* flags */
     bool ask_for_local; /* request our address from peer */

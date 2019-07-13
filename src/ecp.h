@@ -32,9 +32,10 @@
  */
 #pragma once
 
-struct EcpOptions {
-    bool required;		/* Is ECP required? */
-    unsigned enctype;		/* Encryption type */
+struct EcpOptions
+{
+    bool required; /* Is ECP required? */
+    unsigned enctype; /* Encryption type */
 };
 
 extern Fsm ecp_fsm[];
@@ -48,3 +49,6 @@ extern EcpOptions ecp_hisoptions[];
 bool ecp_open(PppPcb* ppp_pcb, int unit);
 
 
+//
+// END OF FILE
+//

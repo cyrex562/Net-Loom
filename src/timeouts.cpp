@@ -42,7 +42,7 @@
 #include "opt.h"
 #include "autoip.h"
 #include "def.h"
-#include "dhcp.h"
+#include "DhcpContext.h"
 #include "dhcp6.h"
 #include "dns.h"
 #include "etharp.h"

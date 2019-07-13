@@ -139,13 +139,13 @@
 #endif
 
 /* Forward declarations.*/
-static LwipError tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, struct NetIfc *netif);
+static LwipError tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*netif);
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
-static struct NetIfc *
+static NetIfc*
 tcp_route(const struct TcpProtoCtrlBlk *pcb, const IpAddr *src, const IpAddr *dst)
 {
-  LWIP_UNUSED_ARG(src); /* in case IPv4-only and source-based routing is disabled */
+  ; /* in case IPv4-only and source-based routing is disabled */
 
   if ((pcb != nullptr) && (pcb->netif_idx != NETIF_NO_INDEX)) {
     return netif_get_by_index(pcb->netif_idx);
@@ -248,10 +248,10 @@ tcp_pbuf_prealloc(PbufLayer layer, uint16_t length, uint16_t max_length,
   LWIP_ASSERT("tcp_pbuf_prealloc: invalid pcb", pcb != nullptr);
 
 #if LWIP_NETIF_TX_SINGLE_PBUF
-  LWIP_UNUSED_ARG(max_length);
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(apiflags);
-  LWIP_UNUSED_ARG(first_seg);
+  ;
+  ;
+  ;
+  ;
   alloc = max_length;
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
   if (length < max_length) {
@@ -1254,7 +1254,7 @@ tcp_output(struct TcpProtoCtrlBlk *pcb)
   struct tcp_seg *seg, *useg;
   uint32_t wnd, snd_nxt;
   LwipError err;
-  struct NetIfc *netif;
+  NetIfc*netif;
 #if TCP_CWND_DEBUG
   int16_t i = 0;
 #endif /* TCP_CWND_DEBUG */
@@ -1467,7 +1467,7 @@ tcp_output_segment_busy(const struct tcp_seg *seg)
  * @param netif the netif used to send the segment
  */
 static LwipError
-tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, struct NetIfc *netif)
+tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*netif)
 {
   LwipError err;
   uint16_t len;
@@ -1912,18 +1912,18 @@ tcp_output_fill_options(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *
     opts += sacks_len;
   }
 #else
-  LWIP_UNUSED_ARG(num_sacks);
+  ;
 #endif
 
 #ifdef LWIP_HOOK_TCP_OUT_ADD_TCPOPTS
   opts = LWIP_HOOK_TCP_OUT_ADD_TCPOPTS(p, tcphdr, pcb, opts);
 #endif
 
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(sacks_len);
+  ;
+  ;
   LWIP_ASSERT("options not filled", (uint8_t *)opts == ((uint8_t *)(tcphdr + 1)) + sacks_len * 4 + LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb));
-  LWIP_UNUSED_ARG(optflags); /* for LWIP_NOASSERT */
-  LWIP_UNUSED_ARG(opts); /* for LWIP_NOASSERT */
+  ; /* for LWIP_NOASSERT */
+  ; /* for LWIP_NOASSERT */
 }
 
 /** Output a control segment PacketBuffer to IP.
@@ -1937,7 +1937,7 @@ tcp_output_control_segment(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffe
                            const IpAddr *src, const IpAddr *dst)
 {
   LwipError err;
-  struct NetIfc *netif;
+  NetIfc*netif;
 
   LWIP_ASSERT("tcp_output_control_segment: invalid pbuf", p != nullptr);
 
@@ -1954,7 +1954,7 @@ tcp_output_control_segment(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffe
     }
 #endif
     if (pcb != nullptr) {
-      NETIF_SET_HINTS(netif, LWIP_CONST_CAST(struct netif_hint*, &(pcb->netif_hints)));
+      NETIF_SET_HINTS(netif, LWIP_CONST_CAST(NetIfc*cHint*, &(pcb->netif_hints)));
       ttl = pcb->ttl;
       tos = pcb->tos;
     } else {

@@ -34,18 +34,17 @@
  */
 #pragma once
 
-#include "ppp_opts.h"
+#include <cstdint>
 
 /**
  * \brief          SHA-1 context structure
  */
-typedef struct
+struct Sha1Context
 {
-    unsigned long total[2];     /*!< number of bytes processed  */
-    unsigned long state[5];     /*!< intermediate digest state  */
-    unsigned char buffer[64];   /*!< data block being processed */
-}
-sha1_context;
+    uint32_t total[2]; /*!< number of bytes processed  */
+    uint32_t state[5]; /*!< intermediate digest state  */
+    uint8_t buffer[64]; /*!< data block being processed */
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +55,7 @@ extern "C" {
  *
  * \param ctx      context to be initialized
  */
-void sha1_starts( sha1_context *ctx );
+void sha1_starts( Sha1Context *ctx );
 
 /**
  * \brief          SHA-1 process buffer
@@ -65,7 +64,7 @@ void sha1_starts( sha1_context *ctx );
  * \param input    buffer holding the  data
  * \param ilen     length of the input data
  */
-void sha1_update( sha1_context *ctx, const unsigned char *input, int ilen );
+void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen );
 
 /**
  * \brief          SHA-1 final digest
@@ -73,7 +72,7 @@ void sha1_update( sha1_context *ctx, const unsigned char *input, int ilen );
  * \param ctx      SHA-1 context
  * \param output   SHA-1 checksum result
  */
-void sha1_finish( sha1_context *ctx, unsigned char output[20] );
+void sha1_finish( Sha1Context *ctx, unsigned char output[20] );
 
 /**
  * \brief          Output = SHA-1( input buffer )

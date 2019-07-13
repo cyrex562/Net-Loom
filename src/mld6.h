@@ -93,15 +93,15 @@ struct mld_group {
 
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
-LwipError  mld6_stop(struct netif *netif);
-void   mld6_report_groups(struct netif *netif);
+LwipError  mld6_stop(NetIfc*netif);
+void   mld6_report_groups(NetIfc*netif);
 void   mld6_tmr(void);
-struct mld_group *mld6_lookfor_group(struct netif *ifp, const Ip6Addr *addr);
-void   mld6_input(struct PacketBuffer *p, struct netif *inp);
+struct mld_group *mld6_lookfor_group(NetIfc*ifp, const Ip6Addr *addr);
+void   mld6_input(struct PacketBuffer *p, NetIfc*inp);
 LwipError  mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
-LwipError  mld6_joingroup_netif(struct netif *netif, const Ip6Addr *groupaddr);
+LwipError  mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
 LwipError  mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
-LwipError  mld6_leavegroup_netif(struct netif *netif, const Ip6Addr *groupaddr);
+LwipError  mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
 
 /** @ingroup mld6
  * Get list head of MLD6 groups for netif.

@@ -4,12 +4,16 @@
 
 #pragma once
 
-#include "opt.h"
-#include "packet_buffer.h"
+#include "arch.h"
+
+#include "ethernet.h"
+
 #include "ip4_addr.h"
 #include "netif.h"
-#include "ethernet.h"
-#include "arch.h"
+#include "opt.h"
+
+#include "packet_buffer.h"
+
 
 /**
  * struct ip4_addr_wordaligned is used in the definition of the ARP packet format in
@@ -25,7 +29,7 @@ struct Ip4AddrWordaligned
 /** MEMCPY-like copying of IP addresses where addresses are known to be
  * 16-bit-aligned if the port is correctly configured (so a port could define
  * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
-inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, Ip4Addr* src)
+inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4Addr* src)
 {
     SMEMCPY(dest, src, sizeof(Ip4Addr));
     return true;
@@ -36,7 +40,7 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, Ip4Addr* s
 /** MEMCPY-like copying of IP addresses where addresses are known to be
 * 16-bit-aligned if the port is correctly configured (so a port could define
 * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
-inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddr* dest, Ip4AddrWordaligned* src)
+inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddr* dest, const Ip4AddrWordaligned* src)
 {
     SMEMCPY(dest, src, sizeof(Ip4Addr));
 }

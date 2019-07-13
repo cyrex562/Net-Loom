@@ -121,12 +121,12 @@ static LwipError pppoe_send_padr(struct pppoe_softc *);
 static LwipError pppoe_send_pado(struct pppoe_softc *);
 static LwipError pppoe_send_pads(struct pppoe_softc *);
 #endif
-static LwipError pppoe_send_padt(struct NetIfc *, u_int, const uint8_t *);
+static LwipError pppoe_send_padt(NetIfc*, u_int, const uint8_t *);
 
 /* internal helper functions */
 static LwipError pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb);
-static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct NetIfc *rcvif);
-static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct NetIfc *rcvif);
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, NetIfc*rcvif);
+static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, NetIfc*rcvif);
 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
@@ -148,13 +148,13 @@ static const struct LinkCallbacks pppoe_callbacks = {
  *
  * Return 0 on success, an error code on failure.
  */
-PppPcb *pppoe_create(struct NetIfc *pppif,
-       struct NetIfc *ethif,
+PppPcb *pppoe_create(NetIfc*pppif,
+       NetIfc*ethif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
-    LWIP_UNUSED_ARG(service_name);
-  LWIP_UNUSED_ARG(concentrator_name);
+    ;
+  ;
   LWIP_ASSERT_CORE_LOCKED();
 
   // sc = (struct pppoe_softc *)LWIP_MEMPOOL_ALLOC(PPPOE_IF);
@@ -186,7 +186,7 @@ static LwipError pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
 #if MIB2_STATS
   uint16_t tot_len;
 #else /* MIB2_STATS */
-  LWIP_UNUSED_ARG(ppp);
+  ;
 #endif /* MIB2_STATS */
 
   /* skip address & flags */
@@ -229,7 +229,7 @@ static LwipError pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer 
 #if MIB2_STATS
   uint16_t tot_len;
 #else /* MIB2_STATS */
-  LWIP_UNUSED_ARG(ppp);
+  ;
 #endif /* MIB2_STATS */
 
   /* @todo: try to use pbuf_header() here! */
@@ -268,7 +268,7 @@ pppoe_destroy(PppPcb *ppp, void *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pppoe_softc*freep;
-  LWIP_UNUSED_ARG(ppp);
+  ;
 
   sys_untimeout(pppoe_timeout, sc);
 
@@ -299,7 +299,7 @@ pppoe_destroy(PppPcb *ppp, void *ctx)
  * and lean implementation, so number of open sessions typically should
  * be 1.
  */
-static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct NetIfc *rcvif) {
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, NetIfc*rcvif) {
     for (struct pppoe_softc* sc = pppoe_softc_list; sc != nullptr; sc = sc->next) {
     if (sc->sc_state == PPPOE_STATE_SESSION
         && sc->sc_session == session
@@ -312,7 +312,7 @@ static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct Net
 
 /* Check host unique token passed and return appropriate softc pointer,
  * or NULL if token is bogus. */
-static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct NetIfc *rcvif) {
+static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, NetIfc*rcvif) {
   struct pppoe_softc *sc, *t;
 
   if (len != sizeof sc) {
@@ -347,7 +347,7 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t le
 
 /* analyze and handle a single received packet while not in session state */
 void
-pppoe_disc_input(struct NetIfc *netif, struct PacketBuffer *pb)
+pppoe_disc_input(NetIfc*netif, struct PacketBuffer *pb)
 {
   uint16_t tag, len, off;
   uint16_t session, plen;
@@ -581,7 +581,7 @@ breakbreak:;
       sc->sc_state = PPPOE_STATE_PADR_SENT;
       if ((err = pppoe_send_padr(sc)) != 0) {
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
-        LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
+        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
       break;
@@ -625,7 +625,7 @@ done:
 }
 
 void
-pppoe_data_input(struct NetIfc *netif, struct PacketBuffer *pb)
+pppoe_data_input(NetIfc*netif, struct PacketBuffer *pb)
 {
   uint16_t session, plen;
   struct pppoe_softc *sc;
@@ -825,7 +825,7 @@ pppoe_timeout(void *arg)
       if ((err = pppoe_send_padi(sc)) != 0) {
         sc->sc_padi_retried--;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
-        LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
+        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout(retry_wait, pppoe_timeout, sc);
       break;
@@ -838,7 +838,7 @@ pppoe_timeout(void *arg)
         sc->sc_padr_retried = 0;
         if ((err = pppoe_send_padi(sc)) != 0) {
           PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
-          LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
+          ; /* if PPPDEBUG is disabled */
         }
         sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), pppoe_timeout, sc);
         return;
@@ -846,7 +846,7 @@ pppoe_timeout(void *arg)
       if ((err = pppoe_send_padr(sc)) != 0) {
         sc->sc_padr_retried--;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
-        LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
+        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
       break;
@@ -1003,7 +1003,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* send a PADT packet */
 static LwipError
-pppoe_send_padt(struct NetIfc *outgoing_if, u_int session, const uint8_t *dest)
+pppoe_send_padt(NetIfc*outgoing_if, u_int session, const uint8_t *dest)
 {
   struct PacketBuffer *pb;
   struct eth_hdr *ethhdr;
@@ -1131,7 +1131,7 @@ pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb)
 
 #if 0 /*def PFIL_HOOKS*/
 static int
-pppoe_ifattach_hook(void *arg, struct PacketBuffer **mp, struct netif *ifp, int dir)
+pppoe_ifattach_hook(void *arg, struct PacketBuffer **mp, NetIfc*ifp, int dir)
 {
   struct pppoe_softc *sc;
   int s;
@@ -1161,7 +1161,7 @@ pppoe_ifattach_hook(void *arg, struct PacketBuffer **mp, struct netif *ifp, int 
 static void
 pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 {
-  LWIP_UNUSED_ARG(message);
+  ;
 
   /* stop timer */
   sys_untimeout(pppoe_timeout, sc);

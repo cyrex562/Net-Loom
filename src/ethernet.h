@@ -56,7 +56,7 @@ constexpr uint8_t kLLIp4McastAddrOui[] = {0x01, 0x00, 0x5e};
 /** IPv6 multicast uses this prefix */
 constexpr uint8_t kLLIp6McastAddrPrefix[] = {0x33, 0x33};
 
-inline bool eth_addr_cmp(EthAddr* addr1, EthAddr* addr2)
+inline bool eth_addr_cmp(const EthAddr* addr1, const EthAddr* addr2)
 {
     return (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0);
 }

@@ -130,15 +130,15 @@ struct igmp_group {
 
 /*  Prototypes */
 void   igmp_init(void);
-LwipError  igmp_start(struct netif *netif);
-LwipError  igmp_stop(struct netif *netif);
-void   igmp_report_groups(struct netif *netif);
-struct igmp_group *igmp_lookfor_group(struct netif *ifp, const Ip4Addr *addr);
-void   igmp_input(struct PacketBuffer *p, struct netif *inp, const Ip4Addr *dest);
+LwipError  igmp_start(NetIfc*netif);
+LwipError  igmp_stop(NetIfc*netif);
+void   igmp_report_groups(NetIfc*netif);
+struct igmp_group *igmp_lookfor_group(NetIfc*ifp, const Ip4Addr *addr);
+void   igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest);
 LwipError  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipError  igmp_joingroup_netif(struct netif *netif, const Ip4Addr *groupaddr);
+LwipError  igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
 LwipError  igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipError  igmp_leavegroup_netif(struct netif *netif, const Ip4Addr *groupaddr);
+LwipError  igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
 void   igmp_tmr(void);
 
 /** @ingroup igmp 

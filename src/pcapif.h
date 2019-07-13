@@ -17,12 +17,12 @@ extern "C" {
 #error "Can't create a dedicated RX thread with NO_SYS==1"
 #endif
 
-struct NetIfc;
+NetIfc*;
 
-LwipError pcapif_init    (struct NetIfc *netif);
-void  pcapif_shutdown(struct NetIfc *netif);
+LwipError pcapif_init    (NetIfc*netif);
+void  pcapif_shutdown(NetIfc*netif);
 #if !PCAPIF_RX_USE_THREAD
-void  pcapif_poll    (struct netif *netif);
+void  pcapif_poll    (NetIfc*netif);
 #endif /* !PCAPIF_RX_USE_THREAD */
 
 #ifdef __cplusplus

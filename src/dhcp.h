@@ -35,15 +35,16 @@
  * Author: Leon Woestenberg <leon.woestenberg@gmx.net>
  *
  */
-#ifndef LWIP_HDR_DHCP_H
-#define LWIP_HDR_DHCP_H
+#pragma once
 
-#include "opt.h"
 #include "arch.h"
+
 #include "ip4.h"
 
+#include "opt.h"
 
- /* DHCP message item offsets and length */
+
+/* DHCP message item offsets and length */
 #define DHCP_CHADDR_LEN   16U
 #define DHCP_SNAME_OFS    44U
 #define DHCP_SNAME_LEN    64U
@@ -59,7 +60,7 @@
 
 
 /** minimum set of fields of any DHCP message */
-struct dhcp_msg
+struct DhcpMsg
 {
     uint8_t op;
     uint8_t htype;
@@ -82,7 +83,8 @@ struct dhcp_msg
 
 
 /* DHCP client states */
-typedef enum {
+enum dhcp_state_enum_t
+{
     DHCP_STATE_OFF = 0,
     DHCP_STATE_REQUESTING = 1,
     DHCP_STATE_INIT = 2,
@@ -92,11 +94,13 @@ typedef enum {
     DHCP_STATE_SELECTING = 6,
     DHCP_STATE_INFORMING = 7,
     DHCP_STATE_CHECKING = 8,
-    DHCP_STATE_PERMANENT = 9,  /* not yet implemented */
+    DHCP_STATE_PERMANENT = 9,
+    /* not yet implemented */
     DHCP_STATE_BOUND = 10,
-    DHCP_STATE_RELEASING = 11, /* not yet implemented */
+    DHCP_STATE_RELEASING = 11,
+    /* not yet implemented */
     DHCP_STATE_BACKING_OFF = 12
-} dhcp_state_enum_t;
+};
 
 /* DHCP op codes */
 #define DHCP_BOOTREQUEST            1
@@ -156,9 +160,6 @@ typedef enum {
 #define DHCP_OVERLOAD_SNAME         2
 #define DHCP_OVERLOAD_SNAME_FILE    3
 
-
-#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
-
 #include "netif.h"
 #include "udp.h"
 
@@ -176,81 +177,71 @@ extern "C" {
 #define DHCP_BOOT_FILE_LEN      128U
 
 /* AutoIP cooperation flags (struct dhcp.autoip_coop_state) */
-typedef enum {
-  DHCP_AUTOIP_COOP_STATE_OFF  = 0,
-  DHCP_AUTOIP_COOP_STATE_ON   = 1
-} dhcp_autoip_coop_state_enum_t;
-
-struct dhcp
+enum DhcpAutoipCoopStateEnumT
 {
-  /** transaction identifier of last sent request */
-  uint32_t xid;
-  /** track PCB allocation state */
-  uint8_t pcb_allocated;
-  /** current DHCP state machine state */
-  uint8_t state;
-  /** retries of current request */
-  uint8_t tries;
-#if LWIP_DHCP_AUTOIP_COOP
-  uint8_t autoip_coop_state;
-#endif
-  uint8_t subnet_mask_given;
+    DHCP_AUTOIP_COOP_STATE_OFF = 0,
+    DHCP_AUTOIP_COOP_STATE_ON = 1
+};
 
-  uint16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
-  uint16_t t1_timeout;  /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
-  uint16_t t2_timeout;  /* #ticks with period DHCP_COARSE_TIMER_SECS for rebind time */
-  uint16_t t1_renew_time;  /* #ticks with period DHCP_COARSE_TIMER_SECS until next renew try */
-  uint16_t t2_rebind_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next rebind try */
-  uint16_t lease_used; /* #ticks with period DHCP_COARSE_TIMER_SECS since last received DHCP ack */
-  uint16_t t0_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for lease time */
-  IpAddr server_ip_addr; /* dhcp server address that offered this lease (IpAddr because passed to UDP) */
-  Ip4Addr offered_ip_addr;
-  Ip4Addr offered_sn_mask;
-  Ip4Addr offered_gw_addr;
+struct DhcpContext
+{
+    /** transaction identifier of last sent request */
+    uint32_t xid;
+    /** track PCB allocation state */
+    uint8_t pcb_allocated;
+    /** current DHCP state machine state */
+    uint8_t state;
+    /** retries of current request */
+    uint8_t tries;
+    uint8_t autoip_coop_state;
+    uint8_t subnet_mask_given;
 
-  uint32_t offered_t0_lease; /* lease period (in seconds) */
-  uint32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
-  uint32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
-#if LWIP_DHCP_BOOTP_FILE
-  Ip4Addr offered_si_addr;
-  char boot_file_name[DHCP_BOOT_FILE_LEN];
-#endif /* LWIP_DHCP_BOOTPFILE */
+    uint16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
+    uint16_t t1_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
+    uint16_t t2_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for rebind time */
+    uint16_t t1_renew_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next renew try */
+    uint16_t t2_rebind_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next rebind try */
+    uint16_t lease_used; /* #ticks with period DHCP_COARSE_TIMER_SECS since last received DHCP ack */
+    uint16_t t0_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for lease time */
+    IpAddr server_ip_addr; /* dhcp server address that offered this lease (IpAddr because passed to UDP) */
+    Ip4Addr offered_ip_addr;
+    Ip4Addr offered_sn_mask;
+    Ip4Addr offered_gw_addr;
+
+    uint32_t offered_t0_lease; /* lease period (in seconds) */
+    uint32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
+    uint32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
+    Ip4Addr offered_si_addr;
+    char boot_file_name[DHCP_BOOT_FILE_LEN];
 };
 
 
-void dhcp_set_struct(struct netif *netif, struct dhcp *dhcp);
+void dhcp_set_struct(struct netif *netif, struct DhcpContext *dhcp);
 /** Remove a struct dhcp previously set to the netif using dhcp_set_struct() */
 #define dhcp_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, NULL)
-void dhcp_cleanup(struct netif *netif);
-LwipError dhcp_start(struct netif *netif);
-LwipError dhcp_renew(struct netif *netif);
-LwipError dhcp_release(struct netif *netif);
-void dhcp_stop(struct netif *netif);
-void dhcp_release_and_stop(struct netif *netif);
-void dhcp_inform(struct netif *netif);
-void dhcp_network_changed(struct netif *netif);
-#if DHCP_DOES_ARP_CHECK
-void dhcp_arp_reply(struct netif *netif, const Ip4Addr *addr);
-#endif
-uint8_t dhcp_supplied_address(const struct netif *netif);
+void dhcp_cleanup(NetIfc* netif);
+LwipError dhcp_start(NetIfc* netif);
+LwipError dhcp_renew(NetIfc* netif);
+LwipError dhcp_release(NetIfc* netif);
+void dhcp_stop(NetIfc* netif);
+void dhcp_release_and_stop(NetIfc* netif);
+void dhcp_inform(NetIfc* netif);
+void dhcp_network_changed(NetIfc* netif);
+void dhcp_arp_reply(NetIfc* netif, const Ip4Addr* addr);
+uint8_t dhcp_supplied_address(const NetIfc* netif);
 /* to be called every minute */
 void dhcp_coarse_tmr(void);
 /* to be called every half second */
 void dhcp_fine_tmr(void);
 
-#if LWIP_DHCP_GET_NTP_SRV
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP_MAX_NTP_SERVERS */
 extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
-#endif /* LWIP_DHCP_GET_NTP_SRV */
+
 
 #define netif_dhcp_data(netif) ((struct dhcp*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP))
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_DHCP */
-
-#endif /*LWIP_HDR_DHCP_H*/

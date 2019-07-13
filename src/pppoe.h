@@ -117,7 +117,7 @@ constexpr auto PPPOE_MAX_AC_COOKIE_LEN = 64;
 
 struct pppoe_softc {
   struct pppoe_softc *next;
-  struct NetIfc *sc_ethif;      /* ethernet interface we are using */
+  NetIfc*sc_ethif;      /* ethernet interface we are using */
   PppPcb *pcb;                /* PPP PCB */
   struct EthAddr sc_dest;     /* hardware address of concentrator */
   uint16_t sc_session;            /* PPPoE session id */
@@ -140,8 +140,8 @@ struct pppoe_softc {
 
 #define pppoe_init() /* compatibility define, no initialization needed */
 
-PppPcb *pppoe_create(struct NetIfc *pppif,
-       struct NetIfc *ethif,
+PppPcb *pppoe_create(NetIfc*pppif,
+       NetIfc*ethif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
@@ -149,8 +149,8 @@ PppPcb *pppoe_create(struct NetIfc *pppif,
  * Functions called from lwIP
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
-void pppoe_disc_input(struct NetIfc *netif, struct PacketBuffer *p);
-void pppoe_data_input(struct NetIfc *netif, struct PacketBuffer *p);
+void pppoe_disc_input(NetIfc*netif, struct PacketBuffer *p);
+void pppoe_data_input(NetIfc*netif, struct PacketBuffer *p);
 
 #ifdef __cplusplus
 }

@@ -59,10 +59,10 @@ int link_stats_valid;
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
-static LwipError ppp_netif_init_cb(struct NetIfc* netif);
-static LwipError ppp_netif_output_ip4(struct NetIfc* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
-static LwipError ppp_netif_output_ip6(struct NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
-static LwipError ppp_netif_output(struct NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol);
+static LwipError ppp_netif_init_cb(NetIfc** netif);
+static LwipError ppp_netif_output_ip4(NetIfc** netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+static LwipError ppp_netif_output_ip6(NetIfc** netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+static LwipError ppp_netif_output(NetIfc** netif, struct PacketBuffer* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -333,7 +333,7 @@ ppp_do_connect(void* arg)
  * ppp_netif_init_cb - netif init callback
  */
 static LwipError
-ppp_netif_init_cb(struct NetIfc* netif)
+ppp_netif_init_cb(NetIfc** netif)
 {
     netif->name[0] = 'p';
     netif->name[1] = 'p';
@@ -348,7 +348,7 @@ ppp_netif_init_cb(struct NetIfc* netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static LwipError ppp_netif_output_ip4(struct NetIfc* netif,
+static LwipError ppp_netif_output_ip4(NetIfc** netif,
                                       struct PacketBuffer* pb,
                                       const Ip4Addr* ipaddr)
 {
@@ -359,13 +359,13 @@ static LwipError ppp_netif_output_ip4(struct NetIfc* netif,
  * Send an IPv6 packet on the given connection.
  */
 static LwipError
-ppp_netif_output_ip6(struct NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
+ppp_netif_output_ip6(NetIfc** netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
 static LwipError
-ppp_netif_output(struct NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol)
+ppp_netif_output(NetIfc** netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
     LwipError err;
@@ -493,7 +493,7 @@ ppp_init(void)
  * on success or a null pointer on failure.
  */
 PppPcb*
-ppp_new(struct NetIfc* pppif,
+ppp_new(NetIfc** pppif,
         const struct LinkCallbacks* callbacks,
         void* link_ctx_cb,
         const ppp_link_status_cb_fn link_status_cb,
@@ -836,7 +836,7 @@ new_phase(PppPcb* pcb, int p)
 int
 ppp_send_config(PppPcb* pcb, int mtu, uint32_t accm, int pcomp, int accomp)
 {
-    LWIP_UNUSED_ARG(mtu);
+    ;
     /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
 
     if (pcb->link_cb->send_config)
@@ -855,7 +855,7 @@ ppp_send_config(PppPcb* pcb, int mtu, uint32_t accm, int pcomp, int accomp)
 int
 ppp_recv_config(PppPcb* pcb, int mru, uint32_t accm, int pcomp, int accomp)
 {
-    LWIP_UNUSED_ARG(mru);
+    ;
 
     if (pcb->link_cb->recv_config)
     {
@@ -889,8 +889,8 @@ sifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask)
 int
 cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
 {
-    LWIP_UNUSED_ARG(our_adr);
-    LWIP_UNUSED_ARG(his_adr);
+    ;
+    ;
 
     netif_set_addr(pcb->netif, IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4);
     return 1;
@@ -903,8 +903,8 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
  */
 
 int sifproxyarp(PppPcb *pcb, uint32_t his_adr) {
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(his_adr);
+  ;
+  ;
   return 0;
 }
 
@@ -914,8 +914,8 @@ int sifproxyarp(PppPcb *pcb, uint32_t his_adr) {
  */
 
 int cifproxyarp(PppPcb *pcb, uint32_t his_adr) {
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(his_adr);
+  ;
+  ;
   return 0;
 }
 #endif /* UNUSED - PROXY ARP */
@@ -927,7 +927,7 @@ int
 sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
     IpAddr ns;
-    LWIP_UNUSED_ARG(pcb);
+    ;
 
     ip_addr_set_ip4_u32_val(ns, ns1);
     dns_setserver(0, &ns);
@@ -945,7 +945,7 @@ cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
     const IpAddr* nsa;
     IpAddr nsb;
-    LWIP_UNUSED_ARG(pcb);
+    ;
 
     nsa = dns_getserver(0);
     ip_addr_set_ip4_u32_val(nsb, ns1);
@@ -1041,7 +1041,7 @@ get_mask(uint32_t addr)
  * sif6addr - Config the interface with an IPv6 link-local address
  */
 int
-sif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
+sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     Ip6Addr ip6;
 
@@ -1057,7 +1057,7 @@ sif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
  * cif6addr - Remove IPv6 address from interface
  */
 int
-cif6addr(PppPcb* pcb, Eui64T our_eui64, Eui64T his_eui64)
+cif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_INVALID);
     netif_ip6_addr_set(pcb->netif, 0, IP6_ADDR_ANY6);
@@ -1109,9 +1109,9 @@ sif6down(PppPcb* pcb)
 int
 sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode)
 {
-    LWIP_UNUSED_ARG(pcb);
-    LWIP_UNUSED_ARG(proto);
-    LWIP_UNUSED_ARG(mode);
+    ;
+    ;
+    ;
     return 0;
 }
 
@@ -1140,8 +1140,8 @@ netif_get_mtu(PppPcb* pcb)
 void
 ccp_set(PppPcb *pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method)
 {
-  LWIP_UNUSED_ARG(isopen);
-  LWIP_UNUSED_ARG(isup);
+  ;
+  ;
   pcb->ccp_receive_method = receive_method;
   pcb->ccp_transmit_method = transmit_method;
   PPPDEBUG(LOG_DEBUG, ("ccp_set[%d]: is_open=%d, is_up=%d, receive_method=%u, transmit_method=%u\n",
@@ -1158,8 +1158,8 @@ int
 get_idle_time(PppPcb* pcb, struct ppp_idle* ip)
 {
     /* FIXME: add idle time support and make it optional */
-    LWIP_UNUSED_ARG(pcb);
-    LWIP_UNUSED_ARG(ip);
+    ;
+    ;
     return 1;
 }
 

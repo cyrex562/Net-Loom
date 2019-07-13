@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 struct PacketBuffer;
-struct NetIfc;
+NetIfc*;
 
 #define API_VAR_REF(name)               name
 #define API_VAR_DECLARE(type, name)     type name
@@ -115,7 +115,7 @@ struct tcpip_msg {
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     struct {
       struct PacketBuffer *p;
-      struct NetIfc *netif;
+      NetIfc*netif;
       netif_input_fn input_fn;
     } inp;
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */

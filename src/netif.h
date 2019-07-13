@@ -179,12 +179,14 @@ uint8_t netif_alloc_client_data_id(void);
 #define NETIF_SET_CLIENT_DATA(netif, id, data) \
   NETIF_GET_CLIENT_DATA(netif, id) = (data)
 
-typedef uint16_t netif_addr_idx_t;
-#define NETIF_ADDR_IDX_MAX 0x7FFF
+typedef uint16_t NetIfcAddrIdx;
+constexpr auto kNetifAddrIdxMax = 0x7FFF;
 
 #define LWIP_NETIF_USE_HINTS              1
-struct netif_hint {
-  netif_addr_idx_t addr_hint;
+
+struct NetIfcHint
+{
+    NetIfcAddrIdx addr_hint;
 };
 
 
@@ -258,7 +260,7 @@ struct NetIfc
     /** This function could be called to add or delete an entry in the IPv6 multicast
             filter table of the ethernet MAC. */
     netif_mld_mac_filter_fn mld_mac_filter;
-    struct netif_hint* hints; /* List of packets to be queued for ourselves. */
+    struct NetIfcHint* hints; /* List of packets to be queued for ourselves. */
     struct PacketBuffer* loop_first;
     struct PacketBuffer* loop_last;
     uint16_t loop_cnt_current;

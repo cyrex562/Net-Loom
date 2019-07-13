@@ -122,13 +122,13 @@ static uint16_t ip_id;
 
 #if LWIP_MULTICAST_TX_OPTIONS
 /** The default netif used for multicast */
-static struct netif *ip4_default_multicast_netif;
+static NetIfc*ip4_default_multicast_netif;
 
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
 void
-ip4_set_default_multicast_netif(struct netif *default_multicast_netif)
+ip4_set_default_multicast_netif(NetIfc*default_multicast_netif)
 {
   ip4_default_multicast_netif = default_multicast_netif;
 }
@@ -139,12 +139,12 @@ ip4_set_default_multicast_netif(struct netif *default_multicast_netif)
  * Source based IPv4 routing must be fully implemented in
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
-struct netif *
+NetIfc*
 ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest)
 {
   if (src != NULL) {
     /* when src==NULL, the hook is called from ip4_route(dest) */
-    struct netif *netif = LWIP_HOOK_IP4_ROUTE_SRC(src, dest);
+    NetIfc*netif = LWIP_HOOK_IP4_ROUTE_SRC(src, dest);
     if (netif != NULL) {
       return netif;
     }
@@ -162,11 +162,11 @@ ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest)
  * @param dest the destination IP address for which to find the route
  * @return the netif on which to send to reach dest
  */
-struct NetIfc *
+NetIfc*
 ip4_route(const Ip4Addr *dest)
 {
 #if !LWIP_SINGLE_NETIF
-  struct NetIfc *netif;
+  NetIfc*netif;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -178,7 +178,7 @@ ip4_route(const Ip4Addr *dest)
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
   /* bug #54569: in case LWIP_SINGLE_NETIF=1 and Logf() disabled, the following loop is optimized away */
-  LWIP_UNUSED_ARG(dest);
+  ;
 
   /* iterate through netifs */
   NETIF_FOREACH(netif) {
@@ -292,12 +292,12 @@ ip4_canforward(struct PacketBuffer *p)
  * @param inp the netif on which this packet was received
  */
 static void
-ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, struct netif *inp)
+ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
 {
-  struct netif *netif;
+  NetIfc*netif;
 
   PERF_START;
-  LWIP_UNUSED_ARG(inp);
+  ;
 
   if (!ip4_canforward(p)) {
     goto return_noroute;
@@ -385,7 +385,7 @@ return_noroute:
 
 /** Return true if the current input packet should be accepted on this netif */
 static int
-ip4_input_accept(struct NetIfc *netif)
+ip4_input_accept(NetIfc*netif)
 {
 //  Logf(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
 //                         ip4_addr_get_u32(ip4_current_dest_addr()), ip4_addr_get_u32(netif_ip4_addr(netif)),
@@ -437,10 +437,10 @@ ip4_input_accept(struct NetIfc *netif)
  *         processed, but currently always returns ERR_OK)
  */
 LwipError
-ip4_input(struct PacketBuffer *p, struct NetIfc *inp)
+ip4_input(struct PacketBuffer *p, NetIfc*inp)
 {
   const struct Ip4Hdr *iphdr;
-  struct NetIfc *netif;
+  NetIfc*netif;
   uint16_t iphdr_hlen;
   uint16_t iphdr_len;
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP
@@ -800,7 +800,7 @@ ip4_input(struct PacketBuffer *p, struct NetIfc *inp)
 LwipError
 ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
               uint8_t ttl, uint8_t tos,
-              uint8_t proto, struct NetIfc *netif)
+              uint8_t proto, NetIfc*netif)
 {
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
@@ -814,7 +814,7 @@ ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
  */
 LwipError
 ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-                  uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
+                  uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
                   uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
@@ -844,7 +844,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
                     uint8_t ttl,
                     uint8_t tos,
                     uint8_t proto,
-                    struct NetIfc *netif)
+                    NetIfc*netif)
   {
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, NULL, 0);
@@ -856,7 +856,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
  */
 LwipError
 ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-                      uint8_t ttl, uint8_t tos, uint8_t proto, struct netif *netif, void *ip_options,
+                      uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
                       uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
@@ -1057,7 +1057,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
              uint8_t tos,
              uint8_t proto)
   {
-      struct NetIfc *netif;
+      NetIfc*netif;
 
       LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
@@ -1098,9 +1098,9 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
                     uint8_t ttl,
                     uint8_t tos,
                     uint8_t proto,
-                    struct netif_hint *netif_hint)
+                    NetIfc*cHint *netif_hint)
   {
-      struct NetIfc *netif;
+      NetIfc*netif;
       LwipError err;
 
       LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);

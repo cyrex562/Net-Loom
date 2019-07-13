@@ -208,7 +208,7 @@ extern "C" {
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
-        struct netif_hint netif_hints; /** Protocol specific PCB members */
+        NetIfc*cHint netif_hints; /** Protocol specific PCB members */
         tcp_pcb_listen* next; /* for the linked list */
         void* callback_arg;
         struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
@@ -230,7 +230,7 @@ struct TcpProtoCtrlBlk
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    struct netif_hint netif_hints; /** protocol specific PCB members */
+    NetIfc*cHint netif_hints; /** protocol specific PCB members */
     tcp_pcb_listen* next; /* for the linked list */
     void* callback_arg;
     struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
@@ -381,7 +381,7 @@ void tcp_backlog_accepted(struct TcpProtoCtrlBlk* pcb);
 
 void tcp_recved(struct TcpProtoCtrlBlk* pcb, uint16_t len);
 LwipError tcp_bind(struct TcpProtoCtrlBlk* pcb, const IpAddr* ipaddr, uint16_t port);
-void tcp_bind_netif(struct TcpProtoCtrlBlk* pcb, const struct NetIfc* netif);
+void tcp_bind_netif(struct TcpProtoCtrlBlk* pcb, const NetIfc** netif);
 LwipError tcp_connect(struct TcpProtoCtrlBlk* pcb,
                   const IpAddr* ipaddr,
                   uint16_t port,

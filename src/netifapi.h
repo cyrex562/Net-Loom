@@ -62,18 +62,18 @@ LwipError netifapi_arp_add(const Ip4Addr *ipaddr, struct EthAddr *ethaddr, enum 
 LwipError netifapi_arp_remove(const Ip4Addr *ipaddr, enum netifapi_arp_entry type);
 #endif /* LWIP_ARP && LWIP_IPV4 */
 
-LwipError netifapi_netif_add(struct netif *netif,
+LwipError netifapi_netif_add(NetIfc*netif,
 #if LWIP_IPV4
                          const Ip4Addr *ipaddr, const Ip4Addr *netmask, const Ip4Addr *gw,
 #endif /* LWIP_IPV4 */
                          void *state, netif_init_fn init, netif_input_fn input);
 
 #if LWIP_IPV4
-LwipError netifapi_netif_set_addr(struct netif *netif, const Ip4Addr *ipaddr,
+LwipError netifapi_netif_set_addr(NetIfc*netif, const Ip4Addr *ipaddr,
                               const Ip4Addr *netmask, const Ip4Addr *gw);
 #endif /* LWIP_IPV4*/
 
-LwipError netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
+LwipError netifapi_netif_common(NetIfc*netif, netifapi_void_fn voidfunc,
                             netifapi_errt_fn errtfunc);
 
 /** @ingroup netifapi_netif */

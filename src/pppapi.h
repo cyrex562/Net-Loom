@@ -22,7 +22,7 @@ struct PppApiMsgMsg
 
         struct
         {
-            struct NetIfc* pppif;
+            NetIfc** pppif;
             pppos_output_cb_fn output_cb;
             ppp_link_status_cb_fn link_status_cb;
             void* ctx_cb;
@@ -30,8 +30,8 @@ struct PppApiMsgMsg
 
         struct
         {
-            struct NetIfc* pppif;
-            struct NetIfc* ethif;
+            NetIfc** pppif;
+            NetIfc** ethif;
             const char* service_name;
             const char* concentrator_name;
             ppp_link_status_cb_fn link_status_cb;
@@ -40,8 +40,8 @@ struct PppApiMsgMsg
 
         struct
         {
-            struct NetIfc* pppif;
-            struct NetIfc* netif;
+            NetIfc** pppif;
+            NetIfc** netif;
             IpAddr ipaddr;
             uint16_t port;
             const uint8_t* secret;
@@ -79,13 +79,13 @@ LwipError pppapi_set_default(PppPcb *pcb);
 
 LwipError pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 
-PppPcb *pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+PppPcb *pppapi_pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-PppPcb *pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *service_name,
+PppPcb *pppapi_pppoe_create(NetIfc*pppif, NetIfc*ethif, const char *service_name,
                                 const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                                 void *ctx_cb);
 
-PppPcb *pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, IpAddr *ipaddr, uint16_t port,
+PppPcb *pppapi_pppol2tp_create(NetIfc*pppif, NetIfc*netif, IpAddr *ipaddr, uint16_t port,
                             const uint8_t *secret, uint8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 

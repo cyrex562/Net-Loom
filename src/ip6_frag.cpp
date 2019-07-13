@@ -411,7 +411,7 @@ ip6_reass(struct PacketBuffer *p)
     /* Make room for struct ip6_reass_helper (only required if sizeof(void*) > 4).
        This cannot fail since we already checked when receiving this fragment. */
     uint8_t hdrerr = pbuf_header_force(p, IPV6_FRAG_REQROOM);
-    LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
+    ; /* in case of LWIP_NOASSERT */
     LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
   }
 #else /* IPV6_FRAG_COPYHEADER */
@@ -567,7 +567,7 @@ ip6_reass(struct PacketBuffer *p)
         if (IPV6_FRAG_REQROOM > 0) {
           /* hide the extra bytes borrowed from ip6_hdr for struct ip6_reass_helper */
           uint8_t hdrerr = pbuf_remove_header(next_pbuf, IPV6_FRAG_REQROOM);
-          LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
+          ; /* in case of LWIP_NOASSERT */
           LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
         }
 #endif
@@ -592,7 +592,7 @@ ip6_reass(struct PacketBuffer *p)
       MEMCPY(p->payload, ipr->orig_hdr, IPV6_FRAG_REQROOM);
       /* get back room for struct ip6_reass_helper (only required if sizeof(void*) > 4) */
       hdrerr = pbuf_remove_header(p, IPV6_FRAG_REQROOM);
-      LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
+      ; /* in case of LWIP_NOASSERT */
       LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
     }
 #endif
@@ -717,7 +717,7 @@ ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
  * @return ERR_OK if sent successfully, LwipError otherwise
  */
 LwipError
-ip6_frag(struct PacketBuffer *p, struct netif *netif, const Ip6Addr *dest)
+ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
 {
   struct ip6_hdr *original_ip6hdr;
   struct ip6_hdr *ip6hdr;

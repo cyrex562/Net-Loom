@@ -40,21 +40,16 @@
  */
 
 #include "opt.h"
-
-#if LWIP_IPV6 && LWIP_ETHERNET
-
+#include "ethernet.h"
 #include "ethip6.h"
-#include "nd6.h"
-#include "packet_buffer.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "inet_chksum.h"
-#include "netif.h"
 #include "icmp6.h"
-#include "ethernet.h"
-#include "ethernet.h"
+#include "ieee.h"
+#include "ip6_addr.h"
+#include "nd6.h"
+#include "netif.h"
+#include "packet_buffer.h"
+#include <cstring>
 
-#include <string.h>
 
 /**
  * Resolve and fill-in Ethernet address header for outgoing IPv6 packet.
@@ -76,48 +71,52 @@
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
 LwipError
-ethip6_output(struct netif *netif, struct PacketBuffer *q, const Ip6Addr *ip6addr)
+ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
 {
-  struct EthAddr dest;
-  const uint8_t *hwaddr;
-  LwipError result;
+    EthAddr dest{};
+    const uint8_t* hwaddr;
 
-  LWIP_ASSERT_CORE_LOCKED();
+    LWIP_ASSERT_CORE_LOCKED();
 
-  /* The destination IP address must be properly zoned from here on down. */
-  IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
+    /* The destination IP address must be properly zoned from here on down. */
+    IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
 
-  /* multicast destination IP address? */
-  if (ip6_addr_ismulticast(ip6addr)) {
-    /* Hash IP multicast address to MAC address.*/
-    dest.addr[0] = 0x33;
-    dest.addr[1] = 0x33;
-    dest.addr[2] = ((const uint8_t *)(&(ip6addr->addr[3])))[0];
-    dest.addr[3] = ((const uint8_t *)(&(ip6addr->addr[3])))[1];
-    dest.addr[4] = ((const uint8_t *)(&(ip6addr->addr[3])))[2];
-    dest.addr[5] = ((const uint8_t *)(&(ip6addr->addr[3])))[3];
+    /* multicast destination IP address? */
+    if (ip6_addr_ismulticast(ip6addr))
+    {
+        /* Hash IP multicast address to MAC address.*/
+        dest.addr[0] = 0x33;
+        dest.addr[1] = 0x33;
+        dest.addr[2] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[0];
+        dest.addr[3] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[1];
+        dest.addr[4] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[2];
+        dest.addr[5] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[3];
 
-    /* Send out. */
-    return ethernet_output(netif, q, (const struct EthAddr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
-  }
+        /* Send out. */
+        return ethernet_output(netif, q, reinterpret_cast<const struct EthAddr*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    }
 
-  /* We have a unicast destination IP address */
-  /* @todo anycast? */
+    /* We have a unicast destination IP address */
+    /* @todo anycast? */
 
-  /* Ask ND6 what to do with the packet. */
-  result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
-  if (result != ERR_OK) {
-    return result;
-  }
+    /* Ask ND6 what to do with the packet. */
+    const LwipError result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
+    if (result != ERR_OK)
+    {
+        return result;
+    }
 
-  /* If no hardware address is returned, nd6 has queued the packet for later. */
-  if (hwaddr == NULL) {
-    return ERR_OK;
-  }
+    /* If no hardware address is returned, nd6 has queued the packet for later. */
+    if (hwaddr == NULL)
+    {
+        return ERR_OK;
+    }
 
-  /* Send out the packet using the returned hardware address. */
-  SMEMCPY(dest.addr, hwaddr, 6);
-  return ethernet_output(netif, q, (const struct EthAddr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    /* Send out the packet using the returned hardware address. */
+    SMEMCPY(dest.addr, hwaddr, 6);
+    return ethernet_output(netif, q, reinterpret_cast<const struct EthAddr*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
 }
 
-#endif /* LWIP_IPV6 && LWIP_ETHERNET */
+//
+// END OF FILE
+//

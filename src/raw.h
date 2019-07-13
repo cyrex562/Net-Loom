@@ -80,7 +80,7 @@ struct raw_pcb {
     uint8_t tos;
     /* Time To Live */
     uint8_t ttl;
-    struct netif_hint netif_hints;;
+    NetIfc*cHint netif_hints;;
 
   struct raw_pcb *next;
 
@@ -111,12 +111,12 @@ struct raw_pcb * raw_new        (uint8_t proto);
 struct raw_pcb * raw_new_ip_type(uint8_t type, uint8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
 LwipError            raw_bind       (struct raw_pcb *pcb, const IpAddr *ipaddr);
-void             raw_bind_netif (struct raw_pcb *pcb, const struct NetIfc *netif);
+void             raw_bind_netif (struct raw_pcb *pcb, const NetIfc*netif);
 LwipError            raw_connect    (struct raw_pcb *pcb, const IpAddr *ipaddr);
 void             raw_disconnect (struct raw_pcb *pcb);
 
 LwipError            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr);
-LwipError            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, struct NetIfc *netif, const IpAddr *src_ip);
+LwipError            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, NetIfc*netif, const IpAddr *src_ip);
 LwipError            raw_send       (struct raw_pcb *pcb, struct PacketBuffer *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);

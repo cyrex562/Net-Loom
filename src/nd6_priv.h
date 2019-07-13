@@ -70,7 +70,7 @@ struct nd6_q_entry {
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
   Ip6Addr next_hop_address;
-  struct netif *netif;
+  NetIfc*netif;
   uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
 #if LWIP_ND6_QUEUEING
@@ -99,7 +99,7 @@ struct nd6_destination_cache_entry {
 
 struct nd6_prefix_list_entry {
   Ip6Addr prefix;
-  struct netif *netif;
+  NetIfc*netif;
   uint32_t invalidation_timer; /* in seconds */
 };
 

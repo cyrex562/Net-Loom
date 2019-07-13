@@ -62,7 +62,7 @@ struct Lowpan6LinkAddr {
 
 int8_t lowpan6_get_address_mode(const Ip6Addr* ip6addr,
                                 const struct Lowpan6LinkAddr* mac_addr);
-LwipError lowpan6_compress_headers(struct NetIfc* netif,
+LwipError lowpan6_compress_headers(NetIfc** netif,
                                uint8_t* inbuf,
                                size_t inbuf_size,
                                uint8_t* outbuf,

@@ -50,7 +50,7 @@ struct LwipIpv4Addr {
 };
 
 /* Forward declaration to not include netif.h */
-struct NetIfc;
+NetIfc*;
 
 /** 255.255.255.255 */
 constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
@@ -143,7 +143,7 @@ inline void IP4_ADDR(ip4_addr* ipaddr, uint8_t a, uint8_t b, uint8_t c, uint8_t 
 #define ip4_addr_isany(addr1) ((addr1) == NULL || ip4_addr_isany_val(*(addr1)))
 
 #define ip4_addr_isbroadcast(addr1, netif) ip4_addr_isbroadcast_u32((addr1)->addr, netif)
-uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetIfc *netif);
+uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const NetIfc*netif);
 
 #define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
 uint8_t ip4_addr_netmask_valid(uint32_t netmask);

@@ -122,7 +122,7 @@ ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr)
     dst[0] |= 0x02;
   }
 #else
-  LWIP_UNUSED_ARG(public_addr);
+  ;
 #endif
 }
 
@@ -174,10 +174,10 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
  * This expects an address of 8 bytes.
  */
 LwipError
-rfc7668_set_local_addr_eui64(struct NetIfc *netif, const uint8_t *local_addr, size_t local_addr_len)
+rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
-  LWIP_UNUSED_ARG(netif);
+  ;
   return rfc7668_set_addr(&rfc7668_local_addr, local_addr, local_addr_len, 0, 0);
 }
 
@@ -185,10 +185,10 @@ rfc7668_set_local_addr_eui64(struct NetIfc *netif, const uint8_t *local_addr, si
  * This expects an address of 6 bytes.
  */
 LwipError
-rfc7668_set_local_addr_mac48(struct NetIfc *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
+rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
-  LWIP_UNUSED_ARG(netif);
+  ;
   return rfc7668_set_addr(&rfc7668_local_addr, local_addr, local_addr_len, 1, is_public_addr);
 }
 
@@ -196,10 +196,10 @@ rfc7668_set_local_addr_mac48(struct NetIfc *netif, const uint8_t *local_addr, si
  * This expects an address of 8 bytes.
  */
 LwipError
-rfc7668_set_peer_addr_eui64(struct NetIfc *netif, const uint8_t *peer_addr, size_t peer_addr_len)
+rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
-  LWIP_UNUSED_ARG(netif);
+  ;
   return rfc7668_set_addr(&rfc7668_peer_addr, peer_addr, peer_addr_len, 0, 0);
 }
 
@@ -207,10 +207,10 @@ rfc7668_set_peer_addr_eui64(struct NetIfc *netif, const uint8_t *peer_addr, size
  * This expects an address of 6 bytes.
  */
 LwipError
-rfc7668_set_peer_addr_mac48(struct NetIfc *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
+rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
-  LWIP_UNUSED_ARG(netif);
+  ;
   return rfc7668_set_addr(&rfc7668_peer_addr, peer_addr, peer_addr_len, 1, is_public_addr);
 }
 
@@ -228,7 +228,7 @@ rfc7668_set_peer_addr_mac48(struct NetIfc *netif, const uint8_t *peer_addr, size
  * @return Same as netif->output.
  */
 static LwipError
-rfc7668_compress(struct NetIfc *netif, struct PacketBuffer *p)
+rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *p_frag;
   uint16_t remaining_len;
@@ -309,8 +309,8 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
   ip6_addr_set(&rfc7668_context[idx], context);
   return ERR_OK;
 #else
-  LWIP_UNUSED_ARG(idx);
-  LWIP_UNUSED_ARG(context);
+  ;
+  ;
   return ERR_VAL;
 #endif
 }
@@ -326,7 +326,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  * @return See rfc7668_compress
  */
 LwipError
-rfc7668_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
+rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
   return rfc7668_compress(netif, q);
@@ -343,7 +343,7 @@ rfc7668_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6ad
  * @return ERR_OK if everything was fine
  */
 LwipError
-rfc7668_input(struct PacketBuffer * p, struct NetIfc *netif)
+rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
 {
   uint8_t * puc;
 
@@ -406,7 +406,7 @@ rfc7668_input(struct PacketBuffer * p, struct NetIfc *netif)
  * @return ERR_OK if everything went fine
  */
 LwipError
-rfc7668_if_init(struct NetIfc *netif)
+rfc7668_if_init(NetIfc*netif)
 {
   netif->name[0] = 'b';
   netif->name[1] = 't';
@@ -436,7 +436,7 @@ rfc7668_if_init(struct NetIfc *netif)
  * @return see @ref tcpip_inpkt, same return values
  */
 LwipError
-tcpip_rfc7668_input(struct PacketBuffer *p, struct NetIfc *inp)
+tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp)
 {
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);

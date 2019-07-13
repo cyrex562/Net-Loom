@@ -46,7 +46,7 @@
  */
 #include "udp.h"
 #include "def.h"
-#include "dhcp.h"
+#include "DhcpContext.h"
 #include "icmp.h"
 #include "icmp6.h"
 #include "inet_chksum.h"
@@ -119,7 +119,7 @@ again: if (udp_port++ == UDP_LOCAL_PORT_RANGE_END)
  * @return 1 on match, 0 otherwise
  */
 static uint8_t udp_input_local_match(struct UdpPcb* pcb,
-                                     struct NetIfc* inp,
+                                     NetIfc** inp,
                                      uint8_t broadcast)
 {
     LWIP_ASSERT("udp_input_local_match: invalid pcb", pcb != nullptr);
@@ -185,7 +185,7 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
  *
  */
 void
-udp_input(struct PacketBuffer *p, struct NetIfc *inp)
+udp_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct UdpHdr *udphdr;
   struct UdpPcb *pcb, *prev;
@@ -194,7 +194,7 @@ udp_input(struct PacketBuffer *p, struct NetIfc *inp)
   uint8_t broadcast;
   uint8_t for_us = 0;
 
-  LWIP_UNUSED_ARG(inp);
+  ;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -525,7 +525,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                   uint16_t dst_port, uint8_t have_chksum, uint16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
-  struct NetIfc *netif;
+  NetIfc*netif;
 
   LWIP_ERROR("udp_sendto: invalid pcb", pcb != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_sendto: invalid pbuf", p != nullptr, return ERR_ARG);
@@ -616,7 +616,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
  */
 LwipError
 udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
-              const IpAddr *dst_ip, uint16_t dst_port, struct NetIfc *netif)
+              const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0);
@@ -625,7 +625,7 @@ udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
 /** Same as udp_sendto_if(), but with checksum */
 LwipError
 udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                     uint16_t dst_port, struct netif *netif, uint8_t have_chksum,
+                     uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
                      uint16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
@@ -691,7 +691,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
  * Same as @ref udp_sendto_if, but with source address */
 LwipError
 udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
-                  const IpAddr *dst_ip, uint16_t dst_port, struct NetIfc *netif, const IpAddr *src_ip)
+                  const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif, const IpAddr *src_ip)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
@@ -700,7 +700,7 @@ udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
 /** Same as udp_sendto_if_src(), but with checksum */
 LwipError
 udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                         uint16_t dst_port, struct netif *netif, uint8_t have_chksum,
+                         uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
                          uint16_t chksum, const IpAddr *src_ip)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
@@ -1033,7 +1033,7 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
  * @see udp_disconnect()
  */
 void
-udp_bind_netif(struct UdpPcb *pcb, const struct NetIfc *netif)
+udp_bind_netif(struct UdpPcb *pcb, const NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 

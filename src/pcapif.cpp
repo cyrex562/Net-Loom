@@ -280,7 +280,7 @@ pcapif_compare_packets(struct pcapipf_pending_packet *pack, const void *packet, 
 }
 
 static int
-pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
+pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
 {
   struct pcapif_private *priv = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   struct pcapipf_pending_packet *iter, *last;
@@ -326,7 +326,7 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 #define pcapif_init_tx_packets(priv)
 #define pcapif_add_tx_packet(priv, buf, tot_len)
 static int
-pcaipf_is_tx_packet(struct NetIfc *netif, const void *packet, int packet_len)
+pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
 {
   const struct EthAddr *src = (const struct EthAddr *)packet + 1;
   if (packet_len >= (ETH_HWADDR_LEN * 2)) {
@@ -647,7 +647,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
 static void
 pcapif_check_linkstate(void *netif_ptr)
 {
-  struct NetIfc *netif = (struct NetIfc*)netif_ptr;
+  NetIfc*netif = (NetIfc**)netif_ptr;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   enum pcapifh_link_event le;
 
@@ -680,7 +680,7 @@ pcapif_check_linkstate(void *netif_ptr)
  * @param netif netif to shutdown
  */
 void
-pcapif_shutdown(struct NetIfc *netif)
+pcapif_shutdown(NetIfc*netif)
 {
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   if (pa) {
@@ -707,7 +707,7 @@ pcapif_shutdown(struct NetIfc *netif)
 static void
 pcapif_input_thread(void *arg)
 {
-  struct NetIfc *netif = (struct NetIfc *)arg;
+  NetIfc*netif = (NetIfc*)arg;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   do
   {
@@ -724,7 +724,7 @@ pcapif_input_thread(void *arg)
 /** Low-level initialization: find the correct adapter and initialize it.
  */
 static void
-pcapif_low_level_init(struct NetIfc *netif)
+pcapif_low_level_init(NetIfc*netif)
 {
   uint8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
@@ -818,7 +818,7 @@ pcapif_low_level_init(struct NetIfc *netif)
  * the function. This PacketBuffer might be chained.
  */
 static LwipError
-pcapif_low_level_output(struct NetIfc *netif, struct PacketBuffer *p)
+pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *q;
   unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
@@ -895,7 +895,7 @@ pcapif_low_level_output(struct NetIfc *netif, struct PacketBuffer *p)
  * packet from the interface into the PacketBuffer.
  */
 static struct PacketBuffer *
-pcapif_low_level_input(struct NetIfc *netif, const void *packet, int packet_len)
+pcapif_low_level_input(NetIfc*netif, const void *packet, int packet_len)
 {
   struct PacketBuffer *p, *q;
   int start;
@@ -1019,7 +1019,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 {
   struct pcapif_private *pa = (struct pcapif_private*)user;
   int packet_len = pkt_header->caplen;
-  struct NetIfc *netif = (struct NetIfc *)pa->input_fn_arg;
+  NetIfc*netif = (NetIfc*)pa->input_fn_arg;
   struct PacketBuffer *p;
 
   PCAPIF_RX_LOCK_LWIP();
@@ -1044,7 +1044,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
  * pcapif_init(): initialization function, pass to netif_add().
  */
 LwipError
-pcapif_init(struct NetIfc *netif)
+pcapif_init(NetIfc*netif)
 {
   static int ethernetif_index;
   int local_index;
@@ -1078,7 +1078,7 @@ pcapif_init(struct NetIfc *netif)
 }
 
 void
-pcapif_poll(struct netif *netif)
+pcapif_poll(NetIfc*netif)
 {
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
 

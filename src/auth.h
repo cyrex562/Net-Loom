@@ -29,12 +29,8 @@ void auth_peer_success(PppPcb* pcb,
                        int protocol,
                        int prot_flavor,
                        const char* name,
-                       int namelen,
-                       Protent** protocols);
-void auth_withpeer_success(PppPcb* pcb,
-                           int protocol,
-                           int prot_flavor,
-                           Protent** protocols);
+                       size_t namelen);
+
 void np_up(PppPcb* pcb, int proto);
 void np_down(PppPcb* pcb, int proto);
 void np_finished(PppPcb* pcb, int proto);
@@ -44,7 +40,7 @@ int get_secret(PppPcb* pcb,
                char* secret,
                int* secret_len,
                int am_server);
-
+void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor);
 //
 // END OF FILE
 //

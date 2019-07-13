@@ -67,7 +67,7 @@ static void icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t d
 static void icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t data,
     uint8_t type, const Ip6Addr *src_addr, const Ip6Addr *dest_addr);
 static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data,
-    uint8_t type, const Ip6Addr *src_addr, const Ip6Addr *dest_addr, struct netif *netif);
+    uint8_t type, const Ip6Addr *src_addr, const Ip6Addr *dest_addr, NetIfc*netif);
 
 
 /**
@@ -80,7 +80,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uin
  * @param inp the netif on which this packet was received
  */
 void
-icmp6_input(struct PacketBuffer *p, struct netif *inp)
+icmp6_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct Icmp6Hdr *icmp6hdr;
   struct PacketBuffer *r;
@@ -309,7 +309,7 @@ static void
 icmp6_send_response(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type)
 {
   const struct ip6_addr *reply_src, *reply_dest;
-  struct netif *netif = ip_current_netif();
+  NetIfc*netif = ip_current_netif();
 
   LWIP_ASSERT("icmpv6 packet not a direct response", netif != NULL);
   reply_dest = ip6_current_src_addr();
@@ -347,7 +347,7 @@ icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t da
     const Ip6Addr *src_addr, const Ip6Addr *dest_addr)
 {
   const struct ip6_addr *reply_src, *reply_dest;
-  struct netif *netif;
+  NetIfc*netif;
 
   /* Get the destination address and netif for this ICMP message. */
   LWIP_ASSERT("must provide both source and destination", src_addr != NULL);
@@ -383,7 +383,7 @@ icmp6_send_response_with_addrs(struct PacketBuffer *p, uint8_t code, uint32_t da
  */
 static void
 icmp6_send_response_with_addrs_and_netif(struct PacketBuffer *p, uint8_t code, uint32_t data, uint8_t type,
-    const Ip6Addr *reply_src, const Ip6Addr *reply_dest, struct netif *netif)
+    const Ip6Addr *reply_src, const Ip6Addr *reply_dest, NetIfc*netif)
 {
   struct PacketBuffer *q;
   struct Icmp6Hdr *icmp6hdr;

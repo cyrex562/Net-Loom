@@ -64,7 +64,7 @@ static void
 zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
                const IpAddr* addr, uint16_t port)
 {
-    auto netif_lowpan6 = static_cast<struct NetIfc *>(arg);
+    auto netif_lowpan6 = static_cast<NetIfc*>(arg);
 
     LWIP_ASSERT("arg != NULL", arg != nullptr);
     LWIP_ASSERT("pcb != NULL", pcb != nullptr);
@@ -126,7 +126,7 @@ err_return:
 
 /* Send 6LoWPAN TX packets as UDP broadcast */
 static LwipError
-zepif_linkoutput(struct NetIfc* netif, struct PacketBuffer* p)
+zepif_linkoutput(NetIfc** netif, struct PacketBuffer* p)
 {
     struct PacketBuffer* q;
 
@@ -179,7 +179,7 @@ int zepif_default_udp_port = 9999;
  * functions for ZEP
  */
 LwipError
-zepif_init(struct NetIfc* netif)
+zepif_init(NetIfc** netif)
 {
     LwipError err;
     auto init_state = static_cast<struct ZepifInit*>(netif->state);

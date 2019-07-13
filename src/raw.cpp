@@ -122,14 +122,14 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
  *
  */
 raw_input_state_t
-raw_input(struct PacketBuffer *p, struct NetIfc *inp)
+raw_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct raw_pcb *pcb, *prev;
   int16_t proto;
   raw_input_state_t ret = RAW_INPUT_NONE;
   uint8_t broadcast = ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif());
 
-  LWIP_UNUSED_ARG(inp);
+  ;
 
 
   if (IP_HDR_GET_VERSION(p->payload) == 6)
@@ -231,7 +231,7 @@ raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
  * @see raw_disconnect()
  */
 void
-raw_bind_netif(struct raw_pcb *pcb, const struct NetIfc *netif)
+raw_bind_netif(struct raw_pcb *pcb, const NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if (netif != nullptr) {
@@ -330,7 +330,7 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 LwipError
 raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
 {
-  struct NetIfc *netif;
+  NetIfc*netif;
   const IpAddr *src_ip;
 
   if ((pcb == nullptr) || (ipaddr == nullptr) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
@@ -395,7 +395,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
  */
 LwipError
 raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                  struct NetIfc *netif, const IpAddr *src_ip)
+                  NetIfc*netif, const IpAddr *src_ip)
 {
   LwipError err;
   struct PacketBuffer *q; /* q will be sent down the stack */

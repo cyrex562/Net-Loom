@@ -44,7 +44,7 @@ sys_win_rand_init(void)
       char errbuf[128];
       err = GetLastError();
       snprintf(errbuf, sizeof(errbuf), "CryptAcquireContext failed with error %d", (int)err);
-      LWIP_UNUSED_ARG(err);
+      ;
       LWIP_ASSERT(errbuf, 0);
     }
   }
@@ -118,7 +118,7 @@ sys_arch_protect(void)
 void
 sys_arch_unprotect(sys_prot_t pval)
 {
-  LWIP_UNUSED_ARG(pval);
+  ;
 #if LWIP_SYS_ARCH_CHECK_NESTED_PROTECT
   LWIP_ASSERT("missing SYS_ARCH_PROTECT", protection_depth == 1);
 #else
@@ -261,7 +261,7 @@ sys_sem_signal(sys_sem_t *sem)
   LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   ret = ReleaseSemaphore(sem->sem, 1, nullptr);
   LWIP_ASSERT("Error releasing semaphore", ret != 0);
-  LWIP_UNUSED_ARG(ret);
+  ;
 }
 
 LwipError
@@ -313,7 +313,7 @@ void sys_mutex_lock(sys_mutex_t *mutex)
   /* wait infinite */
   ret = WaitForSingleObject(mutex->mut, INFINITE);
   LWIP_ASSERT("Error waiting for mutex", ret == WAIT_OBJECT_0);
-  LWIP_UNUSED_ARG(ret);
+  ;
 }
 
 void
@@ -361,8 +361,8 @@ SetThreadName(DWORD dwThreadID, const char* threadName)
 static void
 SetThreadName(DWORD dwThreadID, const char* threadName)
 {
-  LWIP_UNUSED_ARG(dwThreadID);
-  LWIP_UNUSED_ARG(threadName);
+  ;
+  ;
 }
 #endif /* _MSC_VER */
 
@@ -447,7 +447,7 @@ sys_check_core_locking(void)
 #else /* LWIP_TCPIP_CORE_LOCKING */
     LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
-    LWIP_UNUSED_ARG(current_thread_id); /* for LWIP_NOASSERT */
+    ; /* for LWIP_NOASSERT */
   }
 }
 #endif /* !NO_SYS */
@@ -456,7 +456,7 @@ LwipError
 sys_mbox_new(sys_mbox_t *mbox, int size)
 {
   LWIP_ASSERT("mbox != NULL", mbox != nullptr);
-  LWIP_UNUSED_ARG(size);
+  ;
 
   mbox->sem = CreateSemaphore(nullptr, 0, MAX_QUEUE_ENTRIES, nullptr);
   LWIP_ASSERT("Error creating semaphore", mbox->sem != nullptr);
@@ -666,7 +666,7 @@ sys_arch_netconn_sem_alloc(void)
   err = sys_sem_new(sem, 0);
   LWIP_ASSERT("failed to initialise TLS semaphore", err == ERR_OK);
   done = TlsSetValue(netconn_sem_tls_index, sem);
-  LWIP_UNUSED_ARG(done);
+  ;
   LWIP_ASSERT("failed to initialise TLS semaphore storage", done == TRUE);
 }
 
@@ -678,7 +678,7 @@ sys_arch_netconn_sem_free(void)
     BOOL done;
     free(tls_data);
     done = TlsSetValue(netconn_sem_tls_index, NULL);
-    LWIP_UNUSED_ARG(done);
+    ;
     LWIP_ASSERT("failed to de-init TLS semaphore storage", done == TRUE);
   }
 }

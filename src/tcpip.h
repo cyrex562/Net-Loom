@@ -60,7 +60,7 @@ extern sys_mutex_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 struct PacketBuffer;
-struct NetIfc;
+NetIfc*;
 
 /** Function prototype for the init_done function passed to tcpip_init */
 typedef void (*tcpip_init_done_fn)(void *arg);
@@ -72,8 +72,8 @@ struct tcpip_callback_msg;
 
 void   tcpip_init(tcpip_init_done_fn tcpip_init_done, void *arg);
 
-LwipError  tcpip_inpkt(struct PacketBuffer *p, struct NetIfc *inp, netif_input_fn input_fn);
-LwipError  tcpip_input(struct PacketBuffer *p, struct NetIfc *inp);
+LwipError  tcpip_inpkt(struct PacketBuffer *p, NetIfc*inp, netif_input_fn input_fn);
+LwipError  tcpip_input(struct PacketBuffer *p, NetIfc*inp);
 
 LwipError  tcpip_try_callback(tcpip_callback_fn function, void *ctx);
 LwipError  tcpip_callback(tcpip_callback_fn function, void *ctx);

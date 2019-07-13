@@ -151,7 +151,7 @@ inline bool ip4_addr_isany_val(const Ip4Addr addr1)
 }
 
 
-inline bool ip4_addr_isany(Ip4Addr* addr1)
+inline bool ip4_addr_isany(const Ip4Addr* addr1)
 {
     return addr1 == nullptr || addr1->addr == kIp4AddrAny4;
 }

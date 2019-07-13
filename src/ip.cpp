@@ -151,7 +151,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
  * Don't call directly, pass to netif_add() and call netif->input().
  */
 LwipError
-ip_input(struct PacketBuffer *p, struct netif *inp)
+ip_input(struct PacketBuffer *p, NetIfc*inp)
 {
   if (p != NULL) {
     if (IP_HDR_GET_VERSION(p->payload) == 6) {

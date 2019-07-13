@@ -168,7 +168,7 @@ ppp_get_fcs(uint8_t byte)
  *
  * Return 0 on success, an error code on failure.
  */
-PppPcb *pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
+PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   pppos_pcb *pppos;
@@ -202,7 +202,7 @@ pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
   uint16_t n;
   uint16_t fcs_out;
   LwipError err;
-  LWIP_UNUSED_ARG(ppp);
+  ;
 
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
@@ -253,7 +253,7 @@ pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t pro
   struct PacketBuffer *nb, *p;
   uint16_t fcs_out;
   LwipError err;
-  LWIP_UNUSED_ARG(ppp);
+  ;
 
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
@@ -396,7 +396,7 @@ static LwipError
 pppos_destroy(PppPcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  LWIP_UNUSED_ARG(ppp);
+  ;
 
 #if PPP_INPROC_IRQ_SAFE
   /* input PacketBuffer left ? */
@@ -436,7 +436,7 @@ pppos_input_tcpip(PppPcb *ppp, uint8_t *s, int l)
 }
 
 /* called from TCPIP thread */
-LwipError pppos_input_sys(struct PacketBuffer *p, struct netif *inp) {
+LwipError pppos_input_sys(struct PacketBuffer *p, NetIfc*inp) {
   PppPcb *ppp = (PppPcb*)inp->state;
   struct PacketBuffer *n;
   LWIP_ASSERT_CORE_LOCKED();
@@ -736,7 +736,7 @@ pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  LWIP_UNUSED_ARG(ppp);
+  ;
 
   pppos->pcomp = pcomp;
   pppos->accomp = accomp;
@@ -757,9 +757,9 @@ pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
-  LWIP_UNUSED_ARG(ppp);
-  LWIP_UNUSED_ARG(pcomp);
-  LWIP_UNUSED_ARG(accomp);
+  ;
+  ;
+  ;
 
   /* Load the ACCM bits for the 32 control codes. */
   PPPOS_PROTECT(lev);

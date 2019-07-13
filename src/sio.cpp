@@ -249,7 +249,7 @@ uint32_t sio_read(sio_fd_t fd, uint8_t* data, uint32_t len)
   Logf(SIO_DEBUG, ("sio_read()...\n"));
   ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, nullptr);
   Logf(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
-  LWIP_UNUSED_ARG(ret);
+  ;
   return dwNbBytesReadden;
 }
 
@@ -270,7 +270,7 @@ uint32_t sio_tryread(sio_fd_t fd, uint8_t* data, uint32_t len)
   Logf(SIO_DEBUG, ("sio_read()...\n"));
   ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, nullptr);
   Logf(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
-  LWIP_UNUSED_ARG(ret);
+  ;
   return dwNbBytesReadden;
 }
 
@@ -291,7 +291,7 @@ uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
   Logf(SIO_DEBUG, ("sio_write()...\n"));
   ret = WriteFile((HANDLE)(fd), data, len, &dwNbBytesWritten, nullptr);
   Logf(SIO_DEBUG, ("sio_write()=%lu bytes -> %d\n", dwNbBytesWritten, ret));
-  LWIP_UNUSED_ARG(ret);
+  ;
   return dwNbBytesWritten;
 }
 
@@ -303,7 +303,7 @@ uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
  */
 void sio_read_abort(sio_fd_t fd)
 {
-  LWIP_UNUSED_ARG(fd);
+  ;
   Logf(SIO_DEBUG, ("sio_read_abort() !!!!!...\n"));
   sio_abort = 1;
   return;

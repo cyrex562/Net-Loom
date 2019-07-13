@@ -339,7 +339,7 @@ lowpan6_tmr(void)
  * If configured, will compress IPv6 and or UDP headers.
  * */
 static LwipError
-lowpan6_frag(struct NetIfc *netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
+lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
 {
   struct PacketBuffer *p_frag;
   uint16_t frag_len, remaining_len, max_data_len;
@@ -508,8 +508,8 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 
   return ERR_OK;
 #else
-  LWIP_UNUSED_ARG(idx);
-  LWIP_UNUSED_ARG(context);
+  ;
+  ;
   return ERR_ARG;
 #endif
 }
@@ -531,7 +531,7 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 
 /* Create IEEE 802.15.4 address from netif address */
 static LwipError
-lowpan6_hwaddr_to_addr(struct NetIfc *netif, struct Lowpan6LinkAddr *addr)
+lowpan6_hwaddr_to_addr(NetIfc*netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
@@ -568,7 +568,7 @@ lowpan6_hwaddr_to_addr(struct NetIfc *netif, struct Lowpan6LinkAddr *addr)
  * @return LwipError
  */
 LwipError
-lowpan6_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
+lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   LwipError result;
   const uint8_t *hwaddr;
@@ -648,7 +648,7 @@ lowpan6_output(struct NetIfc *netif, struct PacketBuffer *q, const Ip6Addr*ip6ad
  * NETIF input function: don't free the input PacketBuffer when returning != ERR_OK!
  */
 LwipError
-lowpan6_input(struct PacketBuffer *p, struct NetIfc *netif)
+lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
 {
   uint8_t *puc, b;
   int8_t i;
@@ -877,7 +877,7 @@ lowpan6_input_discard:
  * @ingroup sixlowpan
  */
 LwipError
-lowpan6_if_init(struct NetIfc *netif)
+lowpan6_if_init(NetIfc*netif)
 {
   netif->name[0] = 'L';
   netif->name[1] = '6';
@@ -916,7 +916,7 @@ lowpan6_set_pan_id(uint16_t pan_id)
  * @param inp the network interface on which the packet was received
  */
 LwipError
-tcpip_6lowpan_input(struct PacketBuffer *p, struct NetIfc *inp)
+tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);
 }

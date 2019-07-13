@@ -129,7 +129,7 @@ lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
  * Compress IPv6 and/or UDP headers.
  * */
 LwipError
-lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
+lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
                          uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, Ip6Addr *lowpan6_contexts,
                          const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
 {
@@ -196,7 +196,7 @@ lowpan6_compress_headers(struct netif *netif, uint8_t *inbuf, size_t inbuf_size,
     lowpan6_header_len++;
   }
 #else /* LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
-  LWIP_UNUSED_ARG(lowpan6_contexts);
+  ;
 #endif /* LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
 
   /* Determine TF field: Traffic Class, Flow Label */
@@ -566,7 +566,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       ip6hdr->src.addr[1] = lowpan6_contexts[i].addr[1];
       Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("SAM == xx, context compression found @%d: %8X, %8X\n", (int)i, ip6hdr->src.addr[0], ip6hdr->src.addr[1]));
 #else
-      LWIP_UNUSED_ARG(lowpan6_contexts);
+      ;
 #endif
     }
 

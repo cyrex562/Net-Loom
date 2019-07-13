@@ -163,7 +163,7 @@ int ppp_init(void);
  */
 
 /* Create a new PPP control block */
-PppPcb *ppp_new(struct NetIfc *pppif, const struct LinkCallbacks *callbacks, void *link_ctx_cb,
+PppPcb *ppp_new(NetIfc*pppif, const struct LinkCallbacks *callbacks, void *link_ctx_cb,
                  ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* Initiate LCP open request */

@@ -458,7 +458,7 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
 static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len) {
     uint8_t msglen;
     char *msg;
-    LWIP_UNUSED_ARG(id);
+    ;
 
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;
@@ -493,7 +493,7 @@ static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len) {
 static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len) {
     uint8_t msglen;
     char *msg;
-    LWIP_UNUSED_ARG(id);
+    ;
 
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;

@@ -17,7 +17,7 @@ const IpAddr kIpAddrBroadcast = {{{{kIpaddrBroadcast}}}};
  * @return returns non-zero if the address is a broadcast address
  */
 uint8_t
-ip4_addr_isbroadcast_u32(const uint32_t addr, const struct NetIfc *netif)
+ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
 {
   Ip4Addr ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);

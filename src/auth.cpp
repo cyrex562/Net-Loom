@@ -303,42 +303,45 @@ void auth_peer_fail(PppPcb *pcb, int protocol) {
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
-void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *name, int namelen, Protent** protocols) {
+void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* name, size_t namelen)
+{
     int bit;
 
-    switch (protocol) {
+    switch (protocol)
+    {
     case PPP_CHAP:
-	bit = CHAP_PEER;
-	switch (prot_flavor) {
-	case CHAP_MD5:
-	    bit |= CHAP_MD5_PEER;
-	    break;
-	case CHAP_MICROSOFT:
-	    bit |= CHAP_MS_PEER;
-	    break;
-	case CHAP_MICROSOFT_V2:
-	    bit |= CHAP_MS2_PEER;
-	    break;
-	default:
-	    break;
-	}
-	break;
+        bit = CHAP_PEER;
+        switch (prot_flavor)
+        {
+        case CHAP_MD5:
+            bit |= CHAP_MD5_PEER;
+            break;
+        case CHAP_MICROSOFT:
+            bit |= CHAP_MS_PEER;
+            break;
+        case CHAP_MICROSOFT_V2:
+            bit |= CHAP_MS2_PEER;
+            break;
+        default:
+            break;
+        }
+        break;
     case PPP_PAP:
-	bit = PAP_PEER;
-	break;
+        bit = PAP_PEER;
+        break;
     case PPP_EAP:
-	bit = EAP_PEER;
-	break;
+        bit = EAP_PEER;
+        break;
     default:
-	ppp_warn("auth_peer_success: unknown protocol %x", protocol);
-	return;
+        ppp_warn("auth_peer_success: unknown protocol %x", protocol);
+        return;
     }
 
     /*
      * Save the authenticated name of the peer for later.
      */
     if (namelen > (int)sizeof(pcb->peer_authname) - 1)
-	namelen = (int)sizeof(pcb->peer_authname) - 1;
+        namelen = (int)sizeof(pcb->peer_authname) - 1;
     MEMCPY(pcb->peer_authname, name, namelen);
     pcb->peer_authname[namelen] = 0;
 
@@ -377,10 +380,10 @@ void auth_withpeer_fail(PppPcb* pcb, int protocol)
 /*
  * We have successfully authenticated ourselves with the peer using `protocol'.
  */
-void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor, Protent** protocols)
+void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor)
 {
     int bit;
-    const char* prot = "";
+    auto prot = "";
 
     switch (protocol)
     {

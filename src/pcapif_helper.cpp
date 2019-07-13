@@ -88,18 +88,18 @@ struct pcapifh_linkstate {
 
 struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
 {
-  LWIP_UNUSED_ARG(adapter_name);
+  ;
   return NULL;
 }
 
 enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state)
 {
-  LWIP_UNUSED_ARG(state);
+  ;
   return PCAPIF_LINKEVENT_UP;
 }
 void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
 {
-  LWIP_UNUSED_ARG(state);
+  ;
 }
 
 #endif /* WIN32 */

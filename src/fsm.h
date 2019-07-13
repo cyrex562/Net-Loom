@@ -100,6 +100,7 @@ struct Fsm
     uint8_t maxnakloops; /* Maximum number of nak loops tolerated
 				   (necessary because IPCP require a custom large max nak loops value) */
     uint8_t term_reason_len; /* Length of term_reason */
+    int unit;
 };
 
 

@@ -371,7 +371,7 @@ chap_handle_response(PppPcb* pcb,
                                   PPP_CHAP,
                                   pcb->chap_server.digest->code,
                                   name,
-                                  strlen(name),protocols
+                                  strlen(name)
                 );
             if (pcb->settings.chap_rechallenge_time)
             {
@@ -543,7 +543,7 @@ chap_handle_status(PppPcb* pcb,
             ppp_info("%s", msg);
     }
     if (code == CHAP_SUCCESS)
-        auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code, protocols);
+        auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code);
     else
     {
         pcb->chap_client.flags |= AUTH_FAILED;

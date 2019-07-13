@@ -84,7 +84,7 @@ static void icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t cod
  * @param inp the netif on which this packet was received
  */
 void
-icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
+icmp_input(struct PacketBuffer *p, NetIfc*inp)
 {
   uint8_t type;
 #ifdef LWIP_DEBUG
@@ -113,7 +113,7 @@ icmp_input(struct PacketBuffer *p, struct NetIfc *inp)
 #ifdef LWIP_DEBUG
   code = *(((uint8_t *)p->payload) + 1);
   /* if debug is enabled but debug statement below is somehow disabled: */
-  LWIP_UNUSED_ARG(code);
+  ;
 #endif /* LWIP_DEBUG */
   switch (type) {
     case ICMP_ER:
@@ -361,7 +361,7 @@ icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code)
   /* we can use the echo header here */
   struct IcmpEchoHdr *icmphdr;
   Ip4Addr iphdr_src;
-  struct NetIfc *netif;
+  NetIfc*netif;
 
   /* increase number of messages attempted to send */
   MIB2_STATS_INC(mib2.icmpoutmsgs);

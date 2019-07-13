@@ -36,24 +36,19 @@
 */
 #pragma once
 
-#include "ppp_opts.h"
 #include <cstdint>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * @todo:
  *
  * Maybe this should be done by processing struct LwipIn6Addr directly...
  */
-typedef union
+union Eui64
 {
     uint8_t e8[8];
     uint16_t e16[4];
     uint32_t e32[2];
-} Eui64T;
+} ;
 
 #define eui64_iszero(e)		(((e).e32[0] | (e).e32[1]) == 0)
 #define eui64_equals(e, o)	(((e).e32[0] == (o).e32[0]) && \
@@ -90,8 +85,8 @@ typedef union
 				} while (0)
 #define eui64_setlo32(e, l)	eui64_set32(e, l)
 
-char *eui64_ntoa(Eui64T);	/* Returns ascii representation of id */
+char *eui64_ntoa(Eui64);	/* Returns ascii representation of id */
 
-#ifdef __cplusplus
-}
-#endif
+//
+// END OF FILE
+//

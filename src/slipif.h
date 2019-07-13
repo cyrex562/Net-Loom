@@ -71,12 +71,12 @@
 extern "C" {
 #endif
 
-LwipError slipif_init(struct NetIfc * netif);
-void slipif_poll(struct NetIfc *netif);
+LwipError slipif_init(NetIfc* netif);
+void slipif_poll(NetIfc*netif);
 #if SLIP_RX_FROM_ISR
-void slipif_process_rxqueue(struct netif *netif);
-void slipif_received_byte(struct netif *netif, uint8_t data);
-void slipif_received_bytes(struct netif *netif, uint8_t *data, uint8_t len);
+void slipif_process_rxqueue(NetIfc*netif);
+void slipif_received_byte(NetIfc*netif, uint8_t data);
+void slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len);
 #endif /* SLIP_RX_FROM_ISR */
 
 #ifdef __cplusplus

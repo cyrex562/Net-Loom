@@ -81,10 +81,10 @@
 #define MLD6_GROUP_IDLE_MEMBER            2
 
 /* Forward declarations. */
-static struct mld_group *mld6_new_group(struct netif *ifp, const Ip6Addr *addr);
-static LwipError mld6_remove_group(struct netif *netif, struct mld_group *group);
+static struct mld_group *mld6_new_group(NetIfc*ifp, const Ip6Addr *addr);
+static LwipError mld6_remove_group(NetIfc*netif, struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, uint16_t maxresp);
-static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type);
+static void mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type);
 
 
 /**
@@ -93,7 +93,7 @@ static void mld6_send(struct netif *netif, struct mld_group *group, uint8_t type
  * @param netif network interface on which stop MLD processing
  */
 LwipError
-mld6_stop(struct netif *netif)
+mld6_stop(NetIfc*netif)
 {
   struct mld_group *group = netif_mld6_data(netif);
 
@@ -122,7 +122,7 @@ mld6_stop(struct netif *netif)
  * @param netif network interface on which report MLD memberships
  */
 void
-mld6_report_groups(struct netif *netif)
+mld6_report_groups(NetIfc*netif)
 {
   struct mld_group *group = netif_mld6_data(netif);
 
@@ -141,7 +141,7 @@ mld6_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct mld_group *
-mld6_lookfor_group(struct netif *ifp, const Ip6Addr *addr)
+mld6_lookfor_group(NetIfc*ifp, const Ip6Addr *addr)
 {
   struct mld_group *group = netif_mld6_data(ifp);
 
@@ -165,7 +165,7 @@ mld6_lookfor_group(struct netif *ifp, const Ip6Addr *addr)
  *         NULL on memory error.
  */
 static struct mld_group *
-mld6_new_group(struct netif *ifp, const Ip6Addr *addr)
+mld6_new_group(NetIfc*ifp, const Ip6Addr *addr)
 {
   struct mld_group *group;
 
@@ -191,7 +191,7 @@ mld6_new_group(struct netif *ifp, const Ip6Addr *addr)
  * @return ERR_OK if group was removed from the list, an LwipError otherwise
  */
 static LwipError
-mld6_remove_group(struct netif *netif, struct mld_group *group)
+mld6_remove_group(NetIfc*netif, struct mld_group *group)
 {
   LwipError err = ERR_OK;
 
@@ -224,7 +224,7 @@ mld6_remove_group(struct netif *netif, struct mld_group *group)
  * @param inp the netif on which this packet was received
  */
 void
-mld6_input(struct PacketBuffer *p, struct netif *inp)
+mld6_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct mld_header *mld_hdr;
   struct mld_group *group;
@@ -315,7 +315,7 @@ LwipError
 mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
 {
   LwipError         err = ERR_VAL; /* no matching interface */
-  struct netif *netif;
+  NetIfc*netif;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -344,7 +344,7 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
  * @return ERR_OK if group was joined on the netif, an LwipError otherwise
  */
 LwipError
-mld6_joingroup_netif(struct netif *netif, const Ip6Addr *groupaddr)
+mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
@@ -404,7 +404,7 @@ LwipError
 mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
 {
   LwipError         err = ERR_VAL; /* no matching interface */
-  struct netif *netif;
+  NetIfc*netif;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -434,7 +434,7 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
  * @return ERR_OK if group was left on the netif, an LwipError otherwise
  */
 LwipError
-mld6_leavegroup_netif(struct netif *netif, const Ip6Addr *groupaddr)
+mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
 #if LWIP_IPV6_SCOPES
@@ -495,7 +495,7 @@ mld6_leavegroup_netif(struct netif *netif, const Ip6Addr *groupaddr)
 void
 mld6_tmr(void)
 {
-  struct netif *netif;
+  NetIfc*netif;
 
   NETIF_FOREACH(netif) {
     struct mld_group *group = netif_mld6_data(netif);
@@ -560,7 +560,7 @@ mld6_delayed_report(struct mld_group *group, uint16_t maxresp_in)
  * @param type ICMP6_TYPE_MLR (report) or ICMP6_TYPE_MLD (done)
  */
 static void
-mld6_send(struct netif *netif, struct mld_group *group, uint8_t type)
+mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
 {
   struct mld_header *mld_hdr;
   struct PacketBuffer *p;

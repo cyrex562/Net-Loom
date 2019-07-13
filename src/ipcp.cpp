@@ -2177,7 +2177,7 @@ static void ipcp_down(fsm *f) {
  * proxy arp entries, etc.
  */
 static void ipcp_clear_addrs(PppPcb *pcb, uint32_t ouraddr, uint32_t hisaddr, uint8_t replacedefaultroute) {
-    LWIP_UNUSED_ARG(replacedefaultroute);
+    ;
 
 #if 0 /* UNUSED - PROXY ARP */
     if (pcb->proxy_arp_set) {

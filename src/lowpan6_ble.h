@@ -53,17 +53,17 @@
 extern "C" {
 #endif
 
-LwipError rfc7668_output(struct netif *netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
-LwipError rfc7668_input(struct PacketBuffer * p, struct netif *netif);
-LwipError rfc7668_set_local_addr_eui64(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len);
-LwipError rfc7668_set_local_addr_mac48(struct netif *netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
-LwipError rfc7668_set_peer_addr_eui64(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len);
-LwipError rfc7668_set_peer_addr_mac48(struct netif *netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
+LwipError rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
+LwipError rfc7668_input(struct PacketBuffer * p, NetIfc*netif);
+LwipError rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len);
+LwipError rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
+LwipError rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len);
+LwipError rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
 LwipError rfc7668_set_context(uint8_t index, const Ip6Addr * context);
-LwipError rfc7668_if_init(struct netif *netif);
+LwipError rfc7668_if_init(NetIfc*netif);
 
 #if !NO_SYS
-LwipError tcpip_rfc7668_input(struct PacketBuffer *p, struct netif *inp);
+LwipError tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp);
 #endif
 
 void ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr);

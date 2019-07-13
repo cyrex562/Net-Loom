@@ -74,7 +74,7 @@ void             tcp_fasttmr (void);
 void             tcp_txnow   (void);
 
 /* Only used by IP to pass a TCP segment to TCP: */
-void             tcp_input   (struct PacketBuffer *p, struct NetIfc *inp);
+void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
 /* Used within the TCP code only: */
 struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
@@ -232,7 +232,7 @@ LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 
 #define TCP_EVENT_ERR(last_state,errf,arg,err)                 \
   do {                                                         \
-    LWIP_UNUSED_ARG(last_state);                               \
+    ;                               \
     if((errf) != NULL)                                         \
       (errf)((arg),(err));                                     \
   } while (0)
@@ -476,7 +476,7 @@ LwipError tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, struct NetIfc *outif,
+uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
                              const IpAddr *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)

@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 struct UdpPcb;
-struct NetIfc;
+NetIfc*;
 
 /**
  * @defgroup netif_mib2 MIB2 statistics
@@ -134,21 +134,21 @@ enum snmp_ifType {
 
 /* LWIP MIB2 callbacks */
 /* network interface */
-void mib2_netif_added(struct NetIfc *ni);
-void mib2_netif_removed(struct NetIfc *ni);
+void mib2_netif_added(NetIfc*ni);
+void mib2_netif_removed(NetIfc*ni);
 
 /* ARP (for atTable and ipNetToMediaTable) */
-void mib2_add_arp_entry(struct NetIfc *ni, IpAddr *ip);
-void mib2_remove_arp_entry(struct NetIfc *ni, IpAddr*ip);
+void mib2_add_arp_entry(NetIfc*ni, IpAddr *ip);
+void mib2_remove_arp_entry(NetIfc*ni, IpAddr*ip);
 
 
 
 /* IP */
 
-void mib2_add_ip4(struct NetIfc *ni);
-void mib2_remove_ip4(struct NetIfc *ni);
-void mib2_add_route_ip4(uint8_t dflt, struct NetIfc *ni);
-void mib2_remove_route_ip4(uint8_t dflt, struct NetIfc *ni);
+void mib2_add_ip4(NetIfc*ni);
+void mib2_remove_ip4(NetIfc*ni);
+void mib2_add_route_ip4(uint8_t dflt, NetIfc*ni);
+void mib2_remove_route_ip4(uint8_t dflt, NetIfc*ni);
 
 
 /* UDP */

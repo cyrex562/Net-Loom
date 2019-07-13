@@ -149,7 +149,7 @@ static
  * Just a callback function for tcpip_callback() that calls pbuf_free_ooseq().
  */
 static void pbuf_free_ooseq_callback(void *arg) {
-  LWIP_UNUSED_ARG(arg);
+  ;
   pbuf_free_ooseq();
 }
 #endif /* !NO_SYS */
@@ -611,7 +611,7 @@ uint8_t pbuf_remove_header(struct PacketBuffer *p, size_t header_size_decrement)
 
   /* remember current payload pointer */
   payload = p->payload;
-  // LWIP_UNUSED_ARG(payload); /* only used in Logf below */
+  // ; /* only used in Logf below */
 
   /* increase payload pointer (guarded by length check above) */
   p->payload = (uint8_t *)p->payload + header_size_decrement;
@@ -1322,7 +1322,7 @@ struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuf
     return nullptr;
   }
   err = pbuf_copy(q, p);
-  LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
+  ; /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("pbuf_copy failed", err == ERR_OK);
   return q;
 }

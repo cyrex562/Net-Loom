@@ -40,24 +40,17 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
 /*
  * @todo:
  * Randomize fsm id on link/init.
  * Deal with variable outgoing MTU.
  */
 
-#if 0 /* UNUSED */
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#endif /* UNUSED */
+#include "ppp_opts.h"
+#include "fsm.h"
 
-#include "ppp/ppp_impl.h"
+#include "ppp_impl.h"
 
-#include "ppp/fsm.h"
 
 static void fsm_timeout (void *);
 static void fsm_rconfreq(fsm *f, uint8_t id, uint8_t *inp, int len);
@@ -75,11 +68,12 @@ static void fsm_sconfreq(fsm *f, int retransmit);
  *
  * Initialize fsm state.
  */
-void fsm_init(fsm *f) {
-    PppPcb *pcb = f->pcb;
+void fsm_init(fsm* f)
+{
+    PppPcb* pcb = f->pcb;
     f->state = PPP_FSM_INITIAL;
     f->flags = 0;
-    f->id = 0;				/* XXX Start with random id? */
+    f->id = 0; /* XXX Start with random id? */
     f->maxnakloops = pcb->settings.fsm_max_nak_loops;
     f->term_reason_len = 0;
 }
