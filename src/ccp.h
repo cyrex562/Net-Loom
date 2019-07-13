@@ -1,35 +1,3 @@
-/*
- * ccp.h - Definitions for PPP Compression Control Protocol.
- *
- * Copyright (c) 1994-2002 Paul Mackerras. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
- *
- * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * $Id: ccp.h,v 1.12 2004/11/04 10:02:26 paulus Exp $
- */
-
 #pragma once
 #include "fsm.h"
 #include <servprov.h>
@@ -39,19 +7,31 @@
 /*
  * CCP codes.
  */
+enum CcpCode
+{
+    CCP_CONFREQ =1,
+    CCP_CONFACK =2,
+    CCP_TERMREQ =5,
+    CCP_TERMACK =6,
+    CCP_RESETREQ= 14,
+    CCP_RESETACK= 15
+};
 
-#define CCP_CONFREQ	1
-#define CCP_CONFACK	2
-#define CCP_TERMREQ	5
-#define CCP_TERMACK	6
-#define CCP_RESETREQ	14
-#define CCP_RESETACK	15
+
 
 /*
  * Max # bytes for a CCP option
  */
+constexpr auto CCP_MAX_OPTION_LENGTH = 32;
 
-#define CCP_MAX_OPTION_LENGTH	32
+constexpr auto kDeflateMinWorks = 9;
+
+/*
+ * Local state (mainly for handling reset-reqs and reset-acks).
+ */
+constexpr auto kRackPending = 1	/* waiting for reset-ack */;
+constexpr auto kRreqRepeat = 2	/* send another reset-req if no reset-ack */;
+constexpr auto kRacktimeout = 1	/* second */;
 
 /*
  * Parts of a CCP packet.
@@ -117,12 +97,12 @@
 
 
 struct CcpOptions {
-    unsigned int deflate          :1; /* do Deflate? */
-    unsigned int deflate_correct  :1; /* use correct code for deflate? */
-    unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
-    unsigned int bsd_compress     :1; /* do BSD Compress? */
-    unsigned int predictor_1      :1; /* do Predictor-1? */
-    unsigned int predictor_2      :1; /* do Predictor-2? */
+    bool deflate; /* do Deflate? */
+    bool deflate_correct; /* use correct code for deflate? */
+    bool deflate_draft; /* use draft RFC code for deflate? */
+    bool bsd_compress; /* do BSD Compress? */
+    bool predictor_1; /* do Predictor-1? */
+    bool predictor_2; /* do Predictor-2? */
     uint8_t mppe;			/* MPPE bitfield */
     uint16_t bsd_bits;		/* # bits/code for BSD Compress */
     uint16_t deflate_size;	/* lg(window size) for Deflate */
@@ -131,11 +111,11 @@ struct CcpOptions {
 
 extern const struct Protent kCcpProtent;
 
-void ccp_resetrequest(uint8_t* PppPcb_ccp_local_state);  /* Issue a reset-request. */
+
 
 struct CcpRackTimeoutArgs
 {
-    fsm* f;
+    Fsm* f;
     PppPcb* pcb;
 };
 
@@ -143,6 +123,36 @@ struct CcpRackTimeoutArgs
 /*
  * ccp_open - CCP is allowed to come up.
  */
+void ccp_init(PppPcb* ppp_pcb);
 bool ccp_open(PppPcb* pcb);
+void ccp_close(PppPcb* pcb, const char* reason);
+void ccp_lowerup(PppPcb* pcb);
+void ccp_lowerdown(PppPcb* pcb);
+void ccp_input(PppPcb* pcb, uint8_t* pkt, int len, Protent** protocols);
+void ccp_protrej(PppPcb* pcb);
+void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
+void ccp_resetci(Fsm*, PppPcb* pcb);
+size_t ccp_cilen(PppPcb* PppPcb);
+void ccp_addci(Fsm*, uint8_t*, int*, PppPcb* pcb);
+int ccp_ackci(Fsm*, uint8_t*, int, PppPcb* pcb);
+int ccp_nakci(Fsm*, const uint8_t*, int, int, PppPcb* pcb);
+int ccp_rejci(Fsm*, const uint8_t*, int, PppPcb* pcb);
+int ccp_reqci(Fsm*, uint8_t*, size_t*, int, PppPcb* pcb);
+void ccp_up(Fsm*, PppPcb* pcb, Protent** protocols);
+void ccp_down(Fsm*, Fsm* lcp_fsm, PppPcb* pcb);
+int ccp_extcode(Fsm*, int, int, uint8_t*, int, PppPcb* PppPcb);
+void ccp_rack_timeout(void*);
+const char* method_name(struct CcpOptions*, struct CcpOptions*);
+void ccp_resetrequest(uint8_t* PppPcb_ccp_local_state);  /* Issue a reset-request. */
 
 
+inline bool ccp_test(PppPcb* pcb, uint8_t* opt_buf, uint32_t option, uint32_t idx)
+{
+    // TODO: figure out what test should do and implement.
+    return false;
+}
+
+
+//
+// END OF FILE
+//

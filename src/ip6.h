@@ -188,13 +188,13 @@ extern "C" {
 #endif
 
 struct netif *ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
-const ip_addr_t *ip6_select_source_address(struct netif *netif, const Ip6Addr * dest);
-err_t         ip6_input(struct PacketBuffer *p, struct netif *inp);
-err_t         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+const IpAddr *ip6_select_source_address(struct netif *netif, const Ip6Addr * dest);
+LwipError         ip6_input(struct PacketBuffer *p, struct netif *inp);
+LwipError         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                          uint8_t hl, uint8_t tc, uint8_t nexth);
-err_t         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipError         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
-err_t         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipError         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, struct netif *netif);
 #if LWIP_NETIF_USE_HINTS
 LwipError         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,

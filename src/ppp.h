@@ -128,54 +128,57 @@ typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
 /*
  * PPP configuration.
  */
-struct PppSettings {
-  bool  auth_required;      // Peer is required to authenticate */
-  bool null_login;      // Username of "" and a password of "" are acceptable 
-  bool explicit_remote;      // remote_name specified with remotename opt */
-  bool refuse_pap;      // Don't proceed auth. with PAP */
-  bool refuse_chap;      // Don't proceed auth. with CHAP */
-  bool refuse_mschap;      //Don't proceed auth. with MS-CHAP */
-  bool refuse_mschap_v2;      // Don't proceed auth. with MS-CHAPv2 */
-  bool refuse_eap;      // Don't proceed auth. with EAP */
-  bool usepeerdns;      // Ask peer for DNS adds */
-  bool persist;      // Persist mode, always try to open the connection */
-  bool hide_password;      // Hide password in dumped packets */
-  bool noremoteip;      // Let him have no IP address */
-  bool lax_recv;      // accept control chars in asyncmap */
-  bool noendpoint;      // don't send/accept endpoint discriminator */
-  bool lcp_echo_adaptive;      // request echo only if the link was idle */
-  bool require_mppe;      // Require MPPE (Microsoft Point to Point Encryption) 
-  bool refuse_mppe_40;      // Allow MPPE 40-bit mode? */
-  bool refuse_mppe_128;      // Allow MPPE 128-bit mode? */
-  bool refuse_mppe_stateful;      // Allow MPPE stateful mode? */
-  uint64_t  listen_time;                 // time to listen first (ms), waiting for peer to send LCP packet */
-  uint64_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
-  uint64_t  maxconnect;                  /* Maximum connect time (seconds) */
-  /* auth data */
-  char user[0xff];                   /* Username for PAP */
-  char passwd[0xff];                 /* Password for PAP, secret for CHAP */
-  char  remote_name[0xff]; /* Peer's name for authentication */
-  uint64_t  pap_timeout_time;        /* Timeout (seconds) for auth-req retrans. */
-  uint32_t  pap_max_transmits;       /* Number of auth-reqs sent */
-  uint64_t  pap_req_timeout;         /* Time to wait for auth-req from peer */
-  uint64_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
-  uint32_t  chap_max_transmits;      /* max # times to send challenge */
-  uint64_t  chap_rechallenge_time;   /* Time to wait for auth-req from peer */
-  uint64_t  eap_req_time;            /* Time to wait (for retransmit/fail) */
-  uint32_t  eap_allow_req;           /* Max Requests allowed */
-  uint64_t  eap_timeout_time;        /* Time to wait (for retransmit/fail) */
-  uint32_t  eap_max_transmits;       /* Max Requests allowed */
-  uint64_t  fsm_timeout_time;            /* Timeout time in seconds */
-  uint32_t  fsm_max_conf_req_transmits;  /* Maximum Configure-Request transmissions */
-  uint32_t  fsm_max_term_transmits;      /* Maximum Terminate-Request transmissions */
-  uint32_t  fsm_max_nak_loops;           /* Maximum number of nak loops tolerated */
-  uint32_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
-                                 before deciding the link is looped-back. */
-  uint64_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
-  uint32_t  lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
+struct PppSettings
+{
+    bool auth_required; // Peer is required to authenticate */
+    bool null_login; // Username of "" and a password of "" are acceptable 
+    bool explicit_remote; // remote_name specified with remotename opt */
+    bool refuse_pap; // Don't proceed auth. with PAP */
+    bool refuse_chap; // Don't proceed auth. with CHAP */
+    bool refuse_mschap; //Don't proceed auth. with MS-CHAP */
+    bool refuse_mschap_v2; // Don't proceed auth. with MS-CHAPv2 */
+    bool refuse_eap; // Don't proceed auth. with EAP */
+    bool usepeerdns; // Ask peer for DNS adds */
+    bool persist; // Persist mode, always try to open the connection */
+    bool hide_password; // Hide password in dumped packets */
+    bool noremoteip; // Let him have no IP address */
+    bool lax_recv; // accept control chars in asyncmap */
+    bool noendpoint; // don't send/accept endpoint discriminator */
+    bool lcp_echo_adaptive; // request echo only if the link was idle */
+    bool require_mppe; // Require MPPE (Microsoft Point to Point Encryption) 
+    bool refuse_mppe_40; // Allow MPPE 40-bit mode? */
+    bool refuse_mppe_128; // Allow MPPE 128-bit mode? */
+    bool refuse_mppe_stateful; // Allow MPPE stateful mode? */
+    uint64_t listen_time;
+    // time to listen first (ms), waiting for peer to send LCP packet */
+    uint64_t idle_time_limit; /* Disconnect if idle for this many seconds */
+    uint64_t maxconnect; /* Maximum connect time (seconds) */ /* auth data */
+    char user[0xff]; /* Username for PAP */
+    char passwd[0xff]; /* Password for PAP, secret for CHAP */
+    char remote_name[0xff]; /* Peer's name for authentication */
+    uint64_t pap_timeout_time; /* Timeout (seconds) for auth-req retrans. */
+    uint32_t pap_max_transmits; /* Number of auth-reqs sent */
+    uint64_t pap_req_timeout; /* Time to wait for auth-req from peer */
+    uint64_t chap_timeout_time; /* Timeout (seconds) for retransmitting req */
+    uint32_t chap_max_transmits; /* max # times to send challenge */
+    uint64_t chap_rechallenge_time; /* Time to wait for auth-req from peer */
+    uint64_t eap_req_time; /* Time to wait (for retransmit/fail) */
+    uint32_t eap_allow_req; /* Max Requests allowed */
+    uint64_t eap_timeout_time; /* Time to wait (for retransmit/fail) */
+    uint32_t eap_max_transmits; /* Max Requests allowed */
+    uint64_t fsm_timeout_time; /* Timeout time in seconds */
+    uint32_t fsm_max_conf_req_transmits; /* Maximum Configure-Request transmissions */
+    uint32_t fsm_max_term_transmits; /* Maximum Terminate-Request transmissions */
+    uint32_t fsm_max_nak_loops; /* Maximum number of nak loops tolerated */
+    uint32_t lcp_loopbackfail;
+    /* Number of times we receive our magic number from the peer
+                                    before deciding the link is looped-back. */
+    uint64_t lcp_echo_interval; /* Interval between LCP echo-requests */
+    uint32_t lcp_echo_fails; /* Tolerance to unanswered echo-requests */
 };
 
-struct PppAddrs {
+struct PppAddrs
+{
     Ip4Addr our_ipaddr;
     Ip4Addr his_ipaddr;
     Ip4Addr netmask;
@@ -189,67 +192,70 @@ struct PppAddrs {
 /*
  * PPP interface control block.
  */
-struct PppPcb {
-  PppSettings settings;
-  struct LinkCallbacks *link_cb;
-  void *link_ctx_cb;
-  void (*link_status_cb)(PppPcb *pcb, int err_code, void *ctx);  /* Status change callback */
-  void (*notify_phase_cb)(PppPcb *pcb, uint8_t phase, void *ctx);   /* Notify phase callback */
-  void *ctx_cb;                  /* Callbacks optional pointer */
-  struct NetIfc *netif;           /* PPP interface */
-  uint8_t phase;                    /* where the link is at */
-  uint8_t err_code;                 /* Code indicating why interface is down. */
-  /* flags */
-  bool ask_for_local; /* request our address from peer */
-  bool ipcp_is_open; /* haven't called np_finished() */
-  bool ipcp_is_up; /* have called ipcp_up() */
-  bool if4_up; /* True when the IPv4 interface is up. */
-  bool proxy_arp_set; /* Have created proxy arp entry */
-  bool ipv6_cp_is_up; /* have called ip6cp_up() */
-  bool if6_up; /* True when the IPv6 interface is up. */
-  bool lcp_echo_timer_running; /* set if a timer is running */
-  bool vj_enabled; /* Flag indicating VJ compression enabled. */
-  bool ccp_all_rejected; /* we rejected all peer's options */
-  bool mppe_keys_set; /* Have the MPPE keys been set? */
-  /* auth data */
-  char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
-  uint16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
-  uint16_t auth_done;           /* Records which authentication operations have been completed. */
-  upap_state upap;           /* PAP data */
-  chap_client_state chap_client;  /* CHAP client data */
-  chap_server_state chap_server;  /* CHAP server data */
-  EapState eap;            /* EAP data */
-  fsm lcp_fsm;                   /* LCP fsm structure */
-  LcpOptions lcp_wantoptions;   /* Options that we want to request */
-  LcpOptions lcp_gotoptions;    /* Options that peer ack'd */
-  LcpOptions lcp_allowoptions;  /* Options we allow peer to request */
-  LcpOptions lcp_hisoptions;    /* Options that we ack'd */
-  uint16_t peer_mru;                /* currently negotiated peer MRU */
-  uint8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
-  uint8_t lcp_echo_number;          /* ID number of next echo frame */
-  uint8_t num_np_open;              /* Number of network protocols which we have opened. */
-  uint8_t num_np_up;                /* Number of network protocols which have come up. */
-  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
-  fsm ccp_fsm;                   /* CCP fsm structure */
-  CcpOptions ccp_wantoptions;   /* what to request the peer to use */
-  CcpOptions ccp_gotoptions;    /* what the peer agreed to do */
-  CcpOptions ccp_allowoptions;  /* what we'll agree to do */
-  CcpOptions ccp_hisoptions;    /* what we agreed to do */
-  uint8_t ccp_localstate;           /* Local state (mainly for handling reset-reqs and reset-acks). */
-  uint8_t ccp_receive_method;       /* Method chosen on receive path */
-  uint8_t ccp_transmit_method;      /* Method chosen on transmit path */
-  ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
-  ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
-  fsm ipcp_fsm;                   /* IPCP fsm structure */
-  IpcpOptions ipcp_wantoptions;  /* Options that we want to request */
-  IpcpOptions ipcp_gotoptions;   /* Options that peer ack'd */
-  IpcpOptions ipcp_allowoptions; /* Options we allow peer to request */
-  IpcpOptions ipcp_hisoptions;   /* Options that we ack'd */
-  fsm ipv6cp_fsm;                     /* IPV6CP fsm structure */
-  ipv6cp_options ipv6cp_wantoptions;  /* Options that we want to request */
-  ipv6cp_options ipv6cp_gotoptions;   /* Options that peer ack'd */
-  ipv6cp_options ipv6cp_allowoptions; /* Options we allow peer to request */
-  ipv6cp_options ipv6cp_hisoptions;   /* Options that we ack'd */
+struct PppPcb
+{
+    PppSettings settings;
+    struct LinkCallbacks* link_cb;
+    void* link_ctx_cb;
+    void (*link_status_cb)(PppPcb* pcb, int err_code, void* ctx);
+    /* Status change callback */
+    void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx);
+    /* Notify phase callback */
+    void* ctx_cb; /* Callbacks optional pointer */
+    struct NetIfc* netif; /* PPP interface */
+    uint8_t phase; /* where the link is at */
+    uint8_t err_code; /* Code indicating why interface is down. */ /* flags */
+    bool ask_for_local; /* request our address from peer */
+    bool ipcp_is_open; /* haven't called np_finished() */
+    bool ipcp_is_up; /* have called ipcp_up() */
+    bool if4_up; /* True when the IPv4 interface is up. */
+    bool proxy_arp_set; /* Have created proxy arp entry */
+    bool ipv6_cp_is_up; /* have called ip6cp_up() */
+    bool if6_up; /* True when the IPv6 interface is up. */
+    bool lcp_echo_timer_running; /* set if a timer is running */
+    bool vj_enabled; /* Flag indicating VJ compression enabled. */
+    bool ccp_all_rejected; /* we rejected all peer's options */
+    bool mppe_keys_set; /* Have the MPPE keys been set? */ /* auth data */
+    char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
+    uint16_t auth_pending;
+    /* Records which authentication operations haven't completed yet. */
+    uint16_t auth_done; /* Records which authentication operations have been completed. */
+    upap_state upap; /* PAP data */
+    chap_client_state chap_client; /* CHAP client data */
+    chap_server_state chap_server; /* CHAP server data */
+    EapState eap; /* EAP data */
+    Fsm lcp_fsm; /* LCP fsm structure */
+    LcpOptions lcp_wantoptions; /* Options that we want to request */
+    LcpOptions lcp_gotoptions; /* Options that peer ack'd */
+    LcpOptions lcp_allowoptions; /* Options we allow peer to request */
+    LcpOptions lcp_hisoptions; /* Options that we ack'd */
+    uint16_t peer_mru; /* currently negotiated peer MRU */
+    uint8_t lcp_echos_pending; /* Number of outstanding echo msgs */
+    uint8_t lcp_echo_number; /* ID number of next echo frame */
+    uint8_t num_np_open; /* Number of network protocols which we have opened. */
+    uint8_t num_np_up; /* Number of network protocols which have come up. */
+    struct vjcompress vj_comp; /* Van Jacobson compression header. */
+    Fsm ccp_fsm; /* CCP fsm structure */
+    CcpOptions ccp_wantoptions; /* what to request the peer to use */
+    CcpOptions ccp_gotoptions; /* what the peer agreed to do */
+    CcpOptions ccp_allowoptions; /* what we'll agree to do */
+    CcpOptions ccp_hisoptions; /* what we agreed to do */
+    uint8_t ccp_localstate;
+    /* Local state (mainly for handling reset-reqs and reset-acks). */
+    uint8_t ccp_receive_method; /* Method chosen on receive path */
+    uint8_t ccp_transmit_method; /* Method chosen on transmit path */
+    ppp_mppe_state mppe_comp; /* MPPE "compressor" structure */
+    ppp_mppe_state mppe_decomp; /* MPPE "decompressor" structure */
+    Fsm ipcp_fsm; /* IPCP fsm structure */
+    IpcpOptions ipcp_wantoptions; /* Options that we want to request */
+    IpcpOptions ipcp_gotoptions; /* Options that peer ack'd */
+    IpcpOptions ipcp_allowoptions; /* Options we allow peer to request */
+    IpcpOptions ipcp_hisoptions; /* Options that we ack'd */
+    Fsm ipv6cp_fsm; /* IPV6CP fsm structure */
+    ipv6cp_options ipv6cp_wantoptions; /* Options that we want to request */
+    ipv6cp_options ipv6cp_gotoptions; /* Options that peer ack'd */
+    ipv6cp_options ipv6cp_allowoptions; /* Options we allow peer to request */
+    ipv6cp_options ipv6cp_hisoptions; /* Options that we ack'd */
 };
 
 /************************
@@ -299,8 +305,9 @@ void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *p
  *
  * Default is false.
  */
-inline void PppSetAuthRequired(PppPcb *ppp, const bool boolval) {
-  (ppp->settings.auth_required = (boolval));
+inline void PppSetAuthRequired(PppPcb* ppp, const bool boolval)
+{
+    (ppp->settings.auth_required = (boolval));
 }
 
 
@@ -317,7 +324,7 @@ inline void PppSetIpcpOuraddr(PppPcb* ppp, Ip4Addr* addr)
     (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0;
 }
 
-inline void PPP_SET_IPCP_HISADDR(PppPcb* ppp, Ip4Addr* addr)
+inline void PppSetIpcpHisaddr(PppPcb* ppp, Ip4Addr* addr)
 {
     ((ppp)->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr));
 }
@@ -328,8 +335,9 @@ inline void PPP_SET_IPCP_HISADDR(PppPcb* ppp, Ip4Addr* addr)
  *
  * Default is unset (0.0.0.0).
  */
-inline void PPP_SET_IPCP_DNSADDR(PppPcb *ppp, uint32_t index, Ip4Addr *addr) {
-  ((ppp)->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr));
+inline void PppSetIpcpDnsaddr(PppPcb* ppp, uint32_t index, Ip4Addr* addr)
+{
+    ((ppp)->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr));
 }
 
 /*
@@ -343,7 +351,7 @@ inline void PPP_SET_IPCP_DNSADDR(PppPcb *ppp, uint32_t index, Ip4Addr *addr) {
 
 
 /* Disable MPPE (Microsoft Point to Point Encryption). This parameter is exclusive. */
-constexpr auto PPP_MPPE_DISABLE = 0x00;
+constexpr auto kPppMppeDisable = 0x00;
 /* Require the use of MPPE (Microsoft Point to Point Encryption). */
 constexpr auto PPP_MPPE_ENABLE = 0x01;
 /* Allow MPPE to use stateful mode. Stateless mode is still attempted first. */

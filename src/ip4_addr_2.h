@@ -55,11 +55,11 @@ struct NetIfc;
 /** 255.255.255.255 */
 constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
 /** 127.0.0.1 */
-constexpr uint32_t IPADDR_LOOPBACK = uint32_t(0x7f000001UL);
+constexpr uint32_t kIpaddrLoopback = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
 constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
-constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
+constexpr uint32_t kIpaddrBroadcast = uint32_t(0xffffffffUL);
 
 /* Definitions of the bits in an Internet address integer.
 
@@ -153,7 +153,7 @@ uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 #define ip4_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
-  LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
+  Logf(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \

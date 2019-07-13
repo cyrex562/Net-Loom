@@ -7,7 +7,7 @@
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 const IpAddr kIpAddrAny = {{{{kIp4AddrAny4}}}};
-const IpAddr kIpAddrBroadcast = {{{{IPADDR_BROADCAST}}}};
+const IpAddr kIpAddrBroadcast = {{{{kIpaddrBroadcast}}}};
 
 /**
  * Determine if an address is a broadcast address on a network interface
@@ -41,7 +41,7 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const struct NetIfc *netif)
   if (ip4_addr_netcmp(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
       /* ...and host identifier bits are all ones? =>... */
       && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
-          (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
+          (kIpaddrBroadcast & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
       /* => network broadcast address */
       return 1;
   }

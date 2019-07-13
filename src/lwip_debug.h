@@ -26,27 +26,27 @@ constexpr auto kLwipDbgLevelOff = LWIP_DBG_LEVEL_ALL;
 
 /** @name Enable/disable debug messages completely (LWIP_DBG_TYPES_ON)
 * @{
-*/ /** flag for LWIP_DEBUGF to enable that debug message */
+*/ /** flag for Logf to enable that debug message */
 constexpr auto LWIP_DBG_ON = 0x80U;
-/** flag for LWIP_DEBUGF to disable that debug message */
+/** flag for Logf to disable that debug message */
 constexpr auto LWIP_DBG_OFF = 0x00U; 
 /**
  * @}
  */ /** @name Debug message types (LWIP_DBG_TYPES_ON)
  * @{
- */ /** flag for LWIP_DEBUGF indicating a tracing message (to follow program flow) */
+ */ /** flag for Logf indicating a tracing message (to follow program flow) */
 enum LwipDebugMsgType
 {
     LWIP_DBG_TRACE = 0x40U,
-    /** flag for LWIP_DEBUGF indicating a state debug message (to follow module states) */
+    /** flag for Logf indicating a state debug message (to follow module states) */
     LWIP_DBG_STATE = 0x20U,
-    /** flag for LWIP_DEBUGF indicating newly added code, not thoroughly tested yet */
+    /** flag for Logf indicating newly added code, not thoroughly tested yet */
     LWIP_DBG_FRESH = 0x10U,
-    /** flag for LWIP_DEBUGF to halt after printing this debug message */
+    /** flag for Logf to halt after printing this debug message */
     LWIP_DBG_HALT = 0x08U
 };
 
-inline void LWIP_ASSERT(char* msg, const bool assertion)
+inline void LWIP_ASSERT(const char* msg, const bool assertion)
 {
     if (!assertion)
     {
@@ -60,7 +60,7 @@ inline void LWIP_PLATFORM_ERROR(char* msg)
 }
 
 // TODO: add log level and filter
-inline void Logf(const bool debug, char* message, ...)
+inline void Logf(const bool debug, const char* message, ...)
 {
 
     va_list args;

@@ -165,7 +165,7 @@ typedef struct pppol2tp_pcb_s pppol2tp_pcb;
 struct pppol2tp_pcb_s {
   PppPcb *ppp;                /* PPP PCB */
   uint8_t phase;                  /* L2TP phase */
-  struct udp_pcb *udp;         /* UDP L2TP Socket */
+  struct UdpPcb *udp;         /* UDP L2TP Socket */
   struct NetIfc *netif;         /* Output interface, used as a default route */
   IpAddr remote_ip;         /* LNS IP Address */
   uint16_t remote_port;           /* LNS port */
@@ -193,7 +193,7 @@ struct pppol2tp_pcb_s {
 
 
 /* Create a new L2TP session. */
-PppPcb *pppol2tp_create(struct NetIfc *pppif,
+PppPcb *CreatePppol2tpSession(struct NetIfc *pppif,
        struct NetIfc *netif, const IpAddr *ipaddr, uint16_t port,
        const uint8_t *secret, uint8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);

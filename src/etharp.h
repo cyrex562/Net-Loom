@@ -25,9 +25,10 @@ struct Ip4AddrWordaligned
 /** MEMCPY-like copying of IP addresses where addresses are known to be
  * 16-bit-aligned if the port is correctly configured (so a port could define
  * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
-inline void IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, IpAddr* src)
+inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, Ip4Addr* src)
 {
     SMEMCPY(dest, src, sizeof(Ip4Addr));
+    return true;
 }
     
 

@@ -34,6 +34,7 @@
 #include "chap_md5.h"
 #include "chap_ms.h"
 #include "magic.h"
+#include "auth.h"
 
 /*
  * Command-line options.

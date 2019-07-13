@@ -374,7 +374,7 @@ static void remove_bundle_link()
 	}
 	rec.dptr[rec.dsize-1] = 0;
 	p = strstr(rec.dptr, entry);
-	if (p != NULL) {
+	if (p != nullptr) {
 		q = p + strlen(entry);
 		l = strlen(q) + 1;
 		memmove(p, q, l);
@@ -401,7 +401,7 @@ static void iterate_bundle_links(void (*func)(char *))
 	}
 	p = rec.dptr;
 	p[rec.dsize-1] = 0;
-	while ((q = strchr(p, ';')) != NULL) {
+	while ((q = strchr(p, ';')) != nullptr) {
 		*q = 0;
 		key.dptr = p;
 		key.dsize = q - p;
@@ -427,7 +427,7 @@ parse_num(str, key, valp)
 	int i;
 
 	p = strstr(str, key);
-	if (p != 0) {
+	if (p != nullptr) {
 		p += strlen(key);
 		i = strtol(p, &endp, 10);
 		if (endp != p && (*endp == 0 || *endp == ';')) {
@@ -472,7 +472,7 @@ get_default_epdisc(ep)
 
 	/* First try for an ethernet MAC address */
 	p = get_first_ethernet();
-	if (p != 0 && get_if_hwaddr(ep->value, p) >= 0) {
+	if (p != nullptr && get_if_hwaddr(ep->value, p) >= 0) {
 		ep->class = EPD_MAC;
 		ep->length = 6;
 		return 1;
@@ -480,7 +480,7 @@ get_default_epdisc(ep)
 
 	/* see if our hostname corresponds to a reasonable IP address */
 	hp = gethostbyname(hostname);
-	if (hp != NULL) {
+	if (hp != nullptr) {
 		addr = *(uint32_t *)hp->h_addr;
 		if (!bad_ip_adrs(addr)) {
 			addr = lwip_ntohl(addr);

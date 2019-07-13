@@ -1059,7 +1059,7 @@ pcapif_init(struct NetIfc *netif)
   netif->name[1] = (char)(IFNAME1 + local_index);
   netif->linkoutput = pcapif_low_level_output;
   netif->output = etharp_output;
-  netif->output = NULL; /* not used for PPPoE */
+  netif->output = nullptr; /* not used for PPPoE */
   netif->output_ip6 = ethip6_output;
   /* Initialize interface hostname */
   netif_set_hostname(netif, "lwip");

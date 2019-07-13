@@ -142,7 +142,7 @@ struct ChapDigestType
 typedef struct chap_client_state {
 	uint8_t flags;
 	const char *name;
-	const struct chap_digest_type *digest;
+	const ChapDigestType *digest;
 	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
 
@@ -150,7 +150,7 @@ typedef struct chap_server_state {
 	uint8_t flags;
 	uint8_t id;
 	const char *name;
-	const struct chap_digest_type *digest;
+	const ChapDigestType *digest;
 	int challenge_xmits;
 	int challenge_pktlen;
 	unsigned char challenge[CHAL_MAX_PKTLEN];

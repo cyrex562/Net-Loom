@@ -686,7 +686,7 @@ pppoe_data_input(struct NetIfc *netif, struct PacketBuffer *pb)
   }
 
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(sc->pcb, pb,,);
+  ppp_input(sc->pcb, pb,);
   return;
 
 drop:
@@ -746,7 +746,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
   }
 #endif /* PPPOE_TODO */
   LWIP_ASSERT("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
-    sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
+              sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len), PBUF_RAM);
@@ -969,7 +969,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
     len += 2 + 2 + sc->sc_ac_cookie_len;  /* AC cookie */
   }
   LWIP_ASSERT("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
-    sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
+              sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
   pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len), PBUF_RAM);
   if (!pb) {
     return ERR_MEM;

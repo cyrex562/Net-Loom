@@ -53,73 +53,85 @@ struct PppPcb;
 /*
  * Packet header = Code, id, length.
  */
-constexpr auto HEADERLEN = 4;
+constexpr auto kHeaderlen = 4;
 
 
 /*
  *  CP (LCP, IPCP, etc.) codes.
  */
-#define CONFREQ		1	/* Configuration Request */
-#define CONFACK		2	/* Configuration Ack */
-#define CONFNAK		3	/* Configuration Nak */
-#define CONFREJ		4	/* Configuration Reject */
-#define TERMREQ		5	/* Termination Request */
-#define TERMACK		6	/* Termination Ack */
-#define CODEREJ		7	/* Code Reject */
+enum CpCodes
+{
+    CONFREQ =1,
+    /* Configuration Request */
+    CONFACK = 2,
+    /* Configuration Ack */
+    CONFNAK = 3,
+    /* Configuration Nak */
+    CONFREJ = 4,
+    /* Configuration Reject */
+    TERMREQ = 5,
+    /* Termination Request */
+    TERMACK = 6,
+    /* Termination Ack */
+    CODEREJ = 7,
+    /* Code Reject */
+};
+
 
 
 /*
  * Each FSM is described by an fsm structure and fsm callbacks.
  */
-typedef struct fsm {
-    PppPcb *pcb;		/* PPP Interface */
-    const struct FsmCallbacks *callbacks;	/* Callback routines */
-    const char *term_reason;	/* Reason for closing protocol */
-    uint8_t seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
-				  /* -- This is our only flag, we might use u_int :1 if we have more flags */
-    uint16_t protocol;		/* Data Link Layer Protocol field value */
-    uint8_t state;			/* State */
-    uint8_t flags;			/* Contains option bits */
-    uint8_t id;			/* Current id */
-    uint8_t reqid;			/* Current request id */
-    uint8_t retransmits;		/* Number of retransmissions left */
-    uint8_t nakloops;		/* Number of nak loops since last ack */
-    uint8_t rnakloops;		/* Number of naks received */
-    uint8_t maxnakloops;		/* Maximum number of nak loops tolerated
+struct Fsm
+{
+    PppPcb* pcb; /* PPP Interface */
+    const struct FsmCallbacks* callbacks; /* Callback routines */
+    const char* term_reason; /* Reason for closing protocol */
+    uint8_t seen_ack; /* Have received valid Ack/Nak/Rej to Req */
+    /* -- This is our only flag, we might use u_int :1 if we have more flags */
+    uint16_t protocol; /* Data Link Layer Protocol field value */
+    uint8_t state; /* State */
+    uint8_t flags; /* Contains option bits */
+    uint8_t id; /* Current id */
+    uint8_t reqid; /* Current request id */
+    uint8_t retransmits; /* Number of retransmissions left */
+    uint8_t nakloops; /* Number of nak loops since last ack */
+    uint8_t rnakloops; /* Number of naks received */
+    uint8_t maxnakloops; /* Maximum number of nak loops tolerated
 				   (necessary because IPCP require a custom large max nak loops value) */
-    uint8_t term_reason_len;	/* Length of term_reason */
-} fsm;
+    uint8_t term_reason_len; /* Length of term_reason */
+};
 
 
 struct FsmCallbacks {
     /* Reset our Configuration Information */
-    void (*resetci)(fsm *, PppPcb*);
+    void (*resetci)(Fsm *, PppPcb*);
     /* Length of our Configuration Information */
     size_t  (*cilen)	 (PppPcb*);
     /* Add our Configuration Information */
-    void (*addci) (fsm *, uint8_t *, int *, PppPcb*);
+    void (*addci) (Fsm *, uint8_t *, int *, PppPcb*);
     /* ACK our Configuration Information */
-    int  (*ackci) (fsm *, uint8_t *, int, PppPcb*);
+    int  (*ackci) (Fsm *, uint8_t *, int, PppPcb*);
     /* NAK our Configuration Information */
-    int (*nakci)(fsm*, const uint8_t*, int, int, PppPcb*);
+    int (*nakci)(Fsm*, const uint8_t*, int, int, PppPcb*);
     /* Reject our Configuration Information */
-    int (*rejci)(fsm*, const uint8_t*, int, PppPcb*);
+    int (*rejci)(Fsm*, const uint8_t*, int, PppPcb*);
     /* Request peer's Configuration Information */
-    int  (*reqci)	 (fsm *, uint8_t *, size_t *, int, PppPcb*);
+    int  (*reqci)	 (Fsm *, uint8_t *, size_t *, int, PppPcb*);
     /* Called when fsm reaches PPP_FSM_OPENED state */
-    void (*up) (fsm *, PppPcb*, Protent**);
+    void (*up) (Fsm *, PppPcb*, Protent**);
     /* Called when fsm leaves PPP_FSM_OPENED state */
-    void (*down) (fsm *, fsm*, PppPcb*);
+    void (*down) (Fsm *, Fsm*, PppPcb*);
     /* Called when we want the lower layer */
-    void (*starting)	 (fsm *);
+    void (*starting)	 (Fsm *);
     /* Called when we don't want the lower layer */
-    void (*finished) (fsm *);
+    void (*finished) (Fsm *);
     /* Called when Protocol-Reject received */
     void (*protreject)	 (int);
     /* Retransmission is necessary */
-    void (*retransmit)	 (fsm *);
+    void (*retransmit)	 (Fsm *);
     /* Called when unknown code received */
-    int  (*extcode)	 (fsm *, int, int, uint8_t *, int, PppPcb*);
+    int  (*extcode)	 (Fsm *, int, int, uint8_t *, int, PppPcb*);
     const char *proto_name;	/* String name for protocol (for messages) */
 } ;
 
@@ -149,14 +161,14 @@ struct FsmCallbacks {
 /*
  * Prototypes
  */
-void fsm_init(fsm* f);
-void fsm_lowerup(fsm* f);
-void fsm_lowerdown(fsm* f);
-void fsm_open(fsm* f);
-void fsm_close(fsm* f, const char* reason);
-void fsm_input(fsm* f, uint8_t* inpacket, int l);
-void fsm_protreject(fsm* f);
-void fsm_sdata(fsm* f, uint8_t code, uint8_t id, const uint8_t* data, int datalen);
+void fsm_init(Fsm* f);
+void fsm_lowerup(Fsm* f);
+void fsm_lowerdown(Fsm* f);
+void fsm_open(Fsm* f);
+void fsm_close(Fsm* f, const char* reason);
+void fsm_input(Fsm* f, uint8_t* inpacket, int l);
+void fsm_protreject(Fsm* f);
+void fsm_sdata(Fsm* f, uint8_t code, uint8_t id, const uint8_t* data, int datalen);
 
 #ifdef __cplusplus
 }

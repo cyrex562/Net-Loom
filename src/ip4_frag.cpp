@@ -62,7 +62,7 @@ void ip_reass_tmr(void)
         if (r->timer > 0)
         {
             r->timer--;
-            //      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n", (uint16_t)r->timer));
+            //      Logf(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n", (uint16_t)r->timer));
             prev = r;
             r = r->next;
         }
@@ -70,7 +70,7 @@ void ip_reass_tmr(void)
         {
             /* reassembly timed out */
             struct ip_reassdata* tmp;
-            //      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out\n"));
+            //      Logf(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out\n"));
             tmp = r; /* get the next pointer before freeing */
             r = r->next; /* free the helper struct and all enqueued pbufs */
             ip_reass_free_complete_datagram(tmp, prev);
@@ -410,7 +410,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
           LWIP_ASSERT("sanity check",
                       ((struct IpReassHelper *)ipr->p->payload) != iprh);
           LWIP_ASSERT("validate_datagram:next_pbuf!=NULL",
-                      iprh->next_pbuf == NULL);
+                      iprh->next_pbuf == nullptr);
         }
       }
     }
@@ -471,7 +471,7 @@ ip4_reass(struct PacketBuffer *p)
     {
       /* No datagram could be freed and still too many pbufs enqueued */
       Logf(IP_REASS_DEBUG, ("ip4_reass: Overflow condition: pbufct=%d, clen=%d, MAX=%d\n",
-                                   ip_reass_pbufcount, clen, IP_REASS_MAX_PBUFS));
+               ip_reass_pbufcount, clen, IP_REASS_MAX_PBUFS));
       IPFRAG_STATS_INC(ip_frag.memerr);
       /* @todo: send ICMP time exceeded here? */
       /* drop this PacketBuffer */
@@ -486,7 +486,7 @@ ip4_reass(struct PacketBuffer *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if (IP_ADDRESSES_AND_ID_MATCH(&ipr->iphdr, fraghdr)) {
-//      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
+//      Logf(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
 //                                   lwip_ntohs(IPH_ID(fraghdr))));
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;
@@ -539,7 +539,7 @@ ip4_reass(struct PacketBuffer *p)
     uint16_t datagram_len = (uint16_t)(offset + len);
     ipr->datagram_len = datagram_len;
     ipr->flags |= IP_REASS_FLAG_LASTFRAG;
-//    LWIP_DEBUGF(IP_REASS_DEBUG,
+//    Logf(IP_REASS_DEBUG,
 //                ("ip4_reass: last fragment seen, total len %"S16_F"\n",
 //                 ipr->datagram_len));
   }
@@ -764,7 +764,7 @@ ip4_frag(struct PacketBuffer *p, struct NetIfc *netif, const Ip4Addr *dest)
       /* Mirror this PacketBuffer, although we might not need all of it. */
       newpbuf = pbuf_alloced_custom(PBUF_RAW, newpbuflen, PBUF_REF, &pcr->pc,
                                     (uint8_t *)p->payload + poff, newpbuflen);
-      if (newpbuf == NULL) {
+      if (newpbuf == nullptr) {
         ip_frag_free_pbuf_custom_ref(pcr);
         pbuf_free(rambuf);
         goto memerr;

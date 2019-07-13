@@ -16,6 +16,7 @@
 
 #include "upap.h"
 
+#include "ppp.h"
 
 #include <string>
 
@@ -480,7 +481,7 @@ void np_down(PppPcb* pcb, int proto)
 	Untimeout(check_idle, (void*)pcb);
 
 
-	Untimeout(connect_time_expired, NULL);
+	Untimeout(connect_time_expired, nullptr);
 
 
 	// UNTIMEOUT(check_maxoctets, NULL);

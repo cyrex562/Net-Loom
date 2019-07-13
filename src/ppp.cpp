@@ -22,7 +22,8 @@
 #include "ipcp.h"
 #include "ipv6cp.h"
 #include "fsm.h"
-
+#include "auth.h"
+#include "pppdebug.h"
 #ifdef _MSC_VER
 #include <WinSock2.h>
 #endif
@@ -43,18 +44,18 @@ int link_stats_valid;
  * One entry per supported protocol.
  * The last entry must be NULL.
  */
-const struct Protent* const kProtocols[] = {
-    &kLcpProtent,
-    &pap_protent,
-    &kChapProtent,
-    nullptr,
-    &ipcp_protent,
-    &ipv6cp_protent,
-    &kCcpProtent,
-    &kEcpProtent,
-    nullptr,
-    &eap_protent,
-};
+// const struct Protent* const kProtocols[] = {
+//     &kLcpProtent,
+//     &pap_protent,
+//     &kChapProtent,
+//     nullptr,
+//     &ipcp_protent,
+//     &ipv6cp_protent,
+//     &kCcpProtent,
+//     &kEcpProtent,
+//     nullptr,
+//     &eap_protent,
+// };
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
@@ -82,7 +83,7 @@ void ppp_set_auth(PppPcb *pcb, const uint8_t authtype, const char *user, const c
 
 /* Set MPPE configuration */
 void ppp_set_mppe(PppPcb *pcb, uint8_t flags) {
-  if (flags == PPP_MPPE_DISABLE) {
+  if (flags == kPppMppeDisable) {
     pcb->settings.require_mppe = 0;
     return;
   }
@@ -495,7 +496,7 @@ PppPcb*
 ppp_new(struct NetIfc* pppif,
         const struct LinkCallbacks* callbacks,
         void* link_ctx_cb,
-        ppp_link_status_cb_fn link_status_cb,
+        const ppp_link_status_cb_fn link_status_cb,
         void* ctx_cb)
 {
     const struct Protent* protp; /* PPP is single-threaded: without a callback,
@@ -553,7 +554,16 @@ ppp_new(struct NetIfc* pppif,
         return nullptr;
     }
 
-    pcb->link_cb = callbacks;
+    //pcb->link_cb = callbacks;
+    // TODO: consider implementing "copy callbacks" fn
+    pcb->link_cb->connect = callbacks->connect;
+    pcb->link_cb->listen = callbacks->listen;
+    pcb->link_cb->disconnect = callbacks->listen;
+    pcb->link_cb->free = callbacks->free;
+    pcb->link_cb->write = callbacks->write;
+    pcb->link_cb->netif_output = callbacks->netif_output;
+    pcb->link_cb->send_config = callbacks->send_config;
+    pcb->link_cb->recv_config = callbacks->recv_config;
     pcb->link_ctx_cb = link_ctx_cb;
     pcb->link_status_cb = link_status_cb;
     pcb->ctx_cb = ctx_cb;
@@ -618,105 +628,44 @@ ppp_link_end(PppPcb* pcb)
  * Pass the processed input packet to the appropriate handler.
  * This function and all handlers run in the context of the tcpip_thread
  */
-void
-ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocols)
+bool ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
 {
-    uint16_t protocol;
-#if PPP_DEBUG && PPP_PROTOCOLNAME
-    const char *pname;
-#endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
-
-  magic_randomize();
-
-  if (pb->len < 2) {
-    PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
-    goto drop;
-  }
-  protocol = (((uint8_t *)pb->payload)[0] << 8) | ((uint8_t*)pb->payload)[1];
-
-#if PRINTPKT_SUPPORT
-  ppp_dump_packet(pcb, "rcvd", (unsigned char *)pb->payload, pb->len);
-#endif /* PRINTPKT_SUPPORT */
-
-  pbuf_remove_header(pb, sizeof(protocol));
-
-  LINK_STATS_INC(link.recv);
-  MIB2_STATS_NETIF_INC(pcb->netif, ifinucastpkts);
-  MIB2_STATS_NETIF_ADD(pcb->netif, ifinoctets, pb->tot_len);
-
+    const char* pname;
+    magic_randomize();
+    if (pb->len < 2)
+    {
+        PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
+        pbuf_free(pb);
+        return false;
+    }
+    uint16_t protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
+    pbuf_remove_header(pb, sizeof(protocol));
     if (pb->len < 2)
     {
         // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
         goto drop;
     }
-    protocol = (((uint8_t *)pb->payload)[0] << 8) | ((uint8_t*)pb->payload)[1];
-
-
+    protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
     pbuf_remove_header(pb, sizeof(protocol));
-
-  if (protocol == PPP_COMP) {
-    uint8_t *pl;
-
-    /*
-     * Toss all non-LCP packets unless LCP is OPEN.
-     */
-    if (protocol != PPP_LCP && lcp_fsm->state != PPP_FSM_OPENED)
+    if (protocol == PPP_COMP)
     {
-        ppp_dbglog("Discarded non-LCP packet when LCP not open");
-        goto drop;
-    }
-
-    /*
+        if (protocol != PPP_LCP && lcp_fsm->state != PPP_FSM_OPENED)
+        {
+            ppp_dbglog("Discarded non-LCP packet when LCP not open");
+            goto drop;
+        } /*
      * Until we get past the authentication phase, toss all packets
      * except LCP, LQR and authentication packets.
      */
-    if (pcb->phase <= PPP_PHASE_AUTHENTICATE
-        && !(protocol == PPP_LCP
-            || protocol == PPP_LQR
-            || protocol == PPP_PAP
-            || protocol == PPP_CHAP
-            || protocol == PPP_EAP
-        ))
-    {
-        ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
-        goto drop;
-    }
-
-    /* Extract and hide protocol (do PFC decompression if necessary) */
-    pl = (uint8_t*)pb->payload;
-    if (pl[0] & 0x01) {
-      protocol = pl[0];
-      pbuf_remove_header(pb, 1);
-    } else {
-      protocol = (pl[0] << 8) | pl[1];
-      pbuf_remove_header(pb, 2);
-    }
-
-    if (protocol == PPP_COMP)
-    {
-        uint8_t* pl;
-
-        switch (pcb->ccp_receive_method)
+        if (pcb->phase <= PPP_PHASE_AUTHENTICATE && !(protocol == PPP_LCP || protocol ==
+                PPP_LQR || protocol == PPP_PAP || protocol == PPP_CHAP || protocol ==
+                PPP_EAP)
+        )
         {
-        case CI_MPPE:
-            if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != ERR_OK)
-            {
-                goto drop;
-            }
-            break;
-        default:
-            // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
-            goto drop; /* Cannot really happen, we only negotiate what we are able to do */
-        }
-
-        /* Assume no PFC */
-        if (pb->len < 2)
-        {
+            ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
             goto drop;
-        }
-
-        /* Extract and hide protocol (do PFC decompression if necessary) */
-        pl = (uint8_t*)pb->payload;
+        } /* Extract and hide protocol (do PFC decompression if necessary) */
+        auto pl = static_cast<uint8_t*>(pb->payload);
         if (pl[0] & 0x01)
         {
             protocol = pl[0];
@@ -727,62 +676,84 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocol
             protocol = (pl[0] << 8) | pl[1];
             pbuf_remove_header(pb, 2);
         }
-    }
-
-    switch (protocol)
+        if (protocol == PPP_COMP)
+        {
+            uint8_t* pl;
+            switch (pcb->ccp_receive_method)
+            {
+            case CI_MPPE:
+                if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != ERR_OK)
+                {
+                    goto drop;
+                }
+                break;
+            default:
+                // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
+                goto drop;
+                /* Cannot really happen, we only negotiate what we are able to do */
+            } /* Assume no PFC */
+            if (pb->len < 2)
+            {
+                goto drop;
+            } /* Extract and hide protocol (do PFC decompression if necessary) */
+            pl = (uint8_t*)pb->payload;
+            if (pl[0] & 0x01)
+            {
+                protocol = pl[0];
+                pbuf_remove_header(pb, 1);
+            }
+            else
+            {
+                protocol = (pl[0] << 8) | pl[1];
+                pbuf_remove_header(pb, 2);
+            }
+        }
+        switch (protocol)
+        {
+        case PPP_IP: /* Internet Protocol */
+            // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
+            ip4_input(pb, pcb->netif);
+            return;
+        case PPP_IPV6: /* Internet Protocol Version 6 */
+            // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
+            ip6_input(pb, pcb->netif);
+            return;
+        } /* Something's wrong so drop it. */
+        PPPDEBUG(LOG_WARNING,
+                 ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
+        break;
+    default:
     {
-    case PPP_IP: /* Internet Protocol */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
-        ip4_input(pb, pcb->netif);
-        return;
-    case PPP_IPV6: /* Internet Protocol Version 6 */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
-        ip6_input(pb, pcb->netif);
-        return;
-      }
-      /* Something's wrong so drop it. */
-      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
-      break;
-#endif /* VJ_SUPPORT */
-
-    default: {
-      int i;
-      const struct protent *protp;
-
-      /*
+        int i;
+        const struct protent* protp; /*
        * Upcall the proper protocol input routine.
        */
-      for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-        if (protp->protocol == protocol) {
-          pb = pbuf_coalesce(pb, PBUF_RAW);
-          (*protp->input)(pcb, (uint8_t*)pb->payload, pb->len);
-          goto out;
-        }
-        /* Something's wrong so drop it. */
-        // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->netif->num));
-        break;
-
-    case PPP_VJC_UNCOMP: /* VJ uncompressed TCP */
-        /*
+        for (i = 0; (protp = protocols[i]) != NULL; ++i)
+        {
+            if (protp->protocol == protocol)
+            {
+                pb = pbuf_coalesce(pb, PBUF_RAW);
+                (*protp->input)(pcb, (uint8_t*)pb->payload, pb->len);
+                goto out;
+            } /* Something's wrong so drop it. */
+            // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->netif->num));
+            break;
+        case PPP_VJC_UNCOMP: /* VJ uncompressed TCP */ /*
          * Process the TCP/IP header for VJ header compression and then pass
          * the packet to IP.
          */
-        // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
-        if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0)
-        {
-            ip4_input(pb, pcb->netif);
-            return;
-        }
-        /* Something's wrong so drop it. */
-        // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
-        break;
-
-    default:
+            // PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in PacketBuffer len=%d\n", pcb->netif->num, pb->tot_len));
+            if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0)
+            {
+                ip4_input(pb, pcb->netif);
+                return;
+            } /* Something's wrong so drop it. */
+            // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
+            break;
+        default:
         {
             int i;
-            const struct Protent* protp;
-
-            /*
+            const struct Protent* protp; /*
              * Upcall the proper protocol input routine.
              */
             for (i = 0; (protp = kProtocols[i]) != nullptr; ++i)
@@ -794,7 +765,6 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocol
                     goto out;
                 }
             }
-
             auto pname = protocol_name(protocol);
             if (pname != nullptr)
             {
@@ -809,18 +779,13 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, fsm* lcp_fsm, Protent** protocol
             }
             lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
         }
-        lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
-      }
-      break;
-  }
-
-drop:
-    LINK_STATS_INC(link.drop);
-    MIB2_STATS_NETIF_INC(pcb->netif, ifindiscards);
-
-out:
-    pbuf_free(pb);
-}
+            lcp_sprotrej(pcb, (uint8_t*)pb->payload, pb->len);
+        }
+        break;
+    }
+    drop: 
+    out: pbuf_free(pb);
+    }
 
 /*
  * Write a PacketBuffer to a ppp link, only used from PPP functions
@@ -1062,7 +1027,7 @@ sifdown(PppPcb* pcb)
 uint32_t
 get_mask(uint32_t addr)
 {
-    return IPADDR_BROADCAST;
+    return kIpaddrBroadcast;
 }
 
 #define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \

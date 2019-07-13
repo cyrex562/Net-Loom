@@ -42,7 +42,7 @@ struct ZepHdr {
 struct ZepifState
 {
     struct ZepifInit init;
-    struct udp_pcb* pcb;
+    struct UdpPcb* pcb;
     uint32_t seqno;
 };
 
@@ -61,7 +61,7 @@ zep_lowpan_timer(void* arg)
 
 /* Pass received pbufs into 6LowPAN netif */
 static void
-zepif_udp_recv(void* arg, struct udp_pcb* pcb, struct PacketBuffer* p,
+zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
                const IpAddr* addr, uint16_t port)
 {
     auto netif_lowpan6 = static_cast<struct NetIfc *>(arg);
@@ -143,7 +143,7 @@ zepif_linkoutput(struct NetIfc* netif, struct PacketBuffer* p)
     LWIP_ASSERT("state->pcb != NULL", state->pcb != nullptr);
 
   q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len, PBUF_RAM);
-  if (q == NULL) {
+  if (q == nullptr) {
     return ERR_MEM;
   }
   zep = (struct ZepHdr *)q->payload;
@@ -215,11 +215,11 @@ zepif_init(struct NetIfc* netif)
     netif->state = nullptr;
 
   err = lowpan6_if_init(netif);
-  LWIP_ASSERT("lowpan6_if_init set a state", netif->state == NULL);
+  LWIP_ASSERT("lowpan6_if_init set a state", netif->state == nullptr);
   if (err == ERR_OK) {
     netif->state = state;
     netif->hwaddr_len = 6;
-    if (init_state != NULL) {
+    if (init_state != nullptr) {
       memcpy(netif->hwaddr, init_state->addr, 6);
     } else {
       uint8_t i;

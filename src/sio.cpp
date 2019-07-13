@@ -171,7 +171,7 @@ sio_fd_t sio_open(uint8_t devnum)
     if (devnum & 1) {
       DWORD mode = PIPE_NOWAIT;
       if (!SetNamedPipeHandleState(fileHandle, &mode, NULL, NULL)) {
-        LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu): SetNamedPipeHandleState failed. GetLastError() returns %d\n",
+        Logf(SIO_DEBUG, ("sio_open(%lu): SetNamedPipeHandleState failed. GetLastError() returns %d\n",
                   (DWORD)devnum, GetLastError()));
       }
     } else
@@ -183,7 +183,7 @@ sio_fd_t sio_open(uint8_t devnum)
     if(!sio_setup(fileHandle)) {
       CloseHandle(fileHandle);
       Logf(SIO_DEBUG, ("sio_open(%lu): sio_setup failed. GetLastError() returns %lu\n",
-                  (DWORD)devnum, GetLastError()));
+               (DWORD)devnum, GetLastError()));
       return nullptr;
     }
 #endif /* SIO_USE_COMPORT */
@@ -192,7 +192,7 @@ sio_fd_t sio_open(uint8_t devnum)
     return (sio_fd_t)(fileHandle);
   }
   Logf(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
-              (DWORD)devnum, GetLastError()));
+           (DWORD)devnum, GetLastError()));
   printf("sio_open(%lu) failed. GetLastError() returns %lu\n",
               (DWORD)devnum, GetLastError());
   return nullptr;

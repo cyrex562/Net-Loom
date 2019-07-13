@@ -1,137 +1,104 @@
-/*
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- */
-
-#ifndef LWIP_PPPAPI_H
-#define LWIP_PPPAPI_H
+#pragma once
 
 #include "ppp_opts.h"
-
-#if LWIP_PPP_API /* don't build if not configured for use in lwipopts.h */
-
+#include "ppp.h"
+#include "pppos.h"
 #include "sys.h"
 #include "netif.h"
-#include "priv/tcpip_priv.h"
-#include "ppp/ppp.h"
-#if PPPOS_SUPPORT
-#include "ppp/pppos.h"
-#endif /* PPPOS_SUPPORT */
+#include "tcpip_priv.h"
+#include "ppp.h"
+#include "pppos.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct PppApiMsgMsg
+{
+    PppPcb* ppp;
 
-struct pppapi_msg_msg {
-  PppPcb *ppp;
-  union {
-#if PPP_NOTIFY_PHASE
-    struct {
-      ppp_notify_phase_cb_fn notify_phase_cb;
-    } setnotifyphasecb;
-#endif /* PPP_NOTIFY_PHASE */
-#if PPPOS_SUPPORT
-    struct {
-      struct NetIfc *pppif;
-      pppos_output_cb_fn output_cb;
-      ppp_link_status_cb_fn link_status_cb;
-      void *ctx_cb;
-    } serialcreate;
-#endif /* PPPOS_SUPPORT */
-#if PPPOE_SUPPORT
-    struct {
-      struct NetIfc *pppif;
-      struct NetIfc *ethif;
-      const char *service_name;
-      const char *concentrator_name;
-      ppp_link_status_cb_fn link_status_cb;
-      void *ctx_cb;
-    } ethernetcreate;
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-    struct {
-      struct NetIfc *pppif;
-      struct NetIfc *netif;
-      API_MSG_M_DEF_C(IpAddr, ipaddr);
-      uint16_t port;
-#if PPPOL2TP_AUTH_SUPPORT
-      const uint8_t *secret;
-      uint8_t secret_len;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
-      ppp_link_status_cb_fn link_status_cb;
-      void *ctx_cb;
-    } l2tpcreate;
-#endif /* PPPOL2TP_SUPPORT */
-    struct {
-      uint16_t holdoff;
-    } connect;
-    struct {
-      uint8_t nocarrier;
-    } close;
-    struct {
-      uint8_t cmd;
-      void *arg;
-    } ioctl;
-  } msg;
+    union
+    {
+        struct
+        {
+            ppp_notify_phase_cb_fn notify_phase_cb;
+        } setnotifyphasecb;
+
+        struct
+        {
+            struct NetIfc* pppif;
+            pppos_output_cb_fn output_cb;
+            ppp_link_status_cb_fn link_status_cb;
+            void* ctx_cb;
+        } serialcreate;
+
+        struct
+        {
+            struct NetIfc* pppif;
+            struct NetIfc* ethif;
+            const char* service_name;
+            const char* concentrator_name;
+            ppp_link_status_cb_fn link_status_cb;
+            void* ctx_cb;
+        } ethernetcreate;
+
+        struct
+        {
+            struct NetIfc* pppif;
+            struct NetIfc* netif;
+            IpAddr ipaddr;
+            uint16_t port;
+            const uint8_t* secret;
+            uint8_t secret_len;
+            ppp_link_status_cb_fn link_status_cb;
+            void* ctx_cb;
+        } l2tpcreate;
+
+        struct
+        {
+            uint16_t holdoff;
+        } connect;
+
+        struct
+        {
+            uint8_t nocarrier;
+        } close;
+
+        struct
+        {
+            uint8_t cmd;
+            void* arg;
+        } ioctl;
+    } msg;
 };
 
-struct pppapi_msg {
-  struct tcpip_api_call_data call;
-  struct pppapi_msg_msg msg;
+struct pppapi_msg
+{
+    struct tcpip_api_call_data call;
+    struct PppApiMsgMsg msg;
 };
 
 /* API for application */
 LwipError pppapi_set_default(PppPcb *pcb);
-#if PPP_NOTIFY_PHASE
+
 LwipError pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
-#endif /* PPP_NOTIFY_PHASE */
-#if PPPOS_SUPPORT
+
 PppPcb *pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* PPPOS_SUPPORT */
-#if PPPOE_SUPPORT
+
 PppPcb *pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *service_name,
                                 const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                                 void *ctx_cb);
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
+
 PppPcb *pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, IpAddr *ipaddr, uint16_t port,
                             const uint8_t *secret, uint8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* PPPOL2TP_SUPPORT */
+
 LwipError pppapi_connect(PppPcb *pcb, uint16_t holdoff);
-#if PPP_SERVER
+
 LwipError pppapi_listen(PppPcb *pcb);
-#endif /* PPP_SERVER */
+
 LwipError pppapi_close(PppPcb *pcb, uint8_t nocarrier);
+
 LwipError pppapi_free(PppPcb *pcb);
+
 LwipError pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_PPP_API */
-
-#endif /* LWIP_PPPAPI_H */
+//
+// END OF FILE
+//

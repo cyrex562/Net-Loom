@@ -54,20 +54,15 @@
 //#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip_error.h"
-#include "memp.h"
 #include "netif.h"
 #include "udp.h"
 #include "lwip_snmp.h"
-
 #include "ppp_impl.h"
 #include "lcp.h"
 #include "ipcp.h"
 #include "pppol2tp.h"
 #include "pppcrypt.h"
 #include "magic.h"
-
-/* Memory pool */
-//LWIP_MEMPOOL_DECLARE(PPPOL2TP_PCB, MEMP_NUM_PPPOL2TP_INTERFACES, sizeof(pppol2tp_pcb), "PPPOL2TP_PCB")
 
 /* callbacks called from PPP core */
 static LwipError pppol2tp_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
@@ -77,7 +72,7 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx);    /* Be a LAC, connect to
 static void pppol2tp_disconnect(PppPcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+static void pppol2tp_input(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, struct PacketBuffer *p, uint16_t ns, uint16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
@@ -90,75 +85,51 @@ static LwipError pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, uint16_t ns);
 static LwipError pppol2tp_xmit(pppol2tp_pcb *l2tp, struct PacketBuffer *pb);
 static LwipError pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct PacketBuffer *pb);
 
-/* Callbacks structure for PPP core */
-static const struct LinkCallbacks pppol2tp_callbacks = {
-  pppol2tp_connect,
-#if PPP_SERVER
-  nullptr,
-#endif /* PPP_SERVER */
-  pppol2tp_disconnect,
-  pppol2tp_destroy,
-  pppol2tp_write,
-  pppol2tp_netif_output,
- nullptr,
- nullptr
-};
-
-
 /* Create a new L2TP session. */
-PppPcb *pppol2tp_create(struct NetIfc *pppif,
-       struct NetIfc *netif, const IpAddr *ipaddr, uint16_t port,
-       const uint8_t *secret, uint8_t secret_len,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  PppPcb *ppp;
-  pppol2tp_pcb *l2tp;
-  struct udp_pcb *udp;
-#if !PPPOL2TP_AUTH_SUPPORT
-  LWIP_UNUSED_ARG(secret);
-  LWIP_UNUSED_ARG(secret_len);
-#endif /* !PPPOL2TP_AUTH_SUPPORT */
+PppPcb* CreatePppol2tpSession(struct NetIfc* pppif,
+                        struct NetIfc* netif,
+                        const IpAddr* ipaddr,
+                        uint16_t port,
+                        const uint8_t* secret,
+                        uint8_t secret_len,
+                        ppp_link_status_cb_fn link_status_cb,
+                        void* ctx_cb)
+{
+    if (ipaddr == nullptr)
+    {
+        return nullptr;
+    }
+    // ReSharper disable once CppInconsistentNaming
+    auto l2tp_pcb = new pppol2tp_pcb;
+    if (l2tp_pcb == nullptr)
+    {
+        return nullptr;
+    }
+    auto udp = udp_new_ip_type(IP_GET_TYPE(ipaddr));
+    if (udp == nullptr)
+    {
+        delete l2tp_pcb;
+        return nullptr;
+    }
+    udp_recv(udp, pppol2tp_input, l2tp_pcb);
+    PppPcb* ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp_pcb, link_status_cb, ctx_cb);
+    if (ppp == nullptr)
+    {
+        udp_remove(udp);
+        delete l2tp_pcb;
+        return nullptr;
+    }
+    memset(l2tp_pcb, 0, sizeof(pppol2tp_pcb));
+    l2tp_pcb->phase = PPPOL2TP_STATE_INITIAL;
+    l2tp_pcb->ppp = ppp;
+    l2tp_pcb->udp = udp;
+    l2tp_pcb->netif = netif;
+    ip_addr_copy(l2tcp_pcb->remote_ip, *ipaddr);
+    l2tp_pcb->remote_port = port;
+    l2tp_pcb->secret = secret;
+    l2tp_pcb->secret_len = secret_len;
 
-  if (ipaddr == nullptr) {
-    goto ipaddr_check_failed;
-  }
-
-  l2tp = (pppol2tp_pcb *)LWIP_MEMPOOL_ALLOC(PPPOL2TP_PCB);
-  if (l2tp == nullptr) {
-    goto memp_malloc_l2tp_failed;
-  }
-
-  udp = udp_new_ip_type(IP_GET_TYPE(ipaddr));
-  if (udp == nullptr) {
-    goto udp_new_failed;
-  }
-  udp_recv(udp, pppol2tp_input, l2tp);
-
-  ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp, link_status_cb, ctx_cb);
-  if (ppp == nullptr) {
-    goto ppp_new_failed;
-  }
-
-  memset(l2tp, 0, sizeof(pppol2tp_pcb));
-  l2tp->phase = PPPOL2TP_STATE_INITIAL;
-  l2tp->ppp = ppp;
-  l2tp->udp = udp;
-  l2tp->netif = netif;
-  ip_addr_copy(l2tp->remote_ip, *ipaddr);
-  l2tp->remote_port = port;
-#if PPPOL2TP_AUTH_SUPPORT
-  l2tp->secret = secret;
-  l2tp->secret_len = secret_len;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
-
-  return ppp;
-
-ppp_new_failed:
-  udp_remove(udp);
-udp_new_failed:
-  LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
-memp_malloc_l2tp_failed:
-ipaddr_check_failed:
-  return nullptr;
+    return ppp;
 }
 
 /* Called by PPP core */
@@ -342,7 +313,7 @@ static void pppol2tp_disconnect(PppPcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
+static void pppol2tp_input(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   uint16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   uint8_t *inp;
@@ -473,7 +444,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct PacketBuffer *
     }
   }
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(l2tp->ppp, p,,);
+  ppp_input(l2tp->ppp, p,);
   return;
 
 packet_too_short:

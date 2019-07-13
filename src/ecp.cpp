@@ -114,27 +114,27 @@ static void ecp_datainput (int unit, uint8_t *pkt, int len);
 // #endif /* DEMAND_SUPPORT */
 // };
 
-fsm ecp_fsm[NUM_PPP];
+Fsm ecp_fsm[NUM_PPP];
 ecp_options ecp_wantoptions[NUM_PPP];	/* what to request the peer to use */
 ecp_options ecp_gotoptions[NUM_PPP];	/* what the peer agreed to do */
 ecp_options ecp_allowoptions[NUM_PPP];	/* what we'll agree to do */
 ecp_options ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
 
 static const FsmCallbacks ecp_callbacks = {
-    NULL, /* ecp_resetci, */
-    NULL, /* ecp_cilen, */
-    NULL, /* ecp_addci, */
-    NULL, /* ecp_ackci, */
-    NULL, /* ecp_nakci, */
-    NULL, /* ecp_rejci, */
-    NULL, /* ecp_reqci, */
-    NULL, /* ecp_up, */
-    NULL, /* ecp_down, */
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL, /* ecp_extcode, */
+    nullptr, /* ecp_resetci, */
+ nullptr, /* ecp_cilen, */
+ nullptr, /* ecp_addci, */
+ nullptr, /* ecp_ackci, */
+ nullptr, /* ecp_nakci, */
+ nullptr, /* ecp_rejci, */
+ nullptr, /* ecp_reqci, */
+ nullptr, /* ecp_up, */
+ nullptr, /* ecp_down, */
+ nullptr,
+ nullptr,
+ nullptr,
+ nullptr,
+ nullptr, /* ecp_extcode, */
     "ECP"
 };
 
@@ -145,7 +145,7 @@ static void
 ecp_init(unit)
     int unit;
 {
-    fsm *f = &ecp_fsm[unit];
+    Fsm *f = &ecp_fsm[unit];
 
     f->unit = unit;
     f->protocol = PPP_ECP;

@@ -42,6 +42,7 @@
 #include "opt.h"
 #include "ip_addr.h"
 #include "lwip_error.h"
+#include "ip4_addr.h"
 
 
  /** DNS server port address */
@@ -94,7 +95,7 @@
 #define DNS_HDR_GET_OPCODE(hdr) ((((hdr)->flags1) >> 3) & 0xF)
 
 /** DNS message header */
-struct dns_hdr
+struct DnsHdr
 {
     uint16_t id;
     uint8_t flags1;
@@ -116,14 +117,14 @@ struct dns_hdr
 #endif
 
 /* IPv4 group for multicast DNS queries: 224.0.0.251 */
-#ifndef DNS_MQUERY_IPV4_GROUP_INIT
-#define DNS_MQUERY_IPV4_GROUP_INIT  IPADDR4_INIT_BYTES(224,0,0,251)
-#endif
+
+// constexpr auto DNS_MQUERY_IPV4_GROUP_INIT = IpAddr4InitBytes(224,0,0,251);
+
 
 /* IPv6 group for multicast DNS queries: FF02::FB */
-#ifndef DNS_MQUERY_IPV6_GROUP_INIT
+
 #define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
-#endif
+
 
 
 
@@ -146,21 +147,16 @@ extern "C" {
 
 
 /** struct used for local host-list */
-struct local_hostlist_entry {
-  /** static hostname */
-  const char *name;
-  /** static host address in network byteorder */
-  IpAddr addr;
-  struct local_hostlist_entry *next;
+struct LocalHostListEntry
+{
+    /** static hostname */
+    const char* name; /** static host address in network byteorder */
+    IpAddr addr;
+    struct LocalHostListEntry* next;
 };
 #define DNS_LOCAL_HOSTLIST_ELEM(name, addr_init) {name, addr_init, NULL}
-#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
-#ifndef DNS_LOCAL_HOSTLIST_MAX_NAMELEN
 #define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH
-#endif
-#define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct local_hostlist_entry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
-#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
-
+#define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct LocalHostListEntry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
 
 
 extern const IpAddr dns_mquery_v4group;
@@ -180,22 +176,28 @@ typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, void 
 void             dns_init(void);
 void             dns_tmr(void);
 void             dns_setserver(uint8_t numdns, const IpAddr *dnsserver);
-const IpAddr* dns_getserver(uint8_t numdns);
+IpAddr dns_getserver(uint8_t numdns);
 LwipError            dns_gethostbyname(const char *hostname, IpAddr *addr,
                                    dns_found_callback found, void *callback_arg);
 LwipError            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
                                    dns_found_callback found, void *callback_arg,
                                    uint8_t dns_addrtype);
 
-
-#if DNS_LOCAL_HOSTLIST
 size_t         dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg);
 LwipError          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
-#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+
 int            dns_local_removehost(const char *hostname, const IpAddr *addr);
 LwipError          dns_local_addhost(const char *hostname, const IpAddr *addr);
-#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
-#endif /* DNS_LOCAL_HOSTLIST */
+
+inline bool LwipDnsAddrtypeIsIpv6(uint8_t t)
+{
+    return (((t) == LWIP_DNS_ADDRTYPE_IPV6_IPV4) || ((t) == LWIP_DNS_ADDRTYPE_IPV6));
+}
+
+inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddr* ip)
+{
+    return (IpIsV6(ip) ? LwipDnsAddrtypeIsIpv6(t) : (!LwipDnsAddrtypeIsIpv6(t)));
+}
 
 #ifdef __cplusplus
 }

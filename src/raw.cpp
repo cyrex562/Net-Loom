@@ -142,16 +142,16 @@ raw_input(struct PacketBuffer *p, struct NetIfc *inp)
     proto = IPH_PROTO((struct Ip4Hdr *)p->payload);
   }
 
-  prev = NULL;
+  prev = nullptr;
   pcb = raw_pcbs;
   /* loop through all raw pcbs until the packet is eaten by one */
   /* this allows multiple pcbs to match against the packet by design */
-  while (pcb != NULL) {
+  while (pcb != nullptr) {
     if ((pcb->protocol == proto) && raw_input_local_match(pcb, broadcast) &&
         (((pcb->flags & RAW_FLAGS_CONNECTED) == 0) ||
          ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
       /* receive callback function available? */
-      if (pcb->recv != NULL) {
+      if (pcb->recv != nullptr) {
         uint8_t eaten;
 
         void *old_payload = p->payload;
@@ -160,8 +160,8 @@ raw_input(struct PacketBuffer *p, struct NetIfc *inp)
         eaten = pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr());
         if (eaten != 0) {
           /* receive function ate the packet */
-          p = NULL;
-          if (prev != NULL) {
+          p = nullptr;
+          if (prev != nullptr) {
             /* move the pcb to the front of raw_pcbs so that is
                found faster next time */
             prev->next = pcb->next;
@@ -203,7 +203,7 @@ LwipError
 raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
-  if ((pcb == NULL) || (ipaddr == NULL)) {
+  if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
@@ -234,7 +234,7 @@ void
 raw_bind_netif(struct raw_pcb *pcb, const struct NetIfc *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
-  if (netif != NULL) {
+  if (netif != nullptr) {
     pcb->netif_idx = netif_get_index(netif);
   } else {
     pcb->netif_idx = NETIF_NO_INDEX;
@@ -259,7 +259,7 @@ LwipError
 raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
-  if ((pcb == NULL) || (ipaddr == NULL)) {
+  if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
@@ -333,11 +333,11 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
   struct NetIfc *netif;
   const IpAddr *src_ip;
 
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == nullptr) || (ipaddr == nullptr) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
-  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
+  Logf(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 
   if (pcb->netif_idx != NETIF_NO_INDEX) {
     netif = netif_get_by_index(pcb->netif_idx);
@@ -358,8 +358,8 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
     }
   }
 
-  if (netif == NULL) {
-    LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
+  if (netif == nullptr) {
+    Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
     ip_addr_debug_print(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ipaddr);
     return ERR_RTE;
   }
@@ -404,7 +404,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if ((pcb == NULL) || (dst_ip == NULL) || (netif == NULL) || (src_ip == NULL) ||
+  if ((pcb == nullptr) || (dst_ip == nullptr) || (netif == nullptr) || (src_ip == nullptr) ||
       !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
   }
@@ -442,8 +442,8 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
     /* allocate header in new PacketBuffer */
     q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
     /* new header PacketBuffer could not be allocated? */
-    if (q == NULL) {
-      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\n"));
+    if (q == nullptr) {
+      Logf(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\n"));
       return ERR_MEM;
     }
     if (p->tot_len != 0) {
@@ -451,7 +451,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
       pbuf_chain(q, p);
     }
     /* { first PacketBuffer q points to header PacketBuffer } */
-    LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
+    Logf(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
   } else {
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
@@ -465,7 +465,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
   if (IP_IS_V4(dst_ip)) {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
-      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+      Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
       /* free any temporary header PacketBuffer allocated by pbuf_header() */
       if (q != p) {
         pbuf_free(q);
@@ -545,9 +545,9 @@ raw_remove(struct raw_pcb *pcb)
     raw_pcbs = raw_pcbs->next;
     /* pcb not 1st in list */
   } else {
-    for (pcb2 = raw_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
+    for (pcb2 = raw_pcbs; pcb2 != nullptr; pcb2 = pcb2->next) {
       /* find pcb in raw_pcbs list */
-      if (pcb2->next != NULL && pcb2->next == pcb) {
+      if (pcb2->next != nullptr && pcb2->next == pcb) {
         /* remove pcb from list */
         pcb2->next = pcb->next;
         break;
@@ -573,12 +573,12 @@ raw_new(uint8_t proto)
 {
   struct raw_pcb *pcb;
 
-  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
+  Logf(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
   LWIP_ASSERT_CORE_LOCKED();
 
   pcb = (struct raw_pcb *)memp_malloc(MEMP_RAW_PCB);
   /* could allocate RAW PCB? */
-  if (pcb != NULL) {
+  if (pcb != nullptr) {
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct raw_pcb));
     pcb->protocol = proto;
@@ -614,7 +614,7 @@ raw_new_ip_type(uint8_t type, uint8_t proto)
   LWIP_ASSERT_CORE_LOCKED();
   pcb = raw_new(proto);
 
-  if (pcb != NULL) {
+  if (pcb != nullptr) {
     IpAdderSetTypeVal(pcb->local_ip,  type);
     IpAdderSetTypeVal(pcb->remote_ip, type);
   }
@@ -631,7 +631,7 @@ void raw_netif_ip_addr_changed(const IpAddr *old_addr, const IpAddr *new_addr)
   struct raw_pcb *rpcb;
 
   if (!ip_addr_isany(old_addr) && !ip_addr_isany(new_addr)) {
-    for (rpcb = raw_pcbs; rpcb != NULL; rpcb = rpcb->next) {
+    for (rpcb = raw_pcbs; rpcb != nullptr; rpcb = rpcb->next) {
       /* PCB bound to current local interface address? */
       if (ip_addr_cmp(&rpcb->local_ip, old_addr)) {
         /* The PCB is bound to the old ipaddr and

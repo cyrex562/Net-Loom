@@ -398,7 +398,7 @@ netif_do_set_netmask(struct NetIfc *netif, const Ip4Addr *netmask, IpAddr *old_n
     ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
     IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
     mib2_add_route_ip4(0, netif);
-//    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_netmask(netif)),
 //                ip4_addr2_16(netif_ip4_netmask(netif)),
@@ -426,7 +426,7 @@ netif_set_netmask(struct NetIfc *netif, const Ip4Addr *netmask)
   IpAddr old_nm_val;
   IpAddr *old_nm = &old_nm_val;
 #else
-  IpAddr *old_nm = NULL;
+  IpAddr *old_nm = nullptr;
 #endif
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -460,7 +460,7 @@ netif_do_set_gw(struct NetIfc *netif, const Ip4Addr *gw, IpAddr *old_gw)
 
     ip4_addr_set(ip_2_ip4(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
-//    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_gw(netif)),
 //                ip4_addr2_16(netif_ip4_gw(netif)),
@@ -487,7 +487,7 @@ netif_set_gw(struct NetIfc *netif, const Ip4Addr *gw)
   IpAddr old_gw_val;
   IpAddr *old_gw = &old_gw_val;
 #else
-  IpAddr *old_gw = NULL;
+  IpAddr *old_gw = nullptr;
 #endif
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -517,78 +517,52 @@ netif_set_gw(struct NetIfc *netif, const Ip4Addr *gw)
  * @param netmask the new netmask
  * @param gw the new default gateway
  */
-void
-netif_set_addr(struct NetIfc *netif, const Ip4Addr *ipaddr, const Ip4Addr *netmask,
-               const Ip4Addr *gw)
+bool netif_set_addr(struct NetIfc* netif,
+                    const Ip4Addr* ipaddr,
+                    const Ip4Addr* netmask,
+                    const Ip4Addr* gw)
 {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-  netif_nsc_reason_t change_reason = LWIP_NSC_NONE;
-  netif_ext_callback_args_t cb_args;
-  IpAddr old_nm_val;
-  IpAddr old_gw_val;
-  IpAddr *old_nm = &old_nm_val;
-  IpAddr *old_gw = &old_gw_val;
-#else
-  IpAddr *old_nm = NULL;
-  IpAddr *old_gw = NULL;
-#endif
-  IpAddr old_addr;
-  int remove;
-
-  LWIP_ASSERT_CORE_LOCKED();
-
-  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
-  if (ipaddr == nullptr) {
-    ipaddr = IP4_ADDR_ANY4;
-  }
-  if (netmask == nullptr) {
-    netmask = IP4_ADDR_ANY4;
-  }
-  if (gw == nullptr) {
-    gw = IP4_ADDR_ANY4;
-  }
-
-  remove = ip4_addr_isany(ipaddr);
-  if (remove) {
-    /* when removing an address, we have to remove it *before* changing netmask/gw
-       to ensure that tcp RST segment can be sent correctly */
-    if (netif_do_set_ipaddr(netif, ipaddr, &old_addr)) {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-      change_reason |= LWIP_NSC_IPV4_ADDRESS_CHANGED;
-      cb_args.ipv4_changed.old_address = &old_addr;
-#endif
+    IpAddr* old_nm = nullptr;
+    IpAddr* old_gw = nullptr;
+    IpAddr old_addr;
+    LWIP_ASSERT_CORE_LOCKED();
+    /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+    if (ipaddr == nullptr)
+    {
+        ipaddr = IP4_ADDR_ANY4;
     }
-  }
-  if (netif_do_set_netmask(netif, netmask, old_nm)) {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-    change_reason |= LWIP_NSC_IPV4_NETMASK_CHANGED;
-    cb_args.ipv4_changed.old_netmask = old_nm;
-#endif
-  }
-  if (netif_do_set_gw(netif, gw, old_gw)) {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-    change_reason |= LWIP_NSC_IPV4_GATEWAY_CHANGED;
-    cb_args.ipv4_changed.old_gw = old_gw;
-#endif
-  }
-  if (!remove) {
-    /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
-    if (netif_do_set_ipaddr(netif, ipaddr, &old_addr)) {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-      change_reason |= LWIP_NSC_IPV4_ADDRESS_CHANGED;
-      cb_args.ipv4_changed.old_address = &old_addr;
-#endif
+    if (netmask == nullptr)
+    {
+        netmask = IP4_ADDR_ANY4;
     }
-  }
-
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-  if (change_reason != LWIP_NSC_NONE) {
-    change_reason |= LWIP_NSC_IPV4_SETTINGS_CHANGED;
-    netif_invoke_ext_callback(netif, change_reason, &cb_args);
-  }
-#endif
+    if (gw == nullptr)
+    {
+        gw = IP4_ADDR_ANY4;
+    }
+    int remove = ip4_addr_isany(ipaddr);
+    if (remove)
+    {
+        /* when removing an address, we have to remove it *before* changing netmask/gw
+           to ensure that tcp RST segment can be sent correctly */
+        if (netif_do_set_ipaddr(netif, ipaddr, &old_addr))
+        {
+        }
+    }
+    if (netif_do_set_netmask(netif, netmask, old_nm))
+    {
+    }
+    if (netif_do_set_gw(netif, gw, old_gw))
+    {
+    }
+    if (!remove)
+    {
+        /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
+        if (netif_do_set_ipaddr(netif, ipaddr, &old_addr))
+        {
+        }
+    }
 }
-#endif /* LWIP_IPV4*/
+
 
 /**
  * @ingroup netif
@@ -671,7 +645,7 @@ netif_remove(struct NetIfc *netif)
     netif->remove_callback(netif);
   }
 #endif /* LWIP_NETIF_REMOVE_CALLBACK */
-  Logf( NETIF_DEBUG, ("netif_remove: removed netif\n") );
+  Logf(NETIF_DEBUG, ("netif_remove: removed netif\n") );
 }
 
 /**
@@ -695,7 +669,7 @@ netif_set_default(struct NetIfc *netif)
   }
   netif_default = netif;
   Logf(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
-                            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
+           netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
 
 /**
@@ -1203,7 +1177,7 @@ netif_ip6_addr_set_parts(struct netif *netif, int8_t addr_idx, uint32_t i0, uint
   /* address is actually being changed? */
   if ((ip_2_ip6(&old_addr)->addr[0] != i0) || (ip_2_ip6(&old_addr)->addr[1] != i1) ||
       (ip_2_ip6(&old_addr)->addr[2] != i2) || (ip_2_ip6(&old_addr)->addr[3] != i3)) {
-    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
+    Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
 
     IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
     ip6_addr_assign_zone(ip_2_ip6(&new_ipaddr), IP6_UNICAST, netif);
@@ -1230,7 +1204,7 @@ netif_ip6_addr_set_parts(struct netif *netif, int8_t addr_idx, uint32_t i0, uint
 #endif
   }
 
-  LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+  Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
               addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
               netif_ip6_addr_state(netif, addr_idx)));
 }
@@ -1258,7 +1232,7 @@ netif_ip6_addr_set_state(struct netif *netif, int8_t addr_idx, uint8_t state)
   if (old_state != state) {
     uint8_t old_valid = old_state & IP6_ADDR_VALID;
     uint8_t new_valid = state & IP6_ADDR_VALID;
-    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
+    Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
 
 #if LWIP_IPV6_MLD
     /* Reevaluate solicited-node multicast group membership. */
@@ -1297,7 +1271,7 @@ netif_ip6_addr_set_state(struct netif *netif, int8_t addr_idx, uint8_t state)
     }
 #endif
   }
-  LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+  Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
               addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
               netif_ip6_addr_state(netif, addr_idx)));
 }

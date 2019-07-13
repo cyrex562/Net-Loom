@@ -49,14 +49,15 @@ static uint8_t pppcrypt_get_7bits(uint8_t *input, int startBit) {
 /* IN  56 bit DES key missing parity bits
  * OUT 64 bit DES key with parity bits added
  */
-void pppcrypt_56_to_64_bit_key(uint8_t *key, uint8_t * des_key) {
-	des_key[0] = pppcrypt_get_7bits(key,  0);
-	des_key[1] = pppcrypt_get_7bits(key,  7);
-	des_key[2] = pppcrypt_get_7bits(key, 14);
-	des_key[3] = pppcrypt_get_7bits(key, 21);
-	des_key[4] = pppcrypt_get_7bits(key, 28);
-	des_key[5] = pppcrypt_get_7bits(key, 35);
-	des_key[6] = pppcrypt_get_7bits(key, 42);
-	des_key[7] = pppcrypt_get_7bits(key, 49);
+void pppcrypt_56_to_64_bit_key(uint8_t* key, uint8_t* des_key)
+{
+    des_key[0] = pppcrypt_get_7bits(key, 0);
+    des_key[1] = pppcrypt_get_7bits(key, 7);
+    des_key[2] = pppcrypt_get_7bits(key, 14);
+    des_key[3] = pppcrypt_get_7bits(key, 21);
+    des_key[4] = pppcrypt_get_7bits(key, 28);
+    des_key[5] = pppcrypt_get_7bits(key, 35);
+    des_key[6] = pppcrypt_get_7bits(key, 42);
+    des_key[7] = pppcrypt_get_7bits(key, 49);
 }
 

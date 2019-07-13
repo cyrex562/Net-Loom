@@ -720,7 +720,7 @@ lowpan6_input(struct PacketBuffer *p, struct NetIfc *netif)
     }
     lrh->datagram_size = datagram_size;
     lrh->datagram_tag = datagram_tag;
-    lrh->frags = NULL;
+    lrh->frags = nullptr;
     if (*(uint8_t *)p->payload == 0x41) {
       /* This is a complete IPv6 packet, just skip dispatch byte. */
       pbuf_remove_header(p, 1); /* hide dispatch byte. */
@@ -777,7 +777,7 @@ lowpan6_input(struct PacketBuffer *p, struct NetIfc *netif)
       /* find the correct place to insert */
       struct PacketBuffer *q, *last;
       uint16_t new_frag_len = p->len - 1; /* p->len includes datagram_offset byte */
-      for (q = lrh->frags, last = NULL; q != NULL; last = q, q = q->next) {
+      for (q = lrh->frags, last = nullptr; q != nullptr; last = q, q = q->next) {
         uint16_t q_datagram_offset = ((uint8_t *)q->payload)[0] << 3;
         uint16_t q_frag_len = q->len - 1;
         if (datagram_offset < q_datagram_offset) {
@@ -813,7 +813,7 @@ lowpan6_input(struct PacketBuffer *p, struct NetIfc *netif)
     if (lrh->reass) {
       uint16_t offset = lrh->reass->len;
       struct PacketBuffer *q;
-      for (q = lrh->frags; q != NULL; q = q->next) {
+      for (q = lrh->frags; q != nullptr; q = q->next) {
         uint16_t q_datagram_offset = ((uint8_t *)q->payload)[0] << 3;
         if (q_datagram_offset != offset) {
           /* not complete, wait for more fragments */

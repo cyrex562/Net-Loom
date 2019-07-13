@@ -42,6 +42,12 @@
 extern "C" {
 #endif
 
+    /*
+ * Values for FCS calculations.
+ */
+#define PPP_INITFCS     0xffff  /* Initial FCS value */
+#define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
+
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
 enum {

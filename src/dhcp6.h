@@ -129,28 +129,23 @@ extern "C" {
 #endif
 
 /** period (in milliseconds) of the application calling dhcp6_tmr() */
-#define DHCP6_TIMER_MSECS   500
+constexpr auto DHCP6_TIMER_MSECS = 500;
 
-struct dhcp6
+struct Dhcp6
 {
-  /** transaction identifier of last sent request */
-  uint32_t xid;
-  /** track PCB allocation state */
-  uint8_t pcb_allocated;
-  /** current DHCPv6 state machine state */
-  uint8_t state;
-  /** retries of current request */
-  uint8_t tries;
-  /** if request config is triggered while another action is active, this keeps track of it */
-  uint8_t request_config_pending;
-  /** #ticks with period DHCP6_TIMER_MSECS for request timeout */
-  uint16_t request_timeout;
-#if LWIP_IPV6_DHCP6_STATEFUL
-  /* @todo: add more members here to keep track of stateful DHCPv6 data, like lease times */
-#endif /* LWIP_IPV6_DHCP6_STATEFUL */
+    /** transaction identifier of last sent request */
+    uint32_t xid; /** track PCB allocation state */
+    uint8_t pcb_allocated; /** current DHCPv6 state machine state */
+    uint8_t state; /** retries of current request */
+    uint8_t tries;
+    /** if request config is triggered while another action is active, this keeps track of it */
+    uint8_t request_config_pending;
+    /** #ticks with period DHCP6_TIMER_MSECS for request timeout */
+    uint16_t request_timeout;
+    /* @todo: add more members here to keep track of stateful DHCPv6 data, like lease times */
 };
 
-void dhcp6_set_struct(struct netif *netif, struct dhcp6 *dhcp6);
+void dhcp6_set_struct(struct netif *netif, struct Dhcp6 *dhcp6);
 /** Remove a struct dhcp6 previously set to the netif using dhcp6_set_struct() */
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
 void dhcp6_cleanup(struct netif *netif);
@@ -169,9 +164,9 @@ void dhcp6_nd6_ra_trigger(struct netif *netif, uint8_t managed_addr_config, uint
 extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_server_addrs);
 
 
-inline dhcp6* netif_dhcp6_data(NetIfc* netif)
+inline Dhcp6* netif_dhcp6_data(NetIfc* netif)
 {
-    return static_cast<struct dhcp6 *>(NETIF_GET_CLIENT_DATA(
+    return static_cast<struct Dhcp6 *>(NETIF_GET_CLIENT_DATA(
         netif,
         LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
 }

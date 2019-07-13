@@ -35,34 +35,10 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_UDP_H
-#define LWIP_HDR_UDP_H
+#pragma once
 
 #include "opt.h"
 #include "arch.h"
-
-
-#define UDP_HLEN 8
-
- /* Fields are (of course) in network byte order. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
-struct udp_hdr {
-    (uint16_t src);
-    (uint16_t dest);  /* src/dest UDP ports */
-    (uint16_t len);
-    (uint16_t chksum);
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-
-
-#if LWIP_UDP /* don't build if not configured for use in lwipopts.h */
-
 #include "packet_buffer.h"
 #include "netif.h"
 #include "ip_addr.h"
@@ -70,16 +46,25 @@ PACK_STRUCT_END
 #include "ip6_addr.h"
 #include "udp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+constexpr auto kUdpHdrLen = 8;
 
-#define UDP_FLAGS_NOCHKSUM       0x01U
-#define UDP_FLAGS_UDPLITE        0x02U
-#define UDP_FLAGS_CONNECTED      0x04U
-#define UDP_FLAGS_MULTICAST_LOOP 0x08U
+struct UdpHdr
+{
+    uint16_t src;
+    uint16_t dest; /* src/dest UDP ports */
+    uint16_t len;
+    uint16_t chksum;
+};
 
-struct udp_pcb;
+enum UdpFlags
+{
+    UDP_FLAGS_NOCHKSUM = 0x01U,
+    UDP_FLAGS_UDPLITE = 0x02U,
+    UDP_FLAGS_CONNECTED = 0x04U,
+    UDP_FLAGS_MULTICAST_LOOP= 0x08U
+};
+
+struct UdpPcb;
 
 /** Function prototype for udp pcb receive callback functions
  * addr and port are in same byte order as in the pcb
@@ -95,92 +80,71 @@ struct udp_pcb;
  * @param addr the remote IP address from which the packet was received
  * @param port the remote port from which the packet was received
  */
-typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct PacketBuffer *p,
+typedef void (*udp_recv_fn)(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p,
     const IpAddr *addr, uint16_t port);
 
 /** the UDP protocol control block */
-struct udp_pcb {
-/** Common members of all PCB types */
-    IpAddr local_ip;
-    /* Bound netif index */
-    uint8_t netif_idx;
-    /* Socket options */
-    uint8_t so_options;
-    /* Type Of Service */
-    uint8_t tos;
-    /* Time To Live */
+struct UdpPcb
+{
+    /** Common members of all PCB types */
+    IpAddr local_ip; /* Bound netif index */
+    uint8_t netif_idx; /* Socket options */
+    uint8_t so_options; /* Type Of Service */
+    uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    struct netif_hint netif_hints;
-
-/* Protocol specific PCB members */
-
-  struct udp_pcb *next;
-
-  uint8_t flags;
-  /** ports are in host byte order */
-  uint16_t local_port, remote_port;
-
-#if LWIP_MULTICAST_TX_OPTIONS
-#if LWIP_IPV4
-  /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
-  Ip4Addr mcast_ip4;
-#endif /* LWIP_IPV4 */
-  /** outgoing network interface for multicast packets, by interface index (if nonzero) */
-  uint8_t mcast_ifindex;
-  /** TTL for outgoing multicast packets */
-  uint8_t mcast_ttl;
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
-
-#if LWIP_UDPLITE
-  /** used for UDP_LITE only */
-  uint16_t chksum_len_rx, chksum_len_tx;
-#endif /* LWIP_UDPLITE */
-
-  /** receive callback function */
-  udp_recv_fn recv;
-  /** user-supplied argument for the recv callback */
-  void *recv_arg;
+    struct netif_hint netif_hints; /* Protocol specific PCB members */
+    struct UdpPcb* next;
+    uint8_t flags; /** ports are in host byte order */
+    uint16_t local_port, remote_port;
+    /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
+    Ip4Addr mcast_ip4;
+    /** outgoing network interface for multicast packets, by interface index (if nonzero) */
+    uint8_t mcast_ifindex; /** TTL for outgoing multicast packets */
+    uint8_t mcast_ttl; /** used for UDP_LITE only */
+    uint16_t chksum_len_rx, chksum_len_tx; /** receive callback function */
+    udp_recv_fn recv; /** user-supplied argument for the recv callback */
+    void* recv_arg;
 };
+
+
 /* udp_pcbs export for external reference (e.g. SNMP agent) */
-extern struct udp_pcb *udp_pcbs;
+extern struct UdpPcb *udp_pcbs;
 
 /* The following functions is the application layer interface to the
    UDP code. */
-struct udp_pcb * udp_new        (void);
-struct udp_pcb * udp_new_ip_type(uint8_t type);
-void             udp_remove     (struct udp_pcb *pcb);
-LwipError            udp_bind       (struct udp_pcb *pcb, const IpAddr *ipaddr,
+struct UdpPcb * udp_new        (void);
+struct UdpPcb * udp_new_ip_type(uint8_t type);
+void             udp_remove     (struct UdpPcb *pcb);
+LwipError            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
-void             udp_bind_netif (struct udp_pcb *pcb, const struct NetIfc* netif);
-LwipError            udp_connect    (struct udp_pcb *pcb, const IpAddr *ipaddr,
+void             udp_bind_netif (struct UdpPcb *pcb, const struct NetIfc* netif);
+LwipError            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
-void             udp_disconnect (struct udp_pcb *pcb);
-void             udp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
+void             udp_disconnect (struct UdpPcb *pcb);
+void             udp_recv       (struct UdpPcb *pcb, udp_recv_fn recv,
                                  void *recv_arg);
-LwipError            udp_sendto_if  (struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  struct NetIfc *netif);
-LwipError            udp_sendto_if_src(struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  struct NetIfc *netif, const IpAddr *src_ip);
-LwipError            udp_sendto     (struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port);
-LwipError            udp_send       (struct udp_pcb *pcb, struct PacketBuffer *p);
+LwipError            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
 
-#if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
-LwipError            udp_sendto_if_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  struct netif *netif, uint8_t have_chksum,
                                  uint16_t chksum);
-LwipError            udp_sendto_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipError            udp_send_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipError            udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct PacketBuffer *p,
+LwipError            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port, struct netif *netif,
                                  uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
-#endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 
 #define          udp_flags(pcb) ((pcb)->flags)
 #define          udp_setflags(pcb, f)  ((pcb)->flags = (f))
@@ -197,29 +161,14 @@ void             udp_init       (void);
 /* for compatibility with older implementation */
 #define udp_new_ip6() udp_new_ip_type(IPADDR_TYPE_V6)
 
-#if LWIP_MULTICAST_TX_OPTIONS
-#if LWIP_IPV4
 #define udp_set_multicast_netif_addr(pcb, ip4addr) ip4_addr_copy((pcb)->mcast_ip4, *(ip4addr))
 #define udp_get_multicast_netif_addr(pcb)          (&(pcb)->mcast_ip4)
-#endif /* LWIP_IPV4 */
 #define udp_set_multicast_netif_index(pcb, idx)    ((pcb)->mcast_ifindex = (idx))
 #define udp_get_multicast_netif_index(pcb)         ((pcb)->mcast_ifindex)
 #define udp_set_multicast_ttl(pcb, value)          ((pcb)->mcast_ttl = (value))
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
 
-#if UDP_DEBUG
+
 void udp_debug_print(struct udp_hdr *udphdr);
-#else
-#define udp_debug_print(udphdr)
-#endif
 
 void udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_UDP */
-
-#endif /* LWIP_HDR_UDP_H */

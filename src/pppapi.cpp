@@ -35,11 +35,12 @@
 
 #if LWIP_PPP_API /* don't build if not configured for use in lwipopts.h */
 
-#include "ppp/pppapi.h"
-#include "priv/tcpip_priv.h"
-#include "ppp/pppoe.h"
-#include "ppp/pppol2tp.h"
-#include "ppp/pppos.h"
+#include "pppapi.h"
+#include "tcpip_priv.h"
+#include "pppoe.h"
+#include "pppol2tp.h"
+#include "pppos.h"
+#include "lwip_error.h"
 
 #if LWIP_MPU_COMPATIBLE
 LWIP_MEMPOOL_DECLARE(PPPAPI_MSG, MEMP_NUM_PPP_API_MSG, sizeof(struct pppapi_msg), "PPPAPI_MSG")
@@ -54,7 +55,7 @@ LWIP_MEMPOOL_DECLARE(PPPAPI_MSG, MEMP_NUM_PPP_API_MSG, sizeof(struct pppapi_msg)
 /**
  * Call ppp_set_default() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_set_default(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -69,10 +70,10 @@ pppapi_do_ppp_set_default(struct tcpip_api_call_data *m)
  * Call ppp_set_default() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_set_default(PppPcb *pcb)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -87,7 +88,7 @@ pppapi_set_default(PppPcb *pcb)
 /**
  * Call ppp_set_notify_phase_callback() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -102,10 +103,10 @@ pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call_data *m)
  * Call ppp_set_notify_phase_callback() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -122,7 +123,7 @@ pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phas
 /**
  * Call pppos_create() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_pppos_create(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -146,7 +147,7 @@ pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
 
-  PPPAPI_VAR_REF(msg).msg.ppp = NULL;
+  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
   PPPAPI_VAR_REF(msg).msg.msg.serialcreate.pppif = pppif;
   PPPAPI_VAR_REF(msg).msg.msg.serialcreate.output_cb = output_cb;
   PPPAPI_VAR_REF(msg).msg.msg.serialcreate.link_status_cb = link_status_cb;
@@ -163,7 +164,7 @@ pppapi_pppos_create(struct NetIfc *pppif, pppos_output_cb_fn output_cb,
 /**
  * Call pppoe_create() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_pppoe_create(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -189,7 +190,7 @@ pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *serv
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
 
-  PPPAPI_VAR_REF(msg).msg.ppp = NULL;
+  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
   PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.pppif = pppif;
   PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.ethif = ethif;
   PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.service_name = service_name;
@@ -208,14 +209,14 @@ pppapi_pppoe_create(struct NetIfc *pppif, struct NetIfc *ethif, const char *serv
 /**
  * Call pppol2tp_create() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
    * We know it works because the structs have been instantiated as struct pppapi_msg */
   struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
 
-  msg->msg.ppp = pppol2tp_create(msg->msg.msg.l2tpcreate.pppif,
+  msg->msg.ppp = CreatePppol2tpSession(msg->msg.msg.l2tpcreate.pppif,
     msg->msg.msg.l2tpcreate.netif, API_EXPR_REF(msg->msg.msg.l2tpcreate.ipaddr), msg->msg.msg.l2tpcreate.port,
 #if PPPOL2TP_AUTH_SUPPORT
     msg->msg.msg.l2tpcreate.secret,
@@ -233,7 +234,7 @@ pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, ip_addr_t *ipaddr, uint16_t port,
+pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, IpAddr *ipaddr, uint16_t port,
                         const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
@@ -245,7 +246,7 @@ pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, ip_addr_t *ip
   LWIP_UNUSED_ARG(secret_len);
 #endif /* !PPPOL2TP_AUTH_SUPPORT */
 
-  PPPAPI_VAR_REF(msg).msg.ppp = NULL;
+  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.pppif = pppif;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.netif = netif;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.ipaddr = PPPAPI_VAR_REF(ipaddr);
@@ -267,7 +268,7 @@ pppapi_pppol2tp_create(struct NetIfc *pppif, struct NetIfc *netif, ip_addr_t *ip
 /**
  * Call ppp_connect() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_connect(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -281,10 +282,10 @@ pppapi_do_ppp_connect(struct tcpip_api_call_data *m)
  * Call ppp_connect() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_connect(PppPcb *pcb, uint16_t holdoff)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -300,7 +301,7 @@ pppapi_connect(PppPcb *pcb, uint16_t holdoff)
 /**
  * Call ppp_listen() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -314,10 +315,10 @@ pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
  * Call ppp_listen() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_listen(PppPcb *pcb)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -332,7 +333,7 @@ pppapi_listen(PppPcb *pcb)
 /**
  * Call ppp_close() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_close(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -346,10 +347,10 @@ pppapi_do_ppp_close(struct tcpip_api_call_data *m)
  * Call ppp_close() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_close(PppPcb *pcb, uint8_t nocarrier)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -364,7 +365,7 @@ pppapi_close(PppPcb *pcb, uint8_t nocarrier)
 /**
  * Call ppp_free() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_free(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -378,10 +379,10 @@ pppapi_do_ppp_free(struct tcpip_api_call_data *m)
  * Call ppp_free() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_free(PppPcb *pcb)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
@@ -395,7 +396,7 @@ pppapi_free(PppPcb *pcb)
 /**
  * Call ppp_ioctl() inside the tcpip_thread context.
  */
-static err_t
+static LwipError
 pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings. 
@@ -409,10 +410,10 @@ pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
  * Call ppp_ioctl() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-err_t
+LwipError
 pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
 {
-  err_t err;
+  LwipError err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 

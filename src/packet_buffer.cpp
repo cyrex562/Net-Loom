@@ -178,7 +178,7 @@ static void pbuf_pool_is_empty(void) {
 static void pbuf_init_alloced_pbuf(struct PacketBuffer *p, void *payload,
                                    uint16_t tot_len, uint16_t len,
                                    PbufType type, uint8_t flags) {
-  p->next = NULL;
+  p->next = nullptr;
   p->payload = payload;
   p->tot_len = tot_len;
   p->len = len;
@@ -339,10 +339,9 @@ struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
   // p = (struct PacketBuffer *)memp_malloc(MEMP_PBUF);
   p = new PacketBuffer;
   if (p == nullptr) {
-    Logf(
-        PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-        ("pbuf_alloc_reference: Could not allocate MEMP_PBUF for PBUF_%s.\n",
-         (type == PBUF_ROM) ? "ROM" : "REF"));
+    Logf(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+         ("pbuf_alloc_reference: Could not allocate MEMP_PBUF for PBUF_%s.\n",
+             (type == PBUF_ROM) ? "ROM" : "REF"));
     return nullptr;
   }
   pbuf_init_alloced_pbuf(p, payload, length, length, type, 0);
@@ -510,9 +509,9 @@ static uint8_t pbuf_add_header_impl(struct PacketBuffer *p, size_t header_size_i
     /* boundary check fails? */
     if ((uint8_t *)payload < (uint8_t *)p + SIZEOF_STRUCT_PBUF) {
       Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-                  ("pbuf_add_header: failed as %p < %p (not enough space for "
-                   "new header size)\n",
-                   (void *)payload, (void *)((uint8_t *)p + SIZEOF_STRUCT_PBUF)));
+           ("pbuf_add_header: failed as %p < %p (not enough space for "
+               "new header size)\n",
+               (void *)payload, (void *)((uint8_t *)p + SIZEOF_STRUCT_PBUF)));
       /* bail out unsuccessfully */
       return 1;
     }
@@ -612,7 +611,7 @@ uint8_t pbuf_remove_header(struct PacketBuffer *p, size_t header_size_decrement)
 
   /* remember current payload pointer */
   payload = p->payload;
-  // LWIP_UNUSED_ARG(payload); /* only used in LWIP_DEBUGF below */
+  // LWIP_UNUSED_ARG(payload); /* only used in Logf below */
 
   /* increase payload pointer (guarded by length check above) */
   p->payload = (uint8_t *)p->payload + header_size_decrement;
@@ -738,7 +737,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
     LWIP_ASSERT("p != NULL", p != nullptr);
     /* if assertions are disabled, proceed with debug output */
     Logf(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                ("pbuf_free(p == NULL) was called.\n"));
+         ("pbuf_free(p == NULL) was called.\n"));
     return 0;
   }
   Logf(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free(%p)\n", (void *)p));
@@ -763,7 +762,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
       /* remember next PacketBuffer in chain for next iteration */
       q = p->next;
       Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-                  ("pbuf_free: deallocating %p\n", (void *)p));
+           ("pbuf_free: deallocating %p\n", (void *)p));
       alloc_src = pbuf_get_allocsrc(p);
 #if LWIP_SUPPORT_CUSTOM_PBUF
       /* is this a custom PacketBuffer? */
@@ -902,7 +901,7 @@ void pbuf_chain(struct PacketBuffer *h, struct PacketBuffer *t) {
   /* t is now referenced by h */
   pbuf_ref(t);
   Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-              ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
+       ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }
 
 /**
@@ -932,13 +931,12 @@ struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p) {
     p->tot_len = p->len;
     /* q is no longer referenced by p, free it */
     Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-                ("pbuf_dechain: unreferencing %p\n", (void *)q));
+         ("pbuf_dechain: unreferencing %p\n", (void *)q));
     tail_gone = pbuf_free(q);
     if (tail_gone > 0) {
-      Logf(
-          PBUF_DEBUG | LWIP_DBG_TRACE,
-          ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n",
-           (void *)q));
+      Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+           ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n",
+               (void *)q));
     }
     /* return remaining tail or NULL if deallocated */
   }
@@ -969,9 +967,8 @@ struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p) {
 LwipError pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from) {
   size_t offset_to = 0, offset_from = 0, len;
 
-  Logf(
-      PBUF_DEBUG | LWIP_DBG_TRACE,
-      ("pbuf_copy(%p, %p)\n", (const void *)p_to, (const void *)p_from));
+  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+       ("pbuf_copy(%p, %p)\n", (const void *)p_to, (const void *)p_from));
 
   /* is the target big enough to hold the source? */
   LWIP_ERROR("pbuf_copy: target not big enough to hold source",
@@ -1020,7 +1017,7 @@ LwipError pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from
     }
   } while (p_from);
   Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-              ("pbuf_copy: end of chain reached.\n"));
+       ("pbuf_copy: end of chain reached.\n"));
   return ERR_OK;
 }
 
@@ -1400,7 +1397,7 @@ int pbuf_try_get_at(const struct PacketBuffer *p, uint16_t offset) {
   const struct PacketBuffer *q = pbuf_skip_const(p, offset, &q_idx);
 
   /* return requested data if PacketBuffer is OK */
-  if ((q != NULL) && (q->len > q_idx)) {
+  if ((q != nullptr) && (q->len > q_idx)) {
     return ((uint8_t *)q->payload)[q_idx];
   }
   return -1;
@@ -1420,7 +1417,7 @@ void pbuf_put_at(struct PacketBuffer *p, uint16_t offset, uint8_t data) {
   struct PacketBuffer *q = pbuf_skip(p, offset, &q_idx);
 
   /* write requested data if PacketBuffer is OK */
-  if ((q != NULL) && (q->len > q_idx)) {
+  if ((q != nullptr) && (q->len > q_idx)) {
     ((uint8_t *)q->payload)[q_idx] = data;
   }
 }

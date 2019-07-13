@@ -175,10 +175,10 @@ ethernet_input(struct PacketBuffer *p, struct NetIfc *netif)
       }
       /* skip Ethernet header (min. size checked above) */
       if (pbuf_remove_header(p, next_hdr_offset)) {
-//        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+//        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
 //                    ("ethernet_input: IPv4 packet dropped, too short (%"U16_F"/%"U16_F")\n",
 //                     p->tot_len, next_hdr_offset));
-//        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+//        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
         goto free_and_return;
       } else {
         /* pass to IP layer */
@@ -192,10 +192,10 @@ ethernet_input(struct PacketBuffer *p, struct NetIfc *netif)
       }
       /* skip Ethernet header (min. size checked above) */
       if (pbuf_remove_header(p, next_hdr_offset)) {
-//        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+//        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
 //                    ("ethernet_input: ARP response packet dropped, too short (%"U16_F"/%"U16_F")\n",
 //                     p->tot_len, next_hdr_offset));
-//        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+//        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
         ETHARP_STATS_INC(etharp.lenerr);
         ETHARP_STATS_INC(etharp.drop);
         goto free_and_return;
@@ -219,7 +219,7 @@ ethernet_input(struct PacketBuffer *p, struct NetIfc *netif)
     case PpHtons(ETHTYPE_IPV6): /* IPv6 */
       /* skip Ethernet header */
       if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset)) {
-        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
                     ("ethernet_input: IPv6 packet dropped, too short (%"U16_F"/%"U16_F")\n",
                      p->tot_len, next_hdr_offset));
         goto free_and_return;
@@ -305,14 +305,14 @@ ethernet_output(struct NetIfc * netif, struct PacketBuffer * p,
   LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
               (netif->hwaddr_len == ETH_HWADDR_LEN));
   Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-              ("ethernet_output: sending packet %p\n", (void *)p));
+       ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
   return netif->linkoutput(netif, p);
 
 pbuf_header_failed:
   Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-              ("ethernet_output: could not allocate room for header.\n"));
+       ("ethernet_output: could not allocate room for header.\n"));
   LINK_STATS_INC(link.lenerr);
   return ERR_BUF;
 }

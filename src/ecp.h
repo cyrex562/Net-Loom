@@ -37,7 +37,7 @@ struct EcpOptions {
     unsigned enctype;		/* Encryption type */
 };
 
-extern fsm ecp_fsm[];
+extern Fsm ecp_fsm[];
 extern EcpOptions ecp_wantoptions[];
 extern EcpOptions ecp_gotoptions[];
 extern EcpOptions ecp_allowoptions[];

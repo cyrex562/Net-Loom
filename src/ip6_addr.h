@@ -2,7 +2,6 @@
 
 #include "def.h"
 #include "opt.h"
-#include "ip6_zone.h"
 
 #ifdef __cplusplus
 extern "C" 
@@ -12,13 +11,202 @@ extern "C"
 
 /** This is the aligned version of Ip6Addr,
     used as local variable, on the stack, etc. */
-struct Ip6Addr {
+struct Ip6Addr
+{
     uint32_t addr[4];
     uint8_t zone;
 };
 
-/** IPv6 address */
-typedef struct Ip6Addr Ip6Addr;
+
+    /**
+ * @defgroup ip6_zones IPv6 Zones
+ * @ingroup ip6
+ * @{
+ */
+
+/** Identifier for "no zone". */
+constexpr auto kIp6NoZone = 0;
+
+/** Zone initializer for static IPv6 address initialization, including comma. */
+
+
+/** Return the zone index of the given IPv6 address; possibly "no zone". */
+#define ip6_addr_zone(ip6addr) ((ip6addr)->zone)
+
+/** Does the given IPv6 address have a zone set? (0/1) */
+#define ip6_addr_has_zone(ip6addr) (ip6_addr_zone(ip6addr) != IP6_NO_ZONE)
+
+/** Set the zone field of an IPv6 address to a particular value. */
+#define ip6_addr_set_zone(ip6addr, zone_idx) ((ip6addr)->zone = (zone_idx))
+
+/** Clear the zone field of an IPv6 address, setting it to "no zone". */
+inline void ip6_addr_clear_zone(Ip6Addr* ip6_addr)
+{
+    ((ip6_addr)->zone = kIp6NoZone);
+}
+
+
+
+/** Is the zone field of the given IPv6 address equal to the given zone index? (0/1) */
+#define ip6_addr_equals_zone(ip6addr, zone_idx) ((ip6addr)->zone == (zone_idx))
+
+/** Are the zone fields of the given IPv6 addresses equal? (0/1)
+ * This macro must only be used on IPv6 addresses of the same scope. */
+inline bool ip6_addr_cmp_zone(const Ip6Addr* ip6addr1, const Ip6Addr* ip6addr2)
+{
+    return ((ip6addr1)->zone == (ip6addr2)->zone);
+}
+
+/** Symbolic constants for the 'type' parameters in some of the macros.
+ * These exist for efficiency only, allowing the macros to avoid certain tests
+ * when the address is known not to be of a certain type. Dead code elimination
+ * will do the rest. IP6_MULTICAST is supported but currently not optimized.
+ * @see ip6_addr_has_scope, ip6_addr_assign_zone, ip6_addr_lacks_zone.
+ */
+enum lwip_ipv6_scope_type
+{
+  /** Unknown */
+  IP6_UNKNOWN   = 0,
+  /** Unicast */
+  IP6_UNICAST   = 1,
+  /** Multicast */
+  IP6_MULTICAST = 2
+};
+
+/** IPV6_CUSTOM_SCOPES: together, the following three macro definitions,
+ * @ref ip6_addr_has_scope, @ref ip6_addr_assign_zone, and
+ * @ref LwipIp6Addrest_zone, completely define the lwIP scoping policy.
+ * The definitions below implement the default policy from RFC 4007 Sec. 6.
+ * Should an implementation desire to implement a different policy, it can
+ * define IPV6_CUSTOM_SCOPES to 1 and supply its own definitions for the three
+ * macros instead.
+ */
+
+#define IPV6_CUSTOM_SCOPES 0
+
+
+
+/**
+ * Determine whether an IPv6 address has a constrained scope, and as such is
+ * meaningful only if accompanied by a zone index to identify the scope's zone.
+ * The given address type may be used to eliminate at compile time certain
+ * checks that will evaluate to false at run time anyway.
+ *
+ * This default implementation follows the default model of RFC 4007, where
+ * only interface-local and link-local scopes are defined.
+ *
+ * Even though the unicast loopback address does have an implied link-local
+ * scope, in this implementation it does not have an explicitly assigned zone
+ * index. As such it should not be tested for in this macro.
+ *
+ * @param ip6addr the IPv6 address (const); only its address part is examined.
+ * @param type address type; see @ref lwip_ipv6_scope_type.
+ * @return 1 if the address has a constrained scope, 0 if it does not.
+ */
+#define ip6_addr_has_scope(ip6addr, type) \
+  (ip6_addr_islinklocal(ip6addr) || (((type) != IP6_UNICAST) && \
+   (ip6_addr_ismulticast_iflocal(ip6addr) || \
+    ip6_addr_ismulticast_linklocal(ip6addr))))
+
+/**
+ * Assign a zone index to an IPv6 address, based on a network interface. If the
+ * given address has a scope, the assigned zone index is that scope's zone of
+ * the given netif; otherwise, the assigned zone index is "no zone".
+ *
+ * This default implementation follows the default model of RFC 4007, where
+ * only interface-local and link-local scopes are defined, and the zone index
+ * of both of those scopes always equals the index of the network interface.
+ * As such, this default implementation need not distinguish between different
+ * constrained scopes when assigning the zone.
+ *
+ * @param ip6addr the IPv6 address; its address part is examined, and its zone
+ *                index is assigned.
+ * @param type address type; see @ref lwip_ipv6_scope_type.
+ * @param netif the network interface (const).
+ */
+#define ip6_addr_assign_zone(ip6addr, type, netif) \
+    (ip6_addr_set_zone((ip6addr), \
+      ip6_addr_has_scope((ip6addr), (type)) ? netif_get_index(netif) : 0))
+
+/**
+ * Test whether an IPv6 address is "zone-compatible" with a network interface.
+ * That is, test whether the network interface is part of the zone associated
+ * with the address. For efficiency, this macro is only ever called if the
+ * given address is either scoped or zoned, and thus, it need not test this.
+ * If an address is scoped but not zoned, or zoned and not scoped, it is
+ * considered not zone-compatible with any netif.
+ *
+ * This default implementation follows the default model of RFC 4007, where
+ * only interface-local and link-local scopes are defined, and the zone index
+ * of both of those scopes always equals the index of the network interface.
+ * As such, there is always only one matching netif for a specific zone index,
+ * but all call sites of this macro currently support multiple matching netifs
+ * as well (at no additional expense in the common case).
+ *
+ * @param ip6addr the IPv6 address (const).
+ * @param netif the network interface (const).
+ * @return 1 if the address is scope-compatible with the netif, 0 if not.
+ */
+#define LwipIp6Addrest_zone(ip6addr, netif) \
+    (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
+
+
+
+/** Does the given IPv6 address have a scope, and as such should also have a
+ * zone to be meaningful, but does not actually have a zone? (0/1) */
+#define ip6_addr_lacks_zone(ip6addr, type) \
+    (!ip6_addr_has_zone(ip6addr) && ip6_addr_has_scope((ip6addr), (type)))
+
+/**
+ * Try to select a zone for a scoped address that does not yet have a zone.
+ * Called from PCB bind and connect routines, for two reasons: 1) to save on
+ * this (relatively expensive) selection for every individual packet route
+ * operation and 2) to allow the application to obtain the selected zone from
+ * the PCB as is customary for e.g. getsockname/getpeername BSD socket calls.
+ *
+ * Ideally, callers would always supply a properly zoned address, in which case
+ * this function would not be needed. It exists both for compatibility with the
+ * BSD socket API (which accepts zoneless destination addresses) and for
+ * backward compatibility with pre-scoping lwIP code.
+ *
+ * It may be impossible to select a zone, e.g. if there are no netifs.  In that
+ * case, the address's zone field will be left as is.
+ *
+ * @param dest the IPv6 address for which to select and set a zone.
+ * @param src source IPv6 address (const); may be equal to dest.
+ */
+#define ip6_addr_select_zone(dest, src) do { struct netif *selected_netif; \
+  selected_netif = ip6_route((src), (dest)); \
+  if (selected_netif != NULL) { \
+    ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif); \
+  } } while (0)
+
+
+/** Verify that the given IPv6 address is properly zoned. */
+#define IP6_ADDR_ZONECHECK(ip6addr) LWIP_ASSERT("IPv6 zone check failed", \
+    ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) == ip6_addr_has_zone(ip6addr))
+
+/** Verify that the given IPv6 address is properly zoned for the given netif. */
+#define IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif) LWIP_ASSERT("IPv6 netif zone check failed", \
+    ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) ? \
+    (ip6_addr_has_zone(ip6addr) && \
+     (((netif) == NULL) || LwipIp6Addrest_zone((ip6addr), (netif)))) : \
+    !ip6_addr_has_zone(ip6addr))
+
+inline bool ip6_addr_cmp_zoneless(const Ip6Addr* addr1, const Ip6Addr* addr2)
+{
+    return (((addr1)->addr[0] == (addr2)->addr[0]) && ((addr1)->addr[1] == (addr2)->addr[1
+        ]) && ((addr1)->addr[2] == (addr2)->addr[2]) && ((addr1)->addr[3] == (addr2)->addr
+            [3])
+    );
+}
+
+inline bool ip6_addr_cmp(const Ip6Addr* addr1, const Ip6Addr* addr2)
+{
+    return (ip6_addr_cmp_zoneless((addr1), (addr2)) && ip6_addr_cmp_zone((addr1), (addr2))
+    );
+}
+
 
 /** Set an IPv6 partial address given by byte-parts */
 #define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
@@ -26,12 +214,11 @@ typedef struct Ip6Addr Ip6Addr;
 
 /** Set a full IPv6 address by passing the 4 uint32_t indices in network byte order
     (use PP_HTONL() for constants) */
-inline void IP6_ADDR(
-    Ip6Addr* ip6addr, 
-    uint32_t idx0, 
-    uint32_t idx1, 
-    uint32_t idx2, 
-    uint32_t idx3)
+inline void IP6_ADDR(Ip6Addr* ip6addr,
+                     uint32_t idx0,
+                     uint32_t idx1,
+                     uint32_t idx2,
+                     uint32_t idx3)
 {
     (ip6addr)->addr[0] = idx0;
     (ip6addr)->addr[1] = idx1;
@@ -39,6 +226,8 @@ inline void IP6_ADDR(
     (ip6addr)->addr[3] = idx3;
     ip6_addr_clear_zone(ip6addr);
 }
+
+
 
 /** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK1(ip6addr) ((uint16_t)((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xffff))
@@ -57,12 +246,7 @@ inline void IP6_ADDR(
 /** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK8(ip6addr) ((uint16_t)((lwip_htonl((ip6addr)->addr[3])) & 0xffff))
 
-/** Copy IPv6 address - faster than ip6_addr_set: no NULL check */
-#define ip6_addr_copy(dest, src) do{(dest).addr[0] = (src).addr[0]; \
-                                    (dest).addr[1] = (src).addr[1]; \
-                                    (dest).addr[2] = (src).addr[2]; \
-                                    (dest).addr[3] = (src).addr[3]; \
-                                    ip6_addr_copy_zone((dest), (src)); }while(0)
+
 /** Safely copy one IPv6 address to another (src may be NULL) */
 #define ip6_addr_set(dest, src) do{(dest)->addr[0] = (src) == NULL ? 0 : (src)->addr[0]; \
                                    (dest)->addr[1] = (src) == NULL ? 0 : (src)->addr[1]; \
@@ -125,11 +309,7 @@ inline void IP6_ADDR(
 #define ip6_addr_nethostcmp(addr1, addr2) (((addr1)->addr[2] == (addr2)->addr[2]) && \
                                            ((addr1)->addr[3] == (addr2)->addr[3]))
 
-/** Compare IPv6 addresses, ignoring zone information. To be used sparingly! */
-#define ip6_addr_cmp_zoneless(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
-                                    ((addr1)->addr[1] == (addr2)->addr[1]) && \
-                                    ((addr1)->addr[2] == (addr2)->addr[2]) && \
-                                    ((addr1)->addr[3] == (addr2)->addr[3]))
+
 /**
  * Determine if two IPv6 addresses are the same. In particular, the address
  * part of both must be the same, and the zone must be compatible.
@@ -138,8 +318,7 @@ inline void IP6_ADDR(
  * @param addr2 IPv6 address 2
  * @return 1 if the addresses are considered equal, 0 if not
  */
-#define ip6_addr_cmp(addr1, addr2) (ip6_addr_cmp_zoneless((addr1), (addr2)) && \
-                                    ip6_addr_cmp_zone((addr1), (addr2)))
+
 
 /** Compare IPv6 address to packed address and zone */
 #define ip6_addr_cmp_packed(ip6addr, paddr, zone_idx) (((ip6addr)->addr[0] == (paddr)->addr[0]) && \
@@ -150,10 +329,11 @@ inline void IP6_ADDR(
 
 #define ip6_get_subnet_id(ip6addr)   (lwip_htonl((ip6addr)->addr[2]) & 0x0000ffffUL)
 
-#define ip6_addr_isany_val(ip6addr) (((ip6addr).addr[0] == 0) && \
-                                     ((ip6addr).addr[1] == 0) && \
-                                     ((ip6addr).addr[2] == 0) && \
-                                     ((ip6addr).addr[3] == 0))
+inline bool ip6_addr_isany_val(Ip6Addr ip6addr)
+{
+    return (((ip6addr).addr[0] == 0) && ((ip6addr).addr[1] == 0) && ((ip6addr).addr[2] ==
+        0) && ((ip6addr).addr[3] == 0));
+}
 #define ip6_addr_isany(ip6addr) (((ip6addr) == NULL) || ip6_addr_isany_val(*(ip6addr)))
 
 #define ip6_addr_isloopback(ip6addr) (((ip6addr)->addr[0] == 0UL) && \
@@ -271,7 +451,7 @@ inline void IP6_ADDR(
 
 
 #define ip6_addr_debug_print_parts(debug, a, b, c, d, e, f, g, h) \
-  LWIP_DEBUGF(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F, \
+  Logf(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F, \
                       a, b, c, d, e, f, g, h))
 #define ip6_addr_debug_print(debug, ipaddr) \
   ip6_addr_debug_print_parts(debug, \

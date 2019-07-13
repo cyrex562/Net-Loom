@@ -125,7 +125,7 @@ slipif_output(struct NetIfc *netif, struct PacketBuffer *p)
   LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
   LWIP_ASSERT("p != NULL", (p != nullptr));
 
-//  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
+//  Logf(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
 
   /* Send PacketBuffer out on the serial I/O device. */
@@ -226,7 +226,7 @@ slipif_rxbyte(struct NetIfc *netif, uint8_t c)
 
             LINK_STATS_INC(link.recv);
 
-//            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+//            Logf(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
             t = priv->q;
             priv->p = priv->q = nullptr;
             priv->i = priv->recved = 0;
@@ -282,7 +282,7 @@ slipif_rxbyte(struct NetIfc *netif, uint8_t c)
   }
 
   /* this automatically drops bytes if > SLIP_MAX_SIZE */
-  if ((priv->p != NULL) && (priv->recved <= SLIP_MAX_SIZE)) {
+  if ((priv->p != nullptr) && (priv->recved <= SLIP_MAX_SIZE)) {
     ((uint8_t *)priv->p->payload)[priv->i] = c;
     priv->recved++;
     priv->i++;
@@ -368,7 +368,7 @@ slipif_init(struct NetIfc *netif)
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(uint8_t, netif->state);
 
-//  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
+//  Logf(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));

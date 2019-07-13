@@ -40,11 +40,11 @@
 #include "lwip_error.h"
 #include "packet_buffer.h"
 #include "sys.h"
-#include "memp.h"
+
 #include "netif.h"
 #include "lwip_snmp.h"
 #include "tcpip_priv.h"
-#include "api.h"
+
 #include "ip4.h" /* for ip4_input() */
 
 #include "ppp_impl.h"
@@ -150,11 +150,7 @@ ppp_get_fcs(uint8_t byte)
 #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ ppp_get_fcs(((fcs) ^ (c)) & 0xff))
 #endif /* PPP_FCS_TABLE */
 
-/*
- * Values for FCS calculations.
- */
-#define PPP_INITFCS     0xffff  /* Initial FCS value */
-#define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
+
 
 #if PPP_INPROC_IRQ_SAFE
 #define PPPOS_DECL_PROTECT(lev) sys_prot_t lev
@@ -684,7 +680,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
               pppos->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
-            if (pppos->in_head == NULL) {
+            if (pppos->in_head == nullptr) {
               uint8_t *payload = ((uint8_t*)next_pbuf->payload) + pbuf_alloc_len;
 #if PPP_INPROC_IRQ_SAFE
               ((struct pppos_input_header*)payload)->ppp = ppp;

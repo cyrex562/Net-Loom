@@ -367,9 +367,9 @@ static void des_setkey( unsigned long SK[32], unsigned char key[8] )
 /*
  * DES key schedule (56-bit, encryption)
  */
-void des_setkey_enc( des_context *ctx, unsigned char key[8] )
+void des_setkey_enc(des_context* ctx, unsigned char key[8])
 {
-    des_setkey( ctx->sk, key );
+    des_setkey(ctx->sk, key);
 }
 
 /*

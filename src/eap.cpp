@@ -363,7 +363,7 @@ uint8_t *outp;
   char *cp;
 
   while (inlen > 0) {
-    if ((cp = strchr(base64, *inp++)) == NULL) break;
+    if ((cp = strchr(base64, *inp++)) == nullptr) break;
     bs->bs_bits = (bs->bs_bits << 6) | (cp - base64);
     inlen--;
     bs->bs_offs += 6;
@@ -401,10 +401,10 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
 
       /* Discard any previous session. */
       ts = (struct t_server *)pcb->eap.es_server.ea_session;
-      if (ts != NULL) {
+      if (ts != nullptr) {
         t_serverclose(ts);
-        pcb->eap.es_server.ea_session = NULL;
-        pcb->eap.es_server.ea_skey = NULL;
+        pcb->eap.es_server.ea_session = nullptr;
+        pcb->eap.es_server.ea_skey = nullptr;
       }
 
       if (status != 0) {
@@ -493,7 +493,7 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
         } else {
           break;
         }
-        if ((cp2 = strchr(cp, ':')) == NULL) break;
+        if ((cp2 = strchr(cp, ':')) == nullptr) break;
         *cp2++ = '\0';
         tpw.pebuf.name = pcb->eap.es_server.ea_peer;
         tpw.pebuf.password.len = t_fromb64((char *)tpw.pwbuf, cp);
@@ -516,14 +516,14 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
 
     case eapSRP1:
       ts = (struct t_server *)pcb->eap.es_server.ea_session;
-      if (ts != NULL && status != 0) {
+      if (ts != nullptr && status != 0) {
         t_serverclose(ts);
-        pcb->eap.es_server.ea_session = NULL;
-        pcb->eap.es_server.ea_skey = NULL;
+        pcb->eap.es_server.ea_session = nullptr;
+        pcb->eap.es_server.ea_skey = nullptr;
       }
       if (status == 1) {
         pcb->eap.es_server.ea_state = eapMD5Chall;
-      } else if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+      } else if (status != 0 || pcb->eap.es_server.ea_session == nullptr) {
         pcb->eap.es_server.ea_state = eapBadAuth;
       } else {
         pcb->eap.es_server.ea_state = eapSRP2;
@@ -533,12 +533,12 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
     case eapSRP2:
 
       ts = (struct t_server *)pcb->eap.es_server.ea_session;
-      if (ts != NULL && status != 0) {
+      if (ts != nullptr && status != 0) {
         t_serverclose(ts);
-        pcb->eap.es_server.ea_session = NULL;
-        pcb->eap.es_server.ea_skey = NULL;
+        pcb->eap.es_server.ea_session = nullptr;
+        pcb->eap.es_server.ea_skey = nullptr;
       }
-      if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+      if (status != 0 || pcb->eap.es_server.ea_session == nullptr) {
         pcb->eap.es_server.ea_state = eapBadAuth;
       } else {
         pcb->eap.es_server.ea_state = eapSRP3;
@@ -549,12 +549,12 @@ static void eap_figure_next_state(PppPcb *pcb, int status) {
     case eapSRP4:
 
       ts = (struct t_server *)pcb->eap.es_server.ea_session;
-      if (ts != NULL && status != 0) {
+      if (ts != nullptr && status != 0) {
         t_serverclose(ts);
-        pcb->eap.es_server.ea_session = NULL;
-        pcb->eap.es_server.ea_skey = NULL;
+        pcb->eap.es_server.ea_session = nullptr;
+        pcb->eap.es_server.ea_skey = nullptr;
       }
-      if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+      if (status != 0 || pcb->eap.es_server.ea_session == nullptr) {
         pcb->eap.es_server.ea_state = eapBadAuth;
       } else {
         pcb->eap.es_server.ea_state = eapOpen;

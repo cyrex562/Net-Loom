@@ -176,7 +176,7 @@ void ppp_link_failed(PppPcb *pcb);
 void ppp_link_end(PppPcb *pcb);
 
 /* function called to process input packet */
-void ppp_input(PppPcb *pcb, struct PacketBuffer *pb, fsm* lcp_fsm, Protent** protocols);
+bool ppp_input(PppPcb *pcb, struct PacketBuffer *pb, Fsm* lcp_fsm);
 
 
 /*

@@ -39,10 +39,6 @@
 #include "opt.h"
 #include "def.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** This is the aligned version of Ip4Addr,
    used as local variable, on the stack, etc. */
 struct Ip4Addr {
@@ -55,11 +51,11 @@ struct NetIfc;
 /** 255.255.255.255 */
 constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
 /** 127.0.0.1 */
-constexpr uint32_t IPADDR_LOOPBACK = uint32_t(0x7f000001UL);
+constexpr uint32_t kIpaddrLoopback = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
 constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
-constexpr uint32_t IPADDR_BROADCAST = uint32_t(0xffffffffUL);
+constexpr uint32_t kIpaddrBroadcast = uint32_t(0xffffffffUL);
 
 /* Definitions of the bits in an Internet address integer.
 
@@ -99,7 +95,7 @@ inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b,
 }
 
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
-#define ip4_addr_copy(dest, src) ((dest).addr = (src).addr)
+
 /** Safely copy one IP address to another (src may be NULL) */
 #define ip4_addr_set(dest, src) ((dest)->addr = \
                                     ((src) == NULL ? 0 : \
@@ -140,10 +136,25 @@ inline uint32_t ip4_addr_get_u32(Ip4Addr* src_ipaddr)
                                               (mask)->addr) == \
                                              ((addr2)->addr & \
                                               (mask)->addr))
-#define ip4_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
-#define ip4_addr_isany_val(addr1)   ((addr1).addr == IPADDR_ANY)
-#define ip4_addr_isany(addr1) ((addr1) == NULL || ip4_addr_isany_val(*(addr1)))
+inline bool ip4_addr_cmp(const Ip4Addr* addr1, const Ip4Addr* addr2)
+{
+    return ((addr1)->addr == (addr2)->addr);
+}
+
+//
+// todo: document
+//
+inline bool ip4_addr_isany_val(const Ip4Addr addr1)
+{
+    return addr1.addr == kIp4AddrAny4;
+}
+
+
+inline bool ip4_addr_isany(Ip4Addr* addr1)
+{
+    return addr1 == nullptr || addr1->addr == kIp4AddrAny4;
+}
 
 #define ip4_addr_isbroadcast(addr1, netif) ip4_addr_isbroadcast_u32((addr1)->addr, netif)
 uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetIfc *netif);
@@ -156,7 +167,7 @@ uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 #define ip4_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
-  LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
+  Logf(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
@@ -205,9 +216,4 @@ int ip4addr_aton(const char *cp, Ip4Addr *addr);
 char *ip4addr_ntoa(const Ip4Addr *addr);
 char *ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
 
-#ifdef __cplusplus
-}
-#endif
-
 // END OF FILE
-

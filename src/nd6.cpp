@@ -2120,12 +2120,12 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer *q)
         /* queue did not exist, first item in queue */
         neighbor_cache[neighbor_index].q = new_entry;
       }
-      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (int16_t)neighbor_index));
+      Logf(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (int16_t)neighbor_index));
       result = ERR_OK;
     } else {
       /* the pool MEMP_ND6_QUEUE is empty */
       pbuf_free(p);
-      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)p));
+      Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)p));
       /* { result == ERR_MEM } through initialization */
     }
 #else /* LWIP_ND6_QUEUEING */
@@ -2134,11 +2134,11 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer *q)
       pbuf_free(neighbor_cache[neighbor_index].q);
     }
     neighbor_cache[neighbor_index].q = p;
-    LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (int16_t)neighbor_index));
+    Logf(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (int16_t)neighbor_index));
     result = ERR_OK;
 #endif /* LWIP_ND6_QUEUEING */
   } else {
-    LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)q));
+    Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)q));
     /* { result == ERR_MEM } through initialization */
   }
 

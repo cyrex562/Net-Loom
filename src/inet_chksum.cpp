@@ -270,9 +270,9 @@ inet_cksum_pseudo_base(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len
   /* iterate through all PacketBuffer in chain */
   for (q = p; q != nullptr; q = q->next) {
     Logf(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
-                             (void *)q, (void *)q->next));
+             (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
+    /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
     /* just executing this next line is probably faster that the if statement needed
        to check whether we really need to execute it, and does no harm */
     acc = FOLD_U32T(acc);
@@ -280,7 +280,7 @@ inet_cksum_pseudo_base(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len
       swapped = !swapped;
       acc = SWAP_BYTES_IN_WORD(acc);
     }
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
+    /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
   }
 
   if (swapped) {
@@ -294,7 +294,7 @@ inet_cksum_pseudo_base(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain lwip_chksum()=%"X32_F"\n", acc));
+//  Logf(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 
@@ -411,7 +411,7 @@ inet_cksum_pseudo_partial_base(struct PacketBuffer *p, uint8_t proto, uint16_t p
   /* iterate through all PacketBuffer in chain */
   for (q = p; (q != nullptr) && (chksum_len > 0); q = q->next) {
     Logf(INET_DEBUG, ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n",
-                             (void *)q, (void *)q->next));
+             (void *)q, (void *)q->next));
     chklen = q->len;
     if (chklen > chksum_len) {
       chklen = chksum_len;
@@ -419,14 +419,14 @@ inet_cksum_pseudo_partial_base(struct PacketBuffer *p, uint8_t proto, uint16_t p
     acc += LWIP_CHKSUM(q->payload, chklen);
     chksum_len = (uint16_t)(chksum_len - chklen);
     LWIP_ASSERT("delete me", chksum_len < 0x7fff);
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
+    /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
     /* fold the upper bit down */
     acc = FOLD_U32T(acc);
     if (q->len % 2 != 0) {
       swapped = !swapped;
       acc = SWAP_BYTES_IN_WORD(acc);
     }
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
+    /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
   }
 
   if (swapped) {
@@ -440,7 +440,7 @@ inet_cksum_pseudo_partial_base(struct PacketBuffer *p, uint8_t proto, uint16_t p
      calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
-//  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain lwip_chksum()=%"X32_F"\n", acc));
+//  Logf(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain lwip_chksum()=%"X32_F"\n", acc));
   return (uint16_t)~(acc & 0xffffUL);
 }
 

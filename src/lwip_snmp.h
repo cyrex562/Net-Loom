@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-struct udp_pcb;
+struct UdpPcb;
 struct NetIfc;
 
 /**
@@ -153,8 +153,8 @@ void mib2_remove_route_ip4(uint8_t dflt, struct NetIfc *ni);
 
 /* UDP */
 
-void mib2_udp_bind(struct udp_pcb *pcb);
-void mib2_udp_unbind(struct udp_pcb *pcb);
+void mib2_udp_bind(struct UdpPcb *pcb);
+void mib2_udp_unbind(struct UdpPcb *pcb);
 
 
 
