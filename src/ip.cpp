@@ -54,18 +54,13 @@
  */
 
 #include "opt.h"
-
-#if LWIP_IPV4 || LWIP_IPV6
-
 #include "ip_addr.h"
 #include "ip.h"
 
 /** Global data for both IPv4 and IPv6 */
-struct ip_globals ip_data;
+struct IpGlobals ip_data;
 
-#if LWIP_IPV4 && LWIP_IPV6
-
-const IpAddr ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
+const IpAddr ip_addr_any_type = kIpAddrAnyType;
 
 /**
  * @ingroup ipaddr
@@ -78,13 +73,13 @@ const IpAddr ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
  */
 char *ipaddr_ntoa(const IpAddr *addr)
 {
-  if (addr == NULL) {
-    return NULL;
+  if (addr == nullptr) {
+    return nullptr;
   }
   if (IpIsV6(addr)) {
-    return ip6addr_ntoa(ip_2_ip6(addr));
+    return ip6addr_ntoa(IpAddrToIp6Addr(addr));
   } else {
-    return ip4addr_ntoa(ip_2_ip4(addr));
+    return ip4addr_ntoa(IpAddrToIp4Addr(addr));
   }
 }
 
@@ -100,13 +95,13 @@ char *ipaddr_ntoa(const IpAddr *addr)
  */
 char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
 {
-  if (addr == NULL) {
-    return NULL;
+  if (addr == nullptr) {
+    return nullptr;
   }
   if (IpIsV6(addr)) {
-    return ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen);
+    return ip6addr_ntoa_r(IpAddrToIp6Addr(addr), buf, buflen);
   } else {
-    return ip4addr_ntoa_r(ip_2_ip4(addr), buf, buflen);
+    return ip4addr_ntoa_r(IpAddrToIp4Addr(addr), buf, buflen);
   }
 }
 
@@ -122,7 +117,7 @@ char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
 int
 ipaddr_aton(const char *cp, IpAddr *addr)
 {
-  if (cp != NULL) {
+  if (cp != nullptr) {
     const char *c;
     for (c = cp; *c != 0; c++) {
       if (*c == ':') {
@@ -130,7 +125,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
         if (addr) {
           IpAdderSetTypeVal(*addr, IPADDR_TYPE_V6);
         }
-        return ip6addr_aton(cp, ip_2_ip6(addr));
+        return ip6addr_aton(cp, IpAddrToIp6Addr(addr));
       } else if (*c == '.') {
         /* contains a dot: IPv4 address */
         break;
@@ -140,7 +135,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
     if (addr) {
       IpAdderSetTypeVal(*addr, IPADDR_TYPE_V4);
     }
-    return ip4addr_aton(cp, ip_2_ip4(addr));
+    return ip4addr_aton(cp, IpAddrToIp4Addr(addr));
   }
   return 0;
 }
@@ -153,15 +148,11 @@ ipaddr_aton(const char *cp, IpAddr *addr)
 LwipError
 ip_input(struct PacketBuffer *p, NetIfc*inp)
 {
-  if (p != NULL) {
-    if (IP_HDR_GET_VERSION(p->payload) == 6) {
+  if (p != nullptr) {
+    if (IpHdrGetVersion(p->payload) == 6) {
       return ip6_input(p, inp);
     }
     return ip4_input(p, inp);
   }
   return ERR_VAL;
 }
-
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
-#endif /* LWIP_IPV4 || LWIP_IPV6 */

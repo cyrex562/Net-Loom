@@ -2412,9 +2412,9 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * LWIP_ICMP6_DATASIZE: bytes from original packet to send back in
  * ICMPv6 error messages.
  */
-#if !defined LWIP_ICMP6_DATASIZE || defined __DOXYGEN__
-#define LWIP_ICMP6_DATASIZE             8
-#endif
+
+constexpr auto LWIP_ICMP6_DATASIZE      =       8;
+
 
 /**
  * LWIP_ICMP6_HL: default hop limit for ICMPv6 messages

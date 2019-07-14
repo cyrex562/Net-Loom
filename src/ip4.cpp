@@ -58,8 +58,6 @@
 
 #include "ip4_frag.h"
 
-#include "mem.h"
-
 #include "netif.h"
 
 #include "raw_priv.h"
@@ -234,7 +232,7 @@ ip4_route(const Ip4Addr *dest)
 //    Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
 //                ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);
-    MIB2_STATS_INC(mib2.ipoutnoroutes);
+    
     return nullptr;
   }
 
@@ -333,7 +331,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
   IPH_TTL_SET(iphdr, IPH_TTL(iphdr) - 1);
   /* send ICMP if TTL == 0 */
   if (IPH_TTL(iphdr) == 0) {
-    MIB2_STATS_INC(mib2.ipinhdrerrors);
+    
 #if LWIP_ICMP
     /* Don't send ICMP messages in response to ICMP messages */
     if (IPH_PROTO(iphdr) != IP_PROTO_ICMP) {
@@ -355,7 +353,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
                          ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
 
   IP_STATS_INC(ip.fw);
-  MIB2_STATS_INC(mib2.ipforwdatagrams);
+  
   IP_STATS_INC(ip.xmit);
 
   PERF_STOP("ip4_forward");
@@ -379,7 +377,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
   netif->output(netif, p, ip4_current_dest_addr());
   return;
 return_noroute:
-  MIB2_STATS_INC(mib2.ipoutnoroutes);
+  
 }
 #endif /* IP_FORWARD */
 
@@ -453,7 +451,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   LWIP_ASSERT_CORE_LOCKED();
 
   IP_STATS_INC(ip.recv);
-  MIB2_STATS_INC(mib2.ipinreceives);
+  
 
   /* identify the IP header */
   iphdr = (struct Ip4Hdr *)p->payload;
@@ -463,7 +461,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
     pbuf_free(p);
     IP_STATS_INC(ip.err);
     IP_STATS_INC(ip.drop);
-    MIB2_STATS_INC(mib2.ipinhdrerrors);
+    
     return ERR_OK;
   }
 
@@ -504,7 +502,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
     pbuf_free(p);
     IP_STATS_INC(ip.lenerr);
     IP_STATS_INC(ip.drop);
-    MIB2_STATS_INC(mib2.ipindiscards);
+    
     return ERR_OK;
   }
 
@@ -519,7 +517,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
       pbuf_free(p);
       IP_STATS_INC(ip.chkerr);
       IP_STATS_INC(ip.drop);
-      MIB2_STATS_INC(mib2.ipinhdrerrors);
+      
       return ERR_OK;
     }
   }
@@ -622,8 +620,8 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
       /* free (drop) packet pbufs */
       pbuf_free(p);
       IP_STATS_INC(ip.drop);
-      MIB2_STATS_INC(mib2.ipinaddrerrors);
-      MIB2_STATS_INC(mib2.ipindiscards);
+      
+      
       return ERR_OK;
     }
   }
@@ -641,8 +639,8 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 #endif /* IP_FORWARD */
     {
       IP_STATS_INC(ip.drop);
-      MIB2_STATS_INC(mib2.ipinaddrerrors);
-      MIB2_STATS_INC(mib2.ipindiscards);
+      
+      
     }
     pbuf_free(p);
     return ERR_OK;
@@ -666,7 +664,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
     IP_STATS_INC(ip.opterr);
     IP_STATS_INC(ip.drop);
     /* unsupported protocol feature */
-    MIB2_STATS_INC(mib2.ipinunknownprotos);
+    
     return ERR_OK;
 #endif /* IP_REASSEMBLY */
   }
@@ -684,7 +682,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
     IP_STATS_INC(ip.opterr);
     IP_STATS_INC(ip.drop);
     /* unsupported protocol feature */
-    MIB2_STATS_INC(mib2.ipinunknownprotos);
+    
     return ERR_OK;
   }
 #endif /* IP_OPTIONS_ALLOWED == 0 */
@@ -713,19 +711,19 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 #if LWIP_UDPLITE
       case IP_PROTO_UDPLITE:
 #endif /* LWIP_UDPLITE */
-        MIB2_STATS_INC(mib2.ipindelivers);
+        
         udp_input(p, inp);
         break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
       case IP_PROTO_TCP:
-        MIB2_STATS_INC(mib2.ipindelivers);
+        
         tcp_input(p, inp);
         break;
 #endif /* LWIP_TCP */
 #if LWIP_ICMP
       case IP_PROTO_ICMP:
-        MIB2_STATS_INC(mib2.ipindelivers);
+        
         icmp_input(p, inp);
         break;
 #endif /* LWIP_ICMP */
@@ -737,7 +735,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
       default:
 #if LWIP_RAW
         if (raw_status == RAW_INPUT_DELIVERED) {
-          MIB2_STATS_INC(mib2.ipindelivers);
+          
         } else
 #endif /* LWIP_RAW */
         {
@@ -754,7 +752,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
           IP_STATS_INC(ip.proterr);
           IP_STATS_INC(ip.drop);
-          MIB2_STATS_INC(mib2.ipinunknownprotos);
+          
         }
         pbuf_free(p);
         break;
@@ -869,7 +867,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       LWIP_ASSERT_CORE_LOCKED();
       LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-      MIB2_STATS_INC(mib2.ipoutrequests);
+      
 
       /* Should the IP header be generated or is it already included in p? */
       if (dest != nullptr)
@@ -885,7 +883,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
         /* optlen too long */
         Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: optlen too long\n"));
         IP_STATS_INC(ip.err);
-        MIB2_STATS_INC(mib2.ipoutdiscards);
+        
         return ERR_VAL;
       }
       /* round up to a multiple of 4 */
@@ -895,7 +893,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       if (pbuf_add_header(p, optlen_aligned)) {
         Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: not enough room for IP options in PacketBuffer\n"));
         IP_STATS_INC(ip.err);
-        MIB2_STATS_INC(mib2.ipoutdiscards);
+        
         return ERR_BUF;
       }
       MEMCPY(p->payload, ip_options, optlen);
@@ -916,7 +914,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: not enough room for IP header in PacketBuffer\n"));
 
               IP_STATS_INC(ip.err);
-              MIB2_STATS_INC(mib2.ipoutdiscards);
+              
               return ERR_BUF;
           }
 
@@ -931,7 +929,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
           /* dest cannot be NULL here */
-          ip4_addr_copy(iphdr->dest, *dest);
+          Ip4AddrCopy(iphdr->dest, *dest);
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += ip4_addr_get_u32(&iphdr->dest) & 0xFFFF;
           chk_sum += ip4_addr_get_u32(&iphdr->dest) >> 16;
@@ -955,11 +953,11 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
           if (src == nullptr)
           {
-              ip4_addr_copy(iphdr->src, *IP4_ADDR_ANY4);
+              Ip4AddrCopy(iphdr->src, *IP4_ADDR_ANY4);
           } else
           {
               /* src cannot be NULL here */
-              ip4_addr_copy(iphdr->src, *src);
+              Ip4AddrCopy(iphdr->src, *src);
           }
 
 #if CHECKSUM_GEN_IP_INLINE
@@ -991,11 +989,11 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           {
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n"));
               IP_STATS_INC(ip.err);
-              MIB2_STATS_INC(mib2.ipoutdiscards);
+              
               return ERR_BUF;
           }
           iphdr = (struct Ip4Hdr *)p->payload;
-          ip4_addr_copy(dest_addr, iphdr->dest);
+          Ip4AddrCopy(dest_addr, iphdr->dest);
           dest = &dest_addr;
       }
 

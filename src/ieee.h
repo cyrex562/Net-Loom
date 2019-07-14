@@ -38,12 +38,7 @@
  *
  */
 
-#ifndef LWIP_HDR_PROT_IEEE_H
-#define LWIP_HDR_PROT_IEEE_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#pragma once
 
 /**
  * @ingroup ieee
@@ -84,8 +79,3 @@ enum lwip_ieee_eth_type {
   ETHTYPE_QINQ      = 0x9100U
 };
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_HDR_PROT_IEEE_H */

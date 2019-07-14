@@ -1,20 +1,39 @@
 
 #pragma once
 #include "packet_buffer.h"
-#include "ip_addr.h"
-constexpr auto ICMP_ER = 0    /* echo reply */;
-constexpr auto ICMP_DUR = 3    /* destination unreachable */;
-constexpr auto ICMP_SQ = 4    /* source quench */;
-constexpr auto ICMP_RD = 5    /* redirect */;
-#define ICMP_ECHO 8    /* echo */
-#define ICMP_TE  11    /* time exceeded */
-#define ICMP_PP  12    /* parameter problem */
-#define ICMP_TS  13    /* timestamp */
-#define ICMP_TSR 14    /* timestamp reply */
-#define ICMP_IRQ 15    /* information request */
-#define ICMP_IR  16    /* information reply */
-#define ICMP_AM  17    /* address mask request */
-#define ICMP_AMR 18    /* address mask reply */
+#include "icmp6.h"
+
+enum IcmpType
+{
+    ICMP_ER = 0,
+    /* echo reply */
+    ICMP_DUR = 3,
+    /* destination unreachable */
+    ICMP_SQ = 4,
+    /* source quench */
+    ICMP_RD = 5,
+    /* redirect */
+    ICMP_ECHO =8,
+    /* echo */
+    ICMP_TE = 11,
+    /* time exceeded */
+    ICMP_PP = 12,
+    /* parameter problem */
+    ICMP_TS = 13,
+    /* timestamp */
+    ICMP_TSR= 14,
+    /* timestamp reply */
+    ICMP_IRQ =15,
+    /* information request */
+    ICMP_IR = 16,
+    /* information reply */
+    ICMP_AM = 17,
+    /* address mask request */
+    ICMP_AMR =18,
+    /* address mask reply */
+};
+
+
 
  /** This is the standard ICMP header only that the uint32_t data
   *  is split to two uint16_t like ICMP echo needs it.
@@ -42,9 +61,13 @@ inline uint8_t IcmphCode(IcmpEchoHdr* hdr)
     return ((hdr)->code);
 }
 
+inline void IcmphTypeSet(IcmpEchoHdr* hdr, const IcmpType t)
+{
+    ((hdr)->type = (t));
+}
 
-#define ICMPH_TYPE_SET(hdr, t) ((hdr)->type = (t))
 #define ICMPH_CODE_SET(hdr, c) ((hdr)->code = (c))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,6 +99,7 @@ enum icmp_te_type {
 void icmp_input(struct PacketBuffer *p, NetIfc*inp);
 void icmp_dest_unreach(struct PacketBuffer *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct PacketBuffer *p, enum icmp_te_type t);
+void icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code);
 
 inline void icmp_port_unreach(bool isipv6, PacketBuffer* pbuf)
 {

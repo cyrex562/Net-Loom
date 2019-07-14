@@ -259,7 +259,7 @@ const char * protocol_name(int proto);
 /*
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
  */
-// #define TIMEOUT(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
+// #define Timeout(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
 
 inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t time)
 {

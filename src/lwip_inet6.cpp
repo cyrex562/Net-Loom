@@ -40,14 +40,9 @@
  */
 
 #include "opt.h"
-
-#if LWIP_IPV6 && LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
-
-#include "def.h"
-#include "inet.h"
+#include "lwip_inet.h"
 
 /** This variable is initialized by the system to contain the wildcard IPv6 address.
  */
 const struct LwipIn6Addr in6addr_any = IN6ADDR_ANY_INIT;
 
-#endif /* LWIP_IPV6 */

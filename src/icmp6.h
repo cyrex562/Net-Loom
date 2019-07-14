@@ -46,10 +46,6 @@
 #include "netif.h"
 #include "arch.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // ICMP TYPE
 enum Icmp6Type
 {
@@ -168,6 +164,6 @@ void icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum Icmp6TeCode c,
                                     const Ip6Addr *dest_addr);
 void icmp6_param_problem(struct PacketBuffer *p, enum Icmp6PpCode c, const void *pointer);
 
-#ifdef __cplusplus
-}
-#endif
+//
+// END OF FILE
+//

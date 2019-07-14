@@ -115,8 +115,8 @@ struct Dhcp6OptionInfo dhcp6_rx_options[DHCP6_OPTION_IDX_MAX];
 #define dhcp6_set_option(dhcp6, idx, start, len) do { dhcp6_rx_options[idx].val_start = (start); dhcp6_rx_options[idx].val_length = (len); }while(0)
 
 
-const IpAddr dhcp6_All_DHCP6_Relay_Agents_and_Servers = IPADDR6_INIT_HOST(0xFF020000, 0, 0, 0x00010002);
-const IpAddr dhcp6_All_DHCP6_Servers = IPADDR6_INIT_HOST(0xFF020000, 0, 0, 0x00010003);
+const IpAddr dhcp6_All_DHCP6_Relay_Agents_and_Servers = Ipaddr6InitHost(0xFF020000, 0, 0, 0x00010002);
+const IpAddr dhcp6_All_DHCP6_Servers = Ipaddr6InitHost(0xFF020000, 0, 0, 0x00010003);
 
 static struct UdpPcb *dhcp6_pcb;
 static uint8_t dhcp6_pcb_refcount;

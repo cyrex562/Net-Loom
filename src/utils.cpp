@@ -715,12 +715,12 @@ void ppp_dump_packet(PppPcb *pcb, const char *tag, unsigned char *p, int len) {
     /*
      * don't print valid LCP echo request/reply packets if the link is up.
      */
-    if (proto == PPP_LCP && pcb->phase == PPP_PHASE_RUNNING && len >= 2 + HEADERLEN) {
+    if (proto == PPP_LCP && pcb->phase == PPP_PHASE_RUNNING && len >= 2 + kHeaderlen) {
 	unsigned char *lcp = p + 2;
 	int l = (lcp[2] << 8) + lcp[3];
 
 	if ((lcp[0] == ECHOREQ || lcp[0] == ECHOREP)
-	    && l >= HEADERLEN && l <= len - 2)
+	    && l >= kHeaderlen && l <= len - 2)
 	    return;
     }
 

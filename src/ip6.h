@@ -55,19 +55,24 @@
 struct Ip6AddrPacked {
     uint32_t addr[4];
 };
-typedef struct Ip6AddrPacked ip6_addr_p_t;
+typedef struct Ip6AddrPacked Ip6AddrPT;
 
-#define IP6_HLEN 40
-#define IP6_NEXTH_HOPBYHOP  0
-#define IP6_NEXTH_TCP       6
-#define IP6_NEXTH_UDP       17
-#define IP6_NEXTH_ENCAPS    41
-#define IP6_NEXTH_ROUTING   43
-#define IP6_NEXTH_FRAGMENT  44
-#define IP6_NEXTH_ICMP6     58
-#define IP6_NEXTH_NONE      59
-#define IP6_NEXTH_DESTOPTS  60
-#define IP6_NEXTH_UDPLITE   136
+constexpr auto kIp6Hlen = 40;
+
+enum Ip6NextHdr
+{
+    IP6_NEXTH_HOPBYHOP = 0,
+    IP6_NEXTH_TCP =6,
+    IP6_NEXTH_UDP =17,
+    IP6_NEXTH_ENCAPS =41,
+    IP6_NEXTH_ROUTING =43,
+    IP6_NEXTH_FRAGMENT =44,
+    IP6_NEXTH_ICMP6 =58,
+    IP6_NEXTH_NONE =59,
+    IP6_NEXTH_DESTOPTS =60,
+    IP6_NEXTH_UDPLITE =136,
+};
+
 
 /** The IPv6 header. */
 
@@ -81,8 +86,8 @@ struct Ip6Hdr {
     /** hop limit */
     uint8_t _hoplim;
     /** source and destination IP addresses */
-    ip6_addr_p_t src;
-    ip6_addr_p_t dest;
+    Ip6AddrPT src;
+    Ip6AddrPT dest;
 } ;
 
 #define IP6H_V(hdr)  ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f)
@@ -188,7 +193,8 @@ extern "C" {
 #endif
 
 NetIfc*ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
-const IpAddr *ip6_select_source_address(NetIfc*netif, const Ip6Addr * dest);
+const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
+
 LwipError         ip6_input(struct PacketBuffer *p, NetIfc* inp);
 LwipError         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                          uint8_t hl, uint8_t tc, uint8_t nexth);

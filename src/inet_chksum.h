@@ -34,8 +34,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_INET_CHKSUM_H
-#define LWIP_HDR_INET_CHKSUM_H
+#pragma once
 
 #include "opt.h"
 
@@ -52,30 +51,23 @@
 #define FOLD_U32T(u)          ((uint32_t)(((u) >> 16) + ((u) & 0x0000ffffUL)))
 #endif
 
-#if LWIP_CHECKSUM_ON_COPY
+
 /** Function-like macro: same as MEMCPY but returns the checksum of copied data
     as uint16_t */
-# ifndef LWIP_CHKSUM_COPY
-#  define LWIP_CHKSUM_COPY(dst, src, len) lwip_chksum_copy(dst, src, len)
-#  ifndef LWIP_CHKSUM_COPY_ALGORITHM
-#   define LWIP_CHKSUM_COPY_ALGORITHM 1
-#  endif /* LWIP_CHKSUM_COPY_ALGORITHM */
-# else /* LWIP_CHKSUM_COPY */
-#  define LWIP_CHKSUM_COPY_ALGORITHM 0
-# endif /* LWIP_CHKSUM_COPY */
-#else /* LWIP_CHECKSUM_ON_COPY */
-# define LWIP_CHKSUM_COPY_ALGORITHM 0
-#endif /* LWIP_CHECKSUM_ON_COPY */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#  define lwip_standard_checksum_COPY(dst, src, len) lwip_standard_checksum_copy(dst, src, len)
+
+#   define lwip_standard_checksum_COPY_ALGORITHM 1
+
+
+
+
 
 uint16_t inet_chksum(const void *dataptr, uint16_t len);
 uint16_t inet_chksum_pbuf(struct PacketBuffer *p);
-#if LWIP_CHKSUM_COPY_ALGORITHM
-uint16_t lwip_chksum_copy(void *dst, const void *src, uint16_t len);
-#endif /* LWIP_CHKSUM_COPY_ALGORITHM */
+#if lwip_standard_checksum_COPY_ALGORITHM
+uint16_t lwip_standard_checksum_copy(void *dst, const void *src, uint16_t len);
+#endif /* lwip_standard_checksum_COPY_ALGORITHM */
 
 #if LWIP_IPV4
 uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
@@ -97,9 +89,26 @@ uint16_t ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_
 uint16_t ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        uint16_t chksum_len, const IpAddr *src, const IpAddr *dest);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* LWIP_HDR_INET_H */
+uint16_t
+ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
+                  const Ip6Addr *src, const Ip6Addr *dest);
 
+uint16_t
+lwip_standard_chksum_1(const void *dataptr, int len);
+
+uint16_t
+lwip_standard_chksum_2(const void *dataptr, const size_t len);
+
+uint16_t
+lwip_standard_chksum_3(const void *dataptr, const size_t len);
+
+constexpr auto kLwipStandardChecksumAlgorithm = 2;
+
+uint16_t lwip_standard_checksum(const void* dataptr,
+                                const size_t len,
+                                const int checksum_algorithm = kLwipStandardChecksumAlgorithm);
+
+//
+// END OF FILE
+//

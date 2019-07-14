@@ -259,7 +259,7 @@ struct PacketBuffer *pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type)
                                type,
                                0);
         // LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
-        //             ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
+        //             ((uintptr_t)q->payload % MEM_ALIGNMENT) == 0);
         LWIP_ASSERT(
             "PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT",
             (PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)) > 0);
@@ -1355,7 +1355,7 @@ LwipError pbuf_fill_chksum(struct PacketBuffer *p, uint16_t start_offset,
   }
 
   dst_ptr = ((char *)p->payload) + start_offset;
-  copy_chksum = LWIP_CHKSUM_COPY(dst_ptr, dataptr, len);
+  copy_chksum = lwip_standard_checksum_COPY(dst_ptr, dataptr, len);
   if ((start_offset & 1) != 0) {
     copy_chksum = SWAP_BYTES_IN_WORD(copy_chksum);
   }

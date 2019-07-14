@@ -58,7 +58,7 @@ struct mld_header {
     (uint16_t chksum);
     (uint16_t max_resp_delay);
     (uint16_t reserved);
-    PACK_STRUCT_FLD_S(ip6_addr_p_t multicast_address);
+    PACK_STRUCT_FLD_S(Ip6AddrPT multicast_address);
     /* Options follow. */
 } ;
 PACK_STRUCT_END

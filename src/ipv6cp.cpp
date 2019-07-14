@@ -1407,13 +1407,13 @@ static int ipv6cp_printpkt(const uint8_t *p, int plen,
 #endif /* IPV6CP_COMP */
     eui64_t ifaceid;
 
-    if (plen < HEADERLEN)
+    if (plen < kHeaderlen)
 	return 0;
     pstart = p;
     GETCHAR(code, p);
     GETCHAR(id, p);
     GETSHORT(len, p);
-    if (len < HEADERLEN || len > plen)
+    if (len < kHeaderlen || len > plen)
 	return 0;
 
     if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ipv6cp_codenames))
@@ -1421,7 +1421,7 @@ static int ipv6cp_printpkt(const uint8_t *p, int plen,
     else
 	printer(arg, " code=0x%x", code);
     printer(arg, " id=0x%x", id);
-    len -= HEADERLEN;
+    len -= kHeaderlen;
     switch (code) {
     case CONFREQ:
     case CONFACK:

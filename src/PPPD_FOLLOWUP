@@ -88,7 +88,7 @@ in our port.
 Only concern changes on RP-PPPoE plugin, which we don't use.
 
 
-2010-09-11 - chat: Allow TIMEOUT value to come from environment variable
+2010-09-11 - chat: Allow Timeout value to come from environment variable
   ae80bf833e48a6202f44a935a68083ae52ad3824
 
 See 2b6310fd24dba8e0fca8999916a162f0a1842a84.

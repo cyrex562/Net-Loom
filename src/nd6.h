@@ -1,46 +1,3 @@
-/**
- * @file
- *
- * Neighbor discovery and stateless address autoconfiguration for IPv6.
- * Aims to be compliant with RFC 4861 (Neighbor discovery) and RFC 4862
- * (Address autoconfiguration).
- */
-
-/*
- * Copyright (c) 2010 Inico Technologies Ltd.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Ivan Delamer <delamer@inicotech.com>
- *
- *
- * Please coordinate changes and requests with Ivan Delamer
- * <delamer@inicotech.com>
- */
-
 #pragma once
 
 #include "ip6_addr.h"
@@ -57,7 +14,7 @@ struct ns_header
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    ip6_addr_p_t target_address;
+    Ip6AddrPT target_address;
     /* Options follow. */
 };
 
@@ -71,7 +28,7 @@ struct na_header
     uint16_t chksum;
     uint8_t flags;
     uint8_t reserved[3];
-    ip6_addr_p_t target_address;
+    Ip6AddrPT target_address;
     /* Options follow. */
 };
 
@@ -124,8 +81,8 @@ struct redirect_header
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    ip6_addr_p_t target_address;
-    ip6_addr_p_t destination_address;
+    Ip6AddrPT target_address;
+    Ip6AddrPT destination_address;
     /* Options follow. */
 };
 
@@ -161,7 +118,7 @@ struct prefix_option
     uint32_t preferred_lifetime;
     uint8_t reserved2[3];
     uint8_t site_prefix_length;
-    ip6_addr_p_t prefix;
+    Ip6AddrPT prefix;
 };
 
 
@@ -202,7 +159,7 @@ struct route_option
     uint8_t prefix_length;
     uint8_t preference;
     uint32_t route_lifetime;
-    ip6_addr_p_t prefix;
+    Ip6AddrPT prefix;
 };
 
 
@@ -216,7 +173,7 @@ struct rdnss_option
     uint8_t length;
     uint16_t reserved;
     uint32_t lifetime;
-    ip6_addr_p_t rdnss_address[1];
+    Ip6AddrPT rdnss_address[1];
 };
 
 

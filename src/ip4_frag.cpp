@@ -100,7 +100,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     LWIP_ASSERT("prev->next == ipr", prev->next == ipr);
   }
 
-  MIB2_STATS_INC(mib2.ipreasmfails);
+  
 #if LWIP_ICMP
   iprh = (struct IpReassHelper *)ipr->p->payload;
   if (iprh->start == 0) {
@@ -442,7 +442,7 @@ ip4_reass(struct PacketBuffer *p)
   int is_last;
 
   IPFRAG_STATS_INC(ip_frag.recv);
-  MIB2_STATS_INC(mib2.ipreasmreqds);
+  
 
   fraghdr = (struct Ip4Hdr *)p->payload;
 
@@ -597,7 +597,7 @@ ip4_reass(struct PacketBuffer *p)
     LWIP_ASSERT("ip_reass_pbufcount >= clen", ip_reass_pbufcount >= clen);
     ip_reass_pbufcount = (uint16_t)(ip_reass_pbufcount - clen);
 
-    MIB2_STATS_INC(mib2.ipreasmoks);
+    
 
     /* Return the PacketBuffer chain */
     return p;
@@ -821,10 +821,10 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
     left = (uint16_t)(left - fragsize);
     ofo = (uint16_t)(ofo + nfb);
   }
-  MIB2_STATS_INC(mib2.ipfragoks);
+  
   return ERR_OK;
 memerr:
-  MIB2_STATS_INC(mib2.ipfragfails);
+  
   return ERR_MEM;
 }
 #endif /* IP_FRAG */

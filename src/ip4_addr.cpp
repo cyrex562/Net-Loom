@@ -107,7 +107,7 @@ uint32_t ipaddr_addr(const char* cp)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int ip4addr_aton(const char* cp, Ip4Addr* addr)
+int ip4addr_aton(const char* cp, const Ip4Addr* addr)
 {
     uint32_t val;
     uint32_t parts[4];

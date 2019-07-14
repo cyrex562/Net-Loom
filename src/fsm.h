@@ -120,7 +120,7 @@ struct FsmCallbacks {
     /* Request peer's Configuration Information */
     int  (*reqci)	 (Fsm *, uint8_t *, size_t *, int, PppPcb*);
     /* Called when fsm reaches PPP_FSM_OPENED state */
-    void (*up) (Fsm *, PppPcb*, Protent**);
+    void (*up) (Fsm *, PppPcb*);
     /* Called when fsm leaves PPP_FSM_OPENED state */
     void (*down) (Fsm *, Fsm*, PppPcb*);
     /* Called when we want the lower layer */
@@ -165,7 +165,7 @@ struct FsmCallbacks {
 void fsm_init(Fsm* f);
 void fsm_lowerup(Fsm* f);
 void fsm_lowerdown(Fsm* f);
-void fsm_open(Fsm* f);
+bool fsm_open(Fsm* f);
 void fsm_close(Fsm* f, const char* reason);
 void fsm_input(Fsm* f, uint8_t* inpacket, int l);
 void fsm_protreject(Fsm* f);

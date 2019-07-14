@@ -1177,7 +1177,7 @@ static void ccp_datainput(PppPcb* pcb, uint8_t* pkt, int len)
 // 	     */
 // 	    if (!(pcb->ccp_localstate & RACK_PENDING)) {
 // 		fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, NULL, 0);
-// 		TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
+// 		Timeout(ccp_rack_timeout, f, RACKTIMEOUT);
 // 		pcb->ccp_localstate |= RACK_PENDING;
 // 	    } else
 // 		pcb->ccp_localstate |= RREQ_REPEAT;

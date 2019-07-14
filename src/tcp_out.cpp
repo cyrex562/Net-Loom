@@ -109,11 +109,11 @@
    nicer by preventing too many ifdef's. */
 #if TCP_CHECKSUM_ON_COPY
 #define TCP_DATA_COPY(dst, src, len, seg) do { \
-  tcp_seg_add_chksum(LWIP_CHKSUM_COPY(dst, src, len), \
+  tcp_seg_add_chksum(lwip_standard_checksum_COPY(dst, src, len), \
                      len, &seg->chksum, &seg->chksum_swapped); \
   seg->flags |= TF_SEG_DATA_CHECKSUMMED; } while(0)
 #define TCP_DATA_COPY2(dst, src, len, chksum, chksum_swapped)  \
-  tcp_seg_add_chksum(LWIP_CHKSUM_COPY(dst, src, len), len, chksum, chksum_swapped);
+  tcp_seg_add_chksum(lwip_standard_checksum_COPY(dst, src, len), len, chksum, chksum_swapped);
 #else /* TCP_CHECKSUM_ON_COPY*/
 #define TCP_DATA_COPY(dst, src, len, seg)                     MEMCPY(dst, src, len)
 #define TCP_DATA_COPY2(dst, src, len, chksum, chksum_swapped) MEMCPY(dst, src, len)
@@ -1102,7 +1102,7 @@ tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags)
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
-  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % LWIP_MIN(MEM_ALIGNMENT, 4)) == 0);
+  LWIP_ASSERT("seg->tcphdr not aligned", ((uintptr_t)seg->tcphdr % LWIP_MIN(MEM_ALIGNMENT, 4)) == 0);
   LWIP_ASSERT("tcp_enqueue_flags: invalid segment length", seg->len == 0);
 
   Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE,
@@ -1563,7 +1563,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*neti
   len = (uint16_t)((uint8_t *)seg->tcphdr - (uint8_t *)seg->p->payload);
   if (len == 0) {
     /** Exclude retransmitted segments from this count. */
-    MIB2_STATS_INC(mib2.tcpoutsegs);
+    
   }
 
   seg->p->len -= len;
@@ -1782,7 +1782,7 @@ tcp_rexmit(struct TcpProtoCtrlBlk *pcb)
   pcb->rttest = 0;
 
   /* Do the actual retransmission. */
-  MIB2_STATS_INC(mib2.tcpretranssegs);
+  
   /* No need to call tcp_output: we are always called from tcp_input()
      and thus tcp_output directly returns. */
   return ERR_OK;
@@ -2019,7 +2019,7 @@ tcp_rst(const struct TcpProtoCtrlBlk *pcb, uint32_t seqno, uint32_t ackno,
   }
   tcp_output_fill_options(pcb, p, 0, optlen);
 
-  MIB2_STATS_INC(mib2.tcpoutrsts);
+  
 
   tcp_output_control_segment(pcb, p, local_ip, remote_ip);
   Logf(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));

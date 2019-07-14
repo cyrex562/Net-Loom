@@ -193,15 +193,15 @@ NetIfc** netif_add(NetIfc** netif,
     if (ipaddr == nullptr)
     {
 
-        ipaddr = ip_2_ip4(kIp4AddrAny);
+        ipaddr = IpAddrToIp4Addr(kIp4AddrAny);
     }
     if (netmask == nullptr)
     {
-        netmask = ip_2_ip4(kIp4AddrAny);
+        netmask = IpAddrToIp4Addr(kIp4AddrAny);
     }
     if (gw == nullptr)
     {
-        gw = ip_2_ip4(kIp4AddrAny);
+        gw = IpAddrToIp4Addr(kIp4AddrAny);
     } /* reset new interface configuration state */
     ip_addr_set_zero_ip4(&netif->ip_addr);
     ip_addr_set_zero_ip4(&netif->netmask);
@@ -325,7 +325,7 @@ netif_do_set_ipaddr(NetIfc*netif, const Ip4Addr *ipaddr, IpAddr *old_addr)
   /* address is actually being changed? */
   if (ip4_addr_cmp(ipaddr, netif_ip4_addr(netif)) == 0) {
     IpAddr new_addr;
-    *ip_2_ip4(&new_addr) = *ipaddr;
+    *IpAddrToIp4Addr(&new_addr) = *ipaddr;
     IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
 
     ip_addr_copy(*old_addr, *netif_ip_addr4(netif));
@@ -336,7 +336,7 @@ netif_do_set_ipaddr(NetIfc*netif, const Ip4Addr *ipaddr, IpAddr *old_addr)
     mib2_remove_ip4(netif);
     mib2_remove_route_ip4(0, netif);
     /* set new IP address to netif */
-    ip4_addr_set(ip_2_ip4(&netif->ip_addr), ipaddr);
+    ip4_addr_set(IpAddrToIp4Addr(&netif->ip_addr), ipaddr);
     IP_SET_TYPE_VAL(netif->ip_addr, IPADDR_TYPE_V4);
     mib2_add_ip4(netif);
     mib2_add_route_ip4(0, netif);
@@ -395,7 +395,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
 #endif
     mib2_remove_route_ip4(0, netif);
     /* set new netmask to netif */
-    ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
+    ip4_addr_set(IpAddrToIp4Addr(&netif->netmask), netmask);
     IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
     mib2_add_route_ip4(0, netif);
 //    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -458,7 +458,7 @@ netif_do_set_gw(NetIfc*netif, const Ip4Addr *gw, IpAddr *old_gw)
     ;
 #endif
 
-    ip4_addr_set(ip_2_ip4(&netif->gw), gw);
+    ip4_addr_set(IpAddrToIp4Addr(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
 //    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
 //                netif->name[0], netif->name[1],
@@ -1282,7 +1282,7 @@ netif_ip6_addr_set_state(NetIfc*netif, int8_t addr_idx, uint8_t state)
  * interface (as per RFC terminology).
  *
  * The given address may or may not be zoned (i.e., have a zone index other
- * than IP6_NO_ZONE). If the address is zoned, it must have the correct zone
+ * than kIp6NoZone). If the address is zoned, it must have the correct zone
  * for the given netif, or no match will be found.
  *
  * @param netif the netif to check

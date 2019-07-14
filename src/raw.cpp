@@ -81,14 +81,14 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
   }
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
-  if (IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
+  if (IpAddrPcbVersionMatchExact(pcb, ip_current_dest_addr())) {
     /* Special case: IPv4 broadcast: receive all broadcasts
      * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
     if (broadcast != 0) {
       if (ip_get_option(pcb, SOF_BROADCAST))
 
       {
-        if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
+        if (ip4_addr_isany(IpAddrToIp4Addr(&pcb->local_ip))) {
           return 1;
         }
       }
@@ -213,7 +213,7 @@ raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
    * zoned source addresses. */
   if (IpIsV6(&pcb->local_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->local_ip), IP6_UNKNOWN)) {
-    ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), ip_2_ip6(&pcb->local_ip));
+    ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), IpAddrToIp6Addr(&pcb->local_ip));
   }
   return ERR_OK;
 }
@@ -268,7 +268,7 @@ raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
    * using the bound address to make a more informed decision when possible. */
   if (IpIsV6(&pcb->remote_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
-    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
+    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), IpAddrToIp6Addr(&pcb->local_ip));
   }
   raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
   return ERR_OK;
@@ -333,7 +333,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
   NetIfc*netif;
   const IpAddr *src_ip;
 
-  if ((pcb == nullptr) || (ipaddr == nullptr) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == nullptr) || (ipaddr == nullptr) || !IpAddrPcbVersionMatch(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -405,7 +405,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
   LWIP_ASSERT_CORE_LOCKED();
 
   if ((pcb == nullptr) || (dst_ip == nullptr) || (netif == nullptr) || (src_ip == nullptr) ||
-      !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+      !IpAddrPcbVersionMatch(pcb, src_ip) || !IpAddrPcbVersionMatch(pcb, dst_ip)) {
     return ERR_VAL;
   }
 

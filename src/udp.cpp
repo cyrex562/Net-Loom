@@ -46,7 +46,6 @@
  */
 #include "udp.h"
 #include "def.h"
-#include "DhcpContext.h"
 #include "icmp.h"
 #include "icmp6.h"
 #include "inet_chksum.h"
@@ -143,7 +142,7 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
     } 
     
     // Only need to check PCB if incoming IP version matches PCB IP version
-    if (IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr()))
+    if (IpAddrPcbVersionMatchExact(pcb, ip_current_dest_addr()))
     {
         /* Special case: IPv4 broadcast: all or broadcasts in my subnet
          * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
@@ -151,9 +150,9 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
         {
             if (ip_get_option(pcb, SOF_BROADCAST))
             {
-                if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) || ((ip4_current_dest_addr()
+                if (ip4_addr_isany(IpAddrToIp4Addr(&pcb->local_ip)) || ((ip4_current_dest_addr()
                     ->addr == kIpaddrBroadcast)) || ip4_addr_netcmp(
-                    ip_2_ip4(&pcb->local_ip),
+                    IpAddrToIp4Addr(&pcb->local_ip),
                     ip4_current_dest_addr(),
                     netif_ip4_netmask(inp)))
                 {
@@ -212,7 +211,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
 //                ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
     UDP_STATS_INC(udp.lenerr);
     UDP_STATS_INC(udp.drop);
-    MIB2_STATS_INC(mib2.udpinerrors);
+    
     pbuf_free(p);
     goto end;
   }
@@ -262,9 +261,9 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
 #if LWIP_IPV4
         } else if (broadcast && ip4_current_dest_addr()->addr == kIpaddrBroadcast) {
           /* global broadcast address (only valid for IPv4; match was checked before) */
-          if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(ip_2_ip4(&uncon_pcb->local_ip), netif_ip4_addr(inp))) {
+          if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(IpAddrToIp4Addr(&uncon_pcb->local_ip), netif_ip4_addr(inp))) {
             /* uncon_pcb does not match the input netif, check this pcb */
-            if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(ip_2_ip4(&pcb->local_ip), netif_ip4_addr(inp))) {
+            if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(IpAddrToIp4Addr(&pcb->local_ip), netif_ip4_addr(inp))) {
               /* better match */
               uncon_pcb = pcb;
             }
@@ -361,13 +360,13 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
       /* Can we cope with this failing? Just assert for now */
       LWIP_ASSERT("pbuf_remove_header failed\n", 0);
       UDP_STATS_INC(udp.drop);
-      MIB2_STATS_INC(mib2.udpinerrors);
+      
       pbuf_free(p);
       goto end;
     }
 
     if (pcb != nullptr) {
-      MIB2_STATS_INC(mib2.udpindatagrams);
+      
 #if SO_REUSE && SO_REUSE_RXTOALL
       if (ip_get_option(pcb, SOF_REUSEADDR) &&
           (broadcast || ip_addr_ismulticast(ip_current_dest_addr()))) {
@@ -415,7 +414,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
 #endif /* LWIP_ICMP || LWIP_ICMP6 */
       UDP_STATS_INC(udp.proterr);
       UDP_STATS_INC(udp.drop);
-      MIB2_STATS_INC(mib2.udpnoports);
+      
       pbuf_free(p);
     }
   } else {
@@ -430,7 +429,7 @@ chkerr:
        ("udp_input: UDP (or UDP Lite) datagram discarded due to failing checksum\n"));
   UDP_STATS_INC(udp.chkerr);
   UDP_STATS_INC(udp.drop);
-  MIB2_STATS_INC(mib2.udpinerrors);
+  
   pbuf_free(p);
   PERF_STOP("udp_input");
 #endif /* CHECKSUM_CHECK_UDP */
@@ -531,7 +530,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
   LWIP_ERROR("udp_sendto: invalid pbuf", p != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_sendto: invalid dst_ip", dst_ip != nullptr, return ERR_ARG);
 
-  if (!IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+  if (!IpAddrPcbVersionMatch(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -636,7 +635,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
   LWIP_ERROR("udp_sendto_if: invalid dst_ip", dst_ip != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_sendto_if: invalid netif", netif != nullptr, return ERR_ARG);
 
-  if (!IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+  if (!IpAddrPcbVersionMatch(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -664,15 +663,15 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
   else
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #if LWIP_IPV4
-    if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) ||
-        ip4_addr_ismulticast(ip_2_ip4(&pcb->local_ip))) {
+    if (ip4_addr_isany(IpAddrToIp4Addr(&pcb->local_ip)) ||
+        ip4_addr_ismulticast(IpAddrToIp4Addr(&pcb->local_ip))) {
       /* if the local_ip is any or multicast
        * use the outgoing network interface IP address as source address */
       src_ip = netif_ip_addr4(netif);
     } else {
       /* check if UDP PCB local IP address is correct
        * this could be an old address if netif->ip_addr has changed */
-      if (!ip4_addr_cmp(ip_2_ip4(&(pcb->local_ip)), netif_ip4_addr(netif))) {
+      if (!ip4_addr_cmp(IpAddrToIp4Addr(&(pcb->local_ip)), netif_ip4_addr(netif))) {
         /* local_ip doesn't match, drop the packet */
         return ERR_RTE;
       }
@@ -718,8 +717,8 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   LWIP_ERROR("udp_sendto_if_src: invalid src_ip", src_ip != nullptr, return ERR_ARG);
   LWIP_ERROR("udp_sendto_if_src: invalid netif", netif != nullptr, return ERR_ARG);
 
-  if (!IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) ||
-      !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+  if (!IpAddrPcbVersionMatch(pcb, src_ip) ||
+      !IpAddrPcbVersionMatch(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -888,7 +887,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   NETIF_RESET_HINTS(netif);
 
   /* @todo: must this be increased even if error occurred? */
-  MIB2_STATS_INC(mib2.udpoutdatagrams);
+  
 
   /* did we chain a separate header PacketBuffer earlier? */
   if (q != p) {

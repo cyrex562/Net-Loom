@@ -301,7 +301,7 @@ mld6_input(struct PacketBuffer *p, NetIfc*inp)
  * Join a group on one or all network interfaces.
  *
  * If the group is to be joined on all interfaces, the given group address must
- * not have a zone set (i.e., it must have its zone index set to IP6_NO_ZONE).
+ * not have a zone set (i.e., it must have its zone index set to kIp6NoZone).
  * If the group is to be joined on one particular interface, the given group
  * address may or may not have a zone set.
  *

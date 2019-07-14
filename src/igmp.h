@@ -37,11 +37,7 @@
  * source code.
 */
 
-#ifndef LWIP_HDR_IGMP_H
-#define LWIP_HDR_IGMP_H
-
-#include "opt.h"
-#include "ip_addr.h"
+#pragma once
 #include "netif.h"
 #include "packet_buffer.h"
 #include "ip4.h"
@@ -71,27 +67,13 @@
 /**
  * IGMP packet format.
  */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
-
-struct igmp_msg {
-    (uint8_t         igmp_msgtype);
-    (uint8_t         igmp_maxresp);
-    (uint16_t        igmp_checksum);
-    PACK_STRUCT_FLD_S(Ip4AddrPT igmp_group_address);
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-
-
-#if LWIP_IPV4 && LWIP_IGMP /* don't build if not configured for use in lwipopts.h */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct IgmpMsg
+{
+    uint8_t igmp_msgtype;
+    uint8_t igmp_maxresp;
+    uint16_t igmp_checksum;
+    Ip4AddrPT igmp_group_address;
+};
 
 /* IGMP timer */
 #define IGMP_TMR_INTERVAL              100 /* Milliseconds */
@@ -113,9 +95,9 @@ extern "C" {
  * will not run the state machine as it is used to kick off reports
  * from all the other groups
  */
-struct igmp_group {
+struct IgmpGroup {
   /** next link */
-  struct igmp_group *next;
+  struct IgmpGroup *next;
   /** multicast address */
   Ip4Addr         group_address;
   /** signifies we were the last person to report */
@@ -133,7 +115,7 @@ void   igmp_init(void);
 LwipError  igmp_start(NetIfc*netif);
 LwipError  igmp_stop(NetIfc*netif);
 void   igmp_report_groups(NetIfc*netif);
-struct igmp_group *igmp_lookfor_group(NetIfc*ifp, const Ip4Addr *addr);
+struct IgmpGroup *igmp_lookfor_group(NetIfc*ifp, const Ip4Addr *addr);
 void   igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest);
 LwipError  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
 LwipError  igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
@@ -146,12 +128,12 @@ void   igmp_tmr(void);
  * Note: The allsystems group IP is contained in the list as first entry.
  * @see @ref netif_set_igmp_mac_filter()
  */
-#define netif_igmp_data(netif) ((struct igmp_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP))
-
-#ifdef __cplusplus
+inline IgmpGroup* netif_igmp_data(NetIfc* netif)
+{
+    return static_cast<IgmpGroup *>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_IGMP]
+    );
 }
-#endif
 
-#endif /* LWIP_IPV4 && LWIP_IGMP */
-
-#endif /* LWIP_HDR_IGMP_H */
+//
+// END OF FILE
+//

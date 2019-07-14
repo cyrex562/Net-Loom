@@ -130,7 +130,7 @@ inline void LwipPlatformDiag(const char* fmt, ...)
 // typedef uint64_t  u64_t;
 // typedef int64_t   s64_t;
 // #endif
-// typedef uintptr_t mem_ptr_t;
+// typedef uintptr_t uintptr_t;
 // #endif
 
 /** Define this to 1 in cc.h of your port if your compiler does not provide
@@ -217,7 +217,7 @@ inline size_t LWIP_MEM_ALIGN_SIZE(const size_t size)
  * so that ADDR % MEM_ALIGNMENT == 0
  */
 
-// #define LWIP_MEM_ALIGN(addr) ((void *)(((mem_ptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(mem_ptr_t)(MEM_ALIGNMENT-1)))
+// #define LWIP_MEM_ALIGN(addr) ((void *)(((uintptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(uintptr_t)(MEM_ALIGNMENT-1)))
 // inline void LWIP_MEM_ALIGN(void* addr)
 // {
 //     ((void*)(((addr)+MEM_ALIGNMENT - 1) & ~(uint_ptr_t)

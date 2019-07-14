@@ -148,7 +148,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
   PERF_START;
 
   TCP_STATS_INC(tcp.recv);
-  MIB2_STATS_INC(mib2.tcpinsegs);
+  
 
   tcphdr = (struct TcpHdr *)p->payload;
 
@@ -347,7 +347,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
 #else /* SO_REUSE */
           break;
 #endif /* SO_REUSE */
-        } else if (IP_ADDR_PCB_VERSION_MATCH_EXACT(lpcb, ip_current_dest_addr())) {
+        } else if (IpAddrPcbVersionMatchExact(lpcb, ip_current_dest_addr())) {
           if (ip_addr_cmp(&lpcb->local_ip, ip_current_dest_addr())) {
             /* found an exact match */
             break;
@@ -445,7 +445,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
           tcp_send_empty_ack(pcb);
         }
         TCP_STATS_INC(tcp.drop);
-        MIB2_STATS_INC(mib2.tcpinerrs);
+        
         goto aborted;
       }
     }
@@ -602,7 +602,7 @@ aborted:
   return;
 dropped:
   TCP_STATS_INC(tcp.drop);
-  MIB2_STATS_INC(mib2.tcpinerrs);
+  
   pbuf_free(p);
 }
 
@@ -721,7 +721,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip, &npcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-    MIB2_STATS_INC(mib2.tcppassiveopens);
+    
 
 #if LWIP_TCP_PCB_NUM_EXT_ARGS
     if (tcp_ext_arg_invoke_callbacks_passive_open(pcb, npcb) != ERR_OK) {

@@ -465,7 +465,7 @@ void np_up(PppPcb* pcb, int proto)
 
 
 	// if (maxoctets > 0)
-	    // TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
+	    // Timeout(check_maxoctets, NULL, maxoctets_timeout);
 
 
     }
@@ -487,7 +487,7 @@ void np_down(PppPcb* pcb, int proto)
 	Untimeout(connect_time_expired, nullptr);
 
 
-	// UNTIMEOUT(check_maxoctets, NULL);
+	// Untimeout(check_maxoctets, NULL);
 
         new_phase(pcb, PPP_PHASE_NETWORK);
     }

@@ -1,36 +1,35 @@
 #pragma once
 
-#include "opt.h"
 #include "def.h"
+#include "ip4.h"
+#include "ip6.h"
 #include "ip_addr.h"
 #include "lwip_error.h"
 #include "netif.h"
-#include "ip4.h"
-#include "ip6.h"
+#include "packet_buffer.h"
 
-
-#ifdef __cplusplus
-extern "C" 
+enum IpProto
 {
-#endif
+    IP_PROTO_ICMP= 1,
+    IP_PROTO_IGMP= 2,
+    IP_PROTO_UDP= 17,
+    IP_PROTO_UDPLITE= 136,
+    IP_PROTO_TCP= 6,
+};
 
-#define IP_PROTO_ICMP    1
-#define IP_PROTO_IGMP    2
-#define IP_PROTO_UDP     17
-#define IP_PROTO_UDPLITE 136
-#define IP_PROTO_TCP     6
 
-    /** This operates on a void* by loading the first byte */
-#define IP_HDR_GET_VERSION(ptr)   ((*(uint8_t*)(ptr)) >> 4)
-
-/* This is passed as the destination address to ip_output_if (not
-   to ip_output), meaning that an IP header already is constructed
-   in the PacketBuffer. This is used when TCP retransmits. */
-#define LWIP_IP_HDRINCL  NULL
+/** This operates on a void* by loading the first byte */
+inline uint8_t IpHdrGetVersion(void* ptr)
+{
+    return ((*static_cast<uint8_t *>(ptr)) >> 4);
+}
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
     gets altered as the packet is passed down the stack */
-#define LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p) LWIP_ASSERT("p->ref == 1", (p)->ref == 1)
+inline void LwipIpCheckPbufRefCountForTx(PacketBuffer* p)
+{
+    LWIP_ASSERT("p->ref == 1", (p)->ref == 1);
+}
 
 struct IpPcb
 {
@@ -41,180 +40,198 @@ struct IpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl; /* link layer address resolution hint */
-    NetIfc*cHint netif_hints;
+    NetIfc* netif_hints;
 };
-
 
 // struct IpPcb;
 //
-inline bool IP_ADDR_PCB_VERSION_MATCH_EXACT(IpPcb* pcb, IpAddr* ipaddr)
+inline bool IpAddrPcbVersionMatchExact(IpPcb* pcb, IpAddr* ipaddr)
 {
     return (GetIpAddrType(&pcb->local_ip) == GetIpAddrType(ipaddr));
 }
 
-
-inline bool IP_ADDR_PCB_VERSION_MATCH(IpPcb *pcb, IpAddr *ipaddr)
+inline bool IpAddrPcbVersionMatch(IpPcb* pcb, IpAddr* ipaddr)
 {
-  return (IpIsAnyTypeVal(pcb->local_ip) ||   IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr));
+    return (IpIsAnyTypeVal(pcb->local_ip) || IpAddrPcbVersionMatchExact(pcb, ipaddr));
 }
-
-
-
 
 /*
  * Option flags per-socket. These are the same like SO_XXX in sockets.h
  */
-#define SOF_REUSEADDR     0x04U  /* allow local address reuse */
-#define SOF_KEEPALIVE     0x08U  /* keep connections alive */
-#define SOF_BROADCAST     0x20U  /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
+enum IpSof : uint16_t
+{
+    SOF_REUSEADDR = 0x04U,
+    SOF_KEEPALIVE = 0x08U,
+    SOF_BROADCAST = 0x20U,
+};
+
 
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
-#define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE)
+constexpr auto  SOF_INHERITED = (SOF_REUSEADDR | SOF_KEEPALIVE);
 
-/** Global variables of this module, kept in a struct for efficient access using base+index. */
-struct ip_globals
+/** Global variables of this module, kept in a struct for efficient access using
+ * base+index. */
+struct IpGlobals
 {
-  /** The interface that accepted the packet for the current callback invocation. */
-  NetIfc*current_netif;
-  /** The interface that received the packet for the current callback invocation. */
-  NetIfc*current_input_netif;
-
-  /** Header of the input packet currently being processed. */
-  const struct Ip4Hdr *current_ip4_header;
-
-  /** Header of the input IPv6 packet currently being processed. */
-  struct Ip6Hdr *current_ip6_header;
-
-  /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP header starts) */
-  uint16_t current_ip_header_tot_len;
-  /** Source IP address of current_header */
-  IpAddr current_iphdr_src;
-  /** Destination IP address of current_header */
-  IpAddr current_iphdr_dest;
+    /** The interface that accepted the packet for the current callback
+     * invocation. */
+    NetIfc* current_netif;
+    /** The interface that received the packet for the current callback
+      * invocation. */
+    NetIfc* current_input_netif;
+    /** Header of the input packet currently being processed. */
+    const struct Ip4Hdr* current_ip4_header;
+    /** Header of the input IPv6 packet currently being processed. */
+    struct Ip6Hdr* current_ip6_header;
+    /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP
+      * header starts) */
+    uint16_t current_ip_header_tot_len; /** Source IP address of current_header */
+    IpAddr current_iphdr_src; /** Destination IP address of current_header */
+    IpAddr current_iphdr_dest;
 };
-extern struct ip_globals ip_data;
 
+extern struct IpGlobals ip_data;
 
 /** Get the interface that accepted the current packet.
  * This may or may not be the receiving netif, depending on your network setup.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip_current_netif()      (ip_data.current_netif)
+inline NetIfc* ip_current_netif()
+{
+    return (ip_data.current_netif);
+}
+
 /** Get the interface that received the current packet.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
 #define ip_current_input_netif() (ip_data.current_input_netif)
-/** Total header length of ip(6)_current_header() (i.e. after this, the UDP/TCP header starts) */
+/** Total header length of ip(6)_current_header() (i.e. after this, the UDP/TCP
+ * header starts) */
 #define ip_current_header_tot_len() (ip_data.current_ip_header_tot_len)
 /** Source IP address of current_header */
-#define ip_current_src_addr()   (&ip_data.current_iphdr_src)
+#define ip_current_src_addr() (&ip_data.current_iphdr_src)
 /** Destination IP address of current_header */
-#define ip_current_dest_addr()  (&ip_data.current_iphdr_dest)
-
+#define ip_current_dest_addr() (&ip_data.current_iphdr_dest)
 
 /** Get the IPv4 header of the current packet.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip4_current_header()     ip_data.current_ip4_header
+#define ip4_current_header() ip_data.current_ip4_header
 /** Get the IPv6 header of the current packet.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip6_current_header()      ((const struct ip6_hdr*)(ip_data.current_ip6_header))
+#define ip6_current_header() \
+  ((const struct ip6_hdr *)(ip_data.current_ip6_header))
 /** Returns TRUE if the current IP input packet is IPv6, FALSE if it is IPv4 */
-#define ip_current_is_v6()        (ip6_current_header() != NULL)
-/** Source IPv6 address of current_header */
-#define ip6_current_src_addr()    (ip_2_ip6(&ip_data.current_iphdr_src))
-/** Destination IPv6 address of current_header */
-#define ip6_current_dest_addr()   (ip_2_ip6(&ip_data.current_iphdr_dest))
+#define ip_current_is_v6() (ip6_current_header() != NULL)
+
+// Source IPv6 address of current_header
+inline const Ip6Addr* ip6_current_src_addr()
+{
+    return (IpAddrToIp6Addr(&ip_data.current_iphdr_src));
+}
+
+
+// Destination IPv6 address of current_header
+inline const Ip6Addr* ip6_current_dest_addr()
+{
+    return (IpAddrToIp6Addr(&ip_data.current_iphdr_dest));
+}
+
+
 /** Get the transport layer protocol */
-#define ip_current_header_proto() (ip_current_is_v6() ? \
-                                   IP6H_NEXTH(ip6_current_header()) :\
-                                   IPH_PROTO(ip4_current_header()))
+#define ip_current_header_proto()                        \
+  (ip_current_is_v6() ? IP6H_NEXTH(ip6_current_header()) \
+                      : IPH_PROTO(ip4_current_header()))
 /** Get the transport layer header */
-#define ip_next_header_ptr()     ((const void*)((ip_current_is_v6() ? \
-  (const uint8_t*)ip6_current_header() : (const uint8_t*)ip4_current_header())  + ip_current_header_tot_len()))
+#define ip_next_header_ptr()                                      \
+  ((const void *)((ip_current_is_v6()                             \
+                       ? (const uint8_t *)ip6_current_header()    \
+                       : (const uint8_t *)ip4_current_header()) + \
+                  ip_current_header_tot_len()))
 
-/** Source IP4 address of current_header */
-#define ip4_current_src_addr()     (ip_2_ip4(&ip_data.current_iphdr_src))
-/** Destination IP4 address of current_header */
-#define ip4_current_dest_addr()    (ip_2_ip4(&ip_data.current_iphdr_dest))
+// Source IP4 address of current_header
+inline const Ip4Addr *ip4_current_src_addr() {
+  return IpAddrToIp4Addr(&ip_data.current_iphdr_src);
+}
 
+// Destination IP4 address of current_header
+inline const Ip4Addr *ip4_current_dest_addr() {
+  return (IpAddrToIp4Addr(&ip_data.current_iphdr_dest));
+}
 
 /** Union source address of current_header */
-#define ip_current_src_addr()    (&ip_data.current_iphdr_src)
+#define ip_current_src_addr() (&ip_data.current_iphdr_src)
 /** Union destination address of current_header */
-#define ip_current_dest_addr()   (&ip_data.current_iphdr_dest)
+#define ip_current_dest_addr() (&ip_data.current_iphdr_dest)
 
 /** Gets an IP pcb option (SOF_* flags) */
-#define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
+#define ip_get_option(pcb, opt) ((pcb)->so_options & (opt))
 /** Sets an IP pcb option (SOF_* flags) */
-#define ip_set_option(pcb, opt)   ((pcb)->so_options = (uint8_t)((pcb)->so_options | (opt)))
+#define ip_set_option(pcb, opt) \
+  ((pcb)->so_options = (uint8_t)((pcb)->so_options | (opt)))
 /** Resets an IP pcb option (SOF_* flags) */
-#define ip_reset_option(pcb, opt) ((pcb)->so_options = (uint8_t)((pcb)->so_options & ~(opt)))
-
+#define ip_reset_option(pcb, opt) \
+  ((pcb)->so_options = (uint8_t)((pcb)->so_options & ~(opt)))
 
 /**
  * @ingroup ip
  * Output IP packet, netif is selected by source address
  */
-#define ip_output(p, src, dest, ttl, tos, proto) \
-        (IpIsV6(dest) ? \
-        ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) : \
-        ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
+#define ip_output(p, src, dest, ttl, tos, proto)                       \
+  (IpIsV6(dest)                                                        \
+       ? ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) \
+       : ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
 /**
  * @ingroup ip
  * Output IP packet to specified interface
  */
-#define ip_output_if(p, src, dest, ttl, tos, proto, netif) \
-        (IpIsV6(dest) ? \
-        ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
-        ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
+#define ip_output_if(p, src, dest, ttl, tos, proto, netif)                  \
+  (IpIsV6(dest) ? ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, \
+                                proto, netif)                               \
+                : ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, \
+                                proto, netif))
 /**
  * @ingroup ip
  * Output IP packet to interface specifying source address
  */
-#define ip_output_if_src(p, src, dest, ttl, tos, proto, netif) \
-        (IpIsV6(dest) ? \
-        ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
-        ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
+#define ip_output_if_src(p, src, dest, ttl, tos, proto, netif)             \
+  (IpIsV6(dest) ? ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
+                                    tos, proto, netif)                     \
+                : ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, \
+                                    tos, proto, netif))
 /** Output IP packet that already includes an IP header. */
-#define ip_output_if_hdrincl(p, src, dest, netif) \
-        (IpIsV6(dest) ? \
-        ip6_output_if(p, ip_2_ip6(src), LWIP_IP_HDRINCL, 0, 0, 0, netif) : \
-        ip4_output_if(p, ip_2_ip4(src), LWIP_IP_HDRINCL, 0, 0, 0, netif))
+#define ip_output_if_hdrincl(p, src, dest, netif)                         \
+  (IpIsV6(dest)                                                           \
+       ? ip6_output_if(p, ip_2_ip6(src), LWIP_IP_HDRINCL, 0, 0, 0, netif) \
+       : ip4_output_if(p, ip_2_ip4(src), LWIP_IP_HDRINCL, 0, 0, 0, netif))
 /** Output IP packet with netif_hint */
-#define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint) \
-        (IpIsV6(dest) ? \
-        ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif_hint) : \
-        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif_hint))
+#define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint)        \
+  (IpIsV6(dest) ? ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
+                                    tos, proto, netif_hint)                \
+                : ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, \
+                                    tos, proto, netif_hint))
 /**
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
-#define ip_route(src, dest) \
-        (IpIsV6(dest) ? \
-        ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
-        ip4_route_src(ip_2_ip4(src), ip_2_ip4(dest)))
+#define ip_route(src, dest)                                \
+  (IpIsV6(dest) ? ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) \
+                : ip4_route_src(ip_2_ip4(src), ip_2_ip4(dest)))
 /**
  * @ingroup ip
  * Get netif for IP.
  */
-#define ip_netif_get_local_ip(netif, dest) (IpIsV6(dest) ? \
-        ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) : \
-        ip4_netif_get_local_ip(netif))
-#define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
+#define ip_netif_get_local_ip(netif, dest)                      \
+  (IpIsV6(dest) ? ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) \
+                : ip4_netif_get_local_ip(netif))
+#define ip_debug_print(is_ipv6, p) \
+  ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 
-LwipError ip_input(struct PacketBuffer *p, NetIfc*inp);
+LwipError ip_input(struct PacketBuffer *p, NetIfc *inp);
 
-
-#define ip_route_get_local_ip(src, dest, netif, ipaddr) do { \
-  (netif) = ip_route(src, dest); \
-  (ipaddr) = ip_netif_get_local_ip(netif, dest); \
-}while(0)
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
+#define ip_route_get_local_ip(src, dest, netif, ipaddr) \
+  do {                                                  \
+    (netif) = ip_route(src, dest);                      \
+    (ipaddr) = ip_netif_get_local_ip(netif, dest);      \
+  } while (0)

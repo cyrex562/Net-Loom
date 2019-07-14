@@ -38,8 +38,7 @@
  *
  */
 
-#ifndef LWIP_HDR_PROT_IANA_H
-#define LWIP_HDR_PROT_IANA_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +48,7 @@ extern "C" {
  * @ingroup iana
  * Hardware types
  */
-enum lwip_iana_hwtype {
+enum LwipIanaHwType {
   /** Ethernet */
   LWIP_IANA_HWTYPE_ETHERNET = 1
 };
@@ -93,5 +92,3 @@ enum lwip_iana_port_number {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_HDR_PROT_IANA_H */

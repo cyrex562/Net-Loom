@@ -219,7 +219,7 @@ static DnsTableEntry dns_table[DNS_TABLE_SIZE];
 static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
 static IpAddr dns_servers[DNS_MAX_SERVERS];
 const IpAddr dns_mquery_v4group = IpAddr4InitBytes(224, 0, 0, 251);
-const IpAddr dns_mquery_v6group = IPADDR6_INIT_HOST(0xFF020000, 0, 0, 0xFB);
+const IpAddr dns_mquery_v6group = Ipaddr6InitHost(0xFF020000, 0, 0, 0xFB);
 
 
 /**
@@ -1197,23 +1197,21 @@ static void dns_recv(void* arg,
                                 }
                             }
                             if ((ans.type == PpHtons(DNS_RRTYPE_AAAA)) && (ans.len ==
-                                PpHtons(sizeof(ip6_addr_p_t))))
+                                PpHtons(sizeof(Ip6AddrPT))))
                             {
                                 if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
                                 {
-                                    ip6_addr_p_t ip6addr;
+                                    Ip6Addr ip6addr{};
                                     /* read the IP address after answer resource record's header */
                                     if (pbuf_copy_partial(
                                         p,
                                         &ip6addr,
-                                        sizeof(ip6_addr_p_t),
-                                        res_idx) != sizeof(ip6_addr_p_t))
+                                        sizeof(Ip6Addr),
+                                        res_idx) != sizeof(Ip6Addr))
                                     {
                                         goto ignore_packet; /* ignore this packet */
                                     } /* @todo: scope ip6addr? Might be required for link-local addresses at least? */
-                                    ip_addr_copy_from_ip6_packed(
-                                        dns_table[i].ipaddr,
-                                        ip6addr);
+                                    ip_addr_copy_from_ip6(&dns_table[i].ipaddr, &ip6addr);
                                     pbuf_free(p); /* handle correct response */
                                     dns_correct_response(i, lwip_ntohl(ans.ttl));
                                     return;

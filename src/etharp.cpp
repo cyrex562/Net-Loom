@@ -409,7 +409,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
     if (ipaddr != nullptr)
     {
         /* set IP address */
-        ip4_addr_copy(&arp_table[i].ipaddr, ipaddr);
+        Ip4AddrCopy(&arp_table[i].ipaddr, ipaddr);
     }
     arp_table[i].ctime = 0;
 

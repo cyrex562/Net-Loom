@@ -34,43 +34,31 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
  */
-#ifndef LWIP_HDR_NETIF_IEEE802154_H
-#define LWIP_HDR_NETIF_IEEE802154_H
+#pragma once
 
 #include "opt.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
 
 /** General MAC frame format
  * This shows the full featured header, mainly for documentation.
  * Some fields are omitted or shortened to achieve frame compression.
  */
-struct ieee_802154_hdr {
-  /** See IEEE_802154_FC_* defines */
-  (uint16_t frame_control);
-  /** Sequence number is omitted if IEEE_802154_FC_SEQNO_SUPPR is set in frame_control */
-  (uint8_t  sequence_number);
-  /** Destination PAN ID is omitted if Destination Addressing Mode is 0 */
-  (uint16_t destination_pan_id);
-  /** Destination Address is omitted if Destination Addressing Mode is 0 */
-  (uint8_t destination_address[8]);
-  /** Source PAN ID is omitted if Source Addressing Mode is 0
-      or if IEEE_802154_FC_PANID_COMPR is set in frame control*/
-  (uint16_t source_pan_id);
-  /** Source Address is omitted if Source Addressing Mode is 0 */
-  (uint8_t source_address[8]);
-  /* The rest is variable */
-} ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
+struct ieee_802154_hdr
+{
+    /** See IEEE_802154_FC_* defines */
+    uint16_t frame_control;
+    /** Sequence number is omitted if IEEE_802154_FC_SEQNO_SUPPR is set in frame_control */
+    uint8_t sequence_number;
+    /** Destination PAN ID is omitted if Destination Addressing Mode is 0 */
+    uint16_t destination_pan_id;
+    /** Destination Address is omitted if Destination Addressing Mode is 0 */
+    uint8_t destination_address[8];
+    /** Source PAN ID is omitted if Source Addressing Mode is 0
+         or if IEEE_802154_FC_PANID_COMPR is set in frame control*/
+    uint16_t source_pan_id;
+    /** Source Address is omitted if Source Addressing Mode is 0 */
+    uint8_t source_address[8]; /* The rest is variable */
+};
+
 
 /* Addressing modes (2 bits) */
 #define IEEE_802154_ADDR_MODE_NO_ADDR   0x00 /* PAN ID and address fields are not present */
@@ -105,8 +93,3 @@ PACK_STRUCT_END
 #define IEEE_802154_FC_SRC_ADDR_MODE_SHORT     (IEEE_802154_ADDR_MODE_SHORT << 14)
 #define IEEE_802154_FC_SRC_ADDR_MODE_EXT       (IEEE_802154_ADDR_MODE_EXT << 14)
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_HDR_NETIF_IEEE802154_H */

@@ -23,8 +23,8 @@ static void lcp_delayed_up(void *arg);
  */
 
 static int setendpoint (char **);
-static void printendpoint (option_t *, void (*)(void *, char *, ...),
-			       void *);
+// static void printendpoint (option_t *, void (*)(void *, char *, ...),
+// 			       void *);
 
 
 /*
@@ -212,7 +212,7 @@ void lcp_close(PppPcb *pcb, const char *reason) {
 	new_phase(pcb, PPP_PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
-	UNTIMEOUT(lcp_delayed_up, f);
+	Untimeout(lcp_delayed_up, f);
 	f->state = PPP_FSM_STOPPED;
     }
     oldstate = f->state;
@@ -265,7 +265,7 @@ void lcp_lowerdown(PppPcb *pcb) {
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	UNTIMEOUT(lcp_delayed_up, f);
+	Untimeout(lcp_delayed_up, f);
     } else
 	fsm_lowerdown(f);
 }
@@ -292,7 +292,7 @@ static void lcp_input(PppPcb *pcb, uint8_t *p, int len) {
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	UNTIMEOUT(lcp_delayed_up, f);
+	Untimeout(lcp_delayed_up, f);
 	fsm_lowerup(f);
     }
     fsm_input(f, p, len);
@@ -2158,13 +2158,13 @@ static int lcp_printpkt(const uint8_t *p, int plen,
     u_short cishort;
     uint32_t cilong;
 
-    if (plen < HEADERLEN)
+    if (plen < kHeaderlen)
 	return 0;
     pstart = p;
     GETCHAR(code, p);
     GETCHAR(id, p);
     GETSHORT(len, p);
-    if (len < HEADERLEN || len > plen)
+    if (len < kHeaderlen || len > plen)
 	return 0;
 
    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(lcp_codenames))
@@ -2172,7 +2172,7 @@ static int lcp_printpkt(const uint8_t *p, int plen,
     else
 	printer(arg, " code=0x%x", code);
     printer(arg, " id=0x%x", id);
-    len -= HEADERLEN;
+    len -= kHeaderlen;
     switch (code) {
     case CONFREQ:
     case CONFACK:
@@ -2432,7 +2432,7 @@ static void LcpEchoCheck(Fsm *f) {
      */
     if (pcb->lcp_echo_timer_running)
 	ppp_warn("assertion lcp_echo_timer_running==0 failed");
-    TIMEOUT (LcpEchoTimeout, f, pcb->settings.lcp_echo_interval);
+    Timeout (LcpEchoTimeout, f, pcb->settings.lcp_echo_interval);
     pcb->lcp_echo_timer_running = 1;
 }
 
