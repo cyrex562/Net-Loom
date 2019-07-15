@@ -531,7 +531,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
       size_t len;
 
       len = strlen(d->name);
-      LWIP_ASSERT("len < ADAPTER_NAME_LEN", len < ADAPTER_NAME_LEN);
+      lwip_assert("len < ADAPTER_NAME_LEN", len < ADAPTER_NAME_LEN);
       strcpy(pa->name, d->name);
 
       used_adapter = d;
@@ -621,7 +621,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
 #endif /* PCAPIF_LIB_QUIET */
   /* set up the selected adapter */
 
-  LWIP_ASSERT("used_adapter != NULL", used_adapter != nullptr);
+  lwip_assert("used_adapter != NULL", used_adapter != nullptr);
 
   /* Open the device */
   pa->adapter = pcapif_open_adapter(used_adapter->name, errbuf);
@@ -742,7 +742,7 @@ pcapif_low_level_init(NetIfc*netif)
     adapter_num = (LWIP_PTR_NUMERIC_CAST(int, netif->state)) - 1;
     if (adapter_num < 0) {
       printf("ERROR: invalid adapter index \"%d\"!\n", adapter_num);
-      LWIP_ASSERT("ERROR initializing network adapter!\n", 0);
+      lwip_assert("ERROR initializing network adapter!\n", 0);
       return;
     }
   }
@@ -778,7 +778,7 @@ pcapif_low_level_init(NetIfc*netif)
   pa = pcapif_init_adapter(adapter_num, netif);
   if (pa == nullptr) {
     printf("ERROR initializing network adapter %d!\n", adapter_num);
-    LWIP_ASSERT("ERROR initializing network adapter!", 0);
+    lwip_assert("ERROR initializing network adapter!", 0);
     return;
   }
   netif->state = pa;
@@ -1053,7 +1053,7 @@ pcapif_init(NetIfc*netif)
   local_index = ethernetif_index++;
   SYS_ARCH_UNPROTECT(lev);
 
-  LWIP_ASSERT("pcapif needs an input callback", netif->input != nullptr);
+  lwip_assert("pcapif needs an input callback", netif->input != nullptr);
 
   netif->name[0] = IFNAME0;
   netif->name[1] = (char)(IFNAME1 + local_index);

@@ -66,8 +66,8 @@ zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
 {
     auto netif_lowpan6 = static_cast<NetIfc*>(arg);
 
-    LWIP_ASSERT("arg != NULL", arg != nullptr);
-    LWIP_ASSERT("pcb != NULL", pcb != nullptr);
+    lwip_assert("arg != NULL", arg != nullptr);
+    lwip_assert("pcb != NULL", pcb != nullptr);
     if (p == nullptr)
     {
         return;
@@ -130,17 +130,17 @@ zepif_linkoutput(NetIfc** netif, struct PacketBuffer* p)
 {
     struct PacketBuffer* q;
 
-    LWIP_ASSERT("invalid netif", netif != nullptr);
-    LWIP_ASSERT("invalid pbuf", p != nullptr);
+    lwip_assert("invalid netif", netif != nullptr);
+    lwip_assert("invalid pbuf", p != nullptr);
 
     if (p->tot_len > kZepMaxDataLen)
     {
         return ERR_VAL;
     }
-    LWIP_ASSERT("TODO: support chained pbufs", p->next == nullptr);
+    lwip_assert("TODO: support chained pbufs", p->next == nullptr);
 
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
-    LWIP_ASSERT("state->pcb != NULL", state->pcb != nullptr);
+    lwip_assert("state->pcb != NULL", state->pcb != nullptr);
 
   q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len, PBUF_RAM);
   if (q == nullptr) {
@@ -185,7 +185,7 @@ zepif_init(NetIfc** netif)
     auto init_state = static_cast<struct ZepifInit*>(netif->state);
     auto state = static_cast<struct ZepifState *>(mem_malloc(sizeof(struct ZepifState)));
 
-    LWIP_ASSERT("zepif needs an input callback", netif->input != nullptr);
+    lwip_assert("zepif needs an input callback", netif->input != nullptr);
 
     if (state == nullptr)
     {
@@ -215,7 +215,7 @@ zepif_init(NetIfc** netif)
     netif->state = nullptr;
 
   err = lowpan6_if_init(netif);
-  LWIP_ASSERT("lowpan6_if_init set a state", netif->state == nullptr);
+  lwip_assert("lowpan6_if_init set a state", netif->state == nullptr);
   if (err == ERR_OK) {
     netif->state = state;
     netif->hwaddr_len = 6;
@@ -237,12 +237,12 @@ zepif_init(NetIfc** netif)
     {
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }
-    LWIP_ASSERT("udp_bind(lowpan6_broadcast_pcb) failed", err == ERR_OK);
+    lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == ERR_OK);
     ip_set_option(state->pcb, SOF_BROADCAST);
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);
-    LWIP_ASSERT("lowpan6_if_init set a state", netif->state == nullptr);
+    lwip_assert("lowpan6_if_init set a state", netif->state == nullptr);
     if (err == ERR_OK)
     {
         netif->state = state;

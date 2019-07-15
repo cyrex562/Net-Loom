@@ -742,7 +742,7 @@ static void fsm_sconfreq(Fsm* f, int retransmit) {
     PUTSHORT(cilen + kHeaderlen, outp);
     if (cilen != 0) {
 	(*f->callbacks->addci)(f, outp, &cilen, f->pcb);
-	LWIP_ASSERT("cilen == p->len - kHeaderlen - PPP_HDRLEN", cilen == p->len - kHeaderlen - PPP_HDRLEN);
+	lwip_assert("cilen == p->len - kHeaderlen - PPP_HDRLEN", cilen == p->len - kHeaderlen - PPP_HDRLEN);
     }
 
     ppp_write(pcb, p);

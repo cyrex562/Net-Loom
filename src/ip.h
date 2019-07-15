@@ -19,16 +19,16 @@ enum IpProto
 
 
 /** This operates on a void* by loading the first byte */
-inline uint8_t IpHdrGetVersion(void* ptr)
+inline uint8_t get_ip_hdr_version(void* ptr)
 {
     return ((*static_cast<uint8_t *>(ptr)) >> 4);
 }
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
     gets altered as the packet is passed down the stack */
-inline void LwipIpCheckPbufRefCountForTx(PacketBuffer* p)
+inline void check_pbuf_ip_rec_cnt_for_tx(PacketBuffer* p)
 {
-    LWIP_ASSERT("p->ref == 1", (p)->ref == 1);
+    lwip_assert("p->ref == 1", (p)->ref == 1);
 }
 
 struct IpPcb
@@ -45,14 +45,14 @@ struct IpPcb
 
 // struct IpPcb;
 //
-inline bool IpAddrPcbVersionMatchExact(IpPcb* pcb, IpAddr* ipaddr)
+inline bool match_exact_ip_addr_pcb_vers(IpPcb* pcb, IpAddr* ipaddr)
 {
-    return (GetIpAddrType(&pcb->local_ip) == GetIpAddrType(ipaddr));
+    return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
 }
 
-inline bool IpAddrPcbVersionMatch(IpPcb* pcb, IpAddr* ipaddr)
+inline bool match_ip_addr_pcb_version(IpPcb* pcb, IpAddr* ipaddr)
 {
-    return (IpIsAnyTypeVal(pcb->local_ip) || IpAddrPcbVersionMatchExact(pcb, ipaddr));
+    return (IpIsAnyTypeVal(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
 
 /*
@@ -67,7 +67,7 @@ enum IpSof : uint16_t
 
 
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
-constexpr auto  SOF_INHERITED = (SOF_REUSEADDR | SOF_KEEPALIVE);
+constexpr auto  kSofInherited = (SOF_REUSEADDR | SOF_KEEPALIVE);
 
 /** Global variables of this module, kept in a struct for efficient access using
  * base+index. */
@@ -128,14 +128,14 @@ inline NetIfc* ip_current_netif()
 // Source IPv6 address of current_header
 inline const Ip6Addr* ip6_current_src_addr()
 {
-    return (IpAddrToIp6Addr(&ip_data.current_iphdr_src));
+    return (convert_ip_addr_to_ip6_addr(&ip_data.current_iphdr_src));
 }
 
 
 // Destination IPv6 address of current_header
 inline const Ip6Addr* ip6_current_dest_addr()
 {
-    return (IpAddrToIp6Addr(&ip_data.current_iphdr_dest));
+    return (convert_ip_addr_to_ip6_addr(&ip_data.current_iphdr_dest));
 }
 
 
@@ -152,18 +152,19 @@ inline const Ip6Addr* ip6_current_dest_addr()
 
 // Source IP4 address of current_header
 inline const Ip4Addr *ip4_current_src_addr() {
-  return IpAddrToIp4Addr(&ip_data.current_iphdr_src);
+  return convert_ip_addr_to_ip4_addr(&ip_data.current_iphdr_src);
 }
 
 // Destination IP4 address of current_header
 inline const Ip4Addr *ip4_current_dest_addr() {
-  return (IpAddrToIp4Addr(&ip_data.current_iphdr_dest));
+  return (convert_ip_addr_to_ip4_addr(&ip_data.current_iphdr_dest));
 }
 
 /** Union source address of current_header */
 #define ip_current_src_addr() (&ip_data.current_iphdr_src)
 /** Union destination address of current_header */
-#define ip_current_dest_addr() (&ip_data.current_iphdr_dest)
+inline IpAddr* ip_current_dest_addr()
+ { return &ip_data.current_iphdr_dest; }
 
 /** Gets an IP pcb option (SOF_* flags) */
 #define ip_get_option(pcb, opt) ((pcb)->so_options & (opt))

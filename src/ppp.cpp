@@ -874,9 +874,9 @@ sifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask)
 {
     Ip4Addr ip, nm, gw;
 
-    ip4_addr_set_u32(&ip, our_adr);
-    ip4_addr_set_u32(&nm, netmask);
-    ip4_addr_set_u32(&gw, his_adr);
+    SetIp4AddrU32(&ip, our_adr);
+    SetIp4AddrU32(&nm, netmask);
+    SetIp4AddrU32(&gw, his_adr);
     netif_set_addr(pcb->netif, &ip, &nm, &gw);
     return 1;
 }
@@ -929,9 +929,9 @@ sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
     IpAddr ns;
     ;
 
-    ip_addr_set_ip4_u32_val(ns, ns1);
+    set_ip_addr_ip4_u32_val(ns, ns1);
     dns_setserver(0, &ns);
-    ip_addr_set_ip4_u32_val(ns, ns2);
+    set_ip_addr_ip4_u32_val(ns, ns2);
     dns_setserver(1, &ns);
     return 1;
 }
@@ -948,14 +948,14 @@ cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
     ;
 
     nsa = dns_getserver(0);
-    ip_addr_set_ip4_u32_val(nsb, ns1);
-    if (ip_addr_cmp(nsa, &nsb))
+    set_ip_addr_ip4_u32_val(nsb, ns1);
+    if (compare_ip_addr(nsa, &nsb))
     {
         dns_setserver(0, IP_ADDR_ANY);
     }
     nsa = dns_getserver(1);
-    ip_addr_set_ip4_u32_val(nsb, ns2);
-    if (ip_addr_cmp(nsa, &nsb))
+    set_ip_addr_ip4_u32_val(nsb, ns2);
+    if (compare_ip_addr(nsa, &nsb))
     {
         dns_setserver(1, IP_ADDR_ANY);
     }

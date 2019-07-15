@@ -166,7 +166,7 @@ extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_ser
 
 inline Dhcp6* netif_dhcp6_data(NetIfc* netif)
 {
-    return static_cast<struct Dhcp6 *>(NETIF_GET_CLIENT_DATA(
+    return static_cast<struct Dhcp6 *>(NetIfcGetClientData(
         netif,
         LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
 }

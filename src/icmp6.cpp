@@ -85,7 +85,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
     }
     struct Icmp6Hdr* icmp6hdr = (struct Icmp6Hdr *)p->payload;
 #if CHECKSUM_CHECK_ICMP6
-    IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_ICMP6)
+    IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_ICMP6)
     {
         if (ip6_chksum_pseudo(p,
                               IP6_NEXTH_ICMP6,
@@ -162,7 +162,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
         ((struct Icmp6EchoHdr *)(r->payload))->type = ICMP6_TYPE_EREP;
         ((struct Icmp6EchoHdr *)(r->payload))->chksum = 0;
 #if CHECKSUM_GEN_ICMP6
-        IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP6)
+        IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP6)
         {
             ((struct Icmp6EchoHdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
                                                                               IP6_NEXTH_ICMP6,
@@ -280,7 +280,7 @@ static void icmp6_send_response(struct PacketBuffer* p,
                                 uint8_t type)
 {
     NetIfc* netif = ip_current_netif();
-    LWIP_ASSERT("icmpv6 packet not a direct response", netif != nullptr);
+    lwip_assert("icmpv6 packet not a direct response", netif != nullptr);
     const Ip6Addr* reply_dest = ip6_current_src_addr();
     /* Select an address to use as source. */
     Ip6Addr reply_src = ip6_select_source_address(netif, reply_dest)->u_addr.ip6;
@@ -321,8 +321,8 @@ static void icmp6_send_response_with_addrs(struct PacketBuffer* p,
                                            const Ip6Addr* dest_addr)
 {
     /* Get the destination address and netif for this ICMP message. */
-    LWIP_ASSERT("must provide both source and destination", src_addr != nullptr);
-    LWIP_ASSERT("must provide both source and destination", dest_addr != nullptr);
+    lwip_assert("must provide both source and destination", src_addr != nullptr);
+    lwip_assert("must provide both source and destination", dest_addr != nullptr);
     /* Special case, as ip6_current_xxx is either NULL, or points
         to a different packet than the one that expired. */
     IP6_ADDR_ZONECHECK(src_addr);
@@ -376,7 +376,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
              ));
         return;
     }
-    LWIP_ASSERT("check that first PacketBuffer can hold icmp 6message",
+    lwip_assert("check that first PacketBuffer can hold icmp 6message",
                 (q->len >= (sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE)));
     icmp6hdr = (struct Icmp6Hdr *)q->payload;
     icmp6hdr->type = type;
@@ -387,7 +387,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
             kIp6Hlen + LWIP_ICMP6_DATASIZE); /* calculate checksum */
     icmp6hdr->chksum = 0;
 #if CHECKSUM_GEN_ICMP6
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6)
+    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_ICMP6)
     {
         icmp6hdr->chksum = ip6_chksum_pseudo(q,
                                              IP6_NEXTH_ICMP6,

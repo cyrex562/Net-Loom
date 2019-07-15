@@ -236,9 +236,9 @@ dns_init(void)
   dns_setserver(0, &dnsserver);
 
 
-  LWIP_ASSERT("sanity check SIZEOF_DNS_QUERY",
+  lwip_assert("sanity check SIZEOF_DNS_QUERY",
               sizeof(struct DnsQuery) == SIZEOF_DNS_QUERY);
-  LWIP_ASSERT("sanity check SIZEOF_DNS_ANSWER",
+  lwip_assert("sanity check SIZEOF_DNS_ANSWER",
               sizeof(struct DnsAnswer) <= SIZEOF_DNS_ANSWER_ASSERT);
 
   Logf(DNS_DEBUG, ("dns_init: initializing\n"));
@@ -247,11 +247,11 @@ dns_init(void)
 
   if (dns_pcbs[0] == NULL) {
     dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
-    LWIP_ASSERT("dns_pcbs[0] != NULL", dns_pcbs[0] != NULL);
+    lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != NULL);
 
     /* initialize DNS table not needed (initialized to zero since it is a
      * global variable) */
-    LWIP_ASSERT("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
+    lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
                 DNS_STATE_UNUSED == 0);
 
     /* initialize DNS client */
@@ -321,12 +321,12 @@ static void dns_init_local(void)
     for (auto& i : local_hostlist_init)
     {
         struct LocalHostListEntry* init_entry = &i;
-        LWIP_ASSERT("invalid host name (NULL)", init_entry->name != NULL);
+        lwip_assert("invalid host name (NULL)", init_entry->name != NULL);
         size_t namelen = strlen(init_entry->name);
-        LWIP_ASSERT("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
+        lwip_assert("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
                     namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
         entry = new LocalHostListEntry;
-        LWIP_ASSERT("mem-error in dns_init_local", entry != NULL);
+        lwip_assert("mem-error in dns_init_local", entry != NULL);
         if (entry != NULL)
         {
             char* entry_name = reinterpret_cast<char *>(entry) + sizeof(struct
@@ -400,7 +400,7 @@ static LwipError dns_lookup_local(const char* hostname,
         {
             if (addr)
             {
-                ip_addr_copy(addr, &entry->addr);
+                copy_ip_addr(addr, &entry->addr);
             }
             return ERR_OK;
         }
@@ -427,7 +427,7 @@ int dns_local_removehost(const char* hostname, const IpAddr* addr)
     while (entry != NULL)
     {
         if (((hostname == nullptr) || !lwip_stricmp(entry->name, hostname)) && ((addr == nullptr
-        ) || ip_addr_cmp(&entry->addr, addr)))
+        ) || compare_ip_addr(&entry->addr, addr)))
         {
             if (last_entry != NULL)
             {
@@ -462,9 +462,9 @@ int dns_local_removehost(const char* hostname, const IpAddr* addr)
  */
 LwipError dns_local_addhost(const char* hostname, const IpAddr* addr)
 {
-    LWIP_ASSERT("invalid host name (NULL)", hostname != nullptr);
+    lwip_assert("invalid host name (NULL)", hostname != nullptr);
     const auto namelen = strlen(hostname);
-    LWIP_ASSERT("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
+    lwip_assert("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
                 namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
     auto entry = new LocalHostListEntry;
     if (entry == nullptr)
@@ -475,7 +475,7 @@ LwipError dns_local_addhost(const char* hostname, const IpAddr* addr)
     MEMCPY(entry_name, hostname, namelen);
     entry_name[namelen] = 0;
     entry->name = entry_name;
-    ip_addr_copy(&entry->addr, addr);
+    copy_ip_addr(&entry->addr, addr);
     entry->next = local_hostlist_dynamic;
     local_hostlist_dynamic = entry;
     return ERR_OK;
@@ -523,7 +523,7 @@ static LwipError dns_lookup(const char* name,
             Logf(DNS_DEBUG, ("\n"));
             if (addr)
             {
-                ip_addr_copy(addr, &i.ipaddr);
+                copy_ip_addr(addr, &i.ipaddr);
             }
             return ERR_OK;
         }
@@ -654,7 +654,7 @@ static LwipError dns_send(const uint8_t idx)
     auto entry = &dns_table[idx];
     // Logf(DNS_DEBUG, ("dns_send: dns_servers[%"U16_F"] \"%s\": request\n",
     //                         (uint16_t)(entry->server_idx), entry->name));
-    LWIP_ASSERT("dns server out of array", entry->server_idx < DNS_MAX_SERVERS);
+    lwip_assert("dns server out of array", entry->server_idx < DNS_MAX_SERVERS);
     if (ip_addr_isany_val(dns_servers[entry->server_idx]) && !entry->is_mdns)
     {
         /* DNS server not valid anymore, e.g. PPP netif has been shut down */
@@ -937,7 +937,7 @@ dns_check_entry(uint8_t i)
   LwipError err;
   struct DnsTableEntry *entry = &dns_table[i];
 
-  LWIP_ASSERT("array index out of bounds", i < DNS_TABLE_SIZE);
+  lwip_assert("array index out of bounds", i < DNS_TABLE_SIZE);
 
   switch (entry->state) {
     case DNS_STATE_NEW:
@@ -1000,7 +1000,7 @@ dns_check_entry(uint8_t i)
       /* nothing to do */
       break;
     default:
-      LWIP_ASSERT("unknown dns_table entry state:", 0);
+      lwip_assert("unknown dns_table entry state:", 0);
       break;
   }
 }
@@ -1102,7 +1102,7 @@ static void dns_recv(void* arg,
                 {
                     /* Check whether response comes from the same network address to which the
                        question was sent. (RFC 5452) */
-                    if (!ip_addr_cmp(addr, &dns_servers[entry->server_idx]))
+                    if (!compare_ip_addr(addr, &dns_servers[entry->server_idx]))
                     {
                         goto ignore_packet; /* ignore this packet */
                     }
@@ -1190,7 +1190,7 @@ static void dns_recv(void* arg,
                                     {
                                         goto ignore_packet; /* ignore this packet */
                                     }
-                                    ip_addr_copy_from_ip4(&dns_table[i].ipaddr, &ip4addr);
+                                    copy_ip4_addr_to_ip_addr(&dns_table[i].ipaddr, &ip4addr);
                                     pbuf_free(p); /* handle correct response */
                                     dns_correct_response(i, lwip_ntohl(ans.ttl));
                                     return;
@@ -1211,7 +1211,7 @@ static void dns_recv(void* arg,
                                     {
                                         goto ignore_packet; /* ignore this packet */
                                     } /* @todo: scope ip6addr? Might be required for link-local addresses at least? */
-                                    ip_addr_copy_from_ip6(&dns_table[i].ipaddr, &ip6addr);
+                                    copy_ip6_addr_to_ip_addr(&dns_table[i].ipaddr, &ip6addr);
                                     pbuf_free(p); /* handle correct response */
                                     dns_correct_response(i, lwip_ntohl(ans.ttl));
                                     return;

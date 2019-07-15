@@ -745,7 +745,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
     len += 2 + 2 + l2;
   }
 #endif /* PPPOE_TODO */
-  LWIP_ASSERT("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
+  lwip_assert("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
               sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
 
   /* allocate a buffer */
@@ -753,7 +753,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -968,13 +968,13 @@ pppoe_send_padr(struct pppoe_softc *sc)
   if (sc->sc_ac_cookie_len > 0) {
     len += 2 + 2 + sc->sc_ac_cookie_len;  /* AC cookie */
   }
-  LWIP_ASSERT("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
+  lwip_assert("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
               sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
   pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len), PBUF_RAM);
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
   p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1014,7 +1014,7 @@ pppoe_send_padt(NetIfc*outgoing_if, u_int session, const uint8_t *dest)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   if (pbuf_add_header(pb, sizeof(struct EthHdr))) {
     PPPDEBUG(LOG_ERR, ("pppoe: pppoe_send_padt: could not allocate room for PPPoE header\n"));

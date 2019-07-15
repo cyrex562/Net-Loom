@@ -149,7 +149,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
   // timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
   timeout = new sys_timeo;
   if (timeout == nullptr) {
-    LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != nullptr);
+    lwip_assert("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != nullptr);
     return;
   }
 
@@ -250,7 +250,7 @@ void
 sys_timeout(uint32_t msecs, sys_timeout_handler handler, void *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (kLwipUint32Max / 4));
+  lwip_assert("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (kLwipUint32Max / 4));
   uint32_t next_timeout_time = uint32_t(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */ 
   sys_timeout_abs(next_timeout_time, handler, arg, handler_name);
 }
@@ -389,7 +389,7 @@ sys_timeouts_sleeptime(void)
     return 0;
   } else {
     uint32_t ret = (uint32_t)(next_timeout->time - now);
-    LWIP_ASSERT("invalid sleeptime", ret <= LWIP_MAX_TIMEOUT);
+    lwip_assert("invalid sleeptime", ret <= LWIP_MAX_TIMEOUT);
     return ret;
   }
 }

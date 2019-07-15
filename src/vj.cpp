@@ -434,8 +434,8 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
          * retransmitted ack or window probe.  Send it uncompressed
          * in case the other side missed the compressed version.
          */
-        if (IPH_LEN(ip) != IPH_LEN(&cs->cs_ip) &&
-            lwip_ntohs(IPH_LEN(&cs->cs_ip)) == hlen)
+        if (GetIp4HdrLen(ip) != GetIp4HdrLen(&cs->cs_ip) &&
+            lwip_ntohs(GetIp4HdrLen(&cs->cs_ip)) == hlen)
         {
             break;
         }
@@ -451,7 +451,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         goto uncompressed;
 
     case NEW_S | NEW_A:
-        if (deltaS == deltaA && deltaS == lwip_ntohs(IPH_LEN(&cs->cs_ip)) - hlen)
+        if (deltaS == deltaA && deltaS == lwip_ntohs(GetIp4HdrLen(&cs->cs_ip)) - hlen)
         {
             /* special case for echoed terminal traffic */
             changes = SPECIAL_I;
@@ -460,7 +460,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         break;
 
     case NEW_S:
-        if (deltaS == lwip_ntohs(IPH_LEN(&cs->cs_ip)) - hlen)
+        if (deltaS == lwip_ntohs(GetIp4HdrLen(&cs->cs_ip)) - hlen)
         {
             /* special case for data xfer */
             changes = SPECIAL_D;
@@ -471,7 +471,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         break;
     }
 
-    deltaS = (uint16_t)(lwip_ntohs(IPH_ID(ip)) - lwip_ntohs(IPH_ID(&cs->cs_ip)));
+    deltaS = (uint16_t)(lwip_ntohs(GetIp4HdrId(ip)) - lwip_ntohs(GetIp4HdrId(&cs->cs_ip)));
     if (deltaS != 1)
     {
         Encodez(deltaS);
@@ -505,7 +505,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         if (pbuf_remove_header(np, hlen))
         {
             /* Can we cope with this failing?  Just assert for now */
-            LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+            lwip_assert("pbuf_remove_header failed\n", 0);
         }
         cp = (uint8_t*)np->payload;
         *cp++ = (uint8_t)(changes | NEW_C);
@@ -527,7 +527,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
    */
 uncompressed:
     MEMCPY(&cs->cs_ip, ip, hlen);
-    IPH_PROTO_SET(ip, cs->cs_id);
+    SetIp4HdrProto(ip, cs->cs_id);
     comp->last_xmit = cs->cs_id;
     return (TYPE_UNCOMPRESSED_TCP);
 }
@@ -568,7 +568,7 @@ vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
     }
     cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
     comp->flags &= ~ VJF_TOSS;
-    IPH_PROTO_SET(ip, IP_PROTO_TCP);
+    SetIp4HdrProto(ip, IP_PROTO_TCP);
     /* copy from/to bigger buffers checked above instead of cs->cs_ip and ip
        just to help static code analysis to see this is correct ;-) */
     MEMCPY(&cs->cs_hdr, nb->payload, hlen);
@@ -647,7 +647,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     {
     case SPECIAL_I:
         {
-            uint32_t i = lwip_ntohs(IPH_LEN(&cs->cs_ip)) - cs->cs_hlen;
+            uint32_t i = lwip_ntohs(GetIp4HdrLen(&cs->cs_ip)) - cs->cs_hlen;
             /* some compilers can't nest inline assembler.. */
             tmp = lwip_ntohl(th->ackno) + i;
             th->ackno = lwip_htonl(tmp);
@@ -658,7 +658,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 
     case SPECIAL_D:
         /* some compilers can't nest inline assembler.. */
-        tmp = lwip_ntohl(th->seqno) + lwip_ntohs(IPH_LEN(&cs->cs_ip)) - cs->cs_hlen;
+        tmp = lwip_ntohl(th->seqno) + lwip_ntohs(GetIp4HdrLen(&cs->cs_ip)) - cs->cs_hlen;
         th->seqno = lwip_htonl(tmp);
         break;
 
@@ -692,8 +692,8 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     }
     else
     {
-        IPH_ID_SET(&cs->cs_ip, lwip_ntohs(IPH_ID(&cs->cs_ip)) + 1);
-        IPH_ID_SET(&cs->cs_ip, lwip_htons(IPH_ID(&cs->cs_ip)));
+        IPH_ID_SET(&cs->cs_ip, lwip_ntohs(GetIp4HdrId(&cs->cs_ip)) + 1);
+        IPH_ID_SET(&cs->cs_ip, lwip_htons(GetIp4HdrId(&cs->cs_ip)));
     }
     break;
   }

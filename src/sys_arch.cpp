@@ -30,7 +30,7 @@ sys_win_rand(void)
   if (CryptGenRandom(hcrypt, sizeof(ret), (uint8_t*)&ret)) {
     return ret;
   }
-  LWIP_ASSERT("CryptGenRandom failed", 0);
+  lwip_assert("CryptGenRandom failed", 0);
   return 0;
 }
 
@@ -45,7 +45,7 @@ sys_win_rand_init(void)
       err = GetLastError();
       snprintf(errbuf, sizeof(errbuf), "CryptAcquireContext failed with error %d", (int)err);
       ;
-      LWIP_ASSERT(errbuf, 0);
+      lwip_assert(errbuf, 0);
     }
   }
 }
@@ -122,7 +122,7 @@ sys_arch_unprotect(sys_prot_t pval)
 #if LWIP_SYS_ARCH_CHECK_NESTED_PROTECT
   LWIP_ASSERT("missing SYS_ARCH_PROTECT", protection_depth == 1);
 #else
-  LWIP_ASSERT("missing SYS_ARCH_PROTECT", protection_depth > 0);
+  lwip_assert("missing SYS_ARCH_PROTECT", protection_depth > 0);
 #endif
 #if LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER
   protection_depth--;
@@ -152,7 +152,7 @@ msvc_sys_init(void)
   sys_init_timing();
   InitSysArchProtect();
   netconn_sem_tls_index = TlsAlloc();
-  LWIP_ASSERT("TlsAlloc failed", netconn_sem_tls_index != TLS_OUT_OF_INDEXES);
+  lwip_assert("TlsAlloc failed", netconn_sem_tls_index != TLS_OUT_OF_INDEXES);
 }
 
 void
@@ -177,10 +177,10 @@ sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   HANDLE new_sem = nullptr;
 
-  LWIP_ASSERT("sem != NULL", sem != nullptr);
+  lwip_assert("sem != NULL", sem != nullptr);
 
   new_sem = CreateSemaphore(nullptr, count, 100000, nullptr);
-  LWIP_ASSERT("Error creating semaphore", new_sem != nullptr);
+  lwip_assert("Error creating semaphore", new_sem != nullptr);
   if(new_sem != nullptr) {
     if (SYS_INITIALIZED()) {
       SYS_ARCH_LOCKED(SYS_STATS_INC_USED(sem));
@@ -188,7 +188,7 @@ sys_sem_new(sys_sem_t *sem, uint8_t count)
       SYS_STATS_INC_USED(sem);
     }
 #if LWIP_STATS && SYS_STATS
-    LWIP_ASSERT("sys_sem_new() counter overflow", lwip_stats.sys.sem.used != 0);
+    lwip_assert("sys_sem_new() counter overflow", lwip_stats.sys.sem.used != 0);
 #endif /* LWIP_STATS && SYS_STATS*/
     sem->sem = new_sem;
     return ERR_OK;
@@ -208,14 +208,14 @@ void
 sys_sem_free(sys_sem_t *sem)
 {
   /* parameter check */
-  LWIP_ASSERT("sem != NULL", sem != nullptr);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
-  LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
+  lwip_assert("sem != NULL", sem != nullptr);
+  lwip_assert("sem->sem != NULL", sem->sem != nullptr);
+  lwip_assert("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   CloseHandle(sem->sem);
 
   SYS_ARCH_LOCKED(SYS_STATS_DEC(sem.used));
 #if LWIP_STATS && SYS_STATS
-  LWIP_ASSERT("sys_sem_free() closed more than created", lwip_stats.sys.sem.used != (uint16_t)-1);
+  lwip_assert("sys_sem_free() closed more than created", lwip_stats.sys.sem.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
   sem->sem = nullptr;
 }
@@ -225,21 +225,21 @@ sys_arch_sem_wait(sys_sem_t *sem, uint32_t timeout)
 {
   DWORD ret;
   LONGLONG starttime, endtime;
-  LWIP_ASSERT("sem != NULL", sem != nullptr);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
-  LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
+  lwip_assert("sem != NULL", sem != nullptr);
+  lwip_assert("sem->sem != NULL", sem->sem != nullptr);
+  lwip_assert("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   if (!timeout) {
     /* wait infinite */
     starttime = sys_get_ms_longlong();
     ret = WaitForSingleObject(sem->sem, INFINITE);
-    LWIP_ASSERT("Error waiting for semaphore", ret == WAIT_OBJECT_0);
+    lwip_assert("Error waiting for semaphore", ret == WAIT_OBJECT_0);
     endtime = sys_get_ms_longlong();
     /* return the time we waited for the sem */
     return (uint32_t)(endtime - starttime);
   } else {
     starttime = sys_get_ms_longlong();
     ret = WaitForSingleObject(sem->sem, timeout);
-    LWIP_ASSERT("Error waiting for semaphore", (ret == WAIT_OBJECT_0) || (ret == WAIT_TIMEOUT));
+    lwip_assert("Error waiting for semaphore", (ret == WAIT_OBJECT_0) || (ret == WAIT_TIMEOUT));
     if (ret == WAIT_OBJECT_0) {
       endtime = sys_get_ms_longlong();
       /* return the time we waited for the sem */
@@ -256,11 +256,11 @@ sys_sem_signal(sys_sem_t *sem)
 {
   BOOL ret;
   sys_arch_check_not_protected();
-  LWIP_ASSERT("sem != NULL", sem != nullptr);
-  LWIP_ASSERT("sem->sem != NULL", sem->sem != nullptr);
-  LWIP_ASSERT("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
+  lwip_assert("sem != NULL", sem != nullptr);
+  lwip_assert("sem->sem != NULL", sem->sem != nullptr);
+  lwip_assert("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   ret = ReleaseSemaphore(sem->sem, 1, nullptr);
-  LWIP_ASSERT("Error releasing semaphore", ret != 0);
+  lwip_assert("Error releasing semaphore", ret != 0);
   ;
 }
 
@@ -269,14 +269,14 @@ sys_mutex_new(sys_mutex_t *mutex)
 {
   HANDLE new_mut = nullptr;
 
-  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
+  lwip_assert("mutex != NULL", mutex != nullptr);
 
   new_mut = CreateMutex(nullptr, FALSE, nullptr);
-  LWIP_ASSERT("Error creating mutex", new_mut != nullptr);
+  lwip_assert("Error creating mutex", new_mut != nullptr);
   if (new_mut != nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mutex));
 #if LWIP_STATS && SYS_STATS
-    LWIP_ASSERT("sys_mutex_new() counter overflow", lwip_stats.sys.mutex.used != 0);
+    lwip_assert("sys_mutex_new() counter overflow", lwip_stats.sys.mutex.used != 0);
 #endif /* LWIP_STATS && SYS_STATS*/
     mutex->mut = new_mut;
     return ERR_OK;
@@ -292,14 +292,14 @@ void
 sys_mutex_free(sys_mutex_t *mutex)
 {
   /* parameter check */
-  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
-  LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
+  lwip_assert("mutex != NULL", mutex != nullptr);
+  lwip_assert("mutex->mut != NULL", mutex->mut != nullptr);
+  lwip_assert("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   CloseHandle(mutex->mut);
 
   SYS_ARCH_LOCKED(SYS_STATS_DEC(mutex.used));
 #if LWIP_STATS && SYS_STATS
-  LWIP_ASSERT("sys_mutex_free() closed more than created", lwip_stats.sys.mutex.used != (uint16_t)-1);
+  lwip_assert("sys_mutex_free() closed more than created", lwip_stats.sys.mutex.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
   mutex->mut = nullptr;
 }
@@ -307,12 +307,12 @@ sys_mutex_free(sys_mutex_t *mutex)
 void sys_mutex_lock(sys_mutex_t *mutex)
 {
   DWORD ret;
-  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
-  LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
+  lwip_assert("mutex != NULL", mutex != nullptr);
+  lwip_assert("mutex->mut != NULL", mutex->mut != nullptr);
+  lwip_assert("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   /* wait infinite */
   ret = WaitForSingleObject(mutex->mut, INFINITE);
-  LWIP_ASSERT("Error waiting for mutex", ret == WAIT_OBJECT_0);
+  lwip_assert("Error waiting for mutex", ret == WAIT_OBJECT_0);
   ;
 }
 
@@ -320,12 +320,12 @@ void
 sys_mutex_unlock(sys_mutex_t *mutex)
 {
   sys_arch_check_not_protected();
-  LWIP_ASSERT("mutex != NULL", mutex != nullptr);
-  LWIP_ASSERT("mutex->mut != NULL", mutex->mut != nullptr);
-  LWIP_ASSERT("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
+  lwip_assert("mutex != NULL", mutex != nullptr);
+  lwip_assert("mutex->mut != NULL", mutex->mut != nullptr);
+  lwip_assert("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
   /* wait infinite */
   if (!ReleaseMutex(mutex->mut)) {
-    LWIP_ASSERT("Error releasing mutex", 0);
+    lwip_assert("Error releasing mutex", 0);
   }
 }
 
@@ -387,7 +387,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   sys_prot_t lev;
 
   new_thread = (struct threadlist*)malloc(sizeof(struct threadlist));
-  LWIP_ASSERT("new_thread != NULL", new_thread != nullptr);
+  lwip_assert("new_thread != NULL", new_thread != nullptr);
   if (new_thread != nullptr) {
     new_thread->function = function;
     new_thread->arg = arg;
@@ -396,8 +396,8 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
     lwip_win32_threads = new_thread;
 
     h = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)sys_thread_function, new_thread, 0, &(new_thread->id));
-    LWIP_ASSERT("h != 0", h != nullptr);
-    LWIP_ASSERT("h != -1", h != INVALID_HANDLE_VALUE);
+    lwip_assert("h != 0", h != nullptr);
+    lwip_assert("h != -1", h != INVALID_HANDLE_VALUE);
     SetThreadName(new_thread->id, name);
 
     SYS_ARCH_UNPROTECT(lev);
@@ -443,7 +443,7 @@ sys_check_core_locking(void)
     DWORD current_thread_id = GetCurrentThreadId();
 
 #if LWIP_TCPIP_CORE_LOCKING
-    LWIP_ASSERT("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
+    lwip_assert("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
 #else /* LWIP_TCPIP_CORE_LOCKING */
     LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
@@ -455,11 +455,11 @@ sys_check_core_locking(void)
 LwipError
 sys_mbox_new(sys_mbox_t *mbox, int size)
 {
-  LWIP_ASSERT("mbox != NULL", mbox != nullptr);
+  lwip_assert("mbox != NULL", mbox != nullptr);
   ;
 
   mbox->sem = CreateSemaphore(nullptr, 0, MAX_QUEUE_ENTRIES, nullptr);
-  LWIP_ASSERT("Error creating semaphore", mbox->sem != nullptr);
+  lwip_assert("Error creating semaphore", mbox->sem != nullptr);
   if (mbox->sem == nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC(mbox.err));
     return ERR_MEM;
@@ -469,7 +469,7 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
   mbox->tail = 0;
   SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mbox));
 #if LWIP_STATS && SYS_STATS
-  LWIP_ASSERT("sys_mbox_new() counter overflow", lwip_stats.sys.mbox.used != 0);
+  lwip_assert("sys_mbox_new() counter overflow", lwip_stats.sys.mbox.used != 0);
 #endif /* LWIP_STATS && SYS_STATS */
   return ERR_OK;
 }
@@ -478,15 +478,15 @@ void
 sys_mbox_free(sys_mbox_t *mbox)
 {
   /* parameter check */
-  LWIP_ASSERT("mbox != NULL", mbox != nullptr);
-  LWIP_ASSERT("mbox->sem != NULL", mbox->sem != nullptr);
-  LWIP_ASSERT("mbox->sem != INVALID_HANDLE_VALUE", mbox->sem != INVALID_HANDLE_VALUE);
+  lwip_assert("mbox != NULL", mbox != nullptr);
+  lwip_assert("mbox->sem != NULL", mbox->sem != nullptr);
+  lwip_assert("mbox->sem != INVALID_HANDLE_VALUE", mbox->sem != INVALID_HANDLE_VALUE);
 
   CloseHandle(mbox->sem);
 
   SYS_STATS_DEC(mbox.used);
 #if LWIP_STATS && SYS_STATS
-  LWIP_ASSERT( "sys_mbox_free() ", lwip_stats.sys.mbox.used != (uint16_t)-1);
+  lwip_assert( "sys_mbox_free() ", lwip_stats.sys.mbox.used != (uint16_t)-1);
 #endif /* LWIP_STATS && SYS_STATS */
   mbox->sem = nullptr;
 }
@@ -499,9 +499,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
   sys_arch_check_not_protected();
 
   /* parameter check */
-  LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
-  LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
-  LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+  lwip_assert("q != SYS_MBOX_NULL", q != nullptr);
+  lwip_assert("q->sem != NULL", q->sem != nullptr);
+  lwip_assert("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
   SYS_ARCH_PROTECT(lev);
   q->q_mem[q->head] = msg;
@@ -510,9 +510,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
   {
       q->head = 0;
   }
-  LWIP_ASSERT("mbox is full!", q->head != q->tail);
+  lwip_assert("mbox is full!", q->head != q->tail);
   ret = ReleaseSemaphore(q->sem, 1, nullptr);
-  LWIP_ASSERT("Error releasing sem", ret != 0);
+  lwip_assert("Error releasing sem", ret != 0);
   
 
   SYS_ARCH_UNPROTECT(lev);
@@ -527,9 +527,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
       sys_arch_check_not_protected();
 
       /* parameter check */
-      LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
-      LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
-      LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+      lwip_assert("q != SYS_MBOX_NULL", q != nullptr);
+      lwip_assert("q->sem != NULL", q->sem != nullptr);
+      lwip_assert("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
       SYS_ARCH_PROTECT(lev);
 
@@ -546,9 +546,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
 
       q->q_mem[q->head] = msg;
       q->head = new_head;
-      LWIP_ASSERT("mbox is full!", q->head != q->tail);
+      lwip_assert("mbox is full!", q->head != q->tail);
       ret = ReleaseSemaphore(q->sem, 1, nullptr);
-      LWIP_ASSERT("Error releasing sem", ret != 0);
+      lwip_assert("Error releasing sem", ret != 0);
       sys_prot_t lev;
 
       SYS_ARCH_UNPROTECT(lev);
@@ -569,9 +569,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
           sys_prot_t lev;
 
           /* parameter check */
-          LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
-          LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
-          LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+          lwip_assert("q != SYS_MBOX_NULL", q != nullptr);
+          lwip_assert("q->sem != NULL", q->sem != nullptr);
+          lwip_assert("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
           if (timeout == 0)
           {
@@ -597,7 +597,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
               return (uint32_t)(endtime - starttime);
           } else
           {
-              LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
+              lwip_assert("Error waiting for sem", ret == WAIT_TIMEOUT);
               if (msg != nullptr)
               {
                   *msg  = nullptr;
@@ -614,9 +614,9 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
               sys_prot_t lev;
 
               /* parameter check */
-              LWIP_ASSERT("q != SYS_MBOX_NULL", q != nullptr);
-              LWIP_ASSERT("q->sem != NULL", q->sem != nullptr);
-              LWIP_ASSERT("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
+              lwip_assert("q != SYS_MBOX_NULL", q != nullptr);
+              lwip_assert("q->sem != NULL", q->sem != nullptr);
+              lwip_assert("q->sem != INVALID_HANDLE_VALUE", q->sem != INVALID_HANDLE_VALUE);
 
               ret = WaitForSingleObject(q->sem, 0);
               if (ret == WAIT_OBJECT_0)
@@ -636,7 +636,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
                   return 0;
               } else
               {
-                  LWIP_ASSERT("Error waiting for sem", ret == WAIT_TIMEOUT);
+                  lwip_assert("Error waiting for sem", ret == WAIT_TIMEOUT);
                   if (msg != nullptr)
                   {
                       *msg  = nullptr;

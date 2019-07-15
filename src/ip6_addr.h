@@ -73,9 +73,9 @@ inline bool ip6_addr_cmp_zone(const Ip6Addr* ip6addr1,
  * macros instead.
  */
 
-#define IPV6_CUSTOM_SCOPES 0
+constexpr auto IPV6_CUSTOM_SCOPES = 0;
 
-inline bool ip6_addr_islinklocal(Ip6Addr* ip6_addr)
+inline bool ip6_addr_islinklocal(const Ip6Addr* ip6_addr)
 {
     return (ip6_addr->addr[0] & PP_HTONL(0xffc00000UL)) == PP_HTONL(0xfe800000UL);
 }
@@ -188,19 +188,21 @@ inline bool ip6_addr_has_scope(const Ip6Addr* ip6addr,
 
 /** Verify that the given IPv6 address is properly zoned. */
 inline void IP6_ADDR_ZONECHECK(const Ip6Addr* ip6addr) {
-  LWIP_ASSERT(
+  lwip_assert(
       "IPv6 zone check failed",
       ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) == ip6_addr_has_zone(ip6addr));
 }
 
+struct NetIfc;
+
 /** Verify that the given IPv6 address is properly zoned for the given netif. */
-inline void IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif) {
-  LWIP_ASSERT(
-      "IPv6 netif zone check failed",
-      ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
-          ? (ip6_addr_has_zone(ip6addr) &&
-             (((netif) == nullptr) || LwipIp6Addrest_zone((ip6addr), (netif))))
-          : !ip6_addr_has_zone(ip6addr));
+inline void IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif)
+{
+    lwip_assert("IPv6 netif zone check failed",
+                ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
+                    ? (ip6_addr_has_zone(ip6addr) && (((netif) == nullptr) ||
+                        LwipIp6Addrest_zone((ip6addr), (netif))))
+                    : !ip6_addr_has_zone(ip6addr));
 }
 
 inline bool ip6_addr_cmp_zoneless(const Ip6Addr* addr1, const Ip6Addr* addr2) {

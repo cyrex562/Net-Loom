@@ -31,9 +31,9 @@ LwipError bridgeif_fdb_add(NetIfc** bridgeif,
                            const struct EthAddr* addr,
                            const BridgeIfcPortMask ports)
 {
-    LWIP_ASSERT("invalid netif", bridgeif != nullptr);
+    lwip_assert("invalid netif", bridgeif != nullptr);
     auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
-    LWIP_ASSERT("invalid state", br != nullptr);
+    lwip_assert("invalid state", br != nullptr);
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
         if (!br->fdbs[i].used)
@@ -56,9 +56,9 @@ LwipError bridgeif_fdb_add(NetIfc** bridgeif,
  */
 LwipError bridgeif_fdb_remove(NetIfc** bridgeif, const struct EthAddr* addr)
 {
-    LWIP_ASSERT("invalid netif", bridgeif != nullptr);
+    lwip_assert("invalid netif", bridgeif != nullptr);
     auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
-    LWIP_ASSERT("invalid state", br != nullptr);
+    lwip_assert("invalid state", br != nullptr);
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
         if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr, addr, sizeof(struct EthAddr)))
@@ -154,7 +154,7 @@ static LwipError bridgeif_send_to_port(BridgeIfcPrivate* br,
     }
     else
     {
-        LWIP_ASSERT("invalid port index", dstport_idx == kBridgeIfcMaxPorts);
+        lwip_assert("invalid port index", dstport_idx == kBridgeIfcMaxPorts);
     }
     return ERR_OK;
 }
@@ -214,10 +214,10 @@ static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc** netif)
     {
         return ERR_VAL;
     }
-    auto port = static_cast<BridgeIfcPort *>(NETIF_GET_CLIENT_DATA(
+    auto port = static_cast<BridgeIfcPort *>(NetIfcGetClientData(
         netif,
         bridgeif_netif_client_id));
-    LWIP_ASSERT("port data not set", port != nullptr);
+    lwip_assert("port data not set", port != nullptr);
     if (port == nullptr || port->bridge == nullptr)
     {
         return ERR_VAL;
@@ -296,8 +296,8 @@ bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc** netif)
  */
 LwipError bridgeif_init(NetIfc** netif)
 {
-    LWIP_ASSERT("netif != NULL", (netif != nullptr));
-    LWIP_ASSERT("bridgeif needs an input callback", (netif->input != nullptr));
+    lwip_assert("netif != NULL", (netif != nullptr));
+    lwip_assert("bridgeif needs an input callback", (netif->input != nullptr));
     if (netif->input == tcpip_input)
     {
         Logf(kBridgeIfcDebug | LWIP_DBG_ON,
@@ -309,8 +309,8 @@ LwipError bridgeif_init(NetIfc** netif)
         bridgeif_netif_client_id = netif_alloc_client_data_id();
     }
     auto init_data = static_cast<BridgeIfcInitData *>(netif->state);
-    LWIP_ASSERT("init_data != NULL", (init_data != nullptr));
-    LWIP_ASSERT("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
+    lwip_assert("init_data != NULL", (init_data != nullptr));
+    lwip_assert("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
                 init_data->max_ports <= kBridgeIfcMaxPorts);
     auto alloc_len_sizet = sizeof(BridgeIfcPrivate) + (init_data->max_ports * sizeof(
         BridgeIfcPort) + (init_data->max_fdb_static_entries * sizeof(
@@ -329,8 +329,8 @@ LwipError bridgeif_init(NetIfc** netif)
     br->fdbs = reinterpret_cast<BridgeIfcFdbStaticEntry *>(reinterpret_cast<uint8_t *>(br + 1) + (init_data->
         max_ports * sizeof(BridgeIfcPort)));
     init_data = static_cast<BridgeIfcInitData *>(netif->state);
-    LWIP_ASSERT("init_data != NULL", (init_data != nullptr));
-    LWIP_ASSERT("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
+    lwip_assert("init_data != NULL", (init_data != nullptr));
+    lwip_assert("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
                 init_data->max_ports <= kBridgeIfcMaxPorts);
     alloc_len_sizet = sizeof(BridgeIfcPrivate) + (init_data->max_ports * sizeof(
         BridgeIfcPort) + (init_data->max_fdb_static_entries * sizeof(
@@ -396,9 +396,9 @@ LwipError bridgeif_init(NetIfc** netif)
  */
 LwipError bridgeif_add_port(NetIfc** bridgeif, NetIfc** portif)
 {
-    LWIP_ASSERT("bridgeif != NULL", bridgeif != nullptr);
-    LWIP_ASSERT("bridgeif->state != NULL", bridgeif->state != nullptr);
-    LWIP_ASSERT("portif != NULL", portif != nullptr);
+    lwip_assert("bridgeif != NULL", bridgeif != nullptr);
+    lwip_assert("bridgeif->state != NULL", bridgeif->state != nullptr);
+    lwip_assert("portif != NULL", portif != nullptr);
     if (!(portif->flags & kNetifFlagEtharp) || !(portif->flags & kNetifFlagEthernet))
     {
         /* can only add ETHERNET/ETHARP interfaces */
@@ -415,7 +415,7 @@ LwipError bridgeif_add_port(NetIfc** bridgeif, NetIfc** portif)
     port->bridge = br;
     br->num_ports++; /* let the port call us on input */
     portif->input = bridgeif_input; /* store pointer to bridge in netif */
-    NETIF_SET_CLIENT_DATA(portif, bridgeif_netif_client_id, port);
+    NetifSetClientData(portif, bridgeif_netif_client_id, port);
     /* remove ETHARP flag to prevent sending report events on netif-up */
     netif_clear_flags(portif, kNetifFlagEtharp);
     return ERR_OK;

@@ -81,22 +81,22 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
   }
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
-  if (IpAddrPcbVersionMatchExact(pcb, ip_current_dest_addr())) {
+  if (match_exact_ip_addr_pcb_vers(pcb, ip_current_dest_addr())) {
     /* Special case: IPv4 broadcast: receive all broadcasts
      * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
     if (broadcast != 0) {
       if (ip_get_option(pcb, SOF_BROADCAST))
 
       {
-        if (ip4_addr_isany(IpAddrToIp4Addr(&pcb->local_ip))) {
+        if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip))) {
           return 1;
         }
       }
     } else
 
       /* Handle IPv4 and IPv6: catch all or exact match */
-      if (ip_addr_isany(&pcb->local_ip) ||
-          ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
+      if (is_ip_addr_any(&pcb->local_ip) ||
+          compare_ip_addr(&pcb->local_ip, ip_current_dest_addr())) {
         return 1;
       }
   }
@@ -149,7 +149,7 @@ raw_input(struct PacketBuffer *p, NetIfc*inp)
   while (pcb != nullptr) {
     if ((pcb->protocol == proto) && raw_input_local_match(pcb, broadcast) &&
         (((pcb->flags & RAW_FLAGS_CONNECTED) == 0) ||
-         ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
+         compare_ip_addr(&pcb->remote_ip, ip_current_src_addr()))) {
       /* receive callback function available? */
       if (pcb->recv != nullptr) {
         uint8_t eaten;
@@ -171,7 +171,7 @@ raw_input(struct PacketBuffer *p, NetIfc*inp)
           return RAW_INPUT_EATEN;
         } else {
           /* sanity-check that the receive callback did not alter the PacketBuffer */
-          LWIP_ASSERT("raw pcb recv callback altered PacketBuffer payload pointer without eating packet",
+          lwip_assert("raw pcb recv callback altered PacketBuffer payload pointer without eating packet",
                       p->payload == old_payload);
         }
       }
@@ -206,14 +206,14 @@ raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
   if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
-  ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
+  set_ip_addr(&pcb->local_ip, ipaddr);
 
   /* If the given IP address should have a zone but doesn't, assign one now.
    * This is legacy support: scope-aware callers should always provide properly
    * zoned source addresses. */
-  if (IpIsV6(&pcb->local_ip) &&
+  if (is_ip_v6(&pcb->local_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->local_ip), IP6_UNKNOWN)) {
-    ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), IpAddrToIp6Addr(&pcb->local_ip));
+    ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), ConvertIpAddrToIp6Addr(&pcb->local_ip));
   }
   return ERR_OK;
 }
@@ -262,13 +262,13 @@ raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
   if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
-  ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
+  set_ip_addr(&pcb->remote_ip, ipaddr);
 
   /* If the given IP address should have a zone but doesn't, assign one now,
    * using the bound address to make a more informed decision when possible. */
-  if (IpIsV6(&pcb->remote_ip) &&
+  if (is_ip_v6(&pcb->remote_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
-    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), IpAddrToIp6Addr(&pcb->local_ip));
+    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ConvertIpAddrToIp6Addr(&pcb->local_ip));
   }
   raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
   return ERR_OK;
@@ -286,9 +286,9 @@ raw_disconnect(struct raw_pcb *pcb)
   LWIP_ASSERT_CORE_LOCKED();
   /* reset remote address association */
   if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
-    ip_addr_copy(pcb->remote_ip, *IP_ANY_TYPE);
+    copy_ip_addr(pcb->remote_ip, *IP_ANY_TYPE);
   } else {
-    ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
+    set_ip_addr_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
 
   }
   pcb->netif_idx = NETIF_NO_INDEX;
@@ -333,7 +333,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
   NetIfc*netif;
   const IpAddr *src_ip;
 
-  if ((pcb == nullptr) || (ipaddr == nullptr) || !IpAddrPcbVersionMatch(pcb, ipaddr)) {
+  if ((pcb == nullptr) || (ipaddr == nullptr) || !match_ip_addr_pcb_version(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -364,7 +364,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
     return ERR_RTE;
   }
 
-  if (ip_addr_isany(&pcb->local_ip) || ip_addr_ismulticast(&pcb->local_ip)) {
+  if (is_ip_addr_any(&pcb->local_ip) || ip_addr_ismulticast(&pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
     src_ip = ip_netif_get_local_ip(netif, ipaddr);
 #if LWIP_IPV6
@@ -405,7 +405,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
   LWIP_ASSERT_CORE_LOCKED();
 
   if ((pcb == nullptr) || (dst_ip == nullptr) || (netif == nullptr) || (src_ip == nullptr) ||
-      !IpAddrPcbVersionMatch(pcb, src_ip) || !IpAddrPcbVersionMatch(pcb, dst_ip)) {
+      !match_ip_addr_pcb_version(pcb, src_ip) || !match_ip_addr_pcb_version(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -413,7 +413,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
 #if LWIP_IPV4 && LWIP_IPV6
                   IpIsV6(dst_ip) ? IP6_HLEN : IP_HLEN);
 #elif LWIP_IPV4
-                  IP_HLEN);
+                  kIp4HdrLen);
 #else
                   IP6_HLEN);
 #endif
@@ -456,7 +456,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
     if (pbuf_remove_header(q, header_size)) {
-      LWIP_ASSERT("Can't restore header we just removed!", 0);
+      lwip_assert("Can't restore header we just removed!", 0);
       return ERR_MEM;
     }
   }
@@ -615,8 +615,8 @@ raw_new_ip_type(uint8_t type, uint8_t proto)
   pcb = raw_new(proto);
 
   if (pcb != nullptr) {
-    IpAdderSetTypeVal(pcb->local_ip,  type);
-    IpAdderSetTypeVal(pcb->remote_ip, type);
+    set_ip_addr_type_val(pcb->local_ip,  type);
+    set_ip_addr_type_val(pcb->remote_ip, type);
   }
   return pcb;
 }
@@ -630,13 +630,13 @@ void raw_netif_ip_addr_changed(const IpAddr *old_addr, const IpAddr *new_addr)
 {
   struct raw_pcb *rpcb;
 
-  if (!ip_addr_isany(old_addr) && !ip_addr_isany(new_addr)) {
+  if (!is_ip_addr_any(old_addr) && !is_ip_addr_any(new_addr)) {
     for (rpcb = raw_pcbs; rpcb != nullptr; rpcb = rpcb->next) {
       /* PCB bound to current local interface address? */
-      if (ip_addr_cmp(&rpcb->local_ip, old_addr)) {
+      if (compare_ip_addr(&rpcb->local_ip, old_addr)) {
         /* The PCB is bound to the old ipaddr and
          * is set to bound to the new one instead */
-        ip_addr_copy(rpcb->local_ip, *new_addr);
+        copy_ip_addr(rpcb->local_ip, *new_addr);
       }
     }
   }

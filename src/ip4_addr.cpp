@@ -19,8 +19,8 @@ const IpAddr kIpAddrBroadcast = {{{{kIpaddrBroadcast}}}};
 uint8_t
 ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
 {
-  Ip4Addr ipaddr;
-  ip4_addr_set_u32(&ipaddr, addr);
+  Ip4Addr ipaddr{};
+  SetIp4AddrU32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
   if ((~addr == kIp4AddrAny4) ||
@@ -34,11 +34,11 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
       return 0;
       /* address matches network interface address exactly? => no broadcast */
   }
-  if (addr == ip4_addr_get_u32(netif_ip4_addr(netif))) {
+  if (addr == ip4_addr_get_u32(get_net_ifc_ip4_addr(netif))) {
       return 0;
       /*  on the same (sub) network... */
   }
-  if (ip4_addr_netcmp(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
+  if (ip4_addr_netcmp(&ipaddr, get_net_ifc_ip4_addr(netif), netif_ip4_netmask(netif))
       /* ...and host identifier bits are all ones? =>... */
       && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
           (kIpaddrBroadcast & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
@@ -220,11 +220,11 @@ int ip4addr_aton(const char* cp, const Ip4Addr* addr)
         }
         val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
         break;
-    default: LWIP_ASSERT("unhandled", 0);
+    default: lwip_assert("unhandled", 0);
     }
     if (addr)
     {
-        ip4_addr_set_u32(addr, lwip_htonl(val));
+        SetIp4AddrU32(addr, lwip_htonl(val));
     }
     return 1;
 }

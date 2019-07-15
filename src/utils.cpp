@@ -636,7 +636,7 @@ void ppp_fatal(const char *fmt, ...) {
     ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
-    LWIP_ASSERT("ppp_fatal", 0);   /* as promised */
+    lwip_assert("ppp_fatal", 0);   /* as promised */
 }
 
 /*

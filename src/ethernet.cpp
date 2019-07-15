@@ -315,7 +315,7 @@ LwipError ethernet_output(NetIfc* netif, struct PacketBuffer* p,
     SMEMCPY(&ethhdr->dest, dst, ETH_HWADDR_LEN);
     SMEMCPY(&ethhdr->src, src, ETH_HWADDR_LEN);
 
-    LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
+    lwip_assert("netif->hwaddr_len must be 6 for ethernet_output!",
                 (netif->hwaddr_len == ETH_HWADDR_LEN));
     // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
     //      ("ethernet_output: sending packet %p\n", (void *)p));

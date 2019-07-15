@@ -121,9 +121,9 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
   uint16_t i;
   uint8_t c;
 
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
-  LWIP_ASSERT("p != NULL", (p != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("p != NULL", (p != nullptr));
 
 //  Logf(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
@@ -210,8 +210,8 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
   struct slipif_priv *priv;
   struct PacketBuffer *t;
 
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   priv = (struct slipif_priv *)netif->state;
 
@@ -363,7 +363,7 @@ slipif_init(NetIfc*netif)
   struct slipif_priv *priv;
   uint8_t sio_num;
 
-  LWIP_ASSERT("slipif needs an input callback", netif->input != nullptr);
+  lwip_assert("slipif needs an input callback", netif->input != nullptr);
 
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(uint8_t, netif->state);
@@ -429,8 +429,8 @@ slipif_poll(NetIfc*netif)
   uint8_t c;
   struct slipif_priv *priv;
 
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   priv = (struct slipif_priv *)netif->state;
 

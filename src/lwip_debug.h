@@ -46,7 +46,7 @@ enum LwipDebugMsgType
     LWIP_DBG_HALT = 0x08U
 };
 
-inline void LWIP_ASSERT(const char* msg, const bool assertion)
+inline void lwip_assert(const char* msg, const bool assertion)
 {
     if (!assertion)
     {

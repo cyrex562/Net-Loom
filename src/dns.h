@@ -196,7 +196,7 @@ inline bool LwipDnsAddrtypeIsIpv6(uint8_t t)
 
 inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddr* ip)
 {
-    return (IpIsV6(ip) ? LwipDnsAddrtypeIsIpv6(t) : (!LwipDnsAddrtypeIsIpv6(t)));
+    return (is_ip_v6(ip) ? LwipDnsAddrtypeIsIpv6(t) : (!LwipDnsAddrtypeIsIpv6(t)));
 }
 
 #ifdef __cplusplus

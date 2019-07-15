@@ -142,13 +142,13 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6
   if (dst->addr_len == 2) {
     fc |= IEEE_802154_FC_DST_ADDR_MODE_SHORT;
   } else {
-    LWIP_ASSERT("invalid dst address length", dst->addr_len == 8);
+    lwip_assert("invalid dst address length", dst->addr_len == 8);
     fc |= IEEE_802154_FC_DST_ADDR_MODE_EXT;
   }
   if (src->addr_len == 2) {
     fc |= IEEE_802154_FC_SRC_ADDR_MODE_SHORT;
   } else {
-    LWIP_ASSERT("invalid src address length", src->addr_len == 8);
+    lwip_assert("invalid src address length", src->addr_len == 8);
     fc |= IEEE_802154_FC_SRC_ADDR_MODE_EXT;
   }
   hdr->frame_control = fc;
@@ -305,7 +305,7 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *
     lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
   } else {
     /* it wasn't the first, so it must have a valid 'prev' */
-    LWIP_ASSERT("sanity check linked list", prev != nullptr);
+    lwip_assert("sanity check linked list", prev != nullptr);
     prev->next_packet = lrh->next_packet;
   }
 }
@@ -351,7 +351,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
   uint16_t datagram_offset;
   LwipError err = ERR_IF;
 
-  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != nullptr);
+  lwip_assert("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != nullptr);
 
   /* We'll use a dedicated PacketBuffer for building 6LowPAN fragments. */
   p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
@@ -359,12 +359,12 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
-  LWIP_ASSERT("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
+  lwip_assert("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IEEE 802.15.4 header. */
   buffer = (uint8_t *)p_frag->payload;
   ieee_header_len = lowpan6_write_iee802154_header((struct ieee_802154_hdr *)buffer, src, dst);
-  LWIP_ASSERT("ieee_header_len < p_frag->len", ieee_header_len < p_frag->len);
+  lwip_assert("ieee_header_len < p_frag->len", ieee_header_len < p_frag->len);
 
 #if LWIP_6LOWPAN_IPHC
   /* Perform 6LowPAN IPv6 header compression according to RFC 6282 */
@@ -418,7 +418,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     remaining_len -= frag_len - lowpan6_header_len;
     /* datagram offset holds the offset before compression */
     datagram_offset = frag_len - lowpan6_header_len + hidden_header_len;
-    LWIP_ASSERT("datagram offset must be a multiple of 8", (datagram_offset & 7) == 0);
+    lwip_assert("datagram offset must be a multiple of 8", (datagram_offset & 7) == 0);
 
     /* Calculate frame length */
     p_frag->len = p_frag->tot_len = ieee_header_len + 4 + frag_len + 2; /* add 2 bytes for crc*/
@@ -439,7 +439,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
 
       buffer[ieee_header_len] |= 0x20; /* Change FRAG1 to FRAGN */
 
-      LWIP_ASSERT("datagram offset must be a multiple of 8", (datagram_offset & 7) == 0);
+      lwip_assert("datagram offset must be a multiple of 8", (datagram_offset & 7) == 0);
       buffer[ieee_header_len + 4] = (uint8_t)(datagram_offset >> 3); /* datagram offset in FRAGN header (datagram_offset is max. 11 bit) */
 
       frag_len = (127 - ieee_header_len - 5 - 2) & 0xf8;
@@ -473,7 +473,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
 
     /* Calculate frame length */
     p_frag->len = p_frag->tot_len = frag_len + lowpan6_header_len + ieee_header_len + 2;
-    LWIP_ASSERT("", p_frag->len <= 127);
+    lwip_assert("", p_frag->len <= 127);
 
     /* 2 bytes CRC */
     crc = LWIP_6LOWPAN_DO_CALC_CRC(p_frag->payload, p_frag->len - 2);
@@ -760,7 +760,7 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
     }
     /* Insert new PacketBuffer into list of fragments. Each fragment is a PacketBuffer,
        this only works for unchained pbufs. */
-    LWIP_ASSERT("p->next == NULL", p->next == nullptr);
+    lwip_assert("p->next == NULL", p->next == nullptr);
     if (lrh->reass != nullptr) {
       /* FRAG1 already received, check this offset against first len */
       if (datagram_offset < lrh->reass->len) {
@@ -830,7 +830,7 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
           q->tot_len = datagram_left;
           datagram_left -= q->len;
         }
-        LWIP_ASSERT("datagram_left == 0", datagram_left == 0);
+        lwip_assert("datagram_left == 0", datagram_left == 0);
         q = lrh->reass;
         q->tot_len = datagram_size;
         q->next = lrh->frags;

@@ -35,14 +35,13 @@
  *
  */
 #pragma once
-
-#include "opt.h"
 #include "def.h"
 
 /** This is the aligned version of Ip4Addr,
    used as local variable, on the stack, etc. */
-struct Ip4Addr {
-  uint32_t addr;
+struct Ip4Addr
+{
+    uint32_t addr;
 };
 
 /* Forward declaration to not include netif.h */
@@ -61,13 +60,21 @@ constexpr uint32_t kIpaddrBroadcast = uint32_t(0xffffffffUL);
 
    On subnets, host and network parts are found according to
    the subnet mask, not these masks.  */
-#define IP_CLASSA(a)        ((((uint32_t)(a)) & 0x80000000UL) == 0)
-#define IP_CLASSA_NET       0xff000000
-#define IP_CLASSA_NSHIFT    24
-#define IP_CLASSA_HOST      (0xffffffff & ~IP_CLASSA_NET)
-#define IP_CLASSA_MAX       128
+inline bool IsIp4ClassA(const uint32_t a)
+{
+    return (uint32_t(a) & 0x80000000UL) == 0;
+}
 
-#define IP_CLASSB(a)        ((((uint32_t)(a)) & 0xc0000000UL) == 0x80000000UL)
+constexpr auto Ip4ClassANet = 0xff000000;
+constexpr auto Ip4ClassANShift = 24;
+constexpr auto Ip4ClassAHost = (0xffffffff & ~Ip4ClassANet);
+constexpr auto Ip4ClassAMax     =  128;
+
+inline bool IsIp4ClassB(const uint32_t a)
+{
+    return (uint32_t(a) & 0xc0000000UL) == 0x80000000UL;
+}
+
 #define IP_CLASSB_NET       0xffff0000
 #define IP_CLASSB_NSHIFT    16
 #define IP_CLASSB_HOST      (0xffffffff & ~IP_CLASSB_NET)
@@ -127,7 +134,7 @@ inline void ip4_addr_set_loopback(Ip4Addr* ipaddr)
 /** Check if an address is in the loopback region */
 inline bool ip4_addr_isloopback(Ip4Addr* ipaddr)
 {
-    return (ipaddr->addr & PP_HTONL(IP_CLASSA_NET)) == PP_HTONL(
+    return (ipaddr->addr & PP_HTONL(Ip4ClassANet)) == PP_HTONL(
         uint32_t(IP_LOOPBACKNET) << 24);
 }
 
@@ -141,7 +148,7 @@ inline void ip4_addr_set_hton(Ip4Addr* dest, Ip4Addr* src)
 
 
 /** IPv4 only: set the IP address given as an uint32_t */
-inline void ip4_addr_set_u32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
+inline void SetIp4AddrU32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
 {
     ((dest_ipaddr)->addr = (src_u32));
 }
@@ -164,7 +171,7 @@ inline void ip4_addr_get_network(Ip4Addr* target, Ip4Addr* host, Ip4Addr* netmas
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-inline bool ip4_addr_netcmp(Ip4Addr* addr1, Ip4Addr* addr2, Ip4Addr* mask)
+inline bool ip4_addr_netcmp(const Ip4Addr* addr1, const Ip4Addr* addr2, const Ip4Addr* mask)
 {
     return (((addr1)->addr & (mask)->addr) == ((addr2)->addr & (mask)->addr));
 }

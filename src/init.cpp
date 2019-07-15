@@ -37,7 +37,7 @@ void lwip_init(void)
     raw_init();
     udp_init();
     tcp_init();
-    igmp_init();
+    init_igmp_module();
     dns_init();
     ppp_init();
     sys_timeouts_init();

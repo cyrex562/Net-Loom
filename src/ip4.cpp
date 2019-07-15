@@ -1,155 +1,86 @@
-/**
- * @file
- * This is the IPv4 layer implementation for incoming and outgoing IP traffic.
- *
- * @see ip_frag.c
- *
- */
-
-/*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Adam Dunkels <adam@sics.se>
- *
- */
 
 #include "opt.h"
 #include "lwip_debug.h"
-
-#if LWIP_IPV4
-
 #include "autoip.h"
-
 #include "def.h"
+#include "icmp.h"
+#include "inet_chksum.h"
+#include "ip.h"
+#include "ip4_frag.h"
+#include "netif.h"
+#include "stats.h"
+#include "tcp_priv.h"
+#include "udp.h"
 #include "iana.h"
 
-#include "icmp.h"
 
-#include "igmp.h"
-
-#include "inet_chksum.h"
-
-#include "ip.h"
-
-#include "ip4_frag.h"
-
-#include "netif.h"
-
-#include "raw_priv.h"
-
-#include "stats.h"
-
-#include "tcp_priv.h"
-
-#include "udp.h"
-
-
-#include <string.h>
-
-#ifdef LWIP_HOOK_FILENAME
-#include LWIP_HOOK_FILENAME
-#endif
+/**
+ * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
+ * Source-based routing for IPv4 - called from ip_route() (IPv4)
+ * Signature:\code{.c}
+ *   NetIfc*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
+ * \endcode
+ * Arguments:
+ * - src: local/source IPv4 address
+ * - dest: destination IPv4 address
+ * Returns values:
+ * - the destination netif
+ * - NULL if no destination netif is found. In that case, ip_route() continues as normal.
+ */
+inline NetIfc* LWIP_HOOK_IP4_ROUTE_SRC(const Ip4Addr* src, const Ip4Addr* dest)
+{
+    return nullptr;
+}
 
 /** Set this to 0 in the rare case of wanting to call an extra function to
  * generate the IP checksum (in contrast to calculating it on-the-fly). */
-#ifndef LWIP_INLINE_IP_CHKSUM
-#if LWIP_CHECKSUM_CTRL_PER_NETIF
-#define LWIP_INLINE_IP_CHKSUM   0
-#else /* LWIP_CHECKSUM_CTRL_PER_NETIF */
-#define LWIP_INLINE_IP_CHKSUM   1
-#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
-#endif
-
-#if LWIP_INLINE_IP_CHKSUM && CHECKSUM_GEN_IP
-#define CHECKSUM_GEN_IP_INLINE  1
-#else
-#define CHECKSUM_GEN_IP_INLINE  0
-#endif
-
-#if LWIP_DHCP || defined(LWIP_IP_ACCEPT_UDP_PORT)
-#define IP_ACCEPT_LINK_LAYER_ADDRESSING 1
 
 /** Some defines for DHCP to let link-layer-addressed packets through while the
  * netif is down.
  * To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT(port)
  * to return 1 if the port is accepted and 0 if the port is not accepted.
  */
-#if LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT)
-/* accept DHCP client port and custom port */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (((port) == PP_NTOHS(LWIP_IANA_PORT_DHCP_CLIENT)) \
-         || (LWIP_IP_ACCEPT_UDP_PORT(port)))
-#elif defined(LWIP_IP_ACCEPT_UDP_PORT) /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
-/* accept custom port only */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (LWIP_IP_ACCEPT_UDP_PORT(port))
-#else /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
-/* accept DHCP client port only */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) ((port) == PP_NTOHS(LWIP_IANA_PORT_DHCP_CLIENT))
-#endif /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
+inline bool LwipIpAcceptUdpPort(const uint16_t dst_port)
+{
+    return ((dst_port) == PpNtohs(12345));
+} 
 
-#else /* LWIP_DHCP */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSING 0
-#endif /* LWIP_DHCP */
+/* accept DHCP client port and custom port */
+inline bool IpAcceptLinkLayerAddressedPort(const uint16_t port)
+{
+    return (((port) == PpNtohs(LWIP_IANA_PORT_DHCP_CLIENT)) || (LwipIpAcceptUdpPort(port))
+    );
+} 
 
 /** The IP header ID of the next outgoing IP packet */
-static uint16_t ip_id;
-
-#if LWIP_MULTICAST_TX_OPTIONS
-/** The default netif used for multicast */
-static NetIfc*ip4_default_multicast_netif;
+static uint16_t ip_id; /** The default netif used for multicast */
+static NetIfc* ip4_default_multicast_netif;
 
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
-void
-ip4_set_default_multicast_netif(NetIfc*default_multicast_netif)
+void ip4_set_default_multicast_netif(NetIfc* default_multicast_netif)
 {
-  ip4_default_multicast_netif = default_multicast_netif;
+    ip4_default_multicast_netif = default_multicast_netif;
 }
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
 
-#ifdef LWIP_HOOK_IP4_ROUTE_SRC
 /**
  * Source based IPv4 routing must be fully implemented in
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
-NetIfc*
-ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest)
+NetIfc* ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
 {
-  if (src != NULL) {
-    /* when src==NULL, the hook is called from ip4_route(dest) */
-    NetIfc*netif = LWIP_HOOK_IP4_ROUTE_SRC(src, dest);
-    if (netif != NULL) {
-      return netif;
+    if (src != nullptr)
+    {
+        /* when src==NULL, the hook is called from ip4_route(dest) */
+        NetIfc* netif = LWIP_HOOK_IP4_ROUTE_SRC(src, dest);
+        if (netif != nullptr)
+        {
+            return netif;
+        }
     }
-  }
-  return ip4_route(dest);
+    return ip4_route(dest);
 }
-#endif /* LWIP_HOOK_IP4_ROUTE_SRC */
 
 /**
  * Finds the appropriate network interface for a given IP address. It
@@ -160,41 +91,39 @@ ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest)
  * @param dest the destination IP address for which to find the route
  * @return the netif on which to send to reach dest
  */
-NetIfc*
-ip4_route(const Ip4Addr *dest)
+NetIfc* ip4_route(const Ip4Addr* dest)
 {
-#if !LWIP_SINGLE_NETIF
-  NetIfc*netif;
-
-  LWIP_ASSERT_CORE_LOCKED();
-
-#if LWIP_MULTICAST_TX_OPTIONS
-  /* Use administratively selected interface for multicast by default */
-  if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif) {
-    return ip4_default_multicast_netif;
-  }
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
-
-  /* bug #54569: in case LWIP_SINGLE_NETIF=1 and Logf() disabled, the following loop is optimized away */
-  ;
-
-  /* iterate through netifs */
-  NETIF_FOREACH(netif) {
-    /* is the netif up, does it have a link and a valid address? */
-    if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-      /* network mask matches? */
-      if (ip4_addr_netcmp(dest, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
-        /* return netif on which to forward IP packet */
-        return netif;
-      }
-      /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
-      if (((netif->flags & kNetifFlagBroadcast) == 0) && ip4_addr_cmp(dest, netif_ip4_gw(netif))) {
-        /* return netif on which to forward IP packet */
-        return netif;
-      }
+    NetIfc* netif;
+    LWIP_ASSERT_CORE_LOCKED();
+    /* Use administratively selected interface for multicast by default */
+    if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif)
+    {
+        return ip4_default_multicast_netif;
+    } /* bug #54569: in case LWIP_SINGLE_NETIF=1 and Logf() disabled, the following loop is optimized away */
+    ; /* iterate through netifs */
+    NETIF_FOREACH(netif)
+    {
+        /* is the netif up, does it have a link and a valid address? */
+        if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(
+            *get_net_ifc_ip4_addr(netif)))
+        {
+            /* network mask matches? */
+            if (ip4_addr_netcmp(dest,
+                                get_net_ifc_ip4_addr(netif),
+                                netif_ip4_netmask(netif)))
+            {
+                /* return netif on which to forward IP packet */
+                return netif;
+            } /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
+            if (((netif->flags & kNetifFlagBroadcast) == 0) && ip4_addr_cmp(
+                dest,
+                netif_ip4_gw(netif)))
+            {
+                /* return netif on which to forward IP packet */
+                return netif;
+            }
+        }
     }
-  }
-
 #if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
   /* loopif is disabled, looopback traffic is passed through any netif */
   if (ip4_addr_isloopback(dest)) {
@@ -211,7 +140,6 @@ ip4_route(const Ip4Addr *dest)
     return NULL;
   }
 #endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
-
 #ifdef LWIP_HOOK_IP4_ROUTE_SRC
   netif = LWIP_HOOK_IP4_ROUTE_SRC(NULL, dest);
   if (netif != NULL) {
@@ -224,19 +152,18 @@ ip4_route(const Ip4Addr *dest)
   }
 #endif
 #endif /* !LWIP_SINGLE_NETIF */
-
-  if ((netif_default == nullptr) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
-      ip4_addr_isany_val(*netif_ip4_addr(netif_default)) || ip4_addr_isloopback(dest)) {
-    /* No matching netif found and default netif is not usable.
-       If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
-//    Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
-//                ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
-    IP_STATS_INC(ip.rterr);
-    
-    return nullptr;
-  }
-
-  return netif_default;
+    if ((netif_default == nullptr) || !netif_is_up(netif_default) || !
+        netif_is_link_up(netif_default) || ip4_addr_isany_val(
+            *get_net_ifc_ip4_addr(netif_default)) || ip4_addr_isloopback(dest))
+    {
+        /* No matching netif found and default netif is not usable.
+           If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
+        //    Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+        //                ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
+        IP_STATS_INC(ip.rterr);
+        return nullptr;
+    }
+    return netif_default;
 }
 
 #if IP_FORWARD
@@ -392,9 +319,9 @@ ip4_input_accept(NetIfc*netif)
 //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
 
   /* interface is up and configured? */
-  if ((netif_is_up(netif)) && (!ip4_addr_isany_val(*netif_ip4_addr(netif)))) {
+  if ((netif_is_up(netif)) && (!ip4_addr_isany_val(*get_net_ifc_ip4_addr(netif)))) {
     /* unicast to this interface address? */
-    if (ip4_addr_cmp(ip4_current_dest_addr(), netif_ip4_addr(netif)) ||
+    if (ip4_addr_cmp(ip4_current_dest_addr(), get_net_ifc_ip4_addr(netif)) ||
         /* or broadcast on this interface network address? */
         ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
 #if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
@@ -455,7 +382,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
   /* identify the IP header */
   iphdr = (struct Ip4Hdr *)p->payload;
-  if (IPH_V(iphdr) != 4) {
+  if (GetIp4HdrVersion(iphdr) != 4) {
 //    Logf(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", (uint16_t)IPH_V(iphdr)));
     ip4_debug_print(p);
     pbuf_free(p);
@@ -475,7 +402,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   /* obtain IP header length in bytes */
   iphdr_hlen = IPH_HL_BYTES(iphdr);
   /* obtain ip length in bytes */
-  iphdr_len = lwip_ntohs(IPH_LEN(iphdr));
+  iphdr_len = lwip_ntohs(GetIp4HdrLen(iphdr));
 
   /* Trim PacketBuffer. This is especially required for packets < 60 bytes. */
   if (iphdr_len < p->tot_len) {
@@ -483,8 +410,8 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   }
 
   /* header length exceeds first PacketBuffer length, or ip length exceeds total PacketBuffer length? */
-  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len) || (iphdr_hlen < IP_HLEN)) {
-    if (iphdr_hlen < IP_HLEN) {
+  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len) || (iphdr_hlen < kIp4HdrLen)) {
+    if (iphdr_hlen < kIp4HdrLen) {
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
 //                  ("ip4_input: short IP header (%"U16_F" bytes) received, IP packet dropped\n", iphdr_hlen));
     }
@@ -508,7 +435,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
   /* verify checksum */
 #if CHECKSUM_CHECK_IP
-  IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_IP) {
+  IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_IP) {
     if (inet_chksum(iphdr, iphdr_hlen) != 0) {
 
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
@@ -524,8 +451,8 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 #endif
 
   /* copy IP addresses to aligned IpAddr */
-  ip_addr_copy_from_ip4(ip_data.current_iphdr_dest, iphdr->dest);
-  ip_addr_copy_from_ip4(ip_data.current_iphdr_src, iphdr->src);
+  copy_ip4_addr_to_ip_addr(ip_data.current_iphdr_dest, iphdr->dest);
+  copy_ip4_addr_to_ip_addr(ip_data.current_iphdr_src, iphdr->src);
 
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip4_addr_ismulticast(ip4_current_dest_addr())) {
@@ -543,7 +470,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
       netif = NULL;
     }
 #else /* LWIP_IGMP */
-    if ((netif_is_up(inp)) && (!ip4_addr_isany_val(*netif_ip4_addr(inp)))) {
+    if ((netif_is_up(inp)) && (!ip4_addr_isany_val(*get_net_ifc_ip4_addr(inp)))) {
       netif = inp;
     } else {
       netif = nullptr;
@@ -819,7 +746,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
   const Ip4Addr *src_used = src;
   if (dest != nullptr) {
       if (ip4_addr_isany(src)) {
-          src_used = netif_ip4_addr(netif);
+          src_used = get_net_ifc_ip4_addr(netif);
       }
   }
 
@@ -872,7 +799,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       /* Should the IP header be generated or is it already included in p? */
       if (dest != nullptr)
       {
-          uint16_t ip_hlen = IP_HLEN;
+          uint16_t ip_hlen = kIp4HdrLen;
 #if IP_OPTIONS_SEND
     uint16_t optlen_aligned = 0;
     if (optlen != 0) {
@@ -909,7 +836,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
     }
 #endif /* IP_OPTIONS_SEND */
           /* generate IP header */
-          if (pbuf_add_header(p, IP_HLEN))
+          if (pbuf_add_header(p, kIp4HdrLen))
           {
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: not enough room for IP header in PacketBuffer\n"));
 
@@ -919,24 +846,24 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           }
 
           iphdr = (struct Ip4Hdr *)p->payload;
-          LWIP_ASSERT("check that first PacketBuffer can hold struct Ip4Hdr",
+          lwip_assert("check that first PacketBuffer can hold struct Ip4Hdr",
                       (p->len >= sizeof(struct Ip4Hdr)));
 
           IPH_TTL_SET(iphdr, ttl);
-          IPH_PROTO_SET(iphdr, proto);
+          SetIp4HdrProto(iphdr, proto);
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += PP_NTOHS(proto | (ttl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
           /* dest cannot be NULL here */
-          Ip4AddrCopy(iphdr->dest, *dest);
+          copy_ip4_addr(iphdr->dest, *dest);
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += ip4_addr_get_u32(&iphdr->dest) & 0xFFFF;
           chk_sum += ip4_addr_get_u32(&iphdr->dest) >> 16;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
-          IPH_VHL_SET(iphdr, 4, ip_hlen / 4);
-          IPH_TOS_SET(iphdr, tos);
+          SetIp4HdrVHL(iphdr, 4, ip_hlen / 4);
+          SetIp4HdrTos(iphdr, tos);
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += PP_NTOHS(tos | (iphdr->_v_hl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
@@ -944,7 +871,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += iphdr->_len;
 #endif /* CHECKSUM_GEN_IP_INLINE */
-          IPH_OFFSET_SET(iphdr, 0);
+          SetIp4HdrOffset(iphdr, 0);
           IPH_ID_SET(iphdr, lwip_htons(ip_id));
 #if CHECKSUM_GEN_IP_INLINE
           chk_sum += iphdr->_id;
@@ -953,11 +880,11 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
           if (src == nullptr)
           {
-              Ip4AddrCopy(iphdr->src, *IP4_ADDR_ANY4);
+              copy_ip4_addr(iphdr->src, *IP4_ADDR_ANY4);
           } else
           {
               /* src cannot be NULL here */
-              Ip4AddrCopy(iphdr->src, *src);
+              copy_ip4_addr(iphdr->src, *src);
           }
 
 #if CHECKSUM_GEN_IP_INLINE
@@ -977,7 +904,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 #else /* CHECKSUM_GEN_IP_INLINE */
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_IP) {
+    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_IP) {
       IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, ip_hlen));
     }
 #endif /* CHECKSUM_GEN_IP */
@@ -985,7 +912,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       } else
       {
           /* IP header already included in p */
-          if (p->len < IP_HLEN)
+          if (p->len < kIp4HdrLen)
           {
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n"));
               IP_STATS_INC(ip.err);
@@ -993,7 +920,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
               return ERR_BUF;
           }
           iphdr = (struct Ip4Hdr *)p->payload;
-          Ip4AddrCopy(dest_addr, iphdr->dest);
+          copy_ip4_addr(dest_addr, iphdr->dest);
           dest = &dest_addr;
       }
 

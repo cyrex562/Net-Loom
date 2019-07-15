@@ -124,7 +124,7 @@ PppPcb* CreatePppol2tpSession(NetIfc** pppif,
     l2tp_pcb->ppp = ppp;
     l2tp_pcb->udp = udp;
     l2tp_pcb->netif = netif;
-    ip_addr_copy(l2tcp_pcb->remote_ip, *ipaddr);
+    copy_ip_addr(l2tcp_pcb->remote_ip, *ipaddr);
     l2tp_pcb->remote_port = port;
     l2tp_pcb->secret = secret;
     l2tp_pcb->secret_len = secret_len;
@@ -324,7 +324,7 @@ static void pppol2tp_input(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p
     goto free_and_return;
   }
 
-  if (!ip_addr_cmp(&l2tp->remote_ip, addr)) {
+  if (!compare_ip_addr(&l2tp->remote_ip, addr)) {
     goto free_and_return;
   }
 
@@ -797,7 +797,7 @@ static LwipError pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -892,7 +892,7 @@ static LwipError pppol2tp_send_scccn(pppol2tp_pcb *l2tp, uint16_t ns) {
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -939,7 +939,7 @@ static LwipError pppol2tp_send_icrq(pppol2tp_pcb *l2tp, uint16_t ns) {
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -987,7 +987,7 @@ static LwipError pppol2tp_send_iccn(pppol2tp_pcb *l2tp, uint16_t ns) {
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -1034,7 +1034,7 @@ static LwipError pppol2tp_send_zlb(pppol2tp_pcb *l2tp, uint16_t ns, uint16_t nr)
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */
@@ -1063,7 +1063,7 @@ static LwipError pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, uint16_t ns) {
   if (pb == nullptr) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   p = (uint8_t*)pb->payload;
   /* fill in pkt */

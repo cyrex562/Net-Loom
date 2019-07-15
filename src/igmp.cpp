@@ -1,84 +1,3 @@
-/**
- * @file
- * IGMP - Internet Group Management Protocol
- *
- * @defgroup igmp IGMP
- * @ingroup ip4
- * To be called from TCPIP thread
- */
-
-/*
- * Copyright (c) 2002 CITEL Technologies Ltd.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of CITEL Technologies Ltd nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY CITEL TECHNOLOGIES AND CONTRIBUTORS ``AS IS''
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL CITEL TECHNOLOGIES OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * This file is a contribution to the lwIP TCP/IP stack.
- * The Swedish Institute of Computer Science and Adam Dunkels
- * are specifically granted permission to redistribute this
- * source code.
-*/
-
-/*-------------------------------------------------------------
-Note 1)
-Although the rfc requires V1 AND V2 capability
-we will only support v2 since now V1 is very old (August 1989)
-V1 can be added if required
-
-a debug print and statistic have been implemented to
-show this up.
--------------------------------------------------------------
--------------------------------------------------------------
-Note 2)
-A query for a specific group address (as opposed to ALLHOSTS)
-has now been implemented as I am unsure if it is required
-
-a debug print and statistic have been implemented to
-show this up.
--------------------------------------------------------------
--------------------------------------------------------------
-Note 3)
-The router alert rfc 2113 is implemented in outgoing packets
-but not checked rigorously incoming
--------------------------------------------------------------
-Steve Reynolds
-------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------------
- * RFC 988  - Host extensions for IP multicasting                         - V0
- * RFC 1054 - Host extensions for IP multicasting                         -
- * RFC 1112 - Host extensions for IP multicasting                         - V1
- * RFC 2236 - Internet Group Management Protocol, Version 2               - V2  <- this code is based on this RFC (it's the "de facto" standard)
- * RFC 3376 - Internet Group Management Protocol, Version 3               - V3
- * RFC 4604 - Using Internet Group Management Protocol Version 3...       - V3+
- * RFC 2113 - IP Router Alert Option                                      -
- *----------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------------
- * Includes
- *----------------------------------------------------------------------------*/
 
 #include "opt.h"
 #include "igmp.h"
@@ -88,28 +7,27 @@ Steve Reynolds
 #include "netif.h"
 #include "stats.h"
 #include <cstring>
-
-static struct IgmpGroup *igmp_lookup_group(NetIfc*ifp, const Ip4Addr *addr);
-static LwipError  igmp_remove_group(NetIfc*netif, struct IgmpGroup *group);
-static void   igmp_timeout(NetIfc*netif, struct IgmpGroup *group);
-static void   igmp_start_timer(struct IgmpGroup *group, uint8_t max_time);
-static void   igmp_delaying_member(struct IgmpGroup *group, uint8_t maxresp);
-static LwipError  igmp_ip_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest, NetIfc*netif);
-static void   igmp_send(NetIfc*netif, struct IgmpGroup *group, uint8_t type);
-
-static Ip4Addr     allsystems;
-static Ip4Addr     allrouters;
+static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr);
+static LwipError igmp_remove_group(NetIfc* netif, struct IgmpGroup* group);
+static void igmp_timeout(NetIfc* netif, struct IgmpGroup* group);
+static void igmp_start_timer(struct IgmpGroup* group, uint8_t max_time);
+static void igmp_delaying_member(struct IgmpGroup* group, uint8_t maxresp);
+static LwipError igmp_ip_output_if(struct PacketBuffer* p,
+                                   const Ip4Addr* src,
+                                   const Ip4Addr* dest,
+                                   NetIfc* netif);
+static void igmp_send(NetIfc* netif, struct IgmpGroup* group, uint8_t type);
+static Ip4Addr allsystems;
+static Ip4Addr allrouters;
 
 /**
  * Initialize the IGMP module
  */
-void
-igmp_init(void)
+void init_igmp_module(void)
 {
-  Logf(IGMP_DEBUG, ("igmp_init: initializing\n"));
-
-  Ipv4AddrFromBytes(&allsystems, 224, 0, 0, 1);
-  Ipv4AddrFromBytes(&allrouters, 224, 0, 0, 2);
+    Logf(IGMP_DEBUG, ("igmp_init: initializing\n"));
+    Ipv4AddrFromBytes(&allsystems, 224, 0, 0, 1);
+    Ipv4AddrFromBytes(&allrouters, 224, 0, 0, 2);
 }
 
 /**
@@ -219,10 +137,9 @@ struct IgmpGroup* igmp_lookfor_group(NetIfc* ifp, const Ip4Addr* addr)
  */
 static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr)
 {
-    struct IgmpGroup* group;
-    struct IgmpGroup* list_head = netif_igmp_data(ifp);
+    auto list_head = netif_igmp_data(ifp);
     /* Search if the group already exists */
-    group = igmp_lookfor_group(ifp, addr);
+    auto group = igmp_lookfor_group(ifp, addr);
     if (group != nullptr)
     {
         /* Group already exists. */
@@ -240,7 +157,7 @@ static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr)
         if (list_head == nullptr)
         {
             /* this is the first entry in linked list */
-            LWIP_ASSERT("igmp_lookup_group: first group must be allsystems",
+            lwip_assert("igmp_lookup_group: first group must be allsystems",
                         (ip4_addr_cmp(addr, &allsystems) != 0));
             group->next = nullptr;
             ifp->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_IGMP] = group;
@@ -248,7 +165,7 @@ static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr)
         else
         {
             /* append _after_ first entry */
-            LWIP_ASSERT(
+            lwip_assert(
                 "igmp_lookup_group: all except first group must not be allsystems",
                 (ip4_addr_cmp(addr, &allsystems) == 0));
             group->next = list_head->next;
@@ -308,7 +225,7 @@ igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest)
   IGMP_STATS_INC(igmp.recv);
 
   /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */
-  if (p->len < IGMP_MINLEN) {
+  if (p->len < kIgmpMinlen) {
     pbuf_free(p);
     IGMP_STATS_INC(igmp.lenerr);
     Logf(IGMP_DEBUG, ("igmp_input: length error\n"));
@@ -378,7 +295,7 @@ igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest)
             Ip4Addr groupaddr;
             // Logf(IGMP_DEBUG, (" using \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
             /* we first need to re-look for the group since we used dest last time */
-            Ip4AddrCopy(&groupaddr, reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address));
+            copy_ip4_addr(&groupaddr, reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address));
             group = igmp_lookfor_group(inp, &groupaddr);
           } else {
             // Logf(IGMP_DEBUG, (" with the group address as destination [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
@@ -439,7 +356,7 @@ igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     /* Should we join this interface ? */
-    if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
+    if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(get_net_ifc_ip4_addr(netif), ifaddr)))) {
       err = igmp_joingroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         /* Return an error even if some network interfaces are joined */
@@ -536,7 +453,7 @@ igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     /* Should we leave this interface ? */
-    if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
+    if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(get_net_ifc_ip4_addr(netif), ifaddr)))) {
       LwipError res = igmp_leavegroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         /* Store this result if we have not yet gotten a success */
@@ -721,10 +638,10 @@ igmp_ip_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
 {
   /* This is the "router alert" option */
   uint16_t ra[2];
-  ra[0] = PpHtons(ROUTER_ALERT);
+  ra[0] = PpHtons(kRouterAlert);
   ra[1] = 0x0000; /* Router shall examine packet */
   IGMP_STATS_INC(igmp.xmit);
-  return ip4_output_if_opt(p, src, dest, IGMP_TTL, 0, IP_PROTO_IGMP, netif, ra, ROUTER_ALERTLEN);
+  return ip4_output_if_opt(p, src, dest, IGMP_TTL, 0, IP_PROTO_IGMP, netif, ra, kRouterAlertlen);
 }
 
 /**
@@ -742,22 +659,22 @@ igmp_send(NetIfc*netif, struct IgmpGroup *group, uint8_t type)
   Ip4Addr  *dest = nullptr;
 
   /* IP header + "router alert" option + IGMP header */
-  p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, kIgmpMinlen, PBUF_RAM);
 
   if (p) {
     igmp = static_cast<struct IgmpMsg *>(p->payload);
-    LWIP_ASSERT("igmp_send: check that first PacketBuffer can hold struct igmp_msg",
+    lwip_assert("igmp_send: check that first PacketBuffer can hold struct igmp_msg",
                 (p->len >= sizeof(struct IgmpMsg)));
-    Ip4AddrCopy(&src, netif_ip4_addr(netif));
+    copy_ip4_addr(&src, get_net_ifc_ip4_addr(netif));
 
     if (type == IGMP_V2_MEMB_REPORT) {
       dest = &(group->group_address);
-      Ip4AddrCopy(reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address), &group->group_address);
+      copy_ip4_addr(reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address), &group->group_address);
       group->last_reporter_flag = 1; /* Remember we were the last to report */
     } else {
       if (type == IGMP_LEAVE_GROUP) {
         dest = &allrouters;
-        Ip4AddrCopy(reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address), &group->group_address);
+        copy_ip4_addr(reinterpret_cast<Ip4Addr*>(&igmp->igmp_group_address), &group->group_address);
       }
     }
 
@@ -765,7 +682,7 @@ igmp_send(NetIfc*netif, struct IgmpGroup *group, uint8_t type)
       igmp->igmp_msgtype  = type;
       igmp->igmp_maxresp  = 0;
       igmp->igmp_checksum = 0;
-      igmp->igmp_checksum = inet_chksum(igmp, IGMP_MINLEN);
+      igmp->igmp_checksum = inet_chksum(igmp, kIgmpMinlen);
 
       igmp_ip_output_if(p, &src, dest, netif);
     }

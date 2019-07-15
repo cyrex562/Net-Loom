@@ -1,69 +1,68 @@
+#include "autoip.h"
 #include "opt.h"
 #include "ip_addr.h"
 #include "netif.h"
-#include "autoip.h"
 #include "etharp.h"
-#include "autoip.h"
 #include <cstring>
 #include "lwip_debug.h"
 
 
-/** Pseudo random macro based on netif informations.
- * You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
-
-inline uint32_t LwipAutoipRand(NetIfc* netif){ return ( ((uint32_t((netif->hwaddr[5]) & 0xff) << 24) | 
-                                   (uint32_t((netif->hwaddr[3]) & 0xff) << 16) | 
-                                   (uint32_t((netif->hwaddr[2]) & 0xff) << 8) | 
-                                   uint32_t((netif->hwaddr[4]) & 0xff)) + 
-                                   (netif_autoip_data(netif) ? netif_autoip_data(netif)->tried_llipaddr
-                                    : 0));
+//
+// Pseudo random macro based on netif informations.
+// You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
+//
+inline uint32_t AutoipGenRand(NetIfc* netif)
+{
+    return (uint32_t(netif->hwaddr[5] & 0xff) << 24 | uint32_t(netif->hwaddr[3] & 0xff) <<
+            16 | uint32_t(netif->hwaddr[2] & 0xff) << 8 | uint32_t(
+                netif->hwaddr[4] & 0xff)) +
+        (netif_autoip_data(netif) ? netif_autoip_data(netif)->tried_llipaddr : 0);
 }
 
 
-/**
- * Macro that generates the initial IP address to be tried by AUTOIP.
- * If you want to override this, define it to something else in lwipopts.h.
- */
-inline uint32_t LwipAutoipCreateSeedAddr(NetIfc* netif)
+//
+// Macro that generates the initial IP address to be tried by AUTOIP.
+// If you want to override this, define it to something else in lwipopts.h.
+//
+inline uint32_t AutoipGenSeedAddr(NetIfc* netif)
 {
     return lwip_htonl(AUTOIP_RANGE_START + uint32_t(
         uint8_t(netif->hwaddr[4]) | uint32_t(uint8_t(netif->hwaddr[5])) << 8));
 }
 
-/* static functions */
-static LwipError autoip_arp_announce(NetIfc* netif);
-static bool autoip_start_probing(NetIfc* netif);
+LwipError autoip_arp_announce(NetIfc* netif);
+bool autoip_start_probing(NetIfc* netif);
 
-/**
- * @ingroup autoip
- * Set a statically allocated struct autoip to work with.
- * Using this prevents autoip_start to allocate it using mem_malloc.
- *
- * @param netif the netif for which to set the struct autoip
- * @param autoip (uninitialised) autoip struct allocated by the application
- */
+
+//
+// Set a statically allocated struct autoip to work with.
+// Using this prevents autoip_start to allocate it using mem_malloc.
+//
+// netif: the netif for which to set the struct autoip
+// autoip; (uninitialised) autoip struct allocated by the application
+//
 bool autoip_set_struct(NetIfc* netif, struct AutoipState* autoip)
 {
     LWIP_ASSERT_CORE_LOCKED();
-    LWIP_ASSERT("netif != NULL", netif != nullptr);
-    LWIP_ASSERT("autoip != NULL", autoip != nullptr);
-    LWIP_ASSERT("netif already has a struct autoip set",
+    lwip_assert("netif != NULL", netif != nullptr);
+    lwip_assert("autoip != NULL", autoip != nullptr);
+    lwip_assert("netif already has a struct autoip set",
                 netif_autoip_data(netif) == nullptr); /* clear data structure */
     memset(autoip, 0, sizeof(struct AutoipState)); /* autoip->state = AUTOIP_STATE_OFF; */
     netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP] = static_cast<void*>(autoip);
     return true;
 }
 
-/** Restart AutoIP client and check the next address (conflict detected)
- *
- * @param netif The netif under AutoIP control
- */
+//
+// Restart AutoIP client and check the next address (conflict detected)
+//
+// @param netif The netif under AutoIP control
+//
 bool autoip_restart(NetIfc* netif)
 {
     // ReSharper disable once CppLocalVariableMayBeConst
     auto autoip = netif_autoip_data(netif);
-    autoip->tried_llipaddr++;
-    // TODO: check for error
+    autoip->tried_llipaddr++; // TODO: check for error
     autoip_start(netif);
     return true;
 }
@@ -107,7 +106,7 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
     /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
       * compliant to RFC 3927 Section 2.1
       * We have 254 * 256 possibilities */
-    auto addr = lwip_ntohl(LwipAutoipCreateSeedAddr(netif));
+    auto addr = lwip_ntohl(AutoipGenSeedAddr(netif));
     addr += autoip->tried_llipaddr;
     addr = AUTOIP_NET | (addr & 0xffff); /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
     if (addr < AUTOIP_RANGE_START)
@@ -118,9 +117,9 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
     {
         addr -= AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
     }
-    LWIP_ASSERT("AUTOIP address not in range",
+    lwip_assert("AUTOIP address not in range",
                 (addr >= AUTOIP_RANGE_START) && (addr <= AUTOIP_RANGE_END));
-    ip4_addr_set_u32(ipaddr, lwip_htonl(addr));
+    SetIp4AddrU32(ipaddr, lwip_htonl(addr));
 
     return true;
 }
@@ -179,7 +178,7 @@ LwipError autoip_start(NetIfc* netif)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
       * ARP Packets are formed correctly
       */
-    netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
+    netif_set_addr(netif, &kIpAddrAny.u_addr.ip4, &kIpAddrAny.u_addr.ip4, &kIpAddrAny.u_addr.ip4);
     if (autoip == nullptr)
     {
         /* no AutoIP client attached yet? */
@@ -214,7 +213,7 @@ static bool autoip_start_probing(NetIfc* netif)
    * chosen out of 0 to PROBE_WAIT seconds.
    * compliant to RFC 3927 Section 2.2.1
    */
-    autoip->ttw = (uint16_t)(LwipAutoipRand(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND
+    autoip->ttw = (uint16_t)(AutoipGenRand(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND
     )); /*
    * if we tried more then MAX_CONFLICTS we must limit our rate for
    * acquiring and probing address
@@ -253,14 +252,17 @@ bool autoip_network_changed(NetIfc* netif)
 //
 LwipError autoip_stop(NetIfc* netif)
 {
-    struct AutoipState* autoip = netif_autoip_data(netif);
+    const auto autoip = netif_autoip_data(netif);
     LWIP_ASSERT_CORE_LOCKED();
     if (autoip != nullptr)
     {
         autoip->state = AUTOIP_STATE_OFF;
-        if (ip4_addr_islinklocal(netif_ip4_addr(netif)))
+        if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
         {
-            netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
+            netif_set_addr(netif,
+                           &kIpAddrAny.u_addr.ip4,
+                           &kIpAddrAny.u_addr.ip4,
+                           &kIpAddrAny.u_addr.ip4);
         }
     }
     return ERR_OK;
@@ -315,7 +317,7 @@ void autoip_tmr(void)
                         {
                             /* calculate time to wait to next probe */
                             autoip->ttw = uint16_t(
-                                (LwipAutoipRand(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND)) +
+                                (AutoipGenRand(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND)) +
                                 PROBE_MIN * AUTOIP_TICKS_PER_SECOND);
                         }
                     }

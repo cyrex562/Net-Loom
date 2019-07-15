@@ -116,7 +116,7 @@ bool bridgeif_fdb_age_one_second(void* fdb_ptr)
 void bridgeif_age_tmr(void* arg)
 {
     const auto fdb = static_cast<BridgeIfcFdb *>(arg);
-    LWIP_ASSERT("invalid arg", arg != nullptr);
+    lwip_assert("invalid arg", arg != nullptr);
     bridgeif_fdb_age_one_second(fdb);
     sys_timeout(kBridgeifAgeTimerMs, bridgeif_age_tmr, arg);
 }
@@ -130,7 +130,7 @@ void* bridgeif_fdb_init(const uint16_t max_fdb_entries)
     const auto alloc_len_sizet = sizeof(BridgeIfcFdb) + (max_fdb_entries * sizeof(
         BridgeIfDfDbEntry));
     const auto alloc_len = size_t(alloc_len_sizet);
-    LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
+    lwip_assert("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
     Logf(kBridgeIfcDebug,
          "bridgeif_fdb_init: allocating %d bytes for private FDB data\n",
          int(alloc_len));

@@ -355,17 +355,17 @@ uint16_t ip_chksum_pseudo(struct PacketBuffer* p,
                           const IpAddr* src,
                           const IpAddr* dest)
 {
-  if (IpIsV6(dest)) {
-    return ip6_chksum_pseudo(p, proto, proto_len, IpAddrToIp6Addr(src),
-                             IpAddrToIp6Addr(dest));
+  if (is_ip_v6(dest)) {
+    return ip6_chksum_pseudo(p, proto, proto_len, ConvertIpAddrToIp6Addr(src),
+                             ConvertIpAddrToIp6Addr(dest));
   }
   else
     {
         return inet_chksum_pseudo(p,
                                   proto,
                                   proto_len,
-                                  IpAddrToIp4Addr(src),
-                                  IpAddrToIp4Addr(dest));
+                                  convert_ip_addr_to_ip4_addr(src),
+                                  convert_ip_addr_to_ip4_addr(dest));
     }
 
 } /** Parts of the pseudo checksum which are common to IPv4 and IPv6 */
@@ -390,7 +390,7 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
         }
         acc += lwip_standard_checksum(q->payload, chklen);
         chksum_len = (uint16_t)(chksum_len - chklen);
-        LWIP_ASSERT("delete me", chksum_len < 0x7fff);
+        lwip_assert("delete me", chksum_len < 0x7fff);
         /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%"X32_F"
             * \n", acc));*/ /* fold the upper bit down */
         acc = FOLD_U32T(acc);
@@ -522,8 +522,8 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                           proto,
                                           proto_len,
                                           chksum_len,
-                                          IpAddrToIp4Addr(src),
-                                          IpAddrToIp4Addr(dest));
+                                          convert_ip_addr_to_ip4_addr(src),
+                                          convert_ip_addr_to_ip4_addr(dest));
     }
 #endif /* LWIP_IPV4 */
 } /* inet_chksum:

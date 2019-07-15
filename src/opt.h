@@ -2796,22 +2796,8 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
 #define LWIP_HOOK_IP4_ROUTE()
 #endif
 
-/**
- * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
- * Source-based routing for IPv4 - called from ip_route() (IPv4)
- * Signature:\code{.c}
- *   NetIfc*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
- * \endcode
- * Arguments:
- * - src: local/source IPv4 address
- * - dest: destination IPv4 address
- * Returns values:
- * - the destination netif
- * - NULL if no destination netif is found. In that case, ip_route() continues as normal.
- */
-#ifdef __DOXYGEN__
-#define LWIP_HOOK_IP4_ROUTE_SRC(src, dest)
-#endif
+
+
 
 /**
  * LWIP_HOOK_IP4_CANFORWARD(src, dest):

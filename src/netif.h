@@ -7,12 +7,10 @@
 #include "lwip_error.h"
 #include "packet_buffer.h"
 #include "ip_addr.h"
-#include "ip6_addr.h"
 #include "def.h"
+#include "ip4_addr.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct Ip6Addr;
 
 /* Throughout this file, IP addresses are expected to be in
  * the same byte order as in IP_PCB. */
@@ -39,30 +37,34 @@ constexpr auto kNetifNamesize = 6;
  * It must be set by the startup code before this netif can be used
  * (also for dhcp/autoip).
  */
-constexpr auto NETIF_FLAG_UP = 0x01U;
-/** If set, the netif has broadcast capability.
- * Set by the netif driver in its init function. */
-constexpr auto kNetifFlagBroadcast = 0x02U;
-/** If set, the interface has an active link
- *  (set by the network interface driver).
- * Either set by the netif driver in its init function (if the link
- * is up at that time) or at a later point once the link comes up
- * (if link detection is supported by the hardware). */
-constexpr auto NETIF_FLAG_LINK_UP = 0x04U;
-/** If set, the netif is an ethernet device using ARP.
- * Set by the netif driver in its init function.
- * Used to check input packet types and use of DHCP. */
-constexpr auto kNetifFlagEtharp = 0x08U;
-/** If set, the netif is an ethernet device. It might not use
- * ARP or TCP/IP if it is used for PPPoE only.
- */
-constexpr auto kNetifFlagEthernet = 0x10U;
-/** If set, the netif has IGMP capability.
- * Set by the netif driver in its init function. */
-constexpr auto kNetifFlagIgmp = 0x20U;
-/** If set, the netif has MLD6 capability.
- * Set by the netif driver in its init function. */
-constexpr auto kNetifFlagMld6 = 0x40U;
+enum NetIfcFlag : uint8_t
+{
+    NETIF_FLAG_UP = 0x01U,
+    /** If set, the netif has broadcast capability.
+    * Set by the netif driver in its init function. */
+    kNetifFlagBroadcast = 0x02U,
+    /** If set, the interface has an active link
+    *  (set by the network interface driver).
+    * Either set by the netif driver in its init function (if the link
+    * is up at that time) or at a later point once the link comes up
+    * (if link detection is supported by the hardware). */
+    NETIF_FLAG_LINK_UP = 0x04U,
+    /** If set, the netif is an ethernet device using ARP.
+    * Set by the netif driver in its init function.
+    * Used to check input packet types and use of DHCP. */
+    kNetifFlagEtharp = 0x08U,
+    /** If set, the netif is an ethernet device. It might not use
+    * ARP or TCP/IP if it is used for PPPoE only.
+    */
+    kNetifFlagEthernet = 0x10U,
+    /** If set, the netif has IGMP capability.
+    * Set by the netif driver in its init function. */
+    kNetifFlagIgmp = 0x20U,
+    /** If set, the netif has MLD6 capability.
+    * Set by the netif driver in its init function. */
+    kNetifFlagMld6 = 0x40U,
+};
+
 
 /**
  * @}
@@ -103,12 +105,15 @@ enum NetifMacFilterAction {
       NETIF_ADD_MAC_FILTER = 1
 };
 
-/** Function prototype for netif init functions. Set up flags and output/linkoutput
- * callback functions in this function.
- *
- * @param netif The netif to initialize
- */
-typedef LwipError (*netif_init_fn)(struct NetIfc *netif);
+//
+// Function prototype for netif init functions. Set up flags and output/linkoutput
+// callback functions in this function.
+//
+// netif: The netif to initialize
+// returns LwipError
+//
+typedef LwipError (*NetifInitFn)(struct NetIfc *netif);
+
 /** Function prototype for netif->input functions. This function is saved as 'input'
  * callback function in the netif struct. Call it when a packet has been received.
  *
@@ -121,14 +126,15 @@ typedef LwipError (*netif_init_fn)(struct NetIfc *netif);
 typedef LwipError (*netif_input_fn)(struct PacketBuffer *p, struct NetIfc *inp);
 
 
-/** Function prototype for netif->output functions. Called by lwIP when a packet
- * shall be sent. For ethernet netif, set this to 'etharp_output' and set
- * 'linkoutput'.
- *
- * @param netif The netif which shall send a packet
- * @param p The packet to send (p->payload points to IP header)
- * @param ipaddr The IP address to which the packet shall be sent
- */
+// Function prototype for netif->output functions. Called by lwIP when a packet
+// shall be sent. For ethernet netif, set this to 'etharp_output' and set
+// 'linkoutput'.
+//
+// @param netif
+// @param netif The netif which shall send a packet
+// @param p The packet to send (p->payload points to IP header)
+// @param ipaddr The IP address to which the packet shall be sent
+//
 typedef LwipError (*netif_output_fn)(struct NetIfc* netif,
                                      struct PacketBuffer* p,
                                      const Ip4Addr* ipaddr);
@@ -142,8 +148,9 @@ typedef LwipError (*netif_output_fn)(struct NetIfc* netif,
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IPv6 address to which the packet shall be sent
  */
-typedef LwipError (*netif_output_ip6_fn)(struct NetIfc *netif, struct PacketBuffer *p,
-                                     const Ip6Addr*ipaddr);
+typedef LwipError (*netif_output_ip6_fn)(struct NetIfc* netif,
+                                         struct PacketBuffer* p,
+                                         const Ip6Addr* ipaddr);
 
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
  * netifs. This function is called by ARP when a packet shall be sent.
@@ -174,10 +181,8 @@ typedef LwipError (*netif_mld_mac_filter_fn)(struct NetIfc *netif,
 
 uint8_t netif_alloc_client_data_id(void);
 
-#define NETIF_GET_CLIENT_DATA(netif, id) (netif)->client_data[(id)]
 
-#define NETIF_SET_CLIENT_DATA(netif, id, data) \
-  NETIF_GET_CLIENT_DATA(netif, id) = (data)
+
 
 typedef uint16_t NetIfcAddrIdx;
 constexpr auto kNetifAddrIdxMax = 0x7FFF;
@@ -266,11 +271,40 @@ struct NetIfc
     uint16_t loop_cnt_current;
 };
 
-#define NETIF_SET_CHECKSUM_CTRL(netif, chksumflags) do { \
-  (netif)->chksum_flags = chksumflags; } while(0)
-#define IF__NETIF_CHECKSUM_ENABLED(netif, chksumflag) if (((netif) == NULL) || (((netif)->chksum_flags & (chksumflag)) != 0))
+//
+//
+//
+inline void* NetIfcGetClientData(NetIfc* netif, const size_t id)
+{
+    return netif->client_data[id];
+}
 
-/** The list of network interfaces. */
+//
+//
+//
+inline void NetifSetClientData(NetIfc* netif, const size_t id, void* data)
+{
+    netif->client_data[id] = data;
+}
+
+//
+//
+//
+inline void NetifSetChecksumCtrl(NetIfc* netif, const uint16_t chksumflags)
+{
+    netif->chksum_flags = chksumflags;
+}
+
+//
+//
+//
+inline bool IfNetifChecksumEnabled(NetIfc* netif, uint16_t chksumflag)
+{
+    return netif == nullptr || (netif->chksum_flags & chksumflag) != 0;
+}
+
+
+// The list of network interfaces.
 extern struct NetIfc *netif_list;
 #define NETIF_FOREACH(netif) for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next)
 
@@ -281,7 +315,7 @@ void netif_init(void);
 
 struct NetIfc *netif_add_noaddr(struct NetIfc *netif,
                                void *state,
-                               netif_init_fn init,
+                               NetifInitFn init,
                                netif_input_fn input);
 
 
@@ -290,7 +324,7 @@ struct NetIfc *netif_add(struct NetIfc *netif,
                         const Ip4Addr *netmask,
                         const Ip4Addr *gw,
                         void *state,
-                        netif_init_fn init,
+                        NetifInitFn init,
                         netif_input_fn input);
 bool netif_set_addr(struct NetIfc* netif,
                     const Ip4Addr* ipaddr,
@@ -310,17 +344,39 @@ void netif_set_default(struct NetIfc *netif);
 void netif_set_ipaddr(struct NetIfc *netif, const Ip4Addr *ipaddr);
 void netif_set_netmask(struct NetIfc *netif, const Ip4Addr *netmask);
 void netif_set_gw(struct NetIfc *netif, const Ip4Addr *gw);
-/** @ingroup netif_ip4 */
-inline Ip4Addr *netif_ip4_addr(NetIfc *netif) {
-  return (ip_2_ip4(&((netif)->ip_addr)));
+
+
+
+//
+// Get Ip4 Address from the NetIfc
+inline Ip4Addr* get_net_ifc_ip4_addr(NetIfc* netif)
+{
+    return &netif->ip_addr.u_addr.ip4;
 }
 
+//
+//
+//
+inline Ip4Addr* netif_ip4_netmask(NetIfc* netif)
+{
+    return static_cast<Ip4Addr *>(&netif->netmask.u_addr.ip4);
+}
+
+
 /** @ingroup netif_ip4 */
-#define netif_ip4_netmask(netif) ((const Ip4Addr*)ip_2_ip4(&((netif)->netmask)))
+inline Ip4Addr *netif_ip4_gw(NetIfc *netif) {
+  return (Ip4Addr *)&netif->gw.u_addr.ip4;
+}
+
+struct IpAddr;
+
 /** @ingroup netif_ip4 */
-#define netif_ip4_gw(netif)      ((const Ip4Addr*)ip_2_ip4(&((netif)->gw)))
-/** @ingroup netif_ip4 */
-#define netif_ip_addr4(netif)    ((const IpAddr*)&((netif)->ip_addr))
+inline IpAddr* netif_ip_addr4(NetIfc* netif)
+{
+    return static_cast<IpAddr *>(&((netif)->ip_addr));
+}
+
+    
 /** @ingroup netif_ip4 */
 #define netif_ip_netmask4(netif) ((const IpAddr*)&((netif)->netmask))
 /** @ingroup netif_ip4 */
@@ -336,7 +392,10 @@ void netif_set_down(struct NetIfc *netif);
 /** @ingroup netif
  * Ask if an interface is up
  */
-#define netif_is_up(netif) (((netif)->flags & NETIF_FLAG_UP) ? (uint8_t)1 : (uint8_t)0)
+inline bool netif_is_up(NetIfc* netif)
+{
+    return netif->flags & NETIF_FLAG_UP ? uint8_t(1) : uint8_t(0);
+}
 
 void netif_set_status_callback(struct NetIfc *netif, netif_status_callback_fn status_callback);
 
@@ -448,41 +507,40 @@ constexpr auto LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x0200;
 /** @ingroup netif
  * Argument supplied to netif_ext_callback_fn.
  */
- union netif_ext_callback_args_t {
-  /** Args to LWIP_NSC_LINK_CHANGED callback */
-  struct link_changed {
-    /** 1: up; 0: down */
-    uint8_t state;
-  } ;
-  /** Args to LWIP_NSC_STATUS_CHANGED callback */
-  struct status_changed {
-    /** 1: up; 0: down */
-    uint8_t state;
-  } ;
-  /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED|LWIP_NSC_IPV4_GATEWAY_CHANGED|LWIP_NSC_IPV4_NETMASK_CHANGED|LWIP_NSC_IPV4_SETTINGS_CHANGED callback */
-  struct ipv4_changed {
-    /** Old IPv4 address */
-    const IpAddr *old_address;
-    const IpAddr *old_netmask;
-    const IpAddr *old_gw;
-  } ;
-  /** Args to LWIP_NSC_IPV6_SET callback */
-  struct ipv6_set {
-    /** Index of changed IPv6 address */
-    int8_t addr_index;
-    /** Old IPv6 address */
-    const IpAddr *old_address;
-  } ;
-  /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
-  struct ipv6_addr_state_changed_s {
-    /** Index of affected IPv6 address */
-    int8_t addr_index;
-    /** Old IPv6 address state */
-    uint8_t old_state;
-    /** Affected IPv6 address */
-    const IpAddr* address;
-  } ipv6_addr_state_changed;
-} ;
+union netif_ext_callback_args_t
+{
+    /** Args to LWIP_NSC_LINK_CHANGED callback */
+    struct link_changed
+    {
+        /** 1: up; 0: down */
+        uint8_t state;
+    }; /** Args to LWIP_NSC_STATUS_CHANGED callback */
+    struct status_changed
+    {
+        /** 1: up; 0: down */
+        uint8_t state;
+    }; /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED|LWIP_NSC_IPV4_GATEWAY_CHANGED|LWIP_NSC_IPV4_NETMASK_CHANGED|LWIP_NSC_IPV4_SETTINGS_CHANGED callback */
+    struct ipv4_changed
+    {
+        /** Old IPv4 address */
+        const IpAddr* old_address;
+        const IpAddr* old_netmask;
+        const IpAddr* old_gw;
+    }; /** Args to LWIP_NSC_IPV6_SET callback */
+    struct ipv6_set
+    {
+        /** Index of changed IPv6 address */
+        int8_t addr_index; /** Old IPv6 address */
+        const IpAddr* old_address;
+    }; /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
+    struct ipv6_addr_state_changed_s
+    {
+        /** Index of affected IPv6 address */
+        int8_t addr_index; /** Old IPv6 address state */
+        uint8_t old_state; /** Affected IPv6 address */
+        const IpAddr* address;
+    } ipv6_addr_state_changed;
+};
 
 /**
  * @ingroup netif
@@ -492,22 +550,21 @@ constexpr auto LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x0200;
  * @param reason change reason
  * @param args depends on reason, see reason description
  */
-typedef void(*netif_ext_callback_fn)(struct NetIfc *netif,
-                                     netif_nsc_reason_t reason,
-                                     const netif_ext_callback_args_t *args);
+typedef void (*netif_ext_callback_fn)(struct NetIfc* netif,
+                                      netif_nsc_reason_t reason,
+                                      const netif_ext_callback_args_t* args);
 
 struct netif_ext_callback_t
 {
-  netif_ext_callback_fn callback_fn;
-  struct netif_ext_callback_t* next;
-} ;
+    netif_ext_callback_fn callback_fn;
+    struct netif_ext_callback_t* next;
+};
 
 #define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn);
 void netif_remove_ext_callback(netif_ext_callback_t* callback);
 void netif_invoke_ext_callback(struct NetIfc* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 
-#ifdef __cplusplus
-}
-#endif
-
+//
+// END OF FILE
+//

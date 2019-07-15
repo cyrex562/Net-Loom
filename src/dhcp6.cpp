@@ -130,7 +130,7 @@ static LwipError
 dhcp6_inc_pcb_refcount(void)
 {
   if (dhcp6_pcb_refcount == 0) {
-    LWIP_ASSERT("dhcp6_inc_pcb_refcount(): memory leak", dhcp6_pcb == nullptr);
+    lwip_assert("dhcp6_inc_pcb_refcount(): memory leak", dhcp6_pcb == nullptr);
 
     /* allocate UDP PCB */
     dhcp6_pcb = udp_new_ip6();
@@ -155,7 +155,7 @@ dhcp6_inc_pcb_refcount(void)
 static void
 dhcp6_dec_pcb_refcount(void)
 {
-  LWIP_ASSERT("dhcp6_pcb_refcount(): refcount error", (dhcp6_pcb_refcount > 0));
+  lwip_assert("dhcp6_pcb_refcount(): refcount error", (dhcp6_pcb_refcount > 0));
   dhcp6_pcb_refcount--;
 
   if (dhcp6_pcb_refcount == 0) {
@@ -174,9 +174,9 @@ dhcp6_dec_pcb_refcount(void)
  */
 void dhcp6_set_struct(NetIfc** netif, struct Dhcp6* dhcp6)
 {
-    LWIP_ASSERT("netif != NULL", netif != nullptr);
-    LWIP_ASSERT("dhcp6 != NULL", dhcp6 != nullptr);
-    LWIP_ASSERT("netif already has a struct dhcp6 set",
+    lwip_assert("netif != NULL", netif != nullptr);
+    lwip_assert("dhcp6 != NULL", dhcp6 != nullptr);
+    lwip_assert("netif already has a struct dhcp6 set",
                 netif_dhcp6_data(netif) == nullptr); /* clear data structure */
     memset(dhcp6, 0, sizeof(struct Dhcp6)); /* dhcp6_set_state(&dhcp, DHCP6_STATE_OFF); */
     netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = dhcp6;
@@ -193,7 +193,7 @@ void dhcp6_set_struct(NetIfc** netif, struct Dhcp6* dhcp6)
  */
 void dhcp6_cleanup(NetIfc** netif)
 {
-    LWIP_ASSERT("netif != NULL", netif != nullptr);
+    lwip_assert("netif != NULL", netif != nullptr);
     if (netif_dhcp6_data(netif) != nullptr)
     {
         delete netif_dhcp6_data(netif);
@@ -390,7 +390,7 @@ static struct PacketBuffer* dhcp6_create_msg(NetIfc** netif,
              ("dhcp6_create_msg(): could not allocate pbuf\n"));
         return nullptr;
     }
-    LWIP_ASSERT("dhcp6_create_msg: check that first pbuf can hold struct dhcp6_msg",
+    lwip_assert("dhcp6_create_msg: check that first pbuf can hold struct dhcp6_msg",
                 (p_out->len >= sizeof(struct dhcp6_msg) + opt_len_alloc));
     /* @todo: limit new xid for certain message types? */
     /* reuse transaction identifier in retransmissions */
@@ -427,7 +427,7 @@ static uint16_t dhcp6_option_optionrequest(uint16_t options_out_len,
 {
     size_t i;
     uint16_t ret;
-    LWIP_ASSERT(
+    lwip_assert(
         "dhcp6_option_optionrequest: options_out_len + sizeof(struct dhcp6_msg) + addlen <= max_len",
         sizeof(struct dhcp6_msg) + options_out_len + 4U + (2U * num_req_options) <=
         max_len);
@@ -580,7 +580,7 @@ void dhcp6_nd6_ra_trigger(NetIfc** netif,
                           uint8_t other_config)
 {
     struct Dhcp6* dhcp6;
-    LWIP_ASSERT("netif != NULL", netif != nullptr);
+    lwip_assert("netif != NULL", netif != nullptr);
     dhcp6 = netif_dhcp6_data(netif);
 #if LWIP_IPV6_DHCP6_STATELESS
   if (dhcp6 != NULL) {
@@ -690,7 +690,7 @@ static void dhcp6_recv(void* arg,
     {
         goto free_pbuf_and_return;
     } // LWIP_ERROR("invalid server address type", IpIsV6(addr), goto free_pbuf_and_return;);
-    if (!IpIsV6(addr))
+    if (!is_ip_v6(addr))
     {
         printf("invalid server address type\n");
         goto free_pbuf_and_return;

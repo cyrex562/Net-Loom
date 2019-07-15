@@ -76,10 +76,10 @@ char *ipaddr_ntoa(const IpAddr *addr)
   if (addr == nullptr) {
     return nullptr;
   }
-  if (IpIsV6(addr)) {
-    return ip6addr_ntoa(IpAddrToIp6Addr(addr));
+  if (is_ip_v6(addr)) {
+    return ip6addr_ntoa(ConvertIpAddrToIp6Addr(addr));
   } else {
-    return ip4addr_ntoa(IpAddrToIp4Addr(addr));
+    return ip4addr_ntoa(convert_ip_addr_to_ip4_addr(addr));
   }
 }
 
@@ -98,10 +98,10 @@ char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
   if (addr == nullptr) {
     return nullptr;
   }
-  if (IpIsV6(addr)) {
-    return ip6addr_ntoa_r(IpAddrToIp6Addr(addr), buf, buflen);
+  if (is_ip_v6(addr)) {
+    return ip6addr_ntoa_r(ConvertIpAddrToIp6Addr(addr), buf, buflen);
   } else {
-    return ip4addr_ntoa_r(IpAddrToIp4Addr(addr), buf, buflen);
+    return ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf, buflen);
   }
 }
 
@@ -123,9 +123,9 @@ ipaddr_aton(const char *cp, IpAddr *addr)
       if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {
-          IpAdderSetTypeVal(*addr, IPADDR_TYPE_V6);
+          set_ip_addr_type_val(*addr, IPADDR_TYPE_V6);
         }
-        return ip6addr_aton(cp, IpAddrToIp6Addr(addr));
+        return ip6addr_aton(cp, ConvertIpAddrToIp6Addr(addr));
       } else if (*c == '.') {
         /* contains a dot: IPv4 address */
         break;
@@ -133,9 +133,9 @@ ipaddr_aton(const char *cp, IpAddr *addr)
     }
     /* call ip4addr_aton as fallback or if IPv4 was found */
     if (addr) {
-      IpAdderSetTypeVal(*addr, IPADDR_TYPE_V4);
+      set_ip_addr_type_val(*addr, IPADDR_TYPE_V4);
     }
-    return ip4addr_aton(cp, IpAddrToIp4Addr(addr));
+    return ip4addr_aton(cp, convert_ip_addr_to_ip4_addr(addr));
   }
   return 0;
 }
@@ -149,7 +149,7 @@ LwipError
 ip_input(struct PacketBuffer *p, NetIfc*inp)
 {
   if (p != nullptr) {
-    if (IpHdrGetVersion(p->payload) == 6) {
+    if (get_ip_hdr_version(p->payload) == 6) {
       return ip6_input(p, inp);
     }
     return ip4_input(p, inp);
