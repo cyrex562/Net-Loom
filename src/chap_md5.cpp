@@ -30,7 +30,6 @@
 
 #include "ppp_opts.h"
 #include "ppp_impl.h"
-#include "chap_new.h"
 #include "chap_md5.h"
 #include "magic.h"
 #include "pppcrypt.h"

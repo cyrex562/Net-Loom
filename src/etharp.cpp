@@ -683,10 +683,10 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
     auto hdr = static_cast<struct EtharpHdr *>(p->payload);
 
     /* RFC 826 "Packet Reception": */
-    if ((hdr->hwtype != PpHtons(LWIP_IANA_HWTYPE_ETHERNET)) ||
+    if ((hdr->hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) ||
         (hdr->hwlen != ETH_HWADDR_LEN) ||
         (hdr->protolen != sizeof(Ip4Addr)) ||
-        (hdr->proto != PpHtons(ETHTYPE_IP)))
+        (hdr->proto != pp_htons(ETHTYPE_IP)))
     {
         //    Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
         //                ("etharp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
@@ -732,7 +732,7 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
     switch (hdr->opcode)
     {
         /* ARP request? */
-    case PpHtons(ARP_REQUEST):
+    case pp_htons(ARP_REQUEST):
         /* ARP request. If it asked for our address, we send out a
          * reply. In any case, we time-stamp any existing ARP entry,
          * and possibly send out an IP packet that was queued on it. */
@@ -761,7 +761,7 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
             Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: ARP request was not for us.\n"));
         }
         break;
-    case PpHtons(ARP_REPLY):
+    case pp_htons(ARP_REPLY):
         /* ARP reply. We already updated the ARP cache earlier. */
         Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: incoming ARP reply\n"));
 
@@ -1202,8 +1202,8 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
     IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, ipsrc_addr);
     IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, ipdst_addr);
 
-    hdr->hwtype = PpHtons(LWIP_IANA_HWTYPE_ETHERNET);
-    hdr->proto = PpHtons(ETHTYPE_IP);
+    hdr->hwtype = pp_htons(LWIP_IANA_HWTYPE_ETHERNET);
+    hdr->proto = pp_htons(ETHTYPE_IP);
     /* set hwlen and protolen */
     hdr->hwlen = ETH_HWADDR_LEN;
     hdr->protolen = sizeof(Ip4Addr);

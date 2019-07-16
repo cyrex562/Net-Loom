@@ -77,7 +77,7 @@ constexpr auto IPV6_CUSTOM_SCOPES = 0;
 
 inline bool ip6_addr_islinklocal(const Ip6Addr* ip6_addr)
 {
-    return (ip6_addr->addr[0] & PP_HTONL(0xffc00000UL)) == PP_HTONL(0xfe800000UL);
+    return (ip6_addr->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfe800000UL);
 }
 
 #define ip6_addr_ismulticast_iflocal(ip6addr) \
@@ -302,7 +302,7 @@ inline void ip6_addr_set_loopback(Ip6Addr* ip6addr) {
   (ip6addr)->addr[0] = 0;
   (ip6addr)->addr[1] = 0;
   (ip6addr)->addr[2] = 0;
-  (ip6addr)->addr[3] = PP_HTONL(0x00000001UL);
+  (ip6addr)->addr[3] = pp_htonl(0x00000001UL);
   ip6_addr_clear_zone(ip6addr);
 }
 
@@ -369,7 +369,7 @@ inline bool ip6_addr_isany(Ip6Addr* ip6_addr) {
 inline bool ip6_addr_isloopback(Ip6Addr* ip6_addr) {
   return (((ip6_addr)->addr[0] == 0UL) && ((ip6_addr)->addr[1] == 0UL) &&
           ((ip6_addr)->addr[2] == 0UL) &&
-          ((ip6_addr)->addr[3] == PP_HTONL(0x00000001UL)));
+          ((ip6_addr)->addr[3] == pp_htonl(0x00000001UL)));
 }
 
 #define ip6_addr_isglobal(ip6addr) \
@@ -386,7 +386,7 @@ inline bool ip6_addr_isloopback(Ip6Addr* ip6_addr) {
    (((ip6addr)->addr[2]) == PP_HTONL(0x0000FFFFUL)))
 
 inline bool ip6_addr_ismulticast(Ip6Addr* ip6_addr) {
-  return (ip6_addr->addr[0] & PP_HTONL(0xff000000UL)) == PP_HTONL(0xff000000UL);
+  return (ip6_addr->addr[0] & pp_htonl(0xff000000UL)) == pp_htonl(0xff000000UL);
 }
 
 #define ip6_addr_multicast_transient_flag(ip6addr) \
@@ -433,14 +433,15 @@ inline bool ip6_addr_ismulticast(Ip6Addr* ip6_addr) {
   (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) &&             \
    ((ip6addr)->addr[1] == 0UL) && ((ip6addr)->addr[2] == 0UL) && \
    ((ip6addr)->addr[3] == PP_HTONL(0x00000001UL)))
-#define ip6_addr_set_allnodes_linklocal(ip6addr) \
-  do {                                           \
-    (ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
-    (ip6addr)->addr[1] = 0;                      \
-    (ip6addr)->addr[2] = 0;                      \
-    (ip6addr)->addr[3] = PP_HTONL(0x00000001UL); \
-    ip6_addr_clear_zone(ip6addr);                \
-  } while (0)
+
+inline void ip6_addr_set_allnodes_linklocal(Ip6Addr* ip6addr)
+{
+    (ip6addr)->addr[0] = pp_htonl(0xff020000UL);
+    (ip6addr)->addr[1] = 0;
+    (ip6addr)->addr[2] = 0;
+    (ip6addr)->addr[3] = pp_htonl(0x00000001UL);
+    ip6_addr_clear_zone(ip6addr);
+}
 
 #define ip6_addr_isallrouters_linklocal(ip6addr)                 \
   (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) &&             \

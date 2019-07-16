@@ -75,8 +75,8 @@ inline bool IsIp4ClassB(const uint32_t a)
     return (uint32_t(a) & 0xc0000000UL) == 0x80000000UL;
 }
 
-#define IP_CLASSB_NET       0xffff0000
-#define IP_CLASSB_NSHIFT    16
+constexpr auto IP_CLASSB_NET = 0xffff0000;
+constexpr auto IP_CLASSB_NSHIFT = 16;
 #define IP_CLASSB_HOST      (0xffffffff & ~IP_CLASSB_NET)
 #define IP_CLASSB_MAX       65536
 
@@ -98,7 +98,7 @@ inline bool IsIp4ClassB(const uint32_t a)
 
 /** Set an IP address given by the four byte-parts */
 inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
-    (ipaddr)->addr = PP_HTONL(LwipMakeu32(a, b, c, d));
+    (ipaddr)->addr = pp_htonl(make_u32(a, b, c, d));
 }
 
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
@@ -127,14 +127,14 @@ inline void ip4_addr_set_any(Ip4Addr* ipaddr)
 /** Set address to loopback address */
 inline void ip4_addr_set_loopback(Ip4Addr* ipaddr)
 {
-    ((ipaddr)->addr = PP_HTONL(kIpaddrLoopback));
+    ((ipaddr)->addr = pp_htonl(kIpaddrLoopback));
 }
 
 
 /** Check if an address is in the loopback region */
-inline bool ip4_addr_isloopback(Ip4Addr* ipaddr)
+inline bool ip4_addr_isloopback(const Ip4Addr* ipaddr)
 {
-    return (ipaddr->addr & PP_HTONL(Ip4ClassANet)) == PP_HTONL(
+    return (ipaddr->addr & pp_htonl(Ip4ClassANet)) == pp_htonl(
         uint32_t(IP_LOOPBACKNET) << 24);
 }
 
@@ -198,7 +198,7 @@ inline bool ip4_addr_isany(const Ip4Addr* addr1)
 uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetIfc *netif);
 
 
-inline bool ip4_addr_isbroadcast(Ip4Addr *addr1, NetIfc *netif) {
+inline bool ip4_addr_isbroadcast(const Ip4Addr *addr1, const NetIfc *netif) {
   return ip4_addr_isbroadcast_u32((addr1)->addr, netif);
 }
 
@@ -206,14 +206,14 @@ inline bool ip4_addr_isbroadcast(Ip4Addr *addr1, NetIfc *netif) {
 #define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
 uint8_t ip4_addr_netmask_valid(uint32_t netmask);
 
-inline bool ip4_addr_ismulticast(Ip4Addr* addr1)
+inline bool ip4_addr_ismulticast(const Ip4Addr* addr1)
 {
-    return (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL));
+    return (((addr1)->addr & pp_htonl(0xf0000000UL)) == pp_htonl(0xe0000000UL));
 }
 
-inline bool ip4_addr_islinklocal(Ip4Addr* addr1)
+inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
 {
-    return (addr1->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL);
+    return (addr1->addr & pp_htonl(0xffff0000UL)) == pp_htonl(0xa9fe0000UL);
 }
 
 #define ip4_addr_debug_print_parts(debug, a, b, c, d) \

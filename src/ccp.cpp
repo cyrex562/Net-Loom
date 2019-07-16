@@ -396,9 +396,9 @@ static void ccp_resetci(Fsm* f, PppPcb* pcb)
 /*
  * ccp_cilen - Return total length of our configuration info.
  */
-static size_t ccp_cilen(PppPcb* PppPcb)
+static size_t ccp_cilen(PppPcb* ppp_pcb)
 {
-    auto go = &PppPcb->ccp_gotoptions;
+    auto go = &ppp_pcb->ccp_gotoptions;
 
     return 0
         + (go->bsd_compress ? CILEN_BSD_COMPRESS : 0)
@@ -579,7 +579,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
 {
     // PppPcb* pcb = f->pcb;
     auto go = &pcb->ccp_gotoptions;
-    CcpOptions no; /* options we've seen already */
+    CcpOptions no{}; /* options we've seen already */
     memset(&no, 0, sizeof(no));
     auto try_ = *go;
 
@@ -1226,3 +1226,7 @@ static void ccp_rack_timeout(void* arg)
     else
         args->pcb->ccp_localstate &= ~kRackPending;
 }
+
+//
+// END OF FILE
+//

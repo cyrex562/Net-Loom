@@ -67,7 +67,7 @@ extern "C" {
 #define lwip_md5_free(context)
 
 #include "sha1.h"
-#define lwip_sha1_context sha1_context
+#define lwip_sha1_context Sha1Context
 #define lwip_sha1_init(context)
 #define lwip_sha1_starts sha1_starts
 #define lwip_sha1_update sha1_update

@@ -13,7 +13,7 @@ extern "C" {
 /* Get the number of entries in an array ('x' must NOT be a pointer!) */
 #define LWIP_ARRAYSIZE(x) (sizeof(x)/sizeof((x)[0]))  // NOLINT(cppcoreguidelines-macro-usage)
 
-inline uint32_t LwipMakeu32(const uint8_t a,
+inline uint32_t make_u32(const uint8_t a,
                             const uint8_t b,
                             const uint8_t c,
                             const uint8_t d)
@@ -24,16 +24,16 @@ inline uint32_t LwipMakeu32(const uint8_t a,
         uint32_t(d & 0xff);
 }
 
-inline uint16_t PpHtons(const uint16_t x)
+inline uint16_t pp_htons(const uint16_t x)
 {
     return uint16_t((x & uint16_t(0x00ffU)) << 8 | (x & uint16_t(0xff00U)) >> 8);
 }
 
-inline uint16_t PpNtohs(const uint16_t x) {
-    return PpHtons(x);
+inline uint16_t pp_ntohs(const uint16_t x) {
+    return pp_htons(x);
 }
 
-inline uint32_t PP_HTONL(const uint32_t x)
+inline uint32_t pp_htonl(const uint32_t x)
 {
     return (x & uint32_t(0x000000ffUL)) << 24 |
         (x & uint32_t(0x0000ff00UL)) << 8 |
@@ -41,8 +41,8 @@ inline uint32_t PP_HTONL(const uint32_t x)
         (x & uint32_t(0xff000000UL)) >> 24;
 }
 
-inline uint32_t PpNtohl(const uint32_t x) {
-    return PP_HTONL(x);
+inline uint32_t pp_ntohl(const uint32_t x) {
+    return pp_htonl(x);
 }
 
     /* Functions that are not available as standard implementations.

@@ -45,7 +45,7 @@ inline IpAddr IpAddr4InitBytes(const uint8_t a,
                                const uint8_t c,
                                const uint8_t d)
 {
-    return Ipaddr4Init(PP_HTONL(LwipMakeu32(a, b, c, d)));
+    return Ipaddr4Init(pp_htonl(make_u32(a, b, c, d)));
 }
 
 inline IpAddr Ipaddr6Init(const uint32_t a,
@@ -62,7 +62,7 @@ inline IpAddr Ipaddr6InitHost(const uint32_t a,
                               const uint32_t d)
 {
     return {
-            {{{PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d)}, kIp6NoZone}},
+            {{{pp_htonl(a), pp_htonl(b), pp_htonl(c), pp_htonl(d)}, kIp6NoZone}},
         IPADDR_TYPE_V6
     };
 }
@@ -512,7 +512,7 @@ int ipaddr_aton(const char* cp, IpAddr* addr);
 inline void ip4_2_ipv4_mapped_ipv6(Ip6Addr* ip6_addr, Ip4Addr* ip4addr)
 {
     (ip6_addr)->addr[3] = (ip4addr)->addr;
-    (ip6_addr)->addr[2] = PP_HTONL(0x0000FFFFUL);
+    (ip6_addr)->addr[2] = pp_htonl(0x0000FFFFUL);
     (ip6_addr)->addr[1] = 0;
     (ip6_addr)->addr[0] = 0;
     ip6_addr_clear_zone(ip6_addr);
@@ -535,7 +535,7 @@ inline void IP_ADDR6(IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint
 
 inline void IP_ADDR6_HOST(struct IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
 {
-    IP_ADDR6(ipaddr, PP_HTONL(i0), PP_HTONL(i1), PP_HTONL(i2), PP_HTONL(i3));
+    IP_ADDR6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
 }
 
 extern const IpAddr kIpAddrAny;

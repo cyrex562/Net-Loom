@@ -132,7 +132,7 @@ void ccp_input(PppPcb* pcb, uint8_t* pkt, int len, Protent** protocols);
 void ccp_protrej(PppPcb* pcb);
 void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
 void ccp_resetci(Fsm*, PppPcb* pcb);
-size_t ccp_cilen(PppPcb* PppPcb);
+size_t ccp_cilen(PppPcb* ppp_pcb);
 void ccp_addci(Fsm*, uint8_t*, int*, PppPcb* pcb);
 int ccp_ackci(Fsm*, uint8_t*, int, PppPcb* pcb);
 int ccp_nakci(Fsm*, const uint8_t*, int, int, PppPcb* pcb);

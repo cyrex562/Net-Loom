@@ -38,11 +38,10 @@
 #pragma once
 
 #include "arch.h"
-
 #include "ip4.h"
-
 #include "opt.h"
-
+#include "netif.h"
+#include "udp.h"
 
 /* DHCP message item offsets and length */
 #define DHCP_CHADDR_LEN   16U
@@ -56,8 +55,6 @@
 
 /** set this to be sufficient for your options in outgoing DHCP msgs */
 #define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
-    
-
 
 /** minimum set of fields of any DHCP message */
 struct DhcpMsg
@@ -69,10 +66,10 @@ struct DhcpMsg
     uint32_t xid;
     uint16_t secs;
     uint16_t flags;
-    Ip4AddrPT ciaddr;
-    Ip4AddrPT yiaddr;
-    Ip4AddrPT siaddr;
-    Ip4AddrPT giaddr;
+    Ip4Addr ciaddr;
+    Ip4Addr yiaddr;
+    Ip4Addr siaddr;
+    Ip4Addr giaddr;
     uint8_t chaddr[DHCP_CHADDR_LEN];
     uint8_t sname[DHCP_SNAME_LEN];
     uint8_t file[DHCP_FILE_LEN];
@@ -80,10 +77,8 @@ struct DhcpMsg
     uint8_t options[DHCP_OPTIONS_LEN];
 };
 
-
-
 /* DHCP client states */
-enum dhcp_state_enum_t
+enum DhcpStateEnum
 {
     DHCP_STATE_OFF = 0,
     DHCP_STATE_REQUESTING = 1,
@@ -160,12 +155,7 @@ enum dhcp_state_enum_t
 #define DHCP_OVERLOAD_SNAME         2
 #define DHCP_OVERLOAD_SNAME_FILE    3
 
-#include "netif.h"
-#include "udp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS  60
@@ -239,9 +229,8 @@ void dhcp_fine_tmr(void);
  * See LWIP_DHCP_MAX_NTP_SERVERS */
 extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
 
-
-#define netif_dhcp_data(netif) ((struct dhcp*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP))
-
-#ifdef __cplusplus
+inline DhcpContext* netif_dhcp_data(NetIfc* netif)
+{
+    return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
 }
-#endif
+

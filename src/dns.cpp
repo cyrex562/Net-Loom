@@ -674,7 +674,7 @@ static LwipError dns_send(const uint8_t idx)
         memset(&hdr, 0, SIZEOF_DNS_HDR);
         hdr.id = lwip_htons(entry->txid);
         hdr.flags1 = DNS_FLAG1_RD;
-        hdr.numquestions = PpHtons(1);
+        hdr.numquestions = pp_htons(1);
         pbuf_take(p, &hdr, SIZEOF_DNS_HDR);
         const char* hostname = entry->name;
         --hostname; /* convert hostname into suitable query format. */
@@ -705,13 +705,13 @@ static LwipError dns_send(const uint8_t idx)
         query_idx++; /* fill dns query */
         if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
         {
-            qry.type = PpHtons(DNS_RRTYPE_AAAA);
+            qry.type = pp_htons(DNS_RRTYPE_AAAA);
         }
         else
         {
-            qry.type = PpHtons(DNS_RRTYPE_A);
+            qry.type = pp_htons(DNS_RRTYPE_A);
         }
-        qry.cls = PpHtons(DNS_RRCLASS_IN);
+        qry.cls = pp_htons(DNS_RRCLASS_IN);
         pbuf_take_at(p, &qry, SIZEOF_DNS_QUERY, query_idx);
         pcb_idx = entry->pcb_idx; /* send dns packet */ // Logf(DNS_DEBUG,
         //      ("sending DNS request ID %d for name \"%s\" to server %d\r\n", entry->txid,
@@ -1121,10 +1121,10 @@ static void dns_recv(void* arg,
                 {
                     goto ignore_packet; /* ignore this packet */
                 }
-                if ((qry.cls != PpHtons(DNS_RRCLASS_IN)) || (
+                if ((qry.cls != pp_htons(DNS_RRCLASS_IN)) || (
                     LwipDnsAddrtypeIsIpv6(entry->reqaddrtype) && (qry.type !=
-                        PpHtons(DNS_RRTYPE_AAAA))) || (!
-                    LwipDnsAddrtypeIsIpv6(entry->reqaddrtype) && (qry.type != PpHtons(
+                        pp_htons(DNS_RRTYPE_AAAA))) || (!
+                    LwipDnsAddrtypeIsIpv6(entry->reqaddrtype) && (qry.type != pp_htons(
                         DNS_RRTYPE_A))))
                 {
                     Logf(DNS_DEBUG,
@@ -1173,10 +1173,10 @@ static void dns_recv(void* arg,
                             goto ignore_packet;
                         }
                         res_idx = (uint16_t)(res_idx + SIZEOF_DNS_ANSWER);
-                        if (ans.cls == PpHtons(DNS_RRCLASS_IN))
+                        if (ans.cls == pp_htons(DNS_RRCLASS_IN))
                         {
-                            if ((ans.type == PpHtons(DNS_RRTYPE_A)) && (ans.len ==
-                                PpHtons(sizeof(Ip4Addr))))
+                            if ((ans.type == pp_htons(DNS_RRTYPE_A)) && (ans.len ==
+                                pp_htons(sizeof(Ip4Addr))))
                             {
                                 if (!LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
                                 {
@@ -1196,8 +1196,8 @@ static void dns_recv(void* arg,
                                     return;
                                 }
                             }
-                            if ((ans.type == PpHtons(DNS_RRTYPE_AAAA)) && (ans.len ==
-                                PpHtons(sizeof(Ip6AddrPT))))
+                            if ((ans.type == pp_htons(DNS_RRTYPE_AAAA)) && (ans.len ==
+                                pp_htons(sizeof(Ip6AddrPT))))
                             {
                                 if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
                                 {

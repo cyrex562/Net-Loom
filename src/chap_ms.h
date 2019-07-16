@@ -77,8 +77,8 @@ extern const struct ChapDigestType kChapms2Digest;
 
 static void	ascii2unicode (const char[], int, uint8_t[]);
 static void	NTPasswordHash (uint8_t *, int, uint8_t[MD4_SIGNATURE_SIZE]);
-static void	ChallengeResponse (const uint8_t *, const uint8_t *, uint8_t[24]);
-static void	ChallengeHash (const uint8_t[16], const uint8_t *, const char *, uint8_t[8]);
+static void	challenge_response (const uint8_t *, const uint8_t *, uint8_t[24]);
+static void	challenge_hash (const uint8_t[16], const uint8_t *, const char *, uint8_t[8]);
 static void	ChapMS_NT (const uint8_t *, const char *, int, uint8_t[24]);
 static void	ChapMS2_NT (const uint8_t *, const uint8_t[16], const char *, const char *, int,
 				uint8_t[24]);

@@ -33,21 +33,17 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #pragma once
-#include "ppp_opts.h"
-
-
-#define DES_ENCRYPT     1
-#define DES_DECRYPT     0
+constexpr auto kDesEncrypt = 1;
+constexpr auto kDesDecrypt = 0;
 
 /**
  * \brief          DES context structure
  */
-typedef struct
+struct des_context
 {
-    int mode;                   /*!<  encrypt/decrypt   */
-    unsigned long sk[32];       /*!<  DES subkeys       */
-}
-des_context;
+    int mode; /*!<  encrypt/decrypt   */
+    unsigned long sk[32]; /*!<  DES subkeys       */
+};
 
 #ifdef __cplusplus
 extern "C" {

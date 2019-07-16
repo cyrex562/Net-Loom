@@ -27,12 +27,12 @@ uint8_t bridgeif_netif_client_id = 0xff;
  * bit [BRIDGEIF_MAX_PORTS]: cpu port
  * 0: drop
  */
-LwipError bridgeif_fdb_add(NetIfc** bridgeif,
+LwipError bridgeif_fdb_add(NetIfc* bridgeif,
                            const struct EthAddr* addr,
                            const BridgeIfcPortMask ports)
 {
     lwip_assert("invalid netif", bridgeif != nullptr);
-    auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
+    const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
     lwip_assert("invalid state", br != nullptr);
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
@@ -54,10 +54,10 @@ LwipError bridgeif_fdb_add(NetIfc** bridgeif,
  * @ingroup bridgeif
  * Remove a static entry from the forwarding database
  */
-LwipError bridgeif_fdb_remove(NetIfc** bridgeif, const struct EthAddr* addr)
+LwipError bridgeif_fdb_remove(NetIfc* bridgeif, const struct EthAddr* addr)
 {
     lwip_assert("invalid netif", bridgeif != nullptr);
-    auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
+    const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
     lwip_assert("invalid state", br != nullptr);
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
@@ -86,7 +86,7 @@ static BridgeIfcPortMask bridgeif_find_dst_ports(BridgeIfcPrivate* br,
         {
             if (!memcmp(&br->fdbs[i].addr, dst_addr, sizeof(struct EthAddr)))
             {
-                auto ret = br->fdbs[i].dst_ports;
+                const auto ret = br->fdbs[i].dst_ports;
                 return ret;
             }
         }
@@ -172,7 +172,7 @@ static LwipError bridgeif_send_to_ports(BridgeIfcPrivate* br,
     {
         if (dstports & mask)
         {
-            auto err = bridgeif_send_to_port(br, p, i);
+            const auto err = bridgeif_send_to_port(br, p, i);
             if (err != ERR_OK)
             {
                 ret_err = err;
@@ -187,12 +187,12 @@ static LwipError bridgeif_send_to_ports(BridgeIfcPrivate* br,
  * The forwarding port(s) where this PacketBuffer is sent on is/are automatically selected
  * from the FDB.
  */
-LwipError bridgeif_output(NetIfc** netif, struct PacketBuffer* p)
+LwipError bridgeif_output(NetIfc* netif, struct PacketBuffer* p)
 {
-    auto br = static_cast<BridgeIfcPrivate *>(netif->state);
-    auto dst = static_cast<struct EthAddr *>(p->payload);
-    auto dstports = bridgeif_find_dst_ports(br, dst);
-    auto err = bridgeif_send_to_ports(br, p, dstports);
+    const auto br = static_cast<BridgeIfcPrivate *>(netif->state);
+    const auto dst = static_cast<struct EthAddr *>(p->payload);
+    const auto dstports = bridgeif_find_dst_ports(br, dst);
+    const auto err = bridgeif_send_to_ports(br, p, dstports);
     if (static_cast<uint8_t *>(p->payload)[0] & 1)
     {
         /* broadcast or multicast packet*/
@@ -207,14 +207,14 @@ LwipError bridgeif_output(NetIfc** netif, struct PacketBuffer* p)
 /** The actual bridge input function. Port netif's input is changed to call
  * here. This function decides where the frame is forwarded.
  */
-static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc** netif)
+static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
 {
     BridgeIfcPortMask dstports;
     if (p == nullptr || netif == nullptr)
     {
         return ERR_VAL;
     }
-    auto port = static_cast<BridgeIfcPort *>(NetIfcGetClientData(
+    const auto port = static_cast<BridgeIfcPort *>(NetIfcGetClientData(
         netif,
         bridgeif_netif_client_id));
     lwip_assert("port data not set", port != nullptr);
@@ -275,8 +275,7 @@ static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc** netif)
 
 /** Input function for port netifs used to synchronize into tcpip_thread.
  */
-static LwipError
-bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc** netif)
+static LwipError bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif)
 {
     return tcpip_inpkt(p, netif, bridgeif_input);
 }
@@ -294,7 +293,7 @@ bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc** netif)
  *         ERR_MEM if private data couldn't be allocated
  *         any other LwipError on error
  */
-LwipError bridgeif_init(NetIfc** netif)
+LwipError bridgeif_init(NetIfc* netif)
 {
     lwip_assert("netif != NULL", (netif != nullptr));
     lwip_assert("bridgeif needs an input callback", (netif->input != nullptr));
@@ -383,7 +382,7 @@ LwipError bridgeif_init(NetIfc** netif)
      * Should set mld_mac_filter previously. */
     if (netif->mld_mac_filter != nullptr)
     {
-        Ip6Addr ip6_allnodes_ll;
+        Ip6Addr ip6_allnodes_ll{};
         ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
         netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
     }
@@ -394,7 +393,7 @@ LwipError bridgeif_init(NetIfc** netif)
  * @ingroup bridgeif
  * Add a port to the bridge
  */
-LwipError bridgeif_add_port(NetIfc** bridgeif, NetIfc** portif)
+LwipError bridgeif_add_port(NetIfc* bridgeif, NetIfc* portif)
 {
     lwip_assert("bridgeif != NULL", bridgeif != nullptr);
     lwip_assert("bridgeif->state != NULL", bridgeif->state != nullptr);

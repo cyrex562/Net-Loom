@@ -11,7 +11,7 @@
 // Pseudo random macro based on netif informations.
 // You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
 //
-inline uint32_t AutoipGenRand(NetIfc* netif)
+inline uint32_t autoip_gen_rand(NetIfc* netif)
 {
     return (uint32_t(netif->hwaddr[5] & 0xff) << 24 | uint32_t(netif->hwaddr[3] & 0xff) <<
             16 | uint32_t(netif->hwaddr[2] & 0xff) << 8 | uint32_t(
@@ -24,9 +24,9 @@ inline uint32_t AutoipGenRand(NetIfc* netif)
 // Macro that generates the initial IP address to be tried by AUTOIP.
 // If you want to override this, define it to something else in lwipopts.h.
 //
-inline uint32_t AutoipGenSeedAddr(NetIfc* netif)
+inline uint32_t autoip_gen_seed_addr(NetIfc* netif)
 {
-    return lwip_htonl(AUTOIP_RANGE_START + uint32_t(
+    return lwip_htonl(kAutoipRangeStart + uint32_t(
         uint8_t(netif->hwaddr[4]) | uint32_t(uint8_t(netif->hwaddr[5])) << 8));
 }
 
@@ -89,7 +89,7 @@ bool autoip_handle_arp_conflict(NetIfc* netif)
     else
     {
         autoip_arp_announce(netif);
-        autoip->lastconflict = DEFEND_INTERVAL * AUTOIP_TICKS_PER_SECOND;
+        autoip->lastconflict = kDefendInterval * kAutoipTicksPerSecond;
     }
     return true;
 }
@@ -106,19 +106,19 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
     /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
       * compliant to RFC 3927 Section 2.1
       * We have 254 * 256 possibilities */
-    auto addr = lwip_ntohl(AutoipGenSeedAddr(netif));
+    auto addr = lwip_ntohl(autoip_gen_seed_addr(netif));
     addr += autoip->tried_llipaddr;
-    addr = AUTOIP_NET | (addr & 0xffff); /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
-    if (addr < AUTOIP_RANGE_START)
+    addr = kAutoipNet | (addr & 0xffff); /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
+    if (addr < kAutoipRangeStart)
     {
-        addr += AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
+        addr += kAutoipRangeEnd - kAutoipRangeStart + 1;
     }
-    if (addr > AUTOIP_RANGE_END)
+    if (addr > kAutoipRangeEnd)
     {
-        addr -= AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
+        addr -= kAutoipRangeEnd - kAutoipRangeStart + 1;
     }
     lwip_assert("AUTOIP address not in range",
-                (addr >= AUTOIP_RANGE_START) && (addr <= AUTOIP_RANGE_END));
+                (addr >= kAutoipRangeStart) && (addr <= kAutoipRangeEnd));
     SetIp4AddrU32(ipaddr, lwip_htonl(addr));
 
     return true;
@@ -154,7 +154,7 @@ autoip_arp_announce(NetIfc* netif)
 //
 static LwipError autoip_bind(NetIfc* netif)
 {
-    struct AutoipState* autoip = netif_autoip_data(netif);
+    auto autoip = netif_autoip_data(netif);
     Ip4Addr sn_mask{};
     Ip4Addr gw_addr{};
     Ipv4AddrFromBytes(&sn_mask, 255, 255, 0, 0);
@@ -172,13 +172,15 @@ static LwipError autoip_bind(NetIfc* netif)
  */
 LwipError autoip_start(NetIfc* netif)
 {
-    struct AutoipState* autoip = netif_autoip_data(netif);
-    LwipError result = ERR_OK;
-    LWIP_ASSERT_CORE_LOCKED();
+    auto autoip = netif_autoip_data(netif);
+    const LwipError result = ERR_OK;
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
-      * ARP Packets are formed correctly
-      */
-    netif_set_addr(netif, &kIpAddrAny.u_addr.ip4, &kIpAddrAny.u_addr.ip4, &kIpAddrAny.u_addr.ip4);
+         * ARP Packets are formed correctly
+         */
+    netif_set_addr(netif,
+                   &kIpAddrAny.u_addr.ip4,
+                   &kIpAddrAny.u_addr.ip4,
+                   &kIpAddrAny.u_addr.ip4);
     if (autoip == nullptr)
     {
         /* no AutoIP client attached yet? */
@@ -197,33 +199,29 @@ LwipError autoip_start(NetIfc* netif)
         autoip->sent_num = 0;
         ip4_addr_set_zero(&autoip->llipaddr);
         autoip->lastconflict = 0;
-    }
-    // todo: check result
-    autoip_create_addr(netif, &(autoip->llipaddr));
-    // todo: check result
+    } // todo: check result
+    autoip_create_addr(netif, &(autoip->llipaddr)); // todo: check result
     autoip_start_probing(netif);
     return result;
 }
 
 static bool autoip_start_probing(NetIfc* netif)
 {
-    auto autoip = netif_autoip_data(netif);
+    const auto autoip = netif_autoip_data(netif);
     autoip->state = AUTOIP_STATE_PROBING;
     autoip->sent_num = 0; /* time to wait to first probe, this is randomly
    * chosen out of 0 to PROBE_WAIT seconds.
    * compliant to RFC 3927 Section 2.2.1
    */
-    autoip->ttw = (uint16_t)(AutoipGenRand(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND
-    )); /*
+    autoip->ttw = uint16_t(autoip_gen_rand(netif) % (kProbeWait * kAutoipTicksPerSecond)); /*
    * if we tried more then MAX_CONFLICTS we must limit our rate for
    * acquiring and probing address
    * compliant to RFC 3927 Section 2.2.1
    */
-    if (autoip->tried_llipaddr > MAX_CONFLICTS)
+    if (autoip->tried_llipaddr > kMaxConflicts)
     {
-        autoip->ttw = RATE_LIMIT_INTERVAL * AUTOIP_TICKS_PER_SECOND;
+        autoip->ttw = kRateLimitInterval * kAutoipTicksPerSecond;
     }
-
     return true;
 }
 
@@ -240,7 +238,6 @@ bool autoip_network_changed(NetIfc* netif)
     {
         autoip_start_probing(netif);
     }
-
     return true;
 }
 
@@ -276,7 +273,7 @@ void autoip_tmr(void)
     // loop through netif's
     for (auto netif = netif_list; (netif) != nullptr; netif = netif->next)
     {
-        auto autoip = netif_autoip_data(netif);
+        const auto autoip = netif_autoip_data(netif);
         /* only act on AutoIP configured interfaces */
         if (autoip != nullptr)
         {
@@ -293,32 +290,33 @@ void autoip_tmr(void)
             case AUTOIP_STATE_PROBING:
                 if (autoip->ttw == 0)
                 {
-                    if (autoip->sent_num >= PROBE_NUM)
+                    if (autoip->sent_num >= kProbeNum)
                     {
                         /* Switch to ANNOUNCING: now we can bind to an IP address and use it */
                         autoip->state = AUTOIP_STATE_ANNOUNCING;
                         autoip_bind(netif);
                         /* autoip_bind() calls netif_set_addr(): this triggers a gratuitous ARP
-                                                               which counts as an announcement */
+                                                                                      which counts as an announcement */
                         autoip->sent_num = 1;
-                        autoip->ttw = ANNOUNCE_WAIT * AUTOIP_TICKS_PER_SECOND;
+                        autoip->ttw = kAnnounceWait * kAutoipTicksPerSecond;
                     }
                     else
                     {
                         // todo: check the return
                         autoip_arp_probe(netif);
                         autoip->sent_num++;
-                        if (autoip->sent_num == PROBE_NUM)
+                        if (autoip->sent_num == kProbeNum)
                         {
                             /* calculate time to wait to for announce */
-                            autoip->ttw = ANNOUNCE_WAIT * AUTOIP_TICKS_PER_SECOND;
+                            autoip->ttw = kAnnounceWait * kAutoipTicksPerSecond;
                         }
                         else
                         {
                             /* calculate time to wait to next probe */
                             autoip->ttw = uint16_t(
-                                (AutoipGenRand(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND)) +
-                                PROBE_MIN * AUTOIP_TICKS_PER_SECOND);
+                                (autoip_gen_rand(netif) % ((kProbeMax - kProbeMin) *
+                                    kAutoipTicksPerSecond)) + kProbeMin *
+                                kAutoipTicksPerSecond);
                         }
                     }
                 }
@@ -327,9 +325,9 @@ void autoip_tmr(void)
                 if (autoip->ttw == 0)
                 {
                     autoip_arp_announce(netif);
-                    autoip->ttw = ANNOUNCE_INTERVAL * AUTOIP_TICKS_PER_SECOND;
+                    autoip->ttw = kAnnounceInterval * kAutoipTicksPerSecond;
                     autoip->sent_num++;
-                    if (autoip->sent_num >= ANNOUNCE_NUM)
+                    if (autoip->sent_num >= kAnnounceNum)
                     {
                         autoip->state = AUTOIP_STATE_BOUND;
                         autoip->sent_num = 0;
@@ -354,18 +352,17 @@ void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
     auto autoip = netif_autoip_data(netif);
     if ((autoip != nullptr) && (autoip->state != AUTOIP_STATE_OFF))
     {
-        Ip4Addr sipaddr{}; 
-        /* when ip.src == llipaddr && hw.src != netif->hwaddr
+        Ip4Addr sipaddr{}; /* when ip.src == llipaddr && hw.src != netif->hwaddr
          *
          * when probing  ip.dst == llipaddr && hw.src != netif->hwaddr
          * we have a conflict and must solve it
          */
         Ip4Addr dipaddr{};
         EthAddr netifaddr{};
-        SMEMCPY(netifaddr.addr, netif->hwaddr, ETH_HWADDR_LEN);
+        memcpy(netifaddr.addr,netif->hwaddr,ETH_HWADDR_LEN);
         /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
-            * structure packing (not using structure copy which breaks strict-aliasing rules).
-            */
+                   * structure packing (not using structure copy which breaks strict-aliasing rules).
+                   */
         IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, &sipaddr);
         IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
         if (autoip->state == AUTOIP_STATE_PROBING)
@@ -409,7 +406,7 @@ bool autoip_supplied_address(const NetIfc* netif)
 {
     if ((netif != nullptr) && (netif_autoip_data(netif) != nullptr))
     {
-        auto autoip = netif_autoip_data(netif);
+        const auto autoip = netif_autoip_data(netif);
         return (autoip->state == AUTOIP_STATE_BOUND) || (autoip->state ==
             AUTOIP_STATE_ANNOUNCING);
     }

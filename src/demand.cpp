@@ -52,100 +52,78 @@
 #include <pcap-bpf.h>
 #endif
 
-
-
 char *frame;
 int framelen;
 int framemax;
 int escape_flag;
 int flush_flag;
 int fcs;
-
-
-
 struct Packet *pend_q;
 struct Packet *pend_qtail;
-
-
 
 /*
  * demand_conf - configure the interface for doing dial-on-demand.
  */
-void
-demand_conf()
+void demand_conf()
 {
     int i;
-    const struct protent *protp;
-
-/*    framemax = lcp_allowoptions[0].mru;
+    const struct protent* protp; /*    framemax = lcp_allowoptions[0].mru;
     if (framemax < PPP_MRU) */
-	framemax = PPP_MRU;
+    framemax = PPP_MRU;
     framemax += PPP_HDRLEN + PPP_FCSLEN;
     frame = static_cast<char*>(malloc(framemax));
-    if (frame == nullptr)
-	// novm("demand frame");
-    framelen = 0;
+    if (frame == nullptr) // novm("demand frame");
+        framelen = 0;
     pend_q = nullptr;
     escape_flag = 0;
     flush_flag = 0;
     fcs = PPP_INITFCS;
-
- //    netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
- //    if (ppp_send_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0
-	// || ppp_recv_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0)
-	//     fatal("Couldn't set up demand-dialled PPP interface: %m");
- //
- //    set_filters(&pass_filter, &active_filter);
-
-
+    //    netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
+    //    if (ppp_send_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0
+    // || ppp_recv_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0)
+    //     fatal("Couldn't set up demand-dialled PPP interface: %m");
+    //
+    //    set_filters(&pass_filter, &active_filter);
     /*
      * Call the demand_conf procedure for each protocol that's got one.
-     */
- //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	// if (protp->demand_conf != NULL)
-	//     ((*protp->demand_conf)(pcb));
-/* FIXME: find a way to die() here */
-
+     */ //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
+    // if (protp->demand_conf != NULL)
+    //     ((*protp->demand_conf)(pcb));
+    /* FIXME: find a way to die() here */
 }
 
 
 /*
  * demand_block - set each network protocol to block further packets.
  */
-void
-demand_block()
+void demand_block()
 {
     int i;
-    const struct protent *protp;
-
- //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	// if (protp->demand_conf != NULL)
-	//     sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_QUEUE);
- //    get_loop_output();
+    const struct protent* protp; //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
+    // if (protp->demand_conf != NULL)
+    //     sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_QUEUE);
+    //    get_loop_output();
 }
 
 /*
  * demand_discard - set each network protocol to discard packets
  * with an error.
  */
-void
-demand_discard()
+void demand_discard()
 {
-    struct Packet *pkt, *nextpkt;
+    struct Packet*nextpkt;
     int i;
-    const struct protent *protp;
-
-    // for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	// if (protp->demand_conf != NULL)
-	//     sifnpmode(pcb, protp->protocol & ~0x8000, PppNetworkProtoMode);
- //    get_loop_output();
-
+    const struct protent* protp; // for (i = 0; (protp = protocols[i]) != NULL; ++i)
+    // if (protp->demand_conf != NULL)
+    //     sifnpmode(pcb, protp->protocol & ~0x8000, PppNetworkProtoMode);
+    //    get_loop_output();
     /* discard all saved packets */
-    for (pkt = pend_q; pkt != NULL; pkt = nextpkt) {
-	nextpkt = pkt->next;
-	free(pkt);
+    for (auto pkt = pend_q; pkt != nullptr; pkt = nextpkt)
+    {
+        nextpkt = pkt->next;
+        free(pkt);
     }
-    pend_q = NULL;
+    pend_q = nullptr;
     framelen = 0;
     flush_flag = 0;
     escape_flag = 0;
@@ -155,15 +133,12 @@ demand_discard()
 /*
  * demand_unblock - set each enabled network protocol to pass packets.
  */
-void
-demand_unblock()
+void demand_unblock()
 {
     int i;
-    const struct protent *protp;
-
- //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	// if (protp->demand_conf != NULL)
-	//     sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_PASS);
+    const struct protent* protp; //    for (i = 0; (protp = protocols[i]) != NULL; ++i)
+    // if (protp->demand_conf != NULL)
+    //     sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_PASS);
 }
 
 

@@ -2008,7 +2008,7 @@ tcp_rst(const struct TcpProtoCtrlBlk *pcb, uint32_t seqno, uint32_t ackno,
 #if LWIP_WND_SCALE
   wnd = PpHtons(((TCP_WND >> TCP_RCV_SCALE) & 0xFFFF));
 #else
-  wnd = PpHtons(TCP_WND);
+  wnd = pp_htons(TCP_WND);
 #endif
 
   p = tcp_output_alloc_header_common(ackno, optlen, 0, lwip_htonl(seqno), local_port,

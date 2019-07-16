@@ -285,14 +285,14 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 
   /* Extract length and fragment offset from current fragment */
   fraghdr = (struct Ip4Hdr *)new_p->payload;
-  len = lwip_ntohs(GetIp4HdrLen(fraghdr));
+  len = lwip_ntohs(get_ip4_hdr_len(fraghdr));
   hlen = IPH_HL_BYTES(fraghdr);
   if (hlen > len) {
     /* invalid datagram */
     return IP_REASS_VALIDATE_PBUF_DROPPED;
   }
   len = (uint16_t)(len - hlen);
-  offset = GetIp4HdrOffsetBytes(fraghdr);
+  offset = get_ip4_hdr_offset_bytes(fraghdr);
 
   /* overwrite the fragment's ip header from the PacketBuffer with our helper struct,
    * and setup the embedded helper structure. */
@@ -455,8 +455,8 @@ ip4_reass(struct PacketBuffer *p)
     goto nullreturn;
   }
 
-  offset = GetIp4HdrOffsetBytes(fraghdr);
-  len = lwip_ntohs(GetIp4HdrLen(fraghdr));
+  offset = get_ip4_hdr_offset_bytes(fraghdr);
+  len = lwip_ntohs(get_ip4_hdr_len(fraghdr));
   hlen = IPH_HL_BYTES(fraghdr);
   if (hlen > len) {
     /* invalid datagram */
@@ -560,7 +560,7 @@ ip4_reass(struct PacketBuffer *p)
     fraghdr = (struct Ip4Hdr *)(ipr->p->payload);
     SMEMCPY(fraghdr, &ipr->iphdr, kIp4HdrLen);
     IPH_LEN_SET(fraghdr, lwip_htons(datagram_len));
-    SetIp4HdrOffset(fraghdr, 0);
+    set_ip4_hdr_offset(fraghdr, 0);
     IPH_CHKSUM_SET(fraghdr, 0);
     /* @todo: do we need to set/calculate the correct checksum? */
 #if CHECKSUM_GEN_IP
@@ -798,7 +798,7 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
       /* the last fragment has MF set if the input frame had it */
       tmp = tmp | IP_MF;
     }
-    SetIp4HdrOffset(iphdr, lwip_htons(tmp));
+    set_ip4_hdr_offset(iphdr, lwip_htons(tmp));
     IPH_LEN_SET(iphdr, lwip_htons((uint16_t)(fragsize + kIp4HdrLen)));
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP

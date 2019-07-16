@@ -42,99 +42,99 @@ struct Ip4Hdr
 };
 
 /* Macros to get struct Ip4Hdr fields: */
-inline uint8_t GetIp4HdrVersion(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_version(Ip4Hdr* hdr)
 {
     return ((hdr)->_v_hl >> 4);
 }
 
-inline uint8_t GetIp4HdrHdrLen(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len(Ip4Hdr* hdr)
 {
     return ((hdr)->_v_hl & 0x0f);
 }
 
-inline uint8_t GetIp4HdrHdrLenBytes(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len_bytes(Ip4Hdr* hdr)
 {
-    return uint8_t(GetIp4HdrHdrLen(hdr) * 4);
+    return uint8_t(get_ip4_hdr_hdr_len(hdr) * 4);
 }
 
-inline uint8_t GetIp4HdrTos(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_tos(Ip4Hdr* hdr)
 {
     return ((hdr)->_tos);
 }
 
-inline uint16_t GetIp4HdrLen(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_len(Ip4Hdr* hdr)
 {
     return ((hdr)->_len);
 }
 
-inline uint16_t GetIp4HdrId(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_id(Ip4Hdr* hdr)
 {
     return ((hdr)->_id);
 }
 
-inline uint16_t GetIp4HdrOffset(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset(Ip4Hdr* hdr)
 {
     return ((hdr)->_offset);
 }
 
-inline uint16_t GetIp4HdrOffsetBytes(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset_bytes(Ip4Hdr* hdr)
 {
-    return uint16_t((lwip_ntohs(GetIp4HdrOffset(hdr)) & kIpOffMask) * 8U);
+    return uint16_t((lwip_ntohs(get_ip4_hdr_offset(hdr)) & kIpOffMask) * 8U);
 }
 
-inline uint8_t GetIp4HdrTTL(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_ttl(Ip4Hdr* hdr)
 {
     return ((hdr)->_ttl);
 }
 
-inline uint8_t GetIp4HdrProto(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_proto(Ip4Hdr* hdr)
 {
     return ((hdr)->_proto);
 }
 
-inline uint16_t GetIp4HdrChecksum(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_checksum(Ip4Hdr* hdr)
 {
     return ((hdr)->_chksum);
 }
 
 /* Macros to set struct Ip4Hdr fields: */
 // ReSharper disable once CppInconsistentNaming
-inline void SetIp4HdrVHL(Ip4Hdr* hdr, const uint8_t v, const uint8_t hl)
+inline void set_ip4_hdr_vhl(Ip4Hdr* hdr, const uint8_t v, const uint8_t hl)
 {
     hdr->_v_hl = uint8_t(v << 4 | hl);
 }
 
-inline void SetIp4HdrTos(Ip4Hdr* hdr, const uint8_t tos)
+inline void set_ip4_hdr_tos(Ip4Hdr* hdr, const uint8_t tos)
 {
     (hdr)->_tos = (tos);
 }
 
-inline void SetIp4HdrLen(Ip4Hdr* hdr, const uint16_t len)
+inline void set_ip4_hdr_len(Ip4Hdr* hdr, const uint16_t len)
 {
     (hdr)->_len = (len);
 }
 
-inline void SetIp4HdrId(Ip4Hdr* hdr, const uint16_t id)
+inline void set_ip4_hdr_id(Ip4Hdr* hdr, const uint16_t id)
 {
     (hdr)->_id = (id);
 }
 
-inline void SetIp4HdrOffset(Ip4Hdr* hdr, const uint16_t off)
+inline void set_ip4_hdr_offset(Ip4Hdr* hdr, const uint16_t off)
 {
     (hdr)->_offset = (off);
 }
 
-inline void SetIp4HdrTtl(Ip4Hdr* hdr, const uint8_t ttl)
+inline void set_ip4_hdr_ttl(Ip4Hdr* hdr, const uint8_t ttl)
 {
     (hdr)->_ttl = uint8_t(ttl);
 }
 
-inline void SetIp4HdrProto(Ip4Hdr* hdr, const uint8_t proto)
+inline void set_ip4_hdr_proto(Ip4Hdr* hdr, const uint8_t proto)
 {
     (hdr)->_proto = uint8_t(proto);
 }
 
-inline void SetIp4HdrChecksum(Ip4Hdr *hdr, const uint16_t chksum) {
+inline void set_ip4_hdr_checksum(Ip4Hdr *hdr, const uint16_t chksum) {
   (hdr)->_chksum = (chksum);
 }
 
@@ -143,7 +143,10 @@ constexpr auto kLwipIpv4SrcRouting = 1;
 
 
 /* Compatibility define, no init needed. */
-inline bool ip_init() {}
+inline bool ip_init()
+{
+    return true;
+}
 
 NetIfc*ip4_route(const Ip4Addr *dest);
 
@@ -171,9 +174,9 @@ LwipError ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, cons
 
 void  ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
 
-inline Ip4Addr* ip4_netif_get_local_ip(NetIfc* netif)
+inline IpAddr* ip4_netif_get_local_ip(NetIfc* netif)
 {
-    return (((netif) != NULL) ? netif_ip_addr4(netif) : NULL);
+    return netif != NULL ? netif_ip_addr4(netif) : NULL;
 }
 
 

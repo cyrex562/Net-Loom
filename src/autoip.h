@@ -3,35 +3,35 @@
 #include "etharp.h"
 
  /* 169.254.0.0 */
-constexpr auto AUTOIP_NET = 0xA9FE0000;
+constexpr auto kAutoipNet = 0xA9FE0000;
 /* 169.254.1.0 */
-constexpr auto AUTOIP_RANGE_START   =   (AUTOIP_NET | 0x0100);
+constexpr auto kAutoipRangeStart   =   (kAutoipNet | 0x0100);
 /* 169.254.254.255 */
-constexpr auto AUTOIP_RANGE_END   =     (AUTOIP_NET | 0xFEFF);
+constexpr auto kAutoipRangeEnd   =     (kAutoipNet | 0xFEFF);
 
 /* RFC 3927 Constants */
-constexpr auto PROBE_WAIT = 1   /* second   (initial random delay)                 */;
-constexpr auto PROBE_MIN = 1   /* second   (minimum delay till repeated probe)    */;
-constexpr auto PROBE_MAX = 2   /* seconds  (maximum delay till repeated probe)    */;
-constexpr auto PROBE_NUM = 3   /*          (number of probe packets)              */;
-constexpr auto ANNOUNCE_NUM = 2   /*          (number of announcement packets)       */;
-constexpr auto ANNOUNCE_INTERVAL = 2   /* seconds  (time between announcement packets)    */;
-constexpr auto ANNOUNCE_WAIT = 2   /* seconds  (delay before announcing)              */;
-constexpr auto MAX_CONFLICTS = 10  /*          (max conflicts before rate limiting)   */;
-constexpr auto RATE_LIMIT_INTERVAL = 60  /* seconds  (delay between successive attempts)    */;
-constexpr auto DEFEND_INTERVAL = 10  /* seconds  (min. wait between defensive ARPs)     */;
+constexpr auto kProbeWait = 1   /* second   (initial random delay)                 */;
+constexpr auto kProbeMin = 1   /* second   (minimum delay till repeated probe)    */;
+constexpr auto kProbeMax = 2   /* seconds  (maximum delay till repeated probe)    */;
+constexpr auto kProbeNum = 3   /*          (number of probe packets)              */;
+constexpr auto kAnnounceNum = 2   /*          (number of announcement packets)       */;
+constexpr auto kAnnounceInterval = 2   /* seconds  (time between announcement packets)    */;
+constexpr auto kAnnounceWait = 2   /* seconds  (delay before announcing)              */;
+constexpr auto kMaxConflicts = 10  /*          (max conflicts before rate limiting)   */;
+constexpr auto kRateLimitInterval = 60  /* seconds  (delay between successive attempts)    */;
+constexpr auto kDefendInterval = 10  /* seconds  (min. wait between defensive ARPs)     */;
 
 /* AutoIP client states */
-typedef enum {
+enum AutoIpStateEnum{
     AUTOIP_STATE_OFF = 0,
     AUTOIP_STATE_PROBING = 1,
     AUTOIP_STATE_ANNOUNCING = 2,
     AUTOIP_STATE_BOUND = 3
-} autoip_state_enum_t;
+};
 
 /** AutoIP Timing */
-constexpr auto AUTOIP_TMR_INTERVAL = 100;
-constexpr auto  AUTOIP_TICKS_PER_SECOND = (1000 / AUTOIP_TMR_INTERVAL);
+constexpr auto kAutoipTmrInterval = 100;
+constexpr auto  kAutoipTicksPerSecond = (1000 / kAutoipTmrInterval);
 
 /** AutoIP state information per netif */
 struct AutoipState

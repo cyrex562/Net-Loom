@@ -405,8 +405,10 @@ void netif_set_remove_callback(struct NetIfc *netif, netif_status_callback_fn re
 void netif_set_link_up(struct NetIfc *netif);
 void netif_set_link_down(struct NetIfc *netif);
 /** Ask if a link is up */
-#define netif_is_link_up(netif) (((netif)->flags & NETIF_FLAG_LINK_UP) ? (uint8_t)1 : (uint8_t)0)
-
+inline bool netif_is_link_up(NetIfc* netif)
+{
+    return (netif->flags & NETIF_FLAG_LINK_UP) != 0;
+}
 
 void netif_set_link_callback(struct NetIfc *netif, netif_status_callback_fn link_callback);
 

@@ -230,8 +230,7 @@ bool start_networks(PppPcb* pcb, const bool multilink)
 bool continue_networks(PppPcb* pcb)
 {
     // TODO: determine which network protocols to start and start them.
-
-    bool none_started = true;
+    const auto none_started = true;
 
     // Start the "real" network protocols.
     // for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
@@ -265,26 +264,32 @@ bool continue_networks(PppPcb* pcb)
  *      1: Authentication succeeded.
  * In either case, msg points to an appropriate message and msglen to the message len.
  */
-int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen) {
-  int secretuserlen;
-  int secretpasswdlen;
-
-  if (pcb->settings.user && pcb->settings.passwd) {
-    secretuserlen = (int)strlen(pcb->settings.user);
-    secretpasswdlen = (int)strlen(pcb->settings.passwd);
-    if (secretuserlen == userlen
-        && secretpasswdlen == passwdlen
-        && !memcmp(auser, pcb->settings.user, userlen)
-        && !memcmp(apasswd, pcb->settings.passwd, passwdlen) ) {
-      *msg = "Login ok";
-      *msglen = sizeof("Login ok")-1;
-      return 1;
+int auth_check_passwd(PppPcb* pcb,
+                      char* auser,
+                      const int userlen,
+                      char* apasswd,
+                      const int passwdlen,
+                      const char** msg,
+                      int* msglen)
+{
+    if (pcb->settings.user && pcb->settings.passwd)
+    {
+        const auto secretuserlen = int(strlen(pcb->settings.user));
+        const auto secretpasswdlen = int(strlen(pcb->settings.passwd));
+        if (secretuserlen == userlen && secretpasswdlen == passwdlen && !
+            memcmp(auser, pcb->settings.user, userlen) && !memcmp(
+                apasswd,
+                pcb->settings.passwd,
+                passwdlen))
+        {
+            *msg = "Login ok";
+            *msglen = sizeof("Login ok") - 1;
+            return 1;
+        }
     }
-  }
-
-  *msg = "Login incorrect";
-  *msglen = sizeof("Login incorrect")-1;
-  return 0;
+    *msg = "Login incorrect";
+    *msglen = sizeof("Login incorrect") - 1;
+    return 0;
 }
 
 /*
@@ -340,8 +345,8 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* n
     /*
      * Save the authenticated name of the peer for later.
      */
-    if (namelen > (int)sizeof(pcb->peer_authname) - 1)
-        namelen = (int)sizeof(pcb->peer_authname) - 1;
+    if (namelen > int(sizeof(pcb->peer_authname)) - 1)
+        namelen = int(sizeof(pcb->peer_authname)) - 1;
     MEMCPY(pcb->peer_authname, name, namelen);
     pcb->peer_authname[namelen] = 0;
 
@@ -481,7 +486,7 @@ void np_down(PppPcb* pcb, int proto)
     if (--pcb->num_np_up == 0)
     {
 
-	Untimeout(check_idle, (void*)pcb);
+	Untimeout(check_idle, static_cast<void*>(pcb));
 
 
 	Untimeout(connect_time_expired, nullptr);
@@ -513,10 +518,10 @@ void np_finished(PppPcb* pcb, int proto)
  * enough that we can shut it down.
  */
 static void check_idle(void *arg) {
-    PppPcb *pcb = (PppPcb*)arg;
+    const auto pcb = static_cast<PppPcb*>(arg);
     // struct ppp_idle idle;
     time_t itime;
-    int tlim;
+    auto tlim = 0;
 
  //    if (!get_idle_time(pcb, &idle))
 	// return;
@@ -533,7 +538,7 @@ static void check_idle(void *arg) {
 	need_holdoff = 0;
 #endif /* UNUSED */
     } else {
-	Timeout(check_idle, (void*)pcb, tlim);
+	Timeout(check_idle, static_cast<void*>(pcb), tlim);
     }
 }
 
@@ -543,7 +548,7 @@ static void check_idle(void *arg) {
  * connect_time_expired - log a message and close the connection.
  */
 static void connect_time_expired(void *arg) {
-    PppPcb *pcb = (PppPcb*)arg;
+    auto*pcb = static_cast<PppPcb*>(arg);
     ppp_info("Connect time expired");
     pcb->err_code = PPPERR_CONNECTTIME;
     /* Close connection */

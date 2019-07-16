@@ -57,12 +57,12 @@
 
 
 /* Values for flags in chap_client_state and chap_server_state */
-constexpr auto LOWERUP = 1;
-constexpr auto AUTH_STARTED = 2;
-constexpr auto AUTH_DONE = 4;
-constexpr auto AUTH_FAILED = 8;
-constexpr auto TIMEOUT_PENDING = 0x10;
-constexpr auto CHALLENGE_VALID = 0x20;
+constexpr auto kLowerup = 1;
+constexpr auto kAuthStarted = 2;
+constexpr auto kAuthDone = 4;
+constexpr auto kAuthFailed = 8;
+constexpr auto kTimeoutPending = 0x10;
+constexpr auto kChallengeValid = 0x20;
 
 /*
  * Prototypes.
@@ -123,10 +123,10 @@ chap_init(PppPcb* pcb)
 static void
 chap_lowerup(PppPcb* pcb)
 {
-    pcb->chap_client.flags |= LOWERUP;
+    pcb->chap_client.flags |= kLowerup;
 
-    pcb->chap_server.flags |= LOWERUP;
-    if (pcb->chap_server.flags & AUTH_STARTED)
+    pcb->chap_server.flags |= kLowerup;
+    if (pcb->chap_server.flags & kAuthStarted)
         chap_timeout(pcb);
 }
 
@@ -134,7 +134,7 @@ static void
 chap_lowerdown(PppPcb* pcb)
 {
     pcb->chap_client.flags = 0;
-    if (pcb->chap_server.flags & TIMEOUT_PENDING)
+    if (pcb->chap_server.flags & kTimeoutPending)
         Untimeout(chap_timeout, pcb);
     pcb->chap_server.flags = 0;
 }
@@ -150,7 +150,7 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
 {
     const struct ChapDigestType* dp;
 
-    if (pcb->chap_server.flags & AUTH_STARTED)
+    if (pcb->chap_server.flags & kAuthStarted)
     {
         ppp_error("CHAP: peer authentication already started!");
         return;
@@ -166,8 +166,8 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
     pcb->chap_server.name = our_name;
     /* Start with a random ID value */
     pcb->chap_server.id = magic();
-    pcb->chap_server.flags |= AUTH_STARTED;
-    if (pcb->chap_server.flags & LOWERUP)
+    pcb->chap_server.flags |= kAuthStarted;
+    if (pcb->chap_server.flags & kLowerup)
         chap_timeout(pcb);
 }
 
@@ -185,7 +185,7 @@ chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_code)
     if (nullptr == our_name)
         return;
 
-    if (pcb->chap_client.flags & AUTH_STARTED)
+    if (pcb->chap_client.flags & kAuthStarted)
     {
         ppp_error("CHAP: authentication with peer already started!");
         return;
@@ -200,7 +200,7 @@ chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_code)
 
     pcb->chap_client.digest = dp;
     pcb->chap_client.name = our_name;
-    pcb->chap_client.flags |= AUTH_STARTED;
+    pcb->chap_client.flags |= kAuthStarted;
 }
 
 #if PPP_SERVER
@@ -214,17 +214,17 @@ chap_timeout(void* arg)
 {
     PppPcb* pcb = (PppPcb*)arg;
 
-    pcb->chap_server.flags &= ~TIMEOUT_PENDING;
-    if ((pcb->chap_server.flags & CHALLENGE_VALID) == 0)
+    pcb->chap_server.flags &= ~kTimeoutPending;
+    if ((pcb->chap_server.flags & kChallengeValid) == 0)
     {
         pcb->chap_server.challenge_xmits = 0;
         chap_generate_challenge(pcb);
-        pcb->chap_server.flags |= CHALLENGE_VALID;
+        pcb->chap_server.flags |= kChallengeValid;
     }
     else if (pcb->chap_server.challenge_xmits >= pcb->settings.chap_max_transmits)
     {
-        pcb->chap_server.flags &= ~CHALLENGE_VALID;
-        pcb->chap_server.flags |= AUTH_DONE | AUTH_FAILED;
+        pcb->chap_server.flags &= ~kChallengeValid;
+        pcb->chap_server.flags |= kAuthDone | kAuthFailed;
         auth_peer_fail(pcb, PPP_CHAP);
         return;
     }
@@ -241,7 +241,7 @@ chap_timeout(void* arg)
     MEMCPY(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
     ppp_write(pcb, p);
     ++pcb->chap_server.challenge_xmits;
-    pcb->chap_server.flags |= TIMEOUT_PENDING;
+    pcb->chap_server.flags |= kTimeoutPending;
     Timeout(chap_timeout, arg, pcb->settings.chap_timeout_time);
 }
 
@@ -285,20 +285,20 @@ chap_handle_response(PppPcb* pcb,
     char rname[MAXNAMELEN + 1];
     char message[256];
 
-    if ((pcb->chap_server.flags & LOWERUP) == 0)
+    if ((pcb->chap_server.flags & kLowerup) == 0)
         return;
     if (code != pcb->chap_server.challenge[PPP_HDRLEN + 1] || len < 2)
         return;
-    if (pcb->chap_server.flags & CHALLENGE_VALID)
+    if (pcb->chap_server.flags & kChallengeValid)
     {
         const unsigned char* response = pkt;
         GETCHAR(response_len, pkt);
         len -= response_len + 1; /* length of name */
         name = reinterpret_cast<char *>(pkt) + response_len;
 
-        if (pcb->chap_server.flags & TIMEOUT_PENDING)
+        if (pcb->chap_server.flags & kTimeoutPending)
         {
-            pcb->chap_server.flags &= ~TIMEOUT_PENDING;
+            pcb->chap_server.flags &= ~kTimeoutPending;
             Untimeout(chap_timeout, pcb);
         }
         if (pcb->settings.explicit_remote)
@@ -323,11 +323,11 @@ chap_handle_response(PppPcb* pcb,
 
         if (!ok)
         {
-            pcb->chap_server.flags |= AUTH_FAILED;
+            pcb->chap_server.flags |= kAuthFailed;
             ppp_warn("Peer %q failed CHAP authentication", name);
         }
     }
-    else if ((pcb->chap_server.flags & AUTH_DONE) == 0)
+    else if ((pcb->chap_server.flags & kAuthDone) == 0)
         return;
 
     /* send the response */
@@ -346,7 +346,7 @@ chap_handle_response(PppPcb* pcb,
     auto outp = static_cast<unsigned char *>(p->payload);
     MAKEHEADER(outp, PPP_CHAP);
 
-    outp[0] = (pcb->chap_server.flags & AUTH_FAILED) ? CHAP_FAILURE : CHAP_SUCCESS;
+    outp[0] = (pcb->chap_server.flags & kAuthFailed) ? CHAP_FAILURE : CHAP_SUCCESS;
     outp[1] = code;
     outp[2] = len >> 8;
     outp[3] = len;
@@ -354,19 +354,19 @@ chap_handle_response(PppPcb* pcb,
         memcpy(outp + kChapHdrlen, message, mlen);
     ppp_write(pcb, p);
 
-    if (pcb->chap_server.flags & CHALLENGE_VALID)
+    if (pcb->chap_server.flags & kChallengeValid)
     {
-        pcb->chap_server.flags &= ~CHALLENGE_VALID;
-        if (!(pcb->chap_server.flags & AUTH_DONE) && !(pcb->chap_server.flags & AUTH_FAILED))
+        pcb->chap_server.flags &= ~kChallengeValid;
+        if (!(pcb->chap_server.flags & kAuthDone) && !(pcb->chap_server.flags & kAuthFailed))
         {
         }
-        if (pcb->chap_server.flags & AUTH_FAILED)
+        if (pcb->chap_server.flags & kAuthFailed)
         {
             auth_peer_fail(pcb, PPP_CHAP);
         }
         else
         {
-            if ((pcb->chap_server.flags & AUTH_DONE) == 0)
+            if ((pcb->chap_server.flags & kAuthDone) == 0)
                 auth_peer_success(pcb,
                                   PPP_CHAP,
                                   pcb->chap_server.digest->code,
@@ -375,13 +375,13 @@ chap_handle_response(PppPcb* pcb,
                 );
             if (pcb->settings.chap_rechallenge_time)
             {
-                pcb->chap_server.flags |= TIMEOUT_PENDING;
+                pcb->chap_server.flags |= kTimeoutPending;
                 Timeout(chap_timeout,
                         pcb,
                         pcb->settings.chap_rechallenge_time);
             }
         }
-        pcb->chap_server.flags |= AUTH_DONE;
+        pcb->chap_server.flags |= kAuthDone;
     }
 }
 
@@ -448,7 +448,7 @@ chap_respond(PppPcb* pcb,
         return;
     }
 
-    if ((pcb->chap_client.flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
+    if ((pcb->chap_client.flags & (kLowerup | kAuthStarted)) != (kLowerup | kAuthStarted))
         return; /* not ready */
     if (len < 2 || len < pkt[0] + 1)
         return; /* too short */
@@ -512,10 +512,10 @@ chap_handle_status(PppPcb* pcb,
     const char* msg = nullptr;
 
 
-    if ((pcb->chap_client.flags & (AUTH_DONE | AUTH_STARTED | LOWERUP))
-        != (AUTH_STARTED | LOWERUP))
+    if ((pcb->chap_client.flags & (kAuthDone | kAuthStarted | kLowerup))
+        != (kAuthStarted | kLowerup))
         return;
-    pcb->chap_client.flags |= AUTH_DONE;
+    pcb->chap_client.flags |= kAuthDone;
 
     if (code == CHAP_SUCCESS)
     {
@@ -546,7 +546,7 @@ chap_handle_status(PppPcb* pcb,
         auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code);
     else
     {
-        pcb->chap_client.flags |= AUTH_FAILED;
+        pcb->chap_client.flags |= kAuthFailed;
         ppp_error("CHAP authentication failed");
         auth_withpeer_fail(pcb, PPP_CHAP);
     }
@@ -590,20 +590,20 @@ static void
 chap_protrej(PppPcb* pcb)
 {
 #if PPP_SERVER
-    if (pcb->chap_server.flags & TIMEOUT_PENDING)
+    if (pcb->chap_server.flags & kTimeoutPending)
     {
-        pcb->chap_server.flags &= ~TIMEOUT_PENDING;
+        pcb->chap_server.flags &= ~kTimeoutPending;
         Untimeout(chap_timeout, pcb);
     }
-    if (pcb->chap_server.flags & AUTH_STARTED)
+    if (pcb->chap_server.flags & kAuthStarted)
     {
         pcb->chap_server.flags = 0;
         auth_peer_fail(pcb, PPP_CHAP);
     }
 #endif /* PPP_SERVER */
-    if ((pcb->chap_client.flags & (AUTH_STARTED | AUTH_DONE)) == AUTH_STARTED)
+    if ((pcb->chap_client.flags & (kAuthStarted | kAuthDone)) == kAuthStarted)
     {
-        pcb->chap_client.flags &= ~AUTH_STARTED;
+        pcb->chap_client.flags &= ~kAuthStarted;
         ppp_error("CHAP authentication failed due to protocol-reject");
         auth_withpeer_fail(pcb, PPP_CHAP);
     }

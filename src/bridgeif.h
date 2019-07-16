@@ -17,7 +17,7 @@ struct BridgeIfcPrivate;
 struct BridgeIfcPort
 {
     struct BridgeIfcPrivate* bridge;
-    NetIfc** port_netif;
+    NetIfc* port_netif;
     uint8_t port_num;
 };
 
@@ -30,7 +30,7 @@ struct BridgeIfcFdbStaticEntry
 
 struct BridgeIfcPrivate
 {
-    NetIfc** netif;
+    NetIfc* netif;
     struct EthAddr ethaddr;
     uint8_t max_ports;
     uint8_t num_ports;
@@ -93,4 +93,8 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t po
 BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthAddr *dst_addr);
 void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
 
+static LwipError bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);
 
+//
+// END OF FILE
+//

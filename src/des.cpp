@@ -38,8 +38,6 @@
  *
  *  http://csrc.nist.gov/publications/fips/fips46-3/fips46-3.pdf
  */
-
-#include "ppp_opts.h"
 #include "des.h"
 
 /*

@@ -110,7 +110,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
 
     auto type = ethhdr->type;
 
-    if (type == PpHtons(ETHTYPE_VLAN))
+    if (type == pp_htons(ETHTYPE_VLAN))
     {
         struct EthVlanHdr* vlan = (struct EthVlanHdr *)(((char *)ethhdr) + kSizeofEthHdr);
         next_hdr_offset = kSizeofEthHdr + kSizeofVlanHdr;
@@ -172,7 +172,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
     switch (type)
     {
         /* IP packet? */
-    case PpHtons(ETHTYPE_IP):
+    case pp_htons(ETHTYPE_IP):
         if (!(netif->flags & kNetifFlagEtharp))
         {
             goto free_and_return;
@@ -193,7 +193,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         }
         break;
 
-    case PpHtons(ETHTYPE_ARP):
+    case pp_htons(ETHTYPE_ARP):
         if (!(netif->flags & kNetifFlagEtharp))
         {
             goto free_and_return;
@@ -216,14 +216,14 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         }
         break;
 
-    case PpHtons(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
+    case pp_htons(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
         pppoe_disc_input(netif, p);
         break;
 
-    case PpHtons(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
+    case pp_htons(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
         pppoe_data_input(netif, p);
         break;
-    case PpHtons(ETHTYPE_IPV6): /* IPv6 */
+    case pp_htons(ETHTYPE_IPV6): /* IPv6 */
         /* skip Ethernet header */
         if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset))
         {

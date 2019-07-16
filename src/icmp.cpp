@@ -180,13 +180,13 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP)
             {
                 /* adjust the checksum */
-                if (iecho->chksum > PpHtons(0xffffU - (ICMP_ECHO << 8)))
+                if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
                 {
-                    iecho->chksum = uint16_t(iecho->chksum + PpHtons(uint16_t(ICMP_ECHO << 8)) + 1);
+                    iecho->chksum = uint16_t(iecho->chksum + pp_htons(uint16_t(ICMP_ECHO << 8)) + 1);
                 }
                 else
                 {
-                    iecho->chksum = uint16_t(iecho->chksum + PpHtons(ICMP_ECHO << 8));
+                    iecho->chksum = uint16_t(iecho->chksum + pp_htons(ICMP_ECHO << 8));
                 }
             }
             else

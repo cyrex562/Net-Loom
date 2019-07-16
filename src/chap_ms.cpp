@@ -328,7 +328,7 @@ print_msg: if (p != nullptr)
         ppp_error("MS-CHAP authentication failed: %v", p);
 }
 
-static void ChallengeResponse(const uint8_t* challenge,
+static void challenge_response(const uint8_t* challenge,
                               const uint8_t password_hash[MD4_SIGNATURE_SIZE],
                               uint8_t response[24])
 {
@@ -354,13 +354,13 @@ static void ChallengeResponse(const uint8_t* challenge,
     // lwip_des_free(&des);
 }
 
-static void ChallengeHash(const uint8_t PeerChallenge[16],
+static void challenge_hash(const uint8_t PeerChallenge[16],
                           const uint8_t* rchallenge,
                           const char* username,
                           uint8_t Challenge[8])
 {
     lwip_sha1_context sha1Context;
-    uint8_t sha1Hash[SHA1_SIGNATURE_SIZE];
+    uint8_t sha1_hash[SHA1_SIGNATURE_SIZE];
     const char* user; /* remove domain from "domain\username" */
     if ((user = strrchr(username, '\\')) != nullptr)
         ++user;
@@ -371,9 +371,9 @@ static void ChallengeHash(const uint8_t PeerChallenge[16],
     lwip_sha1_update(&sha1Context, PeerChallenge, 16);
     lwip_sha1_update(&sha1Context, rchallenge, 16);
     lwip_sha1_update(&sha1Context, reinterpret_cast<const unsigned char*>(user), strlen(user));
-    lwip_sha1_finish(&sha1Context, sha1Hash);
+    lwip_sha1_finish(&sha1Context, sha1_hash);
     lwip_sha1_free(&sha1Context);
-    MEMCPY(Challenge, sha1Hash, 8);
+    MEMCPY(Challenge, sha1_hash, 8);
 }
 
 /*
@@ -413,7 +413,7 @@ static void ChapMS_NT(const uint8_t* rchallenge,
     /* Hash the Unicode version of the secret (== password). */
     ascii2unicode(secret, secret_len, unicodePassword);
     NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
-    ChallengeResponse(rchallenge, PasswordHash, NTResponse);
+    challenge_response(rchallenge, PasswordHash, NTResponse);
 }
 
 static void ChapMS2_NT(const uint8_t* rchallenge,
@@ -426,11 +426,11 @@ static void ChapMS2_NT(const uint8_t* rchallenge,
     uint8_t unicodePassword[MAX_NT_PASSWORD * 2];
     uint8_t PasswordHash[MD4_SIGNATURE_SIZE];
     uint8_t Challenge[8];
-    ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
+    challenge_hash(PeerChallenge, rchallenge, username, Challenge);
     /* Hash the Unicode version of the secret (== password). */
     ascii2unicode(secret, secret_len, unicodePassword);
     NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
-    ChallengeResponse(Challenge, PasswordHash, NTResponse);
+    challenge_response(Challenge, PasswordHash, NTResponse);
 }
 
 static void ChapMsLanMan(const uint8_t* rchallenge,
@@ -451,7 +451,7 @@ static void ChapMsLanMan(const uint8_t* rchallenge,
     pppcrypt_56_to_64_bit_key(ucase_password + 7, des_key); // lwip_des_init(&des);
     des_setkey_enc(&des, des_key);
     des_crypt_ecb(&des, StdText, password_hash + 8); // lwip_des_free(&des);
-    ChallengeResponse(rchallenge, password_hash, &response[MS_CHAP_LANMANRESP]);
+    challenge_response(rchallenge, password_hash, &response[MS_CHAP_LANMANRESP]);
 }
 
 static void GenerateAuthenticatorResponse(
@@ -473,7 +473,7 @@ static void GenerateAuthenticatorResponse(
     lwip_sha1_update(&sha1Context, Magic1, sizeof(Magic1));
     lwip_sha1_finish(&sha1Context, Digest);
     lwip_sha1_free(&sha1Context);
-    ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
+    challenge_hash(PeerChallenge, rchallenge, username, Challenge);
     lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, Digest, sizeof(Digest));

@@ -1023,7 +1023,7 @@ pppoe_send_padt(NetIfc*outgoing_if, u_int session, const uint8_t *dest)
     return ERR_BUF;
   }
   struct EthHdr* ethhdr = (struct EthHdr *)pb->payload;
-  ethhdr->type = PpHtons(ETHTYPE_PPPOEDISC);
+  ethhdr->type = pp_htons(ETHTYPE_PPPOEDISC);
   MEMCPY(&ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
   MEMCPY(&ethhdr->src.addr, &outgoing_if->hwaddr, sizeof(ethhdr->src.addr));
 
