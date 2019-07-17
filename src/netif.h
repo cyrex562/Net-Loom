@@ -9,6 +9,7 @@
 #include "ip_addr.h"
 #include "def.h"
 #include "ip4_addr.h"
+#include "ip6_addr.h"
 
 struct Ip6Addr;
 
@@ -349,7 +350,7 @@ void netif_set_gw(struct NetIfc *netif, const Ip4Addr *gw);
 
 //
 // Get Ip4 Address from the NetIfc
-inline Ip4Addr* get_net_ifc_ip4_addr(NetIfc* netif)
+inline const Ip4Addr* get_net_ifc_ip4_addr(const NetIfc* netif)
 {
     return &netif->ip_addr.u_addr.ip4;
 }
@@ -357,9 +358,9 @@ inline Ip4Addr* get_net_ifc_ip4_addr(NetIfc* netif)
 //
 //
 //
-inline Ip4Addr* netif_ip4_netmask(NetIfc* netif)
+inline const Ip4Addr* netif_ip4_netmask(const NetIfc* netif)
 {
-    return static_cast<Ip4Addr *>(&netif->netmask.u_addr.ip4);
+    return static_cast<const Ip4Addr*>(&netif->netmask.u_addr.ip4);
 }
 
 
@@ -566,6 +567,48 @@ struct netif_ext_callback_t
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn);
 void netif_remove_ext_callback(netif_ext_callback_t* callback);
 void netif_invoke_ext_callback(struct NetIfc* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
+
+inline bool LwipIp6Addrest_zone(const Ip6Addr* ip6addr, const NetIfc* netif)
+{
+    return (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)));
+}
+
+/** Verify that the given IPv6 address is properly zoned for the given netif. */
+inline void IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif)
+{
+    lwip_assert("IPv6 netif zone check failed",
+                ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
+                    ? (ip6_addr_has_zone(ip6addr) && (((netif) == nullptr) ||
+                        LwipIp6Addrest_zone((ip6addr), (netif))))
+                    : !ip6_addr_has_zone(ip6addr));
+}
+
+
+/**
+ * Assign a zone index to an IPv6 address, based on a network interface. If the
+ * given address has a scope, the assigned zone index is that scope's zone of
+ * the given netif; otherwise, the assigned zone index is "no zone".
+ *
+ * This default implementation follows the default model of RFC 4007, where
+ * only interface-local and link-local scopes are defined, and the zone index
+ * of both of those scopes always equals the index of the network interface.
+ * As such, this default implementation need not distinguish between different
+ * constrained scopes when assigning the zone.
+ *
+ * @param ip6addr the IPv6 address; its address part is examined, and its zone
+ *                index is assigned.
+ * @param type address type; see @ref lwip_ipv6_scope_type.
+ * @param netif the network interface (const).
+ */
+inline void ip6_addr_assign_zone(Ip6Addr* ip6addr,
+                                 const Ip6ScopeTypes type,
+                                 const NetIfc* netif)
+{
+    if (ip6_addr_has_scope((ip6addr), (type)))
+        (ip6_addr_set_zone((ip6addr), netif_get_index(netif)));
+    else
+        (ip6_addr_set_zone((ip6addr), 0));
+} 
 
 //
 // END OF FILE

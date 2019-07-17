@@ -218,8 +218,8 @@ static uint8_t dns_seqno;
 static DnsTableEntry dns_table[DNS_TABLE_SIZE];
 static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
 static IpAddr dns_servers[DNS_MAX_SERVERS];
-const IpAddr dns_mquery_v4group = IpAddr4InitBytes(224, 0, 0, 251);
-const IpAddr dns_mquery_v6group = Ipaddr6InitHost(0xFF020000, 0, 0, 0xFB);
+const IpAddr dns_mquery_v4group = init_ip_addr_ip4_bytes(224, 0, 0, 251);
+const IpAddr dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
 
 
 /**
@@ -245,9 +245,9 @@ dns_init(void)
 
   /* if dns client not yet initialized... */
 
-  if (dns_pcbs[0] == NULL) {
+  if (dns_pcbs[0] == nullptr) {
     dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
-    lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != NULL);
+    lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != nullptr);
 
     /* initialize DNS table not needed (initialized to zero since it is a
      * global variable) */
@@ -255,8 +255,9 @@ dns_init(void)
                 DNS_STATE_UNUSED == 0);
 
     /* initialize DNS client */
-    udp_bind(dns_pcbs[0], kIpAnyType, 0);
-    udp_recv(dns_pcbs[0], dns_recv, NULL);
+      IpAddr any_addr = kIpAddrAny();
+    udp_bind(dns_pcbs[0], &any_addr, 0);
+    udp_recv(dns_pcbs[0], dns_recv, nullptr);
   }
 
   dns_init_local();
@@ -270,16 +271,20 @@ dns_init(void)
  * @param numdns the index of the DNS server to set must be < DNS_MAX_SERVERS
  * @param dnsserver IP address of the DNS server to set
  */
-void
-dns_setserver(uint8_t numdns, const IpAddr *dnsserver)
+void dns_setserver(uint8_t numdns, const IpAddr* dnsserver)
 {
-  if (numdns < DNS_MAX_SERVERS) {
-    if (dnsserver != NULL) {
-      dns_servers[numdns] = (*dnsserver);
-    } else {
-      dns_servers[numdns] = kIpAddrAny;
+    if (numdns < DNS_MAX_SERVERS)
+    {
+        if (dnsserver != nullptr)
+        {
+            dns_servers[numdns] = (*dnsserver);
+        }
+        else
+        {
+            IpAddr any_addr = kIpAddrAny();
+            dns_servers[numdns] = any_addr;
+        }
     }
-  }
 }
 
 /**
@@ -299,7 +304,8 @@ IpAddr dns_getserver(const uint8_t numdns)
     }
     else
     {
-        return kIpAddrAny;
+
+        return kIpAddrAny();
     }
 }
 
@@ -760,7 +766,8 @@ static UdpPcb* dns_alloc_random_port(void)
         auto port = static_cast<uint16_t>(LwipRand());
         if (DNS_PORT_ALLOWED(port))
         {
-            err = udp_bind(pcb, kIpAnyType, port);
+            IpAddr any_addr = kIpAddrAny();
+            err = udp_bind(pcb, &any_addr, port);
         }
         else
         {

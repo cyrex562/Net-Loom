@@ -3,7 +3,7 @@
 #include "lwip_error.h"
 #include "ethernet.h"
 
-NetIfc*;
+struct NetIfc;
 typedef uint64_t BridgeIfcPortMask;
 
 constexpr auto kBrFlood = BridgeIfcPortMask(-1);

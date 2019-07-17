@@ -72,7 +72,7 @@ raw_input_local_match(struct raw_pcb *pcb, uint8_t broadcast)
   }
 
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
-  if (IpIsAnyTypeVal(pcb->local_ip)) {
+  if (is_ip_addr_any_type_val(pcb->local_ip)) {
 
     if ((broadcast != 0) && !ip_get_option(pcb, SOF_BROADCAST)) {
       return 0;

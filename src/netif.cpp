@@ -170,7 +170,7 @@ netif_add_noaddr(NetIfc*netif, void *state, NetifInitFn init, netif_input_fn inp
  *
  * @return netif, or NULL if failed.
  */
-NetIfc** netif_add(NetIfc** netif,
+NetIfc* netif_add(NetIfc* netif,
                          const Ip4Addr* ipaddr,
                          const Ip4Addr* netmask,
                          const Ip4Addr* gw,
@@ -245,7 +245,7 @@ NetIfc** netif_add(NetIfc** netif,
         This algorithm is O(n^2), but that should be OK for lwIP.
         */
     {
-        NetIfc** netif2;
+        NetIfc* netif2;
         int num_netifs;
         do
         {
@@ -515,7 +515,7 @@ netif_set_gw(NetIfc*netif, const Ip4Addr *gw)
  * @param netmask the new netmask
  * @param gw the new default gateway
  */
-bool netif_set_addr(NetIfc** netif,
+bool netif_set_addr(NetIfc* netif,
                     const Ip4Addr* ipaddr,
                     const Ip4Addr* netmask,
                     const Ip4Addr* gw)

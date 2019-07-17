@@ -196,7 +196,7 @@ struct PppPcb
     void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx);
     /* Notify phase callback */
     void* ctx_cb; /* Callbacks optional pointer */
-    NetIfc** netif; /* PPP interface */
+    NetIfc* netif; /* PPP interface */
     uint8_t phase; /* where the link is at */
     uint8_t err_code; /* Code indicating why interface is down. */ /* flags */
     bool ask_for_local; /* request our address from peer */

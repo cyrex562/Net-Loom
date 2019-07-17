@@ -35,20 +35,20 @@ struct NetIfc;
 
 extern const struct IpAddr kIpAddrAnyType;
 
-inline IpAddr Ipaddr4Init(const uint32_t u32_val)
+inline IpAddr init_ip_addr_ip4(const uint32_t u32_val)
 {
     return {{{{u32_val, 0ul, 0ul, 0ul}, kIp6NoZone}}, IPADDR_TYPE_V4};
 }
 
-inline IpAddr IpAddr4InitBytes(const uint8_t a,
+inline IpAddr init_ip_addr_ip4_bytes(const uint8_t a,
                                const uint8_t b,
                                const uint8_t c,
                                const uint8_t d)
 {
-    return Ipaddr4Init(pp_htonl(make_u32(a, b, c, d)));
+    return init_ip_addr_ip4(pp_htonl(make_u32(a, b, c, d)));
 }
 
-inline IpAddr Ipaddr6Init(const uint32_t a,
+inline IpAddr init_ip_addr_ip6(const uint32_t a,
                           const uint32_t b,
                           const uint32_t c,
                           const uint32_t d)
@@ -56,7 +56,7 @@ inline IpAddr Ipaddr6Init(const uint32_t a,
     return {{{{a, b, c, d}, kIp6NoZone}}, IPADDR_TYPE_V6};
 }
 
-inline IpAddr Ipaddr6InitHost(const uint32_t a,
+inline IpAddr init_ip_addr_ip6_host(const uint32_t a,
                               const uint32_t b,
                               const uint32_t c,
                               const uint32_t d)
@@ -72,34 +72,34 @@ inline IpAddrType get_ip_addr_type(const IpAddr* ipaddr)
     return ipaddr->type;
 }
 
-inline bool IpIsAnyTypeVal(const IpAddr ipaddr)
+inline bool is_ip_addr_any_type_val(const IpAddr ipaddr)
 {
     return get_ip_addr_type(&ipaddr) == IPADDR_TYPE_ANY;
 }
 
-inline IpAddr IpaddrAnyTypeInit()
+inline IpAddr init_ip_addr_any_type()
 {
     return {{{{0ul, 0ul, 0ul, 0ul}, kIp6NoZone}}, IPADDR_TYPE_ANY};
 }
 
-inline bool IpIsV4Val(IpAddr ipaddr)
+inline bool is_ip_addr_ip4_val(IpAddr ipaddr)
 {
     return get_ip_addr_type(&ipaddr) == IPADDR_TYPE_V4;
 }
 
-inline bool IpIsV6Val(IpAddr ipaddr)
+inline bool is_ip_addr_ip6_val(IpAddr ipaddr)
 {
     return get_ip_addr_type(&ipaddr) == IPADDR_TYPE_V6;
 }
 
-inline bool IpIsV4(IpAddr* ipaddr)
+inline bool is_ip_addr_ip4(IpAddr* ipaddr)
 {
-    return ipaddr == nullptr || IpIsV4Val(*ipaddr);
+    return ipaddr == nullptr || is_ip_addr_ip4_val(*ipaddr);
 }
 
 inline bool is_ip_v6(const IpAddr* ipaddr)
 {
-    return ipaddr != nullptr && IpIsV6Val(*ipaddr);
+    return ipaddr != nullptr && is_ip_addr_ip6_val(*ipaddr);
 }
 
 inline IpAddr set_ip_addr_type_val(IpAddr ipaddr, const IpAddrType iptype)
@@ -233,7 +233,7 @@ inline void set_ip_addr_ip4_u32(IpAddr* ipaddr, const uint32_t val)
 {
     if (ipaddr)
     {
-        SetIp4AddrU32(&ipaddr->u_addr.ip4, val);
+        set_ip4_addr_u32(&ipaddr->u_addr.ip4, val);
         set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
         clear_ip_addr(ipaddr);
     }
@@ -244,7 +244,7 @@ inline void set_ip_addr_ip4_u32(IpAddr* ipaddr, const uint32_t val)
 //
 inline IpAddr set_ip_addr_ip4_u32_val(IpAddr ipaddr, const uint32_t val)
 {
-    SetIp4AddrU32(&ipaddr.u_addr.ip4, val);
+    set_ip4_addr_u32(&ipaddr.u_addr.ip4, val);
     set_ip_addr_type_val(ipaddr, IPADDR_TYPE_V4);
     clear_ip_addr(&ipaddr);
     return ipaddr;
@@ -255,7 +255,7 @@ inline IpAddr set_ip_addr_ip4_u32_val(IpAddr ipaddr, const uint32_t val)
 //
 inline uint32_t get_ip4_addr_u32_from_ip_addr(IpAddr* ipaddr)
 {
-    if (ipaddr && IpIsV4(ipaddr))
+    if (ipaddr && is_ip_addr_ip4(ipaddr))
         return ip4_addr_get_u32(&ipaddr->u_addr.ip4);
     return 0;
 } 
@@ -458,7 +458,7 @@ inline bool is_ip_addr_any(IpAddr* ipaddr)
 
 inline bool ip_addr_isany_val(IpAddr ipaddr)
 {
-    if (IpIsV6Val(ipaddr))
+    if (is_ip_addr_ip6_val(ipaddr))
         return ip6_addr_isany_val(*convert_ip_addr_to_ip6_addr(&ipaddr));
     return ip4_addr_isany_val(*convert_ip_addr_to_ip4_addr(&ipaddr));
 }
@@ -538,55 +538,46 @@ inline void IP_ADDR6_HOST(struct IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint3
     IP_ADDR6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
 }
 
-extern const IpAddr kIpAddrAny;
-extern const IpAddr kIpAddrBroadcast;
 
-/**
- * @ingroup ip4addr
- * Can be used as a fixed/const IpAddr
- * for the IP wildcard.
- * Defined to @ref IP4_ADDR_ANY when IPv4 is enabled.
- * Defined to @ref IP6_ADDR_ANY in IPv6 only systems.
- * Use this if you can handle IPv4 _AND_ IPv6 addresses.
- * Use @ref IP4_ADDR_ANY or @ref IP6_ADDR_ANY when the IP
- * type matters.
- */
+inline IpAddr kIpAddrIp4Broadcast()
+{
+    IpAddr addr{};
+    addr.u_addr.ip4.addr = make_u32(255,255,255,255);
+    addr.type = IPADDR_TYPE_V4;
+    return addr;
+}
 
-/**
- * @ingroup ip4addr
- * Can be used as a fixed/const IpAddr
- * for the IPv4 wildcard and the broadcast address
- */
-constexpr auto kIp4AddrAny = &kIpAddrAny;
-/**
- * @ingroup ip4addr
- * Can be used as a fixed/const Ip4Addr
- * for the wildcard and the broadcast address
- */
-// constexpr auto IP4_ADDR_ANY4 = &kIpAddrAny.u_addr.ip4;
 
-/** @ingroup ip4addr */
-constexpr auto IP_ADDR_BROADCAST = &kIpAddrBroadcast;
-/** @ingroup ip4addr */
-constexpr auto IP4_ADDR_BROADCAST = &kIpAddrBroadcast.u_addr.ip4;
+inline IpAddr kIpAddrIp4Any()
+{
+    IpAddr addr{};
+    addr.u_addr.ip4.addr = make_u32(0,0,0,0);
+    addr.type = IPADDR_TYPE_V4;
+    return addr;
+}
 
-    extern const IpAddr ip6_addr_any;
+inline IpAddr kIpAddrIp6Any() {
+    IpAddr addr{};
+    addr.u_addr.ip6.addr[0] = 0;
+    addr.u_addr.ip6.addr[1] = 0;
+    addr.u_addr.ip6.addr[2] = 0;
+    addr.u_addr.ip6.addr[3] = 0;
+    addr.u_addr.ip6.zone = kIp6NoZone;
+    addr.type = IPADDR_TYPE_V6;
+    return addr;
+}
 
-/** 
- * @ingroup ip6addr
- * IP6_ADDR_ANY can be used as a fixed IpAddr
- * for the IPv6 wildcard address
- */
-constexpr auto kIp6AddrAny = &ip6_addr_any;
-/**
- * @ingroup ip6addr
- * IP6_ADDR_ANY6 can be used as a fixed Ip6Addr
- * for the IPv6 wildcard address
- */
-constexpr auto kIp6AddrAny6 = &ip6_addr_any.u_addr.ip6;
-
-// 
-constexpr auto kIpAnyType = &kIpAddrAnyType;
+inline IpAddr kIpAddrAny()
+{
+    IpAddr addr{};
+    addr.u_addr.ip6.addr[0] = 0;
+    addr.u_addr.ip6.addr[1] = 0;
+    addr.u_addr.ip6.addr[2] = 0;
+    addr.u_addr.ip6.addr[3] = 0;
+    addr.u_addr.ip6.zone = kIp6NoZone;
+    addr.type = IPADDR_TYPE_ANY;
+    return addr;
+}
 
 //
 // END OF FILE

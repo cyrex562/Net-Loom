@@ -2,8 +2,6 @@
 
 #include "def.h"
 #include "lwip_debug.h"
-#include "netif.h"
-#include "opt.h"
 
 enum Ip6Zone : uint8_t {
   kIp6NoZone = 0,
@@ -22,7 +20,7 @@ struct Ip6Addr {
  * will do the rest. IP6_MULTICAST is supported but currently not optimized.
  * @see ip6_addr_has_scope, ip6_addr_assign_zone, ip6_addr_lacks_zone.
  */
-enum LwipIpv6ScopeType {
+enum Ip6ScopeTypes {
   /** Unknown */
   IP6_UNKNOWN = 0,
   /** Unicast */
@@ -55,7 +53,10 @@ inline void ip6_addr_clear_zone(Ip6Addr* ip6_addr) {
 
 /** Is the zone field of the given IPv6 address equal to the given zone index?
  * (0/1) */
-#define ip6_addr_equals_zone(ip6addr, zone_idx) ((ip6addr)->zone == (zone_idx))
+inline bool ip6_addr_equals_zone(const Ip6Addr* ip6addr, const int zone_idx)
+{
+    return ((ip6addr)->zone == (zone_idx));
+}
 
 /** Are the zone fields of the given IPv6 addresses equal? (0/1)
  * This macro must only be used on IPv6 addresses of the same scope. */
@@ -80,11 +81,15 @@ inline bool ip6_addr_islinklocal(const Ip6Addr* ip6_addr)
     return (ip6_addr->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfe800000UL);
 }
 
-#define ip6_addr_ismulticast_iflocal(ip6addr) \
-  (((ip6addr)->addr[0] & PP_HTONL(0xff8f0000UL)) == PP_HTONL(0xff010000UL))
+inline bool ip6_addr_ismulticast_iflocal(const Ip6Addr* ip6addr)
+{
+    (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff010000UL));
+}
 
-#define ip6_addr_ismulticast_linklocal(ip6addr) \
-  (((ip6addr)->addr[0] & PP_HTONL(0xff8f0000UL)) == PP_HTONL(0xff020000UL))
+inline bool ip6_addr_ismulticast_linklocal(const Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff020000UL));
+}
 
 /**
  * Determine whether an IPv6 address has a constrained scope, and as such is
@@ -104,33 +109,12 @@ inline bool ip6_addr_islinklocal(const Ip6Addr* ip6_addr)
  * @return 1 if the address has a constrained scope, 0 if it does not.
  */
 inline bool ip6_addr_has_scope(const Ip6Addr* ip6addr,
-                               const LwipIpv6ScopeType type) {
+                               const Ip6ScopeTypes type) {
   return (
       ip6_addr_islinklocal(ip6addr) ||
       (((type) != IP6_UNICAST) && (ip6_addr_ismulticast_iflocal(ip6addr) ||
                                    ip6_addr_ismulticast_linklocal(ip6addr))));
 }
-
-/**
- * Assign a zone index to an IPv6 address, based on a network interface. If the
- * given address has a scope, the assigned zone index is that scope's zone of
- * the given netif; otherwise, the assigned zone index is "no zone".
- *
- * This default implementation follows the default model of RFC 4007, where
- * only interface-local and link-local scopes are defined, and the zone index
- * of both of those scopes always equals the index of the network interface.
- * As such, this default implementation need not distinguish between different
- * constrained scopes when assigning the zone.
- *
- * @param ip6addr the IPv6 address; its address part is examined, and its zone
- *                index is assigned.
- * @param type address type; see @ref lwip_ipv6_scope_type.
- * @param netif the network interface (const).
- */
-#define ip6_addr_assign_zone(ip6addr, type, netif)                    \
-  (ip6_addr_set_zone((ip6addr), ip6_addr_has_scope((ip6addr), (type)) \
-                                    ? netif_get_index(netif)          \
-                                    : 0))
 
 /**
  * Test whether an IPv6 address is "zone-compatible" with a network interface.
@@ -151,8 +135,7 @@ inline bool ip6_addr_has_scope(const Ip6Addr* ip6addr,
  * @param netif the network interface (const).
  * @return 1 if the address is scope-compatible with the netif, 0 if not.
  */
-#define LwipIp6Addrest_zone(ip6addr, netif) \
-  (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
+
 
 /** Does the given IPv6 address have a scope, and as such should also have a
  * zone to be meaningful, but does not actually have a zone? (0/1) */
@@ -195,15 +178,7 @@ inline void IP6_ADDR_ZONECHECK(const Ip6Addr* ip6addr) {
 
 struct NetIfc;
 
-/** Verify that the given IPv6 address is properly zoned for the given netif. */
-inline void IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif)
-{
-    lwip_assert("IPv6 netif zone check failed",
-                ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
-                    ? (ip6_addr_has_zone(ip6addr) && (((netif) == nullptr) ||
-                        LwipIp6Addrest_zone((ip6addr), (netif))))
-                    : !ip6_addr_has_zone(ip6addr));
-}
+
 
 inline bool ip6_addr_cmp_zoneless(const Ip6Addr* addr1, const Ip6Addr* addr2) {
   return (((addr1)->addr[0] == (addr2)->addr[0]) &&

@@ -59,10 +59,10 @@ int link_stats_valid;
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
-static LwipError ppp_netif_init_cb(NetIfc** netif);
-static LwipError ppp_netif_output_ip4(NetIfc** netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
-static LwipError ppp_netif_output_ip6(NetIfc** netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
-static LwipError ppp_netif_output(NetIfc** netif, struct PacketBuffer* pb, uint16_t protocol);
+static LwipError ppp_netif_init_cb(NetIfc* netif);
+static LwipError ppp_netif_output_ip4(NetIfc* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+static LwipError ppp_netif_output_ip6(NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+static LwipError ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -333,7 +333,7 @@ ppp_do_connect(void* arg)
  * ppp_netif_init_cb - netif init callback
  */
 static LwipError
-ppp_netif_init_cb(NetIfc** netif)
+ppp_netif_init_cb(NetIfc* netif)
 {
     netif->name[0] = 'p';
     netif->name[1] = 'p';
@@ -348,7 +348,7 @@ ppp_netif_init_cb(NetIfc** netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static LwipError ppp_netif_output_ip4(NetIfc** netif,
+static LwipError ppp_netif_output_ip4(NetIfc* netif,
                                       struct PacketBuffer* pb,
                                       const Ip4Addr* ipaddr)
 {
@@ -359,13 +359,13 @@ static LwipError ppp_netif_output_ip4(NetIfc** netif,
  * Send an IPv6 packet on the given connection.
  */
 static LwipError
-ppp_netif_output_ip6(NetIfc** netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
+ppp_netif_output_ip6(NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
 static LwipError
-ppp_netif_output(NetIfc** netif, struct PacketBuffer* pb, uint16_t protocol)
+ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
     LwipError err;
@@ -493,7 +493,7 @@ ppp_init(void)
  * on success or a null pointer on failure.
  */
 PppPcb*
-ppp_new(NetIfc** pppif,
+ppp_new(NetIfc* pppif,
         const struct LinkCallbacks* callbacks,
         void* link_ctx_cb,
         const ppp_link_status_cb_fn link_status_cb,
@@ -541,9 +541,9 @@ ppp_new(NetIfc** pppif,
     pcb->netif = pppif;
     // MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
     if (!netif_add(pcb->netif,
-                   IP4_ADDR_ANY4,
-                   IP4_ADDR_BROADCAST,
-                   IP4_ADDR_ANY4,
+                   kIp4AddrAny,
+                   kIp4AddrBroadcast,
+                   kIp4AddrAny,
                    (void *)pcb,
                    ppp_netif_init_cb,
                    nullptr))
@@ -874,9 +874,9 @@ sifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask)
 {
     Ip4Addr ip, nm, gw;
 
-    SetIp4AddrU32(&ip, our_adr);
-    SetIp4AddrU32(&nm, netmask);
-    SetIp4AddrU32(&gw, his_adr);
+    set_ip4_addr_u32(&ip, our_adr);
+    set_ip4_addr_u32(&nm, netmask);
+    set_ip4_addr_u32(&gw, his_adr);
     netif_set_addr(pcb->netif, &ip, &nm, &gw);
     return 1;
 }
@@ -892,7 +892,7 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
     ;
     ;
 
-    netif_set_addr(pcb->netif, IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4);
+    netif_set_addr(pcb->netif, IP4_ADDR_ANY4, kIpAddrIp4Broadcast, IP4_ADDR_ANY4);
     return 1;
 }
 

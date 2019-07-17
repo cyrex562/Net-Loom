@@ -1,40 +1,3 @@
-/**
- * @file
- * DHCP client API
- */
-
-/*
- * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
- * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Leon Woestenberg <leon.woestenberg@gmx.net>
- *
- */
 #pragma once
 
 #include "arch.h"
@@ -44,14 +7,14 @@
 #include "udp.h"
 
 /* DHCP message item offsets and length */
-#define DHCP_CHADDR_LEN   16U
-#define DHCP_SNAME_OFS    44U
-#define DHCP_SNAME_LEN    64U
-#define DHCP_FILE_OFS     108U
-#define DHCP_FILE_LEN     128U
-#define DHCP_MSG_LEN      236U
+constexpr auto DHCP_CHADDR_LEN = 16U;
+constexpr auto DHCP_SNAME_OFS = 44U;
+constexpr auto DHCP_SNAME_LEN = 64U;
+constexpr auto DHCP_FILE_OFS = 108U;
+constexpr auto DHCP_FILE_LEN = 128U;
+constexpr auto DHCP_MSG_LEN = 236U;
 #define DHCP_OPTIONS_OFS  (DHCP_MSG_LEN + 4U) /* 4 byte: cookie */
-#define DHCP_MIN_OPTIONS_LEN 68U
+constexpr auto DHCP_MIN_OPTIONS_LEN = 68U;
 
 /** set this to be sufficient for your options in outgoing DHCP msgs */
 #define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
@@ -98,20 +61,28 @@ enum DhcpStateEnum
 };
 
 /* DHCP op codes */
-#define DHCP_BOOTREQUEST            1
-#define DHCP_BOOTREPLY              2
+enum DhcpOpCodes
+{
+    DHCP_BOOTREQUEST = 1,
+    DHCP_BOOTREPLY = 2,
+};
+
 
 /* DHCP message types */
-#define DHCP_DISCOVER               1
-#define DHCP_OFFER                  2
-#define DHCP_REQUEST                3
-#define DHCP_DECLINE                4
-#define DHCP_ACK                    5
-#define DHCP_NAK                    6
-#define DHCP_RELEASE                7
-#define DHCP_INFORM                 8
+enum DhcpMsgTypes
+{
+    DHCP_DISCOVER = 1,
+    DHCP_OFFER = 2,
+    DHCP_REQUEST = 3,
+    DHCP_DECLINE = 4,
+    DHCP_ACK = 5,
+    DHCP_NAK = 6,
+    DHCP_RELEASE = 7,
+    DHCP_INFORM = 8
+};
 
-#define DHCP_MAGIC_COOKIE           0x63825363UL
+
+constexpr auto DHCP_MAGIC_COOKIE = 0x63825363UL;
 
 /* This is a list of options for BOOTP and DHCP, see RFC 2132 for descriptions */
 

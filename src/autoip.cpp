@@ -119,7 +119,7 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
     }
     lwip_assert("AUTOIP address not in range",
                 (addr >= kAutoipRangeStart) && (addr <= kAutoipRangeEnd));
-    SetIp4AddrU32(ipaddr, lwip_htonl(addr));
+    set_ip4_addr_u32(ipaddr, lwip_htonl(addr));
 
     return true;
 }
@@ -177,10 +177,9 @@ LwipError autoip_start(NetIfc* netif)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    netif_set_addr(netif,
-                   &kIpAddrAny.u_addr.ip4,
-                   &kIpAddrAny.u_addr.ip4,
-                   &kIpAddrAny.u_addr.ip4);
+    auto any_addr = kIp4AddrAny();
+
+    netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
     {
         /* no AutoIP client attached yet? */
@@ -256,10 +255,11 @@ LwipError autoip_stop(NetIfc* netif)
         autoip->state = AUTOIP_STATE_OFF;
         if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
         {
+            auto any_addr = kIp4AddrAny();
             netif_set_addr(netif,
-                           &kIpAddrAny.u_addr.ip4,
-                           &kIpAddrAny.u_addr.ip4,
-                           &kIpAddrAny.u_addr.ip4);
+                           &any_addr,
+                           &any_addr,
+                           &any_addr);
         }
     }
     return ERR_OK;

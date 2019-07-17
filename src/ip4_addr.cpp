@@ -1,13 +1,11 @@
 #include "opt.h"
 #include "lwip_debug.h"
-#include "ip_addr.h"
+// #include "ip_addr.h"
 #include "netif.h"
 
 #include <cctype>
 
-/* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const IpAddr kIpAddrAny = {{{{kIp4AddrAny4}}}};
-const IpAddr kIpAddrBroadcast = {{{{kIpaddrBroadcast}}}};
+
 
 /**
  * Determine if an address is a broadcast address on a network interface
@@ -20,7 +18,7 @@ uint8_t
 ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
 {
   Ip4Addr ipaddr{};
-  SetIp4AddrU32(&ipaddr, addr);
+  set_ip4_addr_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
   if ((~addr == kIp4AddrAny4) ||
@@ -107,7 +105,7 @@ uint32_t ipaddr_addr(const char* cp)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int ip4addr_aton(const char* cp, const Ip4Addr* addr)
+int ip4addr_aton(const char* cp, Ip4Addr* addr)
 {
     uint32_t val;
     uint32_t parts[4];
@@ -224,7 +222,7 @@ int ip4addr_aton(const char* cp, const Ip4Addr* addr)
     }
     if (addr)
     {
-        SetIp4AddrU32(addr, lwip_htonl(val));
+        set_ip4_addr_u32(addr, lwip_htonl(val));
     }
     return 1;
 }

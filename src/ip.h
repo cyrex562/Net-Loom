@@ -52,7 +52,7 @@ inline bool match_exact_ip_addr_pcb_vers(IpPcb* pcb, IpAddr* ipaddr)
 
 inline bool match_ip_addr_pcb_version(IpPcb* pcb, IpAddr* ipaddr)
 {
-    return (IpIsAnyTypeVal(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
+    return (is_ip_addr_any_type_val(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
 
 /*

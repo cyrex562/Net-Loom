@@ -44,6 +44,31 @@ struct Ip4Addr
     uint32_t addr;
 };
 
+/* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
+inline Ip4Addr init_ip4_addr_bytes(const uint8_t a,
+                                   const uint8_t b,
+                                   const uint8_t c,
+                                   const uint8_t d)
+{
+    const Ip4Addr addr = {make_u32(a, b, c, d)};
+    return addr;
+}
+
+
+inline Ip4Addr kIp4AddrAny()
+{
+    Ip4Addr addr{};
+    addr.addr = 0;
+    return addr;
+}
+
+inline Ip4Addr kIp4AddrBroadcast()
+{
+    Ip4Addr addr{};
+    addr.addr = make_u32(255,255,255,255);
+    return addr;
+}
+
 /* Forward declaration to not include netif.h */
 struct NetIfc;
 
@@ -148,7 +173,7 @@ inline void ip4_addr_set_hton(Ip4Addr* dest, Ip4Addr* src)
 
 
 /** IPv4 only: set the IP address given as an uint32_t */
-inline void SetIp4AddrU32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
+inline void set_ip4_addr_u32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
 {
     ((dest_ipaddr)->addr = (src_u32));
 }
@@ -261,7 +286,7 @@ inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 uint32_t ipaddr_addr(const char *cp);
-int ip4addr_aton(const char *cp, const Ip4Addr* addr);
+int ip4addr_aton(const char *cp, Ip4Addr* addr);
 /** returns ptr to static buffer; not reentrant! */
 char *ip4addr_ntoa(const Ip4Addr *addr);
 char *ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
