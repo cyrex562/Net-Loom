@@ -67,9 +67,6 @@
 
 
 #include "lowpan6_ble.h"
-
-//#if LWIP_IPV6
-
 #include "ip.h"
 #include "packet_buffer.h"
 #include "ip_addr.h"
@@ -80,15 +77,10 @@
 #include "tcpip.h"
 #include "lwip_snmp.h"
 #include "lowpan6_common.h"
-
 #include <string.h>
 
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
 /** context memory, containing IPv6 addresses */
 static Ip6Addr rfc7668_context[LWIP_6LOWPAN_NUM_CONTEXTS];
-#else
-#define rfc7668_context NULL
-#endif
 
 static struct Lowpan6LinkAddr rfc7668_local_addr;
 static struct Lowpan6LinkAddr rfc7668_peer_addr;
@@ -115,15 +107,12 @@ ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr)
   dst[3] = 0xFF;
   dst[4] = 0xFE;
   memcpy(&dst[5], &src[3], 3);
-#if LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS
+
   if(public_addr) {
     dst[0] &= ~0x02;
   } else {
     dst[0] |= 0x02;
   }
-#else
-  ;
-#endif
 }
 
 /**
@@ -239,14 +228,12 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 
 //  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
-#if LWIP_6LOWPAN_IPHC
 
   /* We'll use a dedicated PacketBuffer for building BLE fragments.
    * We'll over-allocate it by the bytes saved for header compression.
    */
   p_frag = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
   if (p_frag == nullptr) {
-    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
 //  LWIP_ASSERT("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
@@ -257,7 +244,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   err = lowpan6_compress_headers(netif, (uint8_t *)p->payload, p->len, buffer, p_frag->len,
     &lowpan6_header_len, &hidden_header_len, rfc7668_context, &rfc7668_local_addr, &rfc7668_peer_addr);
   if (err != ERR_OK) {
-    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+
     pbuf_free(p_frag);
     return err;
   }
@@ -273,17 +260,14 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   p_frag->len = p_frag->tot_len = remaining_len + lowpan6_header_len;
 
   /* send the packet */
-  MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
+
 //  Logf(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (void *)p));
   err = netif->linkoutput(netif, p_frag);
 
   pbuf_free(p_frag);
 
   return err;
-#else /* LWIP_6LOWPAN_IPHC */
-  /* 6LoWPAN over BLE requires IPHC! */
-  return ERR_IF;
-#endif/* LWIP_6LOWPAN_IPHC */
+
 }
 
 /**
@@ -300,7 +284,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 LwipError
 rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
 {
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
   /* check if the ID is possible */
   if (idx >= LWIP_6LOWPAN_NUM_CONTEXTS) {
     return ERR_ARG;
@@ -308,11 +292,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
   /* copy IPv6 address to context storage */
   ip6_addr_set(&rfc7668_context[idx], context);
   return ERR_OK;
-#else
-  ;
-  ;
-  return ERR_VAL;
-#endif
+
 }
 
 /**
@@ -347,8 +327,6 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
 {
   uint8_t * puc;
 
-  MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
-
   /* Load first header byte */
   puc = (uint8_t*)p->payload;
   
@@ -364,20 +342,16 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
     p = lowpan6_decompress(p, 0, rfc7668_context, &rfc7668_peer_addr, &rfc7668_local_addr);
     /* if no PacketBuffer is returned, handle as discarded packet */
     if (p == nullptr) {
-      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       return ERR_OK;
     }
   /* invalid header byte, discard */
   } else {
 //    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, discarding: 0x%2x \n", *puc));
-    MIB2_STATS_NETIF_INC(netif, ifindiscards);
     pbuf_free(p);
     return ERR_OK;
   }
   /* @todo: distinguish unicast/multicast */
-  MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
 
-#if LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG
   {
     uint16_t i;
     Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("IPv6 payload:\n"));
@@ -389,7 +363,7 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
     }
     Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\np->len: %d\n", p->len));
   }
-#endif
+
   /* pass data to ip6_input */
   return ip6_input(p, netif);
 }
@@ -413,7 +387,6 @@ rfc7668_if_init(NetIfc*netif)
   /* local function as IPv6 output */
   netif->output_ip6 = rfc7668_output;
 
-  MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);
 
   /* maximum transfer unit, set according to RFC7668 ch2.4 */
   netif->mtu = 1280;
@@ -425,7 +398,6 @@ rfc7668_if_init(NetIfc*netif)
   return ERR_OK;
 }
 
-#if !NO_SYS
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -441,6 +413,4 @@ tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp)
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);
 }
-#endif /* !NO_SYS */
 
-//#endif /* LWIP_IPV6 */

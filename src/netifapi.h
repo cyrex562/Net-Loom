@@ -29,27 +29,20 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#ifndef LWIP_HDR_NETIFAPI_H
-#define LWIP_HDR_NETIFAPI_H
+#pragma once
 
 #include "opt.h"
-
-#if LWIP_NETIF_API /* don't build if not configured for use in lwipopts.h */
 
 #include "sys.h"
 #include "netif.h"
 #include "dhcp.h"
 #include "autoip.h"
-#include "priv/tcpip_priv.h"
-#include "priv/api_msg.h"
+#include "tcpip_priv.h"
 #include "ethernet.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* API for application */
-#if LWIP_ARP && LWIP_IPV4
+
 /* Used for netfiapi_arp_* APIs */
 enum netifapi_arp_entry {
   NETIFAPI_ARP_PERM /* Permanent entry */
@@ -62,16 +55,15 @@ LwipError netifapi_arp_add(const Ip4Addr *ipaddr, struct EthAddr *ethaddr, enum 
 LwipError netifapi_arp_remove(const Ip4Addr *ipaddr, enum netifapi_arp_entry type);
 #endif /* LWIP_ARP && LWIP_IPV4 */
 
-LwipError netifapi_netif_add(NetIfc*netif,
-#if LWIP_IPV4
+
                          const Ip4Addr *ipaddr, const Ip4Addr *netmask, const Ip4Addr *gw,
-#endif /* LWIP_IPV4 */
+
                          void *state, netif_init_fn init, netif_input_fn input);
 
-#if LWIP_IPV4
+
 LwipError netifapi_netif_set_addr(NetIfc*netif, const Ip4Addr *ipaddr,
                               const Ip4Addr *netmask, const Ip4Addr *gw);
-#endif /* LWIP_IPV4*/
+
 
 LwipError netifapi_netif_common(NetIfc*netif, netifapi_void_fn voidfunc,
                             netifapi_errt_fn errtfunc);
@@ -152,10 +144,3 @@ LwipError netifapi_netif_index_to_name(uint8_t index, char *name);
   */
 #define netifapi_autoip_stop(n)       netifapi_netif_common(n, NULL, autoip_stop)
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_NETIF_API */
-
-#endif /* LWIP_HDR_NETIFAPI_H */

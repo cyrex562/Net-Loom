@@ -40,24 +40,12 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-
-#ifndef LWIP_HDR_ND6_PRIV_H
-#define LWIP_HDR_ND6_PRIV_H
-
+#pragma once
 #include "opt.h"
-
-#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
-
 #include "packet_buffer.h"
 #include "ip6_addr.h"
 #include "netif.h"
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if LWIP_ND6_QUEUEING
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h
   */
@@ -65,7 +53,7 @@ struct nd6_q_entry {
   struct nd6_q_entry *next;
   struct PacketBuffer *p;
 };
-#endif /* LWIP_ND6_QUEUEING */
+
 
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
@@ -73,13 +61,10 @@ struct nd6_neighbor_cache_entry {
   NetIfc*netif;
   uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
-#if LWIP_ND6_QUEUEING
+
   /** Pointer to queue of pending outgoing packets on this entry. */
   struct nd6_q_entry *q;
-#else /* LWIP_ND6_QUEUEING */
-  /** Pointer to a single pending outgoing packet on this entry. */
-  struct PacketBuffer *q;
-#endif /* LWIP_ND6_QUEUEING */
+
   uint8_t state;
   uint8_t isrouter;
   union {
@@ -133,10 +118,3 @@ extern struct nd6_router_list_entry default_router_list[];
 extern uint32_t reachable_time;
 extern uint32_t retrans_timer;
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_ND6_PRIV_H */

@@ -187,11 +187,6 @@ struct Ip6FragHdr
 //#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 NetIfc*ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
 const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
 
@@ -202,25 +197,13 @@ LwipError         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, cons
                             uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
 LwipError         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
-#if LWIP_NETIF_USE_HINTS
+
 LwipError         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
-                                uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc* netif_hint);
-#endif /* LWIP_NETIF_USE_HINTS */
-#if LWIP_IPV6_MLD
+
 LwipError         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
-#endif /* LWIP_IPV6_MLD */
+
 
 #define ip6_netif_get_local_ip(netif, dest) (((netif) != NULL) ? \
   ip6_select_source_address(netif, dest) : NULL)
 
-#if IP6_DEBUG
-void ip6_debug_print(struct PacketBuffer *p);
-#else
 #define ip6_debug_print(p)
-#endif /* IP6_DEBUG */
-
-
-#ifdef __cplusplus
-}
-#endif
-

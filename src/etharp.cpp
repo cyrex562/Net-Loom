@@ -1209,14 +1209,14 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
     hdr->protolen = sizeof(Ip4Addr);
 
     /* send ARP query */
-#if LWIP_AUTOIP
+
   /* If we are using Link-Local, all ARP packets that contain a Link-Local
    * 'sender IP address' MUST be sent using link-layer broadcast instead of
    * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
   if (ip4_addr_islinklocal(ipsrc_addr)) {
     ethernet_output(netif, p, ethsrc_addr, &ethbroadcast, ETHTYPE_ARP);
   } else
-#endif /* LWIP_AUTOIP */
+
     {
         ethernet_output(netif, p, ethsrc_addr, ethdst_addr, ETHTYPE_ARP);
     }

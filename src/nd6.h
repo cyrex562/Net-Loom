@@ -184,9 +184,9 @@ struct rdnss_option
 #define ND6_TMR_INTERVAL 1000
 
 /** Router solicitations are sent in 4 second intervals (see RFC 4861, ch. 6.3.7) */
-#ifndef ND6_RTR_SOLICITATION_INTERVAL
+
 #define ND6_RTR_SOLICITATION_INTERVAL  4000
-#endif
+
 
 struct PacketBuffer;
 
@@ -199,13 +199,13 @@ NetIfc* nd6_find_route(const Ip6Addr* ip6addr);
 LwipError nd6_get_next_hop_addr_or_queue(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr,
                                          const uint8_t** hwaddrp);
 uint16_t nd6_get_destination_mtu(const Ip6Addr* ip6addr, NetIfc* netif);
-#if LWIP_ND6_TCP_REACHABILITY_HINTS
+
 void nd6_reachability_hint(const Ip6Addr* ip6addr);
-#endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
+
 void nd6_cleanup_netif(NetIfc* netif);
-#if LWIP_IPV6_MLD
+
 void nd6_adjust_mld_membership(NetIfc*netif, int8_t addr_idx, uint8_t new_state);
-#endif /* LWIP_IPV6_MLD */
+
 void nd6_restart_netif(NetIfc* netif);
 
 //

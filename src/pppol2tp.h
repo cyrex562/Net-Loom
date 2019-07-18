@@ -169,13 +169,13 @@ struct pppol2tp_pcb_s {
   NetIfc*netif;         /* Output interface, used as a default route */
   IpAddr remote_ip;         /* LNS IP Address */
   uint16_t remote_port;           /* LNS port */
-#if PPPOL2TP_AUTH_SUPPORT
+
   const uint8_t *secret;          /* Secret string */
   uint8_t secret_len;             /* Secret string length */
   uint8_t secret_rv[16];          /* Random vector */
   uint8_t challenge_hash[16];     /* Challenge response */
   uint8_t send_challenge;         /* Boolean whether the next sent packet should contains a challenge response */
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   uint16_t tunnel_port;           /* Tunnel port */
   uint16_t our_ns;                /* NS to peer */

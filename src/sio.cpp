@@ -86,9 +86,7 @@ static int sio_abort = 0;
 /**
  * SIO_DEBUG: Enable debugging for SIO.
  */
-#ifndef SIO_DEBUG
-#define SIO_DEBUG    LWIP_DBG_OFF
-#endif
+
 
 #if SIO_USE_COMPORT
 /** When using a real COM port, set up the

@@ -34,23 +34,17 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCPIP_PRIV_H
-#define LWIP_HDR_TCPIP_PRIV_H
+#pragma once
 
 #include "opt.h"
-
-#if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
 #include "tcpip.h"
 #include "sys.h"
 #include "timeouts.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct PacketBuffer;
-NetIfc*;
+NetIfc;
 
 #define API_VAR_REF(name)               name
 #define API_VAR_DECLARE(type, name)     type name
@@ -70,30 +64,19 @@ LwipError tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t*
 
 struct tcpip_api_call_data
 {
-#if !LWIP_TCPIP_CORE_LOCKING
-  LwipError err;
-#if !LWIP_NETCONN_SEM_PER_THREAD
-  sys_sem_t sem;
-#endif /* LWIP_NETCONN_SEM_PER_THREAD */
-#else /* !LWIP_TCPIP_CORE_LOCKING */
+
   uint8_t dummy; /* avoid empty struct :-( */
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
+
 };
 typedef LwipError (*tcpip_api_call_fn)(struct tcpip_api_call_data* call);
 LwipError tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call);
 
 enum tcpip_msg_type {
-#if !LWIP_TCPIP_CORE_LOCKING
-  TCPIP_MSG_API,
-  TCPIP_MSG_API_CALL,
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
-#if !LWIP_TCPIP_CORE_LOCKING_INPUT
+
   TCPIP_MSG_INPKT,
-#endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
-#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
+
   TCPIP_MSG_TIMEOUT,
   TCPIP_MSG_UNTIMEOUT,
-#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
   TCPIP_MSG_CALLBACK,
   TCPIP_MSG_CALLBACK_STATIC
 };
@@ -101,42 +84,25 @@ enum tcpip_msg_type {
 struct tcpip_msg {
   enum tcpip_msg_type type;
   union {
-#if !LWIP_TCPIP_CORE_LOCKING
-    struct {
-      tcpip_callback_fn function;
-      void* msg;
-    } api_msg;
-    struct {
-      tcpip_api_call_fn function;
-      struct tcpip_api_call_data *arg;
-      sys_sem_t *sem;
-    } api_call;
-#endif /* LWIP_TCPIP_CORE_LOCKING */
-#if !LWIP_TCPIP_CORE_LOCKING_INPUT
+
+
     struct {
       struct PacketBuffer *p;
       NetIfc*netif;
       netif_input_fn input_fn;
     } inp;
-#endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
+
     struct {
       tcpip_callback_fn function;
       void *ctx;
     } cb;
-#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
+
     struct {
       uint32_t msecs;
       sys_timeout_handler h;
       void *arg;
     } tmo;
-#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
+
   } msg;
 };
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* !NO_SYS */
-
-#endif /* LWIP_HDR_TCPIP_PRIV_H */

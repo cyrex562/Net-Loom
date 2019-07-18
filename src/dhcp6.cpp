@@ -62,25 +62,14 @@
 #include <cstring>
 #include "lwip_debug.h"
 
-#ifdef LWIP_HOOK_FILENAME
-#include LWIP_HOOK_FILENAME
-#endif
-#ifndef LWIP_HOOK_DHCP6_APPEND_OPTIONS
-#define LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, state, msg, msg_type, options_len_ptr, max_len)
-#endif
-#ifndef LWIP_HOOK_DHCP6_PARSE_OPTION
-#define LWIP_HOOK_DHCP6_PARSE_OPTION(netif, dhcp6, state, msg, msg_type, option, len, PacketBuffer, offset) do { 
-#endif
 
-#if LWIP_DNS && LWIP_DHCP6_MAX_DNS_SERVERS
-#if DNS_MAX_SERVERS > LWIP_DHCP6_MAX_DNS_SERVERS
+#define LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, state, msg, msg_type, options_len_ptr, max_len)
+
+#define LWIP_HOOK_DHCP6_PARSE_OPTION(netif, dhcp6, state, msg, msg_type, option, len, PacketBuffer, offset) do { 
+
 #define LWIP_DHCP6_PROVIDE_DNS_SERVERS LWIP_DHCP6_MAX_DNS_SERVERS
-#else
-#define LWIP_DHCP6_PROVIDE_DNS_SERVERS DNS_MAX_SERVERS
-#endif
-#else
-#define LWIP_DHCP6_PROVIDE_DNS_SERVERS 0
-#endif
+
+
 
 
 /** Option handling: options are parsed in dhcp6_parse_reply
@@ -449,7 +438,7 @@ dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out)
 }
 
 
-#if LWIP_IPV6_DHCP6_STATELESS
+
 static void
 dhcp6_information_request(NetIfc*netif, struct dhcp6 *dhcp6)
 {
@@ -520,7 +509,7 @@ dhcp6_handle_config_reply(NetIfc*netif, struct PacketBuffer *p_msg_in)
   ;
   ;
 
-#if LWIP_DHCP6_PROVIDE_DNS_SERVERS
+
   if (dhcp6_option_given(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER)) {
     IpAddr dns_addr;
     Ip6Addr *dns_addr6;
@@ -544,9 +533,9 @@ dhcp6_handle_config_reply(NetIfc*netif, struct PacketBuffer *p_msg_in)
     }
   }
   /* @ todo: parse and set Domain Search List */
-#endif /* LWIP_DHCP6_PROVIDE_DNS_SERVERS */
 
-#if LWIP_DHCP6_GET_NTP_SRV
+
+
   if (dhcp6_option_given(dhcp6, DHCP6_OPTION_IDX_NTP_SERVER)) {
     IpAddr ntp_server_addrs[LWIP_DHCP6_MAX_NTP_SERVERS];
     uint16_t op_start = dhcp6_get_option_start(dhcp6, DHCP6_OPTION_IDX_NTP_SERVER);
@@ -568,9 +557,9 @@ dhcp6_handle_config_reply(NetIfc*netif, struct PacketBuffer *p_msg_in)
     }
     dhcp6_set_ntp_servers(n, ntp_server_addrs);
   }
-#endif /* LWIP_DHCP6_GET_NTP_SRV */
+
 }
-#endif /* LWIP_IPV6_DHCP6_STATELESS */
+
 
 /** This function is called from nd6 module when an RA messsage is received
  * It triggers DHCPv6 requests (if enabled).
@@ -582,7 +571,7 @@ void dhcp6_nd6_ra_trigger(NetIfc* netif,
     struct Dhcp6* dhcp6;
     lwip_assert("netif != NULL", netif != nullptr);
     dhcp6 = netif_dhcp6_data(netif);
-#if LWIP_IPV6_DHCP6_STATELESS
+
   if (dhcp6 != NULL) {
     if (dhcp6_stateless_enabled(dhcp6)) {
       if (other_config) {
@@ -592,7 +581,7 @@ void dhcp6_nd6_ra_trigger(NetIfc* netif,
       }
     }
   }
-#endif /* LWIP_IPV6_DHCP6_STATELESS */
+
 }
 
 /**
@@ -641,7 +630,7 @@ static LwipError dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6* dhcp6)
         case (DHCP6_OPTION_SERVERID): dhcp6_got_option(dhcp6, DHCP6_OPTION_IDX_SERVER_ID);
             dhcp6_set_option(dhcp6, DHCP6_OPTION_IDX_SERVER_ID, val_offset, len);
             break;
-#if LWIP_DHCP6_PROVIDE_DNS_SERVERS
+
       case (DHCP6_OPTION_DNS_SERVERS):
         dhcp6_got_option(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER);
         dhcp6_set_option(dhcp6, DHCP6_OPTION_IDX_DNS_SERVER, val_offset, len);
@@ -650,13 +639,13 @@ static LwipError dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6* dhcp6)
         dhcp6_got_option(dhcp6, DHCP6_OPTION_IDX_DOMAIN_LIST);
         dhcp6_set_option(dhcp6, DHCP6_OPTION_IDX_DOMAIN_LIST, val_offset, len);
         break;
-#endif /* LWIP_DHCP6_PROVIDE_DNS_SERVERS */
-#if LWIP_DHCP6_GET_NTP_SRV
+
+
       case (DHCP6_OPTION_SNTP_SERVERS):
         dhcp6_got_option(dhcp6, DHCP6_OPTION_IDX_NTP_SERVER);
         dhcp6_set_option(dhcp6, DHCP6_OPTION_IDX_NTP_SERVER, val_offset, len);
         break;
-#endif /* LWIP_DHCP6_GET_NTP_SRV*/
+
         default:
             // Logf(DHCP6_DEBUG, ("skipping option %"U16_F" in options\n", op));
             // LWIP_HOOK_DHCP6_PARSE_OPTION(ip_current_netif(),
@@ -731,13 +720,13 @@ static void dhcp6_recv(void* arg,
     if (msg_type == DHCP6_REPLY)
     {
         Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("DHCP6_REPLY received\n"));
-#if LWIP_IPV6_DHCP6_STATELESS
+
     /* in info-requesting state? */
     if (dhcp6->state == DHCP6_STATE_REQUESTING_CONFIG) {
       dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE, "dhcp6_recv");
       dhcp6_handle_config_reply(netif, p);
     } else
-#endif /* LWIP_IPV6_DHCP6_STATELESS */
+
         {
             /* @todo: handle reply in other states? */
         }
@@ -763,13 +752,13 @@ dhcp6_timeout(NetIfc*netif, struct Dhcp6 *dhcp6)
   // ;
   // ;
 
-#if LWIP_IPV6_DHCP6_STATELESS
+
   /* back-off period has passed, or server selection timed out */
   if (dhcp6->state == DHCP6_STATE_REQUESTING_CONFIG) {
     Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("dhcp6_timeout(): retrying information request\n"));
     dhcp6_information_request(netif, dhcp6);
   }
-#endif /* LWIP_IPV6_DHCP6_STATELESS */
+
 }
 
 /**

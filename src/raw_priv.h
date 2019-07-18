@@ -34,18 +34,11 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_RAW_PRIV_H
-#define LWIP_HDR_RAW_PRIV_H
+#pragma once
 
 #include "opt.h"
-
-#if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
-
 #include "raw.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** return codes for raw_input */
 typedef enum raw_input_state
@@ -60,10 +53,3 @@ raw_input_state_t raw_input(struct PacketBuffer *p, NetIfc*inp);
 
 void raw_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_RAW */
-
-#endif /* LWIP_HDR_RAW_PRIV_H */

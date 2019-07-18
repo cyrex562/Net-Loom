@@ -34,12 +34,10 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_NETBUF_H
-#define LWIP_HDR_NETBUF_H
+#pragma once
 
 #include "opt.h"
 
-#if LWIP_NETCONN || LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
@@ -47,9 +45,6 @@
 #include "ip_addr.h"
 #include "ip6_addr.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** This netbuf has dest-addr/port set */
 #define NETBUF_FLAG_DESTADDR    0x01
@@ -60,14 +55,10 @@ extern "C" {
 struct netbuf {
   struct PacketBuffer *p, *ptr;
   IpAddr addr;
-  uint16_t port;
-#if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
-  uint8_t flags;
+  uint16_t port;  uint8_t flags;
   uint16_t toport_chksum;
-#if LWIP_NETBUF_RECVINFO
   IpAddr toaddr;
-#endif /* LWIP_NETBUF_RECVINFO */
-#endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
+
 };
 
 /* Network buffer functions: */
@@ -93,24 +84,10 @@ void              netbuf_first    (struct netbuf *buf);
 #define netbuf_fromaddr(buf)         (&((buf)->addr))
 #define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set(&((buf)->addr), fromaddr)
 #define netbuf_fromport(buf)         ((buf)->port)
-#if LWIP_NETBUF_RECVINFO
 #define netbuf_destaddr(buf)         (&((buf)->toaddr))
 #define netbuf_set_destaddr(buf, destaddr) ip_addr_set(&((buf)->toaddr), destaddr)
-#if LWIP_CHECKSUM_ON_COPY
 #define netbuf_destport(buf)         (((buf)->flags & NETBUF_FLAG_DESTADDR) ? (buf)->toport_chksum : 0)
-#else /* LWIP_CHECKSUM_ON_COPY */
-#define netbuf_destport(buf)         ((buf)->toport_chksum)
-#endif /* LWIP_CHECKSUM_ON_COPY */
-#endif /* LWIP_NETBUF_RECVINFO */
-#if LWIP_CHECKSUM_ON_COPY
+
 #define netbuf_set_chksum(buf, chksum) do { (buf)->flags = NETBUF_FLAG_CHKSUM; \
                                             (buf)->toport_chksum = chksum; } while(0)
-#endif /* LWIP_CHECKSUM_ON_COPY */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
-
-#endif /* LWIP_HDR_NETBUF_H */

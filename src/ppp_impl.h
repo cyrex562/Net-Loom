@@ -10,10 +10,6 @@
 #include "protent.h"
 #include "lwip_error.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 constexpr auto kPppCtrlPbufMaxSize = 512;
 
 // #define PPP_ADDRESS(p)	(((uint8_t *)(p))[0])
@@ -301,27 +297,26 @@ inline void Untimeout(sys_timeout_handler time_fn, void* arg) {
 // void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
 //                     unknown>) noexcept;    /* start all the network control protos */
 // bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
-#if PPP_AUTH_SUPPORT
-#if PPP_SERVER
+
 int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen);
                                 /* check the user name and passwd against configuration */
 void auth_peer_fail(PppPcb *pcb, int protocol);
 				/* peer failed to authenticate itself */
 void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *name, int namelen, Protent** protocols);
 				/* peer successfully authenticated itself */
-#endif /* PPP_SERVER */
+
 void auth_withpeer_fail(PppPcb *pcb, int protocol);
 				/* we failed to authenticate ourselves */
 void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor, Protent** protocols);
 				/* we successfully authenticated ourselves */
-#endif /* PPP_AUTH_SUPPORT */
+
 void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(PppPcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(PppPcb *pcb, int proto); /* a network protocol no longer needs link */
-#if PPP_AUTH_SUPPORT
+
 int get_secret(PppPcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server);
 				/* get "secret" for chap */
-#endif /* PPP_AUTH_SUPPORT */
+
 
 /* Procedures exported from ipcp.c */
 /* int parse_dotted_ip (char *, uint32_t *); */
@@ -460,6 +455,3 @@ void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
  * 1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT
  */
 
-#ifdef __cplusplus
-}
-#endif

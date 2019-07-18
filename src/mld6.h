@@ -39,41 +39,26 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-
-#ifndef LWIP_HDR_MLD6_H
-#define LWIP_HDR_MLD6_H
-
+#pragma once
 #include "opt.h"
 
 
 #define MLD6_HBH_HLEN 8
  /** Multicast listener report/query/done message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
+
 
 struct mld_header {
-    (uint8_t type);
-    (uint8_t code);
-    (uint16_t chksum);
-    (uint16_t max_resp_delay);
-    (uint16_t reserved);
-    PACK_STRUCT_FLD_S(Ip6AddrPT multicast_address);
+    uint8_t type;
+    uint8_t code;
+    uint16_t chksum;
+    uint16_t max_resp_delay;
+   uint16_t reserved;
+    Ip6AddrPT multicast_address;
     /* Options follow. */
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-
-#if LWIP_IPV6_MLD && LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 #include "packet_buffer.h"
 #include "netif.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** MLD group */
 struct mld_group {
@@ -111,10 +96,3 @@ LwipError  mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
  */
 #define netif_mld6_data(netif) ((struct mld_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6))
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_IPV6_MLD && LWIP_IPV6 */
-
-#endif /* LWIP_HDR_MLD6_H */

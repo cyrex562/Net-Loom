@@ -41,41 +41,15 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 /*
  * @todo:
  */
 
-#if 0 /* UNUSED */
-#include <stdio.h>
-#include <string.h>
-#endif /* UNUSED */
 
-#include "ppp/ppp_impl.h"
+#include "ppp_impl.h"
 
-#include "ppp/upap.h"
-
-#if PPP_OPTIONS
-/*
- * Command-line options.
- */
-static option_t pap_option_list[] = {
-    { "hide-password", o_bool, &hide_password,
-      "Don't output passwords to log", OPT_PRIO | 1 },
-    { "show-password", o_bool, &hide_password,
-      "Show password string in debug log messages", OPT_PRIOSUB | 0 },
-
-    { "pap-restart", o_int, &upap[0].us_timeouttime,
-      "Set retransmit timeout for PAP", OPT_PRIO },
-    { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
-      "Set max number of transmissions for auth-reqs", OPT_PRIO },
-    { "pap-timeout", o_int, &upap[0].us_reqtimeout,
-      "Set time limit for peer PAP authentication", OPT_PRIO },
-
-    { NULL }
-};
-#endif /* PPP_OPTIONS */
+#include "upap.h"
 
 /*
  * Protocol entry points.
@@ -85,9 +59,6 @@ static void upap_lowerup(PppPcb *pcb);
 static void upap_lowerdown(PppPcb *pcb);
 static void upap_input(PppPcb *pcb, uint8_t *inpacket, int l);
 static void upap_protrej(PppPcb *pcb);
-#if PRINTPKT_SUPPORT
-static int upap_printpkt(const uint8_t *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
-#endif /* PRINTPKT_SUPPORT */
 
 const struct protent pap_protent = {
     PPP_PAP,
@@ -98,37 +69,23 @@ const struct protent pap_protent = {
     upap_lowerdown,
     NULL,
     NULL,
-#if PRINTPKT_SUPPORT
-    upap_printpkt,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_DATAINPUT
-    NULL,
-#endif /* PPP_DATAINPUT */
-#if PRINTPKT_SUPPORT
-    "PAP",
-    NULL,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_OPTIONS
-    pap_option_list,
-    NULL,
-#endif /* PPP_OPTIONS */
-#if DEMAND_SUPPORT
-    NULL,
-    NULL
-#endif /* DEMAND_SUPPORT */
+
+
+
+
 };
 
 static void upap_timeout(void *arg);
-#if PPP_SERVER
+
 static void upap_reqtimeout(void *arg);
 static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len);
-#endif /* PPP_SERVER */
+
 static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len);
 static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len);
 static void upap_sauthreq(PppPcb *pcb);
-#if PPP_SERVER
+
 static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, int msglen);
-#endif /* PPP_SERVER */
+
 
 
 /*
@@ -140,9 +97,9 @@ static void upap_init(PppPcb *pcb) {
     pcb->upap.us_passwd = NULL;
     pcb->upap.us_passwdlen = 0;
     pcb->upap.us_clientstate = UPAPCS_INITIAL;
-#if PPP_SERVER
+
     pcb->upap.us_serverstate = UPAPSS_INITIAL;
-#endif /* PPP_SERVER */
+
     pcb->upap.us_id = 0;
 }
 
@@ -174,7 +131,7 @@ void upap_authwithpeer(PppPcb *pcb, const char *user, const char *password) {
     upap_sauthreq(pcb);		/* Start protocol */
 }
 
-#if PPP_SERVER
+
 /*
  * upap_authpeer - Authenticate our peer (start server).
  *
@@ -193,7 +150,7 @@ void upap_authpeer(PppPcb *pcb) {
     if (pcb->settings.pap_req_timeout > 0)
 	Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
 }
-#endif /* PPP_SERVER */
+
 
 /*
  * upap_timeout - Retransmission timer for sending auth-reqs expired.
@@ -216,7 +173,7 @@ static void upap_timeout(void *arg) {
 }
 
 
-#if PPP_SERVER
+
 /*
  * upap_reqtimeout - Give up waiting for the peer to send an auth-req.
  */
@@ -229,7 +186,7 @@ static void upap_reqtimeout(void *arg) {
     auth_peer_fail(pcb, PPP_PAP);
     pcb->upap.us_serverstate = UPAPSS_BADAUTH;
 }
-#endif /* PPP_SERVER */
+
 
 
 /*
@@ -245,7 +202,7 @@ static void upap_lowerup(PppPcb *pcb) {
 	upap_sauthreq(pcb);	/* send an auth-request */
     }
 
-#if PPP_SERVER
+
     if (pcb->upap.us_serverstate == UPAPSS_INITIAL)
 	pcb->upap.us_serverstate = UPAPSS_CLOSED;
     else if (pcb->upap.us_serverstate == UPAPSS_PENDING) {
@@ -253,7 +210,7 @@ static void upap_lowerup(PppPcb *pcb) {
 	if (pcb->settings.pap_req_timeout > 0)
 	    Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
     }
-#endif /* PPP_SERVER */
+
 }
 
 
@@ -266,15 +223,15 @@ static void upap_lowerdown(PppPcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ)	/* Timeout pending? */
 	Untimeout(upap_timeout, pcb);		/* Cancel timeout */
-#if PPP_SERVER
+
     if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->settings.pap_req_timeout > 0)
 	Untimeout(upap_reqtimeout, pcb);
-#endif /* PPP_SERVER */
+
 
     pcb->upap.us_clientstate = UPAPCS_INITIAL;
-#if PPP_SERVER
+
     pcb->upap.us_serverstate = UPAPSS_INITIAL;
-#endif /* PPP_SERVER */
+
 }
 
 
@@ -289,12 +246,12 @@ static void upap_protrej(PppPcb *pcb) {
 	ppp_error("PAP authentication failed due to protocol-reject");
 	auth_withpeer_fail(pcb, PPP_PAP);
     }
-#if PPP_SERVER
+
     if (pcb->upap.us_serverstate == UPAPSS_LISTEN) {
 	ppp_error("PAP authentication of peer failed (protocol-reject)");
 	auth_peer_fail(pcb, PPP_PAP);
     }
-#endif /* PPP_SERVER */
+
     upap_lowerdown(pcb);
 }
 
@@ -334,9 +291,9 @@ static void upap_input(PppPcb *pcb, uint8_t *inpacket, int l) {
      */
     switch (code) {
     case UPAP_AUTHREQ:
-#if PPP_SERVER
+
 	upap_rauthreq(pcb, inp, id, len);
-#endif /* PPP_SERVER */
+
 	break;
 
     case UPAP_AUTHACK:
@@ -352,7 +309,7 @@ static void upap_input(PppPcb *pcb, uint8_t *inpacket, int l) {
     }
 }
 
-#if PPP_SERVER
+
 /*
  * upap_rauth - Receive Authenticate.
  */
@@ -413,25 +370,6 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
     }
     BZERO(rpasswd, rpasswdlen);
 
-#if 0 /* UNUSED */
-    /*
-     * Check remote number authorization.  A plugin may have filled in
-     * the remote number or added an allowed number, and rather than
-     * return an authenticate failure, is leaving it for us to verify.
-     */
-    if (retcode == UPAP_AUTHACK) {
-	if (!auth_number()) {
-	    /* We do not want to leak info about the pap result. */
-	    retcode = UPAP_AUTHNAK; /* XXX exit value will be "wrong" */
-	    warn("calling number %q is not authorized", remote_number);
-	}
-    }
-
-    msglen = strlen(msg);
-    if (msglen > 255)
-	msglen = 255;
-#endif /* UNUSED */
-
     upap_sresp(pcb, retcode, id, msg, msglen);
 
     /* Null terminate and clean remote name. */
@@ -450,7 +388,7 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
     if (pcb->settings.pap_req_timeout > 0)
 	Untimeout(upap_reqtimeout, pcb);
 }
-#endif /* PPP_SERVER */
+
 
 /*
  * upap_rauthack - Receive Authenticate-Ack.
@@ -559,8 +497,6 @@ static void upap_sauthreq(PppPcb *pcb) {
     ++pcb->upap.us_transmits;
     pcb->upap.us_clientstate = UPAPCS_AUTHREQ;
 }
-
-#if PPP_SERVER
 /*
  * upap_sresp - Send a response (ack or nak).
  */
@@ -589,89 +525,3 @@ static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, i
 
     ppp_write(pcb, p);
 }
-#endif /* PPP_SERVER */
-
-#if PRINTPKT_SUPPORT
-/*
- * upap_printpkt - print the contents of a PAP packet.
- */
-static const char* const upap_codenames[] = {
-    "AuthReq", "AuthAck", "AuthNak"
-};
-
-static int upap_printpkt(const uint8_t *p, int plen, void (*printer) (void *, const char *, ...), void *arg) {
-    int code, id, len;
-    int mlen, ulen, wlen;
-    const uint8_t *user, *pwd, *msg;
-    const uint8_t *pstart;
-
-    if (plen < UPAP_HEADERLEN)
-	return 0;
-    pstart = p;
-    GETCHAR(code, p);
-    GETCHAR(id, p);
-    GETSHORT(len, p);
-    if (len < UPAP_HEADERLEN || len > plen)
-	return 0;
-
-    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(upap_codenames))
-	printer(arg, " %s", upap_codenames[code-1]);
-    else
-	printer(arg, " code=0x%x", code);
-    printer(arg, " id=0x%x", id);
-    len -= UPAP_HEADERLEN;
-    switch (code) {
-    case UPAP_AUTHREQ:
-	if (len < 1)
-	    break;
-	ulen = p[0];
-	if (len < ulen + 2)
-	    break;
-	wlen = p[ulen + 1];
-	if (len < ulen + wlen + 2)
-	    break;
-	user = (const uint8_t *) (p + 1);
-	pwd = (const uint8_t *) (p + ulen + 2);
-	p += ulen + wlen + 2;
-	len -= ulen + wlen + 2;
-	printer(arg, " user=");
-	ppp_print_string(user, ulen, printer, arg);
-	printer(arg, " password=");
-/* FIXME: require PppPcb struct as printpkt() argument */
-#if 0
-	if (!pcb->settings.hide_password)
-#endif
-	    ppp_print_string(pwd, wlen, printer, arg);
-#if 0
-	else
-	    printer(arg, "<hidden>");
-#endif
-	break;
-    case UPAP_AUTHACK:
-    case UPAP_AUTHNAK:
-	if (len < 1)
-	    break;
-	mlen = p[0];
-	if (len < mlen + 1)
-	    break;
-	msg = (const uint8_t *) (p + 1);
-	p += mlen + 1;
-	len -= mlen + 1;
-	printer(arg, " ");
-	ppp_print_string(msg, mlen, printer, arg);
-	break;
-    default:
-	break;
-    }
-
-    /* print the rest of the bytes in the packet */
-    for (; len > 0; --len) {
-	GETCHAR(code, p);
-	printer(arg, " %.2x", code);
-    }
-
-    return p - pstart;
-}
-#endif /* PRINTPKT_SUPPORT */
-
-#endif /* PPP_SUPPORT && PAP_SUPPORT */

@@ -534,9 +534,6 @@ static void check_idle(void *arg) {
 	ppp_notice("Terminating connection due to lack of activity.");
 	pcb->err_code = PPPERR_IDLETIMEOUT;
 	lcp_close(pcb, "Link inactive");
-#if 0 /* UNUSED */
-	need_holdoff = 0;
-#endif /* UNUSED */
     } else {
 	Timeout(check_idle, static_cast<void*>(pcb), tlim);
     }

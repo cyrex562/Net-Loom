@@ -32,7 +32,6 @@
  */
 
 #include "ppp_opts.h"
-//#if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include <cstring>
 
@@ -59,18 +58,18 @@
 static LwipError pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
 static LwipError pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol);
 static void pppos_connect(PppPcb *ppp, void *ctx);
-#if PPP_SERVER
+
 static void pppos_listen(PppPcb *ppp, void *ctx);
-#endif /* PPP_SERVER */
+
 static void pppos_disconnect(PppPcb *ppp, void *ctx);
 static LwipError pppos_destroy(PppPcb *ppp, void *ctx);
 static void pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 static void pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 
 /* Prototypes for procedures local to this file. */
-#if PPP_INPROC_IRQ_SAFE
+
 static void pppos_input_callback(void *arg);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
 static LwipError pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs);
@@ -79,9 +78,9 @@ static LwipError pppos_output_last(pppos_pcb *pppos, LwipError err, struct Packe
 /* Callbacks structure for PPP core */
 static const struct LinkCallbacks pppos_callbacks = {
   pppos_connect,
-#if PPP_SERVER
+
   pppos_listen,
-#endif /* PPP_SERVER */
+
   pppos_disconnect,
   pppos_destroy,
   pppos_write,
@@ -94,7 +93,7 @@ static const struct LinkCallbacks pppos_callbacks = {
  * to select the specific bit for a character. */
 #define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & 1 << (c & 0x07))
 
-#if PPP_FCS_TABLE
+
 /*
  * FCS lookup table as calculated by genfcstab.
  */
@@ -133,34 +132,15 @@ static const uint16_t fcstab[256] = {
   0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ fcstab[((fcs) ^ (c)) & 0xff])
-#else /* PPP_FCS_TABLE */
-/* The HDLC polynomial: X**0 + X**5 + X**12 + X**16 (0x8408) */
-#define PPP_FCS_POLYNOMIAL 0x8408
-static uint16_t
-ppp_get_fcs(uint8_t byte)
-{
-  unsigned int octet;
-  int bit;
-  octet = byte;
-  for (bit = 8; bit-- > 0; ) {
-    octet = (octet & 0x01) ? ((octet >> 1) ^ PPP_FCS_POLYNOMIAL) : (octet >> 1);
-  }
-  return octet & 0xffff;
-}
-#define PPP_FCS(fcs, c) (((fcs) >> 8) ^ ppp_get_fcs(((fcs) ^ (c)) & 0xff))
-#endif /* PPP_FCS_TABLE */
 
 
 
-#if PPP_INPROC_IRQ_SAFE
+
+
 #define PPPOS_DECL_PROTECT(lev) sys_prot_t lev
 #define PPPOS_PROTECT(lev) SYS_ARCH_PROTECT(lev)
 #define PPPOS_UNPROTECT(lev) SYS_ARCH_UNPROTECT(lev)
-#else
-#define PPPOS_DECL_PROTECT(lev)
-#define PPPOS_PROTECT(lev)
-#define PPPOS_UNPROTECT(lev)
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 
 
 /*
@@ -312,10 +292,10 @@ pppos_connect(PppPcb *ppp, void *ctx)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
 
-#if PPP_INPROC_IRQ_SAFE
+
   /* input PacketBuffer left over from last session? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 
   /* reset PPPoS control block to its initial state */
   memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - offsetof(pppos_pcb, last_xmit));
@@ -337,17 +317,17 @@ pppos_connect(PppPcb *ppp, void *ctx)
   ppp_start(ppp); /* notify upper layers */
 }
 
-#if PPP_SERVER
+
 static void
 pppos_listen(PppPcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
 
-#if PPP_INPROC_IRQ_SAFE
+
   /* input PacketBuffer left over from last session? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 
   /* reset PPPoS control block to its initial state */
   memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - offsetof(pppos_pcb, last_xmit));
@@ -368,7 +348,7 @@ pppos_listen(PppPcb *ppp, void *ctx)
   PPPDEBUG(LOG_INFO, ("pppos_listen: unit %d: listening\n", ppp->netif->num));
   ppp_start(ppp); /* notify upper layers */
 }
-#endif /* PPP_SERVER */
+
 
 static void
 pppos_disconnect(PppPcb *ppp, void *ctx)
@@ -384,10 +364,7 @@ pppos_disconnect(PppPcb *ppp, void *ctx)
    * pppos_input_free_current_packet() here because
    * rx IRQ might still call pppos_input().
    */
-#if !PPP_INPROC_IRQ_SAFE
-  /* input PacketBuffer left ? */
-  pppos_input_free_current_packet(pppos);
-#endif /* !PPP_INPROC_IRQ_SAFE */
+
 
   ppp_link_end(ppp); /* notify upper layers */
 }
@@ -398,72 +375,27 @@ pppos_destroy(PppPcb *ppp, void *ctx)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   ;
 
-#if PPP_INPROC_IRQ_SAFE
+
   /* input PacketBuffer left ? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 
   LWIP_MEMPOOL_FREE(PPPOS_PCB, pppos);
   return ERR_OK;
 }
 
-#if !NO_SYS && !PPP_INPROC_IRQ_SAFE
-/** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
- *
- * This is one of the only functions that may be called outside of the TCPIP thread!
- *
- * @param ppp PPP descriptor index, returned by pppos_create()
- * @param s received data
- * @param l length of received data
- */
-LwipError
-pppos_input_tcpip(PppPcb *ppp, uint8_t *s, int l)
-{
-  struct PacketBuffer *p;
-  LwipError err;
-
-  p = pbuf_alloc(PBUF_RAW, l, PBUF_POOL);
-  if (!p) {
-    return ERR_MEM;
-  }
-  pbuf_take(p, s, l);
-
-  err = tcpip_inpkt(p, ppp_netif(ppp), pppos_input_sys);
-  if (err != ERR_OK) {
-     pbuf_free(p);
-  }
-  return err;
-}
-
-/* called from TCPIP thread */
-LwipError pppos_input_sys(struct PacketBuffer *p, NetIfc*inp) {
-  PppPcb *ppp = (PppPcb*)inp->state;
-  struct PacketBuffer *n;
-  LWIP_ASSERT_CORE_LOCKED();
-
-  for (n = p; n; n = n->next) {
-    pppos_input(ppp, (uint8_t*)n->payload, n->len);
-  }
-  pbuf_free(p);
-  return ERR_OK;
-}
-#endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /** PPPoS input helper struct, must be packed since it is stored
  * to PacketBuffer->payload, which might be unaligned. */
-#if PPP_INPROC_IRQ_SAFE
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "bpstruct.h"
-#endif
+
+
 
 struct pppos_input_header {
-  (PppPcb *ppp);
+  PppPcb *ppp;
 } ;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "epstruct.h"
-#endif
-#endif /* PPP_INPROC_IRQ_SAFE */
+
+
+
 
 /** Pass received raw characters to PPPoS to be decoded.
  *
@@ -479,9 +411,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
   uint8_t cur_char;
   uint8_t escaped;
   PPPOS_DECL_PROTECT(lev);
-#if !PPP_INPROC_IRQ_SAFE
-  LWIP_ASSERT_CORE_LOCKED();
-#endif
+
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
@@ -553,20 +483,17 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
           /* Packet consumed, release our references. */
           pppos->in_head = nullptr;
           pppos->in_tail = nullptr;
-#if IP_FORWARD || LWIP_IPV6_FORWARD
+
           /* hide the room for Ethernet forwarding header */
           pbuf_remove_header(inp, PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN);
-#endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
-#if PPP_INPROC_IRQ_SAFE
+
           if(tcpip_try_callback(pppos_input_callback, inp) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
             MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
           }
-#else /* PPP_INPROC_IRQ_SAFE */
-          ppp_input(ppp, inp,);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
         }
 
         /* Prepare for a new packet. */
@@ -622,13 +549,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
           }
           /* no break */
 
-#if 0
-          else {
-            PPPDEBUG(LOG_WARNING,
-                     ("pppos_input[%d]: Invalid control <%d>\n", ppp->netif->num, cur_char));
-            pppos->in_state = PDSTART;
-          }
-#endif
+
           /* Fall through */
 
       case PDPROTOCOL1:               /* Process protocol field 1. */
@@ -660,7 +581,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
             }
             /* If we haven't started a packet, we need a packet header. */
             pbuf_alloc_len = 0;
-#if IP_FORWARD || LWIP_IPV6_FORWARD
+
             /* If IP forwarding is enabled we are reserving PBUF_LINK_ENCAPSULATION_HLEN
              * + PBUF_LINK_HLEN bytes so the packet is being allocated with enough header
              * space to be forwarded (to Ethernet for example).
@@ -668,7 +589,6 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
             if (pppos->in_head == NULL) {
               pbuf_alloc_len = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
             }
-#endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
             next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len, PBUF_POOL);
             if (next_pbuf == nullptr) {
               /* No free buffers.  Drop the input packet and let the
@@ -682,11 +602,11 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
             }
             if (pppos->in_head == nullptr) {
               uint8_t *payload = ((uint8_t*)next_pbuf->payload) + pbuf_alloc_len;
-#if PPP_INPROC_IRQ_SAFE
+
               ((struct pppos_input_header*)payload)->ppp = ppp;
               payload += sizeof(struct pppos_input_header);
               next_pbuf->len += sizeof(struct pppos_input_header);
-#endif /* PPP_INPROC_IRQ_SAFE */
+
               next_pbuf->len += sizeof(pppos->in_protocol);
               *(payload++) = pppos->in_protocol >> 8;
               *(payload) = pppos->in_protocol & 0xFF;
@@ -707,7 +627,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
   } /* while (l-- > 0), all bytes processed */
 }
 
-#if PPP_INPROC_IRQ_SAFE
+
 /* PPPoS input callback using one input pointer
  */
 static void pppos_input_callback(void *arg) {
@@ -729,7 +649,7 @@ drop:
   MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
   pbuf_free(pb);
 }
-#endif /* PPP_INPROC_IRQ_SAFE */
+
 
 static void
 pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
@@ -796,15 +716,13 @@ static void
 pppos_input_drop(pppos_pcb *pppos)
 {
   if (pppos->in_head != nullptr) {
-#if 0
-    PPPDEBUG(LOG_INFO, ("pppos_input_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
-#endif
+
     PPPDEBUG(LOG_INFO, ("pppos_input_drop: PacketBuffer len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
   }
   pppos_input_free_current_packet(pppos);
-#if VJ_SUPPORT
+
   vj_uncompress_err(&pppos->ppp->vj_comp);
-#endif /* VJ_SUPPORT */
+
 
   LINK_STATS_INC(link.drop);
   MIB2_STATS_NETIF_INC(pppos->ppp->netif, ifindiscards);

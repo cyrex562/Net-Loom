@@ -50,8 +50,6 @@
 
 #include "lowpan6_common.h"
 
-#if LWIP_IPV6
-
 #include "ip.h"
 #include "packet_buffer.h"
 #include "ip_addr.h"
@@ -86,7 +84,6 @@ lowpan6_get_address_mode(const Ip6Addr *ip6addr, const struct lowpan6_link_addr 
   return 1;
 }
 
-#if LWIP_6LOWPAN_IPHC
 
 /* Determine compression mode for multicast address. */
 static int8_t
@@ -110,7 +107,6 @@ lowpan6_get_address_mode_mc(const Ip6Addr *ip6addr)
   return 0;
 }
 
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
 static int8_t
 lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
 {
@@ -123,7 +119,7 @@ lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
   }
   return -1;
 }
-#endif /* LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
+
 
 /*
  * Compress IPv6 and/or UDP headers.
@@ -173,7 +169,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
 
   /* Determine whether there will be a Context Identifier Extension byte or not.
    * If so, set it already. */
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
   buffer[2] = 0;
 
   i = lowpan6_context_lookup(lowpan6_contexts, ip_2_ip6(&ip6src));
@@ -195,9 +191,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
     buffer[1] |= 0x80;
     lowpan6_header_len++;
   }
-#else /* LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
-  ;
-#endif /* LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
+
 
   /* Determine TF field: Traffic Class, Flow Label */
   if (IP6H_FL(ip6hdr) == 0) {
@@ -315,7 +309,6 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   inptr += IP6_HLEN;
   hidden_header_len += IP6_HLEN;
 
-#if LWIP_UDP
   /* Compress UDP header? */
   if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
     /* @todo support optional checksum compression */
@@ -364,7 +357,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
 
     hidden_header_len += UDP_HLEN;
   }
-#endif /* LWIP_UDP */
+
 
   *lowpan6_header_len_out = lowpan6_header_len;
   *hidden_header_len_out = hidden_header_len;
@@ -414,7 +407,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   }
 
   /* output the full compressed packet, if set in @see lowpan6_opts.h */
-#if LWIP_LOWPAN6_IP_COMPRESSED_DEBUG
+
   {
     uint16_t j;
     Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, ("lowpan6_decompress_hdr: IP6 payload (compressed): \n"));
@@ -426,8 +419,6 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
     }
     Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, ("\np->len: %d", lowpan6_bufsize));
   }
-#endif
-
   /* offset for inline IP headers (RFC 6282 ch3)*/
   lowpan6_offset = 2;
   /* if CID is set (context identifier), the context byte 
@@ -561,13 +552,11 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
         /* Error */
         return ERR_VAL;
       }
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
       ip6hdr->src.addr[0] = lowpan6_contexts[i].addr[0];
       ip6hdr->src.addr[1] = lowpan6_contexts[i].addr[1];
       Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("SAM == xx, context compression found @%d: %8X, %8X\n", (int)i, ip6hdr->src.addr[0], ip6hdr->src.addr[1]));
-#else
-      ;
-#endif
+
     }
 
     /* determine further address bits */
@@ -654,10 +643,10 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
         /* Error */
         return ERR_VAL;
       }
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
       ip6hdr->dest.addr[0] = lowpan6_contexts[i].addr[0];
       ip6hdr->dest.addr[1] = lowpan6_contexts[i].addr[1];
-#endif
+
     } else {
       Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("DAC == 0, stateless compression, setting link local prefix\n"));
       /* Link local address compression */
@@ -703,7 +692,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   /* Next Header Compression (NHC) decoding? */
   if (lowpan6_buffer[0] & 0x04) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("NHC decoding\n"));
-#if LWIP_UDP
+
     if ((lowpan6_buffer[lowpan6_offset] & 0xf8) == 0xf0) {
       /* NHC: UDP */
       struct udp_hdr *udphdr;
@@ -752,7 +741,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       udphdr->len = lwip_htons(datagram_size - IP6_HLEN);
 
     } else
-#endif /* LWIP_UDP */
+
     {
       Logf(LWIP_DBG_ON,("NHC: unsupported protocol!\n"));
       /* @todo support NHC other than UDP */
@@ -783,11 +772,8 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   uint16_t lowpan6_offset, ip6_offset;
   LwipError err;
 
-#if LWIP_UDP
 #define UDP_HLEN_ALLOC UDP_HLEN
-#else
-#define UDP_HLEN_ALLOC 0
-#endif
+
 
   /* Allocate a buffer for decompression. This buffer will be too big and will be
      trimmed once the final size is known. */
@@ -836,6 +822,3 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   /* all done */
   return q;
 }
-
-#endif /* LWIP_6LOWPAN_IPHC */
-#endif /* LWIP_IPV6 */

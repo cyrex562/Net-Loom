@@ -211,9 +211,9 @@ static void dns_call_found(uint8_t idx, IpAddr *addr);
 
 /* DNS variables */
 static UdpPcb* dns_pcbs[DNS_MAX_SOURCE_PORTS];
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0)
+
 static uint8_t dns_last_pcb_idx;
-#endif
+
 static uint8_t dns_seqno;
 static DnsTableEntry dns_table[DNS_TABLE_SIZE];
 static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
@@ -751,7 +751,6 @@ overflow_return: pbuf_free(p);
     return ERR_VAL;
 }
 
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0)
 static UdpPcb* dns_alloc_random_port(void)
 {
     LwipError err;
@@ -823,7 +822,7 @@ dns_alloc_pcb(void)
   }
   return DNS_MAX_SOURCE_PORTS;
 }
-#endif /* ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0) */
+
 
 /**
  * dns_call_found() - call the found callback and check if there are duplicate
@@ -836,11 +835,11 @@ dns_alloc_pcb(void)
 static void
 dns_call_found(uint8_t idx, IpAddr *addr)
 {
-#if ((LWIP_DNS_SECURE & (LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)) != 0)
-  uint8_t i;
-#endif
 
-#if LWIP_IPV4 && LWIP_IPV6
+  uint8_t i;
+
+
+
   if (addr != NULL) {
     /* check that address type matches the request and adapt the table entry */
     if (IP_IS_V6_VAL(*addr)) {
@@ -851,9 +850,9 @@ dns_call_found(uint8_t idx, IpAddr *addr)
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
     }
   }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
+
+
   for (i = 0; i < DNS_MAX_REQUESTS; i++) {
     if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
       (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
@@ -861,13 +860,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
       dns_requests[i].found = NULL;
     }
   }
-#else
-  if (dns_requests[idx].found) {
-    (*dns_requests[idx].found)(dns_table[idx].name, addr, dns_requests[idx].arg);
-  }
-  dns_requests[idx].found = NULL;
-#endif
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0)
+
   /* close the pcb used unless other request are using it */
   for (i = 0; i < DNS_MAX_REQUESTS; i++) {
     if (i == idx) {
@@ -887,7 +880,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
     dns_pcbs[dns_table[idx].pcb_idx] = NULL;
     dns_table[idx].pcb_idx = DNS_MAX_SOURCE_PORTS;
   }
-#endif
+
 }
 
 /* Create a query transmission ID that is unique for all outstanding queries */
@@ -966,9 +959,9 @@ dns_check_entry(uint8_t i)
       if (--entry->tmr == 0) {
         if (++entry->retries == DNS_MAX_RETRIES) {
           if (dns_backupserver_available(entry)
-#if LWIP_DNS_SUPPORT_MDNS_QUERIES
+
               && !entry->is_mdns
-#endif /* LWIP_DNS_SUPPORT_MDNS_QUERIES */
+
              ) {
             /* change of server */
             entry->server_idx++;
@@ -1436,39 +1429,39 @@ LwipError dns_gethostbyname_addrtype(const char* hostname,
                                      uint8_t dns_addrtype)
 {
     size_t hostnamelen;
-#if LWIP_DNS_SUPPORT_MDNS_QUERIES
+
   uint8_t is_mdns;
-#endif
+
     /* not initialized or no valid server yet, or invalid addr pointer
      * or invalid hostname or invalid hostname length */
     if ((addr == NULL) || (!hostname) || (!hostname[0]))
     {
         return ERR_ARG;
     }
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) == 0)
+
   if (dns_pcbs[0] == NULL) {
     return ERR_ARG;
   }
-#endif
+
     hostnamelen = strlen(hostname);
     if (hostnamelen >= DNS_MAX_NAME_LENGTH)
     {
         Logf(DNS_DEBUG, ("dns_gethostbyname: name too long to resolve"));
         return ERR_ARG;
     }
-#if LWIP_HAVE_LOOPIF
+
   if (strcmp(hostname, "localhost") == 0) {
     ip_addr_set_loopback(LWIP_DNS_ADDRTYPE_IS_IPV6(dns_addrtype), addr);
     return ERR_OK;
   }
-#endif /* LWIP_HAVE_LOOPIF */
+
     /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
-#if LWIP_IPV4 && LWIP_IPV6
+
     if ((IpIsV6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) ||
         (IP_IS_V4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
         {
             return ERR_OK;
         }

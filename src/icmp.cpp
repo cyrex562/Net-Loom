@@ -70,11 +70,11 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
         goto lenerr;
     }
     type = *static_cast<uint8_t *>(p->payload);
-#ifdef LWIP_DEBUG
+
   code = *(((uint8_t *)p->payload) + 1);
   /* if debug is enabled but debug statement below is somehow disabled: */
   ;
-#endif /* LWIP_DEBUG */
+
     switch (type)
     {
     case ICMP_ER: /* This is OK, echo reply might have been parsed by a raw PCB
@@ -244,10 +244,10 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
     return;
 lenerr: pbuf_free(p);
     return;
-#if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
+
 icmperr: pbuf_free(p);
     return;
-#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
+
 } /**
  * Send an icmp 'destination unreachable' packet, called from ip_input() if
  * the transport layer protocol is unknown and from udp_input() if the local

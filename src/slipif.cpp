@@ -84,9 +84,9 @@
  * (sio_fd is the sio_fd_t returned by sio_open).
  * The default value of zero means 'unknown'.
  */
-#ifndef SLIP_SIO_SPEED
+
 #define SLIP_SIO_SPEED(sio_fd) 0
-#endif
+
 
 enum slipif_recv_state {
   SLIP_RECV_NORMAL,
@@ -99,9 +99,9 @@ struct slipif_priv {
   struct PacketBuffer *p, *q;
   uint8_t state;
   uint16_t i, recved;
-#if SLIP_RX_FROM_ISR
+
   struct PacketBuffer *rxpackets;
-#endif
+
 };
 
 /**
@@ -158,7 +158,7 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
   return ERR_OK;
 }
 
-#if LWIP_IPV4
+
 /**
  * Send a PacketBuffer doing the necessary SLIP encapsulation
  *
@@ -175,9 +175,7 @@ slipif_output_v4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
   ;
   return slipif_output(netif, p);
 }
-#endif /* LWIP_IPV4 */
 
-#if LWIP_IPV6
 /**
  * Send a PacketBuffer doing the necessary SLIP encapsulation
  *
@@ -194,7 +192,7 @@ slipif_output_v6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
   ;
   return slipif_output(netif, p);
 }
-#endif /* LWIP_IPV6 */
+
 
 /**
  * Handle the incoming SLIP stream character by character
@@ -319,7 +317,7 @@ slipif_rxbyte_input(NetIfc*netif, uint8_t c)
   }
 }
 
-#if SLIP_USE_RX_THREAD
+
 /**
  * The SLIP input thread.
  *
@@ -340,7 +338,7 @@ slipif_loop_thread(void *nf)
     }
   }
 }
-#endif /* SLIP_USE_RX_THREAD */
+
 
 /**
  * @ingroup slipif
@@ -378,14 +376,9 @@ slipif_init(NetIfc*netif)
 
   netif->name[0] = 's';
   netif->name[1] = 'l';
-#if LWIP_IPV4
   netif->output = slipif_output_v4;
-#endif /* LWIP_IPV4 */
-#if LWIP_IPV6
   netif->output_ip6 = slipif_output_v6;
-#endif /* LWIP_IPV6 */
   netif->mtu = SLIP_MAX_SIZE;
-
   /* Try to open the serial port. */
   priv->sd = sio_open(sio_num);
   if (!priv->sd) {
@@ -400,20 +393,19 @@ slipif_init(NetIfc*netif)
   priv->state = SLIP_RECV_NORMAL;
   priv->i = 0;
   priv->recved = 0;
-#if SLIP_RX_FROM_ISR
+
   priv->rxpackets = NULL;
-#endif
+
 
   netif->state = priv;
 
   /* initialize the snmp variables and counters inside the NetIfc*/
   MIB2_INIT_NETIF(netif, snmp_ifType_slip, SLIP_SIO_SPEED(priv->sd));
 
-#if SLIP_USE_RX_THREAD
   /* Create a thread to poll the serial line. */
   sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop_thread, netif,
                  SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
-#endif /* SLIP_USE_RX_THREAD */
+
   return ERR_OK;
 }
 
@@ -439,7 +431,6 @@ slipif_poll(NetIfc*netif)
   }
 }
 
-#if SLIP_RX_FROM_ISR
 /**
  * @ingroup slipif
  * Feeds the IP layer with incoming packets that were receive
@@ -460,7 +451,7 @@ slipif_process_rxqueue(NetIfc*netif)
   SYS_ARCH_PROTECT(old_level);
   while (priv->rxpackets != NULL) {
     struct PacketBuffer *p = priv->rxpackets;
-#if SLIP_RX_QUEUE
+
     /* dequeue packet */
     struct PacketBuffer *q = p;
     while ((q->len != q->tot_len) && (q->next != NULL)) {
@@ -468,9 +459,7 @@ slipif_process_rxqueue(NetIfc*netif)
     }
     priv->rxpackets = q->next;
     q->next = NULL;
-#else /* SLIP_RX_QUEUE */
-    priv->rxpackets = NULL;
-#endif /* SLIP_RX_QUEUE */
+
     SYS_ARCH_UNPROTECT(old_level);
     if (netif->input(p, netif) != ERR_OK) {
       pbuf_free(p);
@@ -496,7 +485,7 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
   if (p != NULL) {
     SYS_ARCH_PROTECT(old_level);
     if (priv->rxpackets != NULL) {
-#if SLIP_RX_QUEUE
+
       /* queue multiple pbufs */
       struct PacketBuffer *q = p;
       while (q->next != NULL) {
@@ -504,11 +493,7 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
       }
       q->next = p;
     } else {
-#else /* SLIP_RX_QUEUE */
-      pbuf_free(priv->rxpackets);
-    }
-    {
-#endif /* SLIP_RX_QUEUE */
+
       priv->rxpackets = p;
     }
     SYS_ARCH_UNPROTECT(old_level);
@@ -556,4 +541,4 @@ slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len)
     slipif_rxbyte_enqueue(netif, *rxdata);
   }
 }
-#endif /* SLIP_RX_FROM_ISR */
+

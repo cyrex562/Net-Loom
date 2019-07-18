@@ -62,12 +62,7 @@ sys_get_ms_longlong(void)
 {
   LONGLONG ret;
   LARGE_INTEGER now;
-#if NO_SYS
-  if (!SYS_INITIALIZED()) {
-    sys_init();
-    LWIP_ASSERT("initialization failed", SYS_INITIALIZED());
-  }
-#endif /* NO_SYS */
+
   QueryPerformanceCounter(&now);
   ret = now.QuadPart-sys_start_time.QuadPart;
   return (uint32_t)(((ret)*1000)/freq.QuadPart);
@@ -99,19 +94,14 @@ InitSysArchProtect(void)
 sys_prot_t
 sys_arch_protect(void)
 {
-#if NO_SYS
-  if (!SYS_INITIALIZED()) {
-    sys_init();
-    LWIP_ASSERT("initialization failed", SYS_INITIALIZED());
-  }
-#endif
+
   EnterCriticalSection(&critSec);
-#if LWIP_SYS_ARCH_CHECK_NESTED_PROTECT
+
   LWIP_ASSERT("nested SYS_ARCH_PROTECT", protection_depth == 0);
-#endif
-#if LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER
+
+
   protection_depth++;
-#endif
+
   return 0;
 }
 
@@ -130,7 +120,6 @@ sys_arch_unprotect(sys_prot_t pval)
   LeaveCriticalSection(&critSec);
 }
 
-#if LWIP_SYS_ARCH_CHECK_SCHEDULING_UNPROTECTED
 /** This checks that SYS_ARCH_PROTECT() hasn't been called by protecting
  * and then checking the level
  */
@@ -141,9 +130,8 @@ sys_arch_check_not_protected(void)
   LWIP_ASSERT("SYS_ARCH_PROTECT before scheduling", protection_depth == 1);
   sys_arch_unprotect(0);
 }
-#else
-#define sys_arch_check_not_protected()
-#endif
+
+
 
 static void
 msvc_sys_init(void)
@@ -161,7 +149,7 @@ sys_init(void)
   msvc_sys_init();
 }
 
-#if !NO_SYS
+
 
 struct threadlist {
   lwip_thread_fn function;
@@ -187,9 +175,7 @@ sys_sem_new(sys_sem_t *sem, uint8_t count)
     } else {
       SYS_STATS_INC_USED(sem);
     }
-#if LWIP_STATS && SYS_STATS
-    lwip_assert("sys_sem_new() counter overflow", lwip_stats.sys.sem.used != 0);
-#endif /* LWIP_STATS && SYS_STATS*/
+
     sem->sem = new_sem;
     return ERR_OK;
   }
@@ -214,9 +200,7 @@ sys_sem_free(sys_sem_t *sem)
   CloseHandle(sem->sem);
 
   SYS_ARCH_LOCKED(SYS_STATS_DEC(sem.used));
-#if LWIP_STATS && SYS_STATS
-  lwip_assert("sys_sem_free() closed more than created", lwip_stats.sys.sem.used != (uint16_t)-1);
-#endif /* LWIP_STATS && SYS_STATS */
+
   sem->sem = nullptr;
 }
 
@@ -275,9 +259,9 @@ sys_mutex_new(sys_mutex_t *mutex)
   lwip_assert("Error creating mutex", new_mut != nullptr);
   if (new_mut != nullptr) {
     SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mutex));
-#if LWIP_STATS && SYS_STATS
+
     lwip_assert("sys_mutex_new() counter overflow", lwip_stats.sys.mutex.used != 0);
-#endif /* LWIP_STATS && SYS_STATS*/
+
     mutex->mut = new_mut;
     return ERR_OK;
   }
@@ -298,9 +282,9 @@ sys_mutex_free(sys_mutex_t *mutex)
   CloseHandle(mutex->mut);
 
   SYS_ARCH_LOCKED(SYS_STATS_DEC(mutex.used));
-#if LWIP_STATS && SYS_STATS
+
   lwip_assert("sys_mutex_free() closed more than created", lwip_stats.sys.mutex.used != (uint16_t)-1);
-#endif /* LWIP_STATS && SYS_STATS */
+
   mutex->mut = nullptr;
 }
 
@@ -370,13 +354,13 @@ static void
 sys_thread_function(void* arg)
 {
   struct threadlist* t = (struct threadlist*)arg;
-#if LWIP_NETCONN_SEM_PER_THREAD
+
   sys_arch_netconn_sem_alloc();
-#endif
+
   t->function(t->arg);
-#if LWIP_NETCONN_SEM_PER_THREAD
+
   sys_arch_netconn_sem_free();
-#endif
+
 }
 
 sys_thread_t
@@ -406,8 +390,6 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   return 0;
 }
 
-#if !NO_SYS
-#if LWIP_TCPIP_CORE_LOCKING
 
 static DWORD lwip_core_lock_holder_thread_id;
 
@@ -424,7 +406,7 @@ sys_unlock_tcpip_core(void)
   lwip_core_lock_holder_thread_id = 0;
   sys_mutex_unlock(&lock_tcpip_core);
 }
-#endif /* LWIP_TCPIP_CORE_LOCKING */
+
 
 static DWORD lwip_tcpip_thread_id;
 
@@ -442,15 +424,13 @@ sys_check_core_locking(void)
   if (lwip_tcpip_thread_id != 0) {
     DWORD current_thread_id = GetCurrentThreadId();
 
-#if LWIP_TCPIP_CORE_LOCKING
+
     lwip_assert("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
-#else /* LWIP_TCPIP_CORE_LOCKING */
-    LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
-#endif /* LWIP_TCPIP_CORE_LOCKING */
+
     ; /* for LWIP_NOASSERT */
   }
 }
-#endif /* !NO_SYS */
+
 
 LwipError
 sys_mbox_new(sys_mbox_t *mbox, int size)
@@ -468,9 +448,9 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
   mbox->head = 0;
   mbox->tail = 0;
   SYS_ARCH_LOCKED(SYS_STATS_INC_USED(mbox));
-#if LWIP_STATS && SYS_STATS
+
   lwip_assert("sys_mbox_new() counter overflow", lwip_stats.sys.mbox.used != 0);
-#endif /* LWIP_STATS && SYS_STATS */
+
   return ERR_OK;
 }
 
@@ -485,9 +465,9 @@ sys_mbox_free(sys_mbox_t *mbox)
   CloseHandle(mbox->sem);
 
   SYS_STATS_DEC(mbox.used);
-#if LWIP_STATS && SYS_STATS
+
   lwip_assert( "sys_mbox_free() ", lwip_stats.sys.mbox.used != (uint16_t)-1);
-#endif /* LWIP_STATS && SYS_STATS */
+
   mbox->sem = nullptr;
 }
 
@@ -646,7 +626,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
               }
               }
 
-#if LWIP_NETCONN_SEM_PER_THREAD
+
 sys_sem_t*
 sys_arch_netconn_sem_get(void)
 {
@@ -682,9 +662,9 @@ sys_arch_netconn_sem_free(void)
     LWIP_ASSERT("failed to de-init TLS semaphore storage", done == TRUE);
   }
 }
-#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-#endif /* !NO_SYS */
+
+
 
               /* get keyboard state to terminate the debug app on any kbhit event using win32 API */
               int

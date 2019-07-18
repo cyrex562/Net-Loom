@@ -51,8 +51,6 @@
  */
 
 #include "ppp_opts.h"
-//#if PPP_SUPPORT && PPPOL2TP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
 #include "lwip_error.h"
 #include "netif.h"
 #include "udp.h"
@@ -137,11 +135,9 @@ static LwipError pppol2tp_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) 
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct PacketBuffer *ph; /* UDP + L2TP header */
   LwipError ret;
-#if MIB2_STATS
-  uint16_t tot_len;
-#else /* MIB2_STATS */
+
   ;
-#endif /* MIB2_STATS */
+
 
   ph = pbuf_alloc(PBUF_TRANSPORT, (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN), PBUF_RAM);
   if(!ph) {
@@ -154,9 +150,9 @@ static LwipError pppol2tp_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) 
 
   pbuf_remove_header(ph, PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
   pbuf_cat(ph, p);
-#if MIB2_STATS
+
   tot_len = ph->tot_len;
-#endif /* MIB2_STATS */
+
 
   ret = pppol2tp_xmit(l2tp, ph);
   if (ret != ERR_OK) {
@@ -177,10 +173,9 @@ static LwipError pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct PacketBuff
   struct PacketBuffer *pb;
   uint8_t *pl;
   LwipError err;
-#if MIB2_STATS
+
   uint16_t tot_len;
-#else /* MIB2_STATS */
-  ;
+
 #endif /* MIB2_STATS */
 
   /* @todo: try to use pbuf_header() here! */
@@ -198,9 +193,9 @@ static LwipError pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct PacketBuff
   PUTSHORT(protocol, pl);
 
   pbuf_chain(pb, p);
-#if MIB2_STATS
+
   tot_len = pb->tot_len;
-#endif /* MIB2_STATS */
+
 
   if( (err = pppol2tp_xmit(l2tp, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
@@ -231,10 +226,10 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   LcpOptions *lcp_wo;
   LcpOptions *lcp_ao;
-#if PPP_IPV4_SUPPORT && VJ_SUPPORT
+
   IpcpOptions *ipcp_wo;
   IpcpOptions *ipcp_ao;
-#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
+
 
   l2tp->tunnel_port = l2tp->remote_port;
   l2tp->our_ns = 0;
@@ -260,7 +255,7 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
   lcp_ao->neg_pcompression = 0;
   lcp_ao->neg_accompression = 0;
 
-#if PPP_IPV4_SUPPORT && VJ_SUPPORT
+
   ipcp_wo = &ppp->ipcp_wantoptions;
   ipcp_wo->neg_vj = 0;
   ipcp_wo->old_vj = 0;
@@ -268,24 +263,24 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
   ipcp_ao = &ppp->ipcp_allowoptions;
   ipcp_ao->neg_vj = 0;
   ipcp_ao->old_vj = 0;
-#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
+
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
-#if LWIP_IPV6
+
   if (IP_IS_V6_VAL(l2tp->udp->local_ip)) {
     udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
   } else
-#endif /* LWIP_IPV6 */
+
   udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
 
-#if PPPOL2TP_AUTH_SUPPORT
+
   /* Generate random vector */
   if (l2tp->secret != nullptr) {
     magic_random_bytes(l2tp->secret_rv, sizeof(l2tp->secret_rv));
   }
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   do {
     l2tp->remote_tunnel_id = magic();
@@ -458,11 +453,11 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, 
   uint8_t *inp;
   uint16_t avplen, avpflags, vendorid, attributetype, messagetype=0;
   LwipError err;
-#if PPPOL2TP_AUTH_SUPPORT
+
   lwip_md5_context md5_ctx;
   uint8_t md5_hash[16];
   uint8_t challenge_id = 0;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   /* printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len); */
 
@@ -576,7 +571,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, 
             GETSHORT(l2tp->source_tunnel_id, inp);
             PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %"U16_F"\n", l2tp->source_tunnel_id));
             goto nextavp;
-#if PPPOL2TP_AUTH_SUPPORT
+
           case PPPOL2TP_AVPTYPE_CHALLENGE:
             if (avplen == 0) {
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: Challenge length check failed\n"));
@@ -618,7 +613,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, uint16_t port, 
               return;
             }
             goto skipavp;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
           default:
             break;
         }
@@ -786,11 +781,11 @@ static LwipError pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
 
   /* calculate UDP packet length */
   len = 12 +8 +8 +10 +10 +6+sizeof(PPPOL2TP_HOSTNAME)-1 +6+sizeof(PPPOL2TP_VENDORNAME)-1 +8 +8;
-#if PPPOL2TP_AUTH_SUPPORT
+
   if (l2tp->secret != nullptr) {
     len += 6 + sizeof(l2tp->secret_rv);
   }
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
@@ -859,7 +854,7 @@ static LwipError pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
   PUTSHORT(PPPOL2TP_AVPTYPE_RECEIVEWINDOWSIZE, p); /* Attribute type: Receive window size */
   PUTSHORT(PPPOL2TP_RECEIVEWINDOWSIZE, p); /* Attribute value: Receive window size */
 
-#if PPPOL2TP_AUTH_SUPPORT
+
   /* AVP - Challenge */
   if (l2tp->secret != nullptr) {
     PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6 + sizeof(l2tp->secret_rv), p); /* Mandatory flag + len field */
@@ -868,7 +863,7 @@ static LwipError pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
     MEMCPY(p, l2tp->secret_rv, sizeof(l2tp->secret_rv)); /* Attribute value: Random vector */
     INCPTR(sizeof(l2tp->secret_rv), p);
   }
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   return pppol2tp_udp_send(l2tp, pb);
 }
@@ -881,11 +876,11 @@ static LwipError pppol2tp_send_scccn(pppol2tp_pcb *l2tp, uint16_t ns) {
 
   /* calculate UDP packet length */
   len = 12 +8;
-#if PPPOL2TP_AUTH_SUPPORT
+
   if (l2tp->send_challenge) {
     len += 6 + sizeof(l2tp->challenge_hash);
   }
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
@@ -910,7 +905,7 @@ static LwipError pppol2tp_send_scccn(pppol2tp_pcb *l2tp, uint16_t ns) {
   PUTSHORT(PPPOL2TP_AVPTYPE_MESSAGE, p); /* Attribute type: Message Type */
   PUTSHORT(PPPOL2TP_MESSAGETYPE_SCCCN, p); /* Attribute value: Message type: SCCCN */
 
-#if PPPOL2TP_AUTH_SUPPORT
+
   /* AVP - Challenge response */
   if (l2tp->send_challenge) {
     PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6 + sizeof(l2tp->challenge_hash), p); /* Mandatory flag + len field */
@@ -919,7 +914,7 @@ static LwipError pppol2tp_send_scccn(pppol2tp_pcb *l2tp, uint16_t ns) {
     MEMCPY(p, l2tp->challenge_hash, sizeof(l2tp->challenge_hash)); /* Attribute value: Computed challenge */
     INCPTR(sizeof(l2tp->challenge_hash), p);
   }
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
 
   return pppol2tp_udp_send(l2tp, pb);
 }

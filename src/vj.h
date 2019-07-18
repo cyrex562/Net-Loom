@@ -140,9 +140,7 @@ struct vjcompress {
   uint16_t flags;
   uint8_t maxSlotIndex;
   uint8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
-#if LINK_STATS
-  struct Vjstat stats;
-#endif
+
   struct Cstate tstate[MAX_SLOTS]; /* xmit connection states */
   struct Cstate rstate[MAX_SLOTS]; /* receive connection states */
 };

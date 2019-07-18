@@ -39,31 +39,24 @@
 #pragma once
 
 #include "lwip_error.h"
-
 #include "ip_addr.h"
-
 #include "lwip_inet.h"
 #include "netif.h"
-
 #include "opt.h"
-
 #include <cerrno>
 #include <cstring>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
    to prevent this code from redefining it. */
-#if !defined(sa_family_t) && !defined(SA_FAMILY_T_DEFINED)
+
 typedef uint8_t LwipSaFamily;
-#endif
+
 /* If your port already typedef's LwipInPort, define IN_PORT_T_DEFINED
    to prevent this code from redefining it. */
-#if !defined(LwipInPort) && !defined(IN_PORT_T_DEFINED)
+
 typedef uint16_t LwipInPort;
-#endif
+
 
 constexpr auto SIN_ZERO_LEN = 8;
 
@@ -518,18 +511,15 @@ ssize_t lwip_sendto(int s, const void* dataptr, size_t size, int flags,
 int lwip_socket(int domain, int type, int protocol);
 ssize_t lwip_write(int s, const void* dataptr, size_t size);
 ssize_t lwip_writev(int s, const struct LwipIovec* iov, int iovcnt);
-#if LWIP_SOCKET_SELECT
+
 int lwip_select(int maxfdp1, LwipFdSet* readset, LwipFdSet* writeset, LwipFdSet* exceptset,
                 struct timeval* timeout);
-#endif
-#if LWIP_SOCKET_POLL
+
+#
 int lwip_poll(struct LwipPolllfd* fds, LwipNfds nfds, int timeout);
-#endif
+
 int lwip_ioctl(int s, long cmd, void* argp);
 int lwip_fcntl(int s, int cmd, int val);
 const char* lwip_inet_ntop(int af, const void* src, char* dst, LwipSocklen size);
 int lwip_inet_pton(int af, const char* src, void* dst);
 
-#ifdef __cplusplus
-}
-#endif

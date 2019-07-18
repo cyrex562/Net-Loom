@@ -65,23 +65,19 @@
 
 uint16_t inet_chksum(const void *dataptr, uint16_t len);
 uint16_t inet_chksum_pbuf(struct PacketBuffer *p);
-#if lwip_standard_checksum_COPY_ALGORITHM
-uint16_t lwip_standard_checksum_copy(void *dst, const void *src, uint16_t len);
-#endif /* lwip_standard_checksum_COPY_ALGORITHM */
 
-#if LWIP_IPV4
+uint16_t lwip_standard_checksum_copy(void *dst, const void *src, uint16_t len);
+
 uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        const Ip4Addr *src, const Ip4Addr *dest);
 uint16_t inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
        uint16_t proto_len, uint16_t chksum_len, const Ip4Addr *src, const Ip4Addr *dest);
-#endif /* LWIP_IPV4 */
 
-#if LWIP_IPV6
 uint16_t ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        const Ip6Addr *src, const Ip6Addr *dest);
 uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        uint16_t chksum_len, const Ip6Addr *src, const Ip6Addr *dest);
-#endif /* LWIP_IPV6 */
+
 
 
 uint16_t ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,

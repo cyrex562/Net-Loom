@@ -38,9 +38,7 @@
 #include "ppp.h"
 #include "vj.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
     /*
  * Values for FCS calculations.
@@ -103,10 +101,7 @@ struct pppos_pcb_s {
 PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-#if !NO_SYS && !PPP_INPROC_IRQ_SAFE
-/* Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread. */
-LwipError pppos_input_tcpip(PppPcb *ppp, uint8_t *s, int l);
-#endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
+
 
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(PppPcb *ppp, uint8_t* data, int len);
@@ -116,10 +111,3 @@ void pppos_input(PppPcb *ppp, uint8_t* data, int len);
  * Functions called from lwIP
  * DO NOT CALL FROM lwIP USER APPLICATION.
  */
-#if !NO_SYS && !PPP_INPROC_IRQ_SAFE
-LwipError pppos_input_sys(struct PacketBuffer *p, NetIfc*inp);
-#endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
-
-#ifdef __cplusplus
-}
-#endif

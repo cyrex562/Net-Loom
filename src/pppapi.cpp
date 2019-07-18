@@ -32,19 +32,12 @@
  */
 
 #include "ppp_opts.h"
-
-#if LWIP_PPP_API /* don't build if not configured for use in lwipopts.h */
-
 #include "pppapi.h"
 #include "tcpip_priv.h"
 #include "pppoe.h"
 #include "pppol2tp.h"
 #include "pppos.h"
 #include "lwip_error.h"
-
-#if LWIP_MPU_COMPATIBLE
-LWIP_MEMPOOL_DECLARE(PPPAPI_MSG, MEMP_NUM_PPP_API_MSG, sizeof(struct pppapi_msg), "PPPAPI_MSG")
-#endif
 
 #define PPPAPI_VAR_REF(name)               API_VAR_REF(name)
 #define PPPAPI_VAR_DECLARE(name)           API_VAR_DECLARE(struct pppapi_msg, name)
@@ -83,8 +76,6 @@ pppapi_set_default(PppPcb *pcb)
   return err;
 }
 
-
-#if PPP_NOTIFY_PHASE
 /**
  * Call ppp_set_notify_phase_callback() inside the tcpip_thread context.
  */
@@ -116,10 +107,8 @@ pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phas
   PPPAPI_VAR_FREE(msg);
   return err;
 }
-#endif /* PPP_NOTIFY_PHASE */
 
 
-#if PPPOS_SUPPORT
 /**
  * Call pppos_create() inside the tcpip_thread context.
  */
@@ -157,10 +146,9 @@ pppapi_pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
   PPPAPI_VAR_FREE(msg);
   return result;
 }
-#endif /* PPPOS_SUPPORT */
 
 
-#if PPPOE_SUPPORT
+
 /**
  * Call pppoe_create() inside the tcpip_thread context.
  */
@@ -202,10 +190,9 @@ pppapi_pppoe_create(NetIfc*pppif, NetIfc*ethif, const char *service_name,
   PPPAPI_VAR_FREE(msg);
   return result;
 }
-#endif /* PPPOE_SUPPORT */
 
 
-#if PPPOL2TP_SUPPORT
+
 /**
  * Call pppol2tp_create() inside the tcpip_thread context.
  */
@@ -218,13 +205,10 @@ pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
 
   msg->msg.ppp = CreatePppol2tpSession(msg->msg.msg.l2tpcreate.pppif,
     msg->msg.msg.l2tpcreate.netif, API_EXPR_REF(msg->msg.msg.l2tpcreate.ipaddr), msg->msg.msg.l2tpcreate.port,
-#if PPPOL2TP_AUTH_SUPPORT
+
     msg->msg.msg.l2tpcreate.secret,
     msg->msg.msg.l2tpcreate.secret_len,
-#else /* PPPOL2TP_AUTH_SUPPORT */
-    NULL,
-    0,
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
     msg->msg.msg.l2tpcreate.link_status_cb, msg->msg.msg.l2tpcreate.ctx_cb);
   return ERR_OK;
 }
@@ -241,20 +225,17 @@ pppapi_pppol2tp_create(NetIfc*pppif, NetIfc*netif, IpAddr *ipaddr, uint16_t port
   PppPcb* result;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
-#if !PPPOL2TP_AUTH_SUPPORT
-  ;
-  ;
-#endif /* !PPPOL2TP_AUTH_SUPPORT */
+
 
   PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.pppif = pppif;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.netif = netif;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.ipaddr = PPPAPI_VAR_REF(ipaddr);
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.port = port;
-#if PPPOL2TP_AUTH_SUPPORT
+
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.secret = secret;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.secret_len = secret_len;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
+
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.link_status_cb = link_status_cb;
   PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.ctx_cb = ctx_cb;
   tcpip_api_call(pppapi_do_pppol2tp_create, &PPPAPI_VAR_REF(msg).call);
@@ -262,7 +243,7 @@ pppapi_pppol2tp_create(NetIfc*pppif, NetIfc*netif, IpAddr *ipaddr, uint16_t port
   PPPAPI_VAR_FREE(msg);
   return result;
 }
-#endif /* PPPOL2TP_SUPPORT */
+
 
 
 /**
@@ -425,4 +406,3 @@ pppapi_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
   return err;
 }
 
-#endif /* LWIP_PPP_API */

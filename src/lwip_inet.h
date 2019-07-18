@@ -45,10 +45,6 @@
 #include "ip6_addr.h"
 #include "lwip_sockets.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* If your port already typedef's LwipInAddr, define IN_ADDR_T_DEFINED
    to prevent this code from redefining it. */
 // #if !defined(LwipInAddr) && !defined(IN_ADDR_T_DEFINED)
@@ -153,10 +149,3 @@ extern const struct LwipIn6Addr kIn6AddrAny;
 #define inet6_aton(cp, addr)            ip6addr_aton(cp, (Ip6Addr*)addr)
 #define inet6_ntoa(addr)                ip6addr_ntoa((const Ip6Addr*)&(addr))
 #define inet6_ntoa_r(addr, buf, buflen) ip6addr_ntoa_r((const Ip6Addr*)&(addr), buf, buflen)
-
-
-
-#ifdef __cplusplus
-}
-#endif
-

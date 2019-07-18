@@ -204,13 +204,13 @@ zepif_init(NetIfc* netif)
     {
         state->init.zep_dst_udp_port = zepif_default_udp_port;
     }
-#if LWIP_IPV4
+
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
         state->init.zep_dst_ip_addr = kIpAddrBroadcast;
     }
-#endif /* LWIP_IPV4 */
+
 
     netif->state = nullptr;
 

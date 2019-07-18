@@ -71,18 +71,16 @@
 #include "opt.h"
 
 #include "def.h"
-#include "mem.h"
-#include "memp.h"
+
 #include "netif.h"
 #include "packet_buffer.h"
 #include "stats.h"
 #include "sys.h"
-#if LWIP_TCP && TCP_QUEUE_OOSEQ
+
 #include "tcp_priv.h"
-#endif
-#if LWIP_CHECKSUM_ON_COPY
+
 #include "inet_chksum.h"
-#endif
+
 
 #include <string.h>
 #include "lwip_debug.h"
@@ -96,11 +94,8 @@ static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
                                           uint16_t in_offset,
                                           uint16_t *out_offset);
 
-#if !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ
-#define PBUF_POOL_IS_EMPTY()
-#else /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
 
-#if !NO_SYS
+
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
 #include "tcpip.h"
 #define PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()                               \
@@ -111,8 +106,7 @@ static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
       SYS_ARCH_UNPROTECT(old_level);                                    \
     }                                                                   \
   } while (0)
-#endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
-#endif /* !NO_SYS */
+
 
 volatile uint8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
@@ -125,9 +119,9 @@ volatile uint8_t pbuf_free_ooseq_pending;
  * This must be done in the correct thread context therefore this function
  * can only be used with NO_SYS=0 and through tcpip_callback.
  */
-#if !NO_SYS
+
 static
-#endif /* !NO_SYS */
+
     void
     pbuf_free_ooseq(void) {
   struct TcpProtoCtrlBlk *pcb;
@@ -144,7 +138,6 @@ static
   }
 }
 
-#if !NO_SYS
 /**
  * Just a callback function for tcpip_callback() that calls pbuf_free_ooseq().
  */
@@ -152,13 +145,11 @@ static void pbuf_free_ooseq_callback(void *arg) {
   ;
   pbuf_free_ooseq();
 }
-#endif /* !NO_SYS */
+
 
 /** Queue a call to pbuf_free_ooseq if not already queued. */
 static void pbuf_pool_is_empty(void) {
-#ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
-  SYS_ARCH_SET(pbuf_free_ooseq_pending, 1);
-#else  /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
+
   uint8_t queued;
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
@@ -170,9 +161,9 @@ static void pbuf_pool_is_empty(void) {
     /* queue a call to pbuf_free_ooseq if not already queued */
     PBUF_POOL_FREE_OOSEQ_QUEUE_CALL();
   }
-#endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
+
 }
-#endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
+
 
 /* Initialize members of struct PacketBuffer after allocation */
 static void pbuf_init_alloced_pbuf(struct PacketBuffer *p, void *payload,
@@ -348,7 +339,6 @@ struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
   return p;
 }
 
-#if LWIP_SUPPORT_CUSTOM_PBUF
 /**
  * @ingroup PacketBuffer
  * Initialize a custom PacketBuffer (already allocated).
@@ -391,7 +381,7 @@ struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_typ
                          PBUF_FLAG_IS_CUSTOM);
   return &p->pbuf;
 }
-#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+
 
 /**
  * @ingroup PacketBuffer
@@ -764,7 +754,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
       Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
            ("pbuf_free: deallocating %p\n", (void *)p));
       alloc_src = pbuf_get_allocsrc(p);
-#if LWIP_SUPPORT_CUSTOM_PBUF
+
       /* is this a custom PacketBuffer? */
       if ((p->flags & PBUF_FLAG_IS_CUSTOM) != 0) {
         struct pbuf_custom *pc = (struct pbuf_custom *)p;
@@ -772,7 +762,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
                     pc->custom_free_function != NULL);
         pc->custom_free_function(p);
       } else
-#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+
       {
         /* is this a pbuf from the pool? */
         if (alloc_src == kPbufTypeAllocSrcMaskStdMempPbufPool) {
@@ -1112,7 +1102,7 @@ void *pbuf_get_contiguous(const struct PacketBuffer *p, void *buffer, size_t buf
   return nullptr;
 }
 
-#if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+
 /**
  * This method modifies a 'PacketBuffer chain', so that its total length is
  * smaller than 64K. The remainder of the original PacketBuffer chain is stored
@@ -1160,7 +1150,7 @@ void pbuf_split_64k(struct PacketBuffer *p, struct PacketBuffer **rest) {
     }
   }
 }
-#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
 
 /* Actual implementation of pbuf_skip() but returning const pointer... */
 static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
@@ -1327,7 +1317,6 @@ struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuf
   return q;
 }
 
-#if LWIP_CHECKSUM_ON_COPY
 /**
  * Copies data into a single PacketBuffer (*not* into a PacketBuffer queue!) and updates
  * the checksum while copying
@@ -1364,7 +1353,7 @@ LwipError pbuf_fill_chksum(struct PacketBuffer *p, uint16_t start_offset,
   *chksum = FOLD_U32T(acc);
   return ERR_OK;
 }
-#endif /* LWIP_CHECKSUM_ON_COPY */
+
 
 /**
  * @ingroup PacketBuffer

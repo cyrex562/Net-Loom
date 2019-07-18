@@ -44,11 +44,6 @@
 
 #pragma once
 
-#include "ppp_opts.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Packet header = Code, id, length.
@@ -88,10 +83,6 @@ constexpr auto UPAP_HEADERLEN = 4;
 /*
  * Timeouts.
  */
-#if 0 /* moved to ppp_opts.h */
-#define UPAP_DEFTIMEOUT	3	/* Timeout (seconds) for retransmitting req */
-#define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
-#endif /* moved to ppp_opts.h */
 
 /*
  * Each interface is described by upap structure.
@@ -102,9 +93,9 @@ typedef struct upap_state {
     const char *us_passwd;	/* Password */
     uint8_t us_passwdlen;		/* Password length */
     uint8_t us_clientstate;	/* Client state */
-#if PPP_SERVER
+
     uint8_t us_serverstate;	/* Server state */
-#endif /* PPP_SERVER */
+
     uint8_t us_id;		        /* Current id */
     uint8_t us_transmits;		/* Number of auth-reqs sent */
 } upap_state;
@@ -117,9 +108,4 @@ void upap_authpeer(PppPcb*pcb);
 
 
 extern const struct Protent pap_protent;
-
-#ifdef __cplusplus
-}
-#endif
-
 

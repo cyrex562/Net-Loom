@@ -287,12 +287,11 @@ ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
             goto fail;
         }
         *(int *)arg = (int)(0
-#if PPP_IPV4_SUPPORT
+
             || pcb->if4_up
-#endif /* PPP_IPV4_SUPPORT */
-#if PPP_IPV6_SUPPORT
+
            || pcb->if6_up
-#endif /* PPP_IPV6_SUPPORT */
+
         );
         return ERR_OK;
 
@@ -896,30 +895,6 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
     return 1;
 }
 
-#if 0 /* UNUSED - PROXY ARP */
-/********************************************************************
- *
- * sifproxyarp - Make a proxy ARP entry for the peer.
- */
-
-int sifproxyarp(PppPcb *pcb, uint32_t his_adr) {
-  ;
-  ;
-  return 0;
-}
-
-/********************************************************************
- *
- * cifproxyarp - Delete the proxy ARP entry for the peer.
- */
-
-int cifproxyarp(PppPcb *pcb, uint32_t his_adr) {
-  ;
-  ;
-  return 0;
-}
-#endif /* UNUSED - PROXY ARP */
-
 /*
  * sdns - Config the DNS servers
  */
@@ -1090,10 +1065,10 @@ sif6down(PppPcb* pcb)
     pcb->if6_up = 0;
 
     if (1
-#if PPP_IPV4_SUPPORT
+
         /* set the interface down if IPv4 is down as well */
         && !pcb->if4_up
-#endif /* PPP_IPV4_SUPPORT */
+
     )
     {
         /* make sure the netif link callback is called */

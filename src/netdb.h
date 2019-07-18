@@ -31,39 +31,16 @@
  * Author: Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_NETDB_H
-#define LWIP_HDR_NETDB_H
+#pragma once
 
 #include "opt.h"
-
-#if LWIP_DNS && LWIP_SOCKET
 
 #include "arch.h"
 #include "inet.h"
 #include "sockets.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* some rarely used options */
-#ifndef LWIP_DNS_API_DECLARE_H_ERRNO
-#define LWIP_DNS_API_DECLARE_H_ERRNO  1
-#endif
 
-#ifndef LWIP_DNS_API_DEFINE_ERRORS
-#define LWIP_DNS_API_DEFINE_ERRORS    1
-#endif
-
-#ifndef LWIP_DNS_API_DEFINE_FLAGS
-#define LWIP_DNS_API_DEFINE_FLAGS     1
-#endif
-
-#ifndef LWIP_DNS_API_DECLARE_STRUCTS
-#define LWIP_DNS_API_DECLARE_STRUCTS  1
-#endif
-
-#if LWIP_DNS_API_DEFINE_ERRORS
 /** Errors used by the DNS API functions, h_errno can be one of them */
 #define EAI_NONAME      200
 #define EAI_SERVICE     201
@@ -75,9 +52,7 @@ extern "C" {
 #define NO_DATA         211
 #define NO_RECOVERY     212
 #define TRY_AGAIN       213
-#endif /* LWIP_DNS_API_DEFINE_ERRORS */
 
-#if LWIP_DNS_API_DEFINE_FLAGS
 /* input flags for struct addrinfo */
 #define AI_PASSIVE      0x01
 #define AI_CANONNAME    0x02
@@ -86,9 +61,7 @@ extern "C" {
 #define AI_V4MAPPED     0x10
 #define AI_ALL          0x20
 #define AI_ADDRCONFIG   0x40
-#endif /* LWIP_DNS_API_DEFINE_FLAGS */
 
-#if LWIP_DNS_API_DECLARE_STRUCTS
 struct hostent {
     char  *h_name;      /* Official name of the host. */
     char **h_aliases;   /* A pointer to an array of pointers to alternative host names,
@@ -110,14 +83,13 @@ struct addrinfo {
     char             *ai_canonname;  /* Canonical name of service location. */
     struct addrinfo  *ai_next;       /* Pointer to next in list. */
 };
-#endif /* LWIP_DNS_API_DECLARE_STRUCTS */
+
 
 #define NETDB_ELEM_SIZE           (sizeof(struct addrinfo) + sizeof(struct sockaddr_storage) + DNS_MAX_NAME_LENGTH + 1)
 
-#if LWIP_DNS_API_DECLARE_H_ERRNO
 /* application accessible error code set by the DNS API functions */
 extern int h_errno;
-#endif /* LWIP_DNS_API_DECLARE_H_ERRNO*/
+
 
 struct hostent *lwip_gethostbyname(const char *name);
 int lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
@@ -128,7 +100,7 @@ int lwip_getaddrinfo(const char *nodename,
        const struct addrinfo *hints,
        struct addrinfo **res);
 
-#if LWIP_COMPAT_SOCKETS
+
 /** @ingroup netdbapi */
 #define gethostbyname(name) lwip_gethostbyname(name)
 /** @ingroup netdbapi */
@@ -139,12 +111,3 @@ int lwip_getaddrinfo(const char *nodename,
 /** @ingroup netdbapi */
 #define getaddrinfo(nodname, servname, hints, res) \
        lwip_getaddrinfo(nodname, servname, hints, res)
-#endif /* LWIP_COMPAT_SOCKETS */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_DNS && LWIP_SOCKET */
-
-#endif /* LWIP_HDR_NETDB_H */

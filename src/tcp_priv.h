@@ -34,9 +34,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCP_PRIV_H
-#define LWIP_HDR_TCP_PRIV_H
-
+#pragma once
 #include "opt.h"
 #include "tcp.h"
 #include "packet_buffer.h"
@@ -46,14 +44,6 @@
 #include "ip6.h"
 #include "ip6_addr.h"
 #include "tcp.h"
-
-#if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* Functions for interfacing with TCP: */
 
@@ -111,44 +101,41 @@ LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 #define TCP_SEQ_GT(a,b)     ((s32_t)((uint32_t)(a) - (uint32_t)(b)) > 0)
 #define TCP_SEQ_GEQ(a,b)    ((s32_t)((uint32_t)(a) - (uint32_t)(b)) >= 0)
 /* is b<=a<=c? */
-#if 0 /* see bug #10548 */
-#define TCP_SEQ_BETWEEN(a,b,c) ((c)-(b) >= (a)-(b))
-#endif
+
 #define TCP_SEQ_BETWEEN(a,b,c) (TCP_SEQ_GEQ(a,b) && TCP_SEQ_LEQ(a,c))
 
-#ifndef TCP_TMR_INTERVAL
 #define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
-#endif /* TCP_TMR_INTERVAL */
 
-#ifndef TCP_FAST_INTERVAL
+
+
 #define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in milliseconds */
-#endif /* TCP_FAST_INTERVAL */
 
-#ifndef TCP_SLOW_INTERVAL
+
+
 #define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in milliseconds */
-#endif /* TCP_SLOW_INTERVAL */
+
 
 #define TCP_FIN_WAIT_TIMEOUT 20000 /* milliseconds */
 #define TCP_SYN_RCVD_TIMEOUT 20000 /* milliseconds */
 
 #define TCP_OOSEQ_TIMEOUT        6U /* x RTO */
 
-#ifndef TCP_MSL
+
 #define TCP_MSL 60000UL /* The maximum segment lifetime in milliseconds */
-#endif
+
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
-#ifndef  TCP_KEEPIDLE_DEFAULT
+
 #define  TCP_KEEPIDLE_DEFAULT     7200000UL /* Default KEEPALIVE timer in milliseconds */
-#endif
 
-#ifndef  TCP_KEEPINTVL_DEFAULT
+
+
 #define  TCP_KEEPINTVL_DEFAULT    75000UL   /* Default Time between KEEPALIVE probes in milliseconds */
-#endif
 
-#ifndef  TCP_KEEPCNT_DEFAULT
+
+
 #define  TCP_KEEPCNT_DEFAULT      9U        /* Default Counter for KEEPALIVE probes */
-#endif
+
 
 #define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */
 
@@ -160,29 +147,6 @@ LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 #define TF_CLOSED    (uint8_t)0x10U   /* Connection was successfully closed. */
 #define TF_GOT_FIN   (uint8_t)0x20U   /* Connection was closed by the remote end. */
 
-
-#if LWIP_EVENT_API
-
-#define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret) ret = lwip_tcp_event(arg, (pcb),\
-                LWIP_EVENT_ACCEPT, NULL, 0, err)
-#define TCP_EVENT_SENT(pcb,space,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-                   LWIP_EVENT_SENT, NULL, space, ERR_OK)
-#define TCP_EVENT_RECV(pcb,p,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-                LWIP_EVENT_RECV, (p), 0, (err))
-#define TCP_EVENT_CLOSED(pcb,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-                LWIP_EVENT_RECV, NULL, 0, ERR_OK)
-#define TCP_EVENT_CONNECTED(pcb,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-                LWIP_EVENT_CONNECTED, NULL, 0, (err))
-#define TCP_EVENT_POLL(pcb,ret)       do { if ((pcb)->state != SYN_RCVD) {                          \
-                ret = lwip_tcp_event((pcb)->callback_arg, (pcb), LWIP_EVENT_POLL, NULL, 0, ERR_OK); \
-                } else {                                                                            \
-                ret = ERR_ARG; } } while(0)
-/* For event API, last state SYN_RCVD must be excluded here: the application
-   has not seen this pcb, yet! */
-#define TCP_EVENT_ERR(last_state,errf,arg,err)  do { if (last_state != SYN_RCVD) {                \
-                lwip_tcp_event((arg), NULL, LWIP_EVENT_ERR, NULL, 0, (err)); } } while(0)
-
-#else /* LWIP_EVENT_API */
 
 #define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret)                 \
   do {                                                         \
@@ -237,14 +201,10 @@ LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
       (errf)((arg),(err));                                     \
   } while (0)
 
-#endif /* LWIP_EVENT_API */
+
 
 /** Enabled extra-check for TCP_OVERSIZE if LWIP_DEBUG is enabled */
-#if TCP_OVERSIZE && defined(LWIP_DEBUG)
-#define TCP_OVERSIZE_DBGCHECK 1
-#else
-#define TCP_OVERSIZE_DBGCHECK 0
-#endif
+
 
 /** Don't generate checksum on copy if CHECKSUM_GEN_TCP is disabled */
 #define TCP_CHECKSUM_ON_COPY  (LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_TCP)
@@ -254,15 +214,10 @@ struct tcp_seg {
   struct tcp_seg *next;    /* used when putting segments on a queue */
   struct PacketBuffer *p;          /* buffer containing data + TCP header */
   uint16_t len;               /* the TCP length of this segment */
-#if TCP_OVERSIZE_DBGCHECK
-  uint16_t oversize_left;     /* Extra bytes available at the end of the last
-                              pbuf in unsent (used for asserting vs.
-                              TcpProtoCtrlBlk.unsent_oversize only) */
-#endif /* TCP_OVERSIZE_DBGCHECK */
-#if TCP_CHECKSUM_ON_COPY
+
   uint16_t chksum;
   uint8_t  chksum_swapped;
-#endif /* TCP_CHECKSUM_ON_COPY */
+
   uint8_t  flags;
 #define TF_SEG_OPTS_MSS         (uint8_t)0x01U /* Include MSS option (only used in SYN segments) */
 #define TF_SEG_OPTS_TS          (uint8_t)0x02U /* Include timestamp option. */
@@ -281,25 +236,17 @@ struct tcp_seg {
 #define LWIP_TCP_OPT_TS         8
 
 #define LWIP_TCP_OPT_LEN_MSS    4
-#if LWIP_TCP_TIMESTAMPS
+
 #define LWIP_TCP_OPT_LEN_TS     10
 #define LWIP_TCP_OPT_LEN_TS_OUT 12 /* aligned for output (includes NOP padding) */
-#else
-#define LWIP_TCP_OPT_LEN_TS_OUT 0
-#endif
-#if LWIP_WND_SCALE
+
 #define LWIP_TCP_OPT_LEN_WS     3
 #define LWIP_TCP_OPT_LEN_WS_OUT 4 /* aligned for output (includes NOP padding) */
-#else
-#define LWIP_TCP_OPT_LEN_WS_OUT 0
-#endif
 
-#if LWIP_TCP_SACK_OUT
 #define LWIP_TCP_OPT_LEN_SACK_PERM     2
 #define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 4 /* aligned for output (includes NOP padding) */
-#else
 #define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 0
-#endif
+
 
 #define LWIP_TCP_OPT_LENGTH(flags) \
   ((flags) & TF_SEG_OPTS_MSS       ? LWIP_TCP_OPT_LEN_MSS           : 0) + \
@@ -310,17 +257,12 @@ struct tcp_seg {
 /** This returns a TCP header option for MSS in an uint32_t */
 #define TCP_BUILD_MSS_OPTION(mss) lwip_htonl(0x02040000 | ((mss) & 0xFFFF))
 
-#if LWIP_WND_SCALE
+
 #define TCPWNDSIZE_F       U32_F
 #define TCPWND_MAX         0xFFFFFFFFU
 #define TCPWND_CHECK16(x)  LWIP_ASSERT("window size > 0xFFFF", (x) <= 0xFFFF)
 #define TCPWND_MIN16(x)    ((uint16_t)LWIP_MIN((x), 0xFFFF))
-#else /* LWIP_WND_SCALE */
-#define TCPWNDSIZE_F       U16_F
-#define TCPWND_MAX         0xFFFFU
-#define TCPWND_CHECK16(x)
-#define TCPWND_MIN16(x)    x
-#endif /* LWIP_WND_SCALE */
+
 
 /* Global variables: */
 extern struct TcpProtoCtrlBlk *tcp_input_pcb;
@@ -351,43 +293,7 @@ extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 */
 /* Define two macros, TCP_REG and TCP_RMV that registers a TCP PCB
    with a PCB list or removes a PCB from a list, respectively. */
-#ifndef TCP_DEBUG_PCB_LISTS
-#define TCP_DEBUG_PCB_LISTS 0
-#endif
-#if TCP_DEBUG_PCB_LISTS
-#define TCP_REG(pcbs, npcb) do {\
-                            struct TcpProtoCtrlBlk *tcp_tmp_pcb; \
-                            Logf(TCP_DEBUG, ("TCP_REG %p local port %"U16_F"\n", (void *)(npcb), (npcb)->local_port)); \
-                            for (tcp_tmp_pcb = *(pcbs); \
-          tcp_tmp_pcb != NULL; \
-        tcp_tmp_pcb = tcp_tmp_pcb->next) { \
-                                LWIP_ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != (npcb)); \
-                            } \
-                            LWIP_ASSERT("TCP_REG: pcb->state != CLOSED", ((pcbs) == &tcp_bound_pcbs) || ((npcb)->state != CLOSED)); \
-                            (npcb)->next = *(pcbs); \
-                            LWIP_ASSERT("TCP_REG: npcb->next != npcb", (npcb)->next != (npcb)); \
-                            *(pcbs) = (npcb); \
-                            LWIP_ASSERT("TCP_REG: tcp_pcbs sane", tcp_pcbs_sane()); \
-              tcp_timer_needed(); \
-                            } while(0)
-#define TCP_RMV(pcbs, npcb) do { \
-                            struct TcpProtoCtrlBlk *tcp_tmp_pcb; \
-                            LWIP_ASSERT("TCP_RMV: pcbs != NULL", *(pcbs) != NULL); \
-                            Logf(TCP_DEBUG, ("TCP_RMV: removing %p from %p\n", (void *)(npcb), (void *)(*(pcbs)))); \
-                            if(*(pcbs) == (npcb)) { \
-                               *(pcbs) = (*pcbs)->next; \
-                            } else for (tcp_tmp_pcb = *(pcbs); tcp_tmp_pcb != NULL; tcp_tmp_pcb = tcp_tmp_pcb->next) { \
-                               if(tcp_tmp_pcb->next == (npcb)) { \
-                                  tcp_tmp_pcb->next = (npcb)->next; \
-                                  break; \
-                               } \
-                            } \
-                            (npcb)->next = NULL; \
-                            LWIP_ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
-                            Logf(TCP_DEBUG, ("TCP_RMV: removed %p from %p\n", (void *)(npcb), (void *)(*(pcbs)))); \
-                            } while(0)
 
-#else /* LWIP_DEBUG */
 
 #define TCP_REG(pcbs, npcb)                        \
   do {                                             \
@@ -415,7 +321,7 @@ extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
     (npcb)->next = NULL;                           \
   } while(0)
 
-#endif /* LWIP_DEBUG */
+
 
 #define TCP_REG_ACTIVE(npcb)                       \
   do {                                             \
@@ -475,30 +381,19 @@ LwipError tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
 LwipError tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
-#if TCP_CALCULATE_EFF_SEND_MSS
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
                              const IpAddr *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
-#endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-#if LWIP_CALLBACK_API
 LwipError tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipError err);
-#endif /* LWIP_CALLBACK_API */
 
-#if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
-void tcp_debug_print(struct tcp_hdr *tcphdr);
-void tcp_debug_print_flags(uint8_t flags);
-void tcp_debug_print_state(enum tcp_state s);
-void tcp_debug_print_pcbs(void);
-int16_t tcp_pcbs_sane(void);
-#else
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)
 #  define tcp_debug_print_state(s)
 #  define tcp_debug_print_pcbs()
 #  define tcp_pcbs_sane() 1
-#endif /* TCP_DEBUG */
+
 
 /** External function (implemented in timers.c), called when TCP detects
  * that a timer is needed (i.e. active- or time-wait-pcb found). */
@@ -506,18 +401,8 @@ void tcp_timer_needed(void);
 
 void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
-#if TCP_QUEUE_OOSEQ
 void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);
-#endif
 
-#if LWIP_TCP_PCB_NUM_EXT_ARGS
+
 LwipError tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_TCP */
-
-#endif /* LWIP_HDR_TCP_PRIV_H */

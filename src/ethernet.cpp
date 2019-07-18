@@ -61,9 +61,6 @@
 
 #include <cstring>
 
-#ifdef LWIP_HOOK_FILENAME
-#include LWIP_HOOK_FILENAME
-#endif
 
 const struct EthAddr kEthbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};

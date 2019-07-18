@@ -135,12 +135,10 @@ enum EapType
 	"Initial", "Pending", "Closed", "Listen", "Identify", \
 	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
 
-
-#if PPP_SERVER
 #define	eap_server_active(pcb)	\
 	((pcb)->eap.es_server.ea_state >= eapIdentify && \
 	 (pcb)->eap.es_server.ea_state <= eapMD5Chall)
-#endif /* PPP_SERVER */
+
 
 struct Base64State
 {

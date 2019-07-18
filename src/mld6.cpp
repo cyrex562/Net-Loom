@@ -52,9 +52,6 @@
 /* Based on igmp.c implementation of igmp v2 protocol */
 
 #include "opt.h"
-
-#if LWIP_IPV6 && LWIP_IPV6_MLD  /* don't build if not configured for use in lwipopts.h */
-
 #include "mld6.h"
 #include "prot/mld6.h"
 #include "icmp6.h"
@@ -347,7 +344,7 @@ LwipError
 mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
-#if LWIP_IPV6_SCOPES
+
   Ip6Addr ip6addr;
 
   /* If the address has a particular scope but no zone set, use the netif to
@@ -358,7 +355,7 @@ mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
     groupaddr = &ip6addr;
   }
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
-#endif /* LWIP_IPV6_SCOPES */
+
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -437,7 +434,7 @@ LwipError
 mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
 {
   struct mld_group *group;
-#if LWIP_IPV6_SCOPES
+
   Ip6Addr ip6addr;
 
   if (ip6_addr_lacks_zone(groupaddr, IP6_MULTICAST)) {
@@ -446,7 +443,7 @@ mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
     groupaddr = &ip6addr;
   }
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
-#endif /* LWIP_IPV6_SCOPES */
+
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -533,13 +530,13 @@ mld6_delayed_report(struct mld_group *group, uint16_t maxresp_in)
     maxresp = 1;
   }
 
-#ifdef LWIP_RAND
+
   /* Randomize maxresp. (if LWIP_RAND is supported) */
   maxresp = (uint16_t)(LWIP_RAND() % maxresp);
   if (maxresp == 0) {
     maxresp = 1;
   }
-#endif /* LWIP_RAND */
+
 
   /* Apply timer value if no report has been scheduled already. */
   if ((group->group_state == MLD6_GROUP_IDLE_MEMBER) ||
@@ -601,12 +598,11 @@ mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
   mld_hdr->reserved = 0;
   ip6_addr_copy_to_packed(mld_hdr->multicast_address, group->group_address);
 
-#if CHECKSUM_GEN_ICMP6
   IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
     mld_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len,
       src_addr, &(group->group_address));
   }
-#endif /* CHECKSUM_GEN_ICMP6 */
+
 
   /* Add hop-by-hop headers options: router alert with MLD value. */
   ip6_options_add_hbh_ra(p, IP6_NEXTH_ICMP6, IP6_ROUTER_ALERT_VALUE_MLD);
@@ -623,4 +619,3 @@ mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
   pbuf_free(p);
 }
 
-#endif /* LWIP_IPV6 */

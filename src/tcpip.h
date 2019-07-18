@@ -41,26 +41,18 @@
 #include "timeouts.h"
 #include "netif.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
 extern sys_mutex_t lock_tcpip_core;
-#if !defined LOCK_TCPIP_CORE || defined __DOXYGEN__
+
 /** Lock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
 /** Unlock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
-#endif /* LOCK_TCPIP_CORE */
-#else /* LWIP_TCPIP_CORE_LOCKING */
-#define LOCK_TCPIP_CORE()
-#define UNLOCK_TCPIP_CORE()
-#endif /* LWIP_TCPIP_CORE_LOCKING */
+
+
 
 struct PacketBuffer;
-NetIfc*;
+struct NetIfc;
 
 /** Function prototype for the init_done function passed to tcpip_init */
 typedef void (*tcpip_init_done_fn)(void *arg);
@@ -96,10 +88,4 @@ LwipError  tcpip_timeout(uint32_t msecs, sys_timeout_handler h, void *arg);
 LwipError  tcpip_untimeout(sys_timeout_handler h, void *arg);
 #endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
-#ifdef TCPIP_THREAD_TEST
 int tcpip_thread_poll_one(void);
-#endif
-
-#ifdef __cplusplus
-}
-#endif

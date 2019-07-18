@@ -663,38 +663,6 @@ static void ChapMS2(PppPcb* pcb,
     SetMasterKeys(pcb, secret, secret_len, &response[MS_CHAP2_NTRESP], authenticator);
 }
 
-#if 0 /* UNUSED */
-#if MPPE_SUPPORT
-/*
- * Set MPPE options from plugins.
- */
-void set_mppe_enc_types(int policy, int types) {
-    /* Early exit for unknown policies. */
-    if (policy != MPPE_ENC_POL_ENC_ALLOWED ||
-	policy != MPPE_ENC_POL_ENC_REQUIRED)
-	return;
-
-    /* Don't modify MPPE if it's optional and wasn't already configured. */
-    if (policy == MPPE_ENC_POL_ENC_ALLOWED && !ccp_wantoptions[0].mppe)
-	return;
-
-    /*
-     * Disable undesirable encryption types.  Note that we don't ENABLE
-     * any encryption types, to avoid overriding manual configuration.
-     */
-    switch(types) {
-	case MPPE_ENC_TYPES_RC4_40:
-	    ccp_wantoptions[0].mppe &= ~MPPE_OPT_128;	/* disable 128-bit */
-	    break;
-	case MPPE_ENC_TYPES_RC4_128:
-	    ccp_wantoptions[0].mppe &= ~MPPE_OPT_40;	/* disable 40-bit */
-	    break;
-	default:
-	    break;
-    }
-}
-#endif /* MPPE_SUPPORT */
-#endif /* UNUSED */
 
 const struct ChapDigestType kChapmsDigest = {
 	CHAP_MICROSOFT,		/* code */

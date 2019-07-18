@@ -41,9 +41,6 @@
 #include "lwip_error.h"
 #include <cstdint>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct PacketBuffer;
 
@@ -261,11 +258,11 @@ void pbuf_free_ooseq(void);
 
 struct PacketBuffer *pbuf_alloc(PbufLayer l, uint16_t length, PbufType type);
 struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length, PbufType type);
-#if LWIP_SUPPORT_CUSTOM_PBUF
+
 struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_type type,
                                  struct pbuf_custom *p, void *payload_mem,
                                  uint16_t payload_mem_len);
-#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+
 void pbuf_realloc(struct PacketBuffer *p, uint16_t size);
 #define pbuf_get_allocsrc(p)          ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK)
 #define pbuf_match_allocsrc(p, type)  (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK))
@@ -290,13 +287,13 @@ LwipError pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t l
 struct PacketBuffer *pbuf_skip(struct PacketBuffer* in, uint16_t in_offset, uint16_t* out_offset);
 struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer);
 struct PacketBuffer *pbuf_clone(PbufLayer l, PbufType type, struct PacketBuffer *p);
-#if LWIP_CHECKSUM_ON_COPY
+
 LwipError pbuf_fill_chksum(struct pbuf *p, uint16_t start_offset, const void *dataptr,
                        uint16_t len, uint16_t *chksum);
-#endif /* LWIP_CHECKSUM_ON_COPY */
-#if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+
+
 void pbuf_split_64k(struct pbuf *p, struct pbuf **rest);
-#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
 
 uint8_t pbuf_get_at(const struct PacketBuffer* p, uint16_t offset);
 int pbuf_try_get_at(const struct PacketBuffer* p, uint16_t offset);
@@ -305,7 +302,4 @@ uint16_t pbuf_memcmp(const struct PacketBuffer* p, uint16_t offset, const void* 
 uint16_t pbuf_memfind(const struct PacketBuffer* p, const void* mem, uint16_t mem_len, uint16_t start_offset);
 uint16_t pbuf_strstr(const struct PacketBuffer* p, const char* substr);
 
-#ifdef __cplusplus
-}
-#endif
 

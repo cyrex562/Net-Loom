@@ -148,30 +148,14 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
-
-#if 0 /* UNUSED */
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif /* UNUSED */
-
-#include "ppp/ppp_impl.h"
-#include "ppp/fsm.h"
-#include "ppp/ipcp.h"
-#include "ppp/ipv6cp.h"
-#include "ppp/magic.h"
+#include "ppp_impl.h"
+#include "fsm.h"
+#include "ipcp.h"
+#include "ipv6cp.h"
+#include "magic.h"
 
 /* global vars */
-#if 0 /* UNUSED */
-int no_ifaceid_neg = 0;
-#endif /* UNUSED */
+
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -205,48 +189,6 @@ static const FsmCallbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
     "IPV6CP"			/* String name of protocol */
 };
 
-#if PPP_OPTIONS
-/*
- * Command-line options.
- */
-static int setifaceid(char **arg));
-static void printifaceid(option_t *,
-			      void (*)(void *, char *, ...), void *));
-
-static option_t ipv6cp_option_list[] = {
-    { "ipv6", o_special, (void *)setifaceid,
-      "Set interface identifiers for IPV6",
-      OPT_A2PRINTER, (void *)printifaceid },
-
-    { "+ipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Enable IPv6 and IPv6CP", OPT_PRIO | 1 },
-    { "noipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Disable IPv6 and IPv6CP", OPT_PRIOSUB },
-    { "-ipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Disable IPv6 and IPv6CP", OPT_PRIOSUB | OPT_ALIAS },
-
-    { "ipv6cp-accept-local", o_bool, &ipv6cp_allowoptions[0].accept_local,
-      "Accept peer's interface identifier for us", 1 },
-
-    { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
-      "Use (default) IPv4 address as interface identifier", 1 },
-
-    { "ipv6cp-use-persistent", o_bool, &ipv6cp_wantoptions[0].use_persistent,
-      "Use uniquely-available persistent value for link local address", 1 },
-
-    { "ipv6cp-restart", o_int, &ipv6cp_fsm[0].timeouttime,
-      "Set timeout for IPv6CP", OPT_PRIO },
-    { "ipv6cp-max-terminate", o_int, &ipv6cp_fsm[0].maxtermtransmits,
-      "Set max #xmits for term-reqs", OPT_PRIO },
-    { "ipv6cp-max-configure", o_int, &ipv6cp_fsm[0].maxconfreqtransmits,
-      "Set max #xmits for conf-reqs", OPT_PRIO },
-    { "ipv6cp-max-failure", o_int, &ipv6cp_fsm[0].maxnakloops,
-      "Set max #conf-naks for IPv6CP", OPT_PRIO },
-
-   { NULL }
-};
-#endif /* PPP_OPTIONS */
-
 /*
  * Protocol entry points from main code.
  */
@@ -257,19 +199,13 @@ static void ipv6cp_lowerup(PppPcb *pcb);
 static void ipv6cp_lowerdown(PppPcb *pcb);
 static void ipv6cp_input(PppPcb *pcb, uint8_t *p, int len);
 static void ipv6cp_protrej(PppPcb *pcb);
-#if PPP_OPTIONS
-static void ipv6_check_options(void);
-#endif /* PPP_OPTIONS */
-#if DEMAND_SUPPORT
+
+
 static int  ipv6_demand_conf(int u);
-#endif /* DEMAND_SUPPORT */
-#if PRINTPKT_SUPPORT
-static int ipv6cp_printpkt(const uint8_t *p, int plen,
-		void (*printer)(void *, const char *, ...), void *arg);
-#endif /* PRINTPKT_SUPPORT */
-#if DEMAND_SUPPORT
+
+
 static int ipv6_active_pkt(uint8_t *pkt, int len);
-#endif /* DEMAND_SUPPORT */
+
 
 const struct protent ipv6cp_protent = {
     PPP_IPV6CP,
@@ -280,31 +216,19 @@ const struct protent ipv6cp_protent = {
     ipv6cp_lowerdown,
     ipv6cp_open,
     ipv6cp_close,
-#if PRINTPKT_SUPPORT
-    ipv6cp_printpkt,
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_DATAINPUT
+
     NULL,
-#endif /* PPP_DATAINPUT */
-#if PRINTPKT_SUPPORT
-    "IPV6CP",
-    "IPV6",
-#endif /* PRINTPKT_SUPPORT */
-#if PPP_OPTIONS
-    ipv6cp_option_list,
-    ipv6_check_options,
-#endif /* PPP_OPTIONS */
-#if DEMAND_SUPPORT
+
+
+
+
     ipv6_demand_conf,
     ipv6_active_pkt
-#endif /* DEMAND_SUPPORT */
+
 };
 
 static void ipv6cp_clear_addrs(PppPcb *pcb, eui64_t ourid, eui64_t hisid);
-#if 0 /* UNUSED */
-static void ipv6cp_script(char *));
-static void ipv6cp_script_done(void *));
-#endif /* UNUSED */
+
 
 /*
  * Lengths of configuration options.
@@ -316,95 +240,8 @@ static void ipv6cp_script_done(void *));
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
-#if 0 /* UNUSED */
-/*
- * This state variable is used to ensure that we don't
- * run an ipcp-up/down script while one is already running.
- */
-static enum script_state {
-    s_down,
-    s_up,
-} ipv6cp_script_state;
-static pid_t ipv6cp_script_pid;
-#endif /* UNUSED */
 
 static char *llv6_ntoa(eui64_t ifaceid);
-
-#if PPP_OPTIONS
-/*
- * setifaceid - set the interface identifiers manually
- */
-static int
-setifaceid(argv)
-    char **argv;
-{
-    char *comma, *arg, c;
-    ipv6cp_options *wo = &ipv6cp_wantoptions[0];
-    struct LwipIn6Addr addr;
-    static int prio_local, prio_remote;
-
-#define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \
-			(((a).s6_addr32[2] != 0) || ((a).s6_addr32[3] != 0)) )
-    
-    arg = *argv;
-    if ((comma = strchr(arg, ',')) == NULL)
-	comma = arg + strlen(arg);
-    
-    /* 
-     * If comma first character, then no local identifier
-     */
-    if (comma != arg) {
-	c = *comma;
-	*comma = '\0';
-
-	if (inet_pton(AF_INET6, arg, &addr) == 0 || !VALIDID(addr)) {
-	    option_error("Illegal interface identifier (local): %s", arg);
-	    return 0;
-	}
-
-	if (option_priority >= prio_local) {
-	    eui64_copy(addr.s6_addr32[2], wo->ourid);
-	    wo->opt_local = 1;
-	    prio_local = option_priority;
-	}
-	*comma = c;
-    }
-    
-    /*
-     * If comma last character, the no remote identifier
-     */
-    if (*comma != 0 && *++comma != '\0') {
-	if (inet_pton(AF_INET6, comma, &addr) == 0 || !VALIDID(addr)) {
-	    option_error("Illegal interface identifier (remote): %s", comma);
-	    return 0;
-	}
-	if (option_priority >= prio_remote) {
-	    eui64_copy(addr.s6_addr32[2], wo->hisid);
-	    wo->opt_remote = 1;
-	    prio_remote = option_priority;
-	}
-    }
-
-    if (override_value("+ipv6", option_priority, option_source))
-	ipv6cp_protent.enabled_flag = 1;
-    return 1;
-}
-
-static void
-printifaceid(opt, printer, arg)
-    option_t *opt;
-    void (*printer)(void *, char *, ...));
-    void *arg;
-{
-	ipv6cp_options *wo = &ipv6cp_wantoptions[0];
-
-	if (wo->opt_local)
-		printer(arg, "%s", llv6_ntoa(wo->ourid));
-	printer(arg, ",");
-	if (wo->opt_remote)
-		printer(arg, "%s", llv6_ntoa(wo->hisid));
-}
-#endif /* PPP_OPTIONS */
 
 /*
  * Make a string representation of a network address.
@@ -435,20 +272,15 @@ static void ipv6cp_init(PppPcb *pcb) {
     f->callbacks = &ipv6cp_callbacks;
     fsm_init(f);
 
-#if 0 /* Not necessary, everything is cleared in ppp_new() */
-    memset(wo, 0, sizeof(*wo));
-    memset(ao, 0, sizeof(*ao));
-#endif /* 0 */
 
     wo->accept_local = 1;
     wo->neg_ifaceid = 1;
     ao->neg_ifaceid = 1;
 
-#ifdef IPV6CP_COMP
     wo->neg_vj = 1;
     ao->neg_vj = 1;
     wo->vj_protocol = IPV6CP_COMP;
-#endif
+
 
 }
 
@@ -530,15 +362,15 @@ static int ipv6cp_cilen(fsm *f) {
     PppPcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
 
-#ifdef IPV6CP_COMP
+
 #define LENCIVJ(neg)		(neg ? CILEN_COMPRESS : 0)
-#endif /* IPV6CP_COMP */
+
 #define LENCIIFACEID(neg)	(neg ? CILEN_IFACEID : 0)
 
     return (LENCIIFACEID(go->neg_ifaceid) +
-#ifdef IPV6CP_COMP
+
 	    LENCIVJ(go->neg_vj) +
-#endif /* IPV6CP_COMP */
+
 	    0);
 }
 
@@ -551,7 +383,7 @@ static void ipv6cp_addci(fsm *f, uint8_t *ucp, int *lenp) {
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     int len = *lenp;
 
-#ifdef IPV6CP_COMP
+
 #define ADDCIVJ(opt, neg, val) \
     if (neg) { \
 	int vjlen = CILEN_COMPRESS; \
@@ -563,7 +395,7 @@ static void ipv6cp_addci(fsm *f, uint8_t *ucp, int *lenp) {
 	} else \
 	    neg = 0; \
     }
-#endif /* IPV6CP_COMP */
+
 
 #define ADDCIIFACEID(opt, neg, val1) \
     if (neg) { \
@@ -579,9 +411,9 @@ static void ipv6cp_addci(fsm *f, uint8_t *ucp, int *lenp) {
 
     ADDCIIFACEID(CI_IFACEID, go->neg_ifaceid, go->ourid);
 
-#ifdef IPV6CP_COMP
+
     ADDCIVJ(CI_COMPRESSTYPE, go->neg_vj, go->vj_protocol);
-#endif /* IPV6CP_COMP */
+
 
     *lenp -= len;
 }
@@ -598,9 +430,9 @@ static int ipv6cp_ackci(fsm *f, uint8_t *p, int len) {
     PppPcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_short cilen, citype;
-#ifdef IPV6CP_COMP
+
     u_short cishort;
-#endif /* IPV6CP_COMP */
+
     eui64_t ifaceid;
 
     /*
@@ -609,7 +441,7 @@ static int ipv6cp_ackci(fsm *f, uint8_t *p, int len) {
      * If we find any deviations, then this packet is bad.
      */
 
-#ifdef IPV6CP_COMP
+
 #define ACKCIVJ(opt, neg, val) \
     if (neg) { \
 	int vjlen = CILEN_COMPRESS; \
@@ -624,7 +456,7 @@ static int ipv6cp_ackci(fsm *f, uint8_t *p, int len) {
 	if (cishort != val) \
 	    goto bad; \
     }
-#endif /* IPV6CP_COMP */
+
 
 #define ACKCIIFACEID(opt, neg, val1) \
     if (neg) { \
@@ -643,9 +475,9 @@ static int ipv6cp_ackci(fsm *f, uint8_t *p, int len) {
 
     ACKCIIFACEID(CI_IFACEID, go->neg_ifaceid, go->ourid);
 
-#ifdef IPV6CP_COMP
+
     ACKCIVJ(CI_COMPRESSTYPE, go->neg_vj, go->vj_protocol);
-#endif /* IPV6CP_COMP */
+
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -672,9 +504,9 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
     PppPcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     uint8_t citype, cilen, *next;
-#ifdef IPV6CP_COMP
+
     u_short cishort;
-#endif /* IPV6CP_COMP */
+
     eui64_t ifaceid;
     ipv6cp_options no;		/* options we've seen Naks for */
     ipv6cp_options try_;	/* options to request next time */
@@ -699,7 +531,7 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
 	code \
     }
 
-#ifdef IPV6CP_COMP
+
 #define NAKCIVJ(opt, neg, code) \
     if (go->neg && \
 	((cilen = p[1]) == CILEN_COMPRESS) && \
@@ -711,7 +543,7 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
 	no.neg = 1; \
         code \
     }
-#endif /* IPV6CP_COMP */
+
 
     /*
      * Accept the peer's idea of {our,his} interface identifier, if different
@@ -729,7 +561,7 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
 		 }
 		 );
 
-#ifdef IPV6CP_COMP
+
     NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
 	    {
 		if (cishort == IPV6CP_COMP && !treat_as_reject) {
@@ -739,7 +571,7 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
 		}
 	    }
 	    );
-#endif /* IPV6CP_COMP */
+
 
     /*
      * There may be remaining CIs, if the peer is requesting negotiation
@@ -755,14 +587,14 @@ static int ipv6cp_nakci(fsm *f, uint8_t *p, int len, int treat_as_reject) {
 	next = p + cilen - 2;
 
 	switch (citype) {
-#ifdef IPV6CP_COMP
+
 	case CI_COMPRESSTYPE:
 	    if (go->neg_vj || no.neg_vj ||
 		(cilen != CILEN_COMPRESS))
 		goto bad;
 	    no.neg_vj = 1;
 	    break;
-#endif /* IPV6CP_COMP */
+
 	case CI_IFACEID:
 	    if (go->neg_ifaceid || no.neg_ifaceid || cilen != CILEN_IFACEID)
 		goto bad;
@@ -807,9 +639,9 @@ static int ipv6cp_rejci(fsm *f, uint8_t *p, int len) {
     PppPcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     uint8_t cilen;
-#ifdef IPV6CP_COMP
+
     u_short cishort;
-#endif /* IPV6CP_COMP */
+
     eui64_t ifaceid;
     ipv6cp_options try_;		/* options to request next time */
 
@@ -833,7 +665,6 @@ static int ipv6cp_rejci(fsm *f, uint8_t *p, int len) {
 	try_.neg = 0; \
     }
 
-#ifdef IPV6CP_COMP
 #define REJCIVJ(opt, neg, val) \
     if (go->neg && \
 	p[1] == CILEN_COMPRESS && \
@@ -847,13 +678,12 @@ static int ipv6cp_rejci(fsm *f, uint8_t *p, int len) {
 	    goto bad; \
 	try_.neg = 0; \
      }
-#endif /* IPV6CP_COMP */
+
 
     REJCIIFACEID(CI_IFACEID, neg_ifaceid, go->ourid);
 
-#ifdef IPV6CP_COMP
     REJCIVJ(CI_COMPRESSTYPE, neg_vj, go->vj_protocol);
-#endif /* IPV6CP_COMP */
+
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -892,9 +722,9 @@ static int ipv6cp_reqci(fsm *f, uint8_t *inp, int *len, int reject_if_disagree) 
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     uint8_t *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
-#ifdef IPV6CP_COMP
+
     u_short cishort;		/* Parsed short value */
-#endif /* IPV6CP_COMP */
+
     eui64_t ifaceid;		/* Parsed interface identifier */
     int rc = CONFACK;		/* Final packet return code */
     int orc;			/* Individual option return code */
@@ -976,7 +806,7 @@ static int ipv6cp_reqci(fsm *f, uint8_t *inp, int *len, int reject_if_disagree) 
 	    ho->hisid = ifaceid;
 	    break;
 
-#ifdef IPV6CP_COMP
+
 	case CI_COMPRESSTYPE:
 	    IPV6CPDEBUG(("ipv6cp: received COMPRESSTYPE "));
 	    if (!ao->neg_vj ||
@@ -995,7 +825,7 @@ static int ipv6cp_reqci(fsm *f, uint8_t *inp, int *len, int reject_if_disagree) 
 	    ho->neg_vj = 1;
 	    ho->vj_protocol = cishort;
 	    break;
-#endif /* IPV6CP_COMP */
+
 
 	default:
 	    orc = CONFREJ;
@@ -1060,64 +890,7 @@ endswitch:
     return (rc);			/* Return final code */
 }
 
-#if PPP_OPTIONS
-/*
- * ipv6_check_options - check that any IP-related options are OK,
- * and assign appropriate defaults.
- */
-static void ipv6_check_options() {
-    ipv6cp_options *wo = &ipv6cp_wantoptions[0];
 
-    if (!ipv6cp_protent.enabled_flag)
-	return;
-
-    /*
-     * Persistent link-local id is only used when user has not explicitly
-     * configure/hard-code the id
-     */
-    if ((wo->use_persistent) && (!wo->opt_local) && (!wo->opt_remote)) {
-
-	/* 
-	 * On systems where there are no Ethernet interfaces used, there
-	 * may be other ways to obtain a persistent id. Right now, it
-	 * will fall back to using magic [see eui64_magic] below when
-	 * an EUI-48 from MAC address can't be obtained. Other possibilities
-	 * include obtaining EEPROM serial numbers, or some other unique
-	 * yet persistent number. On Sparc platforms, this is possible,
-	 * but too bad there's no standards yet for x86 machines.
-	 */
-	if (ether_to_eui64(&wo->ourid)) {
-	    wo->opt_local = 1;
-	}
-    }
-
-    if (!wo->opt_local) {	/* init interface identifier */
-	if (wo->use_ip && eui64_iszero(wo->ourid)) {
-	    eui64_setlo32(wo->ourid, lwip_ntohl(ipcp_wantoptions[0].ouraddr));
-	    if (!eui64_iszero(wo->ourid))
-		wo->opt_local = 1;
-	}
-	
-	while (eui64_iszero(wo->ourid))
-	    eui64_magic(wo->ourid);
-    }
-
-    if (!wo->opt_remote) {
-	if (wo->use_ip && eui64_iszero(wo->hisid)) {
-	    eui64_setlo32(wo->hisid, lwip_ntohl(ipcp_wantoptions[0].hisaddr));
-	    if (!eui64_iszero(wo->hisid))
-		wo->opt_remote = 1;
-	}
-    }
-
-    if (demand && (eui64_iszero(wo->ourid) || eui64_iszero(wo->hisid))) {
-	option_error("local/remote LL address required for demand-dialling\n");
-	exit(1);
-    }
-}
-#endif /* PPP_OPTIONS */
-
-#if DEMAND_SUPPORT
 /*
  * ipv6_demand_conf - configure the interface as though
  * IPV6CP were up, for use with dial-on-demand.
@@ -1140,7 +913,6 @@ static int ipv6_demand_conf(int u) {
 
     return 1;
 }
-#endif /* DEMAND_SUPPORT */
 
 
 /*
@@ -1162,9 +934,7 @@ static void ipv6cp_up(fsm *f) {
     if (!ho->neg_ifaceid)
 	ho->hisid = wo->hisid;
 
-#if 0 /* UNUSED */
-    if(!no_ifaceid_neg) {
-#endif /* UNUSED */
+
 	if (eui64_iszero(ho->hisid)) {
 	    ppp_error("Could not determine remote LL address");
 	    ipv6cp_close(f->pcb, "Could not determine remote LL address");
@@ -1180,20 +950,17 @@ static void ipv6cp_up(fsm *f) {
 	    ipv6cp_close(f->pcb, "local and remote LL addresses are equal");
 	    return;
 	}
-#if 0 /* UNUSED */
-    }
-#endif /* UNUSED */
-#if 0 /* UNUSED */
+
     script_setenv("LLLOCAL", llv6_ntoa(go->ourid), 0);
     script_setenv("LLREMOTE", llv6_ntoa(ho->hisid), 0);
-#endif /* UNUSED */
 
-#ifdef IPV6CP_COMP
+
+
     /* set tcp compression */
     sif6comp(f->unit, ho->neg_vj);
-#endif
 
-#if DEMAND_SUPPORT
+
+
     /*
      * If we are doing dial-on-demand, the interface is already
      * configured, so we put out any saved-up packets, then set the
@@ -1223,7 +990,7 @@ static void ipv6cp_up(fsm *f) {
 	sifnpmode(f->unit, PPP_IPV6, NPMODE_PASS);
 
     } else
-#endif /* DEMAND_SUPPORT */
+
     {
 	/*
 	 * Set LL addresses
@@ -1240,9 +1007,9 @@ static void ipv6cp_up(fsm *f) {
 	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
-#if DEMAND_SUPPORT
+
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_PASS);
-#endif /* DEMAND_SUPPORT */
+
 
 	ppp_notice("local  LL address %s", llv6_ntoa(go->ourid));
 	ppp_notice("remote LL address %s", llv6_ntoa(ho->hisid));
@@ -1251,16 +1018,6 @@ static void ipv6cp_up(fsm *f) {
     np_up(f->pcb, PPP_IPV6);
     pcb->ipv6cp_is_up = 1;
 
-#if 0 /* UNUSED */
-    /*
-     * Execute the ipv6-up script, like this:
-     *	/etc/ppp/ipv6-up interface tty speed local-LL remote-LL
-     */
-    if (ipv6cp_script_state == s_down && ipv6cp_script_pid == 0) {
-	ipv6cp_script_state = s_up;
-	ipv6cp_script(_PATH_IPV6UP);
-    }
-#endif /* UNUSED */
 }
 
 
@@ -1276,18 +1033,13 @@ static void ipv6cp_down(fsm *f) {
     ipv6cp_options *ho = &pcb->ipv6cp_hisoptions;
 
     IPV6CPDEBUG(("ipv6cp: down"));
-#if PPP_STATS_SUPPORT
-    update_link_stats(f->unit);
-#endif /* PPP_STATS_SUPPORT */
     if (pcb->ipv6cp_is_up) {
 	pcb->ipv6cp_is_up = 0;
 	np_down(f->pcb, PPP_IPV6);
     }
-#ifdef IPV6CP_COMP
-    sif6comp(f->unit, 0);
-#endif
 
-#if DEMAND_SUPPORT
+    sif6comp(f->unit, 0);
+
     /*
      * If we are doing dial-on-demand, set the interface
      * to queue up outgoing packets (for now).
@@ -1295,24 +1047,17 @@ static void ipv6cp_down(fsm *f) {
     if (demand) {
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_QUEUE);
     } else
-#endif /* DEMAND_SUPPORT */
+
     {
-#if DEMAND_SUPPORT
+
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_DROP);
-#endif /* DEMAND_SUPPORT */
+
 	ipv6cp_clear_addrs(f->pcb,
 			   go->ourid,
 			   ho->hisid);
 	sif6down(f->pcb);
     }
 
-#if 0 /* UNUSED */
-    /* Execute the ipv6-down script */
-    if (ipv6cp_script_state == s_up && ipv6cp_script_pid == 0) {
-	ipv6cp_script_state = s_down;
-	ipv6cp_script(_PATH_IPV6DOWN);
-    }
-#endif /* UNUSED */
 }
 
 
@@ -1333,164 +1078,9 @@ static void ipv6cp_finished(fsm *f) {
 }
 
 
-#if 0 /* UNUSED */
-/*
- * ipv6cp_script_done - called when the ipv6-up or ipv6-down script
- * has finished.
- */
-static void
-ipv6cp_script_done(arg)
-    void *arg;
-{
-    ipv6cp_script_pid = 0;
-    switch (ipv6cp_script_state) {
-    case s_up:
-	if (ipv6cp_fsm[0].state != PPP_FSM_OPENED) {
-	    ipv6cp_script_state = s_down;
-	    ipv6cp_script(_PATH_IPV6DOWN);
-	}
-	break;
-    case s_down:
-	if (ipv6cp_fsm[0].state == PPP_FSM_OPENED) {
-	    ipv6cp_script_state = s_up;
-	    ipv6cp_script(_PATH_IPV6UP);
-	}
-	break;
-    }
-}
 
 
-/*
- * ipv6cp_script - Execute a script with arguments
- * interface-name tty-name speed local-LL remote-LL.
- */
-static void
-ipv6cp_script(script)
-    char *script;
-{
-    char strspeed[32], strlocal[32], strremote[32];
-    char *argv[8];
 
-    sprintf(strspeed, "%d", baud_rate);
-    strcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid));
-    strcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid));
-
-    argv[0] = script;
-    argv[1] = ifname;
-    argv[2] = devnam;
-    argv[3] = strspeed;
-    argv[4] = strlocal;
-    argv[5] = strremote;
-    argv[6] = ipparam;
-    argv[7] = NULL;
-
-    ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done,
-				    NULL, 0);
-}
-#endif /* UNUSED */
-
-#if PRINTPKT_SUPPORT
-/*
- * ipv6cp_printpkt - print the contents of an IPV6CP packet.
- */
-static const char* const ipv6cp_codenames[] = {
-    "ConfReq", "ConfAck", "ConfNak", "ConfRej",
-    "TermReq", "TermAck", "CodeRej"
-};
-
-static int ipv6cp_printpkt(const uint8_t *p, int plen,
-		void (*printer)(void *, const char *, ...), void *arg) {
-    int code, id, len, olen;
-    const uint8_t *pstart, *optend;
-#ifdef IPV6CP_COMP
-    u_short cishort;
-#endif /* IPV6CP_COMP */
-    eui64_t ifaceid;
-
-    if (plen < kHeaderlen)
-	return 0;
-    pstart = p;
-    GETCHAR(code, p);
-    GETCHAR(id, p);
-    GETSHORT(len, p);
-    if (len < kHeaderlen || len > plen)
-	return 0;
-
-    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ipv6cp_codenames))
-	printer(arg, " %s", ipv6cp_codenames[code-1]);
-    else
-	printer(arg, " code=0x%x", code);
-    printer(arg, " id=0x%x", id);
-    len -= kHeaderlen;
-    switch (code) {
-    case CONFREQ:
-    case CONFACK:
-    case CONFNAK:
-    case CONFREJ:
-	/* print option list */
-	while (len >= 2) {
-	    GETCHAR(code, p);
-	    GETCHAR(olen, p);
-	    p -= 2;
-	    if (olen < 2 || olen > len) {
-		break;
-	    }
-	    printer(arg, " <");
-	    len -= olen;
-	    optend = p + olen;
-	    switch (code) {
-#ifdef IPV6CP_COMP
-	    case CI_COMPRESSTYPE:
-		if (olen >= CILEN_COMPRESS) {
-		    p += 2;
-		    GETSHORT(cishort, p);
-		    printer(arg, "compress ");
-		    printer(arg, "0x%x", cishort);
-		}
-		break;
-#endif /* IPV6CP_COMP */
-	    case CI_IFACEID:
-		if (olen == CILEN_IFACEID) {
-		    p += 2;
-		    eui64_get(ifaceid, p);
-		    printer(arg, "addr %s", llv6_ntoa(ifaceid));
-		}
-		break;
-	    default:
-		break;
-	    }
-	    while (p < optend) {
-		GETCHAR(code, p);
-		printer(arg, " %.2x", code);
-	    }
-	    printer(arg, ">");
-	}
-	break;
-
-    case TERMACK:
-    case TERMREQ:
-	if (len > 0 && *p >= ' ' && *p < 0x7f) {
-	    printer(arg, " ");
-	    ppp_print_string(p, len, printer, arg);
-	    p += len;
-	    len = 0;
-	}
-	break;
-    default:
-	break;
-    }
-
-    /* print the rest of the bytes in the packet */
-    for (; len > 0; --len) {
-	GETCHAR(code, p);
-	printer(arg, " %.2x", code);
-    }
-
-    return p - pstart;
-}
-#endif /* PRINTPKT_SUPPORT */
-
-#if DEMAND_SUPPORT
 /*
  * ipv6_active_pkt - see if this IP packet is worth bringing the link up for.
  * We don't bring the link up for IP fragments or for TCP FIN packets
@@ -1528,6 +1118,6 @@ static int ipv6_active_pkt(uint8_t *pkt, int len) {
 	return 0;
     return 1;
 }
-#endif /* DEMAND_SUPPORT */
 
-#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */
+
+

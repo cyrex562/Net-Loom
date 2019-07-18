@@ -39,8 +39,6 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_ARC4
-
 #include "arc4.h"
 /*
  * ARC4 key schedule
@@ -98,4 +96,6 @@ void arc4_crypt( Arc4Context *ctx, unsigned char *buf, int buflen )
     ctx->y = y;
 }
 
-#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES */
+//
+// END OF FILE
+//

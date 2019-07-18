@@ -105,12 +105,12 @@ void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
 void
 mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
 {
-#if PPP_DEBUG
+
 	const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";
 	if (&pcb->mppe_decomp == state) {
 	    debugstr = (const uint8_t*)"mppe_decomp_init";
 	}
-#endif /* PPP_DEBUG */
+
 
 	/* Save keys. */
 	MEMCPY(state->session_key, state->master_key, sizeof(state->master_key));
@@ -131,7 +131,7 @@ mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
 	/* Generate the initial session key. */
 	mppe_rekey(state, 1);
 
-#if PPP_DEBUG
+
 	{
 		int i;
 		char mkey[sizeof(state->master_key) * 2 + 1];
@@ -149,7 +149,7 @@ mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
 		       ("%s[%d]: keys: master: %s initial session: %s\n",
 		       debugstr, pcb->netif->num, mkey, skey));
 	}
-#endif /* PPP_DEBUG */
+
 
 	/*
 	 * Initialize the coherency count.  The initial value is not specified

@@ -150,9 +150,9 @@ extern "C" {
  * Options.
  */
 #define CI_IFACEID	1	/* Interface Identifier */
-#ifdef IPV6CP_COMP
+
 #define CI_COMPRESSTYPE	2	/* Compression Type     */
-#endif /* IPV6CP_COMP */
+
 
 /* No compression types yet defined.
  *#define IPV6CP_COMP	0x004f
@@ -164,16 +164,14 @@ typedef struct ipv6cp_options {
     unsigned int opt_local      :1;  /* ourtoken set by option */
     unsigned int opt_remote     :1;  /* histoken set by option */
     unsigned int use_ip         :1;  /* use IP as interface identifier */
-#if 0
-    unsigned int use_persistent :1;  /* use uniquely persistent value for address */
-#endif
-#ifdef IPV6CP_COMP
-    unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
-#endif /* IPV6CP_COMP */
 
-#ifdef IPV6CP_COMP
+
+    unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
+
+
+
     u_short vj_protocol;        /* protocol value to use in VJ option */
-#endif /* IPV6CP_COMP */
+
     Eui64 ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;
 

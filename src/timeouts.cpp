@@ -96,11 +96,9 @@ tcp_timer_needed(void)
 
 
 static void
-#if LWIP_DEBUG_TIMERNAMES
+
 sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const char *handler_name)
-#else /* LWIP_DEBUG_TIMERNAMES */
-sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
-#endif
+
 {
   struct sys_timeo *timeout, *t;
 
@@ -116,11 +114,11 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg)
   timeout->arg = arg;
   timeout->time = abs_time;
 
-#if LWIP_DEBUG_TIMERNAMES
+
   timeout->handler_name = handler_name;
   Logf(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
                              (void *)timeout, abs_time, handler_name, (void *)arg));
-#endif /* LWIP_DEBUG_TIMERNAMES */
+
 
   if (next_timeout == nullptr) {
     next_timeout = timeout;
@@ -154,28 +152,23 @@ lwip_cyclic_timer(void *arg)
   uint32_t next_timeout_time;
   const struct lwip_cyclic_timer *cyclic = (const struct lwip_cyclic_timer *)arg;
 
-#if LWIP_DEBUG_TIMERNAMES
   Logf(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
-#endif
+
   cyclic->handler();
 
   now = sys_now();
   next_timeout_time = (uint32_t)(current_timeout_due_time + cyclic->interval_ms);  /* overflow handled by TIME_LESS_THAN macro */ 
   if (TIME_LESS_THAN(next_timeout_time, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
-#if LWIP_DEBUG_TIMERNAMES
+
     sys_timeout_abs((uint32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, arg, cyclic->handler_name);
-#else
-    sys_timeout_abs((uint32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, arg);
-#endif
+
 
   } else {
     /* correct cyclic interval with handler execution delay and sys_check_timeouts jitter */
-#if LWIP_DEBUG_TIMERNAMES
+
     sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, arg, cyclic->handler_name);
-#else
-    sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, arg);
-#endif
+
   }
 }
 
@@ -288,12 +281,12 @@ sys_check_timeouts(void)
     handler = tmptimeout->h;
     arg = tmptimeout->arg;
     current_timeout_due_time = tmptimeout->time;
-#if LWIP_DEBUG_TIMERNAMES
+
     if (handler != NULL) {
       Logf(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
                                  tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
     }
-#endif /* LWIP_DEBUG_TIMERNAMES */
+
     // memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
     delete tmptimeout;
     if (handler != nullptr) {

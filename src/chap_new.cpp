@@ -203,7 +203,6 @@ chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_code)
     pcb->chap_client.flags |= kAuthStarted;
 }
 
-#if PPP_SERVER
 /*
  * chap_timeout - It's time to send another challenge to the peer.
  * This could be either a retransmission of a previous challenge,
@@ -423,7 +422,6 @@ chap_verify_response(PppPcb* pcb,
 
     return ok;
 }
-#endif /* PPP_SERVER */
 
 /*
  * chap_respond - Generate and send a response to a challenge.
@@ -589,7 +587,7 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
 static void
 chap_protrej(PppPcb* pcb)
 {
-#if PPP_SERVER
+
     if (pcb->chap_server.flags & kTimeoutPending)
     {
         pcb->chap_server.flags &= ~kTimeoutPending;
@@ -600,7 +598,7 @@ chap_protrej(PppPcb* pcb)
         pcb->chap_server.flags = 0;
         auth_peer_fail(pcb, PPP_CHAP);
     }
-#endif /* PPP_SERVER */
+
     if ((pcb->chap_client.flags & (kAuthStarted | kAuthDone)) == kAuthStarted)
     {
         pcb->chap_client.flags &= ~kAuthStarted;
@@ -608,69 +606,6 @@ chap_protrej(PppPcb* pcb)
         auth_withpeer_fail(pcb, PPP_CHAP);
     }
 }
-
-#if PRINTPKT_SUPPORT
-/*
- * chap_print_pkt - print the contents of a CHAP packet.
- */
-static const char* const chap_code_names[] = {
-	"Challenge", "Response", "Success", "Failure"
-};
-
-static int chap_print_pkt(const unsigned char *p, int plen,
-	       void (*printer) (void *, const char *, ...), void *arg) {
-	int code, id, len;
-	int clen, nlen;
-	unsigned char x;
-
-	if (plen < CHAP_HDRLEN)
-		return 0;
-	GETCHAR(code, p);
-	GETCHAR(id, p);
-	GETSHORT(len, p);
-	if (len < CHAP_HDRLEN || len > plen)
-		return 0;
-
-	if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(chap_code_names))
-		printer(arg, " %s", chap_code_names[code-1]);
-	else
-		printer(arg, " code=0x%x", code);
-	printer(arg, " id=0x%x", id);
-	len -= CHAP_HDRLEN;
-	switch (code) {
-	case CHAP_CHALLENGE:
-	case CHAP_RESPONSE:
-		if (len < 1)
-			break;
-		clen = p[0];
-		if (len < clen + 1)
-			break;
-		++p;
-		nlen = len - clen - 1;
-		printer(arg, " <");
-		for (; clen > 0; --clen) {
-			GETCHAR(x, p);
-			printer(arg, "%.2x", x);
-		}
-		printer(arg, ">, name = ");
-		ppp_print_string(p, nlen, printer, arg);
-		break;
-	case CHAP_FAILURE:
-	case CHAP_SUCCESS:
-		printer(arg, " ");
-		ppp_print_string(p, len, printer, arg);
-		break;
-	default:
-		for (clen = len; clen > 0; --clen) {
-			GETCHAR(x, p);
-			printer(arg, " %.2x", x);
-		}
-		/* no break */
-	}
-
-	return len + CHAP_HDRLEN;
-}
-#endif /* PRINTPKT_SUPPORT */
 
 const struct Protent kChapProtent = {
     PPP_CHAP,

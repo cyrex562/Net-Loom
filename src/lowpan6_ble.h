@@ -35,23 +35,15 @@
  * 
  * Based on the original 6lowpan implementation of lwIP ( @see 6lowpan.c)
  */
- 
-#ifndef LWIP_HDR_LOWPAN6_BLE_H
-#define LWIP_HDR_LOWPAN6_BLE_H
+
+#pragma once
 
 #include "lowpan6_opts.h"
-
-#if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
-
 #include "lowpan6_common.h"
 #include "packet_buffer.h"
 #include "ip.h"
 #include "ip_addr.h"
 #include "netif.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 LwipError rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
 LwipError rfc7668_input(struct PacketBuffer * p, NetIfc*netif);
@@ -61,18 +53,7 @@ LwipError rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, si
 LwipError rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
 LwipError rfc7668_set_context(uint8_t index, const Ip6Addr * context);
 LwipError rfc7668_if_init(NetIfc*netif);
-
-#if !NO_SYS
 LwipError tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp);
-#endif
 
 void ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr);
 void eui64_to_ble_addr(uint8_t *dst, const uint8_t *src);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_IPV6 */
-
-#endif /* LWIP_HDR_LOWPAN6_BLE_H */

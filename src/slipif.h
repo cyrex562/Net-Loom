@@ -37,51 +37,16 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_NETIF_SLIPIF_H
-#define LWIP_HDR_NETIF_SLIPIF_H
-
+#pragma once
 #include "opt.h"
 #include "netif.h"
 
-/** Set this to 1 to start a thread that blocks reading on the serial line
- * (using sio_read()).
- */
-#ifndef SLIP_USE_RX_THREAD
-#define SLIP_USE_RX_THREAD !NO_SYS
-#endif
-
-/** Set this to 1 to enable functions to pass in RX bytes from ISR context.
- * If enabled, slipif_received_byte[s]() process incoming bytes and put assembled
- * packets on a queue, which is fed into lwIP from slipif_poll().
- * If disabled, slipif_poll() polls the serial line (using sio_tryread()).
- */
-#ifndef SLIP_RX_FROM_ISR
-#define SLIP_RX_FROM_ISR 0
-#endif
-
-/** Set this to 1 (default for SLIP_RX_FROM_ISR) to queue incoming packets
- * received by slipif_received_byte[s]() as long as PBUF_POOL pbufs are available.
- * If disabled, packets will be dropped if more than one packet is received.
- */
-#ifndef SLIP_RX_QUEUE
-#define SLIP_RX_QUEUE SLIP_RX_FROM_ISR
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 LwipError slipif_init(NetIfc* netif);
 void slipif_poll(NetIfc*netif);
-#if SLIP_RX_FROM_ISR
+
 void slipif_process_rxqueue(NetIfc*netif);
 void slipif_received_byte(NetIfc*netif, uint8_t data);
 void slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len);
-#endif /* SLIP_RX_FROM_ISR */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LWIP_HDR_NETIF_SLIPIF_H */
 

@@ -39,16 +39,13 @@
  */
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_MD5
-
-#include "ppp/polarssl/md5.h"
-
+#include "polarssl/md5.h"
 #include <string.h>
 
 /*
  * 32-bit integer manipulation macros (little endian)
  */
-#ifndef GET_ULONG_LE
+
 #define GET_ULONG_LE(n,b,i)                             \
 {                                                       \
     (n) = ( (unsigned long) (b)[(i)    ]       )        \
@@ -56,9 +53,7 @@
         | ( (unsigned long) (b)[(i) + 2] << 16 )        \
         | ( (unsigned long) (b)[(i) + 3] << 24 );       \
 }
-#endif
 
-#ifndef PUT_ULONG_LE
 #define PUT_ULONG_LE(n,b,i)                             \
 {                                                       \
     (b)[(i)    ] = (unsigned char) ( (n)       );       \
@@ -66,7 +61,7 @@
     (b)[(i) + 2] = (unsigned char) ( (n) >> 16 );       \
     (b)[(i) + 3] = (unsigned char) ( (n) >> 24 );       \
 }
-#endif
+
 
 /*
  * MD5 context setup
@@ -297,4 +292,3 @@ void md5( unsigned char *input, int ilen, unsigned char output[16] )
     md5_finish( &ctx, output );
 }
 
-#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_MD5 */

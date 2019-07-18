@@ -48,7 +48,7 @@
  * 6LowPAN netif implementation
  */
 
-//#if LWIP_IPV6
+
 #include "lowpan6.h"
 #include "ip.h"
 #include "packet_buffer.h"
@@ -64,11 +64,9 @@
 #include "lwip_debug.h"
 #include <cstring>
 
-#if LWIP_6LOWPAN_802154_HW_CRC
-#define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) 0
-#else
-#define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
-#endif
+LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
+
+
 
 /** This is a helper struct for reassembly of fragments
  * (IEEE 802.15.4 limits to 127 bytes)
@@ -87,10 +85,12 @@ struct lowpan6_reass_helper {
 struct lowpan6_ieee802154_data {
   /** fragment reassembly list */
   struct lowpan6_reass_helper *reass_list;
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
+
   /** address context for compression */
   Ip6Addr lowpan6_context[LWIP_6LOWPAN_NUM_CONTEXTS];
-#endif
+
+
   /** Datagram Tag for fragmentation */
   uint16_t tx_datagram_tag;
   /** local PAN ID for IEEE 802.15.4 header */
@@ -105,17 +105,18 @@ struct lowpan6_ieee802154_data {
 /** Currently, this state is global, since there's only one 6LoWPAN netif */
 static struct lowpan6_ieee802154_data lowpan6_data;
 
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
 #define LWIP_6LOWPAN_CONTEXTS(netif) lowpan6_data.lowpan6_context
-#else
-#define LWIP_6LOWPAN_CONTEXTS(netif) NULL
-#endif
+
+
+
+
 
 static const struct Lowpan6LinkAddr ieee_802154_broadcast = {2, {0xff, 0xff}};
 
-#if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
+
 static struct Lowpan6LinkAddr short_mac_addr = {2, {0, 0}};
-#endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
+
 
 /* IEEE 802.15.4 specific functions: */
 
@@ -379,11 +380,8 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
   }
   pbuf_remove_header(p, hidden_header_len);
 
-#else /* LWIP_6LOWPAN_IPHC */
-  /* Send uncompressed IPv6 header with appropriate dispatch byte. */
-  lowpan6_header_len = 1;
-  buffer[ieee_header_len] = 0x41; /* IPv6 dispatch */
-#endif /* LWIP_6LOWPAN_IPHC */
+
+
 
   /* Calculate remaining packet length */
   remaining_len = p->tot_len;
@@ -428,7 +426,8 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
     /* send the packet */
-    MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
+  
+
     Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
 
@@ -459,7 +458,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
       pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
       /* send the packet */
-      MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
+   
       Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
       err = netif->linkoutput(netif, p_frag);
     }
@@ -480,7 +479,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
     /* send the packet */
-    MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
+
     Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
   }
@@ -497,7 +496,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
 LwipError
 lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 {
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
+
   if (idx >= LWIP_6LOWPAN_NUM_CONTEXTS) {
     return ERR_ARG;
   }
@@ -507,14 +506,9 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
   ip6_addr_set(&lowpan6_data.lowpan6_context[idx], context);
 
   return ERR_OK;
-#else
-  ;
-  ;
-  return ERR_ARG;
-#endif
+
 }
 
-#if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
 /**
  * @ingroup sixlowpan
  * Set short address
@@ -527,7 +521,6 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 
   return ERR_OK;
 }
-#endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
 /* Create IEEE 802.15.4 address from netif address */
 static LwipError
@@ -573,12 +566,10 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
   LwipError result;
   const uint8_t *hwaddr;
   struct Lowpan6LinkAddr src, dest;
-#if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
+
   Ip6Addr ip6_src;
   struct Ip6Hdr *ip6_hdr;
-#endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
-#if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   /* Check if we can compress source address (use aligned copy) */
   ip6_hdr = (struct Ip6Hdr *)q->payload;
   ip6_addr_copy_from_packed(ip6_src, ip6_hdr->src);
@@ -588,18 +579,17 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
     src.addr[0] = short_mac_addr.addr[0];
     src.addr[1] = short_mac_addr.addr[1];
   } else
-#endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
+
   {
     result = lowpan6_hwaddr_to_addr(netif, &src);
     if (result != ERR_OK) {
-      MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
       return result;
     }
   }
 
   /* multicast destination IP address? */
   if (ip6_addr_ismulticast(ip6addr)) {
-    MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
+
     /* We need to send to the broadcast address.*/
     return lowpan6_frag(netif, q, &src, &ieee_802154_broadcast);
   }
@@ -607,7 +597,6 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
   /* We have a unicast destination IP address */
   /* @todo anycast? */
 
-#if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   if (src.addr_len == 2) {
     /* If source address was compressable to short_mac_addr, and dest has same subnet and
      * is also compressable to 2-bytes, assume we can infer dest as a short address too. */
@@ -616,16 +605,14 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
     dest.addr[1] = ((uint8_t *)q->payload)[39];
     if ((src.addr_len == 2) && (ip6_addr_netcmp_zoneless(&ip6_hdr->src, &ip6_hdr->dest)) &&
         (lowpan6_get_address_mode(ip6addr, &dest) == 3)) {
-      MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
       return lowpan6_frag(netif, q, &src, &dest);
     }
   }
-#endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
+
 
   /* Ask ND6 what to do with the packet. */
   result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
   if (result != ERR_OK) {
-    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return result;
   }
 
@@ -640,7 +627,6 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
    * is not correct for IEEE 802.15.4, but currently we don't get this information
    * from the neighbor cache */
   SMEMCPY(dest.addr, hwaddr, netif->hwaddr_len);
-  MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
   return lowpan6_frag(netif, q, &src, &dest);
 }
 /**
@@ -660,8 +646,6 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
   if (p == nullptr) {
     return ERR_OK;
   }
-
-  MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
 
   if (p->len != p->tot_len) {
     /* for now, this needs a PacketBuffer in one piece */
@@ -840,7 +824,6 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
         mem_free(lrh);
 
         /* @todo: distinguish unicast/multicast */
-        MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
         return ip6_input(q, netif);
       }
     }
@@ -854,7 +837,6 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
       /* IPv6 headers are compressed using IPHC. */
       p = lowpan6_decompress(p, datagram_size, LWIP_6LOWPAN_CONTEXTS(netif), &src, &dest);
       if (p == nullptr) {
-        MIB2_STATS_NETIF_INC(netif, ifindiscards);
         return ERR_OK;
       }
     } else {
@@ -862,12 +844,10 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
     }
 
     /* @todo: distinguish unicast/multicast */
-    MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
 
     return ip6_input(p, netif);
   }
 lowpan6_input_discard:
-  MIB2_STATS_NETIF_INC(netif, ifindiscards);
   pbuf_free(p);
   /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
   return ERR_OK;
@@ -882,8 +862,6 @@ lowpan6_if_init(NetIfc*netif)
   netif->name[0] = 'L';
   netif->name[1] = '6';
   netif->output_ip6 = lowpan6_output;
-
-  MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);
 
   /* maximum transfer unit */
   netif->mtu = 1280;
@@ -906,7 +884,6 @@ lowpan6_set_pan_id(uint16_t pan_id)
   return ERR_OK;
 }
 
-#if !NO_SYS
 /**
  * @ingroup sixlowpan
  * Pass a received packet to tcpip_thread for input processing
@@ -920,6 +897,4 @@ tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);
 }
-#endif /* !NO_SYS */
 
-//#endif /* LWIP_IPV6 */

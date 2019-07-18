@@ -73,14 +73,12 @@
 *****************************************************************************/
 
 #include "ppp_opts.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
-
-#include "ppp/ppp_impl.h"
-#include "ppp/magic.h"
-
-#if PPP_MD5_RANDM /* Using MD5 for better randomness if enabled */
-
-#include "ppp/pppcrypt.h"
+#include <cstdint>
+#include "sys.h"
+#include "pppcrypt.h"
+#include "ppp_impl.h"
+#include "magic.h"
+#include "pppcrypt.h"
 
 #define MD5_HASH_SIZE 16
 static char magic_randpool[MD5_HASH_SIZE];   /* Pool of randomness. */
@@ -110,15 +108,15 @@ static void magic_churnrand(char *rand_data, uint32_t rand_len) {
     struct {
       /* INCLUDE fields for any system sources of randomness */
       uint32_t jiffies;
-#ifdef LWIP_RAND
+
       uint32_t rand;
-#endif /* LWIP_RAND */
+
     } sys_data;
     magic_randomseed += sys_jiffies();
     sys_data.jiffies = magic_randomseed;
-#ifdef LWIP_RAND
+
     sys_data.rand = LWIP_RAND();
-#endif /* LWIP_RAND */
+
     /* Load sys_data fields here. */
     lwip_md5_update(&md5_ctx, (uint8_t *)&sys_data, sizeof(sys_data));
   }
@@ -195,94 +193,7 @@ uint32_t magic(void) {
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-#ifndef LWIP_RAND
-static int  magic_randomized;       /* Set when truely randomized. */
-#endif /* LWIP_RAND */
-static uint32_t magic_randomseed;      /* Seed used for random number generation. */
 
-
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
-
-/*
- * Initialize the random number generator.
- *
- * Here we attempt to compute a random number seed but even if
- * it isn't random, we'll randomize it later.
- *
- * The current method uses the fields from the real time clock,
- * the idle process counter, the millisecond counter, and the
- * hardware timer tick counter.  When this is invoked
- * in startup(), then the idle counter and timer values may
- * repeat after each boot and the real time clock may not be
- * operational.  Thus we call it again on the first random
- * event.
- */
-void magic_init(void) {
-  magic_randomseed += sys_jiffies();
-#ifndef LWIP_RAND
-  /* Initialize the Borland random number generator. */
-  srand((unsigned)magic_randomseed);
-#endif /* LWIP_RAND */
-}
-
-/*
- * magic_init - Initialize the magic number generator.
- *
- * Randomize our random seed value.  Here we use the fact that
- * this function is called at *truely random* times by the polling
- * and network functions.  Here we only get 16 bits of new random
- * value but we use the previous value to randomize the other 16
- * bits.
- */
-void magic_randomize(void) {
-#ifndef LWIP_RAND
-  if (!magic_randomized) {
-    magic_randomized = !0;
-    magic_init();
-    /* The initialization function also updates the seed. */
-  } else {
-#endif /* LWIP_RAND */
-    magic_randomseed += sys_jiffies();
-#ifndef LWIP_RAND
-  }
-#endif /* LWIP_RAND */
-}
-
-/*
- * Return a new random number.
- *
- * Here we use the Borland rand() function to supply a pseudo random
- * number which we make truely random by combining it with our own
- * seed which is randomized by truely random events.
- * Thus the numbers will be truely random unless there have been no
- * operator or network events in which case it will be pseudo random
- * seeded by the real time clock.
- */
-uint32_t magic(void) {
-#ifdef LWIP_RAND
-  return LWIP_RAND() + magic_randomseed;
-#else /* LWIP_RAND */
-  return ((uint32_t)rand() << 16) + (uint32_t)rand() + magic_randomseed;
-#endif /* LWIP_RAND */
-}
-
-/*
- * magic_random_bytes - Fill a buffer with random bytes.
- */
-void magic_random_bytes(unsigned char *buf, uint32_t buf_len) {
-  uint32_t new_rand, n;
-
-  while (buf_len > 0) {
-    new_rand = magic();
-    n = LWIP_MIN(buf_len, sizeof(new_rand));
-    MEMCPY(buf, &new_rand, n);
-    buf += n;
-    buf_len -= n;
-  }
-}
-#endif /* PPP_MD5_RANDM */
 
 /*
  * Return a new random number between 0 and (2^pow)-1 included.
@@ -291,4 +202,4 @@ uint32_t magic_pow(uint8_t pow) {
   return magic() & ~(~0UL<<pow);
 }
 
-#endif /* PPP_SUPPORT */
+

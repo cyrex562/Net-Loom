@@ -413,7 +413,7 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
     //  lwip_standard_checksum()=%"X32_F"\n", acc));
     return (uint16_t)~(acc & 0xffffUL);
 }
-#if LWIP_IPV4
+
 /* inet_chksum_pseudo_partial:
  *
  * Calculates the IPv4 pseudo Internet checksum used by TCP and UDP for a
@@ -447,8 +447,7 @@ uint16_t inet_chksum_pseudo_partial(struct PacketBuffer* p,
     acc = FOLD_U32T(acc);
     return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
 }
-#endif /* LWIP_IPV4 */
-#if LWIP_IPV6
+
 /**
  * Calculates the checksum with IPv6 pseudo header used by TCP and UDP for a
  * PacketBuffer chain. IPv6 addresses are expected to be in network byte order.
@@ -485,7 +484,7 @@ uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
 
   return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
 }
-#endif /* LWIP_IPV6 */
+
 /* ip_chksum_pseudo_partial:
  *
  * Calculates the IPv4 or IPv6 pseudo Internet checksum used by TCP and UDP for
@@ -507,16 +506,15 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                   const IpAddr* src,
                                   const IpAddr* dest)
 {
-#if LWIP_IPV6
+
   if (IpIsV6(dest)) {
     return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len,
                                      ip_2_ip6(src), ip_2_ip6(dest));
   }
-#endif /* LWIP_IPV6 */
-#if LWIP_IPV4 && LWIP_IPV6
+
+
   else
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-#if LWIP_IPV4
+
     {
         return inet_chksum_pseudo_partial(p,
                                           proto,
@@ -525,7 +523,7 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                           convert_ip_addr_to_ip4_addr(src),
                                           convert_ip_addr_to_ip4_addr(dest));
     }
-#endif /* LWIP_IPV4 */
+
 } /* inet_chksum:
  *
  * Calculates the Internet checksum over a portion of memory. Used primarily for
@@ -573,7 +571,7 @@ uint16_t inet_chksum_pbuf(struct PacketBuffer* p)
  * in assembly targeted at your hardware by defining it in lwipopts.h:
  *   #define lwip_standard_checksum_COPY(dst, src, len) your_chksum_copy(dst, src, len)
  */
-#if (lwip_standard_checksum_COPY_ALGORITHM == 1) /* Version #1 */
+
 /** Safe but slow: first call MEMCPY, then call lwip_standard_checksum.
  * For architectures with big caches, data might still be in cache when
  * generating the checksum after copying.
@@ -583,4 +581,4 @@ uint16_t lwip_standard_checksum_copy(void* dst, const void* src, uint16_t len)
     MEMCPY(dst, src, len);
     return lwip_standard_checksum(dst, len);
 }
-#endif /* (lwip_standard_checksum_COPY_ALGORITHM == 1) */
+
