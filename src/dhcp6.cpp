@@ -115,7 +115,7 @@ static uint8_t dhcp6_pcb_refcount;
 static void dhcp6_recv(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 
 /** Ensure DHCP PCB is allocated and bound */
-static LwipError
+static LwipStatus
 dhcp6_inc_pcb_refcount(void)
 {
   if (dhcp6_pcb_refcount == 0) {
@@ -131,7 +131,8 @@ dhcp6_inc_pcb_refcount(void)
     ip_set_option(dhcp6_pcb, SOF_BROADCAST);
 
     /* set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs */
-    udp_bind(dhcp6_pcb, kIpAddrIp6Any, DHCP6_CLIENT_PORT);
+      IpAddr addr_any = kIpAddrIp6Any();
+    udp_bind(dhcp6_pcb, &addr_any, DHCP6_CLIENT_PORT);
     udp_recv(dhcp6_pcb, dhcp6_recv, nullptr);
   }
 
@@ -277,7 +278,7 @@ dhcp6_stateful_enabled(struct dhcp6 *dhcp6)
  *
  * @todo: stateful DHCPv6 not supported, yet
  */
-LwipError dhcp6_enable_stateful(NetIfc* netif)
+LwipStatus dhcp6_enable_stateful(NetIfc* netif)
 {
     Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("stateful dhcp6 not implemented yet"));
     return ERR_VAL;
@@ -292,7 +293,7 @@ LwipError dhcp6_enable_stateful(NetIfc* netif)
  * A struct dhcp6 will be allocated for this netif if not
  * set via @ref dhcp6_set_struct before.
  */
-LwipError dhcp6_enable_stateless(NetIfc* netif)
+LwipStatus dhcp6_enable_stateless(NetIfc* netif)
 {
     // Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_enable_stateless(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
     struct Dhcp6* dhcp6 = dhcp6_get_struct(netif, "dhcp6_enable_stateless()");
@@ -371,7 +372,7 @@ static struct PacketBuffer* dhcp6_create_msg(NetIfc* netif,
         return nullptr;
     }
     struct PacketBuffer* p_out = pbuf_alloc(PBUF_TRANSPORT,
-                                    sizeof(struct dhcp6_msg) + opt_len_alloc,
+                                    sizeof(struct Dhcp6Msg) + opt_len_alloc,
                                     PBUF_RAM);
     if (p_out == nullptr)
     {
@@ -380,7 +381,7 @@ static struct PacketBuffer* dhcp6_create_msg(NetIfc* netif,
         return nullptr;
     }
     lwip_assert("dhcp6_create_msg: check that first pbuf can hold struct dhcp6_msg",
-                (p_out->len >= sizeof(struct dhcp6_msg) + opt_len_alloc));
+                (p_out->len >= sizeof(struct Dhcp6Msg) + opt_len_alloc));
     /* @todo: limit new xid for certain message types? */
     /* reuse transaction identifier in retransmissions */
     if (dhcp6->tries == 0)
@@ -389,8 +390,8 @@ static struct PacketBuffer* dhcp6_create_msg(NetIfc* netif,
     }
     // Logf(DHCP6_DEBUG | LWIP_DBG_TRACE,
     //      ("transaction id xid(%"X32_F")\n", dhcp6->xid));
-    struct dhcp6_msg* msg_out = (struct dhcp6_msg *)p_out->payload;
-    memset(msg_out, 0, sizeof(struct dhcp6_msg) + opt_len_alloc);
+    struct Dhcp6Msg* msg_out = (struct Dhcp6Msg *)p_out->payload;
+    memset(msg_out, 0, sizeof(struct Dhcp6Msg) + opt_len_alloc);
     msg_out->msgtype = message_type;
     msg_out->transaction_id[0] = (uint8_t)(dhcp6->xid >> 16);
     msg_out->transaction_id[1] = (uint8_t)(dhcp6->xid >> 8);
@@ -418,7 +419,7 @@ static uint16_t dhcp6_option_optionrequest(uint16_t options_out_len,
     uint16_t ret;
     lwip_assert(
         "dhcp6_option_optionrequest: options_out_len + sizeof(struct dhcp6_msg) + addlen <= max_len",
-        sizeof(struct dhcp6_msg) + options_out_len + 4U + (2U * num_req_options) <=
+        sizeof(struct Dhcp6Msg) + options_out_len + 4U + (2U * num_req_options) <=
         max_len);
     ret = dhcp6_option_short(options_out_len, options, DHCP6_OPTION_ORO);
     ret = dhcp6_option_short(ret, options, 2 * num_req_options);
@@ -434,7 +435,7 @@ static void
 dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out)
 {
   /* shrink the PacketBuffer to the actual content length */
-  pbuf_realloc(p_out, (uint16_t)(sizeof(struct dhcp6_msg) + options_out_len));
+  pbuf_realloc(p_out, (uint16_t)(sizeof(struct Dhcp6Msg) + options_out_len));
 }
 
 
@@ -449,9 +450,9 @@ dhcp6_information_request(NetIfc*netif, struct dhcp6 *dhcp6)
   Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("dhcp6_information_request()\n"));
   /* create and initialize the DHCP message header */
   p_out = dhcp6_create_msg(netif, dhcp6, DHCP6_INFOREQUEST, 4 + sizeof(requested_options), &options_out_len);
-  if (p_out != NULL) {
-    LwipError err;
-    struct dhcp6_msg *msg_out = (struct dhcp6_msg *)p_out->payload;
+  if (p_out != nullptr) {
+    LwipStatus err;
+    struct Dhcp6Msg *msg_out = (struct Dhcp6Msg *)p_out->payload;
     uint8_t *options = (uint8_t *)(msg_out + 1);
     Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("dhcp6_information_request: making request\n"));
 
@@ -477,7 +478,7 @@ dhcp6_information_request(NetIfc*netif, struct dhcp6 *dhcp6)
   Logf(DHCP6_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_information_request(): set request timeout %"U16_F" msecs\n", msecs));
 }
 
-static LwipError
+static LwipStatus
 dhcp6_request_config(NetIfc*netif, struct dhcp6 *dhcp6)
 {
   /* stateless mode enabled and no request running? */
@@ -572,7 +573,7 @@ void dhcp6_nd6_ra_trigger(NetIfc* netif,
     lwip_assert("netif != NULL", netif != nullptr);
     dhcp6 = netif_dhcp6_data(netif);
 
-  if (dhcp6 != NULL) {
+  if (dhcp6 != nullptr) {
     if (dhcp6_stateless_enabled(dhcp6)) {
       if (other_config) {
         dhcp6_request_config(netif, dhcp6);
@@ -590,12 +591,12 @@ void dhcp6_nd6_ra_trigger(NetIfc* netif,
  * Extract the DHCPv6 options (offset + length) so that we can later easily
  * check for them or extract the contents.
  */
-static LwipError dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6* dhcp6)
+static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6* dhcp6)
 {
     /* clear received options */
     dhcp6_clear_all_options(dhcp6);
-    struct dhcp6_msg* msg_in = (struct dhcp6_msg *)p->payload; /* parse options */
-    uint16_t options_idx = sizeof(struct dhcp6_msg);
+    struct Dhcp6Msg* msg_in = (struct Dhcp6Msg *)p->payload; /* parse options */
+    uint16_t options_idx = sizeof(struct Dhcp6Msg);
     /* parse options to the end of the received packet */
     uint16_t offset_max = p->tot_len;
     uint16_t offset = options_idx; /* at least 4 byte to read? */
@@ -671,7 +672,7 @@ static void dhcp6_recv(void* arg,
 {
     NetIfc* netif = ip_current_input_netif();
     struct Dhcp6* dhcp6 = netif_dhcp6_data(netif);
-    struct dhcp6_msg* reply_msg = (struct dhcp6_msg *)p->payload;
+    struct Dhcp6Msg* reply_msg = (struct Dhcp6Msg *)p->payload;
     uint8_t msg_type;
     uint32_t xid;
     /* Caught DHCPv6 message from netif that does not have DHCPv6 enabled? -> not interested */
@@ -694,7 +695,7 @@ static void dhcp6_recv(void* arg,
     // ;
     // ;
     // ;
-    if (p->len < sizeof(struct dhcp6_msg))
+    if (p->len < sizeof(struct Dhcp6Msg))
     {
         Logf(DHCP6_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
              ("DHCPv6 reply message or PacketBuffer too short\n"));

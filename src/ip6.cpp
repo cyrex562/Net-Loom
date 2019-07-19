@@ -86,10 +86,10 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
   LWIP_ASSERT_CORE_LOCKED();
 
   /* If single netif configuration, fast return. */
-  if ((netif_list != NULL) && (netif_list->next == NULL)) {
+  if ((netif_list != nullptr) && (netif_list->next == nullptr)) {
     if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list) ||
         (ip6_addr_has_zone(dest) && !LwipIp6Addrest_zone(dest, netif_list))) {
-      return NULL;
+      return nullptr;
     }
     return netif_list;
   }
@@ -113,7 +113,7 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
     /* No matching netif found. Do no try to route to a different netif,
      * as that would be a zone violation, resulting in any packets sent to
      * that netif being dropped on output. */
-    return NULL;
+    return nullptr;
   }
 
 
@@ -162,14 +162,14 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
     }
     /* Again, do not use any other netif in this case, as that could result in
      * zone boundary violations. */
-    return NULL;
+    return nullptr;
   }
 
   /* We come here only if neither source nor destination is scoped. */
   IP6_ADDR_ZONECHECK(src);
 
   netif = LWIP_HOOK_IP6_ROUTE(src, dest);
-  if (netif != NULL) {
+  if (netif != nullptr) {
     return netif;
   }
 
@@ -196,7 +196,7 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
 
   /* Get the netif for a suitable router-announced route. */
   netif = nd6_find_route(dest);
-  if (netif != NULL) {
+  if (netif != nullptr) {
     return netif;
   }
 
@@ -220,7 +220,7 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
   /* loopif is disabled, loopback traffic is passed through any netif */
   if (ip6_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
-    if (netif_default != NULL && netif_is_up(netif_default)) {
+    if (netif_default != nullptr && netif_is_up(netif_default)) {
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
@@ -229,13 +229,13 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
         return netif;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
 
   /* no matching netif found, use default netif, if up */
-  if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
-    return NULL;
+  if ((netif_default == nullptr) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+    return nullptr;
   }
   return netif_default;
 }
@@ -293,7 +293,7 @@ ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
     dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
   }
 
-  best_addr = NULL;
+  best_addr = nullptr;
 
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     /* Consider only valid (= preferred and deprecated) addresses. */
@@ -322,7 +322,7 @@ ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
     if (cand_bits && ip6_addr_nethostcmp(cand_addr, dest)) {
       return netif_ip_addr6(netif, i); /* Rule 1 */
     }
-    if ((best_addr == NULL) || /* no alternative yet */
+    if ((best_addr == nullptr) || /* no alternative yet */
         ((cand_scope < best_scope) && (cand_scope >= dest_scope)) ||
         ((cand_scope > best_scope) && (best_scope < dest_scope)) || /* Rule 2 */
         ((cand_scope == best_scope) && ((cand_pref > best_pref) || /* Rule 3 */
@@ -364,7 +364,7 @@ ip6_forward(struct PacketBuffer *p, struct ip6_hdr *iphdr, NetIfc*inp)
 
   /* Find network interface where to forward this IP packet to. */
   netif = ip6_route(IP6_ADDR_ANY6, ip6_current_dest_addr());
-  if (netif == NULL) {
+  if (netif == nullptr) {
     Logf(IP6_DEBUG, ("ip6_forward: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(ip6_current_dest_addr()),
         IP6_ADDR_BLOCK2(ip6_current_dest_addr()),
@@ -491,7 +491,7 @@ ip6_input_accept(NetIfc*netif)
  * @return ERR_OK if the packet was processed (could return ERR_* if it wasn't
  *         processed, but currently always returns ERR_OK)
  */
-LwipError
+LwipStatus
 ip6_input(struct PacketBuffer *p, NetIfc*inp)
 {
   struct ip6_hdr *ip6hdr;
@@ -587,7 +587,7 @@ ip6_input(struct PacketBuffer *p, NetIfc*inp)
     }
 
     else {
-      netif = NULL;
+      netif = nullptr;
     }
   } else {
     /* start trying with inp. if that's not acceptable, start walking the
@@ -595,7 +595,7 @@ ip6_input(struct PacketBuffer *p, NetIfc*inp)
     if (ip6_input_accept(inp)) {
       netif = inp;
     } else {
-      netif = NULL;
+      netif = nullptr;
 
 
       /* The loopback address is to be considered link-local. Packets to it
@@ -638,7 +638,7 @@ netif_found:
   }
 
   /* packet not for us? */
-  if (netif == NULL) {
+  if (netif == nullptr) {
     /* packet not for us, route or discard */
     Logf(IP6_DEBUG | LWIP_DBG_TRACE, ("ip6_input: packet not for us.\n"));
 
@@ -961,7 +961,7 @@ netif_found:
         ip_data.current_ip_header_tot_len = hlen_tot;
         p = ip6_reass(p);
         /* packet not fully reassembled yet? */
-        if (p == NULL) {
+        if (p == nullptr) {
           goto ip6_input_cleanup;
         }
 
@@ -1094,16 +1094,16 @@ ip6_input_cleanup:
  *         ERR_BUF if p doesn't have enough space for IPv6/LINK headers
  *         returns errors returned by netif->output_ip6
  */
-LwipError
+LwipStatus
 ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
              uint8_t nexth, NetIfc*netif)
 {
   const Ip6Addr *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
-    if (src != NULL && ip6_addr_isany(src)) {
+    if (src != nullptr && ip6_addr_isany(src)) {
       src_used = ip_2_ip6(ip6_select_source_address(netif, dest));
-      if ((src_used == NULL) || ip6_addr_isany(src_used)) {
+      if ((src_used == nullptr) || ip6_addr_isany(src_used)) {
         /* No appropriate source address was found for this packet. */
         Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: No suitable source address for packet.\n"));
         IP6_STATS_INC(ip6.rterr);
@@ -1118,7 +1118,7 @@ ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
  * Same as ip6_output_if() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
-LwipError
+LwipStatus
 ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
              uint8_t hl, uint8_t tc,
              uint8_t nexth, NetIfc*netif)
@@ -1165,7 +1165,7 @@ ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
     IP6H_VTCFL_SET(ip6hdr, 6, tc, 0);
     IP6H_PLEN_SET(ip6hdr, (uint16_t)(p->tot_len - IP6_HLEN));
 
-    if (src == NULL) {
+    if (src == nullptr) {
       src = IP6_ADDR_ANY6;
     }
     /* src cannot be NULL here */
@@ -1232,7 +1232,7 @@ ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
  * @return ERR_RTE if no route is found
  *         see ip_output_if() for more return values
  */
-LwipError
+LwipStatus
 ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
           uint8_t hl, uint8_t tc, uint8_t nexth)
 {
@@ -1252,7 +1252,7 @@ ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
     netif = ip6_route(&src_addr, &dest_addr);
   }
 
-  if (netif == NULL) {
+  if (netif == nullptr) {
     Logf(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),
@@ -1288,14 +1288,14 @@ ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
  * @return ERR_RTE if no route is found
  *         see ip_output_if() for more return values
  */
-LwipError
+LwipStatus
 ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
           uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*_hint *netif_hint)
 {
   NetIfc*netif;
   struct ip6_hdr *ip6hdr;
   Ip6Addr src_addr, dest_addr;
-  LwipError err;
+  LwipStatus err;
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
@@ -1309,7 +1309,7 @@ ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
     netif = ip6_route(&src_addr, &dest_addr);
   }
 
-  if (netif == NULL) {
+  if (netif == nullptr) {
     Logf(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),
@@ -1340,7 +1340,7 @@ ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
  * @param value the value of the router alert option data (e.g. IP6_ROUTER_ALERT_VALUE_MLD)
  * @return ERR_OK if hop-by-hop header was added, ERR_* otherwise
  */
-LwipError
+LwipStatus
 ip6_options_add_hbh_ra(struct PacketBuffer *p, uint8_t nexth, uint8_t value)
 {
   uint8_t *opt_data;

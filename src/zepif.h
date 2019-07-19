@@ -34,7 +34,7 @@ struct ZepifInit {
   uint8_t                addr[6];
 };
 
-LwipError zepif_init(NetIfc*netif);
+LwipStatus zepif_init(NetIfc*netif);
 
 #ifdef __cplusplus
 }

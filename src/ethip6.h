@@ -53,7 +53,7 @@ extern "C" {
 #endif
 
 
-LwipError ethip6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
+LwipStatus ethip6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
 
 #ifdef __cplusplus
 }

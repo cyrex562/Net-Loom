@@ -151,7 +151,7 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
             if (ip_get_option(pcb, SOF_BROADCAST))
             {
                 if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip)) || ((ip4_current_dest_addr()
-                    ->addr == kIpaddrBroadcast)) || ip4_addr_netcmp(
+                    ->addr == kIpaddr4Broadcast)) || ip4_addr_netcmp(
                     convert_ip_addr_to_ip4_addr(&pcb->local_ip),
                     ip4_current_dest_addr(),
                     netif_ip4_netmask(inp)))
@@ -259,7 +259,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
           /* the first unconnected matching PCB */
           uncon_pcb = pcb;
 
-        } else if (broadcast && ip4_current_dest_addr()->addr == kIpaddrBroadcast) {
+        } else if (broadcast && ip4_current_dest_addr()->addr == kIpaddr4Broadcast) {
           /* global broadcast address (only valid for IPv4; match was checked before) */
           if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
             /* uncon_pcb does not match the input netif, check this pcb */
@@ -371,16 +371,16 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
         /* pass broadcast- or multicast packets to all multicast pcbs
            if SOF_REUSEADDR is set on the first match */
         UdpPcb *mpcb;
-        for (mpcb = udp_pcbs; mpcb != NULL; mpcb = mpcb->next) {
+        for (mpcb = udp_pcbs; mpcb != nullptr; mpcb = mpcb->next) {
           if (mpcb != pcb) {
             /* compare PCB local addr+port to UDP destination addr+port */
             if ((mpcb->local_port == dest) &&
                 (udp_input_local_match(mpcb, inp, broadcast) != 0)) {
               /* pass a copy of the packet to all local matches */
-              if (mpcb->recv != NULL) {
+              if (mpcb->recv != nullptr) {
                 struct PacketBuffer *q;
                 q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
-                if (q != NULL) {
+                if (q != nullptr) {
                   mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
                 }
               }
@@ -454,7 +454,7 @@ chkerr:
  *
  * @see udp_disconnect() udp_sendto()
  */
-LwipError
+LwipStatus
 udp_send(struct UdpPcb *pcb, struct PacketBuffer *p)
 {
   LWIP_ERROR("udp_send: invalid pcb", pcb != nullptr, return ERR_ARG);
@@ -471,12 +471,12 @@ udp_send(struct UdpPcb *pcb, struct PacketBuffer *p)
 /** @ingroup udp_raw
  * Same as udp_send() but with checksum
  */
-LwipError
+LwipStatus
 udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                 uint8_t have_chksum, uint16_t chksum)
 {
-  LWIP_ERROR("udp_send_chksum: invalid pcb", pcb != NULL, return ERR_ARG);
-  LWIP_ERROR("udp_send_chksum: invalid PacketBuffer", p != NULL, return ERR_ARG);
+  LWIP_ERROR("udp_send_chksum: invalid pcb", pcb != nullptr, return ERR_ARG);
+  LWIP_ERROR("udp_send_chksum: invalid PacketBuffer", p != nullptr, return ERR_ARG);
 
   if (IP_IS_ANY_TYPE_VAL(pcb->remote_ip)) {
     return ERR_VAL;
@@ -505,7 +505,7 @@ udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
  *
  * @see udp_disconnect() udp_send()
  */
-LwipError
+LwipStatus
 udp_sendto(struct UdpPcb *pcb, struct PacketBuffer *p,
            const IpAddr *dst_ip, uint16_t dst_port)
 {
@@ -515,7 +515,7 @@ udp_sendto(struct UdpPcb *pcb, struct PacketBuffer *p,
 
 /** @ingroup udp_raw
  * Same as udp_sendto(), but with checksum */
-LwipError
+LwipStatus
 udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                   uint16_t dst_port, uint8_t have_chksum, uint16_t chksum)
 {
@@ -536,7 +536,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
     netif = netif_get_by_index(pcb->netif_idx);
   } else {
 
-    netif = NULL;
+    netif = nullptr;
     if (ip_addr_ismulticast(dst_ip)) {
       /* For IPv6, the interface to use for packets with a multicast destination
        * is specified using an interface index. The same approach may be used for
@@ -566,7 +566,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
 
     }
 
-    if (netif == NULL)
+    if (netif == nullptr)
 
     {
       /* find the outgoing network interface for this packet */
@@ -607,7 +607,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
  *
  * @see udp_disconnect() udp_send()
  */
-LwipError
+LwipStatus
 udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
               const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif)
 {
@@ -616,7 +616,7 @@ udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
 }
 
 /** Same as udp_sendto_if(), but with checksum */
-LwipError
+LwipStatus
 udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                      uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
                      uint16_t chksum)
@@ -639,7 +639,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip)) ||
         ip6_addr_ismulticast(ip_2_ip6(&pcb->local_ip))) {
       src_ip = ip6_select_source_address(netif, ip_2_ip6(dst_ip));
-      if (src_ip == NULL) {
+      if (src_ip == nullptr) {
         /* No suitable source address was found. */
         return ERR_RTE;
       }
@@ -679,7 +679,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
 
 /** @ingroup udp_raw
  * Same as @ref udp_sendto_if, but with source address */
-LwipError
+LwipStatus
 udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
                   const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif, const IpAddr *src_ip)
 {
@@ -688,14 +688,14 @@ udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
 }
 
 /** Same as udp_sendto_if_src(), but with checksum */
-LwipError
+LwipStatus
 udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                          uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
                          uint16_t chksum, const IpAddr *src_ip)
 {
 
   struct UdpHdr *udphdr;
-  LwipError err;
+  LwipStatus err;
   struct PacketBuffer *q; /* q will be sent down the stack */
   uint8_t ip_proto;
   uint8_t ttl;
@@ -910,7 +910,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
  *
  * @see udp_disconnect()
  */
-LwipError
+LwipStatus
 udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 {
   struct UdpPcb *ipcb;
@@ -924,7 +924,7 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == nullptr) {
-    ipaddr = kIp4AddrAny;
+    ipaddr = get_ip4_addr_any;
   }
 
 
@@ -1046,7 +1046,7 @@ udp_bind_netif(struct UdpPcb *pcb, const NetIfc*netif)
  *
  * @see udp_disconnect()
  */
-LwipError
+LwipStatus
 udp_connect(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 {
   struct UdpPcb *ipcb;
@@ -1057,7 +1057,7 @@ udp_connect(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
   LWIP_ERROR("udp_connect: invalid ipaddr", ipaddr != nullptr, return ERR_ARG);
 
   if (pcb->local_port == 0) {
-    LwipError err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
+    LwipStatus err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if (err != ERR_OK) {
       return err;
     }

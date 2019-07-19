@@ -2,11 +2,6 @@
 
 #include <cstdint>
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define LWIP_MAX(x , y)  (((x) > (y)) ? (x) : (y))  // NOLINT(cppcoreguidelines-macro-usage)
 #define LWIP_MIN(x , y)  (((x) < (y)) ? (x) : (y))  // NOLINT(cppcoreguidelines-macro-usage)
 
@@ -87,8 +82,4 @@ constexpr auto kNetifMaxHwaddrLen = 6;
 typedef uintptr_t HCRYPTPROV;
 
 int lwip_getpid();
-
-#ifdef __cplusplus
-}
-#endif
 

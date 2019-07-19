@@ -114,7 +114,7 @@
 
 
 /* Forward declarations.*/
-static LwipError tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*netif);
+static LwipStatus tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*netif);
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
 static NetIfc*
@@ -281,9 +281,9 @@ tcp_seg_add_chksum(uint16_t chksum, uint16_t len, uint16_t *seg_chksum,
  *
  * @param pcb the tcp pcb to check for
  * @param len length of data to send (checked agains snd_buf)
- * @return ERR_OK if tcp_write is allowed to proceed, another LwipError otherwise
+ * @return ERR_OK if tcp_write is allowed to proceed, another LwipStatus otherwise
  */
-static LwipError
+static LwipStatus
 tcp_write_checks(struct TcpProtoCtrlBlk *pcb, uint16_t len)
 {
   lwip_assert("tcp_write_checks: invalid pcb", pcb != nullptr);
@@ -366,9 +366,9 @@ tcp_write_checks(struct TcpProtoCtrlBlk *pcb, uint16_t len)
  * @param apiflags combination of following flags :
  * - TCP_WRITE_FLAG_COPY (0x01) data will be copied into memory belonging to the stack
  * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will not be set on last segment sent,
- * @return ERR_OK if enqueued, another LwipError on error
+ * @return ERR_OK if enqueued, another LwipStatus on error
  */
-LwipError
+LwipStatus
 tcp_write(struct TcpProtoCtrlBlk *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 {
   struct PacketBuffer *concat_p = nullptr;
@@ -389,7 +389,7 @@ tcp_write(struct TcpProtoCtrlBlk *pcb, const void *arg, uint16_t len, uint8_t ap
   uint8_t concat_chksum_swapped = 0;
   uint16_t concat_chksummed = 0;
 
-  LwipError err;
+  LwipStatus err;
   uint16_t mss_local;
 
   LWIP_ERROR("tcp_write: invalid pcb", pcb != nullptr, return ERR_ARG);
@@ -712,7 +712,7 @@ tcp_write(struct TcpProtoCtrlBlk *pcb, const void *arg, uint16_t len, uint8_t ap
 
   if (concat_chksummed) {
     LWIP_ASSERT("tcp_write: concat checksum needs concatenated data",
-                concat_p != NULL || extendlen > 0);
+                concat_p != nullptr || extendlen > 0);
     /*if concat checksumm swapped - swap it back */
     if (concat_chksum_swapped) {
       concat_chksum = SWAP_BYTES_IN_WORD(concat_chksum);
@@ -783,7 +783,7 @@ memerr:
  * @param pcb the TcpProtoCtrlBlk for which to split the unsent head
  * @param split the amount of payload to remain in the head
  */
-LwipError
+LwipStatus
 tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split)
 {
   struct tcp_seg *seg = nullptr, *useg = nullptr;
@@ -904,13 +904,13 @@ tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split)
   offset = q->tot_len - useg->len; /* Offset due to exposed headers */
 
   /* Advance to the PacketBuffer where the offset ends */
-  while (q != NULL && offset > q->len) {
+  while (q != nullptr && offset > q->len) {
     offset -= q->len;
     q = q->next;
   }
-  LWIP_ASSERT("Found start of payload PacketBuffer", q != NULL);
+  LWIP_ASSERT("Found start of payload PacketBuffer", q != nullptr);
   /* Checksum the first payload PacketBuffer accounting for offset, then other pbufs are all payload */
-  for (; q != NULL; offset = 0, q = q->next) {
+  for (; q != nullptr; offset = 0, q = q->next) {
     tcp_seg_add_chksum(~inet_chksum((const uint8_t *)q->payload + offset, q->len - offset), q->len - offset,
                        &useg->chksum, &useg->chksum_swapped);
   }
@@ -950,9 +950,9 @@ memerr:
  * segment is enqueued.
  *
  * @param pcb the TcpProtoCtrlBlk over which to send a segment
- * @return ERR_OK if sent, another LwipError otherwise
+ * @return ERR_OK if sent, another LwipStatus otherwise
  */
-LwipError
+LwipStatus
 tcp_send_fin(struct TcpProtoCtrlBlk *pcb)
 {
   lwip_assert("tcp_send_fin: invalid pcb", pcb != nullptr);
@@ -983,7 +983,7 @@ tcp_send_fin(struct TcpProtoCtrlBlk *pcb)
  * @param pcb Protocol control block for the TCP connection.
  * @param flags TCP header flags to set in the outgoing segment.
  */
-LwipError
+LwipStatus
 tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags)
 {
   struct PacketBuffer *p;
@@ -1091,7 +1091,7 @@ tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags)
 static void
 tcp_build_timestamp_option(const struct TcpProtoCtrlBlk *pcb, uint32_t *opts)
 {
-  LWIP_ASSERT("tcp_build_timestamp_option: invalid pcb", pcb != NULL);
+  LWIP_ASSERT("tcp_build_timestamp_option: invalid pcb", pcb != nullptr);
 
   /* Pad with two NOP options to make everything nicely aligned */
   opts[0] = PP_HTONL(0x0101080A);
@@ -1114,7 +1114,7 @@ tcp_get_num_sacks(const struct TcpProtoCtrlBlk *pcb, uint8_t optlen)
 {
   uint8_t num_sacks = 0;
 
-  LWIP_ASSERT("tcp_get_num_sacks: invalid pcb", pcb != NULL);
+  LWIP_ASSERT("tcp_get_num_sacks: invalid pcb", pcb != nullptr);
 
   if (pcb->flags & TF_SACK) {
     uint8_t i;
@@ -1145,8 +1145,8 @@ tcp_build_sack_option(const struct TcpProtoCtrlBlk *pcb, uint32_t *opts, uint8_t
 {
   uint8_t i;
 
-  LWIP_ASSERT("tcp_build_sack_option: invalid pcb", pcb != NULL);
-  LWIP_ASSERT("tcp_build_sack_option: invalid opts", opts != NULL);
+  LWIP_ASSERT("tcp_build_sack_option: invalid pcb", pcb != nullptr);
+  LWIP_ASSERT("tcp_build_sack_option: invalid opts", opts != nullptr);
 
   /* Pad with two NOP options to make everything nicely aligned.
      We add the length (of just the SACK option, not the NOPs in front of it),
@@ -1166,7 +1166,7 @@ tcp_build_sack_option(const struct TcpProtoCtrlBlk *pcb, uint32_t *opts, uint8_t
 static void
 tcp_build_wnd_scale_option(uint32_t *opts)
 {
-  LWIP_ASSERT("tcp_build_wnd_scale_option: invalid opts", opts != NULL);
+  LWIP_ASSERT("tcp_build_wnd_scale_option: invalid opts", opts != nullptr);
 
   /* Pad with one NOP option to make everything nicely aligned */
   opts[0] = PP_HTONL(0x01030300 | TCP_RCV_SCALE);
@@ -1178,14 +1178,14 @@ tcp_build_wnd_scale_option(uint32_t *opts)
  *
  * @param pcb Protocol control block for the TCP connection to send data
  * @return ERR_OK if data has been sent or nothing to send
- *         another LwipError on error
+ *         another LwipStatus on error
  */
-LwipError
+LwipStatus
 tcp_output(struct TcpProtoCtrlBlk *pcb)
 {
   struct tcp_seg *seg, *useg;
   uint32_t wnd, snd_nxt;
-  LwipError err;
+  LwipStatus err;
   NetIfc*netif;
 
 
@@ -1387,10 +1387,10 @@ tcp_output_segment_busy(const struct tcp_seg *seg)
  * @param pcb the TcpProtoCtrlBlk for the TCP connection used to send the segment
  * @param netif the netif used to send the segment
  */
-static LwipError
+static LwipStatus
 tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*netif)
 {
-  LwipError err;
+  LwipStatus err;
   uint16_t len;
   uint32_t *opts;
 
@@ -1555,7 +1555,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpProtoCtrlBlk *pcb, NetIfc*neti
  *
  * @param pcb the TcpProtoCtrlBlk for which to re-enqueue all unacked segments
  */
-LwipError
+LwipStatus
 tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb)
 {
   struct tcp_seg *seg;
@@ -1643,7 +1643,7 @@ tcp_rexmit_rto(struct TcpProtoCtrlBlk *pcb)
  *
  * @param pcb the TcpProtoCtrlBlk for which to retransmit the first unacked segment
  */
-LwipError
+LwipStatus
 tcp_rexmit(struct TcpProtoCtrlBlk *pcb)
 {
   struct tcp_seg *seg;
@@ -1837,11 +1837,11 @@ tcp_output_fill_options(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *
  * this function combines selecting a netif for transmission, generating the tcp
  * header checksum and calling ip_output_if while handling netif hints and stats.
  */
-static LwipError
+static LwipStatus
 tcp_output_control_segment(const struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p,
                            const IpAddr *src, const IpAddr *dst)
 {
-  LwipError err;
+  LwipStatus err;
   NetIfc*netif;
 
   lwip_assert("tcp_output_control_segment: invalid pbuf", p != nullptr);
@@ -1933,10 +1933,10 @@ tcp_rst(const struct TcpProtoCtrlBlk *pcb, uint32_t seqno, uint32_t ackno,
  *
  * @param pcb Protocol control block for the TCP connection to send the ACK
  */
-LwipError
+LwipStatus
 tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb)
 {
-  LwipError err;
+  LwipStatus err;
   struct PacketBuffer *p;
   uint8_t optlen, optflags = 0;
   uint8_t num_sacks = 0;
@@ -1991,10 +1991,10 @@ tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb)
  *
  * @param pcb the TcpProtoCtrlBlk for which to send a keepalive packet
  */
-LwipError
+LwipStatus
 tcp_keepalive(struct TcpProtoCtrlBlk *pcb)
 {
-  LwipError err;
+  LwipStatus err;
   struct PacketBuffer *p;
   uint8_t optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(0, pcb);
 
@@ -2029,10 +2029,10 @@ tcp_keepalive(struct TcpProtoCtrlBlk *pcb)
  *
  * @param pcb the TcpProtoCtrlBlk for which to send a zero-window probe packet
  */
-LwipError
+LwipStatus
 tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb)
 {
-  LwipError err;
+  LwipStatus err;
   struct PacketBuffer *p;
   struct TcpHdr *tcphdr;
   struct tcp_seg *seg;

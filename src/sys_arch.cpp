@@ -160,7 +160,7 @@ struct threadlist {
 
 static struct threadlist *lwip_win32_threads = nullptr;
 
-LwipError
+LwipStatus
 sys_sem_new(sys_sem_t *sem, uint8_t count)
 {
   HANDLE new_sem = nullptr;
@@ -248,7 +248,7 @@ sys_sem_signal(sys_sem_t *sem)
   ;
 }
 
-LwipError
+LwipStatus
 sys_mutex_new(sys_mutex_t *mutex)
 {
   HANDLE new_mut = nullptr;
@@ -432,7 +432,7 @@ sys_check_core_locking(void)
 }
 
 
-LwipError
+LwipStatus
 sys_mbox_new(sys_mbox_t *mbox, int size)
 {
   lwip_assert("mbox != NULL", mbox != nullptr);
@@ -498,7 +498,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
   SYS_ARCH_UNPROTECT(lev);
   }
 
-  LwipError
+  LwipStatus
   sys_mbox_trypost(sys_mbox_t *q, void *msg)
   {
       uint32_t new_head;
@@ -535,7 +535,7 @@ sys_mbox_post(sys_mbox_t *q, void *msg)
       return ERR_OK;
       }
 
-      LwipError
+      LwipStatus
       sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
       {
           return sys_mbox_trypost(q, msg);
@@ -638,11 +638,11 @@ void
 sys_arch_netconn_sem_alloc(void)
 {
   sys_sem_t *sem;
-  LwipError err;
+  LwipStatus err;
   BOOL done;
 
   sem = (sys_sem_t*)malloc(sizeof(sys_sem_t));
-  LWIP_ASSERT("failed to allocate memory for TLS semaphore", sem != NULL);
+  LWIP_ASSERT("failed to allocate memory for TLS semaphore", sem != nullptr);
   err = sys_sem_new(sem, 0);
   LWIP_ASSERT("failed to initialise TLS semaphore", err == ERR_OK);
   done = TlsSetValue(netconn_sem_tls_index, sem);
@@ -654,10 +654,10 @@ void
 sys_arch_netconn_sem_free(void)
 {
   LPVOID tls_data = TlsGetValue(netconn_sem_tls_index);
-  if (tls_data != NULL) {
+  if (tls_data != nullptr) {
     BOOL done;
     free(tls_data);
-    done = TlsSetValue(netconn_sem_tls_index, NULL);
+    done = TlsSetValue(netconn_sem_tls_index, nullptr);
     ;
     LWIP_ASSERT("failed to de-init TLS semaphore storage", done == TRUE);
   }

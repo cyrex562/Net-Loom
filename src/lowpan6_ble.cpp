@@ -136,7 +136,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
 /** Set an address used for stateful compression.
  * This expects an address of 6 or 8 bytes.
  */
-static LwipError
+static LwipStatus
 rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
   if ((LwipInAddrStruct == NULL) || (addr == nullptr)) {
@@ -162,7 +162,7 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
 /** Set the local address used for stateful compression.
  * This expects an address of 8 bytes.
  */
-LwipError
+LwipStatus
 rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
@@ -173,7 +173,7 @@ rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t loc
 /** Set the local address used for stateful compression.
  * This expects an address of 6 bytes.
  */
-LwipError
+LwipStatus
 rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
@@ -184,7 +184,7 @@ rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t loc
 /** Set the peer address used for stateful compression.
  * This expects an address of 8 bytes.
  */
-LwipError
+LwipStatus
 rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
@@ -195,7 +195,7 @@ rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_
 /** Set the peer address used for stateful compression.
  * This expects an address of 6 bytes.
  */
-LwipError
+LwipStatus
 rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
@@ -216,7 +216,7 @@ rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_
  * 
  * @return Same as netif->output.
  */
-static LwipError
+static LwipStatus
 rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *p_frag;
@@ -224,7 +224,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   uint8_t *buffer;
   uint8_t lowpan6_header_len;
   uint8_t hidden_header_len;
-  LwipError err;
+  LwipStatus err;
 
 //  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
@@ -281,7 +281,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
  *
  * @return ERR_OK (if everything is fine), ERR_ARG (if the context id is out of range), ERR_VAL (if contexts disabled)
  */
-LwipError
+LwipStatus
 rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
 {
 
@@ -305,7 +305,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  *
  * @return See rfc7668_compress
  */
-LwipError
+LwipStatus
 rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
@@ -322,7 +322,7 @@ rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
  * 
  * @return ERR_OK if everything was fine
  */
-LwipError
+LwipStatus
 rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
 {
   uint8_t * puc;
@@ -379,7 +379,7 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
  * 
  * @return ERR_OK if everything went fine
  */
-LwipError
+LwipStatus
 rfc7668_if_init(NetIfc*netif)
 {
   netif->name[0] = 'b';
@@ -407,7 +407,7 @@ rfc7668_if_init(NetIfc*netif)
  * 
  * @return see @ref tcpip_inpkt, same return values
  */
-LwipError
+LwipStatus
 tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp)
 {
   /* send data to upper layer, return the result */

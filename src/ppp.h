@@ -454,7 +454,7 @@ void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_ph
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipError ppp_connect(PppPcb *pcb, uint16_t holdoff);
+LwipStatus ppp_connect(PppPcb *pcb, uint16_t holdoff);
 
 
 /*
@@ -465,7 +465,7 @@ LwipError ppp_connect(PppPcb *pcb, uint16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipError ppp_listen(PppPcb *pcb);
+LwipStatus ppp_listen(PppPcb *pcb);
 
 
 /*
@@ -479,7 +479,7 @@ LwipError ppp_listen(PppPcb *pcb);
  *
  * Return 0 on success, an error code on failure.
  */
-LwipError ppp_close(PppPcb *pcb, uint8_t nocarrier);
+LwipStatus ppp_close(PppPcb *pcb, uint8_t nocarrier);
 
 /*
  * Release the control block.
@@ -491,7 +491,7 @@ LwipError ppp_close(PppPcb *pcb, uint8_t nocarrier);
  *
  * Return 0 on success, an error code on failure.
  */
-LwipError ppp_free(PppPcb *pcb);
+LwipStatus ppp_free(PppPcb *pcb);
 
 /*
  * PPP IOCTL commands.
@@ -516,7 +516,7 @@ constexpr auto kPppctlgFd = 2;
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure.
  */
-LwipError ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
+LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               ((ppp)->netif)

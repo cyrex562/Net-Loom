@@ -112,5 +112,5 @@ struct pbuf_custom_ref {
 };
 
 
-LwipError ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest);
+LwipStatus ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest);
 

@@ -372,7 +372,7 @@ struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_typ
     return nullptr;
   }
 
-  if (payload_mem != NULL) {
+  if (payload_mem != nullptr) {
     payload = (uint8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
   } else {
     payload = nullptr;
@@ -759,7 +759,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
       if ((p->flags & PBUF_FLAG_IS_CUSTOM) != 0) {
         struct pbuf_custom *pc = (struct pbuf_custom *)p;
         LWIP_ASSERT("pc->custom_free_function != NULL",
-                    pc->custom_free_function != NULL);
+                    pc->custom_free_function != nullptr);
         pc->custom_free_function(p);
       } else
 
@@ -954,7 +954,7 @@ struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p) {
  *         ERR_ARG if one of the pbufs is NULL or p_to is not big
  *                 enough to hold p_from
  */
-LwipError pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from) {
+LwipStatus pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from) {
   size_t offset_to = 0, offset_from = 0, len;
 
   Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
@@ -1116,14 +1116,14 @@ void *pbuf_get_contiguous(const struct PacketBuffer *p, void *buffer, size_t buf
  * @param rest pointer to store the remainder (after the first 64K)
  */
 void pbuf_split_64k(struct PacketBuffer *p, struct PacketBuffer **rest) {
-  *rest = NULL;
-  if ((p != NULL) && (p->next != NULL)) {
+  *rest = nullptr;
+  if ((p != nullptr) && (p->next != nullptr)) {
     uint16_t tot_len_front = p->len;
     struct PacketBuffer *i = p;
     struct PacketBuffer *r = p->next;
 
     /* continue until the total length (summed up as uint16_t) overflows */
-    while ((r != NULL) &&
+    while ((r != nullptr) &&
            ((uint16_t)(tot_len_front + r->len) >= tot_len_front)) {
       tot_len_front = (uint16_t)(tot_len_front + r->len);
       i = r;
@@ -1131,14 +1131,14 @@ void pbuf_split_64k(struct PacketBuffer *p, struct PacketBuffer **rest) {
     }
     /* i now points to last packet of the first segment. Set next
        pointer to NULL */
-    i->next = NULL;
+    i->next = nullptr;
 
-    if (r != NULL) {
+    if (r != nullptr) {
       /* Update the tot_len field in the first part */
-      for (i = p; i != NULL; i = i->next) {
+      for (i = p; i != nullptr; i = i->next) {
         i->tot_len = (uint16_t)(i->tot_len - r->tot_len);
         LWIP_ASSERT("tot_len/len mismatch in last PacketBuffer",
-                    (i->next != NULL) || (i->tot_len == i->len));
+                    (i->next != nullptr) || (i->tot_len == i->len));
       }
       if (p->flags & PBUF_FLAG_TCP_FIN) {
         r->flags |= PBUF_FLAG_TCP_FIN;
@@ -1196,7 +1196,7 @@ struct PacketBuffer *pbuf_skip(struct PacketBuffer *in, uint16_t in_offset,
  *
  * @return ERR_OK if successful, ERR_MEM if the PacketBuffer is not big enough
  */
-LwipError pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len) {
+LwipStatus pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len) {
   struct PacketBuffer *p;
   size_t buf_copy_len;
   size_t total_copy_len = len;
@@ -1241,7 +1241,7 @@ LwipError pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len)
  *
  * @return ERR_OK if successful, ERR_MEM if the PacketBuffer is not big enough
  */
-LwipError pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t len,
+LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t len,
                    uint16_t offset) {
   uint16_t target_offset;
   struct PacketBuffer *q = pbuf_skip(buf, offset, &target_offset);
@@ -1306,7 +1306,7 @@ struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
  */
 struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuffer *p) {
   struct PacketBuffer *q;
-  LwipError err;
+  LwipStatus err;
   q = pbuf_alloc(layer, p->tot_len, type);
   if (q == nullptr) {
     return nullptr;
@@ -1329,14 +1329,14 @@ struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuf
  * @return ERR_OK if successful, another error if the data does not fit
  *         within the (first) PacketBuffer (no PacketBuffer queues!)
  */
-LwipError pbuf_fill_chksum(struct PacketBuffer *p, uint16_t start_offset,
+LwipStatus pbuf_fill_chksum(struct PacketBuffer *p, uint16_t start_offset,
                        const void *dataptr, uint16_t len, uint16_t *chksum) {
   uint32_t acc;
   uint16_t copy_chksum;
   char *dst_ptr;
-  LWIP_ASSERT("p != NULL", p != NULL);
-  LWIP_ASSERT("dataptr != NULL", dataptr != NULL);
-  LWIP_ASSERT("chksum != NULL", chksum != NULL);
+  LWIP_ASSERT("p != NULL", p != nullptr);
+  LWIP_ASSERT("dataptr != NULL", dataptr != nullptr);
+  LWIP_ASSERT("chksum != NULL", chksum != nullptr);
   LWIP_ASSERT("len != 0", len != 0);
 
   if ((start_offset >= p->len) || (start_offset + len > p->len)) {

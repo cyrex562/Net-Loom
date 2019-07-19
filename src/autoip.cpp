@@ -30,7 +30,7 @@ inline uint32_t autoip_gen_seed_addr(NetIfc* netif)
         uint8_t(netif->hwaddr[4]) | uint32_t(uint8_t(netif->hwaddr[5])) << 8));
 }
 
-LwipError autoip_arp_announce(NetIfc* netif);
+LwipStatus autoip_arp_announce(NetIfc* netif);
 bool autoip_start_probing(NetIfc* netif);
 
 
@@ -129,7 +129,7 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
 //
 // @param netif network interface used to send the probe
 //
-LwipError autoip_arp_probe(NetIfc* netif)
+LwipStatus autoip_arp_probe(NetIfc* netif)
 {
     auto autoip = netif_autoip_data(netif);
     /* this works because netif->ip_addr is ANY */
@@ -141,7 +141,7 @@ LwipError autoip_arp_probe(NetIfc* netif)
 //
 // @param netif network interface used to send the announce
 //
-static LwipError
+static LwipStatus
 autoip_arp_announce(NetIfc* netif)
 {
   return etharp_gratuitous(netif);
@@ -152,7 +152,7 @@ autoip_arp_announce(NetIfc* netif)
 //
 // @param netif network interface to configure with current LL IP-Address
 //
-static LwipError autoip_bind(NetIfc* netif)
+static LwipStatus autoip_bind(NetIfc* netif)
 {
     auto autoip = netif_autoip_data(netif);
     Ip4Addr sn_mask{};
@@ -170,14 +170,14 @@ static LwipError autoip_bind(NetIfc* netif)
  *
  * @param netif network interface on which start the AutoIP client
  */
-LwipError autoip_start(NetIfc* netif)
+LwipStatus autoip_start(NetIfc* netif)
 {
     auto autoip = netif_autoip_data(netif);
-    const LwipError result = ERR_OK;
+    const LwipStatus result = ERR_OK;
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    auto any_addr = kIp4AddrAny();
+    auto any_addr = get_ip4_addr_any();
 
     netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
@@ -246,7 +246,7 @@ bool autoip_network_changed(NetIfc* netif)
 //
 // @param netif network interface on which stop the AutoIP client
 //
-LwipError autoip_stop(NetIfc* netif)
+LwipStatus autoip_stop(NetIfc* netif)
 {
     const auto autoip = netif_autoip_data(netif);
     LWIP_ASSERT_CORE_LOCKED();
@@ -255,7 +255,7 @@ LwipError autoip_stop(NetIfc* netif)
         autoip->state = AUTOIP_STATE_OFF;
         if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
         {
-            auto any_addr = kIp4AddrAny();
+            auto any_addr = get_ip4_addr_any();
             netif_set_addr(netif,
                            &any_addr,
                            &any_addr,

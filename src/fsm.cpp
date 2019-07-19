@@ -227,7 +227,7 @@ static void terminate_layer(Fsm *f, int nextstate) {
  */
 void fsm_close(Fsm *f, const char *reason) {
     f->term_reason = reason;
-    f->term_reason_len = (reason == NULL? 0: (uint8_t)LWIP_MIN(strlen(reason), 0xFF) );
+    f->term_reason_len = (reason == nullptr? 0: (uint8_t)LWIP_MIN(strlen(reason), 0xFF) );
     switch( f->state ){
     case PPP_FSM_STARTING:
 	f->state = PPP_FSM_INITIAL;
@@ -384,7 +384,7 @@ static void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
     switch( f->state ){
     case PPP_FSM_CLOSED:
 	/* Go away, we're closed */
-	fsm_sdata(f, TERMACK, id, NULL, 0);
+	fsm_sdata(f, TERMACK, id, nullptr, 0);
 	return;
     case PPP_FSM_CLOSING:
     case PPP_FSM_STOPPING:
@@ -464,7 +464,7 @@ static void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
     switch (f->state) {
     case PPP_FSM_CLOSED:
     case PPP_FSM_STOPPED:
-	fsm_sdata(f, TERMACK, id, NULL, 0);
+	fsm_sdata(f, TERMACK, id, nullptr, 0);
 	break;
 
     case PPP_FSM_REQSENT:
@@ -513,14 +513,14 @@ static void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) 
     if (code == CONFNAK) {
 	++f->rnakloops;
 	treat_as_reject = (f->rnakloops >= f->maxnakloops);
-	if (f->callbacks->nakci == NULL
+	if (f->callbacks->nakci == nullptr
 	    || !(ret = f->callbacks->nakci(f, inp, len, treat_as_reject, f->pcb))) {
 	    ppp_error("Received bad configure-nak: %P", inp, len);
 	    return;
 	}
     } else {
 	f->rnakloops = 0;
-	if (f->callbacks->rejci == NULL
+	if (f->callbacks->rejci == nullptr
 	    || !(ret = f->callbacks->rejci(f, inp, len, f->pcb))) {
 	    ppp_error("Received bad configure-rej: %P", inp, len);
 	    return;
@@ -532,7 +532,7 @@ static void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) 
     switch (f->state) {
     case PPP_FSM_CLOSED:
     case PPP_FSM_STOPPED:
-	fsm_sdata(f, TERMACK, id, NULL, 0);
+	fsm_sdata(f, TERMACK, id, nullptr, 0);
 	break;
 
     case PPP_FSM_REQSENT:

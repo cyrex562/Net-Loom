@@ -196,7 +196,7 @@ struct DnsRequestEntry
  *  external name resolution is performed */
 static struct LocalHostListEntry *local_hostlist_dynamic;
 static void dns_init_local(void);
-static LwipError dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
+static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
 
 
 
@@ -327,13 +327,13 @@ static void dns_init_local(void)
     for (auto& i : local_hostlist_init)
     {
         struct LocalHostListEntry* init_entry = &i;
-        lwip_assert("invalid host name (NULL)", init_entry->name != NULL);
+        lwip_assert("invalid host name (NULL)", init_entry->name != nullptr);
         size_t namelen = strlen(init_entry->name);
         lwip_assert("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
                     namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
         entry = new LocalHostListEntry;
-        lwip_assert("mem-error in dns_init_local", entry != NULL);
-        if (entry != NULL)
+        lwip_assert("mem-error in dns_init_local", entry != nullptr);
+        if (entry != nullptr)
         {
             char* entry_name = reinterpret_cast<char *>(entry) + sizeof(struct
                 LocalHostListEntry);
@@ -362,8 +362,8 @@ dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
 
   struct LocalHostListEntry *entry = local_hostlist_dynamic;
   i = 0;
-  while (entry != NULL) {
-    if (iterator_fn != NULL) {
+  while (entry != nullptr) {
+    if (iterator_fn != nullptr) {
       iterator_fn(entry->name, &entry->addr, iterator_arg);
     }
     i++;
@@ -386,14 +386,14 @@ dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  * @return ERR_OK if found, ERR_ARG if not found
  */
-LwipError
+LwipStatus
 dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype)
 {
   return dns_lookup_local(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype));
 }
 
 /* Internal implementation for dns_local_lookup and dns_lookup */
-static LwipError dns_lookup_local(const char* hostname,
+static LwipStatus dns_lookup_local(const char* hostname,
                                   IpAddr* addr
                                   LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
@@ -429,13 +429,13 @@ int dns_local_removehost(const char* hostname, const IpAddr* addr)
 {
     int removed = 0;
     struct LocalHostListEntry* entry = local_hostlist_dynamic;
-    struct LocalHostListEntry* last_entry = NULL;
-    while (entry != NULL)
+    struct LocalHostListEntry* last_entry = nullptr;
+    while (entry != nullptr)
     {
         if (((hostname == nullptr) || !lwip_stricmp(entry->name, hostname)) && ((addr == nullptr
         ) || compare_ip_addr(&entry->addr, addr)))
         {
-            if (last_entry != NULL)
+            if (last_entry != nullptr)
             {
                 last_entry->next = entry->next;
             }
@@ -466,7 +466,7 @@ int dns_local_removehost(const char* hostname, const IpAddr* addr)
  * @param addr IP address of the new entry
  * @return ERR_OK if succeeded or ERR_MEM on memory error
  */
-LwipError dns_local_addhost(const char* hostname, const IpAddr* addr)
+LwipStatus dns_local_addhost(const char* hostname, const IpAddr* addr)
 {
     lwip_assert("invalid host name (NULL)", hostname != nullptr);
     const auto namelen = strlen(hostname);
@@ -503,7 +503,7 @@ LwipError dns_local_addhost(const char* hostname, const IpAddr* addr)
  *         was not found in the cached dns_table.
  * @return ERR_OK if found, ERR_ARG if not found
  */
-static LwipError dns_lookup(const char* name,
+static LwipStatus dns_lookup(const char* name,
                             IpAddr* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
     if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK)
@@ -648,11 +648,11 @@ dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
  * Send a DNS query packet.
  *
  * @param idx the DNS table entry index for which to send a request
- * @return ERR_OK if packet is sent; an LwipError indicating the problem otherwise
+ * @return ERR_OK if packet is sent; an LwipStatus indicating the problem otherwise
  */
-static LwipError dns_send(const uint8_t idx)
+static LwipStatus dns_send(const uint8_t idx)
 {
-    LwipError err;
+    LwipStatus err;
     DnsHdr hdr;
     DnsQuery qry;
     uint8_t n;
@@ -665,7 +665,7 @@ static LwipError dns_send(const uint8_t idx)
     {
         /* DNS server not valid anymore, e.g. PPP netif has been shut down */
         /* call specified callback function if provided */
-        dns_call_found(idx, NULL); /* flush this entry */
+        dns_call_found(idx, nullptr); /* flush this entry */
         entry->state = DNS_STATE_UNUSED;
         return ERR_OK;
     } /* if here, we have either a new query or a retry on a previous query to process */
@@ -753,7 +753,7 @@ overflow_return: pbuf_free(p);
 
 static UdpPcb* dns_alloc_random_port(void)
 {
-    LwipError err;
+    LwipStatus err;
     UdpPcb* pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
     if (pcb == nullptr)
     {
@@ -815,7 +815,7 @@ dns_alloc_pcb(void)
     if (idx >= DNS_MAX_SOURCE_PORTS) {
       idx = 0;
     }
-    if (dns_pcbs[idx] != NULL) {
+    if (dns_pcbs[idx] != nullptr) {
       dns_last_pcb_idx = idx;
       return idx;
     }
@@ -840,7 +840,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
 
 
 
-  if (addr != NULL) {
+  if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
     if (IP_IS_V6_VAL(*addr)) {
       LWIP_ASSERT("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
@@ -857,7 +857,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
     if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
       (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
       /* flush this entry */
-      dns_requests[i].found = NULL;
+      dns_requests[i].found = nullptr;
     }
   }
 
@@ -877,7 +877,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
   if (dns_table[idx].pcb_idx < DNS_MAX_SOURCE_PORTS) {
     /* if we come here, the pcb is not used any more and can be removed */
     udp_remove(dns_pcbs[dns_table[idx].pcb_idx]);
-    dns_pcbs[dns_table[idx].pcb_idx] = NULL;
+    dns_pcbs[dns_table[idx].pcb_idx] = nullptr;
     dns_table[idx].pcb_idx = DNS_MAX_SOURCE_PORTS;
   }
 
@@ -934,7 +934,7 @@ dns_backupserver_available(struct DnsTableEntry *pentry)
 static void
 dns_check_entry(uint8_t i)
 {
-  LwipError err;
+  LwipStatus err;
   struct DnsTableEntry *entry = &dns_table[i];
 
   lwip_assert("array index out of bounds", i < DNS_TABLE_SIZE);
@@ -970,7 +970,7 @@ dns_check_entry(uint8_t i)
           } else {
             Logf(DNS_DEBUG, ("dns_check_entry: \"%s\": timeout\n", entry->name));
             /* call specified callback function if provided */
-            dns_call_found(i, NULL);
+            dns_call_found(i, nullptr);
             /* flush this entry */
             entry->state = DNS_STATE_UNUSED;
             break;
@@ -1247,7 +1247,7 @@ static void dns_recv(void* arg,
                          ("dns_recv: \"%s\": error in response\n", entry->name));
                 } /* call callback to indicate error, clean up memory and return */
                 pbuf_free(p);
-                dns_call_found(i, NULL);
+                dns_call_found(i, nullptr);
                 dns_table[i].state = DNS_STATE_UNUSED;
                 return;
             }
@@ -1264,9 +1264,9 @@ ignore_packet: /* deallocate memory and return */ pbuf_free(p);
  * @param hostnamelen length of the hostname
  * @param found a callback function to be called on success, failure or timeout
  * @param callback_arg argument to pass to the callback function
- * @return LwipError return code.
+ * @return LwipStatus return code.
  */
-static LwipError dns_enqueue(const char* name,
+static LwipStatus dns_enqueue(const char* name,
                              size_t hostnamelen,
                              dns_found_callback found,
                              void* callback_arg LWIP_DNS_ADDRTYPE_ARG(
@@ -1293,7 +1293,7 @@ static LwipError dns_enqueue(const char* name,
             } /* this is a duplicate entry, find a free request entry */
             for (r = 0; r < DNS_MAX_REQUESTS; r++)
             {
-                if (dns_requests[r].found == 0)
+                if (dns_requests[r].found == nullptr)
                 {
                     dns_requests[r].found = found;
                     dns_requests[r].arg = callback_arg;
@@ -1339,16 +1339,16 @@ static LwipError dns_enqueue(const char* name,
             entry = &dns_table[i];
         }
     } /* find a free request entry */
-    req = NULL;
+    req = nullptr;
     for (r = 0; r < DNS_MAX_REQUESTS; r++)
     {
-        if (dns_requests[r].found == NULL)
+        if (dns_requests[r].found == nullptr)
         {
             req = &dns_requests[r];
             break;
         }
     }
-    if (req == NULL)
+    if (req == nullptr)
     {
         /* no request entry can be used now, table is full */
         Logf(DNS_DEBUG,
@@ -1371,7 +1371,7 @@ static LwipError dns_enqueue(const char* name,
         /* failed to get a UDP pcb */
         Logf(DNS_DEBUG, ("dns_enqueue: \"%s\": failed to allocate a pcb\n", name));
         entry->state = DNS_STATE_UNUSED;
-        req->found = NULL;
+        req->found = nullptr;
         return ERR_MEM;
     }
 
@@ -1386,7 +1386,7 @@ static LwipError dns_enqueue(const char* name,
  * Resolve a hostname (string) into an IP address.
  * NON-BLOCKING callback version for use with raw API!!!
  *
- * Returns immediately with one of LwipError return codes:
+ * Returns immediately with one of LwipStatus return codes:
  * - ERR_OK if hostname is a valid IP address string or the host
  *   name is already in the local names table.
  * - ERR_INPROGRESS enqueue a request to be sent to the DNS server
@@ -1399,9 +1399,9 @@ static LwipError dns_enqueue(const char* name,
  * @param found a callback function to be called on success, failure or timeout (only if
  *              ERR_INPROGRESS is returned!)
  * @param callback_arg argument to pass to the callback function
- * @return a LwipError return code.
+ * @return a LwipStatus return code.
  */
-LwipError
+LwipStatus
 dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
                   void *callback_arg)
 {
@@ -1422,7 +1422,7 @@ dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
  *                     - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  */
-LwipError dns_gethostbyname_addrtype(const char* hostname,
+LwipStatus dns_gethostbyname_addrtype(const char* hostname,
                                      IpAddr* addr,
                                      dns_found_callback found,
                                      void* callback_arg,
@@ -1434,12 +1434,12 @@ LwipError dns_gethostbyname_addrtype(const char* hostname,
 
     /* not initialized or no valid server yet, or invalid addr pointer
      * or invalid hostname or invalid hostname length */
-    if ((addr == NULL) || (!hostname) || (!hostname[0]))
+    if ((addr == nullptr) || (!hostname) || (!hostname[0]))
     {
         return ERR_ARG;
     }
 
-  if (dns_pcbs[0] == NULL) {
+  if (dns_pcbs[0] == nullptr) {
     return ERR_ARG;
   }
 

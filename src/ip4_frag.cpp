@@ -662,9 +662,9 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
  * @param netif the netif on which to send
  * @param dest destination ip address to which to send
  *
- * @return ERR_OK if sent successfully, LwipError otherwise
+ * @return ERR_OK if sent successfully, LwipStatus otherwise
  */
-LwipError
+LwipStatus
 ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
 {
   struct PacketBuffer *rambuf;

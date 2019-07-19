@@ -129,14 +129,14 @@ static void magic_churnrand(char *rand_data, uint32_t rand_len) {
  * Initialize the random number generator.
  */
 void magic_init(void) {
-  magic_churnrand(NULL, 0);
+  magic_churnrand(nullptr, 0);
 }
 
 /*
  * Randomize our random seed value.
  */
 void magic_randomize(void) {
-  magic_churnrand(NULL, 0);
+  magic_churnrand(nullptr, 0);
 }
 
 /*

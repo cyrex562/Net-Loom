@@ -45,15 +45,15 @@
 #include "ip_addr.h"
 #include "netif.h"
 
-LwipError rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
-LwipError rfc7668_input(struct PacketBuffer * p, NetIfc*netif);
-LwipError rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len);
-LwipError rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
-LwipError rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len);
-LwipError rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
-LwipError rfc7668_set_context(uint8_t index, const Ip6Addr * context);
-LwipError rfc7668_if_init(NetIfc*netif);
-LwipError tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp);
+LwipStatus rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
+LwipStatus rfc7668_input(struct PacketBuffer * p, NetIfc*netif);
+LwipStatus rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len);
+LwipStatus rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr);
+LwipStatus rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len);
+LwipStatus rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr);
+LwipStatus rfc7668_set_context(uint8_t index, const Ip6Addr * context);
+LwipStatus rfc7668_if_init(NetIfc*netif);
+LwipStatus tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp);
 
 void ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr);
 void eui64_to_ble_addr(uint8_t *dst, const uint8_t *src);

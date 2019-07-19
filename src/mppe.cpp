@@ -186,12 +186,12 @@ void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
  * It's strange to call this a compressor, since the output is always
  * MPPE_OVHD + 2 bytes larger than the input.
  */
-LwipError
+LwipStatus
 mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol)
 {
 	struct PacketBuffer *n, *np;
 	uint8_t *pl;
-	LwipError err;
+	LwipStatus err;
 
 	;
 
@@ -272,7 +272,7 @@ void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
 /*
  * Decompress (decrypt) an MPPE packet.
  */
-LwipError
+LwipStatus
 mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb)
 {
 	struct PacketBuffer *n0 = *pb, *n;

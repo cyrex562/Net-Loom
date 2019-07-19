@@ -66,11 +66,11 @@ struct netbuf *   netbuf_new      (void);
 void              netbuf_delete   (struct netbuf *buf);
 void *            netbuf_alloc    (struct netbuf *buf, uint16_t size);
 void              netbuf_free     (struct netbuf *buf);
-LwipError             netbuf_ref      (struct netbuf *buf,
+LwipStatus             netbuf_ref      (struct netbuf *buf,
                                    const void *dataptr, uint16_t size);
 void              netbuf_chain    (struct netbuf *head, struct netbuf *tail);
 
-LwipError             netbuf_data     (struct netbuf *buf,
+LwipStatus             netbuf_data     (struct netbuf *buf,
                                    void **dataptr, uint16_t *len);
 int8_t              netbuf_next     (struct netbuf *buf);
 void              netbuf_first    (struct netbuf *buf);

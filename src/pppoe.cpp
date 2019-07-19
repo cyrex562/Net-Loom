@@ -103,11 +103,11 @@ constexpr auto PPPOE_ERRORSTRING_LEN = 64;
 
 
 /* callbacks called from PPP core */
-static LwipError pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
-static LwipError pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol);
+static LwipStatus pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
+static LwipStatus pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol);
 static void pppoe_connect(PppPcb *ppp, void *ctx);
 static void pppoe_disconnect(PppPcb *ppp, void *ctx);
-static LwipError pppoe_destroy(PppPcb *ppp, void *ctx);
+static LwipStatus pppoe_destroy(PppPcb *ppp, void *ctx);
 
 /* management routines */
 static void pppoe_abort_connect(struct pppoe_softc *);
@@ -116,15 +116,15 @@ static void pppoe_abort_connect(struct pppoe_softc *);
 static void pppoe_timeout(void *);
 
 /* sending actual protocol controll packets */
-static LwipError pppoe_send_padi(struct pppoe_softc *);
-static LwipError pppoe_send_padr(struct pppoe_softc *);
-static LwipError pppoe_send_pado(struct pppoe_softc *);
-static LwipError pppoe_send_pads(struct pppoe_softc *);
+static LwipStatus pppoe_send_padi(struct pppoe_softc *);
+static LwipStatus pppoe_send_padr(struct pppoe_softc *);
+static LwipStatus pppoe_send_pado(struct pppoe_softc *);
+static LwipStatus pppoe_send_pads(struct pppoe_softc *);
 #endif
-static LwipError pppoe_send_padt(NetIfc*, u_int, const uint8_t *);
+static LwipStatus pppoe_send_padt(NetIfc*, u_int, const uint8_t *);
 
 /* internal helper functions */
-static LwipError pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb);
+static LwipStatus pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb);
 static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, NetIfc*rcvif);
 static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t len, NetIfc*rcvif);
 
@@ -163,7 +163,7 @@ PppPcb *pppoe_create(NetIfc*pppif,
     return nullptr;
   }
 
-  PppPcb* ppp = ppp_new(pppif, &pppoe_callbacks, sc, link_status_cb, ctx_cb);
+  PppPcb* ppp = init_ppp_pcb(pppif, sc, link_status_cb, ctx_cb);
   if (ppp == nullptr) {
       delete sc;
     return nullptr;
@@ -179,10 +179,10 @@ PppPcb *pppoe_create(NetIfc*pppif,
 }
 
 /* Called by PPP core */
-static LwipError pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
+static LwipStatus pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct PacketBuffer *ph; /* Ethernet + PPPoE header */
-  LwipError ret;
+  LwipStatus ret;
 
   ;
 
@@ -217,11 +217,11 @@ static LwipError pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
 }
 
 /* Called by PPP core */
-static LwipError pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol) {
+static LwipStatus pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct PacketBuffer *pb;
   uint8_t *pl;
-  LwipError err;
+  LwipStatus err;
 
   ;
 
@@ -257,7 +257,7 @@ static LwipError pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer 
   return ERR_OK;
 }
 
-static LwipError
+static LwipStatus
 pppoe_destroy(PppPcb *ppp, void *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
@@ -339,7 +339,7 @@ pppoe_disc_input(NetIfc*netif, struct PacketBuffer *pb)
   uint16_t session, plen;
   struct pppoe_softc *sc;
 
-  const char *err_msg = NULL;
+  const char *err_msg = nullptr;
 
   uint8_t *ac_cookie;
   uint16_t ac_cookie_len;
@@ -364,7 +364,7 @@ pppoe_disc_input(NetIfc*netif, struct PacketBuffer *pb)
   ac_cookie = nullptr;
   ac_cookie_len = 0;
 
-  hunique = NULL;
+  hunique = nullptr;
   hunique_len = 0;
 
   session = 0;
@@ -447,7 +447,7 @@ pppoe_disc_input(NetIfc*netif, struct PacketBuffer *pb)
         break;
     }
 
-    if (err_msg != NULL) {
+    if (err_msg != nullptr) {
       char error_tmp[PPPOE_ERRORSTRING_LEN];
       uint16_t error_len = LWIP_MIN(len, sizeof(error_tmp)-1);
       strncpy(error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
@@ -484,7 +484,7 @@ breakbreak:;
           break;
         }
       }
-      if (sc == NULL) {
+      if (sc == nullptr) {
         /* PPPDEBUG(LOG_DEBUG, ("pppoe: free passive interface is not found\n")); */
         goto done;
       }
@@ -493,7 +493,7 @@ breakbreak:;
           mem_free(sc->sc_hunique);
         }
         sc->sc_hunique = mem_malloc(hunique_len);
-        if (sc->sc_hunique == NULL) {
+        if (sc->sc_hunique == nullptr) {
           goto done;
         }
         sc->sc_hunique_len = hunique_len;
@@ -509,13 +509,13 @@ breakbreak:;
       /*
        * get sc from ac_cookie if IFF_PASSIVE
        */
-      if (ac_cookie == NULL) {
+      if (ac_cookie == nullptr) {
         /* be quiet if there is not a single pppoe instance */
         PPPDEBUG(LOG_DEBUG, ("pppoe: received PADR but not includes ac_cookie\n"));
         goto done;
       }
       sc = pppoe_find_softc_by_hunique(ac_cookie, ac_cookie_len, netif);
-      if (sc == NULL) {
+      if (sc == nullptr) {
         /* be quiet if there is not a single pppoe instance */
         if (!LIST_EMPTY(&pppoe_softc_list)) {
           PPPDEBUG(LOG_DEBUG, ("pppoe: received PADR but could not find request for it\n"));
@@ -531,7 +531,7 @@ breakbreak:;
           mem_free(sc->sc_hunique);
         }
         sc->sc_hunique = mem_malloc(hunique_len);
-        if (sc->sc_hunique == NULL) {
+        if (sc->sc_hunique == nullptr) {
           goto done;
         }
         sc->sc_hunique_len = hunique_len;
@@ -566,7 +566,7 @@ breakbreak:;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
-      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
+      sys_timeout_debug((5*1000) * (1 + sc->sc_padr_retried), pppoe_timeout, sc, "pppoe_timeout");
       break;
     case PPPOE_CODE_PADS:
       if (sc == nullptr) {
@@ -670,7 +670,7 @@ drop:
   pbuf_free(pb);
 }
 
-static LwipError
+static LwipStatus
 pppoe_output(struct pppoe_softc *sc, struct PacketBuffer *pb)
 {
     /* make room for Ethernet header - should not fail */
@@ -693,14 +693,14 @@ pppoe_output(struct pppoe_softc *sc, struct PacketBuffer *pb)
       sc->sc_dest.addr[0], sc->sc_dest.addr[1], sc->sc_dest.addr[2], sc->sc_dest.addr[3], sc->sc_dest.addr[4], sc->sc_dest.addr[5],
       pb->tot_len));
 
-  LwipError res = sc->sc_ethif->linkoutput(sc->sc_ethif, pb);
+  LwipStatus res = sc->sc_ethif->linkoutput(sc->sc_ethif, pb);
 
   pbuf_free(pb);
 
   return res;
 }
 
-static LwipError
+static LwipStatus
 pppoe_send_padi(struct pppoe_softc *sc)
 {
   struct PacketBuffer *pb;
@@ -777,7 +777,7 @@ pppoe_timeout(void *arg)
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
-      sys_timeout(retry_wait, pppoe_timeout, sc);
+      sys_timeout_debug(retry_wait, pppoe_timeout, sc, "pppoe_timeout");
       break;
 
     case PPPOE_STATE_PADR_SENT:
@@ -790,7 +790,7 @@ pppoe_timeout(void *arg)
           PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
           ; /* if PPPDEBUG is disabled */
         }
-        sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), pppoe_timeout, sc);
+        sys_timeout_debug((5*1000) * (1 + sc->sc_padi_retried), pppoe_timeout, sc, "pppoe_timeout");
         return;
       }
       if ((err = pppoe_send_padr(sc)) != 0) {
@@ -798,7 +798,7 @@ pppoe_timeout(void *arg)
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
-      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
+      sys_timeout_debug((5*1000) * (1 + sc->sc_padr_retried), pppoe_timeout, sc, "pppoe_timeout");
       break;
     default:
       return;  /* all done, work in peace */
@@ -809,7 +809,7 @@ pppoe_timeout(void *arg)
 static void
 pppoe_connect(PppPcb *ppp, void *ctx)
 {
-  LwipError err;
+  LwipStatus err;
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   LcpOptions *lcp_wo;
   LcpOptions *lcp_ao;
@@ -860,7 +860,7 @@ pppoe_connect(PppPcb *ppp, void *ctx)
   if ((err = pppoe_send_padi(sc)) != 0) {
     PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
   }
-  sys_timeout(PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
+  sys_timeout_debug((5*1000), pppoe_timeout, sc, "pppoe_timeout");
 }
 
 /* disconnect */
@@ -880,7 +880,7 @@ pppoe_disconnect(PppPcb *ppp, void *ctx)
 
   if (sc->sc_hunique) {
     mem_free(sc->sc_hunique);
-    sc->sc_hunique = NULL; /* probably not necessary, if state is initial we shouldn't have to access hunique anyway  */
+    sc->sc_hunique = nullptr; /* probably not necessary, if state is initial we shouldn't have to access hunique anyway  */
   }
   sc->sc_hunique_len = 0; /* probably not necessary, if state is initial we shouldn't have to access hunique anyway  */
 
@@ -898,7 +898,7 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 }
 
 /* Send a PADR packet */
-static LwipError
+static LwipStatus
 pppoe_send_padr(struct pppoe_softc *sc)
 {
   struct PacketBuffer *pb;
@@ -939,12 +939,12 @@ pppoe_send_padr(struct pppoe_softc *sc)
 }
 
 /* send a PADT packet */
-static LwipError
+static LwipStatus
 pppoe_send_padt(NetIfc*outgoing_if, u_int session, const uint8_t *dest)
 {
   struct PacketBuffer *pb;
   struct eth_hdr *ethhdr;
-  LwipError res;
+  LwipStatus res;
   uint8_t *p;
 
   pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN), PBUF_RAM);
@@ -967,14 +967,14 @@ pppoe_send_padt(NetIfc*outgoing_if, u_int session, const uint8_t *dest)
   p = (uint8_t*)(ethhdr + 1);
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
 
-  LwipError res = outgoing_if->linkoutput(outgoing_if, pb);
+  LwipStatus res = outgoing_if->linkoutput(outgoing_if, pb);
 
   pbuf_free(pb);
 
   return res;
 }
 
-static LwipError
+static LwipStatus
 pppoe_send_pado(struct pppoe_softc *sc)
 {
   struct PacketBuffer *pb;
@@ -1004,7 +1004,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
   return pppoe_output(sc, pb);
 }
 
-static LwipError
+static LwipStatus
 pppoe_send_pads(struct pppoe_softc *sc)
 {
   struct PacketBuffer *pb;
@@ -1042,7 +1042,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
 }
 
 
-static LwipError
+static LwipStatus
 pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb)
 {
   uint8_t *p;

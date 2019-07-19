@@ -49,8 +49,8 @@ struct PacketBuffer;
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
 
-#define PBUF_TRANSPORT_HLEN 20
-#define PBUF_IP_HLEN        40
+constexpr auto PBUF_TRANSPORT_HLEN = 20;
+constexpr auto PBUF_IP_HLEN = 40;
 
 
 /**
@@ -259,7 +259,7 @@ void pbuf_free_ooseq(void);
 struct PacketBuffer *pbuf_alloc(PbufLayer l, uint16_t length, PbufType type);
 struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length, PbufType type);
 
-struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_type type,
+struct PacketBuffer *pbuf_alloced_custom(PbufLayer l, uint16_t length, PbufType type,
                                  struct pbuf_custom *p, void *payload_mem,
                                  uint16_t payload_mem_len);
 
@@ -279,16 +279,16 @@ uint16_t pbuf_clen(const struct PacketBuffer *p);
 void pbuf_cat(struct PacketBuffer *head, struct PacketBuffer *tail);
 void pbuf_chain(struct PacketBuffer *head, struct PacketBuffer *tail);
 struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p);
-LwipError pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from);
+LwipStatus pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from);
 uint16_t pbuf_copy_partial(const struct PacketBuffer *p, void *dataptr, uint16_t len, uint16_t offset);
 void *pbuf_get_contiguous(const struct PacketBuffer *p, void *buffer, size_t bufsize, uint16_t len, uint16_t offset);
-LwipError pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len);
-LwipError pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t len, uint16_t offset);
+LwipStatus pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len);
+LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t len, uint16_t offset);
 struct PacketBuffer *pbuf_skip(struct PacketBuffer* in, uint16_t in_offset, uint16_t* out_offset);
 struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer);
 struct PacketBuffer *pbuf_clone(PbufLayer l, PbufType type, struct PacketBuffer *p);
 
-LwipError pbuf_fill_chksum(struct pbuf *p, uint16_t start_offset, const void *dataptr,
+LwipStatus pbuf_fill_chksum(struct pbuf *p, uint16_t start_offset, const void *dataptr,
                        uint16_t len, uint16_t *chksum);
 
 

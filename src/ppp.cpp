@@ -1,6 +1,5 @@
 #include "ppp_opts.h"
 #include "packet_buffer.h"
-#include "stats.h"
 #include "sys.h"
 #include "tcpip.h"
 #include "lwip_snmp.h"
@@ -24,6 +23,7 @@
 #include "fsm.h"
 #include "auth.h"
 #include "pppdebug.h"
+#include "timeouts.h"
 #ifdef _MSC_VER
 #include <WinSock2.h>
 #endif
@@ -59,10 +59,10 @@ int link_stats_valid;
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void* arg);
-static LwipError ppp_netif_init_cb(NetIfc* netif);
-static LwipError ppp_netif_output_ip4(NetIfc* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
-static LwipError ppp_netif_output_ip6(NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
-static LwipError ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol);
+static LwipStatus ppp_netif_init_cb(NetIfc* netif);
+static LwipStatus ppp_netif_output_ip4(NetIfc* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+static LwipStatus ppp_netif_output_ip6(NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+static LwipStatus ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -114,7 +114,7 @@ ppp_set_notify_phase_callback(PppPcb* pcb, ppp_notify_phase_cb_fn notify_phase_c
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipError
+LwipStatus
 ppp_connect(PppPcb* pcb, uint16_t holdoff)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -134,7 +134,7 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
     }
 
     new_phase(pcb, PPP_PHASE_HOLDOFF);
-    sys_timeout((uint32_t)(holdoff * 1000), ppp_do_connect, pcb);
+    sys_timeout_debug((uint32_t)(holdoff * 1000), ppp_do_connect, pcb, "ppp_do_connect");
     return ERR_OK;
 }
 
@@ -146,7 +146,7 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipError
+LwipStatus
 ppp_listen(PppPcb* pcb)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -179,7 +179,7 @@ ppp_listen(PppPcb* pcb)
  *
  * Return 0 on success, an error code on failure.
  */
-LwipError
+LwipStatus
 ppp_close(PppPcb *pcb, uint8_t nocarrier)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -247,10 +247,10 @@ ppp_close(PppPcb *pcb, uint8_t nocarrier)
  *
  * Return 0 on success, an error code on failure.
  */
-LwipError
+LwipStatus
 ppp_free(PppPcb* pcb)
 {
-    LwipError err;
+    LwipStatus err;
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb->phase != PPP_PHASE_DEAD)
     {
@@ -270,7 +270,7 @@ ppp_free(PppPcb* pcb)
 
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
-LwipError
+LwipStatus
 ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -331,7 +331,7 @@ ppp_do_connect(void* arg)
 /*
  * ppp_netif_init_cb - netif init callback
  */
-static LwipError
+static LwipStatus
 ppp_netif_init_cb(NetIfc* netif)
 {
     netif->name[0] = 'p';
@@ -347,7 +347,7 @@ ppp_netif_init_cb(NetIfc* netif)
 /*
  * Send an IPv4 packet on the given connection.
  */
-static LwipError ppp_netif_output_ip4(NetIfc* netif,
+static LwipStatus ppp_netif_output_ip4(NetIfc* netif,
                                       struct PacketBuffer* pb,
                                       const Ip4Addr* ipaddr)
 {
@@ -357,17 +357,17 @@ static LwipError ppp_netif_output_ip4(NetIfc* netif,
 /*
  * Send an IPv6 packet on the given connection.
  */
-static LwipError
+static LwipStatus
 ppp_netif_output_ip6(NetIfc* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr)
 {
     return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 
-static LwipError
+static LwipStatus
 ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol)
 {
     PppPcb* pcb = (PppPcb*)netif->state;
-    LwipError err;
+    LwipStatus err;
     struct PacketBuffer* fpb = nullptr;
 
     /* Check that the link is up. */
@@ -469,7 +469,7 @@ err:
 
 /* Initialize the PPP subsystem. */
 int
-ppp_init(void)
+init_ppp_subsys(void)
 {
     // LWIP_MEMPOOL_INIT(PppPcb);
 
@@ -480,102 +480,87 @@ ppp_init(void)
     magic_init();
 
     return 0;
-}
+} 
 
-/*
- * Create a new PPP control block.
- *
- * This initializes the PPP control block but does not
- * attempt to negotiate the LCP session.
- *
- * Return a new PPP connection control block pointer
- * on success or a null pointer on failure.
- */
-PppPcb*
-ppp_new(NetIfc* pppif,
-        const struct LinkCallbacks* callbacks,
-        void* link_ctx_cb,
-        const ppp_link_status_cb_fn link_status_cb,
-        void* ctx_cb)
+//
+// Create a new PPP control block.
+//
+// This initializes the PPP control block but does not
+// attempt to negotiate the LCP session.
+//
+// Return a new PPP connection control block pointer
+// on success or a null pointer on failure.
+//
+PppPcb* init_ppp_pcb(NetIfc* pppif,
+                     void* link_ctx_cb,
+                     const ppp_link_status_cb_fn link_status_cb,
+                     void* ctx_cb)
 {
     const struct Protent* protp; /* PPP is single-threaded: without a callback,
      * there is no way to know when the link is up. */
     if (link_status_cb == nullptr)
     {
         return nullptr;
-    }
-
-    // pcb = (PppPcb*)LWIP_MEMPOOL_ALLOC(PppPcb);
-    auto pcb = new PppPcb;
+    } // pcb = (PppPcb*)LWIP_MEMPOOL_ALLOC(PppPcb);
+    const auto pcb = new PppPcb;
     if (pcb == nullptr)
     {
         return nullptr;
     }
-
-    memset(pcb, 0, sizeof(PppPcb));
-
-    /* default configuration */
+    memset(pcb, 0, sizeof(PppPcb)); /* default configuration */
     pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
     pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;
     pcb->settings.pap_req_timeout = UPAP_DEFREQTIME;
-
     pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
     pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
     pcb->settings.chap_rechallenge_time = CHAP_DEFRECHALLENGETIME;
-
     pcb->settings.eap_req_time = EAP_DEFREQTIME;
     pcb->settings.eap_allow_req = EAP_DEFALLOWREQ;
     pcb->settings.eap_timeout_time = EAP_DEFTIMEOUT;
     pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
-
     pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
     pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
     pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
-
     pcb->settings.fsm_timeout_time = FSM_DEFTIMEOUT;
     pcb->settings.fsm_max_conf_req_transmits = FSM_DEFMAXCONFREQS;
     pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
-
     pcb->netif = pppif;
-    // MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
+    Ip4Addr ip4_any = get_ip4_addr_any();
+    Ip4Addr ip4_bcast = get_ip4_addr_broadcast();
     if (!netif_add(pcb->netif,
-                   kIp4AddrAny,
-                   kIp4AddrBroadcast,
-                   kIp4AddrAny,
-                   (void *)pcb,
+                   &ip4_any,
+                   &ip4_bcast,
+                   &ip4_any,
+                   static_cast<void *>(pcb),
                    ppp_netif_init_cb,
                    nullptr))
     {
         delete pcb;
-        // LWIP_MEMPOOL_FREE(PppPcb, pcb);
-        // PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
         return nullptr;
-    }
-
+    } 
+    
     //pcb->link_cb = callbacks;
     // TODO: consider implementing "copy callbacks" fn
-    pcb->link_cb->connect = callbacks->connect;
-    pcb->link_cb->listen = callbacks->listen;
-    pcb->link_cb->disconnect = callbacks->listen;
-    pcb->link_cb->free = callbacks->free;
-    pcb->link_cb->write = callbacks->write;
-    pcb->link_cb->netif_output = callbacks->netif_output;
-    pcb->link_cb->send_config = callbacks->send_config;
-    pcb->link_cb->recv_config = callbacks->recv_config;
+    // pcb->link_cb->connect = callbacks->connect;
+    // pcb->link_cb->listen = callbacks->listen;
+    // pcb->link_cb->disconnect = callbacks->listen;
+    // pcb->link_cb->free = callbacks->free;
+    // pcb->link_cb->write = callbacks->write;
+    // pcb->link_cb->netif_output = callbacks->netif_output;
+    // pcb->link_cb->send_config = callbacks->send_config;
+    // pcb->link_cb->recv_config = callbacks->recv_config;
     pcb->link_ctx_cb = link_ctx_cb;
     pcb->link_status_cb = link_status_cb;
-    pcb->ctx_cb = ctx_cb;
-
-    /*
-     * Initialize each protocol.
-     */
+    pcb->ctx_cb = ctx_cb; 
+    
+    //
+    // Initialize each protocol.
     // TODO: call init for protocols
     // for (auto i = 0; (protp = kProtocols[i]) != nullptr; ++i)
     // {
     //     (*protp->init)(pcb);
     // }
-
     new_phase(pcb, PPP_PHASE_DEAD);
     return pcb;
 }
@@ -633,19 +618,22 @@ bool ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
     magic_randomize();
     if (pb->len < 2)
     {
-        PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
         pbuf_free(pb);
         return false;
     }
-    uint16_t protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
-    pbuf_remove_header(pb, sizeof(protocol));
+
+    uint8_t pb_payload_0 = uint8_t(static_cast<uint8_t*>(pb->payload)[0]);
+    uint8_t pb_payload_1 = uint8_t(static_cast<uint8_t*>(pb->payload)[1]);
+
+    uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
+    size_t proto_size = 2; // sizeof(protocol)
+    pbuf_remove_header(pb, proto_size);
     if (pb->len < 2)
     {
-        // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
         goto drop;
     }
-    protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
-    pbuf_remove_header(pb, sizeof(protocol));
+    // protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
+    pbuf_remove_header(pb, proto_size);
     if (protocol == PPP_COMP)
     {
         if (protocol != PPP_LCP && lcp_fsm->state != PPP_FSM_OPENED)
@@ -794,7 +782,7 @@ bool ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
  * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
  * functions (which are callbacks of the netif PPP interface).
  */
-LwipError
+LwipStatus
 ppp_write(PppPcb* pcb, struct PacketBuffer* p)
 {
     return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
@@ -1002,7 +990,7 @@ sifdown(PppPcb* pcb)
 uint32_t
 get_mask(uint32_t addr)
 {
-    return kIpaddrBroadcast;
+    return kIpaddr4Broadcast;
 }
 
 #define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \

@@ -128,7 +128,7 @@ NetIfc* ip4_route(const Ip4Addr* dest)
   /* loopif is disabled, looopback traffic is passed through any netif */
   if (ip4_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
-    if (netif_default != NULL && netif_is_up(netif_default)) {
+    if (netif_default != nullptr && netif_is_up(netif_default)) {
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
@@ -142,12 +142,12 @@ NetIfc* ip4_route(const Ip4Addr* dest)
 
 
   netif = LWIP_HOOK_IP4_ROUTE_SRC(NULL, dest);
-  if (netif != NULL) {
+  if (netif != nullptr) {
     return netif;
   }
 
   netif = LWIP_HOOK_IP4_ROUTE(dest);
-  if (netif != NULL) {
+  if (netif != nullptr) {
     return netif;
   }
 
@@ -235,7 +235,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
 
   /* Find network interface where to forward this IP packet to. */
   netif = ip4_route_src(ip4_current_src_addr(), ip4_current_dest_addr());
-  if (netif == NULL) {
+  if (netif == nullptr) {
     Logf(IP_DEBUG, ("ip4_forward: no forwarding route for %"U16_F".%"U16_F".%"U16_F".%"U16_F" found\n",
                            ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
                            ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
@@ -356,7 +356,7 @@ ip4_input_accept(NetIfc*netif)
  * @return ERR_OK if the packet was processed (could return ERR_* if it wasn't
  *         processed, but currently always returns ERR_OK)
  */
-LwipError
+LwipStatus
 ip4_input(struct PacketBuffer *p, NetIfc*inp)
 {
   const struct Ip4Hdr *iphdr;
@@ -462,7 +462,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
       }
       netif = inp;
     } else {
-      netif = NULL;
+      netif = nullptr;
     }
 
   } else {
@@ -504,7 +504,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
    *
    * #define LWIP_IP_ACCEPT_UDP_PORT(dst_port) ((dst_port) == PP_NTOHS(12345))
    */
-  if (netif == NULL) {
+  if (netif == nullptr) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       const struct udp_hdr *udphdr = (const struct udp_hdr *)((const uint8_t *)iphdr + iphdr_hlen);
@@ -695,7 +695,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
  * @note ip_id: RFC791 "some host may be able to simply use
  *  unique identifiers independent of destination"
  */
-LwipError
+LwipStatus
 ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
               uint8_t ttl, uint8_t tos,
               uint8_t proto, NetIfc*netif)
@@ -710,7 +710,7 @@ ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
  * @ param ip_options pointer to the IP options, copied into the IP header
  * @ param optlen length of ip_options
  */
-LwipError
+LwipStatus
 ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
                   uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
                   uint16_t optlen)
@@ -735,7 +735,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
  * Same as ip_output_if() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
-  LwipError
+  LwipStatus
   ip4_output_if_src(struct PacketBuffer *p,
                     const Ip4Addr *src,
                     const Ip4Addr *dest,
@@ -752,7 +752,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
  * Same as ip_output_if_opt() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
-LwipError
+LwipStatus
 ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
                       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
                       uint16_t optlen)
@@ -937,7 +937,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
  * @return ERR_RTE if no route is found
  *         see ip_output_if() for more return values
  */
-  LwipError
+  LwipStatus
   ip4_output(struct PacketBuffer *p,
              const Ip4Addr *src,
              const Ip4Addr *dest,
@@ -979,7 +979,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
  * @return ERR_RTE if no route is found
  *         see ip_output_if() for more return values
  */
-  LwipError
+  LwipStatus
   ip4_output_hinted(struct PacketBuffer *p,
                     const Ip4Addr *src,
                     const Ip4Addr *dest,
@@ -989,7 +989,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
                     NetIfc*cHint *netif_hint)
   {
       NetIfc*netif;
-      LwipError err;
+      LwipStatus err;
 
       LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 

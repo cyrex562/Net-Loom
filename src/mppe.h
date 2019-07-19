@@ -167,9 +167,9 @@ typedef struct ppp_mppe_state {
 void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key);
 void mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state);
-LwipError mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol);
+LwipStatus mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state);
-LwipError mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb);
+LwipStatus mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb);
 
 #ifdef __cplusplus
 }

@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
 /** Definitions for error constants. */
-enum LwipErrorCode {
+enum LwipStatus {
 /** No error, everything OK. */
   ERR_OK         = 0,
 /** Out of memory error.     */
@@ -78,11 +78,11 @@ enum LwipErrorCode {
 
 /** Define LWIP_ERR_T in cc.h if you want to use
  *  a different type for your platform (must be signed). */
-typedef int LwipError;
 
-extern const char *lwip_strerr(LwipError err);
 
-int err_to_errno(LwipError err);
+extern const char *lwip_strerr(LwipStatus err);
+
+int err_to_errno(LwipStatus err);
 
 #ifdef __cplusplus
 }

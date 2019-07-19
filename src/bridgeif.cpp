@@ -27,7 +27,7 @@ uint8_t bridgeif_netif_client_id = 0xff;
  * bit [BRIDGEIF_MAX_PORTS]: cpu port
  * 0: drop
  */
-LwipError bridgeif_fdb_add(NetIfc* bridgeif,
+LwipStatus bridgeif_fdb_add(NetIfc* bridgeif,
                            const struct EthAddr* addr,
                            const BridgeIfcPortMask ports)
 {
@@ -54,7 +54,7 @@ LwipError bridgeif_fdb_add(NetIfc* bridgeif,
  * @ingroup bridgeif
  * Remove a static entry from the forwarding database
  */
-LwipError bridgeif_fdb_remove(NetIfc* bridgeif, const struct EthAddr* addr)
+LwipStatus bridgeif_fdb_remove(NetIfc* bridgeif, const struct EthAddr* addr)
 {
     lwip_assert("invalid netif", bridgeif != nullptr);
     const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
@@ -124,7 +124,7 @@ static int bridgeif_is_local_mac(BridgeIfcPrivate* br, struct EthAddr* addr)
 }
 
 /* Output helper function */
-static LwipError bridgeif_send_to_port(BridgeIfcPrivate* br,
+static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
                                        struct PacketBuffer* p,
                                        uint8_t dstport_idx)
 {
@@ -161,11 +161,11 @@ static LwipError bridgeif_send_to_port(BridgeIfcPrivate* br,
 
 /** Helper function to pass a PacketBuffer to all ports marked in 'dstports'
  */
-static LwipError bridgeif_send_to_ports(BridgeIfcPrivate* br,
+static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
                                         struct PacketBuffer* p,
                                         BridgeIfcPortMask dstports)
 {
-    LwipError ret_err = ERR_OK;
+    LwipStatus ret_err = ERR_OK;
     BridgeIfcPortMask mask = 1;
     for (uint8_t i = 0; i < kBridgeIfcMaxPorts; i++, mask = static_cast<BridgeIfcPortMask>
          (mask << 1))
@@ -187,7 +187,7 @@ static LwipError bridgeif_send_to_ports(BridgeIfcPrivate* br,
  * The forwarding port(s) where this PacketBuffer is sent on is/are automatically selected
  * from the FDB.
  */
-LwipError bridgeif_output(NetIfc* netif, struct PacketBuffer* p)
+LwipStatus bridgeif_output(NetIfc* netif, struct PacketBuffer* p)
 {
     const auto br = static_cast<BridgeIfcPrivate *>(netif->state);
     const auto dst = static_cast<struct EthAddr *>(p->payload);
@@ -207,7 +207,7 @@ LwipError bridgeif_output(NetIfc* netif, struct PacketBuffer* p)
 /** The actual bridge input function. Port netif's input is changed to call
  * here. This function decides where the frame is forwarded.
  */
-static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
+static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
 {
     BridgeIfcPortMask dstports;
     if (p == nullptr || netif == nullptr)
@@ -275,7 +275,7 @@ static LwipError bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
 
 /** Input function for port netifs used to synchronize into tcpip_thread.
  */
-static LwipError bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif)
+static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif)
 {
     return tcpip_inpkt(p, netif, bridgeif_input);
 }
@@ -291,9 +291,9 @@ static LwipError bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif)
  * @param netif the lwip network interface structure for this ethernetif
  * @return ERR_OK if the loopif is initialized
  *         ERR_MEM if private data couldn't be allocated
- *         any other LwipError on error
+ *         any other LwipStatus on error
  */
-LwipError bridgeif_init(NetIfc* netif)
+LwipStatus bridgeif_init(NetIfc* netif)
 {
     lwip_assert("netif != NULL", (netif != nullptr));
     lwip_assert("bridgeif needs an input callback", (netif->input != nullptr));
@@ -393,7 +393,7 @@ LwipError bridgeif_init(NetIfc* netif)
  * @ingroup bridgeif
  * Add a port to the bridge
  */
-LwipError bridgeif_add_port(NetIfc* bridgeif, NetIfc* portif)
+LwipStatus bridgeif_add_port(NetIfc* bridgeif, NetIfc* portif)
 {
     lwip_assert("bridgeif != NULL", bridgeif != nullptr);
     lwip_assert("bridgeif->state != NULL", bridgeif->state != nullptr);

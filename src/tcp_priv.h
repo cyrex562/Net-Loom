@@ -69,14 +69,14 @@ void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
 struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
 void             tcp_abandon (struct TcpProtoCtrlBlk *pcb, int reset);
-LwipError            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
-LwipError            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
-LwipError            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
+LwipStatus            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
+LwipStatus            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
+LwipStatus            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_rto_commit(struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_rto  (struct TcpProtoCtrlBlk *pcb);
 void             tcp_rexmit_fast (struct TcpProtoCtrlBlk *pcb);
 uint32_t            tcp_update_rcv_ann_wnd(struct TcpProtoCtrlBlk *pcb);
-LwipError            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
+LwipStatus            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
@@ -365,8 +365,8 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   tcp_set_flags(pcb, TF_ACK_NOW)
 
-LwipError tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
-LwipError tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
+LwipStatus tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
+LwipStatus tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
 
 void tcp_rexmit_seg(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg);
 
@@ -376,9 +376,9 @@ void tcp_rst(const struct TcpProtoCtrlBlk* pcb, uint32_t seqno, uint32_t ackno,
 
 uint32_t tcp_next_iss(struct TcpProtoCtrlBlk *pcb);
 
-LwipError tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
-LwipError tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
-LwipError tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
+LwipStatus tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
+LwipStatus tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
+LwipStatus tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
@@ -386,7 +386,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 
-LwipError tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipError err);
+LwipStatus tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipStatus err);
 
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)
@@ -404,5 +404,5 @@ void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);
 
 
-LwipError tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
+LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
 

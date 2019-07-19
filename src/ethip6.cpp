@@ -70,7 +70,7 @@
  * @return
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
-LwipError
+LwipStatus
 ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
 {
     EthAddr dest{};
@@ -100,14 +100,14 @@ ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
     /* @todo anycast? */
 
     /* Ask ND6 what to do with the packet. */
-    const LwipError result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
+    const LwipStatus result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
     if (result != ERR_OK)
     {
         return result;
     }
 
     /* If no hardware address is returned, nd6 has queued the packet for later. */
-    if (hwaddr == NULL)
+    if (hwaddr == nullptr)
     {
         return ERR_OK;
     }

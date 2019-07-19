@@ -83,17 +83,17 @@ struct BridgeIfcInitData {
  */
 //#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
-LwipError bridgeif_init(NetIfc*netif);
-LwipError bridgeif_add_port(NetIfc*bridgeif, NetIfc*portif);
-LwipError bridgeif_fdb_add(NetIfc*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
-LwipError bridgeif_fdb_remove(NetIfc*bridgeif, const struct EthAddr *addr);
+LwipStatus bridgeif_init(NetIfc*netif);
+LwipStatus bridgeif_add_port(NetIfc*bridgeif, NetIfc*portif);
+LwipStatus bridgeif_fdb_add(NetIfc*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
+LwipStatus bridgeif_fdb_remove(NetIfc*bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);
 BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthAddr *dst_addr);
 void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
 
-static LwipError bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);
+static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);
 
 //
 // END OF FILE

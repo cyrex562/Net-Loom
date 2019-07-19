@@ -42,7 +42,7 @@
 #include "netif.h"
 
 
-LwipError slipif_init(NetIfc* netif);
+LwipStatus slipif_init(NetIfc* netif);
 void slipif_poll(NetIfc*netif);
 
 void slipif_process_rxqueue(NetIfc*netif);

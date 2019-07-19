@@ -372,7 +372,7 @@ static void lcp_rprotrej(Fsm *f, uint8_t *inp, int len) {
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->protocol == prot) {
 
-	    if (pname != NULL)
+	    if (pname != nullptr)
 		ppp_dbglog("Protocol-Reject for '%s' (0x%x) received", pname,
 		       prot);
 	    else
@@ -383,7 +383,7 @@ static void lcp_rprotrej(Fsm *f, uint8_t *inp, int len) {
 	}
 
 
-    if (pname != NULL)
+    if (pname != nullptr)
 	ppp_warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
 	     prot);
     else

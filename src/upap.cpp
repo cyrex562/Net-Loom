@@ -92,9 +92,9 @@ static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, i
  * upap_init - Initialize a UPAP unit.
  */
 static void upap_init(PppPcb *pcb) {
-    pcb->upap.us_user = NULL;
+    pcb->upap.us_user = nullptr;
     pcb->upap.us_userlen = 0;
-    pcb->upap.us_passwd = NULL;
+    pcb->upap.us_passwd = nullptr;
     pcb->upap.us_passwdlen = 0;
     pcb->upap.us_clientstate = UPAPCS_INITIAL;
 
@@ -472,7 +472,7 @@ static void upap_sauthreq(PppPcb *pcb) {
     outlen = UPAP_HEADERLEN + 2 * sizeof (uint8_t) +
 	pcb->upap.us_userlen + pcb->upap.us_passwdlen;
     p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
-    if(NULL == p)
+    if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
         pbuf_free(p);
@@ -507,7 +507,7 @@ static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, i
 
     outlen = UPAP_HEADERLEN + sizeof (uint8_t) + msglen;
     p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
-    if(NULL == p)
+    if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
         pbuf_free(p);

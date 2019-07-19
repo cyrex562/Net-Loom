@@ -55,14 +55,14 @@
 // LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "PPPOS_PCB")
 
 /* callbacks called from PPP core */
-static LwipError pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
-static LwipError pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol);
+static LwipStatus pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
+static LwipStatus pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol);
 static void pppos_connect(PppPcb *ppp, void *ctx);
 
 static void pppos_listen(PppPcb *ppp, void *ctx);
 
 static void pppos_disconnect(PppPcb *ppp, void *ctx);
-static LwipError pppos_destroy(PppPcb *ppp, void *ctx);
+static LwipStatus pppos_destroy(PppPcb *ppp, void *ctx);
 static void pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 static void pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
 
@@ -72,8 +72,8 @@ static void pppos_input_callback(void *arg);
 
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
-static LwipError pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs);
-static LwipError pppos_output_last(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint16_t *fcs);
+static LwipStatus pppos_output_append(pppos_pcb *pppos, LwipStatus err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs);
+static LwipStatus pppos_output_last(pppos_pcb *pppos, LwipStatus err, struct PacketBuffer *nb, uint16_t *fcs);
 
 /* Callbacks structure for PPP core */
 static const struct LinkCallbacks pppos_callbacks = {
@@ -160,7 +160,7 @@ PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
     return nullptr;
   }
 
-  ppp = ppp_new(pppif, &pppos_callbacks, pppos, link_status_cb, ctx_cb);
+  ppp = init_ppp_pcb(pppif, pppos, link_status_cb, ctx_cb);
   if (ppp == nullptr) {
     LWIP_MEMPOOL_FREE(PPPOS_PCB, pppos);
     return nullptr;
@@ -173,7 +173,7 @@ PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
 }
 
 /* Called by PPP core */
-static LwipError
+static LwipStatus
 pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -181,7 +181,7 @@ pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
   struct PacketBuffer *nb;
   uint16_t n;
   uint16_t fcs_out;
-  LwipError err;
+  LwipStatus err;
   ;
 
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
@@ -226,13 +226,13 @@ pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
 }
 
 /* Called by PPP core */
-static LwipError
+static LwipStatus
 pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   struct PacketBuffer *nb, *p;
   uint16_t fcs_out;
-  LwipError err;
+  LwipStatus err;
   ;
 
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
@@ -369,7 +369,7 @@ pppos_disconnect(PppPcb *ppp, void *ctx)
   ppp_link_end(ppp); /* notify upper layers */
 }
 
-static LwipError
+static LwipStatus
 pppos_destroy(PppPcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -586,7 +586,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
              * + PBUF_LINK_HLEN bytes so the packet is being allocated with enough header
              * space to be forwarded (to Ethernet for example).
              */
-            if (pppos->in_head == NULL) {
+            if (pppos->in_head == nullptr) {
               pbuf_alloc_len = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
             }
             next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len, PBUF_POOL);
@@ -734,8 +734,8 @@ pppos_input_drop(pppos_pcb *pppos)
  * If PacketBuffer is full, send the PacketBuffer and reuse it.
  * Return the current PacketBuffer.
  */
-static LwipError
-pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs)
+static LwipStatus
+pppos_output_append(pppos_pcb *pppos, LwipStatus err, struct PacketBuffer *nb, uint8_t c, uint8_t accm, uint16_t *fcs)
 {
   if (err != ERR_OK) {
     return err;
@@ -768,8 +768,8 @@ pppos_output_append(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, ui
   return ERR_OK;
 }
 
-static LwipError
-pppos_output_last(pppos_pcb *pppos, LwipError err, struct PacketBuffer *nb, uint16_t *fcs)
+static LwipStatus
+pppos_output_last(pppos_pcb *pppos, LwipStatus err, struct PacketBuffer *nb, uint16_t *fcs)
 {
   PppPcb *ppp = pppos->ppp;
 

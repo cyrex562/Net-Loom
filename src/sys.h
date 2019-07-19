@@ -37,9 +37,10 @@
 #pragma once
 #include <cstdint>
 
+#include "lwip_error.h"
+#include "sys_arch.h"
 
 typedef int sys_prot_t;
-
 
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
 constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
@@ -47,10 +48,7 @@ constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
-#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
-
-#include "lwip_error.h"
-#include "sys_arch.h"
+// #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
 /** Function prototype for thread functions */
 typedef void (*lwip_thread_fn)(void *arg);
@@ -77,9 +75,9 @@ typedef void (*lwip_thread_fn)(void *arg);
  * no real error handling is implemented.
  * 
  * @param mutex pointer to the mutex to create
- * @return ERR_OK if successful, another LwipError otherwise
+ * @return ERR_OK if successful, another LwipStatus otherwise
  */
-LwipError sys_mutex_new(sys_mutex_t *mutex);
+LwipStatus sys_mutex_new(sys_mutex_t *mutex);
 /**
  * @ingroup sys_mutex
  * Blocks the thread until the mutex can be grabbed.
@@ -133,9 +131,9 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex);
  *
  * @param sem pointer to the semaphore to create
  * @param count initial count of the semaphore
- * @return ERR_OK if successful, another LwipError otherwise
+ * @return ERR_OK if successful, another LwipStatus otherwise
  */
-LwipError sys_sem_new(sys_sem_t *sem, uint8_t count);
+LwipStatus sys_sem_new(sys_sem_t *sem, uint8_t count);
 /**
  * @ingroup sys_sem
  * Signals a semaphore
@@ -220,9 +218,9 @@ void sys_msleep(uint32_t ms); /* only has a (close to) 1 ms resolution. */
  * 
  * @param mbox pointer to the mbox to create
  * @param size (minimum) number of messages in this mbox
- * @return ERR_OK if successful, another LwipError otherwise
+ * @return ERR_OK if successful, another LwipStatus otherwise
  */
-LwipError sys_mbox_new(sys_mbox_t *mbox, int size);
+LwipStatus sys_mbox_new(sys_mbox_t *mbox, int size);
 /**
  * @ingroup sys_mbox
  * Post a message to an mbox - may not fail
@@ -241,7 +239,7 @@ void sys_mbox_post(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-LwipError sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
+LwipStatus sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Try to post a message to an mbox - may fail if full.
@@ -251,7 +249,7 @@ LwipError sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-LwipError sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
+LwipStatus sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Blocks the thread until a message arrives in the mailbox, but does

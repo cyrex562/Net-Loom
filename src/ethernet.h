@@ -61,8 +61,8 @@ inline bool eth_addr_cmp(const EthAddr* addr1, const EthAddr* addr2)
     return (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0);
 }
 
-LwipError ethernet_input(struct PacketBuffer* p, struct NetIfc* netif);
-LwipError ethernet_output(struct NetIfc* netif,
+LwipStatus ethernet_input(struct PacketBuffer* p, struct NetIfc* netif);
+LwipStatus ethernet_output(struct NetIfc* netif,
                       struct PacketBuffer* p,
                       const struct EthAddr* src,
                       const struct EthAddr* dst,

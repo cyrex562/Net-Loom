@@ -1,267 +1,44 @@
-/**
- * @file
- *
- * lwIP Options Configuration
- */
+//
+// file: opt.h
+//
 
-#if !defined LWIP_HDR_OPT_H
-#define LWIP_HDR_OPT_H
+#pragma once
 
-/*
- * Include user defined options first. Anything not defined in these files
- * will be set to standard values. Override anything you don't like!
- */
-
-/**
- * @defgroup lwip_opts Options (lwipopts.h)
- * @ingroup lwip
- *
- * @defgroup lwip_opts_debug Debugging
- * @ingroup lwip_opts
- *
- * @defgroup lwip_opts_infrastructure Infrastructure
- * @ingroup lwip_opts
- *
- * @defgroup lwip_opts_callback Callback-style APIs
- * @ingroup lwip_opts
- *
- * @defgroup lwip_opts_threadsafe_apis Thread-safe APIs
- * @ingroup lwip_opts
- */
-
- /*
-   ------------------------------------
-   -------------- NO SYS --------------
-   ------------------------------------
-*/
-/**
- * @defgroup lwip_opts_nosys NO_SYS
- * @ingroup lwip_opts_infrastructure
- * @{
- */
-/**
- * NO_SYS==1: Use lwIP without OS-awareness (no thread, semaphores, mutexes or
- * mboxes). This means threaded APIs cannot be used (socket, NetconnDesc,
- * i.e. everything in the 'api' folder), only the callback-style raw API is
- * available (and you have to watch out for yourself that you don't access
- * lwIP functions/structures from more than one context at a time!)
- */
-#if !defined NO_SYS || defined __DOXYGEN__
 #define NO_SYS                          0
-#endif
-/**
- * @}
- */
 
-/**
- * @defgroup lwip_opts_timers Timers
- * @ingroup lwip_opts_infrastructure
- * @{
- */
-/**
- * LWIP_TIMERS==0: Drop support for sys_timeout and lwip-internal cyclic timers.
- * (the array of lwip-internal cyclic timers is still provided)
- * (check NO_SYS_NO_TIMERS for compatibility to old versions)
- */
-#if !defined LWIP_TIMERS || defined __DOXYGEN__
-#ifdef NO_SYS_NO_TIMERS
-#define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
-#else
 #define LWIP_TIMERS                     1
-#endif
-#endif
 
-/**
- * LWIP_TIMERS_CUSTOM==1: Provide your own timer implementation.
- * Function prototypes in timeouts.h and the array of lwip-internal cyclic timers
- * are still included, but the implementation is not. The following functions
- * will be required: sys_timeouts_init(), sys_timeout(), sys_untimeout(),
- *                   sys_timeouts_mbox_fetch()
- */
-#if !defined LWIP_TIMERS_CUSTOM || defined __DOXYGEN__
 #define LWIP_TIMERS_CUSTOM              0
-#endif
-/**
- * @}
- */
 
-/**
- * @defgroup lwip_opts_memcpy memcpy
- * @ingroup lwip_opts_infrastructure
- * @{
- */
-/**
- * MEMCPY: override this if you have a faster implementation at hand than the
- * one included in your C library
- */
-#if !defined MEMCPY || defined __DOXYGEN__
 #define MEMCPY(dst,src,len)             memcpy(dst,src,len)
-#endif
 
-/**
- * SMEMCPY: override this with care! Some compilers (e.g. gcc) can inline a
- * call to memcpy() if the length is known at compile time and is small.
- */
-#if !defined SMEMCPY || defined __DOXYGEN__
 #define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
-#endif
 
-/**
- * MEMMOVE: override this if you have a faster implementation at hand than the
- * one included in your C library.  lwIP currently uses MEMMOVE only when IPv6
- * fragmentation support is enabled.
- */
-#if !defined MEMMOVE || defined __DOXYGEN__
 #define MEMMOVE(dst,src,len)            memmove(dst,src,len)
-#endif
-/**
- * @}
- */
 
-/*
-   ------------------------------------
-   ----------- Core locking -----------
-   ------------------------------------
-*/
-/**
- * @defgroup lwip_opts_lock Core locking and MPU
- * @ingroup lwip_opts_infrastructure
- * @{
- */
-/**
- * LWIP_MPU_COMPATIBLE: enables special memory management mechanism
- * which makes lwip able to work on MPU (Memory Protection Unit) system
- * by not passing stack-pointers to other threads
- * (this decreases performance as memory is allocated from pools instead
- * of keeping it on the stack)
- */
-#if !defined LWIP_MPU_COMPATIBLE || defined __DOXYGEN__
 #define LWIP_MPU_COMPATIBLE             0
-#endif
 
-/**
- * LWIP_TCPIP_CORE_LOCKING
- * Creates a global mutex that is held during TCPIP thread operations.
- * Can be locked by client code to perform lwIP operations without changing
- * into TCPIP thread using callbacks. See LOCK_TCPIP_CORE() and
- * UNLOCK_TCPIP_CORE().
- * Your system should provide mutexes supporting priority inversion to use this.
- */
-#if !defined LWIP_TCPIP_CORE_LOCKING || defined __DOXYGEN__
 #define LWIP_TCPIP_CORE_LOCKING         1
-#endif
 
-/**
- * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
- * this lets tcpip_input() grab the mutex for input packets as well,
- * instead of allocating a message and passing it to tcpip_thread.
- *
- * ATTENTION: this does not work when tcpip_input() is called from
- * interrupt context!
- */
-#if !defined LWIP_TCPIP_CORE_LOCKING_INPUT || defined __DOXYGEN__
 #define LWIP_TCPIP_CORE_LOCKING_INPUT   0
-#endif
 
-/**
- * SYS_LIGHTWEIGHT_PROT==1: enable inter-task protection (and task-vs-interrupt
- * protection) for certain critical regions during buffer allocation, deallocation
- * and memory allocation and deallocation.
- * ATTENTION: This is required when using lwIP from more than one context! If
- * you disable this, you must be sure what you are doing!
- */
-#if !defined SYS_LIGHTWEIGHT_PROT || defined __DOXYGEN__
 #define SYS_LIGHTWEIGHT_PROT            1
-#endif
 
-/**
- * Macro/function to check whether lwIP's threading/locking
- * requirements are satisfied during current function call.
- * This macro usually calls a function that is implemented in the OS-dependent
- * sys layer and performs the following checks:
- * - Not in ISR (this should be checked for NO_SYS==1, too!)
- * - If @ref LWIP_TCPIP_CORE_LOCKING = 1: TCPIP core lock is held
- * - If @ref LWIP_TCPIP_CORE_LOCKING = 0: function is called from TCPIP thread
- * @see @ref multithreading
- */
-#if !defined LWIP_ASSERT_CORE_LOCKED || defined __DOXYGEN__
 #define LWIP_ASSERT_CORE_LOCKED()
-#endif
 
-/**
- * Called as first thing in the lwIP TCPIP thread. Can be used in conjunction
- * with @ref LWIP_ASSERT_CORE_LOCKED to check core locking.
- * @see @ref multithreading
- */
-#if !defined LWIP_MARK_TCPIP_THREAD || defined __DOXYGEN__
 #define LWIP_MARK_TCPIP_THREAD()
-#endif
-/**
- * @}
- */
 
-/*
-   ------------------------------------
-   ---------- Memory options ----------
-   ------------------------------------
-*/
-/**
- * @defgroup lwip_opts_mem Heap and memory pools
- * @ingroup lwip_opts_infrastructure
- * @{
- */
-/**
- * MEM_LIBC_MALLOC==1: Use malloc/free/realloc provided by your C-library
- * instead of the lwip internal allocator. Can save code size if you
- * already use it.
- */
-#if !defined MEM_LIBC_MALLOC || defined __DOXYGEN__
 #define MEM_LIBC_MALLOC                 0
-#endif
 
-/**
- * MEMP_MEM_MALLOC==1: Use mem_malloc/mem_free instead of the lwip pool allocator.
- * Especially useful with MEM_LIBC_MALLOC but handle with care regarding execution
- * speed (heap alloc can be much slower than pool alloc) and usage from interrupts
- * (especially if your netif driver allocates PBUF_POOL pbufs for received frames
- * from interrupt)!
- * ATTENTION: Currently, this uses the heap for ALL pools (also for private pools,
- * not only for internal pools defined in memp_std.h)!
- */
-#if !defined MEMP_MEM_MALLOC || defined __DOXYGEN__
 #define MEMP_MEM_MALLOC                 0
-#endif
 
-/**
- * MEMP_MEM_INIT==1: Force use of memset to initialize pool memory.
- * Useful if pool are moved in uninitialized section of memory. This will ensure
- * default values in pcbs struct are well initialized in all conditions.
- */
+
 #define MEMP_MEM_INIT                   0
 
-/**
- * MEM_ALIGNMENT: should be set to the alignment of the CPU
- *    4 byte alignment -> \#define MEM_ALIGNMENT 4
- *    2 byte alignment -> \#define MEM_ALIGNMENT 2
- */
 #define MEM_ALIGNMENT                   1
 
-
-/**
- * MEM_SIZE: the size of the heap memory. If the application will send
- * a lot of data that needs to be copied, this should be set high.
- */
 #define MEM_SIZE                        1600
 
-/**
- * MEMP_OVERFLOW_CHECK: memp overflow protection reserves a configurable
- * amount of bytes before and after each memp element in every pool and fills
- * it with a prominent default value.
- *    MEMP_OVERFLOW_CHECK == 0 no checking
- *    MEMP_OVERFLOW_CHECK == 1 checks each element when it is freed
- *    MEMP_OVERFLOW_CHECK >= 2 checks each element in every pool every time
- *      memp_malloc() or memp_free() is called (useful but slow!)
- */
 #define MEMP_OVERFLOW_CHECK             0
 
 /**
@@ -1093,7 +870,7 @@
  *                                    DNS_LOCAL_HOSTLIST_ELEM("host_ip6", IPADDR6_INIT_HOST(123, 234, 345, 456)}
  *
  *  Instead, you can also use an external function:
- *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern LwipError my_lookup_function(const char *name, IpAddr *addr, uint8_t dns_addrtype)
+ *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern LwipStatus my_lookup_function(const char *name, IpAddr *addr, uint8_t dns_addrtype)
  *  that looks up the IP address and returns ERR_OK if found (LWIP_DNS_ADDRTYPE_xxx is passed in dns_addrtype).
  */
 #if !defined DNS_LOCAL_HOSTLIST || defined __DOXYGEN__
@@ -2690,7 +2467,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
  * Signature:\code{.c}
- * LwipError my_hook_tcp_inpkt(struct TcpProtoCtrlBlk *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
+ * LwipStatus my_hook_tcp_inpkt(struct TcpProtoCtrlBlk *pcb, struct tcp_hdr *hdr, uint16_t optlen, uint16_t opt1len, uint8_t *opt2, struct pbuf *p);
  * \endcode
  * Arguments:
  * - pcb: TcpProtoCtrlBlk selected for input of this packet (ATTENTION: this may be
@@ -2955,7 +2732,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(PacketBuffer, netif):
  * Called from ethernet_input() when an unknown eth type is encountered.
  * Signature:\code{.c}
- *   LwipError my_hook(struct PacketBuffer* PacketBuffer, NetIfc** netif);
+ *   LwipStatus my_hook(struct PacketBuffer* PacketBuffer, NetIfc** netif);
  * \endcode
  * Arguments:
  * - p: rx packet with unknown eth type
@@ -3106,7 +2883,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Called from NetconnDesc APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
  * Signature:\code{.c}
- *   int my_hook(const char *name, IpAddr *addr, uint8_t addrtype, LwipError *err)
+ *   int my_hook(const char *name, IpAddr *addr, uint8_t addrtype, LwipStatus *err)
  * \endcode
  * Arguments:
  * - name: hostname to resolve
@@ -3419,4 +3196,3 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * @}
  */
 
-#endif /* LWIP_HDR_OPT_H */

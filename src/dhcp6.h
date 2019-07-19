@@ -43,15 +43,15 @@
 #include "netif.h"
 #include <cstdint>
 
-#define DHCP6_CLIENT_PORT  546
-#define DHCP6_SERVER_PORT  547
+constexpr auto DHCP6_CLIENT_PORT = 546;
+constexpr auto DHCP6_SERVER_PORT = 547;
 
 
  /* DHCPv6 message item offsets and length */
-#define DHCP6_TRANSACTION_ID_LEN   3
+constexpr auto DHCP6_TRANSACTION_ID_LEN = 3;
 
 /** minimum set of fields of any DHCPv6 message */
-struct dhcp6_msg
+struct Dhcp6Msg
 {
     uint8_t msgtype;
     uint8_t transaction_id[DHCP6_TRANSACTION_ID_LEN]; /* options follow */
@@ -60,11 +60,11 @@ struct dhcp6_msg
 
 
 /* DHCP6 client states */
-typedef enum {
+ enum Dhcp6States{
     DHCP6_STATE_OFF = 0,
     DHCP6_STATE_STATELESS_IDLE = 1,
     DHCP6_STATE_REQUESTING_CONFIG = 2
-} dhcp6_state_enum_t;
+} ;
 
 /* DHCPv6 message types */
 #define DHCP6_SOLICIT               1
@@ -150,8 +150,8 @@ void dhcp6_set_struct(NetIfc*netif, struct Dhcp6 *dhcp6);
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
 void dhcp6_cleanup(NetIfc*netif);
 
-LwipError dhcp6_enable_stateful(NetIfc*netif);
-LwipError dhcp6_enable_stateless(NetIfc*netif);
+LwipStatus dhcp6_enable_stateful(NetIfc*netif);
+LwipStatus dhcp6_enable_stateless(NetIfc*netif);
 void dhcp6_disable(NetIfc*netif);
 
 void dhcp6_tmr(void);

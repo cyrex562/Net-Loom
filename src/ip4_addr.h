@@ -55,14 +55,14 @@ inline Ip4Addr init_ip4_addr_bytes(const uint8_t a,
 }
 
 
-inline Ip4Addr kIp4AddrAny()
+inline Ip4Addr get_ip4_addr_any()
 {
     Ip4Addr addr{};
     addr.addr = 0;
     return addr;
 }
 
-inline Ip4Addr kIp4AddrBroadcast()
+inline Ip4Addr get_ip4_addr_broadcast()
 {
     Ip4Addr addr{};
     addr.addr = make_u32(255,255,255,255);
@@ -79,7 +79,7 @@ constexpr uint32_t kIpaddrLoopback = uint32_t(0x7f000001UL);
 /** 0.0.0.0 */
 constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
-constexpr uint32_t kIpaddrBroadcast = uint32_t(0xffffffffUL);
+constexpr uint32_t kIpaddr4Broadcast = uint32_t(0xffffffffUL);
 
 /* Definitions of the bits in an Internet address integer.
 

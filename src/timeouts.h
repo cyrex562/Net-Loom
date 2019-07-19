@@ -1,72 +1,36 @@
-/**
- * @file
- * Timer implementations
- */
 
-/*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Adam Dunkels <adam@sics.se>
- *         Simon Goldschmidt
- *
- */
+//
+// file: timeouts.h
+//
+
 #pragma once
 #include "opt.h"
 #include "lwip_error.h"
-
 #include "sys.h"
-
-
-
-
 
 /** Returned by sys_timeouts_sleeptime() to indicate there is no timer, so we
  * can sleep forever.
  */
-#define SYS_TIMEOUTS_SLEEPTIME_INFINITE 0xFFFFFFFF
+constexpr auto SYS_TIMEOUTS_SLEEPTIME_INFINITE = 0xFFFFFFFF;
 
 /** Function prototype for a stack-internal timer function that has to be
  * called at a defined interval */
-typedef void (* lwip_cyclic_timer_handler)(void);
+typedef void (* cyclic_timer_handler)(void);
 
-/** This struct contains information about a stack-internal timer function
- that has to be called at a defined interval */
-struct lwip_cyclic_timer {
-  uint32_t interval_ms;
-  lwip_cyclic_timer_handler handler;
-  const char* handler_name;
+// This struct contains information about a stack-internal timer function that has to be called at a defined interval
+struct CyclicTimer
+{
+    uint32_t interval_ms;
+    cyclic_timer_handler handler;
+    const char* handler_name;
 };
 
-/** This array contains all stack-internal cyclic timers. To get the number of
- * timers, use lwip_num_cyclic_timers */
-extern const struct lwip_cyclic_timer lwip_cyclic_timers[];
+// This array contains all stack-internal cyclic timers. To get the number of timers, use lwip_num_cyclic_timers
+// TODO: eliminate globl
+extern const struct CyclicTimer lwip_cyclic_timers[];
+
 /** Array size of lwip_cyclic_timers[] */
-extern const int kLwipNumCyclicTimers;
+extern const int NUM_CYCLIC_TIMERS;
 
 
 /** Function prototype for a timeout callback function. Register such a function
@@ -76,13 +40,14 @@ extern const int kLwipNumCyclicTimers;
  */
 typedef void (* sys_timeout_handler)(void *arg);
 
-struct sys_timeo {
-  struct sys_timeo *next;
-  uint32_t time;
-  sys_timeout_handler h;
-  void *arg;
-
-  const char* handler_name;
+struct SysTimeoutContext
+{
+    struct SysTimeoutContext* next;
+    uint32_t time;
+    sys_timeout_handler h;
+    void* arg;
+    const char* handler_name;
+};
 
 
 void sys_timeouts_init(void);
@@ -96,7 +61,9 @@ void sys_restart_timeouts(void);
 void sys_check_timeouts(void);
 uint32_t sys_timeouts_sleeptime(void);
 
-struct sys_timeo** sys_timeouts_get_next_timeout(void);
+struct SysTimeoutContext** sys_timeouts_get_next_timeout(void);
 void lwip_cyclic_timer(void *arg);
 
-
+//
+// END OF FILE
+//

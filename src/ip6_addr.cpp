@@ -228,13 +228,13 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
     char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;
     int buflen_ip4 = buflen - sizeof(IP4MAPPED_HEADER) + 1;
     if (buflen < (int)sizeof(IP4MAPPED_HEADER)) {
-      return NULL;
+      return nullptr;
     }
     memcpy(buf, IP4MAPPED_HEADER, sizeof(IP4MAPPED_HEADER));
     addr4.addr = addr->addr[3];
     ret = ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
     if (ret != buf_ip4) {
-      return NULL;
+      return nullptr;
     }
     return buf;
   }
@@ -256,7 +256,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
         /* special case, we must render a ':' for the last block. */
         buf[i++] = ':';
         if (i >= buflen) {
-          return NULL;
+          return nullptr;
         }
         break;
       }
@@ -272,7 +272,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
           empty_block_flag = 1;
           buf[i++] = ':';
           if (i >= buflen) {
-            return NULL;
+            return nullptr;
           }
           continue; /* move on to next block. */
         }
@@ -288,7 +288,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
     if (current_block_index > 0) {
       buf[i++] = ':';
       if (i >= buflen) {
-        return NULL;
+        return nullptr;
       }
     }
 
@@ -298,7 +298,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
       buf[i++] = lwip_xchar(((current_block_value & 0xf000) >> 12));
       zero_flag = 0;
       if (i >= buflen) {
-        return NULL;
+        return nullptr;
       }
     }
 
@@ -308,7 +308,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
       buf[i++] = lwip_xchar(((current_block_value & 0xf00) >> 8));
       zero_flag = 0;
       if (i >= buflen) {
-        return NULL;
+        return nullptr;
       }
     }
 
@@ -319,13 +319,13 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
       buf[i++] = lwip_xchar(((current_block_value & 0xf0) >> 4));
       zero_flag = 0;
       if (i >= buflen) {
-        return NULL;
+        return nullptr;
       }
     }
 
     buf[i++] = lwip_xchar((current_block_value & 0xf));
     if (i >= buflen) {
-      return NULL;
+      return nullptr;
     }
   }
 

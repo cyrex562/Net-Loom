@@ -124,7 +124,7 @@ lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
 /*
  * Compress IPv6 and/or UDP headers.
  * */
-LwipError
+LwipStatus
 lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
                          uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, Ip6Addr *lowpan6_contexts,
                          const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
@@ -136,11 +136,11 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   struct ip6_hdr *ip6hdr;
   IpAddr ip6src, ip6dst;
 
-  LWIP_ASSERT("netif != NULL", netif != NULL);
-  LWIP_ASSERT("inbuf != NULL", inbuf != NULL);
-  LWIP_ASSERT("outbuf != NULL", outbuf != NULL);
-  LWIP_ASSERT("lowpan6_header_len_out != NULL", lowpan6_header_len_out != NULL);
-  LWIP_ASSERT("hidden_header_len_out != NULL", hidden_header_len_out != NULL);
+  LWIP_ASSERT("netif != NULL", netif != nullptr);
+  LWIP_ASSERT("inbuf != NULL", inbuf != nullptr);
+  LWIP_ASSERT("outbuf != NULL", outbuf != nullptr);
+  LWIP_ASSERT("lowpan6_header_len_out != NULL", lowpan6_header_len_out != nullptr);
+  LWIP_ASSERT("hidden_header_len_out != NULL", hidden_header_len_out != nullptr);
 
   /* Perform 6LowPAN IPv6 header compression according to RFC 6282 */
   buffer = outbuf;
@@ -380,7 +380,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
  * @param dest destination address of the outer layer, used for address compression
  * @return ERR_OK if decompression succeeded, an error otherwise
  */
-static LwipError
+static LwipStatus
 lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
                        uint8_t *decomp_buffer, size_t decomp_bufsize,
                        uint16_t *hdr_size_comp, uint16_t *hdr_size_decomp,
@@ -394,12 +394,12 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   uint32_t header_temp;
   uint16_t ip6_offset = IP6_HLEN;
 
-  LWIP_ASSERT("lowpan6_buffer != NULL", lowpan6_buffer != NULL);
-  LWIP_ASSERT("decomp_buffer != NULL", decomp_buffer != NULL);
-  LWIP_ASSERT("src != NULL", src != NULL);
-  LWIP_ASSERT("dest != NULL", dest != NULL);
-  LWIP_ASSERT("hdr_size_comp != NULL", hdr_size_comp != NULL);
-  LWIP_ASSERT("dehdr_size_decompst != NULL", hdr_size_decomp != NULL);
+  LWIP_ASSERT("lowpan6_buffer != NULL", lowpan6_buffer != nullptr);
+  LWIP_ASSERT("decomp_buffer != NULL", decomp_buffer != nullptr);
+  LWIP_ASSERT("src != NULL", src != nullptr);
+  LWIP_ASSERT("dest != NULL", dest != nullptr);
+  LWIP_ASSERT("hdr_size_comp != NULL", hdr_size_comp != nullptr);
+  LWIP_ASSERT("dehdr_size_decompst != NULL", hdr_size_decomp != nullptr);
 
   ip6hdr = (struct ip6_hdr *)decomp_buffer;
   if (decomp_bufsize < IP6_HLEN) {
@@ -770,7 +770,7 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
 {
   struct PacketBuffer *q;
   uint16_t lowpan6_offset, ip6_offset;
-  LwipError err;
+  LwipStatus err;
 
 #define UDP_HLEN_ALLOC UDP_HLEN
 
@@ -778,15 +778,15 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   /* Allocate a buffer for decompression. This buffer will be too big and will be
      trimmed once the final size is known. */
   q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN_ALLOC, PBUF_POOL);
-  if (q == NULL) {
+  if (q == nullptr) {
     pbuf_free(p);
-    return NULL;
+    return nullptr;
   }
   if (q->len < IP6_HLEN + UDP_HLEN_ALLOC) {
     /* The headers need to fit into the first PacketBuffer */
     pbuf_free(p);
     pbuf_free(q);
-    return NULL;
+    return nullptr;
   }
 
   /* Decompress the IPv6 (and possibly UDP) header(s) into the new PacketBuffer */
@@ -795,7 +795,7 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   if (err != ERR_OK) {
     pbuf_free(p);
     pbuf_free(q);
-    return NULL;
+    return nullptr;
   }
 
   /* Now we copy leftover contents from p to q, so we have all L2 and L3 headers
@@ -812,11 +812,11 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   /* ... trim the PacketBuffer to its correct size... */
   pbuf_realloc(q, ip6_offset + p->len);
   /* ... and cat possibly remaining (data-only) pbufs */
-  if (p->next != NULL) {
+  if (p->next != nullptr) {
     pbuf_cat(q, p->next);
   }
   /* the original (first) PacketBuffer can now be freed */
-  p->next = NULL;
+  p->next = nullptr;
   pbuf_free(p);
 
   /* all done */

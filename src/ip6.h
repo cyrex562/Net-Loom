@@ -190,20 +190,21 @@ struct Ip6FragHdr
 NetIfc*ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
 const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
 
-LwipError         ip6_input(struct PacketBuffer *p, NetIfc* inp);
-LwipError         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipStatus         ip6_input(struct PacketBuffer *p, NetIfc* inp);
+LwipStatus         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                          uint8_t hl, uint8_t tc, uint8_t nexth);
-LwipError         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipStatus         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
-LwipError         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipStatus         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
 
-LwipError         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
+LwipStatus         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest);
 
-LwipError         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
+LwipStatus         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
 
-
-#define ip6_netif_get_local_ip(netif, dest) (((netif) != NULL) ? \
-  ip6_select_source_address(netif, dest) : NULL)
+inline const IpAddr* ip6_netif_get_local_ip(NetIfc* netif, Ip6Addr* dest)
+{
+    return (((netif) != nullptr) ? ip6_select_source_address(netif, dest) : nullptr);
+}
 
 #define ip6_debug_print(p)

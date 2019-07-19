@@ -79,7 +79,7 @@ const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
  * @see ETHARP_SUPPORT_VLAN
  * @see LWIP_HOOK_VLAN_CHECK
  */
-LwipError
+LwipStatus
 ethernet_input(struct PacketBuffer* p, NetIfc* netif)
 {
     uint16_t next_hdr_offset = kSizeofEthHdr;
@@ -269,9 +269,9 @@ free_and_return:
  * @param src the source MAC address to be copied into the ethernet header
  * @param dst the destination MAC address to be copied into the ethernet header
  * @param eth_type ethernet type (@ref lwip_ieee_eth_type)
- * @return ERR_OK if the packet was sent, any other LwipError on failure
+ * @return ERR_OK if the packet was sent, any other LwipStatus on failure
  */
-LwipError ethernet_output(NetIfc* netif, struct PacketBuffer* p,
+LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
                           EthAddr* src, EthAddr* dst,
                           uint16_t eth_type)
 {

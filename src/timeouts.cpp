@@ -26,7 +26,7 @@ constexpr auto LWIP_MAX_TIMEOUT = 0x7fffffff;
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
-const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
+const struct CyclicTimer lwip_cyclic_timers[] = {
 
     /* The TCP timer is a special case: it does not have to run always and
        is triggered to start from TCP using tcp_timer_needed() */
@@ -44,10 +44,10 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
     {DHCP6_TIMER_MSECS, HANDLER(dhcp6_tmr)},
 
 };
-const int kLwipNumCyclicTimers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
+const int NUM_CYCLIC_TIMERS = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 /** The one and only timeout list */
-static struct sys_timeo *next_timeout;
+static struct SysTimeoutContext *next_timeout;
 
 static uint32_t current_timeout_due_time;
 
@@ -100,10 +100,10 @@ static void
 sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const char *handler_name)
 
 {
-  struct sys_timeo *timeout, *t;
+  struct SysTimeoutContext *timeout, *t;
 
   // timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
-  timeout = new sys_timeo;
+  timeout = new SysTimeoutContext;
   if (timeout == nullptr) {
     lwip_assert("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != nullptr);
     return;
@@ -150,7 +150,7 @@ lwip_cyclic_timer(void *arg)
 {
   uint32_t now;
   uint32_t next_timeout_time;
-  const struct lwip_cyclic_timer *cyclic = (const struct lwip_cyclic_timer *)arg;
+  const struct CyclicTimer *cyclic = (const struct CyclicTimer *)arg;
 
   Logf(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
 
@@ -217,7 +217,7 @@ sys_timeout(uint32_t msecs, sys_timeout_handler handler, void *arg)
 void
 sys_untimeout(sys_timeout_handler handler, void *arg)
 {
-  struct sys_timeo *prev_t, *t;
+  struct SysTimeoutContext *prev_t, *t;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -261,7 +261,7 @@ sys_check_timeouts(void)
   now = sys_now();
 
   do {
-    struct sys_timeo *tmptimeout;
+    struct SysTimeoutContext *tmptimeout;
     sys_timeout_handler handler;
     void *arg;
 
@@ -282,7 +282,7 @@ sys_check_timeouts(void)
     arg = tmptimeout->arg;
     current_timeout_due_time = tmptimeout->time;
 
-    if (handler != NULL) {
+    if (handler != nullptr) {
       Logf(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
                                  tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
     }
@@ -308,7 +308,7 @@ sys_restart_timeouts(void)
 {
   uint32_t now;
   uint32_t base;
-  struct sys_timeo *t;
+  struct SysTimeoutContext *t;
 
   if (next_timeout == nullptr) {
     return;

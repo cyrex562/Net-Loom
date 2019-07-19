@@ -177,17 +177,17 @@ void             dns_init(void);
 void             dns_tmr(void);
 void             dns_setserver(uint8_t numdns, const IpAddr *dnsserver);
 IpAddr dns_getserver(uint8_t numdns);
-LwipError            dns_gethostbyname(const char *hostname, IpAddr *addr,
+LwipStatus            dns_gethostbyname(const char *hostname, IpAddr *addr,
                                    dns_found_callback found, void *callback_arg);
-LwipError            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
+LwipStatus            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
                                    dns_found_callback found, void *callback_arg,
                                    uint8_t dns_addrtype);
 
 size_t         dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg);
-LwipError          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
+LwipStatus          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
 
 int            dns_local_removehost(const char *hostname, const IpAddr *addr);
-LwipError          dns_local_addhost(const char *hostname, const IpAddr *addr);
+LwipStatus          dns_local_addhost(const char *hostname, const IpAddr *addr);
 
 inline bool LwipDnsAddrtypeIsIpv6(uint8_t t)
 {

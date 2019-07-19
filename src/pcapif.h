@@ -9,7 +9,7 @@
 
 NetIfc*;
 
-LwipError pcapif_init    (NetIfc*netif);
+LwipStatus pcapif_init    (NetIfc*netif);
 void  pcapif_shutdown(NetIfc*netif);
 
 

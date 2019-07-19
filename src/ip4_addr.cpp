@@ -1,11 +1,7 @@
-#include "opt.h"
+#include "ip4_addr.h"
 #include "lwip_debug.h"
-// #include "ip_addr.h"
 #include "netif.h"
-
 #include <cctype>
-
-
 
 /**
  * Determine if an address is a broadcast address on a network interface
@@ -39,7 +35,7 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
   if (ip4_addr_netcmp(&ipaddr, get_net_ifc_ip4_addr(netif), netif_ip4_netmask(netif))
       /* ...and host identifier bits are all ones? =>... */
       && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
-          (kIpaddrBroadcast & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
+          (kIpaddr4Broadcast & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
       /* => network broadcast address */
       return 1;
   }

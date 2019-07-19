@@ -113,7 +113,7 @@ struct slipif_priv {
  * @param p the PacketBuffer chain packet to send
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
-static LwipError
+static LwipStatus
 slipif_output(NetIfc*netif, struct PacketBuffer *p)
 {
   struct slipif_priv *priv;
@@ -169,7 +169,7 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
  * @param ipaddr the ip address to send the packet to (not used for slipif)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
-static LwipError
+static LwipStatus
 slipif_output_v4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
 {
   ;
@@ -186,7 +186,7 @@ slipif_output_v4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
  * @param ipaddr the ip address to send the packet to (not used for slipif)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
-static LwipError
+static LwipStatus
 slipif_output_v6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
 {
   ;
@@ -355,7 +355,7 @@ slipif_loop_thread(void *nf)
  * @note If netif->state is interpreted as an uint8_t serial port number.
  *
  */
-LwipError
+LwipStatus
 slipif_init(NetIfc*netif)
 {
   struct slipif_priv *priv;
@@ -394,7 +394,7 @@ slipif_init(NetIfc*netif)
   priv->i = 0;
   priv->recved = 0;
 
-  priv->rxpackets = NULL;
+  priv->rxpackets = nullptr;
 
 
   netif->state = priv;
@@ -443,22 +443,22 @@ slipif_process_rxqueue(NetIfc*netif)
   struct slipif_priv *priv;
   SYS_ARCH_DECL_PROTECT(old_level);
 
-  LWIP_ASSERT("netif != NULL", (netif != NULL));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
+  LWIP_ASSERT("netif != NULL", (netif != nullptr));
+  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
 
   priv = (struct slipif_priv *)netif->state;
 
   SYS_ARCH_PROTECT(old_level);
-  while (priv->rxpackets != NULL) {
+  while (priv->rxpackets != nullptr) {
     struct PacketBuffer *p = priv->rxpackets;
 
     /* dequeue packet */
     struct PacketBuffer *q = p;
-    while ((q->len != q->tot_len) && (q->next != NULL)) {
+    while ((q->len != q->tot_len) && (q->next != nullptr)) {
       q = q->next;
     }
     priv->rxpackets = q->next;
-    q->next = NULL;
+    q->next = nullptr;
 
     SYS_ARCH_UNPROTECT(old_level);
     if (netif->input(p, netif) != ERR_OK) {
@@ -482,13 +482,13 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
   SYS_ARCH_DECL_PROTECT(old_level);
 
   p = slipif_rxbyte(netif, data);
-  if (p != NULL) {
+  if (p != nullptr) {
     SYS_ARCH_PROTECT(old_level);
-    if (priv->rxpackets != NULL) {
+    if (priv->rxpackets != nullptr) {
 
       /* queue multiple pbufs */
       struct PacketBuffer *q = p;
-      while (q->next != NULL) {
+      while (q->next != nullptr) {
         q = q->next;
       }
       q->next = p;
@@ -513,8 +513,8 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
 void
 slipif_received_byte(NetIfc*netif, uint8_t data)
 {
-  LWIP_ASSERT("netif != NULL", (netif != NULL));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
+  LWIP_ASSERT("netif != NULL", (netif != nullptr));
+  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
   slipif_rxbyte_enqueue(netif, data);
 }
 
@@ -534,8 +534,8 @@ slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len)
 {
   uint8_t i;
   uint8_t *rxdata = data;
-  LWIP_ASSERT("netif != NULL", (netif != NULL));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
+  LWIP_ASSERT("netif != NULL", (netif != nullptr));
+  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
 
   for (i = 0; i < len; i++, rxdata++) {
     slipif_rxbyte_enqueue(netif, *rxdata);

@@ -11,7 +11,6 @@
 #include "netif.h"
 #include "packet_buffer.h"
 #include "raw.h"
-#include "stats.h"
 #include "sys.h"
 #include "tcp_priv.h"
 #include "timeouts.h"
@@ -28,7 +27,6 @@
 void lwip_init(void)
 {
     auto a = 0;; /* Modules initialization */
-    stats_init();
     sys_init();
     pbuf_init();
     netif_init();
@@ -39,7 +37,7 @@ void lwip_init(void)
     tcp_init();
     init_igmp_module();
     dns_init();
-    ppp_init();
+    init_ppp_subsys();
     sys_timeouts_init();
 }
 

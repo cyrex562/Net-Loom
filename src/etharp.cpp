@@ -125,8 +125,8 @@ inline void EtharpSetAddrhint(NetIfc* netif, const int addrhint)
     }
 }
 
-static LwipError etharp_request_dst(struct NetIfc* netif, const Ip4Addr* ipaddr, const struct EthAddr* hw_dst_addr);
-static LwipError etharp_raw(struct NetIfc* netif,
+static LwipStatus etharp_request_dst(struct NetIfc* netif, const Ip4Addr* ipaddr, const struct EthAddr* hw_dst_addr);
+static LwipStatus etharp_raw(struct NetIfc* netif,
                             const struct EthAddr* ethsrc_addr, const struct EthAddr* ethdst_addr,
                             const struct EthAddr* hwsrc_addr, const Ip4Addr* ipsrc_addr,
                             const struct EthAddr* hwdst_addr, const Ip4Addr* ipdst_addr,
@@ -435,7 +435,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
  *
  * @see pbuf_free()
  */
-static LwipError
+static LwipStatus
 etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthAddr* ethaddr, uint8_t flags)
 {
     int16_t i;
@@ -457,7 +457,7 @@ etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthA
     /* bail out if no entry could be found */
     if (i < 0)
     {
-        return (LwipError)i;
+        return (LwipStatus)i;
     }
 
     if (flags & kEtharpFlagStaticEntry)
@@ -489,7 +489,7 @@ etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthA
     arp_table[i].ctime = 0;
     /* this is where we will send out queued packets! */
 
-    while (arp_table[i].next != NULL)
+    while (arp_table[i].next != nullptr)
     {
         struct PacketBuffer* p;
         /* remember remainder of queue */
@@ -519,7 +519,7 @@ etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthA
  * @param ethaddr ethernet address for the new static entry
  * @return See return values of etharp_add_static_entry
  */
-LwipError
+LwipStatus
 etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthAddr* ethaddr)
 {
     LWIP_ASSERT_CORE_LOCKED();
@@ -547,7 +547,7 @@ etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthAddr* ethaddr)
  *         ERR_MEM: entry wasn't found
  *         ERR_ARG: entry wasn't a static entry but a dynamic one
  */
-LwipError
+LwipStatus
 etharp_remove_static_entry(const Ip4Addr* ipaddr)
 {
     int16_t i;
@@ -560,7 +560,7 @@ etharp_remove_static_entry(const Ip4Addr* ipaddr)
     /* bail out if no entry could be found */
     if (i < 0)
     {
-        return (LwipError)i;
+        return (LwipStatus)i;
     }
 
     if (arp_table[i].state != ETHARP_STATE_STATIC)
@@ -784,7 +784,7 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
 /** Just a small helper function that sends a PacketBuffer to an ethernet address
  * in the arp_table specified by the index 'arp_idx'.
  */
-static LwipError
+static LwipStatus
 etharp_output_to_arp_index(struct NetIfc* netif, struct PacketBuffer* q, NetIfcAddrIdx arp_idx)
 {
     lwip_assert("arp_table[arp_idx].state >= ETHARP_STATE_STABLE",
@@ -833,7 +833,7 @@ etharp_output_to_arp_index(struct NetIfc* netif, struct PacketBuffer* q, NetIfcA
  * - ERR_RTE No route to destination (no gateway to external networks),
  * or the return type of either etharp_query() or ethernet_output().
  */
-LwipError
+LwipStatus
 etharp_output(struct NetIfc* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr)
 {
     const struct EthAddr* dest;
@@ -901,7 +901,7 @@ etharp_output(struct NetIfc* netif, struct PacketBuffer* q, const Ip4Addr* ipadd
             }
         }
 
-        if (netif->hints != NULL)
+        if (netif->hints != nullptr)
         {
             /* per-pcb cached entry was given */
             const auto etharp_cached_entry = netif->hints->addr_hint;
@@ -980,11 +980,11 @@ etharp_output(struct NetIfc* netif, struct PacketBuffer* q, const Ip4Addr* ipadd
  * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
  */
-LwipError
+LwipStatus
 etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q)
 {
     struct EthAddr* srcaddr = (struct EthAddr *)netif->hwaddr;
-    LwipError result = ERR_MEM;
+    LwipStatus result = ERR_MEM;
     int is_new_entry = 0;
     int16_t i_err;
     NetIfcAddrIdx i;
@@ -1010,7 +1010,7 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
             Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: packet dropped\n"));
             // ETHARP_STATS_INC(etharp.memerr);
         }
-        return (LwipError)i_err;
+        return (LwipStatus)i_err;
     }
     lwip_assert("type overflow", (size_t)i_err < kNetifAddrIdxMax);
     i = (NetIfcAddrIdx)i_err;
@@ -1098,7 +1098,7 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
             if (new_entry != nullptr)
             {
                 unsigned int qlen = 0;
-                new_entry->next = 0;
+                new_entry->next = nullptr;
                 new_entry->p = p;
                 if (arp_table[i].next != nullptr)
                 {
@@ -1159,9 +1159,9 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
  * @param opcode the type of the ARP packet
  * @return ERR_OK if the ARP packet has been sent
  *         ERR_MEM if the ARP packet couldn't be allocated
- *         any other LwipError on failure
+ *         any other LwipStatus on failure
  */
-static LwipError
+static LwipStatus
 etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
            const struct EthAddr* ethdst_addr,
            const struct EthAddr* hwsrc_addr, const Ip4Addr* ipsrc_addr,
@@ -1169,7 +1169,7 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
            const uint16_t opcode)
 {
     struct PacketBuffer* p;
-    LwipError result = ERR_OK;
+    LwipStatus result = ERR_OK;
     struct EtharpHdr* hdr;
 
     lwip_assert("netif != NULL", netif != nullptr);
@@ -1240,9 +1240,9 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
  * @param hw_dst_addr the ethernet address to send this packet to
  * @return ERR_OK if the request has been sent
  *         ERR_MEM if the ARP packet couldn't be allocated
- *         any other LwipError on failure
+ *         any other LwipStatus on failure
  */
-static LwipError
+static LwipStatus
 etharp_request_dst(struct NetIfc* netif, const Ip4Addr* ipaddr, const struct EthAddr* hw_dst_addr)
 {
     return etharp_raw(netif, (struct EthAddr *)netif->hwaddr, hw_dst_addr,
@@ -1257,9 +1257,9 @@ etharp_request_dst(struct NetIfc* netif, const Ip4Addr* ipaddr, const struct Eth
  * @param ipaddr the IP address for which to ask
  * @return ERR_OK if the request has been sent
  *         ERR_MEM if the ARP packet couldn't be allocated
- *         any other LwipError on failure
+ *         any other LwipStatus on failure
  */
-LwipError
+LwipStatus
 etharp_request(struct NetIfc* netif, const Ip4Addr* ipaddr)
 {
     Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));

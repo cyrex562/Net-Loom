@@ -62,8 +62,8 @@
 
 
 /* Notifiers for when IPCP goes up and down */
-struct notifier *ip_up_notifier = NULL;
-struct notifier *ip_down_notifier = NULL;
+struct notifier *ip_up_notifier = nullptr;
+struct notifier *ip_down_notifier = nullptr;
 
 
 /* local vars */

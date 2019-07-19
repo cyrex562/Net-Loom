@@ -89,15 +89,15 @@ struct IgmpGroup {
 
 /*  Prototypes */
 void   init_igmp_module(void);
-LwipError  igmp_start(NetIfc*netif);
-LwipError  igmp_stop(NetIfc*netif);
+LwipStatus  igmp_start(NetIfc*netif);
+LwipStatus  igmp_stop(NetIfc*netif);
 void   igmp_report_groups(NetIfc*netif);
 struct IgmpGroup *igmp_lookfor_group(NetIfc*ifp, const Ip4Addr *addr);
 void   igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest);
-LwipError  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipError  igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
-LwipError  igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipError  igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
+LwipStatus  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
+LwipStatus  igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
+LwipStatus  igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
+LwipStatus  igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
 void   igmp_tmr(void);
 
 /** @ingroup igmp 

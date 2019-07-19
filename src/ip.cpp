@@ -145,7 +145,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
  * If both IP versions are enabled, this function can dispatch packets to the correct one.
  * Don't call directly, pass to netif_add() and call netif->input().
  */
-LwipError
+LwipStatus
 ip_input(struct PacketBuffer *p, NetIfc*inp)
 {
   if (p != nullptr) {

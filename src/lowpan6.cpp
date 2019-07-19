@@ -182,7 +182,7 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6
  * @param dest pointer to destination address filled from the header
  * @returns ERR_OK if successful
  */
-static LwipError
+static LwipStatus
 lowpan6_parse_iee802154_header(struct PacketBuffer *p, struct Lowpan6LinkAddr *src,
                                struct Lowpan6LinkAddr *dest)
 {
@@ -339,7 +339,7 @@ lowpan6_tmr(void)
  * Fragments an IPv6 datagram into 6LowPAN units, which fit into IEEE 802.15.4 frames.
  * If configured, will compress IPv6 and or UDP headers.
  * */
-static LwipError
+static LwipStatus
 lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr *src, const struct Lowpan6LinkAddr *dst)
 {
   struct PacketBuffer *p_frag;
@@ -350,7 +350,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
   uint8_t hidden_header_len;
   uint16_t crc;
   uint16_t datagram_offset;
-  LwipError err = ERR_IF;
+  LwipStatus err = ERR_IF;
 
   lwip_assert("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != nullptr);
 
@@ -493,7 +493,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
  * @ingroup sixlowpan
  * Set context
  */
-LwipError
+LwipStatus
 lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 {
 
@@ -513,7 +513,7 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
  * @ingroup sixlowpan
  * Set short address
  */
-LwipError
+LwipStatus
 lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 {
   short_mac_addr.addr[0] = addr_high;
@@ -523,7 +523,7 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
 }
 
 /* Create IEEE 802.15.4 address from netif address */
-static LwipError
+static LwipStatus
 lowpan6_hwaddr_to_addr(NetIfc*netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
@@ -558,12 +558,12 @@ lowpan6_hwaddr_to_addr(NetIfc*netif, struct Lowpan6LinkAddr *addr)
  * @param q The PacketBuffer(s) containing the IP packet to be sent.
  * @param ip6addr The IP address of the packet destination.
  *
- * @return LwipError
+ * @return LwipStatus
  */
-LwipError
+LwipStatus
 lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
-  LwipError result;
+  LwipStatus result;
   const uint8_t *hwaddr;
   struct Lowpan6LinkAddr src, dest;
 
@@ -633,7 +633,7 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
  * @ingroup sixlowpan
  * NETIF input function: don't free the input PacketBuffer when returning != ERR_OK!
  */
-LwipError
+LwipStatus
 lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
 {
   uint8_t *puc, b;
@@ -856,7 +856,7 @@ lowpan6_input_discard:
 /**
  * @ingroup sixlowpan
  */
-LwipError
+LwipStatus
 lowpan6_if_init(NetIfc*netif)
 {
   netif->name[0] = 'L';
@@ -876,7 +876,7 @@ lowpan6_if_init(NetIfc*netif)
  * @ingroup sixlowpan
  * Set PAN ID
  */
-LwipError
+LwipStatus
 lowpan6_set_pan_id(uint16_t pan_id)
 {
   lowpan6_data.ieee_802154_pan_id = pan_id;
@@ -892,7 +892,7 @@ lowpan6_set_pan_id(uint16_t pan_id)
  *          IEEE 802.15.4 header.
  * @param inp the network interface on which the packet was received
  */
-LwipError
+LwipStatus
 tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);

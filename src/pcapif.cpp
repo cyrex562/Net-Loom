@@ -166,8 +166,8 @@ static void
 pcapif_init_tx_packets(struct pcapif_private *priv)
 {
   int i;
-  priv->tx_packets = NULL;
-  priv->free_packets = NULL;
+  priv->tx_packets = nullptr;
+  priv->free_packets = nullptr;
   for (i = 0; i < PCAPIF_LOOPBACKFILTER_NUM_TX_PACKETS; i++) {
     struct pcapipf_pending_packet *pack = &priv->packets[i];
     pack->len = 0;
@@ -186,14 +186,14 @@ pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t t
   /* get a free packet (locked) */
   SYS_ARCH_PROTECT(lev);
   pack = priv->free_packets;
-  if ((pack == NULL) && (priv->tx_packets != NULL)) {
+  if ((pack == nullptr) && (priv->tx_packets != nullptr)) {
     /* no free packets, reuse the oldest */
     pack = priv->tx_packets;
     priv->tx_packets = pack->next;
   }
-  LWIP_ASSERT("no free packet", pack != NULL);
+  LWIP_ASSERT("no free packet", pack != nullptr);
   priv->free_packets = pack->next;
-  pack->next = NULL;
+  pack->next = nullptr;
   SYS_ARCH_UNPROTECT(lev);
 
   /* set up the packet (unlocked) */
@@ -202,9 +202,9 @@ pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t t
 
   /* put the packet on the list (locked) */
   SYS_ARCH_PROTECT(lev);
-  if (priv->tx_packets != NULL) {
-    for (tx = priv->tx_packets; tx->next != NULL; tx = tx->next);
-    LWIP_ASSERT("bug", tx != NULL);
+  if (priv->tx_packets != nullptr) {
+    for (tx = priv->tx_packets; tx->next != nullptr; tx = tx->next);
+    LWIP_ASSERT("bug", tx != nullptr);
     tx->next = pack;
   } else {
     priv->tx_packets = pack;
@@ -231,7 +231,7 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
   SYS_ARCH_DECL_PROTECT(lev);
 
   last = priv->tx_packets;
-  if (last == NULL) {
+  if (last == nullptr) {
     /* list is empty */
     return 0;
   }
@@ -247,13 +247,13 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
     return 1;
   }
   SYS_ARCH_PROTECT(lev);
-  for (iter = last->next; iter != NULL; last = iter, iter = iter->next) {
+  for (iter = last->next; iter != nullptr; last = iter, iter = iter->next) {
     /* unlock while comparing (this works because we have a clean threading separation
        of adding and removing items and adding is only done at the end) */
     SYS_ARCH_UNPROTECT(lev);
     if (pcapif_compare_packets(iter, packet, packet_len)) {
       SYS_ARCH_PROTECT(lev);
-      LWIP_ASSERT("last != NULL", last != NULL);
+      LWIP_ASSERT("last != NULL", last != nullptr);
       last->next = iter->next;
       iter->next = priv->free_packets;
       priv->free_packets = iter;
@@ -299,9 +299,9 @@ get_adapter_index_from_addr(struct LwipInAddrStruct *netaddr, char *guid, size_t
       return -1;
    }
    /* Scan the list printing every entry */
-   for (d = alldevs; d != NULL; d = d->next, index++) {
+   for (d = alldevs; d != nullptr; d = d->next, index++) {
       pcap_addr_t *a;
-      for(a = d->addresses; a != NULL; a = a->next) {
+      for(a = d->addresses; a != nullptr; a = a->next) {
          if (a->addr->sa_family == AF_INET) {
             ULONG a_addr = ((struct LwipSockaddrSockaddrIn *)a->addr)->sin_addr.s_addr;
             ULONG a_netmask = ((struct LwipSockaddrSockaddrIn *)a->netmask)->sin_addr.s_addr;
@@ -318,9 +318,9 @@ get_adapter_index_from_addr(struct LwipInAddrStruct *netaddr, char *guid, size_t
                MEMCPY(name, d->name, len);
                name[len] = 0;
                start = strstr(name, "{");
-               if (start != NULL) {
+               if (start != nullptr) {
                   end = strstr(start, "}");
-                  if (end != NULL) {
+                  if (end != nullptr) {
                      size_t len = end - start + 1;
                      MEMCPY(guid, start, len);
                      ret = index;
@@ -357,7 +357,7 @@ get_adapter_index(const char* adapter_guid)
     return -1;
   }
   /* Scan the list and compare name vs. adapter_guid */
-  for (d = alldevs; d != NULL; d = d->next, idx++) {
+  for (d = alldevs; d != nullptr; d = d->next, idx++) {
     if(strstr(d->name, adapter_guid)) {
       pcap_freealldevs(alldevs);
       return idx;
@@ -365,7 +365,7 @@ get_adapter_index(const char* adapter_guid)
   }
   /* not found, dump all adapters */
   printf("%d available adapters:\n", idx);
-  for (d = alldevs, idx = 0; d != NULL; d = d->next, idx++) {
+  for (d = alldevs, idx = 0; d != nullptr; d = d->next, idx++) {
     printf("- %d: %s\n", idx, d->name);
   }
   pcap_freealldevs(alldevs);
@@ -559,7 +559,7 @@ pcapif_check_linkstate(void *netif_ptr)
         break;
     }
   }
-  sys_timeout(PCAPIF_LINKCHECK_INTERVAL_MS, pcapif_check_linkstate, netif);
+  sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
 }
 
 /**
@@ -673,7 +673,7 @@ pcapif_low_level_init(NetIfc*netif)
   } else {
     netif_set_link_up(netif);
   }
-  sys_timeout(PCAPIF_LINKCHECK_INTERVAL_MS, pcapif_check_linkstate, netif);
+  sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
 
 
   pa->rx_run = 1;
@@ -688,7 +688,7 @@ pcapif_low_level_init(NetIfc*netif)
  * Transmit a packet. The packet is contained in the PacketBuffer that is passed to
  * the function. This PacketBuffer might be chained.
  */
-static LwipError
+static LwipStatus
 pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *q;
@@ -699,7 +699,7 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
   uint16_t tot_len = p->tot_len - ETH_PAD_SIZE;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
 
-  LWIP_ASSERT("p->next == NULL && p->len == p->tot_len", p->next == NULL && p->len == p->tot_len);
+  LWIP_ASSERT("p->next == NULL && p->len == p->tot_len", p->next == nullptr && p->len == p->tot_len);
 
 
   /* initiate transfer */
@@ -833,11 +833,11 @@ static void
 pcapif_rx_pbuf_free_custom(struct PacketBuffer *p)
 {
   struct pcapif_pbuf_custom* ppc;
-  LWIP_ASSERT("NULL pointer", p != NULL);
+  LWIP_ASSERT("NULL pointer", p != nullptr);
   ppc = (struct pcapif_pbuf_custom*)p;
-  LWIP_ASSERT("NULL pointer", ppc->p != NULL);
+  LWIP_ASSERT("NULL pointer", ppc->p != nullptr);
   pbuf_free(ppc->p);
-  ppc->p = NULL;
+  ppc->p = nullptr;
   mem_free(p);
 }
 
@@ -847,16 +847,16 @@ pcapif_rx_ref(struct PacketBuffer* p)
   struct pcapif_pbuf_custom* ppc;
   struct PacketBuffer* q;
 
-  LWIP_ASSERT("NULL pointer", p != NULL);
-  LWIP_ASSERT("chained PacketBuffer not supported here", p->next == NULL);
+  LWIP_ASSERT("NULL pointer", p != nullptr);
+  LWIP_ASSERT("chained PacketBuffer not supported here", p->next == nullptr);
 
   ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
-  LWIP_ASSERT("out of memory for RX", ppc != NULL);
+  LWIP_ASSERT("out of memory for RX", ppc != nullptr);
   ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
   ppc->p = p;
 
   q = pbuf_alloced_custom(PBUF_RAW, p->tot_len, PBUF_REF, &ppc->pc, p->payload, p->tot_len);
-  LWIP_ASSERT("pbuf_alloced_custom returned NULL", q != NULL);
+  LWIP_ASSERT("pbuf_alloced_custom returned NULL", q != nullptr);
   return q;
 }
 
@@ -894,7 +894,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 /**
  * pcapif_init(): initialization function, pass to netif_add().
  */
-LwipError
+LwipStatus
 pcapif_init(NetIfc*netif)
 {
   static int ethernetif_index;
@@ -935,7 +935,7 @@ pcapif_poll(NetIfc*netif)
 
   int ret;
   do {
-    if (pa->adapter != NULL) {
+    if (pa->adapter != nullptr) {
       ret = pcap_dispatch(pa->adapter, -1, pcapif_input, (uint8_t*)pa);
     } else {
       ret = -1;

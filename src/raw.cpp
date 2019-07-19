@@ -199,7 +199,7 @@ raw_input(struct PacketBuffer *p, NetIfc*inp)
  *
  * @see raw_disconnect()
  */
-LwipError
+LwipStatus
 raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
@@ -255,7 +255,7 @@ raw_bind_netif(struct raw_pcb *pcb, const NetIfc*netif)
  *
  * @see raw_disconnect() and raw_sendto()
  */
-LwipError
+LwipStatus
 raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
 {
   LWIP_ASSERT_CORE_LOCKED();
@@ -327,7 +327,7 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  * @param ipaddr the destination address of the IP packet
  *
  */
-LwipError
+LwipStatus
 raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
 {
   NetIfc*netif;
@@ -343,7 +343,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
     netif = netif_get_by_index(pcb->netif_idx);
   } else {
 
-    netif = NULL;
+    netif = nullptr;
     if (ip_addr_ismulticast(ipaddr)) {
       /* For multicast-destined packets, use the user-provided interface index to
        * determine the outgoing interface, if an interface index is set and a
@@ -351,7 +351,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
       netif = netif_get_by_index(pcb->mcast_ifindex);
     }
 
-    if (netif == NULL)
+    if (netif == nullptr)
 
     {
       netif = ip_route(&pcb->local_ip, ipaddr);
@@ -368,7 +368,7 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
     /* use outgoing network interface IP address as source address */
     src_ip = ip_netif_get_local_ip(netif, ipaddr);
 
-    if (src_ip == NULL) {
+    if (src_ip == nullptr) {
       return ERR_RTE;
     }
 
@@ -393,11 +393,11 @@ raw_sendto(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
  * @param netif the netif used for sending
  * @param src_ip source IP address
  */
-LwipError
+LwipStatus
 raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                   NetIfc*netif, const IpAddr *src_ip)
 {
-  LwipError err;
+  LwipStatus err;
   struct PacketBuffer *q; /* q will be sent down the stack */
   uint16_t header_size;
   uint8_t ttl;
@@ -513,7 +513,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
  * @param p the IP payload to send
  *
  */
-LwipError
+LwipStatus
 raw_send(struct raw_pcb *pcb, struct PacketBuffer *p)
 {
   return raw_sendto(pcb, p, &pcb->remote_ip);

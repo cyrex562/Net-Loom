@@ -115,34 +115,34 @@ extern struct UdpPcb *udp_pcbs;
 struct UdpPcb * udp_new        (void);
 struct UdpPcb * udp_new_ip_type(uint8_t type);
 void             udp_remove     (struct UdpPcb *pcb);
-LwipError            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
+LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_bind_netif (struct UdpPcb *pcb, const NetIfc** netif);
-LwipError            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
+LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
 void             udp_recv       (struct UdpPcb *pcb, udp_recv_fn recv,
                                  void *recv_arg);
-LwipError            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  NetIfc*netif);
-LwipError            udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  NetIfc*netif, const IpAddr *src_ip);
-LwipError            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port);
-LwipError            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
+LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
 
-LwipError            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  NetIfc*netif, uint8_t have_chksum,
                                  uint16_t chksum);
-LwipError            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipError            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipError            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p,
+LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif,
                                  uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
 

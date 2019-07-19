@@ -85,18 +85,18 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthAddr* dst_
     return kBrFlood;
 }
 
-/**
- * @ingroup bridgeif_fdb
- * Aging implementation of our simple fdb
- */
+
+//
+// @ingroup bridgeif_fdb
+// Aging implementation of our simple fdb
+//
 bool bridgeif_fdb_age_one_second(void* fdb_ptr)
 {
-    sys_prot_t lev;
     const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
-    SYS_ARCH_PROTECT(lev);
-    for (int i = 0; i < fdb->max_fdb_entries; i++)
+    const auto lev = sys_arch_protect();
+    for (auto i = 0; i < fdb->max_fdb_entries; i++)
     {
-        BridgeIfDfDbEntry* e = &fdb->fdb[i];
+        auto e = &fdb->fdb[i];
         if (e->used && e->ts)
         {
             if (e->used && e->ts)
@@ -108,7 +108,7 @@ bool bridgeif_fdb_age_one_second(void* fdb_ptr)
             }
         }
     }
-    SYS_ARCH_UNPROTECT(lev);
+    sys_arch_unprotect(lev);
     return true;
 }
 
@@ -118,7 +118,7 @@ void bridgeif_age_tmr(void* arg)
     const auto fdb = static_cast<BridgeIfcFdb *>(arg);
     lwip_assert("invalid arg", arg != nullptr);
     bridgeif_fdb_age_one_second(fdb);
-    sys_timeout(kBridgeifAgeTimerMs, bridgeif_age_tmr, arg);
+    sys_timeout_debug(kBridgeifAgeTimerMs, bridgeif_age_tmr, arg, "bridgeif_age_tmr");
 }
 
 /**
@@ -141,7 +141,7 @@ void* bridgeif_fdb_init(const uint16_t max_fdb_entries)
     }
     fdb->max_fdb_entries = max_fdb_entries;
     fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
-    sys_timeout(kBridgeifAgeTimerMs, bridgeif_age_tmr, fdb);
+    sys_timeout_debug(kBridgeifAgeTimerMs, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
     return fdb;
 }
 

@@ -56,17 +56,17 @@ constexpr auto kLowpan6TmrInterval = 1000;
 
 void lowpan6_tmr(void);
 
-LwipError lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
-LwipError lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
-LwipError lowpan4_output(NetIfc*netif, struct PacketBuffer *q, const Ip4Addr *ipaddr);
-LwipError lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
-LwipError lowpan6_input(struct PacketBuffer * p, NetIfc*netif);
-LwipError lowpan6_if_init(NetIfc*netif);
+LwipStatus lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
+LwipStatus lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
+LwipStatus lowpan4_output(NetIfc*netif, struct PacketBuffer *q, const Ip4Addr *ipaddr);
+LwipStatus lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
+LwipStatus lowpan6_input(struct PacketBuffer * p, NetIfc*netif);
+LwipStatus lowpan6_if_init(NetIfc*netif);
 
 /* pan_id in network byte order. */
-LwipError lowpan6_set_pan_id(uint16_t pan_id);
+LwipStatus lowpan6_set_pan_id(uint16_t pan_id);
 uint16_t lowpan6_calc_crc(const void *buf, uint16_t len);
-LwipError tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp);
+LwipStatus tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp);
 
 
 #ifdef __cplusplus

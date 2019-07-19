@@ -57,11 +57,11 @@ struct LinkCallbacks {
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (PppPcb *pcb, void *ctx);
   /* Free lower protocol control block */
-  LwipError (*free) (PppPcb *pcb, void *ctx);
+  LwipStatus (*free) (PppPcb *pcb, void *ctx);
   /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
-  LwipError (*write)(PppPcb *pcb, void *ctx, struct PacketBuffer *p);
+  LwipStatus (*write)(PppPcb *pcb, void *ctx, struct PacketBuffer *p);
   /* Send a packet from lwIP core (IPv4 or IPv6) */
-  LwipError (*netif_output)(PppPcb *pcb, void *ctx, struct PacketBuffer *p, u_short protocol);
+  LwipStatus (*netif_output)(PppPcb *pcb, void *ctx, struct PacketBuffer *p, u_short protocol);
   /* configure the transmit-side characteristics of the PPP interface */
   void (*send_config)(PppPcb *pcb, void *ctx, uint32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
@@ -152,15 +152,17 @@ constexpr auto CHAP_MS2_PEER = 0x800;
 //
 
 /* initialize the PPP subsystem */
-int ppp_init(void);
+int init_ppp_subsys(void);
 
 /*
  * Functions called from PPP link protocols.
  */
 
 /* Create a new PPP control block */
-PppPcb *ppp_new(NetIfc*pppif, const struct LinkCallbacks *callbacks, void *link_ctx_cb,
-                 ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+PppPcb *init_ppp_pcb(NetIfc*pppif,
+                     void *link_ctx_cb,
+                     ppp_link_status_cb_fn link_status_cb,
+                     void *ctx_cb);
 
 /* Initiate LCP open request */
 void ppp_start(PppPcb *pcb);
@@ -180,7 +182,7 @@ bool ppp_input(PppPcb *pcb, struct PacketBuffer *pb, Fsm* lcp_fsm);
  */
 
 /* function called by all PPP subsystems to send packets */
-LwipError ppp_write(PppPcb *pcb, struct PacketBuffer *p);
+LwipStatus ppp_write(PppPcb *pcb, struct PacketBuffer *p);
 
 /* functions called by auth.c link_terminated() */
 void ppp_link_terminated(PppPcb *pcb);

@@ -181,9 +181,9 @@ void dhcp_set_struct(struct netif *netif, struct DhcpContext *dhcp);
 /** Remove a struct dhcp previously set to the netif using dhcp_set_struct() */
 #define dhcp_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, NULL)
 void dhcp_cleanup(NetIfc* netif);
-LwipError dhcp_start(NetIfc* netif);
-LwipError dhcp_renew(NetIfc* netif);
-LwipError dhcp_release(NetIfc* netif);
+LwipStatus dhcp_start(NetIfc* netif);
+LwipStatus dhcp_renew(NetIfc* netif);
+LwipStatus dhcp_release(NetIfc* netif);
 void dhcp_stop(NetIfc* netif);
 void dhcp_release_and_stop(NetIfc* netif);
 void dhcp_inform(NetIfc* netif);

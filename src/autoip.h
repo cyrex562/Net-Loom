@@ -47,8 +47,8 @@ struct AutoipState
 
 bool autoip_set_struct(NetIfc* netif, struct AutoipState *autoip);
 /** Remove a struct autoip previously set to the netif using autoip_set_struct() */
-LwipError autoip_start(NetIfc* netif);
-LwipError autoip_stop(NetIfc* netif);
+LwipStatus autoip_start(NetIfc* netif);
+LwipStatus autoip_stop(NetIfc* netif);
 void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr);
 void autoip_tmr(void);
 bool autoip_network_changed(NetIfc* netif);

@@ -91,7 +91,7 @@ static struct PacketBuffer *recv_data;
 struct TcpProtoCtrlBlk *tcp_input_pcb;
 
 /* Forward declarations. */
-static LwipError tcp_process(struct TcpProtoCtrlBlk *pcb);
+static LwipStatus tcp_process(struct TcpProtoCtrlBlk *pcb);
 static void tcp_receive(struct TcpProtoCtrlBlk *pcb);
 static void tcp_parseopt(struct TcpProtoCtrlBlk *pcb);
 
@@ -125,7 +125,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
   struct tcp_pcb_listen *lpcb_any = NULL;
 #endif /* SO_REUSE */
   uint8_t hdrlen_bytes;
-  LwipError err;
+  LwipStatus err;
 
   ;
   LWIP_ASSERT_CORE_LOCKED();
@@ -346,7 +346,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
     }
 
     /* first try specific local IP */
-    if (lpcb == NULL) {
+    if (lpcb == nullptr) {
       /* only pass to ANY if no specific local IP has been found */
       lpcb = lpcb_any;
       prev = lpcb_prev;
@@ -381,7 +381,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
 
 
 
-  if ((pcb != NULL) && LWIP_HOOK_TCP_INPACKET_PCB(pcb, tcphdr, tcphdr_optlen,
+  if ((pcb != nullptr) && LWIP_HOOK_TCP_INPACKET_PCB(pcb, tcphdr, tcphdr_optlen,
       tcphdr_opt1len, tcphdr_opt2, p) != ERR_OK) {
     pbuf_free(p);
     return;
@@ -460,8 +460,8 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
           goto aborted;
         }
 
-        while (recv_data != NULL) {
-          struct PacketBuffer *rest = NULL;
+        while (recv_data != nullptr) {
+          struct PacketBuffer *rest = nullptr;
           pbuf_split_64k(recv_data, &rest);
 
 
@@ -471,7 +471,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
                notify the remote host that not all data has been processed */
             pbuf_free(recv_data);
 
-            if (rest != NULL) {
+            if (rest != nullptr) {
               pbuf_free(rest);
             }
 
@@ -483,7 +483,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
           if (err == ERR_ABRT) {
 
-            if (rest != NULL) {
+            if (rest != nullptr) {
               pbuf_free(rest);
             }
 
@@ -493,7 +493,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
           /* If the upper layer can't receive this data, store it */
           if (err != ERR_OK) {
 
-            if (rest != NULL) {
+            if (rest != nullptr) {
               pbuf_cat(recv_data, rest);
             }
 
@@ -609,7 +609,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct TcpProtoCtrlBlk *npcb;
   uint32_t iss;
-  LwipError rc;
+  LwipStatus rc;
 
   if (flags & kTcpRst) {
     /* An incoming RST should be ignored. Return. */
@@ -639,7 +639,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        we don't do anything, but rely on the sender will retransmit the
        SYN at a time when we have more memory available. */
     if (npcb == nullptr) {
-      LwipError err;
+      LwipStatus err;
       Logf(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
       TCP_STATS_INC(tcp.memerr);
       TCP_EVENT_ACCEPT(pcb, NULL, pcb->callback_arg, ERR_MEM, err);
@@ -758,12 +758,12 @@ tcp_timewait_input(struct TcpProtoCtrlBlk *pcb)
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */
-static LwipError
+static LwipStatus
 tcp_process(struct TcpProtoCtrlBlk *pcb)
 {
   struct tcp_seg *rseg;
   uint8_t acceptable = 0;
-  LwipError err;
+  LwipStatus err;
 
   err = ERR_OK;
 
@@ -1569,7 +1569,7 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
         }
 
         if (pcb->flags & TF_SACK) {
-          if (pcb->ooseq != NULL) {
+          if (pcb->ooseq != nullptr) {
             /* Some segments may have been removed from ooseq, let's remove all SACKs that
                describe anything before the new beginning of that list. */
             tcp_remove_sacks_lt(pcb, pcb->ooseq->tcphdr->seqno);
@@ -1697,7 +1697,7 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
 
               /* The new segment goes after the 'next' one. If there is a "hole" in sequence numbers
                  between 'prev' and the beginning of 'next', we want to move sackbeg. */
-              if (prev != NULL && prev->tcphdr->seqno + prev->len != next->tcphdr->seqno) {
+              if (prev != nullptr && prev->tcphdr->seqno + prev->len != next->tcphdr->seqno) {
                 sackbeg = next->tcphdr->seqno;
               }
 
@@ -1749,11 +1749,11 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
 
 
           if (pcb->flags & TF_SACK) {
-            if (prev == NULL) {
+            if (prev == nullptr) {
               /* The new segment is at the beginning. sackbeg should already be set properly.
                  We need to find the right edge. */
               next = pcb->ooseq;
-            } else if (prev->next != NULL) {
+            } else if (prev->next != nullptr) {
               /* The new segment was added after 'prev'. If there is a "hole" between 'prev' and 'prev->next',
                  we need to move sackbeg. After that we should find the right edge. */
               next = prev->next;
@@ -1761,11 +1761,11 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
                 sackbeg = next->tcphdr->seqno;
               }
             } else {
-              next = NULL;
+              next = nullptr;
             }
-            if (next != NULL) {
+            if (next != nullptr) {
               uint32_t sackend = next->tcphdr->seqno;
-              for ( ; (next != NULL) && (sackend == next->tcphdr->seqno); next = next->next) {
+              for ( ; (next != nullptr) && (sackend == next->tcphdr->seqno); next = next->next) {
                 sackend += next->len;
               }
               tcp_add_sack(pcb, sackbeg, sackend);
@@ -1784,8 +1784,8 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
           const uint16_t ooseq_max_qlen = TCP_OOSEQ_PBUFS_LIMIT(pcb);
           uint16_t ooseq_qlen = 0;
 
-          struct tcp_seg *next, *prev = NULL;
-          for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
+          struct tcp_seg *next, *prev = nullptr;
+          for (next = pcb->ooseq; next != nullptr; prev = next, next = next->next) {
             struct PacketBuffer *p = next->p;
             int stop_here = 0;
 
@@ -1809,12 +1809,12 @@ tcp_receive(struct TcpProtoCtrlBlk *pcb)
 
               /* too much ooseq data, dump this and everything after it */
               tcp_segs_free(next);
-              if (prev == NULL) {
+              if (prev == nullptr) {
                 /* first ooseq segment is too much, dump the whole queue */
-                pcb->ooseq = NULL;
+                pcb->ooseq = nullptr;
               } else {
                 /* just dump 'next' and everything after it */
-                prev->next = NULL;
+                prev->next = nullptr;
               }
               break;
             }

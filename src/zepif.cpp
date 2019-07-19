@@ -125,7 +125,7 @@ err_return:
 }
 
 /* Send 6LoWPAN TX packets as UDP broadcast */
-static LwipError
+static LwipStatus
 zepif_linkoutput(NetIfc* netif, struct PacketBuffer* p)
 {
     struct PacketBuffer* q;
@@ -178,12 +178,12 @@ int zepif_default_udp_port = 9999;
  * Set up a raw 6LowPAN netif and surround it with input- and output
  * functions for ZEP
  */
-LwipError
+LwipStatus
 zepif_init(NetIfc* netif)
 {
-    LwipError err;
+    LwipStatus err;
     auto init_state = static_cast<struct ZepifInit*>(netif->state);
-    auto state = static_cast<struct ZepifState *>(mem_malloc(sizeof(struct ZepifState)));
+    auto state = new ZepifState;
 
     lwip_assert("zepif needs an input callback", netif->input != nullptr);
 
@@ -208,7 +208,7 @@ zepif_init(NetIfc* netif)
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
-        state->init.zep_dst_ip_addr = kIpAddrBroadcast;
+        state->init.zep_dst_ip_addr = kIpaddr4Broadcast();
     }
 
 

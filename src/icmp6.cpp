@@ -129,7 +129,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
 
         /* Allocate reply. */
         r = pbuf_alloc(PBUF_IP, p->tot_len, PBUF_RAM);
-        if (r == NULL)
+        if (r == nullptr)
         {
             /* drop */
             pbuf_free(p);
@@ -145,7 +145,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
 
     if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
       reply_src = ip_2_ip6(ip6_select_source_address(inp, ip6_current_src_addr()));
-      if (reply_src == NULL) {
+      if (reply_src == nullptr) {
         /* drop */
         pbuf_free(p);
         pbuf_free(r);
@@ -368,7 +368,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     q = pbuf_alloc(PBUF_IP,
                    sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE,
                    PBUF_RAM);
-    if (q == NULL)
+    if (q == nullptr)
     {
         Logf(ICMP_DEBUG,
              ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMPv6 packet.\n"
