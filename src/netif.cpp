@@ -955,11 +955,7 @@ netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
     /* No existing packets queued, schedule poll */
     schedule_poll = 1;
   }
-  SYS_ARCH_UNPROTECT(lev);
-
-  LINK_STATS_INC(link.xmit);
-  MIB2_STATS_NETIF_ADD(stats_if, ifoutoctets, p->tot_len);
-  MIB2_STATS_NETIF_INC(stats_if, ifoutucastpkts);
+  sys_arch_unprotect(lev);
 
   /* For multithreading environment, schedule a call to netif_poll */
   if (schedule_poll) {
@@ -1019,8 +1015,6 @@ netif_poll(NetIfc*netif)
     }
 
     /* adjust the number of pbufs on queue */
-    LWIP_ASSERT("netif->loop_cnt_current underflow",
-                ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
     netif->loop_cnt_current = (uint16_t)(netif->loop_cnt_current - clen);
 
 
@@ -1031,24 +1025,21 @@ netif_poll(NetIfc*netif)
     } else {
       /* pop the PacketBuffer off the list */
       netif->loop_first = in_end->next;
-      LWIP_ASSERT("should not be null since first != last!", netif->loop_first != nullptr);
+
     }
     /* De-queue the PacketBuffer from its successors on the 'loop_' list. */
     in_end->next = nullptr;
-    SYS_ARCH_UNPROTECT(lev);
+    sys_arch_unprotect(lev);
 
     in->if_idx = netif_get_index(netif);
 
-    LINK_STATS_INC(link.recv);
-    MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
-    MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
     /* loopback packets are always IP packets! */
     if (ip_input(in, netif) != ERR_OK) {
       pbuf_free(in);
     }
     SYS_ARCH_PROTECT(lev);
   }
-  SYS_ARCH_UNPROTECT(lev);
+  sys_arch_unprotect(lev);
 }
 
 /**
@@ -1414,7 +1405,7 @@ netif_index_to_name(uint8_t idx, char *name)
   if (netif != nullptr) {
     name[0] = netif->name[0];
     name[1] = netif->name[1];
-    lwip_itoa(&name[2], kNetifNamesize - 2, ((idx) - 1));
+    lwip_itoa(&name[2], NETIFC_NAME_SZ - 2, ((idx) - 1));
     return name;
   }
   return nullptr;

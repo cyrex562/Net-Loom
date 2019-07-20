@@ -151,9 +151,6 @@ extern "C" {
  */
 #define CI_IFACEID	1	/* Interface Identifier */
 
-#define CI_COMPRESSTYPE	2	/* Compression Type     */
-
-
 /* No compression types yet defined.
  *#define IPV6CP_COMP	0x004f
  */

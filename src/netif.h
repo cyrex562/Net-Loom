@@ -24,7 +24,7 @@ struct Ip6Addr;
  * netif can be identified by in APIs. Composed of
  * 2 chars, 3 (max) digits, and 1 \0
  */
-constexpr auto kNetifNamesize = 6;
+constexpr auto NETIFC_NAME_SZ = 6;
 
 /**
  * @defgroup netif_flags Flags
@@ -43,7 +43,7 @@ enum NetIfcFlag : uint8_t
     NETIF_FLAG_UP = 0x01U,
     /** If set, the netif has broadcast capability.
     * Set by the netif driver in its init function. */
-    kNetifFlagBroadcast = 0x02U,
+    NETIF_FLAG_BCAST = 0x02U,
     /** If set, the interface has an active link
     *  (set by the network interface driver).
     * Either set by the netif driver in its init function (if the link
@@ -275,7 +275,7 @@ struct NetIfc
 //
 //
 //
-inline void* NetIfcGetClientData(NetIfc* netif, const size_t id)
+inline void* netif_get_client_data(NetIfc* netif, const size_t id)
 {
     return netif->client_data[id];
 }
@@ -283,7 +283,7 @@ inline void* NetIfcGetClientData(NetIfc* netif, const size_t id)
 //
 //
 //
-inline void NetifSetClientData(NetIfc* netif, const size_t id, void* data)
+inline void netif_set_client_data(NetIfc* netif, const size_t id, void* data)
 {
     netif->client_data[id] = data;
 }

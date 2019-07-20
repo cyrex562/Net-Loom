@@ -42,7 +42,7 @@
 #include "netif.h"
 
 /** The global semaphore to lock the stack. */
-extern sys_mutex_t lock_tcpip_core;
+extern Mutex lock_tcpip_core;
 
 /** Lock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)

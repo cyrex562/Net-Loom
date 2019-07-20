@@ -915,7 +915,7 @@ pcapif_init(NetIfc*netif)
   /* Initialize interface hostname */
   netif_set_hostname(netif, "lwip");
   netif->mtu = 1500;
-  netif->flags = kNetifFlagBroadcast | kNetifFlagEtharp | kNetifFlagEthernet | kNetifFlagIgmp;
+  netif->flags = NETIF_FLAG_BCAST | kNetifFlagEtharp | kNetifFlagEthernet | kNetifFlagIgmp;
 
   netif->flags |= NETIF_FLAG_MLD6;
   netif->hwaddr_len = ETH_HWADDR_LEN;

@@ -1,14 +1,12 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * Options.
  */
-constexpr auto CI_ADDRS = 1	/* IP Addresses */;
-constexpr auto CI_COMPRESSTYPE = 2	/* Compression Type */;
+    // IP Addresses
+
+constexpr auto CI_ADDRS = 1;	
+constexpr auto CI_COMPRESSTYPE = 2;	/* Compression Type */;
 constexpr auto CI_ADDR = 3;
 constexpr auto CI_MS_DNS1 = 129	/* Primary DNS value */;
 constexpr auto CI_MS_DNS2 = 131     /* Secondary DNS value */;
@@ -37,10 +35,3 @@ struct IpcpOptions
     uint16_t vj_protocol; /* protocol value to use in VJ option */
     uint8_t maxslotindex; /* values for RFC1332 VJ compression neg. */
 };
-
-extern const struct Protent ipcp_protent;
-
-#ifdef __cplusplus
-}
-#endif
-

@@ -1,54 +1,18 @@
-/**
- * @file
- * DNS API
- */
-
-/**
- * lwip DNS resolver header file.
-
- * Author: Jim Pettinato
- *   April 2007
-
- * ported from uIP resolv.c Copyright (c) 2002-2003, Adam Dunkels.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+//
+// file: dns.h
+//
 
 #pragma once
-
 
 #include "opt.h"
 #include "ip_addr.h"
 #include "lwip_error.h"
 #include "ip4_addr.h"
 
-
  /** DNS server port address */
-#ifndef DNS_SERVER_PORT
-#define DNS_SERVER_PORT           53
-#endif
+
+constexpr auto DNS_SERVER_PORT = 53;
+
 
 /* DNS field TYPE used for "Resource Records" */
 #define DNS_RRTYPE_A              1     /* a host address */
@@ -125,25 +89,21 @@ struct DnsHdr
 
 #define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
 
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** DNS timer period */
 #define DNS_TMR_INTERVAL          1000
 
 /* DNS resolve types: */
-#define LWIP_DNS_ADDRTYPE_IPV4      0
-#define LWIP_DNS_ADDRTYPE_IPV6      1
-#define LWIP_DNS_ADDRTYPE_IPV4_IPV6 2 /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
-#define LWIP_DNS_ADDRTYPE_IPV6_IPV4 3 /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
+enum dns_addr_type
+{
+    LWIP_DNS_ADDRTYPE_IPV4 = 0,
+    LWIP_DNS_ADDRTYPE_IPV6 = 1,
+    LWIP_DNS_ADDRTYPE_IPV4_IPV6 = 2,
+    LWIP_DNS_ADDRTYPE_IPV6_IPV4 = 3,
+    LWIP_DNS_ADDRTYPE_DEFAULT = LWIP_DNS_ADDRTYPE_IPV4_IPV6
+};
 
-#ifndef LWIP_DNS_ADDRTYPE_DEFAULT
-#define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV4_IPV6
-    #endif
+
+
 
 
 /** struct used for local host-list */
@@ -189,17 +149,14 @@ LwipStatus          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t
 int            dns_local_removehost(const char *hostname, const IpAddr *addr);
 LwipStatus          dns_local_addhost(const char *hostname, const IpAddr *addr);
 
-inline bool LwipDnsAddrtypeIsIpv6(uint8_t t)
+inline bool lwip_dns_addrtype_is_ipv6(uint8_t t)
 {
     return (((t) == LWIP_DNS_ADDRTYPE_IPV6_IPV4) || ((t) == LWIP_DNS_ADDRTYPE_IPV6));
 }
 
 inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddr* ip)
 {
-    return (is_ip_v6(ip) ? LwipDnsAddrtypeIsIpv6(t) : (!LwipDnsAddrtypeIsIpv6(t)));
+    return (is_ipaddr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }
 
-#ifdef __cplusplus
-}
-#endif
 

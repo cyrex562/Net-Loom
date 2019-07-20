@@ -292,10 +292,10 @@ uint16_t inet_chksum_pseudo(struct PacketBuffer* p,
                             const Ip4Addr* src,
                             const Ip4Addr* dest)
 {
-    uint32_t addr = ip4_addr_get_u32(src);
+    uint32_t addr = get_ip4_addr(src);
     uint32_t acc = (addr & 0xffffUL);
     acc = static_cast<uint32_t>(acc + ((addr >> 16) & 0xffffUL));
-    addr = ip4_addr_get_u32(dest);
+    addr = get_ip4_addr(dest);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = FOLD_U32T(acc);
@@ -355,9 +355,12 @@ uint16_t ip_chksum_pseudo(struct PacketBuffer* p,
                           const IpAddr* src,
                           const IpAddr* dest)
 {
-  if (is_ip_v6(dest)) {
-    return ip6_chksum_pseudo(p, proto, proto_len, ConvertIpAddrToIp6Addr(src),
-                             ConvertIpAddrToIp6Addr(dest));
+  if (is_ipaddr_v6(dest)) {
+      return ip6_chksum_pseudo(p,
+                               proto,
+                               proto_len,
+                               convert_ip_addr_to_ip6_addr(src),
+                               convert_ip_addr_to_ip6_addr(dest));
   }
   else
     {
@@ -437,10 +440,10 @@ uint16_t inet_chksum_pseudo_partial(struct PacketBuffer* p,
 {
     uint32_t acc;
     uint32_t addr;
-    addr = ip4_addr_get_u32(src);
+    addr = get_ip4_addr(src);
     acc = (addr & 0xffffUL);
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
-    addr = ip4_addr_get_u32(dest);
+    addr = get_ip4_addr(dest);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = FOLD_U32T(acc);
@@ -506,25 +509,25 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                   const IpAddr* src,
                                   const IpAddr* dest)
 {
-
-  if (IpIsV6(dest)) {
-    return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len,
-                                     ip_2_ip6(src), ip_2_ip6(dest));
-  }
-
-
-  else
-
+    if (is_ipaddr_v6(dest))
     {
-        return inet_chksum_pseudo_partial(p,
-                                          proto,
-                                          proto_len,
-                                          chksum_len,
-                                          convert_ip_addr_to_ip4_addr(src),
-                                          convert_ip_addr_to_ip4_addr(dest));
+        return ip6_chksum_pseudo_partial(p,
+                                         proto,
+                                         proto_len,
+                                         chksum_len,
+                                         &src->u_addr.ip6,
+                                         &dest->u_addr.ip6);
     }
+    return inet_chksum_pseudo_partial(p,
+                                      proto,
+                                      proto_len,
+                                      chksum_len,
+                                      convert_ip_addr_to_ip4_addr(src),
+                                      convert_ip_addr_to_ip4_addr(dest));
+} 
 
-} /* inet_chksum:
+
+/* inet_chksum:
  *
  * Calculates the Internet checksum over a portion of memory. Used primarily for
  * IP and ICMP.
@@ -546,11 +549,9 @@ uint16_t inet_chksum(const void* dataptr, uint16_t len)
  */
 uint16_t inet_chksum_pbuf(struct PacketBuffer* p)
 {
-    uint32_t acc;
-    struct PacketBuffer* q;
-    int swapped = 0;
-    acc = 0;
-    for (q = p; q != nullptr; q = q->next)
+    bool swapped = false;
+    uint32_t acc = 0;
+    for (struct PacketBuffer* q = p; q != nullptr; q = q->next)
     {
         acc += lwip_standard_checksum(q->payload, q->len);
         acc = FOLD_U32T(acc);
@@ -564,8 +565,12 @@ uint16_t inet_chksum_pbuf(struct PacketBuffer* p)
     {
         acc = SWAP_BYTES_IN_WORD(acc);
     }
-    return (uint16_t)~(acc & 0xffffUL);
-} /* These are some implementations for lwip_standard_checksum_COPY, which copies data
+    return uint16_t(~(acc & 0xffffUL));
+} 
+
+
+
+/* These are some implementations for lwip_standard_checksum_COPY, which copies data
  * like MEMCPY but generates a checksum at the same time. Since this is a
  * performance-sensitive function, you might want to create your own version
  * in assembly targeted at your hardware by defining it in lwipopts.h:

@@ -69,20 +69,14 @@
  */
 
 #include "opt.h"
-
 #include "def.h"
-
 #include "netif.h"
 #include "packet_buffer.h"
-#include "stats.h"
 #include "sys.h"
-
+#include "tcpip.h"
 #include "tcp_priv.h"
-
 #include "inet_chksum.h"
-
-
-#include <string.h>
+#include <cstring>
 #include "lwip_debug.h"
 
 #define SIZEOF_STRUCT_PBUF LWIP_MEM_ALIGN_SIZE(sizeof(struct PacketBuffer))
@@ -94,19 +88,15 @@ static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
                                           uint16_t in_offset,
                                           uint16_t *out_offset);
 
-
-
-#ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
-#include "tcpip.h"
-#define PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()                               \
-  do {                                                                  \
-    if (tcpip_try_callback(pbuf_free_ooseq_callback, NULL) != ERR_OK) { \
-      SYS_ARCH_PROTECT(old_level);                                      \
-      pbuf_free_ooseq_pending = 0;                                      \
-      SYS_ARCH_UNPROTECT(old_level);                                    \
-    }                                                                   \
-  } while (0)
-
+inline void PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()
+{
+    if (tcpip_try_callback(pbuf_free_ooseq_callback, nullptr) != ERR_OK)
+    {
+        SYS_ARCH_PROTECT(old_level);
+        pbuf_free_ooseq_pending = 0;
+        sys_arch_unprotect(old_level);
+    }
+}
 
 volatile uint8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
@@ -155,7 +145,7 @@ static void pbuf_pool_is_empty(void) {
   SYS_ARCH_PROTECT(old_level);
   queued = pbuf_free_ooseq_pending;
   pbuf_free_ooseq_pending = 1;
-  SYS_ARCH_UNPROTECT(old_level);
+  sys_arch_unprotect(old_level);
 
   if (!queued) {
     /* queue a call to pbuf_free_ooseq if not already queued */
@@ -746,7 +736,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
     lwip_assert("pbuf_free: p->ref > 0", p->ref > 0);
     /* decrease reference count (number of pointers to PacketBuffer) */
     ref = --(p->ref);
-    SYS_ARCH_UNPROTECT(old_level);
+    sys_arch_unprotect(old_level);
     /* this PacketBuffer is no longer referenced to? */
     if (ref == 0) {
       /* remember next PacketBuffer in chain for next iteration */
@@ -758,8 +748,6 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
       /* is this a custom PacketBuffer? */
       if ((p->flags & PBUF_FLAG_IS_CUSTOM) != 0) {
         struct pbuf_custom *pc = (struct pbuf_custom *)p;
-        LWIP_ASSERT("pc->custom_free_function != NULL",
-                    pc->custom_free_function != nullptr);
         pc->custom_free_function(p);
       } else
 

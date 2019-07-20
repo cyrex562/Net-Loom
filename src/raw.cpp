@@ -211,7 +211,7 @@ raw_bind(struct raw_pcb *pcb, const IpAddr *ipaddr)
   /* If the given IP address should have a zone but doesn't, assign one now.
    * This is legacy support: scope-aware callers should always provide properly
    * zoned source addresses. */
-  if (is_ip_v6(&pcb->local_ip) &&
+  if (is_ipaddr_v6(&pcb->local_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->local_ip), IP6_UNKNOWN)) {
     ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), ConvertIpAddrToIp6Addr(&pcb->local_ip));
   }
@@ -266,7 +266,7 @@ raw_connect(struct raw_pcb *pcb, const IpAddr *ipaddr)
 
   /* If the given IP address should have a zone but doesn't, assign one now,
    * using the bound address to make a more informed decision when possible. */
-  if (is_ip_v6(&pcb->remote_ip) &&
+  if (is_ipaddr_v6(&pcb->remote_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
     ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ConvertIpAddrToIp6Addr(&pcb->local_ip));
   }

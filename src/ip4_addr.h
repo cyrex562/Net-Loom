@@ -178,7 +178,7 @@ inline void set_ip4_addr_u32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
     ((dest_ipaddr)->addr = (src_u32));
 }
 /** IPv4 only: get the IP address as an uint32_t */
-inline uint32_t ip4_addr_get_u32(const Ip4Addr* src_ipaddr)
+inline uint32_t get_ip4_addr(const Ip4Addr* src_ipaddr)
 {
     return ((src_ipaddr)->addr);
 }

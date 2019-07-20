@@ -115,7 +115,7 @@ NetIfc* ip4_route(const Ip4Addr* dest)
                 /* return netif on which to forward IP packet */
                 return netif;
             } /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
-            if (((netif->flags & kNetifFlagBroadcast) == 0) && ip4_addr_cmp(
+            if (((netif->flags & NETIF_FLAG_BCAST) == 0) && ip4_addr_cmp(
                 dest,
                 netif_ip4_gw(netif)))
             {
@@ -175,7 +175,7 @@ NetIfc* ip4_route(const Ip4Addr* dest)
 static int
 ip4_canforward(struct PacketBuffer *p)
 {
-  uint32_t addr = lwip_htonl(ip4_addr_get_u32(ip4_current_dest_addr()));
+  uint32_t addr = lwip_htonl(get_ip4_addr(ip4_current_dest_addr()));
 
   int ret = LWIP_HOOK_IP4_CANFORWARD(p, addr);
   if (ret >= 0) {
@@ -320,7 +320,7 @@ ip4_input_accept(NetIfc*netif)
         /* or broadcast on this interface network address? */
         ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
 
-        || (ip4_addr_get_u32(ip4_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
+        || (get_ip4_addr(ip4_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
 
        ) {
       Logf(IP_DEBUG, ("ip4_input: packet accepted on interface %c%c\n",
@@ -831,8 +831,8 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           /* dest cannot be NULL here */
           copy_ip4_addr(iphdr->dest, *dest);
 
-          chk_sum += ip4_addr_get_u32(&iphdr->dest) & 0xFFFF;
-          chk_sum += ip4_addr_get_u32(&iphdr->dest) >> 16;
+          chk_sum += get_ip4_addr(&iphdr->dest) & 0xFFFF;
+          chk_sum += get_ip4_addr(&iphdr->dest) >> 16;
 
 
           set_ip4_hdr_vhl(iphdr, 4, ip_hlen / 4);
@@ -860,8 +860,8 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
               copy_ip4_addr(iphdr->src, *src);
           }
 
-          chk_sum += ip4_addr_get_u32(&iphdr->src) & 0xFFFF;
-          chk_sum += ip4_addr_get_u32(&iphdr->src) >> 16;
+          chk_sum += get_ip4_addr(&iphdr->src) & 0xFFFF;
+          chk_sum += get_ip4_addr(&iphdr->src) >> 16;
           chk_sum = (chk_sum >> 16) + (chk_sum & 0xFFFF);
           chk_sum = (chk_sum >> 16) + chk_sum;
           chk_sum = ~chk_sum;

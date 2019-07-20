@@ -1,38 +1,6 @@
-/**
- * @file
- * OS abstraction layer
- */
-
-/*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Adam Dunkels <adam@sics.se>
- */
+//
+// file: sys.h
+//
 
 #pragma once
 #include <cstdint>
@@ -40,10 +8,36 @@
 #include "lwip_error.h"
 #include "sys_arch.h"
 
-typedef int sys_prot_t;
+
+using sys_prot_t = int;
+
+/* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
+using sys_thread_t = uint32_t;
 
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
 constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
+
+constexpr auto MAX_QUEUE_ENTRIES = 100;
+
+struct Mailbox
+{
+    void* sem;
+    void* q_mem[MAX_QUEUE_ENTRIES];
+    uint32_t head, tail;
+};
+
+/* HANDLE is used for Semaphore but we won't include windows.h */
+struct Semaphore
+{
+    void* sem;
+};
+
+/* HANDLE is used for sys_mutex_t but we won't include windows.h */
+struct Mutex
+{
+    void* mut;
+};
+
 
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
@@ -51,7 +45,7 @@ constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 // #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
 /** Function prototype for thread functions */
-typedef void (*lwip_thread_fn)(void *arg);
+using lwip_thread_fn = void (*)(void*);
 
 /* Function prototypes for functions to be implemented by platform ports
    (in sys_arch.c) */
@@ -77,43 +71,25 @@ typedef void (*lwip_thread_fn)(void *arg);
  * @param mutex pointer to the mutex to create
  * @return ERR_OK if successful, another LwipStatus otherwise
  */
-LwipStatus sys_mutex_new(sys_mutex_t *mutex);
+LwipStatus sys_mutex_new(Mutex *mutex);
 /**
  * @ingroup sys_mutex
  * Blocks the thread until the mutex can be grabbed.
  * @param mutex the mutex to lock
  */
-void sys_mutex_lock(sys_mutex_t *mutex);
+void sys_mutex_lock(Mutex *mutex);
 /**
  * @ingroup sys_mutex
  * Releases the mutex previously locked through 'sys_mutex_lock()'.
  * @param mutex the mutex to unlock
  */
-void sys_mutex_unlock(sys_mutex_t *mutex);
+void sys_mutex_unlock(Mutex *mutex);
 /**
  * @ingroup sys_mutex
  * Deallocates a mutex.
  * @param mutex the mutex to delete
  */
-void sys_mutex_free(sys_mutex_t *mutex);
-
-/**
- * @ingroup sys_mutex
- * Returns 1 if the mutes is valid, 0 if it is not valid.
- * When using pointers, a simple way is to check the pointer for != NULL.
- * When directly using OS structures, implementing this may be more complex.
- * This may also be a define, in which case the function is not prototyped.
- */
-int sys_mutex_valid(sys_mutex_t *mutex);
-
-/**
- * @ingroup sys_mutex
- * Invalidate a mutex so that sys_mutex_valid() returns 0.
- * ATTENTION: This does NOT mean that the mutex shall be deallocated:
- * sys_mutex_free() is always called before calling this function!
- * This may also be a define, in which case the function is not prototyped.
- */
-void sys_mutex_set_invalid(sys_mutex_t *mutex);
+void sys_mutex_free(Mutex *mutex);
 
 
 /* Semaphore functions: */
@@ -133,13 +109,13 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex);
  * @param count initial count of the semaphore
  * @return ERR_OK if successful, another LwipStatus otherwise
  */
-LwipStatus sys_sem_new(sys_sem_t *sem, uint8_t count);
+LwipStatus sys_sem_new(Semaphore *sem, uint8_t count);
 /**
  * @ingroup sys_sem
  * Signals a semaphore
  * @param sem the semaphore to signal
  */
-void sys_sem_signal(sys_sem_t *sem);
+void sys_sem_signal(Semaphore *sem);
 /**
  * @ingroup sys_sem
  *  Blocks the thread while waiting for the semaphore to be signaled. If the
@@ -157,43 +133,20 @@ void sys_sem_signal(sys_sem_t *sem);
  * @param timeout timeout in milliseconds to wait (0 = wait forever)
  * @return SYS_ARCH_TIMEOUT on timeout, any other value on success
  */
-uint32_t sys_arch_sem_wait(sys_sem_t *sem, uint32_t timeout);
+uint32_t sys_arch_sem_wait(Semaphore *sem, uint32_t timeout);
 /**
  * @ingroup sys_sem
  * Deallocates a semaphore.
  * @param sem semaphore to delete
  */
-void sys_sem_free(sys_sem_t *sem);
+void sys_sem_free(Semaphore *sem);
 /** Wait for a semaphore - forever/no timeout */
-#define sys_sem_wait(sem)                  sys_arch_sem_wait(sem, 0)
 
-/**
- * @ingroup sys_sem
- * Returns 1 if the semaphore is valid, 0 if it is not valid.
- * When using pointers, a simple way is to check the pointer for != NULL.
- * When directly using OS structures, implementing this may be more complex.
- * This may also be a define, in which case the function is not prototyped.
- */
-int sys_sem_valid(sys_sem_t *sem);
-
-/**
- * @ingroup sys_sem
- * Invalidate a semaphore so that sys_sem_valid() returns 0.
- * ATTENTION: This does NOT mean that the semaphore shall be deallocated:
- * sys_sem_free() is always called before calling this function!
- * This may also be a define, in which case the function is not prototyped.
- */
-void sys_sem_set_invalid(sys_sem_t *sem);
-
-/**
- * Same as sys_sem_valid() but taking a value, not a pointer
- */
-#define sys_sem_valid_val(sem)       sys_sem_valid(&(sem))
 
 /**
  * Same as sys_sem_set_invalid() but taking a value, not a pointer
  */
-#define sys_sem_set_invalid_val(sem) sys_sem_set_invalid(&(sem))
+
 
 
 
@@ -206,21 +159,7 @@ void sys_msleep(uint32_t ms); /* only has a (close to) 1 ms resolution. */
 
 /* Mailbox functions. */
 
-/**
- * @ingroup sys_mbox
- * Creates an empty mailbox for maximum "size" elements. Elements stored
- * in mailboxes are pointers. You have to define macros "_MBOX_SIZE"
- * in your lwipopts.h, or ignore this parameter in your implementation
- * and use a default size.
- * If the mailbox has been created, ERR_OK should be returned. Returning any
- * other error will provide a hint what went wrong, but except for assertions,
- * no real error handling is implemented.
- * 
- * @param mbox pointer to the mbox to create
- * @param size (minimum) number of messages in this mbox
- * @return ERR_OK if successful, another LwipStatus otherwise
- */
-LwipStatus sys_mbox_new(sys_mbox_t *mbox, int size);
+
 /**
  * @ingroup sys_mbox
  * Post a message to an mbox - may not fail
@@ -229,7 +168,7 @@ LwipStatus sys_mbox_new(sys_mbox_t *mbox, int size);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-void sys_mbox_post(sys_mbox_t *mbox, void *msg);
+void sys_mbox_post(Mailbox *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Try to post a message to an mbox - may fail if full.
@@ -239,7 +178,7 @@ void sys_mbox_post(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-LwipStatus sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
+LwipStatus sys_mbox_trypost(Mailbox *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Try to post a message to an mbox - may fail if full.
@@ -249,7 +188,7 @@ LwipStatus sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
-LwipStatus sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
+LwipStatus sys_mbox_trypost_fromisr(Mailbox *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Blocks the thread until a message arrives in the mailbox, but does
@@ -271,7 +210,7 @@ LwipStatus sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
  * @param timeout maximum time (in milliseconds) to wait for a message (0 = wait forever)
  * @return SYS_ARCH_TIMEOUT on timeout, any other value if a message has been received
  */
-uint32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, uint32_t timeout);
+uint32_t sys_arch_mbox_fetch(Mailbox *mbox, void **msg, uint32_t timeout);
 
 /**
  * @ingroup sys_mbox
@@ -289,12 +228,15 @@ uint32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, uint32_t timeout);
  * @return 0 (milliseconds) if a message has been received
  *         or SYS_MBOX_EMPTY if the mailbox is empty
  */
-uint32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg);
+uint32_t sys_arch_mbox_tryfetch(Mailbox *mbox, void **msg);
 
 /**
  * For now, we map straight to sys_arch implementation.
  */
-#define sys_mbox_tryfetch(mbox, msg) sys_arch_mbox_tryfetch(mbox, msg)
+inline void sys_mbox_tryfetch(Mailbox* mbox, void** msg)
+{
+    sys_arch_mbox_tryfetch(mbox, msg);
+}
 /**
  * @ingroup sys_mbox
  * Deallocates a mailbox. If there are messages still present in the
@@ -303,39 +245,10 @@ uint32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg);
  * 
  * @param mbox mbox to delete
  */
-void sys_mbox_free(sys_mbox_t *mbox);
-#define sys_mbox_fetch(mbox, msg) sys_arch_mbox_fetch(mbox, msg, 0)
-
-/**
- * @ingroup sys_mbox
- * Returns 1 if the mailbox is valid, 0 if it is not valid.
- * When using pointers, a simple way is to check the pointer for != NULL.
- * When directly using OS structures, implementing this may be more complex.
- * This may also be a define, in which case the function is not prototyped.
- */
-int sys_mbox_valid(sys_mbox_t *mbox);
-
-
-/**
- * @ingroup sys_mbox
- * Invalidate a mailbox so that sys_mbox_valid() returns 0.
- * ATTENTION: This does NOT mean that the mailbox shall be deallocated:
- * sys_mbox_free() is always called before calling this function!
- * This may also be a define, in which case the function is not prototyped.
- */
-void sys_mbox_set_invalid(sys_mbox_t *mbox);
-
-/**
- * Same as sys_mbox_valid() but taking a value, not a pointer
- */
-#define sys_mbox_valid_val(mbox)       sys_mbox_valid(&(mbox))
-
-/**
- * Same as sys_mbox_set_invalid() but taking a value, not a pointer
- */
-#define sys_mbox_set_invalid_val(mbox) sys_mbox_set_invalid(&(mbox))
-
-
+inline void sys_mbox_free(Mailbox *mbox)
+{
+    
+}
 
 /**
  * @ingroup sys_misc
@@ -359,12 +272,15 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
  * sys_init() must be called before anything else.
  * Initialize the sys_arch layer.
  */
-void sys_init(void);
+inline void sys_init()
+{
+    
+}
 
 /**
  * Ticks/jiffies since power up.
  */
-uint32_t sys_jiffies(void);
+uint32_t sys_jiffies();
 
 
 /**
@@ -375,7 +291,7 @@ uint32_t sys_jiffies(void);
  * Not implementing this function means you cannot use some modules (e.g. TCP
  * timestamps, internal timeouts for NO_SYS==1).
  */
-uint32_t sys_now(void);
+uint32_t sys_now();
 
 /* Critical Region Protection */
 /* These functions must be implemented in the sys_arch.c file.
@@ -398,7 +314,7 @@ uint32_t sys_now(void);
  */
 // #define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
 
-    
+   sys_prot_t sys_arch_protect_int(); 
 /**
  * @ingroup sys_prot
  * SYS_ARCH_PROTECT
@@ -410,7 +326,7 @@ uint32_t sys_now(void);
  * which should be implemented in sys_arch.c. If a particular port needs a
  * different implementation, then this macro may be defined in sys_arch.h
  */
-#define SYS_ARCH_PROTECT(lev) lev = sys_arch_protect()
+inline void SYS_ARCH_PROTECT(sys_prot_t& lev){ lev = sys_arch_protect_int();}
 /**
  * @ingroup sys_prot
  * SYS_ARCH_UNPROTECT
@@ -422,7 +338,7 @@ uint32_t sys_now(void);
  * this macro may be defined in sys_arch.h
  */
 #define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
-sys_prot_t sys_arch_protect(void);
+
 void sys_arch_unprotect(sys_prot_t pval);
 
 
@@ -474,3 +390,89 @@ void sys_arch_unprotect(sys_prot_t pval);
                                 code; \
                                 SYS_ARCH_UNPROTECT(old_level); \
                               } while(0)
+
+
+
+inline bool sys_sem_valid_val(Semaphore sema)
+{
+    return sema.sem != nullptr && sema.sem != reinterpret_cast<void*>(-1);
+}
+
+inline bool sys_sem_valid(Semaphore* sema)
+{
+    return sema != nullptr && sys_sem_valid_val(*sema);
+}
+
+inline void sys_sem_set_invalid(Semaphore* sema){ ((sema)->sem = nullptr);}
+
+inline void sys_sem_set_invalid_val(Semaphore sem) {sys_sem_set_invalid(&(sem));}
+
+inline bool sys_mutex_valid_val(Mutex mutex)
+{
+    return (((mutex).mut != nullptr) && ((mutex).mut != (void*)-1));
+}
+
+inline bool sys_mutex_valid(Mutex* mutex)
+{
+    return (((mutex) != nullptr) && sys_mutex_valid_val(*(mutex)));
+}
+
+inline void sys_mutex_set_invalid(Mutex* mutex)
+{
+    ((mutex)->mut = nullptr);
+}
+
+
+
+
+
+
+inline bool sys_mbox_valid_val(const Mailbox mbox)
+{
+    return mbox.sem != nullptr && mbox.sem != reinterpret_cast<void*>(-1);/**/
+}
+
+inline bool sys_mbox_valid(Mailbox* mbox)
+{
+    return ((mbox != nullptr) && sys_mbox_valid_val(*(mbox)));
+}
+
+inline void sys_mbox_set_invalid(Mailbox* mbox){ ((mbox)->sem = nullptr);}
+
+
+/**
+ * @ingroup sys_mbox
+ * Creates an empty mailbox for maximum "size" elements. Elements stored
+ * in mailboxes are pointers. You have to define macros "_MBOX_SIZE"
+ * in your lwipopts.h, or ignore this parameter in your implementation
+ * and use a default size.
+ * If the mailbox has been created, ERR_OK should be returned. Returning any
+ * other error will provide a hint what went wrong, but except for assertions,
+ * no real error handling is implemented.
+ * 
+ * @param mbox pointer to the mbox to create
+ * @param size (minimum) number of messages in this mbox
+ * @return ERR_OK if successful, another LwipStatus otherwise
+ */
+inline LwipStatus sys_mbox_new(Mailbox *mbox, int size)
+{
+    
+}
+
+
+
+
+
+
+Semaphore* sys_arch_netconn_sem_get(void);
+void sys_arch_netconn_sem_alloc(void);
+void sys_arch_netconn_sem_free(void);
+#define LWIP_NETCONN_THREAD_SEM_GET()   sys_arch_netconn_sem_get()
+#define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
+#define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
+
+#define LWIP_EXAMPLE_APP_ABORT() lwip_win32_keypressed()
+int lwip_win32_keypressed(void);
+
+
+

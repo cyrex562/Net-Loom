@@ -93,7 +93,7 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthAddr* dst_
 bool bridgeif_fdb_age_one_second(void* fdb_ptr)
 {
     const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
-    const auto lev = sys_arch_protect();
+    const auto lev = sys_arch_protect_int();
     for (auto i = 0; i < fdb->max_fdb_entries; i++)
     {
         auto e = &fdb->fdb[i];

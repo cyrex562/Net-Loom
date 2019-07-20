@@ -22,20 +22,20 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
     return 1;
     /* no broadcast support on this network interface? */
   }
-  if ((netif->flags & kNetifFlagBroadcast) == 0) {
+  if ((netif->flags & NETIF_FLAG_BCAST) == 0) {
       /* the given address cannot be a broadcast address
      * nor can we check against any broadcast addresses */
       return 0;
       /* address matches network interface address exactly? => no broadcast */
   }
-  if (addr == ip4_addr_get_u32(get_net_ifc_ip4_addr(netif))) {
+  if (addr == get_ip4_addr(get_net_ifc_ip4_addr(netif))) {
       return 0;
       /*  on the same (sub) network... */
   }
   if (ip4_addr_netcmp(&ipaddr, get_net_ifc_ip4_addr(netif), netif_ip4_netmask(netif))
       /* ...and host identifier bits are all ones? =>... */
-      && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
-          (kIpaddr4Broadcast & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
+      && ((addr & ~get_ip4_addr(netif_ip4_netmask(netif))) ==
+          (kIpaddr4Broadcast & ~get_ip4_addr(netif_ip4_netmask(netif))))) {
       /* => network broadcast address */
       return 1;
   }
@@ -85,7 +85,7 @@ uint32_t ipaddr_addr(const char* cp)
     Ip4Addr val;
     if (ip4addr_aton(cp, &val))
     {
-        return ip4_addr_get_u32(&val);
+        return get_ip4_addr(&val);
     }
     return (kIpaddrNone);
 }
@@ -252,7 +252,7 @@ char* ip4addr_ntoa_r(const Ip4Addr* addr, char* buf, const int buflen)
     uint32_t s_addr;
     char inv[3];
     auto len = 0;
-    s_addr = ip4_addr_get_u32(addr);
+    s_addr = get_ip4_addr(addr);
     auto rp = buf;
     auto ap = reinterpret_cast<uint8_t *>(&s_addr);
     for (uint8_t n = 0; n < 4; n++)

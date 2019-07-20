@@ -92,7 +92,7 @@ struct UdpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    NetIfc*cHint netif_hints; /* Protocol specific PCB members */
+    NetIfc* netif_hints; /* Protocol specific PCB members */
     struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
     uint16_t local_port, remote_port;

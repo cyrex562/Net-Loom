@@ -709,7 +709,7 @@ static LwipStatus dns_send(const uint8_t idx)
         while (*hostname != 0);
         pbuf_put_at(p, query_idx, 0);
         query_idx++; /* fill dns query */
-        if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
+        if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
         {
             qry.type = pp_htons(DNS_RRTYPE_AAAA);
         }
@@ -725,7 +725,7 @@ static LwipStatus dns_send(const uint8_t idx)
         if (entry->is_mdns)
         {
             dst_port = DNS_MQUERY_PORT;
-            if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
+            if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
             {
                 dst = &dns_mquery_v6group;
             }
@@ -842,11 +842,11 @@ dns_call_found(uint8_t idx, IpAddr *addr)
 
   if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
-    if (IP_IS_V6_VAL(*addr)) {
-      LWIP_ASSERT("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+    if (is_ip_addr_ip6_val(*addr)) {
+      // LWIP_ASSERT("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
     } else {
-      LWIP_ASSERT("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+      // LWIP_ASSERT("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
     }
   }
@@ -1122,9 +1122,9 @@ static void dns_recv(void* arg,
                     goto ignore_packet; /* ignore this packet */
                 }
                 if ((qry.cls != pp_htons(DNS_RRCLASS_IN)) || (
-                    LwipDnsAddrtypeIsIpv6(entry->reqaddrtype) && (qry.type !=
+                    lwip_dns_addrtype_is_ipv6(entry->reqaddrtype) && (qry.type !=
                         pp_htons(DNS_RRTYPE_AAAA))) || (!
-                    LwipDnsAddrtypeIsIpv6(entry->reqaddrtype) && (qry.type != pp_htons(
+                    lwip_dns_addrtype_is_ipv6(entry->reqaddrtype) && (qry.type != pp_htons(
                         DNS_RRTYPE_A))))
                 {
                     Logf(DNS_DEBUG,
@@ -1178,7 +1178,7 @@ static void dns_recv(void* arg,
                             if ((ans.type == pp_htons(DNS_RRTYPE_A)) && (ans.len ==
                                 pp_htons(sizeof(Ip4Addr))))
                             {
-                                if (!LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
+                                if (!lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
                                 {
                                     Ip4Addr ip4addr;
                                     /* read the IP address after answer resource record's header */
@@ -1199,7 +1199,7 @@ static void dns_recv(void* arg,
                             if ((ans.type == pp_htons(DNS_RRTYPE_AAAA)) && (ans.len ==
                                 pp_htons(sizeof(Ip6AddrPT))))
                             {
-                                if (LwipDnsAddrtypeIsIpv6(entry->reqaddrtype))
+                                if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
                                 {
                                     Ip6Addr ip6addr{};
                                     /* read the IP address after answer resource record's header */
@@ -1423,49 +1423,39 @@ dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  */
 LwipStatus dns_gethostbyname_addrtype(const char* hostname,
-                                     IpAddr* addr,
-                                     dns_found_callback found,
-                                     void* callback_arg,
-                                     uint8_t dns_addrtype)
+                                      IpAddr* addr,
+                                      dns_found_callback found,
+                                      void* callback_arg,
+                                      uint8_t dns_addrtype)
 {
-    size_t hostnamelen;
-
-  uint8_t is_mdns;
-
-    /* not initialized or no valid server yet, or invalid addr pointer
-     * or invalid hostname or invalid hostname length */
     if ((addr == nullptr) || (!hostname) || (!hostname[0]))
     {
         return ERR_ARG;
     }
-
-  if (dns_pcbs[0] == nullptr) {
-    return ERR_ARG;
-  }
-
-    hostnamelen = strlen(hostname);
+    if (dns_pcbs[0] == nullptr)
+    {
+        return ERR_ARG;
+    }
+    size_t hostnamelen = strlen(hostname);
     if (hostnamelen >= DNS_MAX_NAME_LENGTH)
     {
         Logf(DNS_DEBUG, ("dns_gethostbyname: name too long to resolve"));
         return ERR_ARG;
     }
-
-  if (strcmp(hostname, "localhost") == 0) {
-    ip_addr_set_loopback(LWIP_DNS_ADDRTYPE_IS_IPV6(dns_addrtype), addr);
-    return ERR_OK;
-  }
-
-    /* host name already in octet notation? set ip addr and return ERR_OK */
+    if (strcmp(hostname, "localhost") == 0)
+    {
+        set_ip_addr_loopback(lwip_dns_addrtype_is_ipv6(dns_addrtype), addr);
+        return ERR_OK;
+    } /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
-
-    if ((IpIsV6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) ||
-        (IP_IS_V4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
-
+        if ((is_ipaddr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
+            is_ip_addr_ip4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
             return ERR_OK;
         }
-    } /* already have this address cached? */
+    } 
+    // already have this address cached?
     if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK)
     {
         return ERR_OK;
@@ -1491,11 +1481,11 @@ LwipStatus dns_gethostbyname_addrtype(const char* hostname,
     bool is_mdns = false;
     if (strstr(hostname, ".local") == &hostname[hostnamelen] - 6)
     {
-        is_mdns = 1;
+        is_mdns = true;
     }
     else
     {
-        is_mdns = 0;
+        is_mdns = false;
     }
     if (!is_mdns)
     {

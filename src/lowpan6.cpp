@@ -55,7 +55,6 @@
 #include "ip_addr.h"
 #include "netif.h"
 #include "nd6.h"
-#include "mem.h"
 #include "udp.h"
 #include "tcpip.h"
 #include "lwip_snmp.h"
@@ -64,7 +63,7 @@
 #include "lwip_debug.h"
 #include <cstring>
 
-LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
+// LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
 
 
 
@@ -867,7 +866,7 @@ lowpan6_if_init(NetIfc*netif)
   netif->mtu = 1280;
 
   /* broadcast capability */
-  netif->flags = kNetifFlagBroadcast /* | NETIF_FLAG_LOWPAN6 */;
+  netif->flags = NETIF_FLAG_BCAST /* | NETIF_FLAG_LOWPAN6 */;
 
   return ERR_OK;
 }

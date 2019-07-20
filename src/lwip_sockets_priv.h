@@ -82,7 +82,7 @@ struct lwip_sock {
 
 struct lwip_sock* lwip_socket_dbg_get_socket(int fd);
 
-#define SELECT_SEM_T        sys_sem_t*
+#define SELECT_SEM_T        Semaphore*
 #define SELECT_SEM_PTR(sem) (sem)
 
 

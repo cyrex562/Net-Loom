@@ -13,11 +13,11 @@ constexpr auto DHCP_SNAME_LEN = 64U;
 constexpr auto DHCP_FILE_OFS = 108U;
 constexpr auto DHCP_FILE_LEN = 128U;
 constexpr auto DHCP_MSG_LEN = 236U;
-#define DHCP_OPTIONS_OFS  (DHCP_MSG_LEN + 4U) /* 4 byte: cookie */
+constexpr auto  DHCP_OPTIONS_OFS = (DHCP_MSG_LEN + 4U); /* 4 byte: cookie */
 constexpr auto DHCP_MIN_OPTIONS_LEN = 68U;
 
 /** set this to be sufficient for your options in outgoing DHCP msgs */
-#define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
+constexpr auto DHCP_OPTIONS_LEN = DHCP_MIN_OPTIONS_LEN;
 
 /** minimum set of fields of any DHCP message */
 struct DhcpMsg

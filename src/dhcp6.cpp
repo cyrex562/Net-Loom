@@ -680,7 +680,7 @@ static void dhcp6_recv(void* arg,
     {
         goto free_pbuf_and_return;
     } // LWIP_ERROR("invalid server address type", IpIsV6(addr), goto free_pbuf_and_return;);
-    if (!is_ip_v6(addr))
+    if (!is_ipaddr_v6(addr))
     {
         printf("invalid server address type\n");
         goto free_pbuf_and_return;
