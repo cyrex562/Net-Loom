@@ -6,8 +6,6 @@
 #include <cstdint>
 
 #include "lwip_error.h"
-#include "sys_arch.h"
-
 
 using sys_prot_t = int;
 
