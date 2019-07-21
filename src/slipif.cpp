@@ -59,16 +59,16 @@
  *
  */
 
-#include "slipif.h"
-#include "opt.h"
-#include "def.h"
-#include "packet_buffer.h"
-#include "stats.h"
-//#include "snmp.h"
-#include "sys.h"
-#include "sio.h"
-#include "lwip_debug.h"
-#include "lwip_snmp.h"
+#include <slipif.h>
+#include <opt.h>
+#include <def.h>
+#include <packet_buffer.h>
+#include <stats.h>
+//#include <snmp.h>
+#include <sys.h>
+#include <sio.h>
+#include <lwip_debug.h>
+#include <lwip_snmp.h>
 
 #define SLIP_END     0xC0 /* 0300: start and end of every packet */
 #define SLIP_ESC     0xDB /* 0333: escape start (one byte escaped data follows) */
@@ -326,7 +326,7 @@ slipif_rxbyte_input(NetIfc*netif, uint8_t c)
  * @param nf the lwip network interface structure for this slipif
  */
 static void
-slipif_loop_thread(void *nf)
+slipif_loop_thread(uint8_t *nf)
 {
   uint8_t c;
   NetIfc*netif = (NetIfc*)nf;

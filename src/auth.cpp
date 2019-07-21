@@ -1,22 +1,22 @@
 
-#include "ppp_opts.h"
-#include "auth.h"
+#include <ppp_opts.h>
+#include <auth.h>
 
-#include "ccp.h"
+#include <ccp.h>
 
-#include "chap_new.h"
+#include <chap_new.h>
 
-#include "eap.h"
+#include <eap.h>
 
-#include "ecp.h"
+#include <ecp.h>
 
-#include "lcp.h"
+#include <lcp.h>
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
-#include "upap.h"
+#include <upap.h>
 
-#include "ppp.h"
+#include <ppp.h>
 
 #include <string>
 
@@ -517,7 +517,7 @@ void np_finished(PppPcb* pcb, int proto)
  * check_idle - check whether the link has been idle for long
  * enough that we can shut it down.
  */
-static void check_idle(void *arg) {
+static void check_idle(uint8_t *arg) {
     const auto pcb = static_cast<PppPcb*>(arg);
     // struct ppp_idle idle;
     time_t itime;
@@ -544,7 +544,7 @@ static void check_idle(void *arg) {
 /*
  * connect_time_expired - log a message and close the connection.
  */
-static void connect_time_expired(void *arg) {
+static void connect_time_expired(uint8_t *arg) {
     auto*pcb = static_cast<PppPcb*>(arg);
     ppp_info("Connect time expired");
     pcb->err_code = PPPERR_CONNECTTIME;

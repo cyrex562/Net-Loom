@@ -5,7 +5,7 @@
 //
 // For the license information refer to format.h.
 
-#include "gtest-extra.h"
+#include <gtest-extra.h>
 
 #if FMT_USE_FILE_DESCRIPTORS
 

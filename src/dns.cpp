@@ -84,14 +84,14 @@
  * Includes
  *----------------------------------------------------------------------------*/
 
-#include "dns.h"
-#include "opt.h"
-#include "def.h"
-#include "udp.h"
-#include "lwip_debug.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
-#include "ip4_addr.h"
+#include <dns.h>
+#include <opt.h>
+#include <def.h>
+#include <udp.h>
+#include <lwip_debug.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
+#include <ip4_addr.h>
 #include <cstring>
 #include <cctype>
 
@@ -201,7 +201,7 @@ static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_A
 
 
 /* forward declarations */
-static void dns_recv(void *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc*
+static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc*
                      netif);
 static void dns_check_entries(void);
 static void dns_call_found(uint8_t idx, IpAddr *addr);
@@ -357,7 +357,7 @@ static void dns_init_local(void)
  * @return the number of entries in the local host-list
  */
 size_t
-dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
+dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg)
 {
   size_t i;
 
@@ -1404,7 +1404,7 @@ static LwipStatus dns_enqueue(const char* name,
  */
 LwipStatus
 dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
-                  void *callback_arg)
+                  uint8_t *callback_arg)
 {
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
 }

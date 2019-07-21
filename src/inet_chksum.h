@@ -36,10 +36,10 @@
  */
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
-#include "packet_buffer.h"
-#include "ip_addr.h"
+#include <packet_buffer.h>
+#include <ip_addr.h>
 
 /** Swap the bytes in an uint16_t: much like lwip_htons() for little-endian */
 #ifndef SWAP_BYTES_IN_WORD
@@ -63,10 +63,10 @@
 
 
 
-uint16_t inet_chksum(const void *dataptr, uint16_t len);
+uint16_t inet_chksum(const uint8_t *dataptr, uint16_t len);
 uint16_t inet_chksum_pbuf(struct PacketBuffer *p);
 
-uint16_t lwip_standard_checksum_copy(void *dst, const void *src, uint16_t len);
+uint16_t lwip_standard_checksum_copy(uint8_t *dst, const uint8_t *src, uint16_t len);
 
 uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        const Ip4Addr *src, const Ip4Addr *dest);
@@ -91,13 +91,13 @@ ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
                   const Ip6Addr *src, const Ip6Addr *dest);
 
 uint16_t
-lwip_standard_chksum_1(const void *dataptr, int len);
+lwip_standard_chksum_1(const uint8_t *dataptr, int len);
 
 uint16_t
-lwip_standard_chksum_2(const void *dataptr, const size_t len);
+lwip_standard_chksum_2(const uint8_t *dataptr, const size_t len);
 
 uint16_t
-lwip_standard_chksum_3(const void *dataptr, const size_t len);
+lwip_standard_chksum_3(const uint8_t *dataptr, const size_t len);
 
 constexpr auto kLwipStandardChecksumAlgorithm = 2;
 

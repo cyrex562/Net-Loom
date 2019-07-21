@@ -1,13 +1,13 @@
 
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "chap_new.h"
-#include "chap_ms.h"
-#include "pppcrypt.h"
-#include "magic.h"
-#include "mppe.h" /* For mppe_sha1_pad*, mppe_set_key() */
-#include "fsm.h"		/* Need to poke MPPE options */
-#include "ccp.h"
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <chap_new.h>
+#include <chap_ms.h>
+#include <pppcrypt.h>
+#include <magic.h>
+#include <mppe.h> /* For mppe_sha1_pad*, mppe_set_key() */
+#include <fsm.h>		/* Need to poke MPPE options */
+#include <ccp.h>
 
 
 // /*

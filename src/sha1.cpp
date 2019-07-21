@@ -38,10 +38,10 @@
  *  http://www.itl.nist.gov/fipspubs/fip180-1.htm
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
 
-#include "sha1.h"
+#include <sha1.h>
 
 #include <cstring>
 
@@ -261,7 +261,7 @@ void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, fill );
         sha1_process( ctx, ctx->buffer );
         input += fill;
@@ -278,7 +278,7 @@ void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, ilen );
     }
 }

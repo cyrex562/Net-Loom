@@ -1,12 +1,11 @@
 #pragma once
-#include "packet_buffer.h"
-#include "ip4_addr.h"
-#include "lwip_error.h"
-#include "netif.h"
-#include "arch.h"
-
-
- /** This is the packed version of Ip4Addr,
+#include <packet_buffer.h>
+#include <ip4_addr.h>
+#include <lwip_error.h>
+#include <netif.h>
+#include <arch.h>
+#include <ip_addr.h>
+/** This is the packed version of Ip4Addr,
      used in network headers that are itself packed */
 
 
@@ -165,11 +164,11 @@ LwipStatus ip4_output_hinted(struct PacketBuffer *p, const Ip4Addr *src, const I
 
 
 LwipStatus ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, uint8_t *ip_options,
        uint16_t optlen);
 
 LwipStatus ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, uint8_t *ip_options,
        uint16_t optlen);
 
 void  ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);

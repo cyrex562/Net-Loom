@@ -36,8 +36,8 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "ip_addr.h"
+#include <opt.h>
+#include <ip_addr.h>
 
 #ifdef __cplusplus
 extern "C" {

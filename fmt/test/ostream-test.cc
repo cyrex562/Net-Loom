@@ -6,12 +6,12 @@
 // For the license information refer to format.h.
 
 #define FMT_STRING_ALIAS 1
-#include "fmt/ostream.h"
+#include <fmt/ostream.h>
 
 #include <sstream>
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include <gmock.h>
+#include <gtest-extra.h>
+#include <util.h>
 
 using fmt::format;
 using fmt::format_error;
@@ -134,9 +134,9 @@ TEST(OStreamTest, WriteToOStreamMaxSize) {
   } buffer(max_size);
 
   struct mock_streambuf : std::streambuf {
-    MOCK_METHOD2(xsputn, std::streamsize (const void *s, std::streamsize n));
+    MOCK_METHOD2(xsputn, std::streamsize (const uint8_t *s, std::streamsize n));
     std::streamsize xsputn(const char *s, std::streamsize n) {
-      const void *v = s;
+      const uint8_t *v = s;
       return xsputn(v, n);
     }
   } streambuf;

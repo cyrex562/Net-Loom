@@ -38,12 +38,12 @@
 
 #pragma once
 
-#include "lowpan6_opts.h"
-#include "lowpan6_common.h"
-#include "packet_buffer.h"
-#include "ip.h"
-#include "ip_addr.h"
-#include "netif.h"
+#include <lowpan6_opts.h>
+#include <lowpan6_common.h>
+#include <packet_buffer.h>
+#include <ip.h>
+#include <ip_addr.h>
+#include <netif.h>
 
 LwipStatus rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
 LwipStatus rfc7668_input(struct PacketBuffer * p, NetIfc*netif);

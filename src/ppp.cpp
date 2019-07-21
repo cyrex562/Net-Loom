@@ -1,29 +1,29 @@
-#include "ppp_opts.h"
-#include "packet_buffer.h"
-#include "sys.h"
-#include "tcpip.h"
-#include "lwip_snmp.h"
-#include "ip4.h" /* for ip4_input() */
-#include "ip6.h" /* for ip6_input() */
-#include "dns.h"
-#include "ppp_impl.h"
-#include "pppos.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "magic.h"
-#include "upap.h"
-#include "chap_new.h"
-#include "eap.h"
-#include "ccp.h"
-#include "mppe.h"
-#include "ecp.h"
-#include "vj.h"
-#include "ipcp.h"
-#include "ipv6cp.h"
-#include "fsm.h"
-#include "auth.h"
-#include "pppdebug.h"
-#include "timeouts.h"
+#include <ppp_opts.h>
+#include <packet_buffer.h>
+#include <sys.h>
+#include <tcpip.h>
+#include <lwip_snmp.h>
+#include <ip4.h> /* for ip4_input() */
+#include <ip6.h> /* for ip6_input() */
+#include <dns.h>
+#include <ppp_impl.h>
+#include <pppos.h>
+#include <fsm.h>
+#include <lcp.h>
+#include <magic.h>
+#include <upap.h>
+#include <chap_new.h>
+#include <eap.h>
+#include <ccp.h>
+#include <mppe.h>
+#include <ecp.h>
+#include <vj.h>
+#include <ipcp.h>
+#include <ipv6cp.h>
+#include <fsm.h>
+#include <auth.h>
+#include <pppdebug.h>
+#include <timeouts.h>
 #ifdef _MSC_VER
 #include <WinSock2.h>
 #endif
@@ -271,7 +271,7 @@ ppp_free(PppPcb* pcb)
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 LwipStatus
-ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg)
+ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
     if (pcb == nullptr)
@@ -532,7 +532,7 @@ PppPcb* init_ppp_pcb(NetIfc* pppif,
                    &ip4_any,
                    &ip4_bcast,
                    &ip4_any,
-                   static_cast<void *>(pcb),
+                   static_cast<uint8_t *>(pcb),
                    ppp_netif_init_cb,
                    nullptr))
     {

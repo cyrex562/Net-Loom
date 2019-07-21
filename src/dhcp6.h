@@ -38,9 +38,9 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "lwip_error.h"
-#include "netif.h"
+#include <opt.h>
+#include <lwip_error.h>
+#include <netif.h>
 #include <cstdint>
 
 constexpr auto DHCP6_CLIENT_PORT = 546;

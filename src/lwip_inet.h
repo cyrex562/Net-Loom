@@ -39,11 +39,11 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "def.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
-#include "lwip_sockets.h"
+#include <opt.h>
+#include <def.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
+#include <lwip_sockets.h>
 
 /* If your port already typedef's LwipInAddr, define IN_ADDR_T_DEFINED
    to prevent this code from redefining it. */

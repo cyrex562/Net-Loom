@@ -31,19 +31,19 @@
 *   Original derived from BSD codes.
 *****************************************************************************/
 #pragma once
-#include "netif.h"
-#include "ccp.h"
-#include "ip6_addr.h"
-#include "mppe.h"
-#include "ipv6cp.h"
-#include "vj.h"
-#include "chap_new.h"
-#include "ip4_addr.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "ipcp.h"
-#include "eap_state.h"
-#include "upap.h"
+#include <netif.h>
+#include <ccp.h>
+#include <ip6_addr.h>
+#include <mppe.h>
+#include <ipv6cp.h>
+#include <vj.h>
+#include <chap_new.h>
+#include <ip4_addr.h>
+#include <fsm.h>
+#include <lcp.h>
+#include <ipcp.h>
+#include <eap_state.h>
+#include <upap.h>
 
 
 #ifdef __cplusplus
@@ -117,7 +117,7 @@ struct PppPcb;
 
 
 /* Link status callback function prototype */
-typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, void *ctx);
+typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, uint8_t *ctx);
 
 /*
  * PPP configuration.
@@ -439,7 +439,7 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  * This can be used for example to set a LED pattern depending on the
  * current phase of the PPP session.
  */
-typedef void (*ppp_notify_phase_cb_fn)(PppPcb *pcb, uint8_t phase, void *ctx);
+typedef void (*ppp_notify_phase_cb_fn)(PppPcb *pcb, uint8_t phase, uint8_t *ctx);
 void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 
 
@@ -516,7 +516,7 @@ constexpr auto kPppctlgFd = 2;
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure.
  */
-LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, void *arg);
+LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               ((ppp)->netif)

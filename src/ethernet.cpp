@@ -38,26 +38,26 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
+#include <opt.h>
+#include <def.h>
 
-#include "etharp.h"
+#include <etharp.h>
 
-#include "ethernet.h"
+#include <ethernet.h>
 
-#include "ieee.h"
+#include <ieee.h>
 
-#include "ip.h"
+#include <ip.h>
 
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
-#include "pppoe.h"
+#include <pppoe.h>
 
-#include "lwip_snmp.h"
+#include <lwip_snmp.h>
 
-#include "stats.h"
+#include <stats.h>
 
 #include <cstring>
 
@@ -315,7 +315,7 @@ LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
     lwip_assert("netif->hwaddr_len must be 6 for ethernet_output!",
                 (netif->hwaddr_len == ETH_HWADDR_LEN));
     // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-    //      ("ethernet_output: sending packet %p\n", (void *)p));
+    //      ("ethernet_output: sending packet %p\n", (uint8_t *)p));
 
     /* send the packet */
     areturn netif->linkoutput(netif, p);

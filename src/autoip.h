@@ -1,6 +1,6 @@
 #pragma once
-#include "netif.h"
-#include "etharp.h"
+#include <netif.h>
+#include <etharp.h>
 
  /* 169.254.0.0 */
 constexpr auto kAutoipNet = 0xA9FE0000;

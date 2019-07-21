@@ -44,19 +44,19 @@
 
 /* @todo Check the use of '(UdpPcb).chksum_len_rx'!
  */
-#include "udp.h"
-#include "def.h"
-#include "icmp.h"
-#include "icmp6.h"
-#include "inet_chksum.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "ip_addr.h"
-#include "lwip_debug.h"
-#include "lwip_snmp.h"
-#include "netif.h"
-#include "opt.h"
-#include "stats.h"
+#include <udp.h>
+#include <def.h>
+#include <icmp.h>
+#include <icmp6.h>
+#include <inet_chksum.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <ip_addr.h>
+#include <lwip_debug.h>
+#include <lwip_snmp.h>
+#include <netif.h>
+#include <opt.h>
+#include <stats.h>
 #include <cstring>
 
 /* From http://www.iana.org/assignments/port-numbers:
@@ -321,7 +321,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
   if (for_us) {
     Logf(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
 
-    IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_UDP) {
+    is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_UDP) {
 
       if (ip_current_header_proto() == IP_PROTO_UDPLITE) {
         /* Do the UDP Lite checksum */
@@ -721,7 +721,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
 
       ip_addr_isbroadcast(dst_ip, netif)) {
     Logf(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                ("udp_sendto_if: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+                ("udp_sendto_if: SOF_BROADCAST not enabled on pcb %p\n", (uint8_t *)pcb));
     return ERR_VAL;
   }
 
@@ -755,12 +755,12 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     }
     /* first PacketBuffer q points to header PacketBuffer */
     Logf(UDP_DEBUG,
-         ("udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
+         ("udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (uint8_t *)q, (uint8_t *)p));
   } else {
     /* adding space for header within p succeeded */
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
-    Logf(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (void *)p));
+    Logf(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (uint8_t *)p));
   }
   lwip_assert("check that first PacketBuffer can hold struct udp_hdr",
               (q->len >= sizeof(struct UdpHdr)));
@@ -834,7 +834,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     udphdr->len = lwip_htons(q->tot_len);
     /* calculate checksum */
 
-    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_UDP) {
+    is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_UDP) {
       /* Checksum is mandatory over IPv6. */
       if (IP_IS_V6(dst_ip) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
         uint16_t udpchksum;

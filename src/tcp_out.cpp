@@ -60,30 +60,30 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
+#include <opt.h>
+#include <def.h>
 
-#include "inet_chksum.h"
+#include <inet_chksum.h>
 
-#include "ip6.h"
+#include <ip6.h>
 
-#include "ip6_addr.h"
+#include <ip6_addr.h>
 
-#include "ip_addr.h"
-#include "mem.h"
+#include <ip_addr.h>
+#include <mem.h>
 
-#include "memp.h"
+#include <memp.h>
 
-#include "netif.h"
+#include <netif.h>
 
-#include "stats.h"
+#include <stats.h>
 
-#include "sys.h"
+#include <sys.h>
 
-#include "tcp_priv.h"
+#include <tcp_priv.h>
 
 #include <cstring>
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
 
 /* Allow to add custom TCP header options by defining this hook */
@@ -177,7 +177,7 @@ tcp_create_segment(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_t hdr
 
 
   /* build TCP header */
-  if (pbuf_add_header(p, kTcpHdrLen)) {
+  if (pbuf_add_header(p, TCP_HDR_LEN)) {
     Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_create_segment: no room for TCP header in pbuf.\n"));
     TCP_STATS_INC(tcp.err);
     tcp_seg_free(seg);
@@ -369,7 +369,7 @@ tcp_write_checks(struct TcpPcb *pcb, uint16_t len)
  * @return ERR_OK if enqueued, another LwipStatus on error
  */
 LwipStatus
-tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
+tcp_write(struct TcpPcb *pcb, const uint8_t *arg, uint16_t len, uint8_t apiflags)
 {
   struct PacketBuffer *concat_p = nullptr;
   struct tcp_seg *last_unsent = nullptr, *seg = nullptr, *prev_seg = nullptr, *queue = nullptr;
@@ -403,7 +403,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 
 
   Logf(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, data=%p, len=%"U16_F", apiflags=%"U16_F")\n",
-           (void *)pcb, arg, len, (uint16_t)apiflags));
+           (uint8_t *)pcb, arg, len, (uint16_t)apiflags));
   LWIP_ERROR("tcp_write: arg == NULL (programmer violates API)",
              arg != nullptr, return ERR_ARG;);
 
@@ -528,7 +528,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
         /* If the last unsent PacketBuffer is of type PBUF_ROM, try to extend it. */
         struct PacketBuffer *p;
         for (p = last_unsent->p; p->next != nullptr; p = p->next);
-        if (((p->type_internal & (kPbufTypeFlagStructDataContiguous | kPbufTypeFlagDataVolatile)) == 0) &&
+        if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | kPbufTypeFlagDataVolatile)) == 0) &&
             (const uint8_t *)p->payload + p->len == (const uint8_t *)arg) {
           lwip_assert("tcp_write: ROM pbufs cannot be oversized", pos == 0);
           extendlen = seglen;
@@ -749,7 +749,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 
   /* Set the PSH flag in the last segment that we enqueued. */
   if (seg != nullptr && seg->tcphdr != nullptr && ((apiflags & TCP_WRITE_FLAG_MORE) == 0)) {
-    TCPH_SET_FLAG(seg->tcphdr, kTcpPsh);
+    TCPH_SET_FLAG(seg->tcphdr, TCP_PSH);
   }
 
   return ERR_OK;
@@ -861,9 +861,9 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   split_flags = TCPH_FLAGS(useg->tcphdr);
   remainder_flags = 0; /* ACK added in tcp_output() */
 
-  if (split_flags & kTcpPsh) {
-    split_flags &= ~kTcpPsh;
-    remainder_flags |= kTcpPsh;
+  if (split_flags & TCP_PSH) {
+    split_flags &= ~TCP_PSH;
+    remainder_flags |= TCP_PSH;
   }
   if (split_flags & TCP_FIN) {
     split_flags &= ~TCP_FIN;
@@ -963,7 +963,7 @@ tcp_send_fin(struct TcpPcb *pcb)
     for (last_unsent = pcb->unsent; last_unsent->next != nullptr;
          last_unsent = last_unsent->next);
 
-    if ((TCPH_FLAGS(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | kTcpRst)) == 0) {
+    if ((TCPH_FLAGS(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | TCP_RST)) == 0) {
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
       tcp_set_flags(pcb, TF_FIN);
@@ -1210,7 +1210,7 @@ tcp_output(struct TcpPcb *pcb)
 
   if (seg == nullptr) {
     Logf(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n",
-             (void *)pcb->unsent));
+             (uint8_t *)pcb->unsent));
     Logf(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F
              ", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
              ", seg == NULL, ack %"U32_F"\n",
@@ -1277,7 +1277,7 @@ tcp_output(struct TcpPcb *pcb)
   while (seg != nullptr &&
          lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
     lwip_assert("RST not expected here!",
-                (TCPH_FLAGS(seg->tcphdr) & kTcpRst) == 0);
+                (TCPH_FLAGS(seg->tcphdr) & TCP_RST) == 0);
     /* Stop sending if the nagle algorithm would prevent it
      * Don't stop:
      * - if tcp_write had a memory error before (prevent delayed ACK timeout) or
@@ -1292,7 +1292,7 @@ tcp_output(struct TcpPcb *pcb)
 
 
     if (pcb->state != SYN_SENT) {
-      TCPH_SET_FLAG(seg->tcphdr, kTcpAck);
+      TCPH_SET_FLAG(seg->tcphdr, TCP_ACK);
     }
 
     err = tcp_output_segment(seg, pcb, netif);
@@ -1429,7 +1429,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
   /* cast through void* to get rid of alignment warnings */
-  opts = (uint32_t *)(void *)(seg->tcphdr + 1);
+  opts = (uint32_t *)(uint8_t *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
     uint16_t mss;
 
@@ -1497,7 +1497,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
   lwip_assert("options not filled", (uint8_t *)opts == ((uint8_t *)(seg->tcphdr + 1)) + LWIP_TCP_OPT_LENGTH_SEGMENT(seg->flags, pcb));
 
 
-  IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_TCP) {
+  is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_TCP) {
 
     uint32_t acc;
 
@@ -1745,10 +1745,10 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
   struct TcpHdr *tcphdr;
   struct PacketBuffer *p;
 
-  p = pbuf_alloc(PBUF_IP, kTcpHdrLen + optlen + datalen, PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, TCP_HDR_LEN + optlen + datalen, PBUF_RAM);
   if (p != nullptr) {
     lwip_assert("check that first pbuf can hold struct tcp_hdr",
-                (p->len >= kTcpHdrLen + optlen));
+                (p->len >= TCP_HDR_LEN + optlen));
     tcphdr = (struct TcpHdr *)p->payload;
     tcphdr->src = lwip_htons(src_port);
     tcphdr->dest = lwip_htons(dst_port);
@@ -1781,7 +1781,7 @@ tcp_output_alloc_header(struct TcpPcb *pcb, uint16_t optlen, uint16_t datalen,
   lwip_assert("tcp_output_alloc_header: invalid pcb", pcb != nullptr);
 
   p = tcp_output_alloc_header_common(pcb->rcv_nxt, optlen, datalen,
-    seqno_be, pcb->local_port, pcb->remote_port, kTcpAck,
+    seqno_be, pcb->local_port, pcb->remote_port, TCP_ACK,
     TCPWND_MIN16(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd)));
   if (p != nullptr) {
     /* If we're sending a packet, update the announced right window edge */
@@ -1801,7 +1801,7 @@ tcp_output_fill_options(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_
   lwip_assert("tcp_output_fill_options: invalid pbuf", p != nullptr);
 
   tcphdr = (struct TcpHdr *)p->payload;
-  opts = (uint32_t *)(void *)(tcphdr + 1);
+  opts = (uint32_t *)(uint8_t *)(tcphdr + 1);
 
   /* NB. MSS and window scale options are only sent on SYNs, so ignore them here */
 
@@ -1852,7 +1852,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
   } else {
     uint8_t ttl, tos;
 
-    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_TCP) {
+    is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_TCP) {
       struct TcpHdr *tcphdr = (struct TcpHdr *)p->payload;
       tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
                                         src, dst);
@@ -1915,7 +1915,7 @@ tcp_rst(const struct TcpPcb *pcb, uint32_t seqno, uint32_t ackno,
 
 
   p = tcp_output_alloc_header_common(ackno, optlen, 0, lwip_htonl(seqno), local_port,
-    remote_port, kTcpRst | kTcpAck, wnd);
+    remote_port, TCP_RST | TCP_ACK, wnd);
   if (p == nullptr) {
     Logf(TCP_DEBUG, ("tcp_rst: could not allocate memory for PacketBuffer\n"));
     return;
@@ -2080,10 +2080,10 @@ tcp_zero_window_probe(struct TcpPcb *pcb)
 
   if (is_fin) {
     /* FIN segment, no data */
-    TCPH_FLAGS_SET(tcphdr, kTcpAck | TCP_FIN);
+    TCPH_FLAGS_SET(tcphdr, TCP_ACK | TCP_FIN);
   } else {
     /* Data segment, copy in one byte from the head of the unacked queue */
-    char *d = ((char *)p->payload + kTcpHdrLen);
+    char *d = ((char *)p->payload + TCP_HDR_LEN);
     /* Depending on whether the segment has already been sent (unacked) or not
        (unsent), seg->p->payload points to the IP header or TCP header.
        Ensure we copy the first TCP data byte: */

@@ -2,10 +2,10 @@
 // file: sys.cpp
 //
 
-#include "arch.h"
-#include "lwip_debug.h"
-#include "sys.h"
-#include "tcpip.h"
+#include <arch.h>
+#include <lwip_debug.h>
+#include <sys.h>
+#include <tcpip.h>
 #include <windows.h>
 #include <cstdio> 
 #include <cstdlib>

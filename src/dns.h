@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "opt.h"
-#include "ip_addr.h"
-#include "lwip_error.h"
-#include "ip4_addr.h"
+#include <opt.h>
+#include <ip_addr.h>
+#include <lwip_error.h>
+#include <ip4_addr.h>
 
  /** DNS server port address */
 
@@ -131,19 +131,19 @@ extern const IpAddr dns_mquery_v6group;
  *        or NULL if the name could not be found (or on any other error).
  * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, void *callback_arg);
+typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, uint8_t *callback_arg);
 
 void             dns_init(void);
 void             dns_tmr(void);
 void             dns_setserver(uint8_t numdns, const IpAddr *dnsserver);
 IpAddr dns_getserver(uint8_t numdns);
 LwipStatus            dns_gethostbyname(const char *hostname, IpAddr *addr,
-                                   dns_found_callback found, void *callback_arg);
+                                   dns_found_callback found, uint8_t *callback_arg);
 LwipStatus            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
-                                   dns_found_callback found, void *callback_arg,
+                                   dns_found_callback found, uint8_t *callback_arg,
                                    uint8_t dns_addrtype);
 
-size_t         dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg);
+size_t         dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg);
 LwipStatus          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
 
 int            dns_local_removehost(const char *hostname, const IpAddr *addr);

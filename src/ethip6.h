@@ -41,11 +41,11 @@
 
 
 #pragma once
-#include "ip6.h"
+#include <ip6.h>
 
-#include "ip6_addr.h"
+#include <ip6_addr.h>
 
-#include "packet_buffer.h"
+#include <packet_buffer.h>
 
 
 #ifdef __cplusplus

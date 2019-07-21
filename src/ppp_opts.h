@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
 /**
  * PPP_SUPPORT==1: Enable PPP.

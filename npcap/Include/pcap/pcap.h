@@ -449,7 +449,7 @@ PCAP_API int	pcap_setfilter(pcap_t *, struct bpf_program *);
 PCAP_API int 	pcap_setdirection(pcap_t *, pcap_direction_t);
 PCAP_API int	pcap_getnonblock(pcap_t *, char *);
 PCAP_API int	pcap_setnonblock(pcap_t *, int, char *);
-PCAP_API int	pcap_inject(pcap_t *, const void *, size_t);
+PCAP_API int	pcap_inject(pcap_t *, const uint8_t *, size_t);
 PCAP_API int	pcap_sendpacket(pcap_t *, const uint8_t *, int);
 PCAP_API const char *pcap_statustostr(int);
 PCAP_API const char *pcap_strerror(int);
@@ -582,8 +582,8 @@ PCAP_API void	bpf_dump(const struct bpf_program *, int);
 
   PCAP_API HANDLE pcap_getevent(pcap_t *p);
 
-  PCAP_API int pcap_oid_get_request(pcap_t *, bpf_u_int32, void *, size_t *);
-  PCAP_API int pcap_oid_set_request(pcap_t *, bpf_u_int32, const void *, size_t *);
+  PCAP_API int pcap_oid_get_request(pcap_t *, bpf_u_int32, uint8_t *, size_t *);
+  PCAP_API int pcap_oid_set_request(pcap_t *, bpf_u_int32, const uint8_t *, size_t *);
 
   PCAP_API pcap_send_queue* pcap_sendqueue_alloc(u_int memsize);
 

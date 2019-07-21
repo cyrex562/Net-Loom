@@ -40,24 +40,24 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "ip6_addr.h"
-#include "def.h"
-#include "packet_buffer.h"
-#include "netif.h"
+#include <opt.h>
+#include <ip6_addr.h>
+#include <def.h>
+#include <packet_buffer.h>
+#include <netif.h>
 
-#include "lwip_error.h"
+#include <lwip_error.h>
 
 
  /** This is the packed version of Ip6Addr,
      used in network headers that are itself packed */
 
-struct Ip6AddrPacked {
-    uint32_t addr[4];
-};
-typedef struct Ip6AddrPacked Ip6Addr;
+// struct Ip6AddrPacked {
+//     uint32_t addr[4];
+// };
+// typedef struct Ip6AddrPacked Ip6Addr;
 
-constexpr auto kIp6Hlen = 40;
+constexpr auto IP6_HDR_LEN = 40;
 
 enum Ip6NextHdr
 {

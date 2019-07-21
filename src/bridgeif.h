@@ -1,7 +1,7 @@
 #pragma once
 
-#include "lwip_error.h"
-#include "ethernet.h"
+#include <lwip_error.h>
+#include <ethernet.h>
 
 struct NetIfc;
 typedef uint64_t BridgeIfcPortMask;
@@ -90,7 +90,7 @@ LwipStatus bridgeif_fdb_remove(NetIfc*bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthAddr *dst_addr);
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(uint8_t *fdb_ptr, struct EthAddr *dst_addr);
 void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
 
 static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);

@@ -1,10 +1,10 @@
 #pragma once
-#include "ip4.h"
-#include "ip6.h"
-#include "ip_addr.h"
-#include "lwip_error.h"
-#include "netif.h"
-#include "packet_buffer.h"
+#include <ip4.h>
+#include <ip6.h>
+#include <ip_addr.h>
+#include <lwip_error.h>
+#include <netif.h>
+#include <packet_buffer.h>
 
 enum IpProto
 {
@@ -143,7 +143,7 @@ struct IpGlobals
 //                       : IPH_PROTO(ip4_current_header()))
 /** Get the transport layer header */
 // #define ip_next_header_ptr()                                      \
-//   ((const void *)((ip_current_is_v6()                             \
+//   ((const uint8_t *)((ip_current_is_v6()                             \
 //                        ? (const uint8_t *)ip6_current_header()    \
 //                        : (const uint8_t *)ip4_current_header()) + \
 //                   ip_current_header_tot_len()))

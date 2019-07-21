@@ -5,7 +5,7 @@
 //
 // For the license information refer to format.h.
 
-#include "gtest-extra.h"
+#include <gtest-extra.h>
 
 #include <cstring>
 #include <algorithm>
@@ -16,7 +16,7 @@
 # include <crtdbg.h>  // for _CrtSetReportMode
 #endif  // _WIN32
 
-#include "util.h"
+#include <util.h>
 
 using testing::internal::scoped_ptr;
 

@@ -1,12 +1,11 @@
-#include "opt.h"
-#include "def.h"
-#include "icmp.h"
-#include "inet_chksum.h"
-#include "ip4_frag.h"
-#include "netif.h"
-#include "stats.h"
-#include "ip4.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <def.h>
+#include <icmp.h>
+#include <inet_chksum.h>
+#include <ip4_frag.h>
+#include <netif.h>
+#include <ip4.h>
+#include <lwip_debug.h>
 #include <cstring>
 
 constexpr auto kIpReassFlagLastfrag = 0x01;
@@ -560,7 +559,7 @@ ip4_reass(struct PacketBuffer *p)
     IPH_CHKSUM_SET(fraghdr, 0);
     /* @todo: do we need to set/calculate the correct checksum? */
 
-    IfNetifChecksumEnabled(ip_current_input_netif(), NETIF_CHECKSUM_GEN_IP) {
+    is_netif_checksum_enabled(ip_current_input_netif(), NETIF_CHECKSUM_GEN_IP) {
       IPH_CHKSUM_SET(fraghdr, inet_chksum(fraghdr, kIp4HdrLen));
     }
 
@@ -644,7 +643,7 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
 {
   struct PbufCustomRef *pcr = (struct PbufCustomRef *)p;
   lwip_assert("pcr != NULL", pcr != nullptr);
-  lwip_assert("pcr == p", (void *)pcr == (void *)p);
+  lwip_assert("pcr == p", (uint8_t *)pcr == (uint8_t *)p);
   if (pcr->original != nullptr) {
     pbuf_free(pcr->original);
   }
@@ -779,7 +778,7 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
     IPH_LEN_SET(iphdr, lwip_htons((uint16_t)(fragsize + kIp4HdrLen)));
     IPH_CHKSUM_SET(iphdr, 0);
 
-    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_IP) {
+    is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_IP) {
       IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, kIp4HdrLen));
     }
 

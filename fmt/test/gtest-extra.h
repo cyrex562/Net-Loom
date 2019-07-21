@@ -9,9 +9,9 @@
 #define FMT_GTEST_EXTRA_H_
 
 #include <string>
-#include "gmock.h"
+#include <gmock.h>
 
-#include "fmt/core.h"
+#include <fmt/core.h>
 
 #ifndef FMT_USE_FILE_DESCRIPTORS
 # define FMT_USE_FILE_DESCRIPTORS 0

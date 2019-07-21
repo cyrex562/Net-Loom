@@ -48,13 +48,13 @@
  * 6LowPAN netif implementation
  */
 
-#include "lowpan6_common.h"
+#include <lowpan6_common.h>
 
-#include "ip.h"
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "udp.h"
+#include <ip.h>
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <udp.h>
 
 #include <string.h>
 

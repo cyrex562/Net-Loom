@@ -55,13 +55,13 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  */
 
-#include "opt.h"
-#include "dhcp6.h"
-#include "udp.h"
-#include "dns.h"
+#include <opt.h>
+#include <dhcp6.h>
+#include <udp.h>
+#include <dns.h>
 #include <cstring>
-#include "lwip_debug.h"
-#include "ip.h"
+#include <lwip_debug.h>
+#include <ip.h>
 #define LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, state, msg, msg_type, options_len_ptr, max_len)
 
 #define LWIP_HOOK_DHCP6_PARSE_OPTION(netif, dhcp6, state, msg, msg_type, option, len, PacketBuffer, offset) do { 
@@ -111,7 +111,7 @@ static uint8_t dhcp6_pcb_refcount;
 
 
 /* receive, unfold, parse and free incoming messages */
-static void dhcp6_recv(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc
+static void dhcp6_recv(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc
                        * netif);
 
 /** Ensure DHCP PCB is allocated and bound */
@@ -290,7 +290,7 @@ LwipStatus dhcp6_enable_stateful(NetIfc* netif)
  */
 LwipStatus dhcp6_enable_stateless(NetIfc* netif)
 {
-    // Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_enable_stateless(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
+    // Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_enable_stateless(netif=%p) %c%c%"U16_F"\n", (uint8_t *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
     struct Dhcp6* dhcp6 = dhcp6_get_struct(netif, "dhcp6_enable_stateless()");
     if (dhcp6 == nullptr)
     {
@@ -323,7 +323,7 @@ LwipStatus dhcp6_enable_stateless(NetIfc* netif)
 void dhcp6_disable(NetIfc* netif)
 {
     struct Dhcp6* dhcp6;
-    // Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_disable(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
+    // Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_disable(netif=%p) %c%c%"U16_F"\n", (uint8_t *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
     dhcp6 = netif_dhcp6_data(netif);
     if (dhcp6 != nullptr)
     {
@@ -698,7 +698,7 @@ static void dhcp6_recv(void* arg,
         goto free_pbuf_and_return;
     }
     // Logf(DHCP6_DEBUG | LWIP_DBG_TRACE,
-    //      ("dhcp6_recv(PacketBuffer = %p) from DHCPv6 server %s port %"U16_F"\n", (void *)p
+    //      ("dhcp6_recv(PacketBuffer = %p) from DHCPv6 server %s port %"U16_F"\n", (uint8_t *)p
     //          , ipaddr_ntoa(addr), port));
     // Logf(DHCP6_DEBUG | LWIP_DBG_TRACE, ("PacketBuffer->len = %"U16_F"\n", p->len));
     // Logf(DHCP6_DEBUG | LWIP_DBG_TRACE,

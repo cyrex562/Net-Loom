@@ -32,7 +32,7 @@
  */
 
 #pragma once
-#include "ppp.h"
+#include <ppp.h>
 
 /* Timeout */
 constexpr auto PPPOL2TP_CONTROL_TIMEOUT = (5*1000)  /* base for quick timeout calculation */;

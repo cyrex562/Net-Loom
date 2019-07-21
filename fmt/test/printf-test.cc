@@ -9,10 +9,10 @@
 #include <climits>
 #include <cstring>
 
-#include "fmt/core.h"
-#include "fmt/printf.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include <fmt/core.h>
+#include <fmt/printf.h>
+#include <gtest-extra.h>
+#include <util.h>
 
 using fmt::format;
 using fmt::format_error;
@@ -448,7 +448,7 @@ TEST(PrintfTest, String) {
 
 TEST(PrintfTest, Pointer) {
   int n;
-  void *p = &n;
+  uint8_t *p = &n;
   EXPECT_PRINTF(fmt::format("{}", p), "%p", p);
   p = FMT_NULL;
   EXPECT_PRINTF("(nil)", "%p", p);

@@ -36,15 +36,15 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#include "opt.h"
-#include "icmp6.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "inet_chksum.h"
-#include "packet_buffer.h"
-#include "netif.h"
-#include "nd6.h"
-#include "ip.h"
+#include <opt.h>
+#include <icmp6.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <inet_chksum.h>
+#include <packet_buffer.h>
+#include <netif.h>
+#include <nd6.h>
+#include <ip.h>
 #include <cstring>
 
 /* Forward declarations */
@@ -84,7 +84,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
         return;
     }
     struct Icmp6Hdr* icmp6hdr = (struct Icmp6Hdr *)p->payload;
-    IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_ICMP6)
+    is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP6)
     {
         if (ip6_chksum_pseudo(p,
                               IP6_NEXTH_ICMP6,
@@ -161,7 +161,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
         ((struct Icmp6EchoHdr *)(r->payload))->type = ICMP6_TYPE_EREP;
         ((struct Icmp6EchoHdr *)(r->payload))->chksum = 0;
 
-        IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP6)
+        is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP6)
         {
             ((struct Icmp6EchoHdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
                                                                               IP6_NEXTH_ICMP6,
@@ -324,8 +324,8 @@ static void icmp6_send_response_with_addrs(struct PacketBuffer* p,
     lwip_assert("must provide both source and destination", dest_addr != nullptr);
     /* Special case, as ip6_current_xxx is either NULL, or points
         to a different packet than the one that expired. */
-    IP6_ADDR_ZONECHECK(src_addr);
-    IP6_ADDR_ZONECHECK(dest_addr); /* Swap source and destination for the reply. */
+    ip6_addr_zonecheck(src_addr);
+    ip6_addr_zonecheck(dest_addr); /* Swap source and destination for the reply. */
     auto reply_dest = src_addr;
     auto reply_src = dest_addr;
     NetIfc* netif = ip6_route(reply_src, reply_dest);
@@ -366,7 +366,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     struct PacketBuffer* q;
     struct Icmp6Hdr* icmp6hdr; /* ICMPv6 header + IPv6 header + data */
     q = pbuf_alloc(PBUF_IP,
-                   sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE,
+                   sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE,
                    PBUF_RAM);
     if (q == nullptr)
     {
@@ -376,17 +376,17 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
         return;
     }
     lwip_assert("check that first PacketBuffer can hold icmp 6message",
-                (q->len >= (sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE)));
+                (q->len >= (sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE)));
     icmp6hdr = (struct Icmp6Hdr *)q->payload;
     icmp6hdr->type = type;
     icmp6hdr->code = code;
     icmp6hdr->data = lwip_htonl(data); /* copy fields from original packet */
     SMEMCPY((uint8_t *)q->payload + sizeof(struct Icmp6Hdr),
             (uint8_t *)p->payload,
-            kIp6Hlen + LWIP_ICMP6_DATASIZE); /* calculate checksum */
+            IP6_HDR_LEN + LWIP_ICMP6_DATASIZE); /* calculate checksum */
     icmp6hdr->chksum = 0;
 
-    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_ICMP6)
+    is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_ICMP6)
     {
         icmp6hdr->chksum = ip6_chksum_pseudo(q,
                                              IP6_NEXTH_ICMP6,

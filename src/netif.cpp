@@ -2,28 +2,28 @@
 // file: netif.cpp
 //
 
-#include "netif.h"
-#include "opt.h"
-#include "def.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
-#include "tcp_priv.h"
-#include "udp.h"
-#include "raw_priv.h"
-#include "lwip_snmp.h"
-#include "igmp.h"
-#include "etharp.h"
-#include "sys.h"
-#include "ip.h"
-#include "ethernet.h"
-#include "lwip_debug.h"
-#include "lwip_error.h"
-#include "lwip_snmp.h"
-#include "tcpip.h"
-#include "autoip.h"
-#include "dhcp6.h"
-#include "mld6.h"
-#include "nd6.h"
+#include <netif.h>
+#include <opt.h>
+#include <def.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
+#include <tcp_priv.h>
+#include <udp.h>
+#include <raw_priv.h>
+#include <lwip_snmp.h>
+#include <igmp.h>
+#include <etharp.h>
+#include <sys.h>
+#include <ip.h>
+#include <ethernet.h>
+#include <lwip_debug.h>
+#include <lwip_error.h>
+#include <lwip_snmp.h>
+#include <tcpip.h>
+#include <autoip.h>
+#include <dhcp6.h>
+#include <mld6.h>
+#include <nd6.h>
 #include <cstring> /* memset */
 #include <cstdlib> /* atoi */
 
@@ -69,7 +69,7 @@ static LwipStatus netif_loop_output_ipv6(NetIfc*netif, struct PacketBuffer *p, c
 
 
 
-static NetIfc* loop_netif;
+// static NetIfc* loop_netif;
 
 /**
  * Initialize a lwip network interface structure for a loopback interface
@@ -97,23 +97,25 @@ netif_loopif_init(NetIfc*netif)
   return ERR_OK;
 }
 
-void
-netif_init(void)
+void netif_init(NetIfc* loop_netif)
 {
-
-#define LOOPIF_ADDRINIT &loop_ipaddr, &loop_netmask, &loop_gw,
-  Ip4Addr loop_ipaddr, loop_netmask, loop_gw;
-  Ipv4AddrFromBytes(&loop_gw, 127, 0, 0, 1);
-  Ipv4AddrFromBytes(&loop_ipaddr, 127, 0, 0, 1);
-  Ipv4AddrFromBytes(&loop_netmask, 255, 0, 0, 0);
-  netif_add(&loop_netif, LOOPIF_ADDRINIT nullptr, netif_loopif_init, tcpip_input);
-
-  IP_ADDR6_HOST(loop_netif.ip6_addr, 0, 0, 0, 0x00000001UL);
-  loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
-
-  netif_set_link_up(&loop_netif);
-  netif_set_up(&loop_netif);
-
+    Ip4Addr loop_ipaddr{};
+    Ip4Addr loop_netmask{};
+    Ip4Addr loop_gw{};
+    Ipv4AddrFromBytes(&loop_gw, 127, 0, 0, 1);
+    Ipv4AddrFromBytes(&loop_ipaddr, 127, 0, 0, 1);
+    Ipv4AddrFromBytes(&loop_netmask, 255, 0, 0, 0);
+    netif_add(loop_netif,
+              &loop_ipaddr,
+              &loop_netmask,
+              &loop_gw,
+              nullptr,
+              netif_loopif_init,
+              tcpip_input);
+    ip_addr_ip6_host(loop_netif.ip6_addr, 0, 0, 0, 0x00000001UL);
+    loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
+    netif_set_link_up(&loop_netif);
+    netif_set_up(&loop_netif);
 }
 
 /**
@@ -147,7 +149,7 @@ netif_input(struct PacketBuffer *p, NetIfc*inp)
  * Same as @ref netif_add but without IPv4 addresses
  */
 NetIfc*
-netif_add_noaddr(NetIfc*netif, void *state, NetifInitFn init, netif_input_fn input)
+netif_add_noaddr(NetIfc*netif, uint8_t *state, NetifInitFn init, NetifInputFn input)
 {
   return netif_add(netif,
 
@@ -156,40 +158,40 @@ netif_add_noaddr(NetIfc*netif, void *state, NetifInitFn init, netif_input_fn inp
                    state, init, input);
 }
 
-/**
- * @ingroup netif
- * Add a network interface to the list of lwIP netifs.
- *
- * @param netif a pre-allocated netif structure
- * @param ipaddr IP address for the new netif
- * @param netmask network mask for the new netif
- * @param gw default gateway IP address for the new netif
- * @param state opaque data passed to the new netif
- * @param init callback function that initializes the interface
- * @param input callback function that is called to pass
- * ingress packets up in the protocol layer stack.\n
- * It is recommended to use a function that passes the input directly
- * to the stack (netif_input(), NO_SYS=1 mode) or via sending a
- * message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n
- * These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
- * to decide whether to forward to ethernet_input() or ip_input().
- * In other words, the functions only work when the netif
- * driver is implemented correctly!\n
- * Most members of NetIfc* should be be initialized by the
- * netif init function = netif driver (init parameter of this function).\n
- * IPv6: Don't forget to call netif_create_ip6_linklocal_address() after
- * setting the MAC address in NetIfc*.hwaddr
- * (IPv6 requires a link-local address).
- *
- * @return netif, or NULL if failed.
- */
+///
+/// @ingroup netif
+/// Add a network interface to the list of lwIP netifs.
+///
+/// @param netif a pre-allocated netif structure
+/// @param ipaddr IP address for the new netif
+/// @param netmask network mask for the new netif
+///@param gw default gateway IP address for the new netif
+///@param state opaque data passed to the new netif
+///@param init callback function that initializes the interface
+///@param input callback function that is called to pass
+//ingress packets up in the protocol layer stack.\n
+// It is recommended to use a function that passes the input directly
+// to the stack (netif_input(), NO_SYS=1 mode) or via sending a
+// message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n
+// These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
+// to decide whether to forward to ethernet_input() or ip_input().
+// In other words, the functions only work when the netif
+// driver is implemented correctly!\n
+// Most members of NetIfc* should be be initialized by the
+// netif init function = netif driver (init parameter of this function).\n
+// IPv6: Don't forget to call netif_create_ip6_linklocal_address() after
+// setting the MAC address in NetIfc*.hwaddr
+// (IPv6 requires a link-local address).
+//
+// @return netif, or NULL if failed.
+//
 NetIfc* netif_add(NetIfc* netif,
-                         const Ip4Addr* ipaddr,
-                         const Ip4Addr* netmask,
-                         const Ip4Addr* gw,
-                         void* state,
-                         NetifInitFn init,
-                         netif_input_fn input)
+                  const Ip4Addr* ipaddr,
+                  const Ip4Addr* netmask,
+                  const Ip4Addr* gw,
+                  uint8_t* state,
+                  NetifInitFn init,
+                  NetifInputFn input)
 {
     LWIP_ASSERT_CORE_LOCKED();
     if (netif_default != nullptr)
@@ -885,7 +887,7 @@ netif_set_link_callback(NetIfc*netif, netif_status_callback_fn link_callback)
  *         ERR_MEM if the PacketBuffer used to copy the packet couldn't be allocated
  */
 LwipStatus
-netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
+netif_loop_output(NetIfc*netif, struct PacketBuffer *p, NetIfc* loop_netif)
 {
   struct PacketBuffer *r;
   LwipStatus err;
@@ -969,14 +971,14 @@ static LwipStatus
 netif_loop_output_ipv4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *addr)
 {
   ;
-  return netif_loop_output(netif, p);
+  return netif_loop_output(netif, p,);
 }
 
 static LwipStatus
 netif_loop_output_ipv6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *addr)
 {
   ;
-  return netif_loop_output(netif, p);
+  return netif_loop_output(netif, p,);
 }
 
 
@@ -1220,7 +1222,7 @@ netif_get_ip6_addr_match(NetIfc*netif, const Ip6Addr *ip6addr)
   lwip_assert("netif_get_ip6_addr_match: invalid netif", netif != nullptr);
   lwip_assert("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != nullptr);
 
-  if (ip6_addr_has_zone(ip6addr) && !LwipIp6Addrest_zone(ip6addr, netif)) {
+  if (ip6_addr_has_zone(ip6addr) && !ip6_addr_est_zone(ip6addr, netif)) {
     return -1; /* wrong zone, no match */
   }
 

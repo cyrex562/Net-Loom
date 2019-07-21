@@ -40,7 +40,7 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include "opt.h"
+#include <opt.h>
 
 
 #define MLD6_HBH_HLEN 8
@@ -57,8 +57,8 @@ struct mld_header {
     /* Options follow. */
 } ;
 
-#include "packet_buffer.h"
-#include "netif.h"
+#include <packet_buffer.h>
+#include <netif.h>
 
 /** MLD group */
 struct mld_group {

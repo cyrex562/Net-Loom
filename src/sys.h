@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "lwip_error.h"
+#include <lwip_error.h>
 #include <cstdint>
 #include <array>
 
@@ -174,7 +174,7 @@ void sys_mbox_post(Mailbox* mbox, void* msg);
 // mbox: mbox to posts the message
 // msg: message to post (ATTENTION: can be NULL)
 //
-LwipStatus sys_mbox_trypost(Mailbox *mbox, void *msg);
+LwipStatus sys_mbox_trypost(Mailbox *mbox, uint8_t *msg);
 
 //
 // Try to post a message to an mbox - may fail if full.
@@ -184,7 +184,7 @@ LwipStatus sys_mbox_trypost(Mailbox *mbox, void *msg);
 // mbox: mbox to posts the message
 // msg: message to post (ATTENTION: can be NULL)
 //
-LwipStatus sys_mbox_trypost_fromisr(Mailbox *mbox, void *msg);
+LwipStatus sys_mbox_trypost_fromisr(Mailbox *mbox, uint8_t *msg);
 
 //
 // Blocks the thread until a message arrives in the mailbox, but does
@@ -206,7 +206,7 @@ LwipStatus sys_mbox_trypost_fromisr(Mailbox *mbox, void *msg);
 // timeout: maximum time (in milliseconds) to wait for a message (0 = wait forever)
 // returns SYS_ARCH_TIMEOUT on timeout, any other value if a message has been received
 //
-uint32_t sys_arch_mbox_fetch(Mailbox *mbox, void **msg, uint32_t timeout);
+uint32_t sys_arch_mbox_fetch(Mailbox *mbox, uint8_t **msg, uint32_t timeout);
 
 //
 // @ingroup sys_mbox
@@ -224,12 +224,12 @@ uint32_t sys_arch_mbox_fetch(Mailbox *mbox, void **msg, uint32_t timeout);
 // return: 0 (milliseconds) if a message has been received
 //         or SYS_MBOX_EMPTY if the mailbox is empty
 //
-uint32_t sys_arch_mbox_tryfetch(Mailbox *mbox, void **msg);
+uint32_t sys_arch_mbox_tryfetch(Mailbox *mbox, uint8_t **msg);
 
 //
 // For now, we map straight to sys_arch implementation.
 //
-inline void sys_mbox_tryfetch(Mailbox* mbox, void** msg)
+inline void sys_mbox_tryfetch(Mailbox* mbox, uint8_t* msg)
 {
     sys_arch_mbox_tryfetch(mbox, msg);
 }
@@ -367,12 +367,10 @@ void sys_arch_unprotect(sys_prot_t pval);
                                 SYS_ARCH_UNPROTECT(old_level); \
                               } while(0)
 
-
-
 #define SYS_ARCH_SET(var, val) do { \
                                sys_prot_t lev); \
                                 SYS_ARCH_PROTECT(old_level); \
-                                var = val; \
+                                (var) = val; \
                                 SYS_ARCH_UNPROTECT(old_level); \
                               } while(0)
 

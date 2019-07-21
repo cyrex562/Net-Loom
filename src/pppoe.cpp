@@ -68,16 +68,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ppp_opts.h"
-#include "timeouts.h"
-#include "memp.h"
-#include "stats.h"
-#include "lwip_snmp.h"
-#include "ethernet.h"
-#include "ppp_impl.h"
-#include "lcp.h"
-#include "ipcp.h"
-#include "pppoe.h"
+#include <ppp_opts.h>
+#include <timeouts.h>
+#include <memp.h>
+#include <stats.h>
+#include <lwip_snmp.h>
+#include <ethernet.h>
+#include <ppp_impl.h>
+#include <lcp.h>
+#include <ipcp.h>
+#include <pppoe.h>
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
@@ -103,17 +103,17 @@ constexpr auto PPPOE_ERRORSTRING_LEN = 64;
 
 
 /* callbacks called from PPP core */
-static LwipStatus pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
-static LwipStatus pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol);
-static void pppoe_connect(PppPcb *ppp, void *ctx);
-static void pppoe_disconnect(PppPcb *ppp, void *ctx);
-static LwipStatus pppoe_destroy(PppPcb *ppp, void *ctx);
+static LwipStatus pppoe_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p);
+static LwipStatus pppoe_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol);
+static void pppoe_connect(PppPcb *ppp, uint8_t *ctx);
+static void pppoe_disconnect(PppPcb *ppp, uint8_t *ctx);
+static LwipStatus pppoe_destroy(PppPcb *ppp, uint8_t *ctx);
 
 /* management routines */
 static void pppoe_abort_connect(struct pppoe_softc *);
 
 /* internal timeout handling */
-static void pppoe_timeout(void *);
+static void pppoe_timeout(uint8_t *);
 
 /* sending actual protocol controll packets */
 static LwipStatus pppoe_send_padi(struct pppoe_softc *);
@@ -151,7 +151,7 @@ static const struct LinkCallbacks pppoe_callbacks = {
 PppPcb *pppoe_create(NetIfc*pppif,
        NetIfc*ethif,
        const char *service_name, const char *concentrator_name,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {
     ;
   ;
@@ -179,7 +179,7 @@ PppPcb *pppoe_create(NetIfc*pppif,
 }
 
 /* Called by PPP core */
-static LwipStatus pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
+static LwipStatus pppoe_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct PacketBuffer *ph; /* Ethernet + PPPoE header */
   LwipStatus ret;
@@ -217,7 +217,7 @@ static LwipStatus pppoe_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p) {
 }
 
 /* Called by PPP core */
-static LwipStatus pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol) {
+static LwipStatus pppoe_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct PacketBuffer *pb;
   uint8_t *pl;
@@ -258,7 +258,7 @@ static LwipStatus pppoe_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer
 }
 
 static LwipStatus
-pppoe_destroy(PppPcb *ppp, void *ctx)
+pppoe_destroy(PppPcb *ppp, uint8_t *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pppoe_softc*freep;
@@ -741,7 +741,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 }
 
 static void
-pppoe_timeout(void *arg)
+pppoe_timeout(uint8_t *arg)
 {
   uint32_t retry_wait;
   int err;
@@ -807,7 +807,7 @@ pppoe_timeout(void *arg)
 
 /* Start a connection (i.e. initiate discovery phase) */
 static void
-pppoe_connect(PppPcb *ppp, void *ctx)
+pppoe_connect(PppPcb *ppp, uint8_t *ctx)
 {
   LwipStatus err;
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
@@ -865,7 +865,7 @@ pppoe_connect(PppPcb *ppp, void *ctx)
 
 /* disconnect */
 static void
-pppoe_disconnect(PppPcb *ppp, void *ctx)
+pppoe_disconnect(PppPcb *ppp, uint8_t *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
 

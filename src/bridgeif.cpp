@@ -1,14 +1,14 @@
-#include "bridgeif.h"
-#include "etharp.h"
-#include "lwip_debug.h"
-#include "lwipopts.h"
-#include "netif.h"
-#include "opt.h"
+#include <bridgeif.h>
+#include <etharp.h>
+#include <lwip_debug.h>
+#include <lwipopts.h>
+#include <netif.h>
+#include <opt.h>
 #include <cstring>
-#include "ethip6.h"
-#include "lwip_error.h"
-#include "tcpip.h"
-#include "packet_buffer.h"
+#include <ethip6.h>
+#include <lwip_error.h>
+#include <tcpip.h>
+#include <packet_buffer.h>
 
 constexpr char kIfName[] = { 'b', 'r' };
 
@@ -143,7 +143,7 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
                     {
                         Logf(kBridgeIfcFwDebug,
                              "br -> flood(%p:%d) -> %d\n",
-                             static_cast<void *>(p),
+                             static_cast<uint8_t *>(p),
                              p->if_idx,
                              netif_get_index(portif));
                         return portif->linkoutput(portif, p);
@@ -241,7 +241,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
         if (dstports & (1 << kBridgeIfcMaxPorts))
         {
             /* we pass the reference to ->input or have to free it */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<void *>(p));
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<uint8_t *>(p));
             if (br->netif->input(p, br->netif) != ERR_OK)
             {
                 pbuf_free(p);
@@ -260,7 +260,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
         if (bridgeif_is_local_mac(br, dst))
         {
             /* yes, send to cpu port only */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<void *>(p));
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<uint8_t *>(p));
             return br->netif->input(p, br->netif);
         } /* get dst port */
         dstports = bridgeif_find_dst_ports(br, dst);

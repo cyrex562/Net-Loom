@@ -28,13 +28,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "chap_new.h"
-#include "chap_md5.h"
-#include "chap_ms.h"
-#include "magic.h"
-#include "auth.h"
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <chap_new.h>
+#include <chap_md5.h>
+#include <chap_ms.h>
+#include <magic.h>
+#include <auth.h>
 
 /*
  * Command-line options.

@@ -15,10 +15,10 @@
  * @endcode
  */
 
-#include "zepif.h"
-#include "lowpan6.h"
-#include "udp.h"
-#include "timeouts.h"
+#include <zepif.h>
+#include <lowpan6.h>
+#include <udp.h>
+#include <timeouts.h>
 #include <cstring>
 #include <cstdint>
 

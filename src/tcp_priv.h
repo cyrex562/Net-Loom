@@ -35,16 +35,11 @@
  *
  */
 #pragma once
-#include "opt.h"
-#include "tcp.h"
-#include "packet_buffer.h"
-#include "ip.h"
-#include "icmp.h"
-#include "lwip_error.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "tcp.h"
-
+#include <tcp.h>
+#include <packet_buffer.h>
+#include <ip.h>
+#include <lwip_error.h>
+#include <ip6_addr.h>
 /* Functions for interfacing with TCP: */
 
 /* Lower layer interface to TCP: */
@@ -271,7 +266,7 @@ extern uint8_t tcp_active_pcbs_changed;
 
 /* The TCP PCB lists. */
 union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
-  struct tcp_pcb_listen *listen_pcbs;
+  struct TcpPcbListen *listen_pcbs;
   struct TcpPcb *pcbs;
 };
 extern struct TcpPcb *tcp_bound_pcbs;
@@ -386,7 +381,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 
-LwipStatus tcp_recv_null(void *arg, struct TcpPcb *pcb, struct PacketBuffer *p, LwipStatus err);
+LwipStatus tcp_recv_null(uint8_t *arg, struct TcpPcb *pcb, struct PacketBuffer *p, LwipStatus err);
 
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)
@@ -404,5 +399,5 @@ void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 void tcp_free_ooseq(struct TcpPcb *pcb);
 
 
-LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpPcb *cpcb);
+LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct TcpPcbListen *lpcb, struct TcpPcb *cpcb);
 

@@ -39,17 +39,12 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "ip6_frag.h"
-#include "ip6.h"
-#include "icmp6.h"
-#include "nd6.h"
-#include "ip.h"
-
-#include "packet_buffer.h"
-#include "stats.h"
-
-#include <string.h>
+#include <opt.h>
+#include <ip6_frag.h>
+#include <ip6.h>
+#include <icmp6.h>
+#include <nd6.h>
+#include <packet_buffer.h>
 
 /* The number of bytes we need to "borrow" from (i.e., overwrite in) the header
  * that precedes the fragment header for reassembly pruposes. */
@@ -514,7 +509,7 @@ ip6_reass(struct PacketBuffer *p)
 
   if (valid) {
     /* All fragments have been received */
-    struct ip6_hdr* iphdr_ptr;
+    struct Ip6Hdr* iphdr_ptr;
 
     /* chain together the pbufs contained within the ip6_reassdata list. */
     iprh = (struct ip6_reass_helper*) ipr->p->payload;
@@ -573,7 +568,7 @@ ip6_reass(struct PacketBuffer *p)
       (size_t)((uint8_t*)p->payload - (uint8_t*)ipr->iphdr));
 
     /* This is where the IPv6 header is now. */
-    iphdr_ptr = (struct ip6_hdr*)((uint8_t*)ipr->iphdr +
+    iphdr_ptr = (struct Ip6Hdr*)((uint8_t*)ipr->iphdr +
       sizeof(struct ip6_frag_hdr));
 
     /* Adjust datagram length by adding header lengths. */
@@ -676,8 +671,8 @@ ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
 LwipStatus
 ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
 {
-  struct ip6_hdr *original_ip6hdr;
-  struct ip6_hdr *ip6hdr;
+  struct Ip6Hdr *original_ip6hdr;
+  struct Ip6Hdr *ip6hdr;
   struct ip6_frag_hdr *frag_hdr;
   struct PacketBuffer *rambuf;
 
@@ -695,7 +690,7 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
 
   identification++;
 
-  original_ip6hdr = (struct ip6_hdr *)p->payload;
+  original_ip6hdr = (struct Ip6Hdr *)p->payload;
 
   /* @todo we assume there are no options in the unfragmentable part (IPv6 header). */
   lwip_assert("p->tot_len >= IP6_HLEN", p->tot_len >= IP6_HLEN);
@@ -720,7 +715,7 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
     lwip_assert("this needs a PacketBuffer in one piece!",
                 (p->len >= (IP6_HLEN)));
     SMEMCPY(rambuf->payload, original_ip6hdr, IP6_HLEN);
-    ip6hdr = (struct ip6_hdr *)rambuf->payload;
+    ip6hdr = (struct Ip6Hdr *)rambuf->payload;
     frag_hdr = (struct ip6_frag_hdr *)((uint8_t*)rambuf->payload + IP6_HLEN);
 
     /* Can just adjust p directly for needed offset. */

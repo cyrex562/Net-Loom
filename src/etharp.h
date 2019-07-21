@@ -1,18 +1,18 @@
 /* ARP has been moved to core/ipv4, provide this #include for compatibility only */
-//#include "etharp.h"
-//#include "ethernet.h"
+//#include <etharp.h>
+//#include <ethernet.h>
 
 #pragma once
 
-#include "arch.h"
+#include <arch.h>
 
-#include "ethernet.h"
+#include <ethernet.h>
 
-#include "ip4_addr.h"
-#include "netif.h"
-#include "opt.h"
+#include <ip4_addr.h>
+#include <netif.h>
+#include <opt.h>
 
-#include "packet_buffer.h"
+#include <packet_buffer.h>
 
 
 /**

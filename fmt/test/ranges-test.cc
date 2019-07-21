@@ -13,8 +13,8 @@
 #if (__cplusplus > 201402L) || \
     (defined(_MSVC_LANG) && _MSVC_LANG > 201402L && _MSC_VER >= 1910)
 
-#include "fmt/ranges.h"
-#include "gtest.h"
+#include <fmt/ranges.h>
+#include <gtest.h>
 
 #include <vector>
 #include <array>

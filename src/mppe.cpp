@@ -23,15 +23,15 @@
  *                    deprecated in 2.6
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 #include <cstring>
-#include "lwip_error.h"
-#include "ppp_impl.h"
-#include "ccp.h"
-#include "mppe.h"
-#include "pppdebug.h"
-#include "pppcrypt.h"
-#include "lcp.h"
+#include <lwip_error.h>
+#include <ppp_impl.h>
+#include <ccp.h>
+#include <mppe.h>
+#include <pppdebug.h>
+#include <pppcrypt.h>
+#include <lcp.h>
 
 #define SHA1_SIGNATURE_SIZE 20
 

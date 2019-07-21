@@ -34,13 +34,13 @@
  *
  */ /* Some ICMP messages should be passed to the transport protocols. This
    is not implemented. */
-#include "opt.h"
+#include <opt.h>
 // #if LWIP_IPV4 && LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
-#include "def.h"
-#include "icmp.h"
-#include "inet_chksum.h"
-#include "ip.h"
-#include "lwip_debug.h"
+#include <def.h>
+#include <icmp.h>
+#include <inet_chksum.h>
+#include <ip.h>
+#include <lwip_debug.h>
 #include <cstring>
 constexpr auto kIcmpDestUnreachDatasize = 8; /**
  * Processes ICMP input packets, called from ip_input().
@@ -97,7 +97,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             Logf(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
             goto lenerr;
         }
-        IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_ICMP)
+        is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP)
         {
             if (inet_chksum_pbuf(p) != 0)
             {
@@ -177,7 +177,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             copy_ip4_addr(&iphdr->src, src);
             copy_ip4_addr(&iphdr->dest, ip4_current_src_addr());
             IcmphTypeSet(iecho, ICMP_ER);
-            IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP)
+            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP)
             {
                 /* adjust the checksum */
                 if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
@@ -195,7 +195,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             } /* Set the correct TTL and recalculate the header checksum. */
             IPH_TTL_SET(iphdr, ICMP_TTL);
             IPH_CHKSUM_SET(iphdr, 0);
-            IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_IP)
+            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP)
             {
                 IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, hlen));
             } /* increase number of messages attempted to send */
@@ -317,7 +317,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
     {
         /* calculate checksum */
         icmphdr->chksum = 0;
-        IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_ICMP)
+        is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_ICMP)
         {
             icmphdr->chksum = inet_chksum(icmphdr, q->len);
         }

@@ -1,14 +1,14 @@
-#include "opt.h"
-#include "udp.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "def.h"
-#include "dhcp.h"
-#include "autoip.h"
-#include "dns.h"
-#include "etharp.h"
-#include "dhcp.h"
-#include "iana.h"
+#include <opt.h>
+#include <udp.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <def.h>
+#include <dhcp.h>
+#include <autoip.h>
+#include <dns.h>
+#include <etharp.h>
+#include <dhcp.h>
+#include <iana.h>
 #include <cstring>
 
 constexpr auto MAX_TRIES = 255;
@@ -91,7 +91,7 @@ static LwipStatus dhcp_reboot(NetIfc*netif);
 static void dhcp_set_state(DhcpContext *dhcp, uint8_t new_state);
 
 /* receive, unfold, parse and free incoming messages */
-static void dhcp_recv(void *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+static void dhcp_recv(uint8_t *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 
 /* set the DHCP timers */
 static void dhcp_timeout(NetIfc*netif);
@@ -161,7 +161,7 @@ static void dhcp_handle_nak(NetIfc* netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     // Logf(DHCP_DEBUG | LWIP_DBG_TRACE,
-    //      ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif
+    //      ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n", (uint8_t *)netif, netif->name[0], netif
     //          ->name[1], (uint16_t)netif->num));
     /* Change to a defined state - set this before assigning the address
         to ensure the callback can use dhcp_supplied_address() */
@@ -215,7 +215,7 @@ static void dhcp_handle_offer(NetIfc* netif, DhcpMsg* msg_in)
     DhcpContext* dhcp = netif_dhcp_data(netif);
     Logf(DHCP_DEBUG | LWIP_DBG_TRACE,
          "dhcp_handle_offer(netif=%p) %c%c%%d\n",
-         (void *)netif,
+         (uint8_t *)netif,
          netif->name[0],
          netif->name[1],
          (uint16_t)netif->num); /* obtain the server address */
@@ -237,7 +237,7 @@ static void dhcp_handle_offer(NetIfc* netif, DhcpMsg* msg_in)
     else
     {
         Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-             "dhcp_handle_offer(netif=%p) did not get server ID!\n", (void *)netif);
+             "dhcp_handle_offer(netif=%p) did not get server ID!\n", (uint8_t *)netif);
     }
 }
 
@@ -654,7 +654,7 @@ dhcp_start(NetIfc*netif)
   LWIP_ERROR("netif != NULL", (netif != nullptr), return ERR_ARG;);
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
   dhcp = netif_dhcp_data(netif);
-  Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
+  Logf(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (uint8_t *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
 
   /* check MTU of the netif */
   if (netif->mtu < kDhcpMaxMsgLenMinRequired) {
@@ -955,7 +955,7 @@ dhcp_bind(NetIfc*netif)
   LWIP_ERROR("dhcp_bind: netif != NULL", (netif != nullptr), return;);
   dhcp = netif_dhcp_data(netif);
   LWIP_ERROR("dhcp_bind: dhcp != NULL", (dhcp != nullptr), return;);
-  Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_bind(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
+  Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_bind(netif=%p) %c%c%"U16_F"\n", (uint8_t *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
 
   /* reset time used of lease */
   dhcp->lease_used = 0;
@@ -1659,7 +1659,7 @@ decode_next:
  * If an incoming DHCP message is in response to us, then trigger the state machine
  */
 static void
-dhcp_recv(void *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port)
+dhcp_recv(uint8_t *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port)
 {
   NetIfc*netif = ip_current_input_netif();
   DhcpContext *dhcp = netif_dhcp_data(netif);
@@ -1677,7 +1677,7 @@ dhcp_recv(void *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, ui
 
   lwip_assert("invalid server address type", IP_IS_V4(addr));
 
-  Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_recv(PacketBuffer = %p) from DHCP server %"U16_F".%"U16_F".%"U16_F".%"U16_F" port %"U16_F"\n", (void *)p,
+  Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_recv(PacketBuffer = %p) from DHCP server %"U16_F".%"U16_F".%"U16_F".%"U16_F" port %"U16_F"\n", (uint8_t *)p,
               ip4_addr1_16(ip_2_ip4(addr)), ip4_addr2_16(ip_2_ip4(addr)), ip4_addr3_16(ip_2_ip4(addr)), ip4_addr4_16(ip_2_ip4(addr)), port));
   Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("PacketBuffer->len = %"U16_F"\n", p->len));
   Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("PacketBuffer->tot_len = %"U16_F"\n", p->tot_len));

@@ -69,10 +69,10 @@
  */
 #pragma once
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
-#include "ppp.h"
-#include "etharp.h"
+#include <ppp.h>
+#include <etharp.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,7 +140,7 @@ struct pppoe_softc {
 PppPcb *pppoe_create(NetIfc*pppif,
        NetIfc*ethif,
        const char *service_name, const char *concentrator_name,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb);
 
 /*
  * Functions called from lwIP

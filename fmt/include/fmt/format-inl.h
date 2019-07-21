@@ -8,7 +8,7 @@
 #ifndef FMT_FORMAT_INL_H_
 #define FMT_FORMAT_INL_H_
 
-#include "format.h"
+#include <format.h>
 
 #include <string.h>
 

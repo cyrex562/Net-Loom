@@ -41,24 +41,24 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "nd6.h"
-#include "priv/nd6_priv.h"
-#include "prot/nd6.h"
-#include "prot/icmp6.h"
-#include "packet_buffer.h"
-#include "mem.h"
-#include "memp.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "inet_chksum.h"
-#include "netif.h"
-#include "icmp6.h"
-#include "mld6.h"
-#include "dhcp6.h"
-#include "ip.h"
-#include "stats.h"
-#include "dns.h"
+#include <opt.h>
+#include <nd6.h>
+#include <priv/nd6_priv.h>
+#include <prot/nd6.h>
+#include <prot/icmp6.h>
+#include <packet_buffer.h>
+#include <mem.h>
+#include <memp.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <inet_chksum.h>
+#include <netif.h>
+#include <icmp6.h>
+#include <mld6.h>
+#include <dhcp6.h>
+#include <ip.h>
+#include <stats.h>
+#include <dns.h>
 
 #include <string.h>
 
@@ -1535,7 +1535,7 @@ nd6_find_destination_cache_entry(const Ip6Addr *ip6addr)
 {
   int16_t i;
 
-  IP6_ADDR_ZONECHECK(ip6addr);
+  ip6_addr_zonecheck(ip6addr);
 
   for (i = 0; i < LWIP_ND6_NUM_DESTINATIONS; i++) {
     if (ip6_addr_cmp(ip6addr, &(destination_cache[i].destination_addr))) {
@@ -2090,17 +2090,17 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer *q)
         /* queue did not exist, first item in queue */
         neighbor_cache[neighbor_index].q = new_entry;
       }
-      Logf(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (int16_t)neighbor_index));
+      Logf(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (uint8_t *)p, (int16_t)neighbor_index));
       result = ERR_OK;
     } else {
       /* the pool MEMP_ND6_QUEUE is empty */
       pbuf_free(p);
-      Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)p));
+      Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (uint8_t *)p));
       /* { result == ERR_MEM } through initialization */
     }
 
   } else {
-    Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)q));
+    Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (uint8_t *)q));
     /* { result == ERR_MEM } through initialization */
   }
 

@@ -31,14 +31,14 @@
  */
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
-#include "sys.h"
-#include "netif.h"
-#include "dhcp.h"
-#include "autoip.h"
-#include "tcpip_priv.h"
-#include "ethernet.h"
+#include <sys.h>
+#include <netif.h>
+#include <dhcp.h>
+#include <autoip.h>
+#include <tcpip_priv.h>
+#include <ethernet.h>
 
 
 /* API for application */
@@ -58,7 +58,7 @@ LwipStatus netifapi_arp_remove(const Ip4Addr *ipaddr, enum netifapi_arp_entry ty
 
                          const Ip4Addr *ipaddr, const Ip4Addr *netmask, const Ip4Addr *gw,
 
-                         void *state, netif_init_fn init, netif_input_fn input);
+                         uint8_t *state, netif_init_fn init, netif_input_fn input);
 
 
 LwipStatus netifapi_netif_set_addr(NetIfc*netif, const Ip4Addr *ipaddr,

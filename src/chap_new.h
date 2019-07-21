@@ -29,8 +29,8 @@
  */
 
 #pragma once
-#include "ppp_opts.h"
-#include "ppp_defs.h"
+#include <ppp_opts.h>
+#include <ppp_defs.h>
 
 #ifdef __cplusplus
 extern "C" {

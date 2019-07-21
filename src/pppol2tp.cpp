@@ -2,29 +2,29 @@
 // file: pppol2tp.cpp
 //
 
-#include "pppol2tp.h"
-#include "ppp_opts.h"
-#include "lwip_error.h"
-#include "netif.h"
-#include "udp.h"
-#include "lwip_snmp.h"
-#include "ppp_impl.h"
-#include "lcp.h"
-#include "ipcp.h"
-#include "pppcrypt.h"
-#include "magic.h"
+#include <pppol2tp.h>
+#include <ppp_opts.h>
+#include <lwip_error.h>
+#include <netif.h>
+#include <udp.h>
+#include <lwip_snmp.h>
+#include <ppp_impl.h>
+#include <lcp.h>
+#include <ipcp.h>
+#include <pppcrypt.h>
+#include <magic.h>
 
 /* callbacks called from PPP core */
-static LwipStatus pppol2tp_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
-static LwipStatus pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol);
-static LwipStatus pppol2tp_destroy(PppPcb *ppp, void *ctx);    /* Destroy a L2TP control block */
-static void pppol2tp_connect(PppPcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
-static void pppol2tp_disconnect(PppPcb *ppp, void *ctx);  /* Disconnect */
+static LwipStatus pppol2tp_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p);
+static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol);
+static LwipStatus pppol2tp_destroy(PppPcb *ppp, uint8_t *ctx);    /* Destroy a L2TP control block */
+static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx);    /* Be a LAC, connect to a LNS. */
+static void pppol2tp_disconnect(PppPcb *ppp, uint8_t *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
 static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, struct PacketBuffer *p, uint16_t ns, uint16_t nr);
-static void pppol2tp_timeout(void *arg);
+static void pppol2tp_timeout(uint8_t *arg);
 static void pppol2tp_abort_connect(Pppol2tpPcb *l2tp);
 static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp);
 static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns);
@@ -114,7 +114,7 @@ static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
 }
 
 /* Called by PPP core */
-static LwipStatus pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *p, u_short protocol) {
+static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
   struct PacketBuffer *pb;
   uint8_t *pl;
@@ -156,7 +156,7 @@ static LwipStatus pppol2tp_netif_output(PppPcb *ppp, void *ctx, struct PacketBuf
 }
 
 /* Destroy a L2TP control block */
-static LwipStatus pppol2tp_destroy(PppPcb *ppp, void *ctx) {
+static LwipStatus pppol2tp_destroy(PppPcb *ppp, uint8_t *ctx) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
   ;
 
@@ -167,7 +167,7 @@ static LwipStatus pppol2tp_destroy(PppPcb *ppp, void *ctx) {
 }
 
 /* Be a LAC, connect to a LNS. */
-static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
+static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   LwipStatus err;
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
   LcpOptions *lcp_wo;
@@ -241,7 +241,7 @@ static void pppol2tp_connect(PppPcb *ppp, void *ctx) {
 }
 
 /* Disconnect */
-static void pppol2tp_disconnect(PppPcb *ppp, void *ctx) {
+static void pppol2tp_disconnect(PppPcb *ppp, uint8_t *ctx) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
 
   l2tp->our_ns++;
@@ -254,7 +254,7 @@ static void pppol2tp_disconnect(PppPcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
+static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb*)arg;
   uint16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   uint8_t *inp;
@@ -641,7 +641,7 @@ packet_too_short:
 }
 
 /* L2TP Timeout handler */
-static void pppol2tp_timeout(void *arg) {
+static void pppol2tp_timeout(uint8_t *arg) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb*)arg;
   LwipStatus err;
   uint32_t retry_wait;

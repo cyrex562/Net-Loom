@@ -8,8 +8,8 @@
 #ifndef FMT_MOCK_ALLOCATOR_H_
 #define FMT_MOCK_ALLOCATOR_H_
 
-#include "gmock.h"
-#include "fmt/format.h"
+#include <gmock.h>
+#include <fmt/format.h>
 
 template <typename T>
 class mock_allocator {

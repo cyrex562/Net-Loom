@@ -28,8 +28,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#include "def.h"
+#include <ppp_opts.h>
+#include <def.h>
 
 /* Multilink support
  *
@@ -49,11 +49,11 @@
 // #include <netinet/in.h>
 // #include <unistd.h>
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
-#include "fsm.h"
-#include "lcp.h"
-// #include "tdb.h"
+#include <fsm.h>
+#include <lcp.h>
+// #include <tdb.h>
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */

@@ -31,44 +31,44 @@
  *
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
 #include <cstring>
 
-#include "arch.h"
-#include "lwip_error.h"
-#include "packet_buffer.h"
-#include "sys.h"
+#include <arch.h>
+#include <lwip_error.h>
+#include <packet_buffer.h>
+#include <sys.h>
 
-#include "netif.h"
-#include "lwip_snmp.h"
-#include "tcpip_priv.h"
+#include <netif.h>
+#include <lwip_snmp.h>
+#include <tcpip_priv.h>
 
-#include "ip4.h" /* for ip4_input() */
+#include <ip4.h> /* for ip4_input() */
 
-#include "ppp_impl.h"
-#include "pppos.h"
-#include "vj.h"
-#include "ppp.h"
+#include <ppp_impl.h>
+#include <pppos.h>
+#include <vj.h>
+#include <ppp.h>
 
 /* Memory pool */
 // LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "PPPOS_PCB")
 
 /* callbacks called from PPP core */
-static LwipStatus pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p);
-static LwipStatus pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol);
-static void pppos_connect(PppPcb *ppp, void *ctx);
+static LwipStatus pppos_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p);
+static LwipStatus pppos_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *pb, uint16_t protocol);
+static void pppos_connect(PppPcb *ppp, uint8_t *ctx);
 
-static void pppos_listen(PppPcb *ppp, void *ctx);
+static void pppos_listen(PppPcb *ppp, uint8_t *ctx);
 
-static void pppos_disconnect(PppPcb *ppp, void *ctx);
-static LwipStatus pppos_destroy(PppPcb *ppp, void *ctx);
-static void pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
-static void pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp);
+static void pppos_disconnect(PppPcb *ppp, uint8_t *ctx);
+static LwipStatus pppos_destroy(PppPcb *ppp, uint8_t *ctx);
+static void pppos_send_config(PppPcb *ppp, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
+static void pppos_recv_config(PppPcb *ppp, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
 
 /* Prototypes for procedures local to this file. */
 
-static void pppos_input_callback(void *arg);
+static void pppos_input_callback(uint8_t *arg);
 
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
@@ -149,7 +149,7 @@ static const uint16_t fcstab[256] = {
  * Return 0 on success, an error code on failure.
  */
 PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {
   pppos_pcb *pppos;
   PppPcb *ppp;
@@ -174,7 +174,7 @@ PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
 
 /* Called by PPP core */
 static LwipStatus
-pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
+pppos_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   uint8_t *s;
@@ -227,7 +227,7 @@ pppos_write(PppPcb *ppp, void *ctx, struct PacketBuffer *p)
 
 /* Called by PPP core */
 static LwipStatus
-pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t protocol)
+pppos_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *pb, uint16_t protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   struct PacketBuffer *nb, *p;
@@ -287,7 +287,7 @@ pppos_netif_output(PppPcb *ppp, void *ctx, struct PacketBuffer *pb, uint16_t pro
 }
 
 static void
-pppos_connect(PppPcb *ppp, void *ctx)
+pppos_connect(PppPcb *ppp, uint8_t *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -319,7 +319,7 @@ pppos_connect(PppPcb *ppp, void *ctx)
 
 
 static void
-pppos_listen(PppPcb *ppp, void *ctx)
+pppos_listen(PppPcb *ppp, uint8_t *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -351,7 +351,7 @@ pppos_listen(PppPcb *ppp, void *ctx)
 
 
 static void
-pppos_disconnect(PppPcb *ppp, void *ctx)
+pppos_disconnect(PppPcb *ppp, uint8_t *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -370,7 +370,7 @@ pppos_disconnect(PppPcb *ppp, void *ctx)
 }
 
 static LwipStatus
-pppos_destroy(PppPcb *ppp, void *ctx)
+pppos_destroy(PppPcb *ppp, uint8_t *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   ;
@@ -630,7 +630,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
 
 /* PPPoS input callback using one input pointer
  */
-static void pppos_input_callback(void *arg) {
+static void pppos_input_callback(uint8_t *arg) {
   struct PacketBuffer *pb = (struct PacketBuffer*)arg;
   PppPcb *ppp;
 
@@ -652,7 +652,7 @@ drop:
 
 
 static void
-pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
+pppos_send_config(PppPcb *ppp, uint8_t *ctx, uint32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -672,7 +672,7 @@ pppos_send_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
 }
 
 static void
-pppos_recv_config(PppPcb *ppp, void *ctx, uint32_t accm, int pcomp, int accomp)
+pppos_recv_config(PppPcb *ppp, uint8_t *ctx, uint32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;

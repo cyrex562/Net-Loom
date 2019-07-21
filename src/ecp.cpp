@@ -57,9 +57,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_impl.h"
-#include "fsm.h"
-#include "ecp.h"
+#include <ppp_impl.h>
+#include <fsm.h>
+#include <ecp.h>
 
 /*
  * Protocol entry points from main code.

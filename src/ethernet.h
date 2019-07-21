@@ -1,8 +1,8 @@
 #pragma once
-#include "opt.h"
-#include "packet_buffer.h"
-#include "netif.h"
-#include "ethernet.h"
+#include <opt.h>
+#include <packet_buffer.h>
+#include <netif.h>
+#include <ethernet.h>
 #include <cstring>
 #ifdef __cplusplus
 extern "C" {

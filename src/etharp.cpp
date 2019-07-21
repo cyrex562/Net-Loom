@@ -43,28 +43,28 @@
  *
  */
 
-#include "opt.h"
-#include "autoip.h"
+#include <opt.h>
+#include <autoip.h>
 
-#include "dhcp.h"
+#include <dhcp.h>
 
-#include "etharp.h"
+#include <etharp.h>
 
-#include "ethernet.h"
+#include <ethernet.h>
 
-#include "iana.h"
+#include <iana.h>
 
-#include "ieee.h"
+#include <ieee.h>
 
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
-#include "lwip_snmp.h"
+#include <lwip_snmp.h>
 
-#include "stats.h"
+#include <stats.h>
 
 #include <cstring>
 #include <dhcp.cpp>
-#include "ip4.h"
+#include <ip4.h>
 
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
@@ -162,7 +162,7 @@ etharp_free_entry(const int index)
     if (arp_table[index].next != nullptr)
     {
         /* remove all queued packets */
-        //    Logf(ETHARP_DEBUG, ("etharp_free_entry: freeing entry %"U16_F", packet queue %p.\n", (uint16_t)i, (void *)(arp_table[i].q)));
+        //    Logf(ETHARP_DEBUG, ("etharp_free_entry: freeing entry %"U16_F", packet queue %p.\n", (uint16_t)i, (uint8_t *)(arp_table[i].q)));
         free_etharp_q(arp_table[index].next);
         arp_table[index].next = nullptr;
     }
@@ -386,7 +386,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
             /* recycle oldest pending (queued packets are free in etharp_free_entry) */
             i = old_queue;
             // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-            //      ("etharp_find_entry: selecting oldest pending entry %d, freeing packet queue %p\n", (int)i, (void *)(
+            //      ("etharp_find_entry: selecting oldest pending entry %d, freeing packet queue %p\n", (int)i, (uint8_t *)(
             //          arp_table[i].next)));
             /* no empty or recyclable entries found */
         }
@@ -1125,21 +1125,21 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
                     delete old;
                 }
 
-                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"U16_F"\n", (void *)q, i));
+                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"U16_F"\n", (uint8_t *)q, i));
                 result = ERR_OK;
             }
             else
             {
                 /* the pool MEMP_ARP_QUEUE is empty */
                 pbuf_free(p);
-                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
+                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (uint8_t *)q));
                 result = ERR_MEM;
             }
         }
         else
         {
             // ETHARP_STATS_INC(etharp.memerr);
-            //      Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
+            //      Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (uint8_t *)q));
             result = ERR_MEM;
         }
     }

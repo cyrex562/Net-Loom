@@ -40,11 +40,11 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "ip_addr.h"
-#include "def.h"
+#include <opt.h>
+#include <ip_addr.h>
+#include <def.h>
 #include <string.h>
-#include "ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
+#include <ip4_addr.h> /* for ip6addr_aton to handle IPv4-mapped addresses */
 
 
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */

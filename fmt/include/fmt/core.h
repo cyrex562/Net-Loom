@@ -555,8 +555,8 @@ struct string_value {
 
 template <typename Context>
 struct custom_value {
-  const void *value;
-  void (*format)(const void *arg, Context &ctx);
+  const uint8_t *value;
+  void (*format)(const uint8_t *arg, Context &ctx);
 };
 
 // A formatting argument value.
@@ -572,7 +572,7 @@ class value {
     unsigned long long ulong_long_value;
     double double_value;
     long double long_double_value;
-    const void *pointer;
+    const uint8_t *pointer;
     string_value<char_type> string;
     string_value<signed char> sstring;
     string_value<unsigned char> ustring;
@@ -600,7 +600,7 @@ class value {
     string.value = val.data();
     string.size = val.size();
   }
-  value(const void *val) { pointer = val; }
+  value(const uint8_t *val) { pointer = val; }
 
   template <typename T>
   explicit value(const T &val) {
@@ -615,7 +615,7 @@ class value {
  private:
   // Formats an argument of a custom type, such as a user-defined class.
   template <typename T>
-  static void format_custom_arg(const void *arg, Context &ctx) {
+  static void format_custom_arg(const uint8_t *arg, Context &ctx) {
     // Get the formatter type through the context to allow different contexts
     // have different extension points, e.g. `formatter<T>` for `format` and
     // `printf_formatter<T>` for `printf`.
@@ -712,7 +712,7 @@ FMT_MAKE_VALUE(pointer_type, std::nullptr_t, const void*)
 #endif
 
 // Formatting of arbitrary pointers is disallowed. If you want to output a
-// pointer cast it to "void *" or "const void *". In particular, this forbids
+// pointer cast it to "uint8_t *" or "const uint8_t *". In particular, this forbids
 // formatting of "[const] volatile char *" which is printed as bool by
 // iostreams.
 template <typename C, typename T>
@@ -971,7 +971,7 @@ class arg_map {
 // A type-erased reference to an std::locale to avoid heavy <locale> include.
 class locale_ref {
  private:
-  const void *locale_;  // A type-erased pointer to std::locale.
+  const uint8_t *locale_;  // A type-erased pointer to std::locale.
   friend class locale;
 
  public:

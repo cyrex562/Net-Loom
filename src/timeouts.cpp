@@ -1,21 +1,21 @@
 
-#include "opt.h"
-#include "autoip.h"
-#include "def.h"
-#include "dhcp6.h"
-#include "dns.h"
-#include "etharp.h"
-#include "igmp.h"
-#include "ip4_frag.h"
-#include "ip6_frag.h"
-#include "mld6.h"
-#include "nd6.h"
-#include "packet_buffer.h"
-#include "sys.h"
-#include "tcp_priv.h"
-#include "tcpip_priv.h"
-#include "timeouts.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <autoip.h>
+#include <def.h>
+#include <dhcp6.h>
+#include <dns.h>
+#include <etharp.h>
+#include <igmp.h>
+#include <ip4_frag.h>
+#include <ip6_frag.h>
+#include <mld6.h>
+#include <nd6.h>
+#include <packet_buffer.h>
+#include <sys.h>
+#include <tcp_priv.h>
+#include <tcpip_priv.h>
+#include <timeouts.h>
+#include <lwip_debug.h>
 
 #define HANDLER(x) x, #x
 
@@ -60,7 +60,7 @@ static int tcpip_tcp_timer_active;
  * @param arg unused argument
  */
 static void
-tcpip_tcp_timer(void *arg)
+tcpip_tcp_timer(uint8_t *arg)
 {
 
 
@@ -97,7 +97,7 @@ tcp_timer_needed(void)
 
 static void
 
-sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const char *handler_name)
+sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, uint8_t *arg, const char *handler_name)
 
 {
   struct SysTimeoutContext *timeout, *t;
@@ -117,7 +117,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const
 
   timeout->handler_name = handler_name;
   Logf(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
-                             (void *)timeout, abs_time, handler_name, (void *)arg));
+                             (uint8_t *)timeout, abs_time, handler_name, (uint8_t *)arg));
 
 
   if (next_timeout == nullptr) {
@@ -146,7 +146,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const
 
 static
 void
-lwip_cyclic_timer(void *arg)
+lwip_cyclic_timer(uint8_t *arg)
 {
   uint32_t now;
   uint32_t next_timeout_time;
@@ -198,7 +198,7 @@ void sys_timeouts_init(void)
  */
 
 void
-sys_timeout(uint32_t msecs, sys_timeout_handler handler, void *arg)
+sys_timeout(uint32_t msecs, sys_timeout_handler handler, uint8_t *arg)
 {
     LWIP_ASSERT_CORE_LOCKED();
   lwip_assert("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (kLwipUint32Max / 4));
@@ -215,7 +215,7 @@ sys_timeout(uint32_t msecs, sys_timeout_handler handler, void *arg)
  * @param arg callback argument that would be passed to handler
 */
 void
-sys_untimeout(sys_timeout_handler handler, void *arg)
+sys_untimeout(sys_timeout_handler handler, uint8_t *arg)
 {
   struct SysTimeoutContext *prev_t, *t;
 
@@ -263,7 +263,7 @@ sys_check_timeouts(void)
   do {
     struct SysTimeoutContext *tmptimeout;
     sys_timeout_handler handler;
-    void *arg;
+    uint8_t *arg;
 
     PbufCheckFreeOoseq();
 

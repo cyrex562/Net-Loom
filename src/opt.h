@@ -2837,7 +2837,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Called from socket API to implement setsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, LwipSocklen optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const uint8_t *optval, LwipSocklen optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor
@@ -2860,7 +2860,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Called from socket API to implement getsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, LwipSocklen *optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, uint8_t *optval, LwipSocklen *optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor

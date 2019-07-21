@@ -38,8 +38,8 @@
  *
  */
 #pragma once
-#include "opt.h"
-#include "netif.h"
+#include <opt.h>
+#include <netif.h>
 
 
 LwipStatus slipif_init(NetIfc* netif);

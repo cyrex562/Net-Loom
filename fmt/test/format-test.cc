@@ -20,11 +20,11 @@
 # include <windows.h>
 #endif
 
-#include "fmt/format.h"
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "mock-allocator.h"
-#include "util.h"
+#include <fmt/format.h>
+#include <gmock.h>
+#include <gtest-extra.h>
+#include <mock-allocator.h>
+#include <util.h>
 
 #undef ERROR
 #undef min
@@ -1808,7 +1808,7 @@ TEST(FormatTest, JoinArg) {
   std::vector<float> v2;
   v2.push_back(1.2f);
   v2.push_back(3.4f);
-  void *v3[2] = { &v1[0], &v1[1] };
+  uint8_t *v3[2] = { &v1[0], &v1[1] };
 
   EXPECT_EQ("(1, 2, 3)", format("({})", join(v1, v1 + 3, ", ")));
   EXPECT_EQ("(1)", format("({})", join(v1, v1 + 1, ", ")));
@@ -2393,7 +2393,7 @@ TEST(FormatTest, FormatStringErrors) {
   EXPECT_ERROR("{:s}", "invalid type specifier", double);
   EXPECT_ERROR("{:d}", "invalid type specifier", const char *);
   EXPECT_ERROR("{:d}", "invalid type specifier", std::string);
-  EXPECT_ERROR("{:s}", "invalid type specifier", void *);
+  EXPECT_ERROR("{:s}", "invalid type specifier", uint8_t *);
 #endif
   EXPECT_ERROR("{foo", "missing '}' in format string", int);
   EXPECT_ERROR_NOARGS("{10000000000}", "number is too big");

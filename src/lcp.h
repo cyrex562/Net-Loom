@@ -1,7 +1,7 @@
 // PPP LCP -- Link Control Protocol
 
 #pragma once
-#include "ppp.h"
+#include <ppp.h>
 
 #ifdef __cplusplus
 extern "C" {

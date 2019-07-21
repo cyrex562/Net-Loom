@@ -10,7 +10,7 @@
 # define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "fmt/posix.h"
+#include <fmt/posix.h>
 
 #include <limits.h>
 #include <sys/types.h>
@@ -153,7 +153,7 @@ long long file::size() const {
 #endif
 }
 
-std::size_t file::read(void *buffer, std::size_t count) {
+std::size_t file::read(uint8_t *buffer, std::size_t count) {
   RWResult result = 0;
   FMT_RETRY(result, FMT_POSIX_CALL(read(fd_, buffer, convert_rwcount(count))));
   if (result < 0)
@@ -161,7 +161,7 @@ std::size_t file::read(void *buffer, std::size_t count) {
   return internal::to_unsigned(result);
 }
 
-std::size_t file::write(const void *buffer, std::size_t count) {
+std::size_t file::write(const uint8_t *buffer, std::size_t count) {
   RWResult result = 0;
   FMT_RETRY(result, FMT_POSIX_CALL(write(fd_, buffer, convert_rwcount(count))));
   if (result < 0)

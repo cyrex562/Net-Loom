@@ -34,10 +34,10 @@
  */
 
 #pragma once
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
 
-#include "pppcrypt.h"
+#include <pppcrypt.h>
 
 #ifdef __cplusplus
 extern "C" {

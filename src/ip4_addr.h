@@ -35,7 +35,7 @@
  *
  */
 #pragma once
-#include "def.h"
+#include <def.h>
 
 /** This is the aligned version of Ip4Addr,
    used as local variable, on the stack, etc. */
@@ -242,7 +242,7 @@ inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
 }
 
 #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
-  Logf(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
+  Logf(debug, ("%d.%d.%d.%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \

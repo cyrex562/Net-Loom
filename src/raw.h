@@ -37,13 +37,13 @@
  */
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
-#include "packet_buffer.h"
-#include "def.h"
-#include "ip.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
+#include <packet_buffer.h>
+#include <def.h>
+#include <ip.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,7 +65,7 @@ struct raw_pcb;
  * If returning 1, the callback is responsible for freeing the PacketBuffer
  * if it's not used any more.
  */
-typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct PacketBuffer *p,
+typedef uint8_t (*raw_recv_fn)(uint8_t *arg, struct raw_pcb *pcb, struct PacketBuffer *p,
     const IpAddr *addr);
 
 /** the RAW protocol control block */
@@ -97,7 +97,7 @@ struct raw_pcb {
   /** receive callback function */
   raw_recv_fn recv;
   /* user-supplied argument for the recv callback */
-  void *recv_arg;
+  uint8_t *recv_arg;
 
   /* fields for handling checksum computations as per RFC3542. */
   uint16_t chksum_offset;
@@ -119,7 +119,7 @@ LwipStatus            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *
 LwipStatus            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, NetIfc*netif, const IpAddr *src_ip);
 LwipStatus            raw_send       (struct raw_pcb *pcb, struct PacketBuffer *p);
 
-void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
+void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, uint8_t *recv_arg);
 
 #define          raw_flags(pcb) ((pcb)->flags)
 #define          raw_setflags(pcb,f)  ((pcb)->flags = (f))

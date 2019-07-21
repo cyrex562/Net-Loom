@@ -66,17 +66,17 @@
  */
 
 
-#include "lowpan6_ble.h"
-#include "ip.h"
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "nd6.h"
-#include "mem.h"
-#include "udp.h"
-#include "tcpip.h"
-#include "lwip_snmp.h"
-#include "lowpan6_common.h"
+#include <lowpan6_ble.h>
+#include <ip.h>
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <nd6.h>
+#include <mem.h>
+#include <udp.h>
+#include <tcpip.h>
+#include <lwip_snmp.h>
+#include <lowpan6_common.h>
 #include <string.h>
 
 /** context memory, containing IPv6 addresses */
@@ -261,7 +261,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 
   /* send the packet */
 
-//  Logf(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (void *)p));
+//  Logf(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (uint8_t *)p));
   err = netif->linkoutput(netif, p_frag);
 
   pbuf_free(p_frag);

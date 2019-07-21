@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "opt.h"
-#include "lowpan6.h"
-#include "netif.h"
+#include <opt.h>
+#include <lowpan6.h>
+#include <netif.h>
 
 #ifdef __cplusplus
 extern "C" {

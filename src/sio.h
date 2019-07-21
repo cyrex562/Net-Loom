@@ -35,8 +35,8 @@
 #ifndef SIO_H
 #define SIO_H
 
-#include "arch.h"
-#include "opt.h"
+#include <arch.h>
+#include <opt.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,7 @@ extern "C" {
 /* If you want to define sio_fd_t elsewhere or differently,
    define this in your cc.h file. */
 #ifndef __sio_fd_t_defined
-typedef void * sio_fd_t;
+typedef uint8_t * sio_fd_t;
 #endif
 
 /* The following functions can be defined to something else in your cc.h file

@@ -49,18 +49,18 @@
  */
 
 
-#include "lowpan6.h"
-#include "ip.h"
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "nd6.h"
-#include "udp.h"
-#include "tcpip.h"
-#include "lwip_snmp.h"
-#include "ieee802154.h"
-#include "lowpan6_common.h"
-#include "lwip_debug.h"
+#include <lowpan6.h>
+#include <ip.h>
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <nd6.h>
+#include <udp.h>
+#include <tcpip.h>
+#include <lwip_snmp.h>
+#include <ieee802154.h>
+#include <lowpan6_common.h>
+#include <lwip_debug.h>
 #include <cstring>
 
 // LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
@@ -427,7 +427,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     /* send the packet */
   
 
-    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (uint8_t *)p));
     err = netif->linkoutput(netif, p_frag);
 
     while ((remaining_len > 0) && (err == ERR_OK)) {
@@ -458,7 +458,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
 
       /* send the packet */
    
-      Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+      Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (uint8_t *)p));
       err = netif->linkoutput(netif, p_frag);
     }
   } else {
@@ -479,7 +479,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
 
     /* send the packet */
 
-    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
+    Logf(LWIP_LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (uint8_t *)p));
     err = netif->linkoutput(netif, p_frag);
   }
 
@@ -500,7 +500,7 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
     return ERR_ARG;
   }
 
-  IP6_ADDR_ZONECHECK(context);
+  ip6_addr_zonecheck(context);
 
   ip6_addr_set(&lowpan6_data.lowpan6_context[idx], context);
 

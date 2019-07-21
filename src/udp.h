@@ -36,11 +36,11 @@
  *
  */
 #pragma once
-#include "arch.h"
-#include "packet_buffer.h"
-#include "netif.h"
-#include "ip_addr.h"
-#include "udp.h"
+#include <arch.h>
+#include <packet_buffer.h>
+#include <netif.h>
+#include <ip_addr.h>
+#include <udp.h>
 
 constexpr auto UDP_HDR_LEN = 8;
 
@@ -122,7 +122,7 @@ LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
 void             udp_recv       (struct UdpPcb *pcb, UdpRecvFn recv,
-                                 void *recv_arg);
+                                 uint8_t *recv_arg);
 LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  NetIfc*netif);

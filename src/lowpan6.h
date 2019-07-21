@@ -40,12 +40,12 @@
  */
 
 #pragma once
-#include "lowpan6_opts.h"
-#include "lowpan6_common.h"
-#include "packet_buffer.h"
-#include "ip.h"
-#include "ip_addr.h"
-#include "netif.h"
+#include <lowpan6_opts.h>
+#include <lowpan6_common.h>
+#include <packet_buffer.h>
+#include <ip.h>
+#include <ip_addr.h>
+#include <netif.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,7 +65,7 @@ LwipStatus lowpan6_if_init(NetIfc*netif);
 
 /* pan_id in network byte order. */
 LwipStatus lowpan6_set_pan_id(uint16_t pan_id);
-uint16_t lowpan6_calc_crc(const void *buf, uint16_t len);
+uint16_t lowpan6_calc_crc(const uint8_t *buf, uint16_t len);
 LwipStatus tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp);
 
 

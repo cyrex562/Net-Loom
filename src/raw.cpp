@@ -45,20 +45,20 @@
  *
  */
 
-#include "opt.h"
+#include <opt.h>
 
-#include "def.h"
-#include "memp.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "raw.h"
-#include "raw_priv.h"
-#include "stats.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "inet_chksum.h"
+#include <def.h>
+#include <memp.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <raw.h>
+#include <raw_priv.h>
+#include <stats.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <inet_chksum.h>
 #include <cstring>
-#include "ip.h"
+#include <ip.h>
 /** The list of RAW PCBs */
 static struct raw_pcb *raw_pcbs;
 
@@ -154,7 +154,7 @@ raw_input(struct PacketBuffer *p, NetIfc*inp)
       if (pcb->recv != nullptr) {
         uint8_t eaten;
 
-        void *old_payload = p->payload;
+        uint8_t *old_payload = p->payload;
         ret = RAW_INPUT_DELIVERED;
         /* the receive callback function did not eat the packet? */
         eaten = pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr());
@@ -308,7 +308,7 @@ raw_disconnect(struct raw_pcb *pcb)
  *   against further PCBs and/or forwarded to another protocol layers.
  */
 void
-raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
+raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, uint8_t *recv_arg)
 {
   LWIP_ASSERT_CORE_LOCKED();
   /* remember recv() callback and user data */
@@ -447,7 +447,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
       pbuf_chain(q, p);
     }
     /* { first PacketBuffer q points to header PacketBuffer } */
-    Logf(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
+    Logf(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (uint8_t *)q, (uint8_t *)p));
   } else {
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
@@ -461,7 +461,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
   if (IP_IS_V4(dst_ip)) {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
-      Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+      Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (uint8_t *)pcb));
       /* free any temporary header PacketBuffer allocated by pbuf_header() */
       if (q != p) {
         pbuf_free(q);

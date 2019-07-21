@@ -39,8 +39,8 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "lwip_inet.h"
+#include <opt.h>
+#include <lwip_inet.h>
 
 /** This variable is initialized by the system to contain the wildcard IPv6 address.
  */

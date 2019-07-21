@@ -22,7 +22,7 @@ enum EapStateCode {
 struct EapAuth {
 	const char *ea_name;	/* Our name */
 	char ea_peer[0xff];	/* Peer's name */
-	void *ea_session;	/* Authentication library linkage */
+	uint8_t *ea_session;	/* Authentication library linkage */
 	uint8_t *ea_skey;	/* Shared encryption key */
 	size_t ea_namelen;	/* Length of our name */
 	size_t ea_peerlen;	/* Length of peer's name */

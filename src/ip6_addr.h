@@ -1,17 +1,20 @@
 #pragma once
 
-#include "def.h"
-#include "lwip_debug.h"
+#include <def.h>
+#include <lwip_debug.h>
+#include <array>
 
-enum Ip6Zone : uint8_t {
-  kIp6NoZone = 0,
+enum Ip6Zone : uint8_t
+{
+    IP6_NO_ZONE = 0,
 };
 
 /** This is the aligned version of Ip6Addr,
     used as local variable, on the stack, etc. */
-struct Ip6Addr {
-  uint32_t addr[4];
-  Ip6Zone zone;
+struct Ip6Addr
+{
+    std::array<uint32_t, 4>addr;
+    Ip6Zone zone;
 };
 
 /** Symbolic constants for the 'type' parameters in some of the macros.
@@ -32,13 +35,14 @@ enum Ip6ScopeTypes {
 /** Identifier for "no zone". */
 
 /** Return the zone index of the given IPv6 address; possibly "no zone". */
-inline Ip6Zone ip6_addr_zone(const Ip6Addr* ip6addr) {
-  return ((ip6addr)->zone);
+inline Ip6Zone ip6_addr_zone(const Ip6Addr* ip6addr)
+{
+    return ip6addr->zone;
 }
 
 /** Does the given IPv6 address have a zone set? (0/1) */
 inline bool ip6_addr_has_zone(const Ip6Addr* ip6addr) {
-  return (ip6_addr_zone(ip6addr) != kIp6NoZone);
+  return (ip6_addr_zone(ip6addr) != IP6_NO_ZONE);
 }
 
 /** Set the zone field of an IPv6 address to a particular value. */
@@ -48,7 +52,7 @@ inline void ip6_addr_set_zone(Ip6Addr* ip6addr, int zone_idx) {
 
 /** Clear the zone field of an IPv6 address, setting it to "no zone". */
 inline void ip6_addr_clear_zone(Ip6Addr* ip6_addr) {
-  ((ip6_addr)->zone = kIp6NoZone);
+  ((ip6_addr)->zone = IP6_NO_ZONE);
 }
 
 /** Is the zone field of the given IPv6 address equal to the given zone index?
@@ -104,16 +108,16 @@ inline bool ip6_addr_ismulticast_linklocal(const Ip6Addr* ip6addr)
  * scope, in this implementation it does not have an explicitly assigned zone
  * index. As such it should not be tested for in this macro.
  *
- * @param ip6addr the IPv6 address (const); only its address part is examined.
+ * @param ip6_addr the IPv6 address (const); only its address part is examined.
  * @param type address type; see @ref lwip_ipv6_scope_type.
  * @return 1 if the address has a constrained scope, 0 if it does not.
  */
-inline bool ip6_addr_has_scope(const Ip6Addr* ip6addr,
-                               const Ip6ScopeTypes type) {
-  return (
-      ip6_addr_islinklocal(ip6addr) ||
-      (((type) != IP6_UNICAST) && (ip6_addr_ismulticast_iflocal(ip6addr) ||
-                                   ip6_addr_ismulticast_linklocal(ip6addr))));
+inline bool ip6_addr_has_scope(const Ip6Addr* ip6_addr, const Ip6ScopeTypes type)
+{
+    return (ip6_addr_islinklocal(ip6_addr) || (((type) != IP6_UNICAST) && (
+            ip6_addr_ismulticast_iflocal(ip6_addr) || ip6_addr_ismulticast_linklocal(
+                ip6_addr)))
+    );
 }
 
 /**
@@ -170,7 +174,7 @@ inline bool ip6_addr_has_scope(const Ip6Addr* ip6addr,
   } while (0)
 
 /** Verify that the given IPv6 address is properly zoned. */
-inline void IP6_ADDR_ZONECHECK(const Ip6Addr* ip6addr) {
+inline void ip6_addr_zonecheck(const Ip6Addr* ip6addr) {
   lwip_assert(
       "IPv6 zone check failed",
       ip6_addr_has_scope(ip6addr, IP6_UNKNOWN) == ip6_addr_has_zone(ip6addr));
@@ -238,7 +242,7 @@ inline void ip6_addr_set(Ip6Addr* dest, Ip6Addr* src) {
   (dest)->addr[1] = (src) == nullptr ? 0 : (src)->addr[1];
   (dest)->addr[2] = (src) == nullptr ? 0 : (src)->addr[2];
   (dest)->addr[3] = (src) == nullptr ? 0 : (src)->addr[3];
-  ip6_addr_set_zone((dest), (src) == nullptr ? kIp6NoZone : ip6_addr_zone(src));
+  ip6_addr_set_zone((dest), (src) == nullptr ? IP6_NO_ZONE : ip6_addr_zone(src));
 }
 
 /** Copy packed IPv6 address to unpacked IPv6 address; zone is not set */
@@ -288,7 +292,7 @@ inline void ip6_addr_set_hton(Ip6Addr* dest, Ip6Addr* src) {
   (dest)->addr[1] = (src) == nullptr ? 0 : lwip_htonl((src)->addr[1]);
   (dest)->addr[2] = (src) == nullptr ? 0 : lwip_htonl((src)->addr[2]);
   (dest)->addr[3] = (src) == nullptr ? 0 : lwip_htonl((src)->addr[3]);
-  ip6_addr_set_zone((dest), (src) == nullptr ? kIp6NoZone : ip6_addr_zone(src));
+  ip6_addr_set_zone((dest), (src) == nullptr ? IP6_NO_ZONE : ip6_addr_zone(src));
 }
 
 /** Compare IPv6 networks, ignoring zone information. To be used sparingly! */
@@ -332,35 +336,41 @@ inline void ip6_addr_set_hton(Ip6Addr* dest, Ip6Addr* src) {
 #define ip6_get_subnet_id(ip6addr) \
   (lwip_htonl((ip6addr)->addr[2]) & 0x0000ffffUL)
 
-inline bool ip6_addr_isany_val(Ip6Addr ip6_addr) {
+inline bool ip6_addr_isany_val(const Ip6Addr ip6_addr) {
   return (((ip6_addr).addr[0] == 0) && ((ip6_addr).addr[1] == 0) &&
           ((ip6_addr).addr[2] == 0) && ((ip6_addr).addr[3] == 0));
 }
 
-inline bool ip6_addr_isany(Ip6Addr* ip6_addr) {
+inline bool ip6_addr_isany(const Ip6Addr* ip6_addr) {
   return (((ip6_addr) == nullptr) || ip6_addr_isany_val(*(ip6_addr)));
 }
 
-inline bool ip6_addr_isloopback(Ip6Addr* ip6_addr) {
+inline bool ip6_addr_isloopback(const Ip6Addr* ip6_addr) {
   return (((ip6_addr)->addr[0] == 0UL) && ((ip6_addr)->addr[1] == 0UL) &&
           ((ip6_addr)->addr[2] == 0UL) &&
           ((ip6_addr)->addr[3] == pp_htonl(0x00000001UL)));
 }
 
-#define ip6_addr_isglobal(ip6addr) \
-  (((ip6addr)->addr[0] & PP_HTONL(0xe0000000UL)) == PP_HTONL(0x20000000UL))
+inline bool ip6_addr_isglobal(const Ip6Addr* ip6_addr)
+{
+    return (((ip6_addr)->addr[0] & pp_htonl(0xe0000000UL)) == pp_htonl(0x20000000UL));
+}
 
-#define ip6_addr_issitelocal(ip6addr) \
-  (((ip6addr)->addr[0] & PP_HTONL(0xffc00000UL)) == PP_HTONL(0xfec00000UL))
+inline bool ip6_addr_issitelocal(const Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfec00000UL));
+}
 
-#define ip6_addr_isuniquelocal(ip6addr) \
-  (((ip6addr)->addr[0] & PP_HTONL(0xfe000000UL)) == PP_HTONL(0xfc000000UL))
+inline bool ip6_addr_isuniquelocal(const Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xfe000000UL)) == pp_htonl(0xfc000000UL));
+}
 
 #define ip6_addr_isipv4mappedipv6(ip6addr)                   \
   (((ip6addr)->addr[0] == 0) && ((ip6addr)->addr[1] == 0) && \
    (((ip6addr)->addr[2]) == PP_HTONL(0x0000FFFFUL)))
 
-inline bool ip6_addr_ismulticast(Ip6Addr* ip6_addr) {
+inline bool ip6_addr_ismulticast(const Ip6Addr* ip6_addr) {
   return (ip6_addr->addr[0] & pp_htonl(0xff000000UL)) == pp_htonl(0xff000000UL);
 }
 
@@ -372,16 +382,21 @@ inline bool ip6_addr_ismulticast(Ip6Addr* ip6_addr) {
   ((ip6addr)->addr[0] & PP_HTONL(0x00400000UL))
 #define ip6_addr_multicast_scope(ip6addr) \
   ((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xf)
-#define IP6_MULTICAST_SCOPE_RESERVED 0x0
-#define IP6_MULTICAST_SCOPE_RESERVED0 0x0
-#define IP6_MULTICAST_SCOPE_INTERFACE_LOCAL 0x1
-#define IP6_MULTICAST_SCOPE_LINK_LOCAL 0x2
-#define IP6_MULTICAST_SCOPE_RESERVED3 0x3
-#define IP6_MULTICAST_SCOPE_ADMIN_LOCAL 0x4
-#define IP6_MULTICAST_SCOPE_SITE_LOCAL 0x5
-#define IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL 0x8
-#define IP6_MULTICAST_SCOPE_GLOBAL 0xe
-#define IP6_MULTICAST_SCOPE_RESERVEDF 0xf
+
+enum Ip6MulticastScopes
+{
+    IP6_MULTICAST_SCOPE_RESERVED =0x0,
+    IP6_MULTICAST_SCOPE_RESERVED0 =0x0,
+    IP6_MULTICAST_SCOPE_INTERFACE_LOCAL =0x1,
+    IP6_MULTICAST_SCOPE_LINK_LOCAL =0x2,
+    IP6_MULTICAST_SCOPE_RESERVED3 =0x3,
+    IP6_MULTICAST_SCOPE_ADMIN_LOCAL =0x4,
+    IP6_MULTICAST_SCOPE_SITE_LOCAL =0x5,
+    IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL =0x8,
+    IP6_MULTICAST_SCOPE_GLOBAL =0xe,
+    IP6_MULTICAST_SCOPE_RESERVEDF =0xf,
+};
+
 
 #define ip6_addr_ismulticast_adminlocal(ip6addr) \
   (((ip6addr)->addr[0] & PP_HTONL(0xff8f0000UL)) == PP_HTONL(0xff040000UL))

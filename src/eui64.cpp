@@ -35,9 +35,9 @@
  * $Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp $
  */
 
-#include "eui64.h"
+#include <eui64.h>
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
 
 /*

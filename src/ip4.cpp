@@ -1,17 +1,17 @@
 
-#include "opt.h"
-#include "lwip_debug.h"
-#include "autoip.h"
-#include "def.h"
-#include "icmp.h"
-#include "inet_chksum.h"
-#include "ip.h"
-#include "ip4_frag.h"
-#include "netif.h"
-#include "stats.h"
-#include "tcp_priv.h"
-#include "udp.h"
-#include "iana.h"
+#include <opt.h>
+#include <lwip_debug.h>
+#include <autoip.h>
+#include <def.h>
+#include <icmp.h>
+#include <inet_chksum.h>
+#include <ip.h>
+#include <ip4_frag.h>
+#include <netif.h>
+#include <stats.h>
+#include <tcp_priv.h>
+#include <udp.h>
+#include <iana.h>
 
 
 /**
@@ -430,7 +430,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
   /* verify checksum */
 
-  IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_IP) {
+  is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_IP) {
     if (inet_chksum(iphdr, iphdr_hlen) != 0) {
 
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
@@ -712,7 +712,7 @@ ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
  */
 LwipStatus
 ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-                  uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
+                  uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, uint8_t *ip_options,
                   uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
@@ -754,7 +754,7 @@ ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *des
  */
 LwipStatus
 ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-                      uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
+                      uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, uint8_t *ip_options,
                       uint16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
@@ -901,11 +901,11 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
      ) {
     /* Packet to self, enqueue it for loopback */
     Logf(IP_DEBUG, ("netif_loop_output()"));
-    return netif_loop_output(netif, p);
+    return netif_loop_output(netif, p,);
   }
 
   if ((p->flags & PBUF_FLAG_MCASTLOOP) != 0) {
-    netif_loop_output(netif, p);
+    netif_loop_output(netif, p,);
   }
 
 

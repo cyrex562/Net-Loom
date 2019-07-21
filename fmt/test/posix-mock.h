@@ -50,8 +50,8 @@ int dup2(int fildes, int fildes2);
 
 FILE *fdopen(int fildes, const char *mode);
 
-ssize_t read(int fildes, void *buf, size_t nbyte);
-ssize_t write(int fildes, const void *buf, size_t nbyte);
+ssize_t read(int fildes, uint8_t *buf, size_t nbyte);
+ssize_t write(int fildes, const uint8_t *buf, size_t nbyte);
 
 #ifndef _WIN32
 int pipe(int fildes[2]);

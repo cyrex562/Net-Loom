@@ -1,12 +1,12 @@
-#include "ppp_opts.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "ppp_impl.h"
-#include "ppp_impl.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "chap_new.h"
-#include "magic.h"
+#include <ppp_opts.h>
+#include <fsm.h>
+#include <lcp.h>
+#include <ppp_impl.h>
+#include <ppp_impl.h>
+#include <fsm.h>
+#include <lcp.h>
+#include <chap_new.h>
+#include <magic.h>
 
 /*
  * When the link comes up we want to be able to wait for a short while,
@@ -16,15 +16,15 @@
 /* steal a bit in fsm flags word */
 constexpr auto DELAYED_UP = 0x80;
 
-static void lcp_delayed_up(void *arg);
+static void lcp_delayed_up(uint8_t *arg);
 
 /*
  * LCP-related command-line options.
  */
 
 static int setendpoint (char **);
-// static void printendpoint (option_t *, void (*)(void *, char *, ...),
-// 			       void *);
+// static void printendpoint (option_t *, void (*)(uint8_t *, char *, ...),
+// 			       uint8_t *);
 
 
 /*
@@ -50,7 +50,7 @@ static void lcp_rprotrej(Fsm *f, uint8_t *inp, int len);
 
 static void lcp_echo_lowerup(PppPcb *pcb);
 static void lcp_echo_lowerdown(PppPcb *pcb, <unknown>);
-static void LcpEchoTimeout(void *arg);
+static void LcpEchoTimeout(uint8_t *arg);
 static void lcp_received_echo_reply(Fsm *f, int id, uint8_t *inp, int len);
 static void LcpSendEchoRequest(Fsm *f);
 static void LcpLinkFailure(Fsm *f);
@@ -131,8 +131,8 @@ setendpoint(argv)
 static void
 printendpoint(opt, printer, arg)
     option_t *opt;
-    void (*printer) (void *, char *, ...);
-    void *arg;
+    void (*printer) (uint8_t *, char *, ...);
+    uint8_t *arg;
 {
 	printer(arg, "%s", epdisc_to_str(&lcp_wantoptions[0].endpoint));
 }
@@ -272,7 +272,7 @@ void lcp_lowerdown(PppPcb *pcb) {
 /*
  * lcp_delayed_up - Bring the lower layer up now.
  */
-static void lcp_delayed_up(void *arg) {
+static void lcp_delayed_up(uint8_t *arg) {
     Fsm *f = (Fsm*)arg;
 
     if (f->flags & DELAYED_UP) {
@@ -2016,7 +2016,7 @@ static void LcpEchoCheck(Fsm *f) {
  * LcpEchoTimeout - Timer expired on the LCP echo
  */
 
-static void LcpEchoTimeout(void *arg) {
+static void LcpEchoTimeout(uint8_t *arg) {
     Fsm *f = (Fsm*)arg;
     PppPcb *pcb = f->pcb;
     if (pcb->lcp_echo_timer_running != 0) {

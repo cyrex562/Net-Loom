@@ -39,7 +39,7 @@
  *  http://www.ietf.org/rfc/rfc1320.txt
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 #include <string.h>
 
 /*
@@ -204,7 +204,7 @@ void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, fill );
         md4_process( ctx, ctx->buffer );
         input += fill;
@@ -221,7 +221,7 @@ void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, ilen );
     }
 }

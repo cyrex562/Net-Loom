@@ -1,15 +1,14 @@
 #pragma once
-#include "lwip_error.h"
-#include "icmp.h"
-#include "ip.h"
-#include "opt.h"
-#include "packet_buffer.h"
-#include "tcpbase.h"
+#include <lwip_error.h>
+#include <ip.h>
+#include <opt.h>
+#include <packet_buffer.h>
+#include <tcpbase.h>
 #include <cstdint>
 
 /* Length of the TCP header, excluding options. */
-constexpr auto kTcpHdrLen = 20;
-constexpr auto kTcpSndQueueLenOvflw = (0xffffU - 3);
+constexpr auto TCP_HDR_LEN = 20;
+constexpr auto TCP_SND_QUEUE_LEN_OVFLW = (0xffffU - 3);
 
 /* Fields are (of course) in network byte order.
 * Some fields are converted to host byte order in tcp_input().
@@ -28,23 +27,28 @@ struct TcpHdr
 
 
 /* TCP header flags bits */
-constexpr auto TCP_FIN = 0x01U;
-constexpr auto TCP_SYN = 0x02U;
-constexpr auto kTcpRst = 0x04U;
-constexpr auto kTcpPsh = 0x08U;
-constexpr auto kTcpAck = 0x10U;
-constexpr auto kTcpUrg = 0x20U;
-constexpr auto kTcpEce = 0x40U;
-constexpr auto kTcpCwr = 0x80U; /* Valid TCP header flags */
-constexpr auto TCP_FLAGS = 0x3fU;
-constexpr auto kTcpMaxOptionBytes = 40;
+enum TcpHdrFlags : uint8_t
+{
+    TCP_FIN = 0x01U,
+    TCP_SYN = 0x02U,
+    TCP_RST = 0x04U,
+    TCP_PSH = 0x08U,
+    TCP_ACK = 0x10U,
+    TCP_URG = 0x20U,
+    TCP_ECE = 0x40U,
+    TCP_CWR = 0x80U,
+    /* Valid TCP header flags */
+};
 
-inline size_t TcphHdrlen(TcpHdr* phdr) {
+constexpr auto TCP_FLAGS = 0x3fU;
+constexpr auto TCP_MAX_OPTION_BYTES = 40;
+
+inline size_t get_tcp_hdr_len(TcpHdr* phdr) {
     return lwip_ntohs(phdr->_hdrlen_rsvd_flags) >> 12;
 }
 
-inline size_t TcphHdrlenBytes(TcpHdr* phdr) {
-    return TcphHdrlen(phdr) << 2;
+inline size_t get_tcp_hdr_len_bytes(TcpHdr* phdr) {
+    return get_tcp_hdr_len(phdr) << 2;
 }
 
 
@@ -59,7 +63,7 @@ inline size_t TcphHdrlenBytes(TcpHdr* phdr) {
 extern "C" {
 #endif
     struct TcpPcb;
-    struct tcp_pcb_listen;
+    struct TcpPcbListen;
     /** Function prototype for tcp accept callback functions. Called when a new
         * connection can be accepted on a listening pcb.
         *
@@ -176,7 +180,7 @@ extern "C" {
         * @return ERR_OK if OK, any error if connection should be dropped
         */
     typedef LwipStatus(*tcp_extarg_callback_passive_open_fn)(uint8_t id,
-        struct tcp_pcb_listen* lpcb,
+        struct TcpPcbListen* lpcb,
         struct TcpPcb* cpcb);
 
     /** A table of callback functions that is invoked for ext arguments */
@@ -197,10 +201,10 @@ extern "C" {
         void* data;
     };
 
-    typedef uint16_t TcpFlags;
+    using TcpFlags = uint16_t;
     constexpr auto TCP_ALLFLAGS = 0xffffU;
-    struct tcp_pcb_listen; /** the TCP protocol control block for listening pcbs */
-    struct tcp_pcb_listen
+    struct TcpPcbListen; /** the TCP protocol control block for listening pcbs */
+    struct TcpPcbListen
     {
         /** Common members of all PCB types */
         IpAddr local_ip; /* Bound netif index */
@@ -208,8 +212,8 @@ extern "C" {
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
-        NetIfc*cHint netif_hints; /** Protocol specific PCB members */
-        tcp_pcb_listen* next; /* for the linked list */
+        NetIfc* netif_hints; /** Protocol specific PCB members */
+        TcpPcbListen* next; /* for the linked list */
         void* callback_arg;
         struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
         enum TcpState state; /* TCP state */
@@ -230,8 +234,8 @@ struct TcpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    NetIfc*cHint netif_hints; /** protocol specific PCB members */
-    tcp_pcb_listen* next; /* for the linked list */
+    NetIfc* netif_hints; /** protocol specific PCB members */
+    TcpPcb* next; /* for the linked list */
     void* callback_arg;
     struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
     enum TcpState state; /* TCP state */
@@ -282,7 +286,7 @@ struct TcpPcb
     struct tcp_seg* ooseq; /* Received out of sequence segments. */
     struct PacketBuffer* refused_data;
     /* Data previously received but not yet taken by upper layer */
-    struct tcp_pcb_listen* listener;
+    struct TcpPcbListen* listener;
     /* Function to be called when more send buffer space is available. */
     tcp_sent_fn sent; /* Function to be called when (in-sequence) data has arrived. */
     tcp_recv_fn recv; /* Function to be called when a connection has been set up. */
@@ -367,7 +371,7 @@ inline uint32_t tcp_mss(TcpPcb* pcb)
 
 inline uint32_t tcp_backlog_set(TcpPcb* pcb, uint32_t new_backlog)
 {
-    reinterpret_cast<struct tcp_pcb_listen *>(pcb)->backlog = ((new_backlog)
+    reinterpret_cast<struct TcpPcbListen *>(pcb)->backlog = ((new_backlog)
                                                                    ? (new_backlog)
                                                                    : 1);
 }

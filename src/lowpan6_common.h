@@ -41,11 +41,11 @@
 
 #pragma once
 
-#include "lowpan6_opts.h"
-#include "packet_buffer.h"
-#include "ip.h"
-#include "ip6_addr.h"
-#include "netif.h"
+#include <lowpan6_opts.h>
+#include <packet_buffer.h>
+#include <ip.h>
+#include <ip6_addr.h>
+#include <netif.h>
 #include <cstdint>
 
 #ifdef __cplusplus

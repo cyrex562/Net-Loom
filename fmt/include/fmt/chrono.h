@@ -8,8 +8,8 @@
 #ifndef FMT_CHRONO_H_
 #define FMT_CHRONO_H_
 
-#include "format.h"
-#include "locale.h"
+#include <format.h>
+#include <locale.h>
 
 #include <chrono>
 #include <ctime>

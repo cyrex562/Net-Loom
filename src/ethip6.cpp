@@ -39,15 +39,15 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "ethernet.h"
-#include "ethip6.h"
-#include "icmp6.h"
-#include "ieee.h"
-#include "ip6_addr.h"
-#include "nd6.h"
-#include "netif.h"
-#include "packet_buffer.h"
+#include <opt.h>
+#include <ethernet.h>
+#include <ethip6.h>
+#include <icmp6.h>
+#include <ieee.h>
+#include <ip6_addr.h>
+#include <nd6.h>
+#include <netif.h>
+#include <packet_buffer.h>
 #include <cstring>
 
 

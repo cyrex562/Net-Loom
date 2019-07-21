@@ -7,19 +7,19 @@
 
 #define FMT_NOEXCEPT
 #undef FMT_SHARED
-#include "test-assert.h"
+#include <test-assert.h>
 
 // Include format.cc instead of format.h to test implementation.
-#include "../src/format.cc"
-#include "fmt/color.h"
-#include "fmt/printf.h"
+#include <../src/format.cc>
+#include <fmt/color.h>
+#include <fmt/printf.h>
 
 #include <algorithm>
 #include <cstring>
 
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include <gmock.h>
+#include <gtest-extra.h>
+#include <util.h>
 
 #undef min
 #undef max

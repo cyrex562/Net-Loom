@@ -28,11 +28,11 @@
  * 
  */
 
-#include "opt.h"
-#include "sio.h"
-#include "def.h"
-#include "sys.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <sio.h>
+#include <def.h>
+#include <sys.h>
+#include <lwip_debug.h>
 #include <cstdarg>
 #include <cstdio>
 #define WIN32_LEAN_AND_MEAN
@@ -48,7 +48,7 @@
 // #ifdef _MSC_VER
 // #pragma warning (pop)
 // #endif
-// #include "lwipcfg.h"
+// #include <lwipcfg.h>
 
 /** When 1, use COM ports, when 0, use named pipes (for simulation). */
 #ifndef SIO_USE_COMPORT

@@ -42,14 +42,14 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#include "opt.h"
-#include "def.h"
-#include "inet_chksum.h"
-#include "ip_addr.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <def.h>
+#include <inet_chksum.h>
+#include <ip_addr.h>
+#include <lwip_debug.h>
 #include <cstring>
 
-// uint16_t lwip_standard_chksum(const void *dataptr, int len);
+// uint16_t lwip_standard_chksum(const uint8_t *dataptr, int len);
 uint16_t lwip_standard_checksum(const void* dataptr,
                                 const size_t len,
                                 const int checksum_algorithm)
@@ -139,7 +139,7 @@ uint16_t lwip_standard_chksum_2(const void* dataptr, const size_t len)
         local_len--;
     } 
     /* Add the bulk of the data */
-    const auto* ps = static_cast<const uint16_t *>(static_cast<const void *>(pb));
+    const auto* ps = static_cast<const uint16_t *>(static_cast<const uint8_t *>(pb));
     while (local_len > 1)
     {
         sum += *ps++;
@@ -189,13 +189,13 @@ uint16_t lwip_standard_chksum_3(const void* dataptr, const size_t len)
         ((uint8_t *)&t)[1] = *pb++;
         local_len--;
     }
-    const uint16_t* ps = (const uint16_t *)(const void *)pb;
+    const uint16_t* ps = (const uint16_t *)(const uint8_t *)pb;
     if (((uintptr_t)ps & 3) && local_len > 1)
     {
         sum += *ps++;
         local_len -= 2;
     }
-    const uint32_t* pl = (const uint32_t *)(const void *)ps;
+    const uint32_t* pl = (const uint32_t *)(const uint8_t *)ps;
     while (local_len > 7)
     {
         uint32_t tmp = sum + *pl++; /* ping */
@@ -247,7 +247,7 @@ static uint16_t inet_cksum_pseudo_base(struct PacketBuffer* p,
     {
         // Logf(INET_DEBUG,
         //      ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n", (void
-        //          *)q, (void *)q->next));
+        //          *)q, (uint8_t *)q->next));
         acc += lwip_standard_checksum(q->payload, q->len);
         /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%"X32_F"
             * \n", acc));*/
@@ -385,7 +385,7 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
     {
         // Logf(INET_DEBUG,
         //      ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n", (void
-        //          *)q, (void *)q->next));
+        //          *)q, (uint8_t *)q->next));
         chklen = q->len;
         if (chklen > chksum_len)
         {

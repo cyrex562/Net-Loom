@@ -34,10 +34,10 @@
  * Author: Joel Cunningham <joel.cunningham@me.com>
  *
  */
-#include "opt.h"
-#include "lwip_error.h"
-#include "lwip_sockets.h"
-#include "sys.h"
+#include <opt.h>
+#include <lwip_error.h>
+#include <lwip_sockets.h>
+#include <sys.h>
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 

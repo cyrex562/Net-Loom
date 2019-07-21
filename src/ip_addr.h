@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ip6_addr.h"
-#include "ip4_addr.h"
+#include <ip6_addr.h>
+#include <ip4_addr.h>
 #include <cstring>
 
 //
@@ -37,7 +37,7 @@ extern const struct IpAddr kIpAddrAnyType;
 
 inline IpAddr init_ip_addr_ip4(const uint32_t u32_val)
 {
-    return {{{{u32_val, 0UL, 0UL, 0UL}, kIp6NoZone}}, IPADDR_TYPE_V4};
+    return {{{{u32_val, 0UL, 0UL, 0UL}, IP6_NO_ZONE}}, IPADDR_TYPE_V4};
 }
 
 //
@@ -60,7 +60,7 @@ inline IpAddr init_ip_addr_ip6(const uint32_t a,
                           const uint32_t c,
                           const uint32_t d)
 {
-    return {{{{a, b, c, d}, kIp6NoZone}}, IPADDR_TYPE_V6};
+    return {{{{a, b, c, d}, IP6_NO_ZONE}}, IPADDR_TYPE_V6};
 }
 
 //
@@ -72,7 +72,7 @@ inline IpAddr init_ip_addr_ip6_host(const uint32_t a,
                               const uint32_t d)
 {
     return {
-            {{{pp_htonl(a), pp_htonl(b), pp_htonl(c), pp_htonl(d)}, kIp6NoZone}},
+            {{{pp_htonl(a), pp_htonl(b), pp_htonl(c), pp_htonl(d)}, IP6_NO_ZONE}},
         IPADDR_TYPE_V6
     };
 }
@@ -98,7 +98,7 @@ inline bool is_ip_addr_any_type_val(const IpAddr ipaddr)
 //
 inline IpAddr init_ip_addr_any_type()
 {
-    return {{{{0UL, 0UL, 0UL, 0ul}, kIp6NoZone}}, IPADDR_TYPE_ANY};
+    return {{{{0UL, 0UL, 0UL, 0ul}, IP6_NO_ZONE}}, IPADDR_TYPE_ANY};
 }
 
 //
@@ -557,7 +557,7 @@ inline void IP_ADDR6(IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint
     IP6_ADDR(&ipaddr->u_addr.ip6, i0, i1, i2, i3);
 }         
 
-inline void IP_ADDR6_HOST(struct IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
+inline void ip_addr_ip6_host(struct IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
 {
     IP_ADDR6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
 }
@@ -586,7 +586,7 @@ inline IpAddr kIpAddrIp6Any() {
     addr.u_addr.ip6.addr[1] = 0;
     addr.u_addr.ip6.addr[2] = 0;
     addr.u_addr.ip6.addr[3] = 0;
-    addr.u_addr.ip6.zone = kIp6NoZone;
+    addr.u_addr.ip6.zone = IP6_NO_ZONE;
     addr.type = IPADDR_TYPE_V6;
     return addr;
 }
@@ -598,7 +598,7 @@ inline IpAddr kIpAddrAny()
     addr.u_addr.ip6.addr[1] = 0;
     addr.u_addr.ip6.addr[2] = 0;
     addr.u_addr.ip6.addr[3] = 0;
-    addr.u_addr.ip6.zone = kIp6NoZone;
+    addr.u_addr.ip6.zone = IP6_NO_ZONE;
     addr.type = IPADDR_TYPE_ANY;
     return addr;
 }

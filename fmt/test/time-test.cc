@@ -9,9 +9,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "gmock.h"
-#include "fmt/locale.h"
-#include "fmt/time.h"
+#include <gmock.h>
+#include <fmt/locale.h>
+#include <fmt/time.h>
 
 TEST(TimeTest, Format) {
   std::tm tm = std::tm();
