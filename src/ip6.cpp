@@ -1153,7 +1153,7 @@ ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
     }
 
     ip6hdr = (struct ip6_hdr *)p->payload;
-    LWIP_ASSERT("check that first PacketBuffer can hold struct ip6_hdr",
+    lwip_assert("check that first PacketBuffer can hold struct ip6_hdr",
                (p->len >= sizeof(struct ip6_hdr)));
 
     IP6H_HOPLIM_SET(ip6hdr, hl);

@@ -1,6 +1,4 @@
 #pragma once
-
-#include "def.h"
 #include "ip4.h"
 #include "ip6.h"
 #include "ip_addr.h"
@@ -21,7 +19,7 @@ enum IpProto
 /** This operates on a void* by loading the first byte */
 inline uint8_t get_ip_hdr_version(void* ptr)
 {
-    return ((*static_cast<uint8_t *>(ptr)) >> 4);
+    return *static_cast<uint8_t *>(ptr) >> 4;
 }
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
@@ -166,14 +164,29 @@ struct IpGlobals
 // inline IpAddr* ip_current_dest_addr()
 //  { return &ip_data.current_iphdr_dest; }
 
-/** Gets an IP pcb option (SOF_* flags) */
-#define ip_get_option(pcb, opt) ((pcb)->so_options & (opt))
-/** Sets an IP pcb option (SOF_* flags) */
-#define ip_set_option(pcb, opt) \
-  ((pcb)->so_options = (uint8_t)((pcb)->so_options | (opt)))
-/** Resets an IP pcb option (SOF_* flags) */
-#define ip_reset_option(pcb, opt) \
-  ((pcb)->so_options = (uint8_t)((pcb)->so_options & ~(opt)))
+//
+// Gets an IP pcb option (SOF_* flags)
+//
+inline uint8_t ip_get_option(IpPcb* pcb, const uint8_t opt)
+{
+    return ((pcb)->so_options & (opt));
+}
+
+//
+// Sets an IP pcb option (SOF_* flags)
+//
+inline void ip_set_option(uint8_t* so_options, const uint8_t opt)
+{
+    *so_options = uint8_t(*so_options | opt);
+}
+
+//
+// Resets an IP pcb option (SOF_* flags)
+//
+inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
+{
+    pcb->so_options = uint8_t(pcb->so_options & ~opt);
+}
 
 /**
  * @ingroup ip

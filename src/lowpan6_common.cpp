@@ -136,11 +136,11 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   struct ip6_hdr *ip6hdr;
   IpAddr ip6src, ip6dst;
 
-  LWIP_ASSERT("netif != NULL", netif != nullptr);
-  LWIP_ASSERT("inbuf != NULL", inbuf != nullptr);
-  LWIP_ASSERT("outbuf != NULL", outbuf != nullptr);
-  LWIP_ASSERT("lowpan6_header_len_out != NULL", lowpan6_header_len_out != nullptr);
-  LWIP_ASSERT("hidden_header_len_out != NULL", hidden_header_len_out != nullptr);
+  lwip_assert("netif != NULL", netif != nullptr);
+  lwip_assert("inbuf != NULL", inbuf != nullptr);
+  lwip_assert("outbuf != NULL", outbuf != nullptr);
+  lwip_assert("lowpan6_header_len_out != NULL", lowpan6_header_len_out != nullptr);
+  lwip_assert("hidden_header_len_out != NULL", hidden_header_len_out != nullptr);
 
   /* Perform 6LowPAN IPv6 header compression according to RFC 6282 */
   buffer = outbuf;
@@ -394,12 +394,12 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   uint32_t header_temp;
   uint16_t ip6_offset = IP6_HLEN;
 
-  LWIP_ASSERT("lowpan6_buffer != NULL", lowpan6_buffer != nullptr);
-  LWIP_ASSERT("decomp_buffer != NULL", decomp_buffer != nullptr);
-  LWIP_ASSERT("src != NULL", src != nullptr);
-  LWIP_ASSERT("dest != NULL", dest != nullptr);
-  LWIP_ASSERT("hdr_size_comp != NULL", hdr_size_comp != nullptr);
-  LWIP_ASSERT("dehdr_size_decompst != NULL", hdr_size_decomp != nullptr);
+  lwip_assert("lowpan6_buffer != NULL", lowpan6_buffer != nullptr);
+  lwip_assert("decomp_buffer != NULL", decomp_buffer != nullptr);
+  lwip_assert("src != NULL", src != nullptr);
+  lwip_assert("dest != NULL", dest != nullptr);
+  lwip_assert("hdr_size_comp != NULL", hdr_size_comp != nullptr);
+  lwip_assert("dehdr_size_decompst != NULL", hdr_size_decomp != nullptr);
 
   ip6hdr = (struct ip6_hdr *)decomp_buffer;
   if (decomp_bufsize < IP6_HLEN) {

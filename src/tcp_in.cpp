@@ -88,20 +88,20 @@ static uint8_t flags;
 static uint8_t recv_flags;
 static struct PacketBuffer *recv_data;
 
-struct TcpProtoCtrlBlk *tcp_input_pcb;
+struct TcpPcb *tcp_input_pcb;
 
 /* Forward declarations. */
-static LwipStatus tcp_process(struct TcpProtoCtrlBlk *pcb);
-static void tcp_receive(struct TcpProtoCtrlBlk *pcb);
-static void tcp_parseopt(struct TcpProtoCtrlBlk *pcb);
+static LwipStatus tcp_process(struct TcpPcb *pcb);
+static void tcp_receive(struct TcpPcb *pcb);
+static void tcp_parseopt(struct TcpPcb *pcb);
 
 static void tcp_listen_input(struct tcp_pcb_listen *pcb);
-static void tcp_timewait_input(struct TcpProtoCtrlBlk *pcb);
+static void tcp_timewait_input(struct TcpPcb *pcb);
 
-static int tcp_input_delayed_close(struct TcpProtoCtrlBlk *pcb);
+static int tcp_input_delayed_close(struct TcpPcb *pcb);
 
-static void tcp_add_sack(struct TcpProtoCtrlBlk *pcb, uint32_t left, uint32_t right);
-static void tcp_remove_sacks_lt(struct TcpProtoCtrlBlk *pcb, uint32_t seq);
+static void tcp_add_sack(struct TcpPcb *pcb, uint32_t left, uint32_t right);
+static void tcp_remove_sacks_lt(struct TcpPcb *pcb, uint32_t seq);
 #if defined(TCP_OOSEQ_BYTES_LIMIT) || defined(TCP_OOSEQ_PBUFS_LIMIT)
 static void tcp_remove_sacks_gt(struct TcpProtoCtrlBlk *pcb, uint32_t seq);
 #endif /* TCP_OOSEQ_BYTES_LIMIT || TCP_OOSEQ_PBUFS_LIMIT */
@@ -118,7 +118,7 @@ static void tcp_remove_sacks_gt(struct TcpProtoCtrlBlk *pcb, uint32_t seq);
 void
 tcp_input(struct PacketBuffer *p, NetIfc*inp)
 {
-  struct TcpProtoCtrlBlk *pcb, *prev;
+  struct TcpPcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
 #if SO_REUSE
   struct TcpProtoCtrlBlk *lpcb_prev = NULL;
@@ -318,7 +318,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
       /* check if PCB is bound to specific netif */
       if ((lpcb->netif_idx != NETIF_NO_INDEX) &&
           (lpcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
-        prev = (struct TcpProtoCtrlBlk *)lpcb;
+        prev = (struct TcpPcb *)lpcb;
         continue;
       }
 
@@ -342,7 +342,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
           }
         }
       }
-      prev = (struct TcpProtoCtrlBlk *)lpcb;
+      prev = (struct TcpPcb *)lpcb;
     }
 
     /* first try specific local IP */
@@ -368,7 +368,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
 
       Logf(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
 
-      if (LWIP_HOOK_TCP_INPACKET_PCB((struct TcpProtoCtrlBlk *)lpcb, tcphdr, tcphdr_optlen,
+      if (LWIP_HOOK_TCP_INPACKET_PCB((struct TcpPcb *)lpcb, tcphdr, tcphdr_optlen,
                                      tcphdr_opt1len, tcphdr_opt2, p) == ERR_OK)
 
       {
@@ -575,7 +575,7 @@ dropped:
  * @returns 1 if the pcb has been closed and deallocated, 0 otherwise
  */
 static int
-tcp_input_delayed_close(struct TcpProtoCtrlBlk *pcb)
+tcp_input_delayed_close(struct TcpPcb *pcb)
 {
   lwip_assert("tcp_input_delayed_close: invalid pcb", pcb != nullptr);
 
@@ -607,7 +607,7 @@ tcp_input_delayed_close(struct TcpProtoCtrlBlk *pcb)
 static void
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
-  struct TcpProtoCtrlBlk *npcb;
+  struct TcpPcb *npcb;
   uint32_t iss;
   LwipStatus rc;
 
@@ -624,7 +624,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* For incoming segments with the ACK flag set, respond with a
        RST. */
     Logf(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
-    tcp_rst((const struct TcpProtoCtrlBlk *)pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
+    tcp_rst((const struct TcpPcb *)pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
             ip_current_src_addr(), tcphdr->dest, tcphdr->src);
   } else if (flags & TCP_SYN) {
     Logf(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
@@ -710,7 +710,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
  *       involved is passed as a parameter to this function
  */
 static void
-tcp_timewait_input(struct TcpProtoCtrlBlk *pcb)
+tcp_timewait_input(struct TcpPcb *pcb)
 {
   /* RFC 1337: in TIME_WAIT, ignore RST and ACK FINs + any 'acceptable' segments */
   /* RFC 793 3.9 Event Processing - Segment Arrives:
@@ -759,7 +759,7 @@ tcp_timewait_input(struct TcpProtoCtrlBlk *pcb)
  *       involved is passed as a parameter to this function
  */
 static LwipStatus
-tcp_process(struct TcpProtoCtrlBlk *pcb)
+tcp_process(struct TcpPcb *pcb)
 {
   struct tcp_seg *rseg;
   uint8_t acceptable = 0;
@@ -1057,7 +1057,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 
 /** Remove segments from a list if the incoming ACK acknowledges them */
 static struct tcp_seg *
-tcp_free_acked_segments(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg_list, const char *dbg_list_name,
+tcp_free_acked_segments(struct TcpPcb *pcb, struct tcp_seg *seg_list, const char *dbg_list_name,
                         struct tcp_seg *dbg_other_seg_list)
 {
   struct tcp_seg *next;
@@ -1110,7 +1110,7 @@ tcp_free_acked_segments(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg_list, c
  * Called from tcp_process().
  */
 static void
-tcp_receive(struct TcpProtoCtrlBlk *pcb)
+tcp_receive(struct TcpPcb *pcb)
 {
   int16_t m;
   uint32_t right_wnd_edge;
@@ -1861,7 +1861,7 @@ tcp_get_next_optbyte(void)
  * @param pcb the TcpProtoCtrlBlk for which a segment arrived
  */
 static void
-tcp_parseopt(struct TcpProtoCtrlBlk *pcb)
+tcp_parseopt(struct TcpPcb *pcb)
 {
   uint8_t data;
   uint16_t mss;
@@ -1916,8 +1916,8 @@ tcp_parseopt(struct TcpProtoCtrlBlk *pcb)
             pcb->rcv_scale = TCP_RCV_SCALE;
             tcp_set_flags(pcb, TF_WND_SCALE);
             /* window scaling is enabled, we can use the full receive window */
-            LWIP_ASSERT("window not at default value", pcb->rcv_wnd == TCPWND_MIN16(TCP_WND));
-            LWIP_ASSERT("window not at default value", pcb->rcv_ann_wnd == TCPWND_MIN16(TCP_WND));
+            lwip_assert("window not at default value", pcb->rcv_wnd == TCPWND_MIN16(TCP_WND));
+            lwip_assert("window not at default value", pcb->rcv_ann_wnd == TCPWND_MIN16(TCP_WND));
             pcb->rcv_wnd = pcb->rcv_ann_wnd = TCP_WND;
           }
           break;
@@ -1995,7 +1995,7 @@ tcp_trigger_input_pcb_close(void)
  * @param right the right side of the SACK (the first sequence number past this SACK)
  */
 static void
-tcp_add_sack(struct TcpProtoCtrlBlk *pcb, uint32_t left, uint32_t right)
+tcp_add_sack(struct TcpPcb *pcb, uint32_t left, uint32_t right)
 {
   uint8_t i;
   uint8_t unused_idx;
@@ -2055,7 +2055,7 @@ tcp_add_sack(struct TcpProtoCtrlBlk *pcb, uint32_t left, uint32_t right)
  * @param seq the lowest sequence number to keep in SACK entries
  */
 static void
-tcp_remove_sacks_lt(struct TcpProtoCtrlBlk *pcb, uint32_t seq)
+tcp_remove_sacks_lt(struct TcpPcb *pcb, uint32_t seq)
 {
   uint8_t i;
   uint8_t unused_idx;
@@ -2094,7 +2094,7 @@ tcp_remove_sacks_lt(struct TcpProtoCtrlBlk *pcb, uint32_t seq)
  * @param seq the highest sequence number to keep in SACK entries
  */
 static void
-tcp_remove_sacks_gt(struct TcpProtoCtrlBlk *pcb, uint32_t seq)
+tcp_remove_sacks_gt(struct TcpPcb *pcb, uint32_t seq)
 {
   uint8_t i;
   uint8_t unused_idx;

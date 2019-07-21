@@ -321,7 +321,7 @@ ppp_do_connect(void* arg)
 {
     PppPcb* pcb = (PppPcb*)arg;
 
-    // LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF",
+    // lwip_assert("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF",
     //             pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
     new_phase(pcb, PPP_PHASE_INITIALIZE);

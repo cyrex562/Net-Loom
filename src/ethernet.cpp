@@ -284,7 +284,7 @@ LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
     // {
     //     struct eth_vlan_hdr* vlanhdr;
     //
-    //     LWIP_ASSERT("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
+    //     lwip_assert("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
     //
     //     if (pbuf_add_header(p, SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) != 0)
     //     {

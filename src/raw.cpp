@@ -483,7 +483,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
      compute the checksum and update the checksum in the payload. */
   if (IpIsV6(dst_ip) && pcb->chksum_reqd) {
     uint16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
-    LWIP_ASSERT("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
+    lwip_assert("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
     SMEMCPY(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
   }
 

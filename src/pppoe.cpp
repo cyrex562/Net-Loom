@@ -991,7 +991,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
   p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
   PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
@@ -1024,7 +1024,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
   p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADS, sc->sc_session, len);
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);

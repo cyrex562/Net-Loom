@@ -1132,16 +1132,10 @@ udp_disconnect(struct UdpPcb *pcb)
  * @param recv function pointer of the callback function
  * @param recv_arg additional argument to pass to the callback function
  */
-void
-udp_recv(struct UdpPcb *pcb, udp_recv_fn recv, void *recv_arg)
+void udp_recv(struct UdpPcb* pcb, UdpRecvFn recv, void* recv_arg)
 {
-  LWIP_ASSERT_CORE_LOCKED();
-
-  LWIP_ERROR("udp_recv: invalid pcb", pcb != nullptr, return);
-
-  /* remember recv() callback and user data */
-  pcb->recv = recv;
-  pcb->recv_arg = recv_arg;
+    pcb->recv = recv;
+    pcb->recv_arg = recv_arg;
 }
 
 /**

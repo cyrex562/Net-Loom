@@ -3,16 +3,16 @@
 //
 
 #pragma once
-#include <cstdint>
-
 #include "lwip_error.h"
+#include <cstdint>
+#include <array>
 
 using sys_prot_t = int;
 
-/* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
+// DWORD (thread id) is used for sys_thread_t but we won't include windows.h
 using sys_thread_t = uint32_t;
 
-/** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
+// Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait
 constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 
 constexpr auto MAX_QUEUE_ENTRIES = 100;
@@ -20,29 +20,30 @@ constexpr auto MAX_QUEUE_ENTRIES = 100;
 struct Mailbox
 {
     void* sem;
-    void* q_mem[MAX_QUEUE_ENTRIES];
-    uint32_t head, tail;
+    std::array<void*, MAX_QUEUE_ENTRIES>q_mem;
+    uint32_t head;
+    uint32_t tail;
 };
 
-/* HANDLE is used for Semaphore but we won't include windows.h */
+// HANDLE is used for Semaphore but we won't include windows.h
 struct Semaphore
 {
     void* sem;
 };
 
-/* HANDLE is used for sys_mutex_t but we won't include windows.h */
+// HANDLE is used for sys_mutex_t but we won't include windows.h
 struct Mutex
 {
     void* mut;
 };
 
 
-/** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
- * For now we use the same magic value, but we allow this to change in future.
- */
+// sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
+// For now we use the same magic value, but we allow this to change in future.
+//
 // #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
-/** Function prototype for thread functions */
+// Function prototype for thread functions
 using lwip_thread_fn = void (*)(void*);
 
 /* Function prototypes for functions to be implemented by platform ports
@@ -148,136 +149,131 @@ void sys_sem_free(Semaphore *sem);
 
 
 
-/**
- * @ingroup sys_misc
- * Sleep for specified number of ms
- */
+//
+// Sleep for specified number of ms
+//
 void sys_msleep(uint32_t ms); /* only has a (close to) 1 ms resolution. */
 
 
-/* Mailbox functions. */
+// Mailbox functions.
+// @ingroup sys_mbox
+// Post a message to an mbox - may not fail
+// -> blocks if full, only to be used from tasks NOT from ISR!
+// 
+// mbox: mbox to posts the message
+// msg: message to post (ATTENTION: can be NULL)
+//
+void sys_mbox_post(Mailbox* mbox, void* msg);
 
-
-/**
- * @ingroup sys_mbox
- * Post a message to an mbox - may not fail
- * -> blocks if full, only to be used from tasks NOT from ISR!
- * 
- * @param mbox mbox to posts the message
- * @param msg message to post (ATTENTION: can be NULL)
- */
-void sys_mbox_post(Mailbox *mbox, void *msg);
-/**
- * @ingroup sys_mbox
- * Try to post a message to an mbox - may fail if full.
- * Can be used from ISR (if the sys arch layer allows this).
- * Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
- * 
- * @param mbox mbox to posts the message
- * @param msg message to post (ATTENTION: can be NULL)
- */
+//
+// @ingroup sys_mbox
+// Try to post a message to an mbox - may fail if full.
+// Can be used from ISR (if the sys arch layer allows this).
+// Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
+// 
+// mbox: mbox to posts the message
+// msg: message to post (ATTENTION: can be NULL)
+//
 LwipStatus sys_mbox_trypost(Mailbox *mbox, void *msg);
-/**
- * @ingroup sys_mbox
- * Try to post a message to an mbox - may fail if full.
- * To be be used from ISR.
- * Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
- * 
- * @param mbox mbox to posts the message
- * @param msg message to post (ATTENTION: can be NULL)
- */
+
+//
+// Try to post a message to an mbox - may fail if full.
+// To be be used from ISR.
+// Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
+// 
+// mbox: mbox to posts the message
+// msg: message to post (ATTENTION: can be NULL)
+//
 LwipStatus sys_mbox_trypost_fromisr(Mailbox *mbox, void *msg);
-/**
- * @ingroup sys_mbox
- * Blocks the thread until a message arrives in the mailbox, but does
- * not block the thread longer than "timeout" milliseconds (similar to
- * the sys_arch_sem_wait() function). If "timeout" is 0, the thread should
- * be blocked until a message arrives. The "msg" argument is a result
- * parameter that is set by the function (i.e., by doing "*msg =
- * ptr"). The "msg" parameter maybe NULL to indicate that the message
- * should be dropped.
- * The return values are the same as for the sys_arch_sem_wait() function:
- * SYS_ARCH_TIMEOUT if there was a timeout, any other value if a messages
- * is received.
- * 
- * Note that a function with a similar name, sys_mbox_fetch(), is
- * implemented by lwIP. 
- * 
- * @param mbox mbox to get a message from
- * @param msg pointer where the message is stored
- * @param timeout maximum time (in milliseconds) to wait for a message (0 = wait forever)
- * @return SYS_ARCH_TIMEOUT on timeout, any other value if a message has been received
- */
+
+//
+// Blocks the thread until a message arrives in the mailbox, but does
+// not block the thread longer than "timeout" milliseconds (similar to
+// the sys_arch_sem_wait() function). If "timeout" is 0, the thread should
+// be blocked until a message arrives. The "msg" argument is a result
+// parameter that is set by the function (i.e., by doing "*msg =
+// ptr"). The "msg" parameter maybe NULL to indicate that the message
+// should be dropped.
+// The return values are the same as for the sys_arch_sem_wait() function:
+// SYS_ARCH_TIMEOUT if there was a timeout, any other value if a messages
+// is received.
+// 
+// Note that a function with a similar name, sys_mbox_fetch(), is
+// implemented by lwIP. 
+// 
+// mbox: mbox to get a message from
+// msg: pointer where the message is stored
+// timeout: maximum time (in milliseconds) to wait for a message (0 = wait forever)
+// returns SYS_ARCH_TIMEOUT on timeout, any other value if a message has been received
+//
 uint32_t sys_arch_mbox_fetch(Mailbox *mbox, void **msg, uint32_t timeout);
 
-/**
- * @ingroup sys_mbox
- * This is similar to sys_arch_mbox_fetch, however if a message is not
- * present in the mailbox, it immediately returns with the code
- * SYS_MBOX_EMPTY. On success 0 is returned.
- * To allow for efficient implementations, this can be defined as a
- * function-like macro in sys_arch.h instead of a normal function. For
- * example, a naive implementation could be:
- * \#define sys_arch_mbox_tryfetch(mbox,msg) sys_arch_mbox_fetch(mbox,msg,1)
- * although this would introduce unnecessary delays.
- * 
- * @param mbox mbox to get a message from
- * @param msg pointer where the message is stored
- * @return 0 (milliseconds) if a message has been received
- *         or SYS_MBOX_EMPTY if the mailbox is empty
- */
+//
+// @ingroup sys_mbox
+// This is similar to sys_arch_mbox_fetch, however if a message is not
+// present in the mailbox, it immediately returns with the code
+// SYS_MBOX_EMPTY. On success 0 is returned.
+// To allow for efficient implementations, this can be defined as a
+// function-like macro in sys_arch.h instead of a normal function. For
+// example, a naive implementation could be:
+// \#define sys_arch_mbox_tryfetch(mbox,msg) sys_arch_mbox_fetch(mbox,msg,1)
+// although this would introduce unnecessary delays.
+// 
+// mbox: mbox to get a message from
+// msg: pointer where the message is stored
+// return: 0 (milliseconds) if a message has been received
+//         or SYS_MBOX_EMPTY if the mailbox is empty
+//
 uint32_t sys_arch_mbox_tryfetch(Mailbox *mbox, void **msg);
 
-/**
- * For now, we map straight to sys_arch implementation.
- */
+//
+// For now, we map straight to sys_arch implementation.
+//
 inline void sys_mbox_tryfetch(Mailbox* mbox, void** msg)
 {
     sys_arch_mbox_tryfetch(mbox, msg);
 }
-/**
- * @ingroup sys_mbox
- * Deallocates a mailbox. If there are messages still present in the
- * mailbox when the mailbox is deallocated, it is an indication of a
- * programming error in lwIP and the developer should be notified.
- * 
- * @param mbox mbox to delete
- */
-inline void sys_mbox_free(Mailbox *mbox)
-{
-    
-}
 
-/**
- * @ingroup sys_misc
- * The only thread function:
- * Starts a new thread named "name" with priority "prio" that will begin its
- * execution in the function "thread()". The "arg" argument will be passed as an
- * argument to the thread() function. The stack size to used for this thread is
- * the "stacksize" parameter. The id of the new thread is returned. Both the id
- * and the priority are system dependent.
- * ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
- * 
- * @param name human-readable name for the thread (used for debugging purposes)
- * @param thread thread-function
- * @param arg parameter passed to 'thread'
- * @param stacksize stack size in bytes for the new thread (may be ignored by ports)
- * @param prio priority of the new thread (may be ignored by ports) */
-sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio);
+//
+// Deallocates a mailbox. If there are messages still present in the
+// mailbox when the mailbox is deallocated, it is an indication of a
+// programming error in lwIP and the developer should be notified.
+// 
+// mbox: mbox to delete
+//
+void sys_mbox_free(Mailbox *mbox);
 
-/**
- * @ingroup sys_misc
- * sys_init() must be called before anything else.
- * Initialize the sys_arch layer.
- */
-inline void sys_init()
-{
-    
-}
 
-/**
- * Ticks/jiffies since power up.
- */
+// @ingroup sys_misc
+// The only thread function:
+// Starts a new thread named "name" with priority "prio" that will begin its
+// execution in the function "thread()". The "arg" argument will be passed as an
+// argument to the thread() function. The stack size to used for this thread is
+// the "stacksize" parameter. The id of the new thread is returned. Both the id
+// and the priority are system dependent.
+// ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
+// 
+// name: human-readable name for the thread (used for debugging purposes)
+// thread: thread-function
+// arg: parameter passed to 'thread'
+// stacksize: stack size in bytes for the new thread (may be ignored by ports)
+// prio: priority of the new thread (may be ignored by ports) */
+sys_thread_t sys_thread_new(const char* name,
+                            lwip_thread_fn function,
+                            void* arg,
+                            int stacksize,
+                            int prio);
+
+//
+// @ingroup sys_misc
+// sys_init() must be called before anything else.
+// Initialize the sys_arch layer.
+//
+void sys_init();
+
+//
+// Ticks/jiffies since power up.
+//
 uint32_t sys_jiffies();
 
 
@@ -420,11 +416,6 @@ inline void sys_mutex_set_invalid(Mutex* mutex)
     ((mutex)->mut = nullptr);
 }
 
-
-
-
-
-
 inline bool sys_mbox_valid_val(const Mailbox mbox)
 {
     return mbox.sem != nullptr && mbox.sem != reinterpret_cast<void*>(-1);/**/
@@ -452,25 +443,12 @@ inline void sys_mbox_set_invalid(Mailbox* mbox){ ((mbox)->sem = nullptr);}
  * @param size (minimum) number of messages in this mbox
  * @return ERR_OK if successful, another LwipStatus otherwise
  */
-inline LwipStatus sys_mbox_new(Mailbox *mbox, int size)
-{
-    
-}
+LwipStatus sys_mbox_new(Mailbox *mbox, size_t size);
 
-
-
-
-
-
-Semaphore* sys_arch_netconn_sem_get(void);
-void sys_arch_netconn_sem_alloc(void);
-void sys_arch_netconn_sem_free(void);
-#define LWIP_NETCONN_THREAD_SEM_GET()   sys_arch_netconn_sem_get()
-#define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
-#define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
-
-#define LWIP_EXAMPLE_APP_ABORT() lwip_win32_keypressed()
-int lwip_win32_keypressed(void);
+Semaphore* sys_arch_netconn_sem_get();
+void sys_arch_netconn_sem_alloc();
+void sys_arch_netconn_sem_free();
+int lwip_win32_keypressed();
 
 
 

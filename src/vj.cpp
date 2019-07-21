@@ -750,7 +750,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     if (pbuf_remove_header(n0, vjlen))
     {
         /* Can we cope with this failing?  Just assert for now */
-        LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+        lwip_assert("pbuf_remove_header failed\n", 0);
         goto bad;
     }
 
@@ -776,7 +776,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 //         if (pbuf_remove_header(np, cs->cs_hlen))
 //         {
 //             /* Can we cope with this failing?  Just assert for now */
-//             LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+//             lwip_assert("pbuf_remove_header failed\n", 0);
 //             goto bad;
 //         }
 //
@@ -795,7 +795,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     {
         struct PacketBuffer* np;
 
-        LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
+        lwip_assert("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
         np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
         if (!np)
         {
@@ -805,7 +805,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
         pbuf_cat(np, n0);
         n0 = np;
     }
-    LWIP_ASSERT("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
+    lwip_assert("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
     MEMCPY(n0->payload, &cs->cs_ip, cs->cs_hlen);
 
     *nb = n0;

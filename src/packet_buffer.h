@@ -85,7 +85,7 @@ enum PbufLayer
 };
 
 
-/* Base flags for pbuf_type definitions: */
+/* Base flags for PbufType definitions: */
 /** Indicates that the payload directly follows the struct pbuf.
 *  This makes @ref pbuf_header work in both directions. */
 constexpr auto PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS = 0x80;
@@ -241,7 +241,7 @@ struct pbuf_custom {
 
 /** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
 
-extern volatile uint8_t pbuf_free_ooseq_pending;
+extern volatile bool pbuf_free_ooseq_pending;
 void pbuf_free_ooseq(void);
 /** When not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
     at regular intervals from main level to check if ooseq pbufs need to be
@@ -264,9 +264,22 @@ struct PacketBuffer *pbuf_alloced_custom(PbufLayer l, uint16_t length, PbufType 
                                  uint16_t payload_mem_len);
 
 void pbuf_realloc(struct PacketBuffer *p, uint16_t size);
-#define pbuf_get_allocsrc(p)          ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK)
-#define pbuf_match_allocsrc(p, type)  (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK))
-#define pbuf_match_type(p, type)      pbuf_match_allocsrc(p, type)
+
+inline uint8_t pbuf_get_allocsrc(PacketBuffer* p)
+{
+    return ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK);
+}
+
+inline bool pbuf_match_allocsrc(PacketBuffer* p, const uint8_t type)
+{
+    return (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK));
+}
+
+inline bool pbuf_match_type(PacketBuffer* p, uint8_t type)
+{
+    return pbuf_match_allocsrc(p, type);
+}
+
 uint8_t pbuf_header(struct PacketBuffer *p, int16_t header_size);
 uint8_t pbuf_header_force(struct PacketBuffer *p, int16_t header_size);
 uint8_t pbuf_add_header(struct PacketBuffer *p, size_t header_size_increment);

@@ -136,7 +136,7 @@ static LwipStatus dhcp_inc_pcb_refcount(void)
 /** Free DHCP PCB if the last netif stops using it */
 static void dhcp_dec_pcb_refcount(void)
 {
-    // LWIP_ASSERT("dhcp_pcb_refcount(): refcount error", (dhcp_pcb_refcount > 0));
+    // lwip_assert("dhcp_pcb_refcount(): refcount error", (dhcp_pcb_refcount > 0));
     dhcp_pcb_refcount--;
     if (dhcp_pcb_refcount == 0)
     {
@@ -785,7 +785,7 @@ dhcp_network_changed(NetIfc*netif)
       /* stay off */
       break;
     default:
-      LWIP_ASSERT("invalid dhcp->state", dhcp->state <= DHCP_STATE_BACKING_OFF);
+      lwip_assert("invalid dhcp->state", dhcp->state <= DHCP_STATE_BACKING_OFF);
       /* INIT/REQUESTING/CHECKING/BACKING_OFF restart with new 'rid' because the
          state changes, SELECTING: continue with current 'rid' as we stay in the
          same state */
@@ -1340,7 +1340,7 @@ dhcp_set_state(DhcpContext *dhcp, uint8_t new_state)
 static uint16_t
 dhcp_option(uint16_t options_out_len, uint8_t *options, uint8_t option_type, uint8_t option_len)
 {
-  LWIP_ASSERT("dhcp_option: options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
+  lwip_assert("dhcp_option: options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
   options[options_out_len++] = option_type;
   options[options_out_len++] = option_len;
   return options_out_len;
@@ -1352,7 +1352,7 @@ dhcp_option(uint16_t options_out_len, uint8_t *options, uint8_t option_type, uin
 static uint16_t
 dhcp_option_byte(uint16_t options_out_len, uint8_t *options, uint8_t value)
 {
-  LWIP_ASSERT("dhcp_option_byte: options_out_len < DHCP_OPTIONS_LEN", options_out_len < DHCP_OPTIONS_LEN);
+  lwip_assert("dhcp_option_byte: options_out_len < DHCP_OPTIONS_LEN", options_out_len < DHCP_OPTIONS_LEN);
   options[options_out_len++] = value;
   return options_out_len;
 }
@@ -1360,7 +1360,7 @@ dhcp_option_byte(uint16_t options_out_len, uint8_t *options, uint8_t value)
 static uint16_t
 dhcp_option_short(uint16_t options_out_len, uint8_t *options, uint16_t value)
 {
-  LWIP_ASSERT("dhcp_option_short: options_out_len + 2 <= DHCP_OPTIONS_LEN", options_out_len + 2U <= DHCP_OPTIONS_LEN);
+  lwip_assert("dhcp_option_short: options_out_len + 2 <= DHCP_OPTIONS_LEN", options_out_len + 2U <= DHCP_OPTIONS_LEN);
   options[options_out_len++] = (uint8_t)((value & 0xff00U) >> 8);
   options[options_out_len++] = (uint8_t) (value & 0x00ffU);
   return options_out_len;
@@ -1369,7 +1369,7 @@ dhcp_option_short(uint16_t options_out_len, uint8_t *options, uint16_t value)
 static uint16_t
 dhcp_option_long(uint16_t options_out_len, uint8_t *options, uint32_t value)
 {
-  LWIP_ASSERT("dhcp_option_long: options_out_len + 4 <= DHCP_OPTIONS_LEN", options_out_len + 4U <= DHCP_OPTIONS_LEN);
+  lwip_assert("dhcp_option_long: options_out_len + 4 <= DHCP_OPTIONS_LEN", options_out_len + 4U <= DHCP_OPTIONS_LEN);
   options[options_out_len++] = (uint8_t)((value & 0xff000000UL) >> 24);
   options[options_out_len++] = (uint8_t)((value & 0x00ff0000UL) >> 16);
   options[options_out_len++] = (uint8_t)((value & 0x0000ff00UL) >> 8);
@@ -1388,9 +1388,9 @@ dhcp_option_hostname(uint16_t options_out_len, uint8_t *options, NetIfc*netif)
       /* Shrink len to available bytes (need 2 bytes for OPTION_HOSTNAME
          and 1 byte for trailer) */
       size_t available = DHCP_OPTIONS_LEN - options_out_len - 3;
-      LWIP_ASSERT("DHCP: hostname is too long!", namelen <= available);
+      lwip_assert("DHCP: hostname is too long!", namelen <= available);
       len = LWIP_MIN(namelen, available);
-      LWIP_ASSERT("DHCP: hostname is too long!", len <= 0xFF);
+      lwip_assert("DHCP: hostname is too long!", len <= 0xFF);
       options_out_len = dhcp_option(options_out_len, options, DHCP_OPTION_HOSTNAME, (uint8_t)len);
       while (len--) {
         options_out_len = dhcp_option_byte(options_out_len, options, *p++);
@@ -1561,7 +1561,7 @@ again:
         uint32_t value = 0;
         uint16_t copy_len;
 decode_next:
-        LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
+        lwip_assert("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
         if (!dhcp_option_given(dhcp, decode_idx)) {
           copy_len = LWIP_MIN(decode_len, 4);
           if (pbuf_copy_partial(q, &value, copy_len, val_offset) != copy_len) {
@@ -1675,7 +1675,7 @@ dhcp_recv(void *arg, UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, ui
     goto free_pbuf_and_return;
   }
 
-  LWIP_ASSERT("invalid server address type", IP_IS_V4(addr));
+  lwip_assert("invalid server address type", IP_IS_V4(addr));
 
   Logf(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_recv(PacketBuffer = %p) from DHCP server %"U16_F".%"U16_F".%"U16_F".%"U16_F" port %"U16_F"\n", (void *)p,
               ip4_addr1_16(ip_2_ip4(addr)), ip4_addr2_16(ip_2_ip4(addr)), ip4_addr3_16(ip_2_ip4(addr)), ip4_addr4_16(ip_2_ip4(addr)), port));
@@ -1801,7 +1801,7 @@ dhcp_create_msg(NetIfc*netif, DhcpContext *dhcp, uint8_t message_type, uint16_t 
                 ("dhcp_create_msg(): could not allocate PacketBuffer\n"));
     return NULL;
   }
-  LWIP_ASSERT("dhcp_create_msg: check that first PacketBuffer can hold DhcpMsg",
+  lwip_assert("dhcp_create_msg: check that first PacketBuffer can hold DhcpMsg",
               (p_out->len >= sizeof(DhcpMsg)));
 
   /* DHCP_REQUEST should reuse 'xid' from DHCPOFFER */

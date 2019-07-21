@@ -364,7 +364,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
       /* this is (for now), the fragment with the highest offset:
        * chain it to the last fragment */
 
-      LWIP_ASSERT("check fragments don't overlap", iprh_prev->end <= iprh->start);
+      lwip_assert("check fragments don't overlap", iprh_prev->end <= iprh->start);
 
       iprh_prev->next_pbuf = new_p;
       if (iprh_prev->end != iprh->start) {
@@ -372,7 +372,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
       }
     } else {
 
-      LWIP_ASSERT("no previous fragment, this must be the first fragment!",
+      lwip_assert("no previous fragment, this must be the first fragment!",
                   ipr->p == nullptr);
 
       /* this is the first fragment we ever received for this ip datagram */

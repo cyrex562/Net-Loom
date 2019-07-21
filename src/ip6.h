@@ -55,7 +55,7 @@
 struct Ip6AddrPacked {
     uint32_t addr[4];
 };
-typedef struct Ip6AddrPacked Ip6AddrPT;
+typedef struct Ip6AddrPacked Ip6Addr;
 
 constexpr auto kIp6Hlen = 40;
 
@@ -86,8 +86,8 @@ struct Ip6Hdr {
     /** hop limit */
     uint8_t _hoplim;
     /** source and destination IP addresses */
-    Ip6AddrPT src;
-    Ip6AddrPT dest;
+    Ip6Addr src;
+    Ip6Addr dest;
 } ;
 
 #define IP6H_V(hdr)  ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f)

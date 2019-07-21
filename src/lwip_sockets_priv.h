@@ -102,7 +102,7 @@ struct lwip_select_cb {
   /** fds passed to poll; NULL if select */
   struct LwipPolllfd *poll_fds;
   /** nfds passed to poll; 0 if select */
-  nfds_t poll_nfds;
+  LwipNfds poll_nfds;
 
   /** don't signal the same semaphore twice: set to 1 when signalled */
   int sem_signalled;

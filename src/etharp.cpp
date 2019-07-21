@@ -397,7 +397,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
         }
 
         /* { empty or recyclable entry found } */
-        // LWIP_ASSERT("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
+        // lwip_assert("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
         etharp_free_entry(i);
     }
 

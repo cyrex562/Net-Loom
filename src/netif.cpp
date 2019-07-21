@@ -395,7 +395,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
 {
   /* address is actually being changed? */
   if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
-    LWIP_ASSERT("invalid pointer", old_nm != nullptr);
+    lwip_assert("invalid pointer", old_nm != nullptr);
     ip_addr_copy(*old_nm, *netif_ip_netmask4(netif));
 
     mib2_remove_route_ip4(0, netif);
@@ -455,7 +455,7 @@ netif_do_set_gw(NetIfc*netif, const Ip4Addr *gw, IpAddr *old_gw)
   /* address is actually being changed? */
   if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
 
-    LWIP_ASSERT("invalid pointer", old_gw != nullptr);
+    lwip_assert("invalid pointer", old_gw != nullptr);
     ip_addr_copy(*old_gw, *netif_ip_gw4(netif));
 
 
@@ -901,8 +901,8 @@ netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
 
   SYS_ARCH_DECL_PROTECT(lev);
 
-  LWIP_ASSERT("netif_loop_output: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_loop_output: invalid PacketBuffer", p != nullptr);
+  lwip_assert("netif_loop_output: invalid netif", netif != nullptr);
+  lwip_assert("netif_loop_output: invalid PacketBuffer", p != nullptr);
 
   /* Allocate a new PacketBuffer */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
@@ -945,7 +945,7 @@ netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
 
   SYS_ARCH_PROTECT(lev);
   if (netif->loop_first != nullptr) {
-    LWIP_ASSERT("if first != NULL, last must also be != NULL", netif->loop_last != nullptr);
+    lwip_assert("if first != NULL, last must also be != NULL", netif->loop_last != nullptr);
     netif->loop_last->next = r;
     netif->loop_last = last;
   } else {
@@ -995,7 +995,7 @@ netif_poll(NetIfc*netif)
 
   SYS_ARCH_DECL_PROTECT(lev);
 
-  LWIP_ASSERT("netif_poll: invalid netif", netif != nullptr);
+  lwip_assert("netif_poll: invalid netif", netif != nullptr);
 
   /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
   SYS_ARCH_PROTECT(lev);
@@ -1007,7 +1007,7 @@ netif_poll(NetIfc*netif)
 
     in = in_end = netif->loop_first;
     while (in_end->len != in_end->tot_len) {
-      LWIP_ASSERT("bogus PacketBuffer: len != tot_len but next == NULL!", in_end->next != nullptr);
+      lwip_assert("bogus PacketBuffer: len != tot_len but next == NULL!", in_end->next != nullptr);
       in_end = in_end->next;
 
       clen++;
@@ -1071,8 +1071,8 @@ netif_ip6_addr_set(NetIfc*netif, int8_t addr_idx, const Ip6Addr *addr6)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_ip6_addr_set: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_ip6_addr_set: invalid addr6", addr6 != nullptr);
+  lwip_assert("netif_ip6_addr_set: invalid netif", netif != nullptr);
+  lwip_assert("netif_ip6_addr_set: invalid addr6", addr6 != nullptr);
 
   netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
                            addr6->addr[2], addr6->addr[3]);
@@ -1094,8 +1094,8 @@ netif_ip6_addr_set_parts(NetIfc*netif, int8_t addr_idx, uint32_t i0, uint32_t i1
   IpAddr old_addr;
   IpAddr new_ipaddr;
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("netif != NULL", netif != nullptr);
-  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+  lwip_assert("netif != NULL", netif != nullptr);
+  lwip_assert("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
   ip6_addr_copy(*ip_2_ip6(&old_addr), *netif_ip6_addr(netif, addr_idx));
   IpAdderSetTypeVal(old_addr, IPADDR_TYPE_V6);
@@ -1148,8 +1148,8 @@ netif_ip6_addr_set_state(NetIfc*netif, int8_t addr_idx, uint8_t state)
 {
   uint8_t old_state;
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("netif != NULL", netif != nullptr);
-  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+  lwip_assert("netif != NULL", netif != nullptr);
+  lwip_assert("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
   old_state = netif_ip6_addr_state(netif, addr_idx);
   /* state is actually being changed? */
@@ -1217,8 +1217,8 @@ netif_get_ip6_addr_match(NetIfc*netif, const Ip6Addr *ip6addr)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_get_ip6_addr_match: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != nullptr);
+  lwip_assert("netif_get_ip6_addr_match: invalid netif", netif != nullptr);
+  lwip_assert("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != nullptr);
 
   if (ip6_addr_has_zone(ip6addr) && !LwipIp6Addrest_zone(ip6addr, netif)) {
     return -1; /* wrong zone, no match */
@@ -1249,7 +1249,7 @@ netif_create_ip6_linklocal_address(NetIfc*netif, uint8_t from_mac_48bit)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_create_ip6_linklocal_address: invalid netif", netif != nullptr);
+  lwip_assert("netif_create_ip6_linklocal_address: invalid netif", netif != nullptr);
 
   /* Link-local prefix. */
   ip_2_ip6(&netif->ip6_addr[0])->addr[0] = PP_HTONL(0xfe800000ul);
@@ -1314,8 +1314,8 @@ netif_add_ip6_address(NetIfc*netif, const Ip6Addr *ip6addr, int8_t *chosen_idx)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_add_ip6_address: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_add_ip6_address: invalid ip6addr", ip6addr != nullptr);
+  lwip_assert("netif_add_ip6_address: invalid netif", netif != nullptr);
+  lwip_assert("netif_add_ip6_address: invalid ip6addr", ip6addr != nullptr);
 
   i = netif_get_ip6_addr_match(netif, ip6addr);
   if (i >= 0) {
@@ -1478,8 +1478,8 @@ void
 netif_add_ext_callback(netif_ext_callback_t *callback, netif_ext_callback_fn fn)
 {
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("callback must be != NULL", callback != nullptr);
-  LWIP_ASSERT("fn must be != NULL", fn != nullptr);
+  lwip_assert("callback must be != NULL", callback != nullptr);
+  lwip_assert("fn must be != NULL", fn != nullptr);
 
   callback->callback_fn = fn;
   callback->next        = ext_callback;
@@ -1497,7 +1497,7 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
   netif_ext_callback_t *last, *iter;
 
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("callback must be != NULL", callback != nullptr);
+  lwip_assert("callback must be != NULL", callback != nullptr);
 
   if (ext_callback == nullptr) {
     return;
@@ -1509,7 +1509,7 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
     last = ext_callback;
     for (iter = ext_callback->next; iter != nullptr; last = iter, iter = iter->next) {
       if (iter == callback) {
-        LWIP_ASSERT("last != NULL", last != nullptr);
+        lwip_assert("last != NULL", last != nullptr);
         last->next = callback->next;
         callback->next = nullptr;
         return;
@@ -1529,7 +1529,7 @@ netif_invoke_ext_callback(NetIfc*netif, netif_nsc_reason_t reason, const netif_e
 {
   netif_ext_callback_t *callback = ext_callback;
 
-  LWIP_ASSERT("netif must be != NULL", netif != nullptr);
+  lwip_assert("netif must be != NULL", netif != nullptr);
 
   while (callback != nullptr) {
     callback->callback_fn(netif, reason, args);

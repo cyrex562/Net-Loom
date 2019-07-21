@@ -201,7 +201,8 @@ static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_A
 
 
 /* forward declarations */
-static void dns_recv(void *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+static void dns_recv(void *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc*
+                     netif);
 static void dns_check_entries(void);
 static void dns_call_found(uint8_t idx, IpAddr *addr);
 
@@ -843,10 +844,10 @@ dns_call_found(uint8_t idx, IpAddr *addr)
   if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
     if (is_ip_addr_ip6_val(*addr)) {
-      // LWIP_ASSERT("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+      // lwip_assert("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
     } else {
-      // LWIP_ASSERT("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+      // lwip_assert("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
     }
   }
@@ -1058,9 +1059,9 @@ static void dns_recv(void* arg,
                      UdpPcb* pcb,
                      struct PacketBuffer* p,
                      const IpAddr* addr,
-                     uint16_t port)
+                     uint16_t port,
+                     NetIfc* netif)
 {
-    uint16_t res_idx;
     struct DnsHdr hdr;
     struct DnsAnswer ans;
     struct DnsQuery qry; /* is the dns message big enough ? */
@@ -1108,7 +1109,7 @@ static void dns_recv(void* arg,
                     }
                 } /* Check if the name in the "question" part match with the name in the entry and
            skip it if equal. */
-                res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
+                uint16_t res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
                 if (res_idx == 0xFFFF)
                 {
                     Logf(DNS_DEBUG,
@@ -1197,7 +1198,7 @@ static void dns_recv(void* arg,
                                 }
                             }
                             if ((ans.type == pp_htons(DNS_RRTYPE_AAAA)) && (ans.len ==
-                                pp_htons(sizeof(Ip6AddrPT))))
+                                pp_htons(sizeof(Ip6Addr))))
                             {
                                 if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
                                 {

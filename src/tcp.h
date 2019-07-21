@@ -58,7 +58,7 @@ inline size_t TcphHdrlenBytes(TcpHdr* phdr) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-    struct TcpProtoCtrlBlk;
+    struct TcpPcb;
     struct tcp_pcb_listen;
     /** Function prototype for tcp accept callback functions. Called when a new
         * connection can be accepted on a listening pcb.
@@ -69,7 +69,7 @@ extern "C" {
         *            Only return ERR_ABRT if you have called tcp_abort from within the
         *            callback function!
         */
-    typedef LwipStatus(*tcp_accept_fn)(void* arg, struct TcpProtoCtrlBlk* newpcb, LwipStatus err);
+    typedef LwipStatus(*tcp_accept_fn)(void* arg, struct TcpPcb* newpcb, LwipStatus err);
     /** Function prototype for tcp receive callback functions. Called when data has
         * been received.
         *
@@ -80,7 +80,7 @@ extern "C" {
         *            Only return ERR_ABRT if you have called tcp_abort from within the
         *            callback function!
         */
-    typedef LwipStatus(*tcp_recv_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb, struct PacketBuffer* p, LwipStatus err);
+    typedef LwipStatus(*tcp_recv_fn)(void* arg, struct TcpPcb* tpcb, struct PacketBuffer* p, LwipStatus err);
     /** Function prototype for tcp sent callback functions. Called when sent data has
         * been acknowledged by the remote side. Use it to free corresponding resources.
         * This also means that the pcb has now space available to send new data.
@@ -92,7 +92,7 @@ extern "C" {
         *            Only return ERR_ABRT if you have called tcp_abort from within the
         *            callback function!
         */
-    typedef LwipStatus(*tcp_sent_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb, uint16_t len);
+    typedef LwipStatus(*tcp_sent_fn)(void* arg, struct TcpPcb* tpcb, uint16_t len);
     /** Function prototype for tcp poll callback functions. Called periodically as
         * specified by @see tcp_poll.
         *
@@ -102,7 +102,7 @@ extern "C" {
         *            Only return ERR_ABRT if you have called tcp_abort from within the
         *            callback function!
         */
-    typedef LwipStatus(*tcp_poll_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb);
+    typedef LwipStatus(*tcp_poll_fn)(void* arg, struct TcpPcb* tpcb);
     /** Function prototype for tcp error callback functions. Called when the pcb
         * receives a RST or is unexpectedly closed for any other reason.
         *
@@ -126,7 +126,7 @@ extern "C" {
         *
         * @note When a connection attempt fails, the error callback is currently called!
         */
-    typedef LwipStatus(*tcp_connected_fn)(void* arg, struct TcpProtoCtrlBlk* tpcb, LwipStatus err);
+    typedef LwipStatus(*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatus err);
 #define RCV_WND_SCALE(pcb, wnd) (((wnd) >> (pcb)->rcv_scale))
 #define SND_WND_SCALE(pcb, wnd) (((wnd) << (pcb)->snd_scale))
 #define TCPWND16(x)             ((uint16_t)LWIP_MIN((x), 0xFFFF))
@@ -177,7 +177,7 @@ extern "C" {
         */
     typedef LwipStatus(*tcp_extarg_callback_passive_open_fn)(uint8_t id,
         struct tcp_pcb_listen* lpcb,
-        struct TcpProtoCtrlBlk* cpcb);
+        struct TcpPcb* cpcb);
 
     /** A table of callback functions that is invoked for ext arguments */
     struct tcp_ext_arg_callbacks
@@ -222,7 +222,7 @@ extern "C" {
 
 
   
-struct TcpProtoCtrlBlk
+struct TcpPcb
 {
     /** common PCB members */
     IpAddr local_ip; /* Bound netif index */
@@ -302,7 +302,7 @@ struct TcpProtoCtrlBlk
     uint8_t rcv_scale;
 };
 
-inline bool LwipTcpSackValid(TcpProtoCtrlBlk* pcb, const size_t idx) {
+inline bool LwipTcpSackValid(TcpPcb* pcb, const size_t idx) {
     return pcb->rcv_sacks[idx].left != pcb->rcv_sacks[idx].right;
 }
 
@@ -325,31 +325,31 @@ enum LwipEvent
     
     
     /* Application program's interface: */
-struct TcpProtoCtrlBlk* tcp_new(void);
-struct TcpProtoCtrlBlk* tcp_new_ip_type(uint8_t type);
-void tcp_arg(struct TcpProtoCtrlBlk* pcb, void* arg);
-void tcp_recv(struct TcpProtoCtrlBlk* pcb, tcp_recv_fn recv);
-void tcp_sent(struct TcpProtoCtrlBlk* pcb, tcp_sent_fn sent);
-void tcp_err(struct TcpProtoCtrlBlk* pcb, tcp_err_fn err);
-void tcp_accept(struct TcpProtoCtrlBlk* pcb, tcp_accept_fn accept);
-void tcp_poll(struct TcpProtoCtrlBlk* pcb, tcp_poll_fn poll, uint8_t interval);
+struct TcpPcb* tcp_new(void);
+struct TcpPcb* tcp_new_ip_type(uint8_t type);
+void tcp_arg(struct TcpPcb* pcb, void* arg);
+void tcp_recv(struct TcpPcb* pcb, tcp_recv_fn recv);
+void tcp_sent(struct TcpPcb* pcb, tcp_sent_fn sent);
+void tcp_err(struct TcpPcb* pcb, tcp_err_fn err);
+void tcp_accept(struct TcpPcb* pcb, tcp_accept_fn accept);
+void tcp_poll(struct TcpPcb* pcb, tcp_poll_fn poll, uint8_t interval);
 
-inline void tcp_set_flags(TcpProtoCtrlBlk* pcb, const uint16_t set_flags)
+inline void tcp_set_flags(TcpPcb* pcb, const uint16_t set_flags)
 {
     (pcb)->flags = TcpFlags((pcb)->flags | (set_flags));
 }
 
-inline void tcp_clear_flags(TcpProtoCtrlBlk* pcb, const uint16_t clr_flags)
+inline void tcp_clear_flags(TcpPcb* pcb, const uint16_t clr_flags)
 {
     (pcb)->flags = TcpFlags((pcb)->flags & TcpFlags(~(clr_flags) & TCP_ALLFLAGS));
 }
 
-inline bool tcp_is_flag_set(TcpProtoCtrlBlk* pcb, const uint16_t flag)
+inline bool tcp_is_flag_set(TcpPcb* pcb, const uint16_t flag)
 {
     return (((pcb)->flags & (flag)) != 0);
 }
 
-inline uint32_t tcp_mss(TcpProtoCtrlBlk* pcb)
+inline uint32_t tcp_mss(TcpPcb* pcb)
 {
     return (((pcb)->flags & TF_TIMESTAMP) ? ((pcb)->mss - 12) : (pcb)->mss);
 }
@@ -365,7 +365,7 @@ inline uint32_t tcp_mss(TcpProtoCtrlBlk* pcb)
 /** @ingroup tcp_raw */
 #define          tcp_nagle_disabled(pcb)  tcp_is_flag_set(pcb, TF_NODELAY)
 
-inline uint32_t tcp_backlog_set(TcpProtoCtrlBlk* pcb, uint32_t new_backlog)
+inline uint32_t tcp_backlog_set(TcpPcb* pcb, uint32_t new_backlog)
 {
     reinterpret_cast<struct tcp_pcb_listen *>(pcb)->backlog = ((new_backlog)
                                                                    ? (new_backlog)
@@ -373,32 +373,32 @@ inline uint32_t tcp_backlog_set(TcpProtoCtrlBlk* pcb, uint32_t new_backlog)
 }
 
 
-void tcp_backlog_delayed(struct TcpProtoCtrlBlk* pcb);
+void tcp_backlog_delayed(struct TcpPcb* pcb);
 
 
-void tcp_backlog_accepted(struct TcpProtoCtrlBlk* pcb);
+void tcp_backlog_accepted(struct TcpPcb* pcb);
 
 
-void tcp_recved(struct TcpProtoCtrlBlk* pcb, uint16_t len);
-LwipStatus tcp_bind(struct TcpProtoCtrlBlk* pcb, const IpAddr* ipaddr, uint16_t port);
-void tcp_bind_netif(struct TcpProtoCtrlBlk* pcb, const NetIfc** netif);
-LwipStatus tcp_connect(struct TcpProtoCtrlBlk* pcb,
+void tcp_recved(struct TcpPcb* pcb, uint16_t len);
+LwipStatus tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port);
+void tcp_bind_netif(struct TcpPcb* pcb, const NetIfc** netif);
+LwipStatus tcp_connect(struct TcpPcb* pcb,
                   const IpAddr* ipaddr,
                   uint16_t port,
                   tcp_connected_fn connected);
-struct TcpProtoCtrlBlk* tcp_listen_with_backlog_and_err(struct TcpProtoCtrlBlk* pcb,
+struct TcpPcb* tcp_listen_with_backlog_and_err(struct TcpPcb* pcb,
                                                 uint8_t backlog,
                                                 LwipStatus* err);
-struct TcpProtoCtrlBlk* tcp_listen_with_backlog(struct TcpProtoCtrlBlk* pcb, uint8_t backlog);
+struct TcpPcb* tcp_listen_with_backlog(struct TcpPcb* pcb, uint8_t backlog);
 /** @ingroup tcp_raw */
 #define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
-void tcp_abort(struct TcpProtoCtrlBlk* pcb);
-LwipStatus tcp_close(struct TcpProtoCtrlBlk* pcb);
-LwipStatus tcp_shutdown(struct TcpProtoCtrlBlk* pcb, int shut_rx, int shut_tx);
-LwipStatus tcp_write(struct TcpProtoCtrlBlk* pcb, const void* dataptr, uint16_t len, uint8_t apiflags);
-void tcp_setprio(struct TcpProtoCtrlBlk* pcb, uint8_t prio);
-LwipStatus tcp_output(struct TcpProtoCtrlBlk* pcb);
-LwipStatus tcp_tcp_get_tcp_addrinfo(struct TcpProtoCtrlBlk* pcb,
+void tcp_abort(struct TcpPcb* pcb);
+LwipStatus tcp_close(struct TcpPcb* pcb);
+LwipStatus tcp_shutdown(struct TcpPcb* pcb, int shut_rx, int shut_tx);
+LwipStatus tcp_write(struct TcpPcb* pcb, const void* dataptr, uint16_t len, uint8_t apiflags);
+void tcp_setprio(struct TcpPcb* pcb, uint8_t prio);
+LwipStatus tcp_output(struct TcpPcb* pcb);
+LwipStatus tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb,
                                int local,
                                IpAddr* addr,
                                uint16_t* port);
@@ -406,11 +406,11 @@ LwipStatus tcp_tcp_get_tcp_addrinfo(struct TcpProtoCtrlBlk* pcb,
 /* for compatibility with older implementation */
 #define tcp_new_ip6() tcp_new_ip_type(IPADDR_TYPE_V6)
 uint8_t tcp_ext_arg_alloc_id(void);
-void tcp_ext_arg_set_callbacks(struct TcpProtoCtrlBlk* pcb,
+void tcp_ext_arg_set_callbacks(struct TcpPcb* pcb,
                                uint8_t id,
                                const struct tcp_ext_arg_callbacks* const callbacks);
-void tcp_ext_arg_set(struct TcpProtoCtrlBlk* pcb, uint8_t id, void* arg);
-void* tcp_ext_arg_get(const struct TcpProtoCtrlBlk* pcb, uint8_t id);
+void tcp_ext_arg_set(struct TcpPcb* pcb, uint8_t id, void* arg);
+void* tcp_ext_arg_get(const struct TcpPcb* pcb, uint8_t id);
 #ifdef __cplusplus
 }
 #endif

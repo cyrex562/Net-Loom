@@ -191,7 +191,7 @@ pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t t
     pack = priv->tx_packets;
     priv->tx_packets = pack->next;
   }
-  LWIP_ASSERT("no free packet", pack != nullptr);
+  lwip_assert("no free packet", pack != nullptr);
   priv->free_packets = pack->next;
   pack->next = nullptr;
   SYS_ARCH_UNPROTECT(lev);
@@ -204,7 +204,7 @@ pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t t
   SYS_ARCH_PROTECT(lev);
   if (priv->tx_packets != nullptr) {
     for (tx = priv->tx_packets; tx->next != nullptr; tx = tx->next);
-    LWIP_ASSERT("bug", tx != nullptr);
+    lwip_assert("bug", tx != nullptr);
     tx->next = pack;
   } else {
     priv->tx_packets = pack;
@@ -238,7 +238,7 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
   /* compare the first packet */
   if (pcapif_compare_packets(last, packet, packet_len)) {
     SYS_ARCH_PROTECT(lev);
-    LWIP_ASSERT("list has changed", last == priv->tx_packets);
+    lwip_assert("list has changed", last == priv->tx_packets);
     priv->tx_packets = last->next;
     last->next = priv->free_packets;
     priv->free_packets = last;
@@ -253,7 +253,7 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
     SYS_ARCH_UNPROTECT(lev);
     if (pcapif_compare_packets(iter, packet, packet_len)) {
       SYS_ARCH_PROTECT(lev);
-      LWIP_ASSERT("last != NULL", last != nullptr);
+      lwip_assert("last != NULL", last != nullptr);
       last->next = iter->next;
       iter->next = priv->free_packets;
       priv->free_packets = iter;
@@ -637,13 +637,13 @@ pcapif_low_level_init(NetIfc*netif)
   PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
   if (get_adapter_index_from_addr((struct LwipInAddrStruct *)&netaddr, guid, GUID_LEN) < 0) {
      printf("ERROR initializing network adapter, failed to get GUID for network address %s\n", ip4addr_ntoa(&netaddr));
-     LWIP_ASSERT("ERROR initializing network adapter, failed to get GUID for network address!", 0);
+     lwip_assert("ERROR initializing network adapter, failed to get GUID for network address!", 0);
      return;
   }
   adapter_num = get_adapter_index(guid);
   if (adapter_num < 0) {
      printf("ERROR finding network adapter with GUID \"%s\"!\n", guid);
-     LWIP_ASSERT("ERROR finding network adapter with expected GUID!", 0);
+     lwip_assert("ERROR finding network adapter with expected GUID!", 0);
      return;
   }
 
@@ -699,7 +699,7 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
   uint16_t tot_len = p->tot_len - ETH_PAD_SIZE;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
 
-  LWIP_ASSERT("p->next == NULL && p->len == p->tot_len", p->next == nullptr && p->len == p->tot_len);
+  lwip_assert("p->next == NULL && p->len == p->tot_len", p->next == nullptr && p->len == p->tot_len);
 
 
   /* initiate transfer */
@@ -833,9 +833,9 @@ static void
 pcapif_rx_pbuf_free_custom(struct PacketBuffer *p)
 {
   struct pcapif_pbuf_custom* ppc;
-  LWIP_ASSERT("NULL pointer", p != nullptr);
+  lwip_assert("NULL pointer", p != nullptr);
   ppc = (struct pcapif_pbuf_custom*)p;
-  LWIP_ASSERT("NULL pointer", ppc->p != nullptr);
+  lwip_assert("NULL pointer", ppc->p != nullptr);
   pbuf_free(ppc->p);
   ppc->p = nullptr;
   mem_free(p);
@@ -847,16 +847,16 @@ pcapif_rx_ref(struct PacketBuffer* p)
   struct pcapif_pbuf_custom* ppc;
   struct PacketBuffer* q;
 
-  LWIP_ASSERT("NULL pointer", p != nullptr);
-  LWIP_ASSERT("chained PacketBuffer not supported here", p->next == nullptr);
+  lwip_assert("NULL pointer", p != nullptr);
+  lwip_assert("chained PacketBuffer not supported here", p->next == nullptr);
 
   ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
-  LWIP_ASSERT("out of memory for RX", ppc != nullptr);
+  lwip_assert("out of memory for RX", ppc != nullptr);
   ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
   ppc->p = p;
 
   q = pbuf_alloced_custom(PBUF_RAW, p->tot_len, PBUF_REF, &ppc->pc, p->payload, p->tot_len);
-  LWIP_ASSERT("pbuf_alloced_custom returned NULL", q != nullptr);
+  lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
   return q;
 }
 

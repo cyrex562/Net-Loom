@@ -36,17 +36,13 @@
  *
  */
 #pragma once
-
-#include "opt.h"
 #include "arch.h"
 #include "packet_buffer.h"
 #include "netif.h"
 #include "ip_addr.h"
-#include "ip.h"
-#include "ip6_addr.h"
 #include "udp.h"
 
-constexpr auto kUdpHdrLen = 8;
+constexpr auto UDP_HDR_LEN = 8;
 
 struct UdpHdr
 {
@@ -80,8 +76,12 @@ struct UdpPcb;
  * @param addr the remote IP address from which the packet was received
  * @param port the remote port from which the packet was received
  */
-typedef void (*udp_recv_fn)(void *arg, struct UdpPcb *pcb, struct PacketBuffer *p,
-    const IpAddr *addr, uint16_t port);
+using UdpRecvFn = void (*)(void*,
+                           struct UdpPcb*,
+                           struct PacketBuffer*,
+                           const IpAddr*,
+                           uint16_t,
+                           NetIfc*);
 
 /** the UDP protocol control block */
 struct UdpPcb
@@ -102,7 +102,7 @@ struct UdpPcb
     uint8_t mcast_ifindex; /** TTL for outgoing multicast packets */
     uint8_t mcast_ttl; /** used for UDP_LITE only */
     uint16_t chksum_len_rx, chksum_len_tx; /** receive callback function */
-    udp_recv_fn recv; /** user-supplied argument for the recv callback */
+    UdpRecvFn recv; /** user-supplied argument for the recv callback */
     void* recv_arg;
 };
 
@@ -121,7 +121,7 @@ void             udp_bind_netif (struct UdpPcb *pcb, const NetIfc** netif);
 LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
-void             udp_recv       (struct UdpPcb *pcb, udp_recv_fn recv,
+void             udp_recv       (struct UdpPcb *pcb, UdpRecvFn recv,
                                  void *recv_arg);
 LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
@@ -146,17 +146,25 @@ LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer 
                                  const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif,
                                  uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
 
-#define          udp_flags(pcb) ((pcb)->flags)
-#define          udp_setflags(pcb, f)  ((pcb)->flags = (f))
+inline void udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
+{
+    (pcb)->flags = uint8_t((pcb)->flags | (set_flags));
+}
 
-#define          udp_set_flags(pcb, set_flags)     do { (pcb)->flags = (uint8_t)((pcb)->flags |  (set_flags)); } while(0)
-#define          udp_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (uint8_t)((pcb)->flags & (uint8_t)(~(clr_flags) & 0xff)); } while(0)
-#define          udp_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
+inline void udp_clear_flags(UdpPcb* pcb, const uint8_t clr_flags)
+{
+    pcb->flags = uint8_t(pcb->flags & uint8_t(~clr_flags & 0xff));
+}
+
+inline bool udp_is_flag_set(UdpPcb* pcb, const uint8_t flag)
+{
+    return (((pcb)->flags & (flag)) != 0);
+}
 
 /* The following functions are the lower layer interface to UDP. */
 void             udp_input      (struct PacketBuffer *p, NetIfc*inp);
 
-void             udp_init       (void);
+void             udp_init       ();
 
 /* for compatibility with older implementation */
 #define udp_new_ip6() udp_new_ip_type(IPADDR_TYPE_V6)

@@ -88,18 +88,18 @@ static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
                                           uint16_t in_offset,
                                           uint16_t *out_offset);
 
-inline void PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()
-{
-    if (tcpip_try_callback(pbuf_free_ooseq_callback, nullptr) != ERR_OK)
-    {
-        SYS_ARCH_PROTECT(old_level);
-        pbuf_free_ooseq_pending = 0;
-        sys_arch_unprotect(old_level);
-    }
-}
+// inline void pbuf_pool_free_ooseq_queue_call()
+// {
+//     if (tcpip_try_callback(pbuf_free_ooseq_callback, nullptr) != ERR_OK)
+//     {
+//         SYS_ARCH_PROTECT(old_level);
+//         pbuf_free_ooseq_pending = 0;
+//         sys_arch_unprotect(old_level);
+//     }
+// }
 
-volatile uint8_t pbuf_free_ooseq_pending;
-#define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
+volatile bool pbuf_free_ooseq_pending;
+// #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
 
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
@@ -109,23 +109,19 @@ volatile uint8_t pbuf_free_ooseq_pending;
  * This must be done in the correct thread context therefore this function
  * can only be used with NO_SYS=0 and through tcpip_callback.
  */
-
-static
-
-    void
-    pbuf_free_ooseq(void) {
-  struct TcpProtoCtrlBlk *pcb;
-  SYS_ARCH_SET(pbuf_free_ooseq_pending, 0);
-
-  for (pcb = tcp_active_pcbs; nullptr != pcb; pcb = pcb->next) {
-    if (pcb->ooseq != nullptr) {
-      /** Free the ooseq pbufs of one PCB only */
-      Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-                  ("pbuf_free_ooseq: freeing out-of-sequence pbufs\n"));
-      tcp_free_ooseq(pcb);
-      return;
+static void pbuf_free_ooseq(void)
+{
+    for (TcpPcb* pcb = tcp_active_pcbs; nullptr != pcb; pcb = pcb->next)
+    {
+        if (pcb->ooseq != nullptr)
+        {
+            /** Free the ooseq pbufs of one PCB only */
+            Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+                 ("pbuf_free_ooseq: freeing out-of-sequence pbufs\n"));
+            tcp_free_ooseq(pcb);
+            return;
+        }
     }
-  }
 }
 
 /**
@@ -138,21 +134,18 @@ static void pbuf_free_ooseq_callback(void *arg) {
 
 
 /** Queue a call to pbuf_free_ooseq if not already queued. */
-static void pbuf_pool_is_empty(void) {
-
-  uint8_t queued;
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-  queued = pbuf_free_ooseq_pending;
-  pbuf_free_ooseq_pending = 1;
-  sys_arch_unprotect(old_level);
-
-  if (!queued) {
-    /* queue a call to pbuf_free_ooseq if not already queued */
-    PBUF_POOL_FREE_OOSEQ_QUEUE_CALL();
-  }
-
-}
+// static void pbuf_pool_is_empty(void)
+// {
+//     SYS_ARCH_PROTECT(old_level);
+//     auto queued = pbuf_free_ooseq_pending;
+//     pbuf_free_ooseq_pending = 1;
+//     sys_arch_unprotect(old_level);
+//     if (queued == 0u)
+//     {
+//         /* queue a call to pbuf_free_ooseq if not already queued */
+//         // pbuf_pool_free_ooseq_queue_call();
+//     }
+// }
 
 
 /* Initialize members of struct PacketBuffer after allocation */
@@ -201,91 +194,98 @@ static void pbuf_init_alloced_pbuf(struct PacketBuffer *p, void *payload,
  * @return the allocated PacketBuffer. If multiple pbufs where allocated, this
  * is the first PacketBuffer of a PacketBuffer chain.
  */
-struct PacketBuffer *pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type) {
-  struct PacketBuffer *p;
-  uint16_t offset = (uint16_t)layer;
-  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-              ("pbuf_alloc(length=%" U16_F ")\n", length));
-
-  switch (type) {
-    case PBUF_REF: /* fall through */
-    case PBUF_ROM:
-      p = pbuf_alloc_reference(nullptr, length, type);
-      break;
-    case PBUF_POOL: {
-      struct PacketBuffer *q, *last;
-      uint16_t rem_len; /* remaining length */
-      p = nullptr;
-      last = nullptr;
-      rem_len = length;
-      do {
-        uint16_t qlen;
-        // q = (struct PacketBuffer *)memp_malloc(MEMP_PBUF_POOL);
-        q = new PacketBuffer;
-        if (q == nullptr) {
-          PBUF_POOL_IS_EMPTY();
-          /* free chain so far allocated */
-          if (p) {
-            pbuf_free(p);
-          }
-          /* bail out unsuccessfully */
-          return nullptr;
+struct PacketBuffer* pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type)
+{
+    struct PacketBuffer* p;
+    auto offset = uint16_t(layer);
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE, "pbuf_alloc(length=%d)\n", length
+    )
+    ;
+    switch (type)
+    {
+    case PBUF_REF: /* fall through */ case PBUF_ROM:
+        p = pbuf_alloc_reference(nullptr, length, type);
+        break;
+    case PBUF_POOL:
+    {
+        struct PacketBuffer *q, *last;
+        uint16_t rem_len; /* remaining length */
+        p = nullptr;
+        last = nullptr;
+        rem_len = length;
+        do
+        {
+            uint16_t qlen; // q = (struct PacketBuffer *)memp_malloc(MEMP_PBUF_POOL);
+            q = new PacketBuffer;
+            if (q == nullptr)
+            {
+                // pbuf_pool_is_empty(); /* free chain so far allocated */
+                if (p)
+                {
+                    pbuf_free(p);
+                } /* bail out unsuccessfully */
+                return nullptr;
+            }
+            qlen = LWIP_MIN(rem_len,
+                            (uint16_t)(PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(
+                                offset)));
+            pbuf_init_alloced_pbuf(q,
+                                   q + SIZEOF_STRUCT_PBUF + offset,
+                                   rem_len,
+                                   qlen,
+                                   type,
+                                   0);
+            // lwip_assert("pbuf_alloc: pbuf q->payload properly aligned",
+            //             ((uintptr_t)q->payload % MEM_ALIGNMENT) == 0);
+            lwip_assert("PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT",
+                        (PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)) > 0);
+            if (p == nullptr)
+            {
+                /* allocated head of PacketBuffer chain (into p) */
+                p = q;
+            }
+            else
+            {
+                /* make previous PacketBuffer point to this PacketBuffer */
+                last->next = q;
+            }
+            last = q;
+            rem_len = (uint16_t)(rem_len - qlen);
+            offset = 0;
         }
-        qlen = LWIP_MIN(rem_len, (uint16_t)(PBUF_POOL_BUFSIZE_ALIGNED -
-                                            LWIP_MEM_ALIGN_SIZE(offset)));
-        pbuf_init_alloced_pbuf(q,
-                               q + SIZEOF_STRUCT_PBUF + offset,
-                               rem_len,
-                               qlen,
+        while (rem_len > 0);
+        break;
+    }
+    case PBUF_RAM:
+    {
+        auto payload_len = uint16_t(
+            LWIP_MEM_ALIGN_SIZE(offset) + LWIP_MEM_ALIGN_SIZE(length));
+        auto alloc_len = size_t(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF) + payload_len);
+        /* bug #50040: Check for integer overflow when calculating alloc_len */
+        if ((payload_len < LWIP_MEM_ALIGN_SIZE(length)) || (alloc_len <
+            LWIP_MEM_ALIGN_SIZE(length)))
+        {
+            return nullptr;
+        } /* If PacketBuffer is to be allocated in RAM, allocate memory for it. */
+        p = new PacketBuffer;
+        if (p == nullptr)
+        {
+            return nullptr;
+        }
+        pbuf_init_alloced_pbuf(p,
+                               p + SIZEOF_STRUCT_PBUF + offset,
+                               length,
+                               length,
                                type,
                                0);
-        // LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
-        //             ((uintptr_t)q->payload % MEM_ALIGNMENT) == 0);
-        lwip_assert(
-            "PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT",
-            (PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)) > 0);
-        if (p == nullptr) {
-          /* allocated head of PacketBuffer chain (into p) */
-          p = q;
-        } else {
-          /* make previous PacketBuffer point to this PacketBuffer */
-          last->next = q;
-        }
-        last = q;
-        rem_len = (uint16_t)(rem_len - qlen);
-        offset = 0;
-      } while (rem_len > 0);
-      break;
-    }
-    case PBUF_RAM: {
-      uint16_t payload_len =
-          (uint16_t)(LWIP_MEM_ALIGN_SIZE(offset) + LWIP_MEM_ALIGN_SIZE(length));
-      mem_size_t alloc_len =
-          (mem_size_t)(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF) + payload_len);
-
-      /* bug #50040: Check for integer overflow when calculating alloc_len */
-      if ((payload_len < LWIP_MEM_ALIGN_SIZE(length)) ||
-          (alloc_len < LWIP_MEM_ALIGN_SIZE(length))) {
-        return nullptr;
-      }
-
-      /* If PacketBuffer is to be allocated in RAM, allocate memory for it. */
-      p = (struct PacketBuffer *)mem_malloc(alloc_len);
-      if (p == nullptr) {
-        return nullptr;
-      }
-      pbuf_init_alloced_pbuf(
-          p, p + SIZEOF_STRUCT_PBUF + offset,
-          length, length, type, 0);
-      break;
+        break;
     }
     default:
-      lwip_assert("pbuf_alloc: erroneous type", 0);
-      return nullptr;
-  }
-  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-              ("pbuf_alloc(length=%" U16_F ") == %p\n", length, (void *)p));
-  return p;
+        lwip_assert("pbuf_alloc: erroneous type", 0);
+        return nullptr;
+    }
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE, "pbuf_alloc(length=%d) == %p\n", length, (void *)p);
+    return p;
 }
 
 /**
@@ -315,7 +315,7 @@ struct PacketBuffer *pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type)
 struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
                                   PbufType type) {
   struct PacketBuffer *p;
-  lwip_assert("invalid pbuf_type", (type == PBUF_REF) || (type == PBUF_ROM));
+  lwip_assert("invalid PbufType", (type == PBUF_REF) || (type == PBUF_ROM));
   /* only allocate memory for the PacketBuffer structure */
   // p = (struct PacketBuffer *)memp_malloc(MEMP_PBUF);
   p = new PacketBuffer;
@@ -347,29 +347,37 @@ struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
  * @param payload_mem_len the size of the 'payload_mem' buffer, must be at least
  *        big enough to hold 'length' plus the header size
  */
-struct PacketBuffer *pbuf_alloced_custom(pbuf_layer l, uint16_t length, pbuf_type type,
-                                 struct pbuf_custom *p, void *payload_mem,
-                                 uint16_t payload_mem_len) {
-  uint16_t offset = (uint16_t)l;
-  void *payload;
-  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-              ("pbuf_alloced_custom(length=%" U16_F ")\n", length));
-
-  if (LWIP_MEM_ALIGN_SIZE(offset) + length > payload_mem_len) {
-    Logf(
-        PBUF_DEBUG | LWIP_DBG_LEVEL_WARNING,
-        ("pbuf_alloced_custom(length=%" U16_F ") buffer too short\n", length));
-    return nullptr;
-  }
-
-  if (payload_mem != nullptr) {
-    payload = (uint8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
-  } else {
-    payload = nullptr;
-  }
-  pbuf_init_alloced_pbuf(&p->pbuf, payload, length, length, type,
-                         PBUF_FLAG_IS_CUSTOM);
-  return &p->pbuf;
+struct PacketBuffer* pbuf_alloced_custom(PbufLayer l,
+                                         uint16_t length,
+                                         PbufType type,
+                                         struct pbuf_custom* p,
+                                         void* payload_mem,
+                                         uint16_t payload_mem_len)
+{
+    const auto offset = uint16_t(l);
+    void* payload;
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE, "pbuf_alloced_custom(length=%d)\n", length
+    )
+    ;
+    if (LWIP_MEM_ALIGN_SIZE(offset) + length > payload_mem_len)
+    {
+        Logf(PBUF_DEBUG | LWIP_DBG_LEVEL_WARNING,
+             "pbuf_alloced_custom(length=%d) buffer too short\n",
+             length
+        )
+        ;
+        return nullptr;
+    }
+    if (payload_mem != nullptr)
+    {
+        payload = static_cast<uint8_t *>(payload_mem) + LWIP_MEM_ALIGN_SIZE(offset);
+    }
+    else
+    {
+        payload = nullptr;
+    }
+    pbuf_init_alloced_pbuf(&p->pbuf, payload, length, length, type, PBUF_FLAG_IS_CUSTOM);
+    return &p->pbuf;
 }
 
 
@@ -425,15 +433,16 @@ void pbuf_realloc(struct PacketBuffer *p, size_t size) {
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if (pbuf_match_allocsrc(q, kPbufTypeAllocSrcMaskStdHeap) &&
+  if (pbuf_match_allocsrc(q, PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP) &&
       (rem_len != q->len)
 #if LWIP_SUPPORT_CUSTOM_PBUF
       && ((q->flags & PBUF_FLAG_IS_CUSTOM) == 0)
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
   ) {
     /* reallocate and adjust the length of the PacketBuffer that will be split */
-    q = (struct PacketBuffer *)mem_trim(
-        q, (mem_size_t)(((uint8_t *)q->payload - (uint8_t *)q) + rem_len));
+    // q = (struct PacketBuffer *)mem_trim(
+    //     q, (mem_size_t)(((uint8_t *)q->payload - (uint8_t *)q) + rem_len));
+      // todo: replace with realloc
     lwip_assert("mem_trim returned q == NULL", q != nullptr);
   }
   /* adjust length fields for new last PacketBuffer */
@@ -762,7 +771,7 @@ uint8_t pbuf_free(struct PacketBuffer *p) {
           // memp_free(MEMP_PBUF, p);
           delete p;
           /* type == PBUF_RAM */
-        } else if (alloc_src == kPbufTypeAllocSrcMaskStdHeap) {
+        } else if (alloc_src == PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP) {
           mem_free(p);
         } else {
           /* @todo: support freeing other types */
@@ -1125,7 +1134,7 @@ void pbuf_split_64k(struct PacketBuffer *p, struct PacketBuffer **rest) {
       /* Update the tot_len field in the first part */
       for (i = p; i != nullptr; i = i->next) {
         i->tot_len = (uint16_t)(i->tot_len - r->tot_len);
-        LWIP_ASSERT("tot_len/len mismatch in last PacketBuffer",
+        lwip_assert("tot_len/len mismatch in last PacketBuffer",
                     (i->next != nullptr) || (i->tot_len == i->len));
       }
       if (p->flags & PBUF_FLAG_TCP_FIN) {
@@ -1261,7 +1270,7 @@ LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t 
  *          PacketBuffer 'p' is returned, therefore the caller has to check the result!
  *
  * @param p the source PacketBuffer
- * @param layer pbuf_layer of the new PacketBuffer
+ * @param layer PbufLayer of the new PacketBuffer
  *
  * @return a new, single PacketBuffer (p->next is NULL)
  *         or the old PacketBuffer if allocation fails
@@ -1285,7 +1294,7 @@ struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
  * Allocates a new PacketBuffer of same length (via pbuf_alloc()) and copies the source
  * PacketBuffer into this new PacketBuffer (using pbuf_copy()).
  *
- * @param layer pbuf_layer of the new PacketBuffer
+ * @param layer PbufLayer of the new PacketBuffer
  * @param type this parameter decides how and where the PacketBuffer should be allocated
  *             (@see pbuf_alloc())
  * @param p the source PacketBuffer
@@ -1322,10 +1331,10 @@ LwipStatus pbuf_fill_chksum(struct PacketBuffer *p, uint16_t start_offset,
   uint32_t acc;
   uint16_t copy_chksum;
   char *dst_ptr;
-  LWIP_ASSERT("p != NULL", p != nullptr);
-  LWIP_ASSERT("dataptr != NULL", dataptr != nullptr);
-  LWIP_ASSERT("chksum != NULL", chksum != nullptr);
-  LWIP_ASSERT("len != 0", len != 0);
+  lwip_assert("p != NULL", p != nullptr);
+  lwip_assert("dataptr != NULL", dataptr != nullptr);
+  lwip_assert("chksum != NULL", chksum != nullptr);
+  lwip_assert("len != 0", len != 0);
 
   if ((start_offset >= p->len) || (start_offset + len > p->len)) {
     return ERR_ARG;

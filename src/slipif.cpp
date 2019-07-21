@@ -443,8 +443,8 @@ slipif_process_rxqueue(NetIfc*netif)
   struct slipif_priv *priv;
   SYS_ARCH_DECL_PROTECT(old_level);
 
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   priv = (struct slipif_priv *)netif->state;
 
@@ -513,8 +513,8 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
 void
 slipif_received_byte(NetIfc*netif, uint8_t data)
 {
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
   slipif_rxbyte_enqueue(netif, data);
 }
 
@@ -534,8 +534,8 @@ slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len)
 {
   uint8_t i;
   uint8_t *rxdata = data;
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   for (i = 0; i < len; i++, rxdata++) {
     slipif_rxbyte_enqueue(netif, *rxdata);

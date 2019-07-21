@@ -66,17 +66,17 @@ void             tcp_txnow   (void);
 /* Only used by IP to pass a TCP segment to TCP: */
 void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
 /* Used within the TCP code only: */
-struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
-void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
-void             tcp_abandon (struct TcpProtoCtrlBlk *pcb, int reset);
-LwipStatus            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_rto_commit(struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_rto  (struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_fast (struct TcpProtoCtrlBlk *pcb);
-uint32_t            tcp_update_rcv_ann_wnd(struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
+struct TcpPcb * tcp_alloc   (uint8_t prio);
+void             tcp_free    (struct TcpPcb *pcb);
+void             tcp_abandon (struct TcpPcb *pcb, int reset);
+LwipStatus            tcp_send_empty_ack(struct TcpPcb *pcb);
+LwipStatus            tcp_rexmit  (struct TcpPcb *pcb);
+LwipStatus            tcp_rexmit_rto_prepare(struct TcpPcb *pcb);
+void             tcp_rexmit_rto_commit(struct TcpPcb *pcb);
+void             tcp_rexmit_rto  (struct TcpPcb *pcb);
+void             tcp_rexmit_fast (struct TcpPcb *pcb);
+uint32_t            tcp_update_rcv_ann_wnd(struct TcpPcb *pcb);
+LwipStatus            tcp_process_refused_data(struct TcpPcb *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
@@ -260,30 +260,30 @@ struct tcp_seg {
 
 #define TCPWNDSIZE_F       U32_F
 #define TCPWND_MAX         0xFFFFFFFFU
-#define TCPWND_CHECK16(x)  LWIP_ASSERT("window size > 0xFFFF", (x) <= 0xFFFF)
+#define TCPWND_CHECK16(x)  lwip_assert("window size > 0xFFFF", (x) <= 0xFFFF)
 #define TCPWND_MIN16(x)    ((uint16_t)LWIP_MIN((x), 0xFFFF))
 
 
 /* Global variables: */
-extern struct TcpProtoCtrlBlk *tcp_input_pcb;
+extern struct TcpPcb *tcp_input_pcb;
 extern uint32_t tcp_ticks;
 extern uint8_t tcp_active_pcbs_changed;
 
 /* The TCP PCB lists. */
 union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
   struct tcp_pcb_listen *listen_pcbs;
-  struct TcpProtoCtrlBlk *pcbs;
+  struct TcpPcb *pcbs;
 };
-extern struct TcpProtoCtrlBlk *tcp_bound_pcbs;
+extern struct TcpPcb *tcp_bound_pcbs;
 extern union tcp_listen_pcbs_t tcp_listen_pcbs;
-extern struct TcpProtoCtrlBlk *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
+extern struct TcpPcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               state in which they accept or send
               data. */
-extern struct TcpProtoCtrlBlk *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
+extern struct TcpPcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 #define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
 #define NUM_TCP_PCB_LISTS               4
-extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
+extern struct TcpPcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 /* Axioms about the above lists:
    1) Every TCP PCB that is not CLOSED is in one of the lists.
@@ -343,9 +343,9 @@ extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 
 /* Internal functions: */
-struct TcpProtoCtrlBlk *tcp_pcb_copy(struct TcpProtoCtrlBlk *pcb);
-void tcp_pcb_purge(struct TcpProtoCtrlBlk *pcb);
-void tcp_pcb_remove(struct TcpProtoCtrlBlk **pcblist, struct TcpProtoCtrlBlk *pcb);
+struct TcpPcb *tcp_pcb_copy(struct TcpPcb *pcb);
+void tcp_pcb_purge(struct TcpPcb *pcb);
+void tcp_pcb_remove(struct TcpPcb **pcblist, struct TcpPcb *pcb);
 
 void tcp_segs_free(struct tcp_seg *seg);
 void tcp_seg_free(struct tcp_seg *seg);
@@ -365,20 +365,20 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   tcp_set_flags(pcb, TF_ACK_NOW)
 
-LwipStatus tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
-LwipStatus tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
+LwipStatus tcp_send_fin(struct TcpPcb *pcb);
+LwipStatus tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags);
 
-void tcp_rexmit_seg(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg);
+void tcp_rexmit_seg(struct TcpPcb *pcb, struct tcp_seg *seg);
 
-void tcp_rst(const struct TcpProtoCtrlBlk* pcb, uint32_t seqno, uint32_t ackno,
+void tcp_rst(const struct TcpPcb* pcb, uint32_t seqno, uint32_t ackno,
        const IpAddr *local_ip, const IpAddr *remote_ip,
        uint16_t local_port, uint16_t remote_port);
 
-uint32_t tcp_next_iss(struct TcpProtoCtrlBlk *pcb);
+uint32_t tcp_next_iss(struct TcpPcb *pcb);
 
-LwipStatus tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
-LwipStatus tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
-LwipStatus tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
+LwipStatus tcp_keepalive(struct TcpPcb *pcb);
+LwipStatus tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split);
+LwipStatus tcp_zero_window_probe(struct TcpPcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
@@ -386,7 +386,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 
-LwipStatus tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipStatus err);
+LwipStatus tcp_recv_null(void *arg, struct TcpPcb *pcb, struct PacketBuffer *p, LwipStatus err);
 
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)
@@ -401,8 +401,8 @@ void tcp_timer_needed(void);
 
 void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
-void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);
+void tcp_free_ooseq(struct TcpPcb *pcb);
 
 
-LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
+LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpPcb *cpcb);
 
