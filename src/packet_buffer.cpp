@@ -1170,7 +1170,7 @@ struct PacketBuffer* pbuf_skip(struct PacketBuffer* in,
  *
  * @return ERR_OK if successful, ERR_MEM if the PacketBuffer is not big enough
  */
-LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, uint16_t len)
+LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, size_t len)
 {
     size_t total_copy_len = len;
     size_t copied_total = 0;

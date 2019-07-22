@@ -4,8 +4,8 @@
 #include <timeouts.h>
 #include <cstring>
 
-constexpr auto kBridgeifAgeTimerMs = 1000; 
-constexpr auto kBrFdbTimeoutSec = (60*5) /* 5 minutes FDB timeout */;
+constexpr auto BRIDGE_IF_AGE_TIMER_MS = 1000; 
+constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
 
 
 /**
@@ -33,7 +33,7 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t po
                 //                 , src_addr->addr[0], src_addr->addr[1], src_addr->addr[2],
                 //                 src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
                 //                 port_idx, i));
-                e->ts = kBrFdbTimeoutSec;
+                e->ts = BRIDGE_FDB_TIMEOUT_SEC;
                 e->port = port_idx;
                 return true;
             }
@@ -52,7 +52,7 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t po
                 //                 src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
                 //                 port_idx, i));
                 memcpy(&e->addr, src_addr, sizeof(struct EthAddr));
-                e->ts = kBrFdbTimeoutSec;
+                e->ts = BRIDGE_FDB_TIMEOUT_SEC;
                 e->port = port_idx;
                 e->used = 1;
                 return true;
@@ -118,14 +118,14 @@ void bridgeif_age_tmr(void* arg)
     const auto fdb = static_cast<BridgeIfcFdb *>(arg);
     lwip_assert("invalid arg", arg != nullptr);
     bridgeif_fdb_age_one_second(fdb);
-    sys_timeout_debug(kBridgeifAgeTimerMs, bridgeif_age_tmr, arg, "bridgeif_age_tmr");
+    // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, arg, "bridgeif_age_tmr");
 }
 
 /**
  * @ingroup bridgeif_fdb
  * Init our simple fdb list
  */
-void* bridgeif_fdb_init(const uint16_t max_fdb_entries)
+BridgeIfcFdb* bridgeif_fdb_init(const uint16_t max_fdb_entries)
 {
     const auto alloc_len_sizet = sizeof(BridgeIfcFdb) + (max_fdb_entries * sizeof(
         BridgeIfDfDbEntry));
@@ -141,7 +141,7 @@ void* bridgeif_fdb_init(const uint16_t max_fdb_entries)
     }
     fdb->max_fdb_entries = max_fdb_entries;
     fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
-    sys_timeout_debug(kBridgeifAgeTimerMs, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
+    // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
     return fdb;
 }
 

@@ -2112,9 +2112,8 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 /**
  * LWIP_IPV6_NUM_ADDRESSES: Number of IPv6 addresses per netif.
  */
-#if !defined LWIP_IPV6_NUM_ADDRESSES || defined __DOXYGEN__
-#define LWIP_IPV6_NUM_ADDRESSES         3
-#endif
+constexpr auto LWIP_IPV6_NUM_ADDRESSES = 3;
+
 
 /**
  * LWIP_IPV6_FORWARD==1: Forward IPv6 packets across netifs

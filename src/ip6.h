@@ -76,6 +76,8 @@ enum Ip6NextHdr
 
 /** The IPv6 header. */
 
+
+
 struct Ip6Hdr {
     /** version / traffic class / flow label */
     uint32_t _v_tc_fl;
@@ -86,28 +88,74 @@ struct Ip6Hdr {
     /** hop limit */
     uint8_t _hoplim;
     /** source and destination IP addresses */
-    Ip6Addr src;
-    Ip6Addr dest;
+    Ip6HdrAddr src;
+    Ip6HdrAddr dest;
 } ;
 
-#define IP6H_V(hdr)  ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f)
-#define IP6H_TC(hdr) ((lwip_ntohl((hdr)->_v_tc_fl) >> 20) & 0xff)
-#define IP6H_FL(hdr) (lwip_ntohl((hdr)->_v_tc_fl) & 0x000fffff)
-#define IP6H_PLEN(hdr) (lwip_ntohs((hdr)->_plen))
-#define IP6H_NEXTH(hdr) ((hdr)->_nexth)
-#define IP6H_NEXTH_P(hdr) ((uint8_t *)(hdr) + 6)
-#define IP6H_HOPLIM(hdr) ((hdr)->_hoplim)
-#define IP6H_VTCFL_SET(hdr, v, tc, fl) (hdr)->_v_tc_fl = (lwip_htonl((((uint32_t)(v)) << 28) | (((uint32_t)(tc)) << 20) | (fl)))
-#define IP6H_PLEN_SET(hdr, plen) (hdr)->_plen = lwip_htons(plen)
-#define IP6H_NEXTH_SET(hdr, nexth) (hdr)->_nexth = (nexth)
-#define IP6H_HOPLIM_SET(hdr, hl) (hdr)->_hoplim = (uint8_t)(hl)
+inline uint32_t get_ip6_hdr_v(Ip6Hdr* hdr)
+{
+    return ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f);
+}
+
+inline uint32_t get_ip6_hdr_tc(Ip6Hdr* hdr)
+{
+    return ((lwip_ntohl((hdr)->_v_tc_fl) >> 20) & 0xff);
+}
+
+inline uint32_t IP6H_FL(Ip6Hdr* hdr)
+{
+    return (lwip_ntohl((hdr)->_v_tc_fl) & 0x000fffff);
+}
+
+inline uint16_t IP6H_PLEN(Ip6Hdr* hdr)
+{
+    return (lwip_ntohs((hdr)->_plen));
+}
+
+inline uint8_t IP6H_NEXTH(Ip6Hdr* hdr)
+{
+    return ((hdr)->_nexth);
+}
+
+inline uint8_t* IP6H_NEXTH_P(Ip6Hdr* hdr)
+{
+    return (reinterpret_cast<uint8_t *>(hdr) + 6);
+}
+
+inline uint8_t IP6H_HOPLIM(Ip6Hdr* hdr)
+{
+    return ((hdr)->_hoplim);
+}
+
+inline void IP6H_VTCFL_SET(Ip6Hdr* hdr, uint32_t v, uint32_t tc, uint32_t fl)
+{
+    (hdr)->_v_tc_fl = (lwip_htonl(
+        (((uint32_t)(v)) << 28) | (((uint32_t)(tc)) << 20) | (fl)));
+}
+
+inline void IP6H_PLEN_SET(Ip6Hdr* hdr, uint32_t plen)
+{
+    (hdr)->_plen = lwip_htons(plen);
+}
+
+inline void IP6H_NEXTH_SET(Ip6Hdr* hdr, uint8_t nexth){ (hdr)->_nexth = (nexth);}
+
+inline uint8_t IP6H_HOPLIM_SET(Ip6Hdr* hdr, uint8_t hl)
+{
+    (hdr)->_hoplim = (uint8_t)(hl);
+}
 
 /* ipv6 extended options header */
 #define IP6_PAD1_OPTION             0
+
 #define IP6_PADN_OPTION             1
+
 #define IP6_ROUTER_ALERT_OPTION     5
+
 #define IP6_JUMBO_OPTION            194
+
 #define IP6_HOME_ADDRESS_OPTION     201
+
 #define IP6_ROUTER_ALERT_DLEN       2
 #define IP6_ROUTER_ALERT_VALUE_MLD  0
 
@@ -195,8 +243,13 @@ LwipStatus         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const 
                          uint8_t hl, uint8_t tc, uint8_t nexth);
 LwipStatus         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
                             uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
-LwipStatus         ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
-                            uint8_t hl, uint8_t tc, uint8_t nexth, NetIfc*netif);
+LwipStatus         ip6_output_if_src(struct PacketBuffer *pbuf,
+                                     Ip6Addr* src,
+                                     const Ip6Addr *dest,
+                                     uint8_t hl,
+                                     uint8_t tc,
+                                     uint8_t nexth,
+                                     NetIfc*netif);
 
 LwipStatus         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest);
 

@@ -94,9 +94,11 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags) {
     pcb->settings.refuse_mppe_128 = !!(flags & PPP_MPPE_REFUSE_128);
 }
 
-
-void
-ppp_set_notify_phase_callback(PppPcb* pcb, ppp_notify_phase_cb_fn notify_phase_cb)
+//
+//
+//
+void ppp_set_notify_phase_callback(PppPcb* pcb, 
+                                   ppp_notify_phase_cb_fn notify_phase_cb)
 {
     pcb->notify_phase_cb = notify_phase_cb;
     notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
@@ -879,7 +881,7 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
     ;
     ;
 
-    netif_set_addr(pcb->netif, IP4_ADDR_ANY4, kIpAddrIp4Broadcast, IP4_ADDR_ANY4);
+    netif_set_addr(pcb->netif, IP4_ADDR_ANY4, create_ip_addr_ip4_bcast, IP4_ADDR_ANY4);
     return 1;
 }
 

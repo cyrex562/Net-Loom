@@ -387,7 +387,7 @@ inline void set_ip_addr_loopback(const bool is_ipv6, IpAddr* ipaddr)
     }
 }
 
-/** @ingroup ipaddr */
+
 inline void set_ip_addr_loopback_val(bool is_ipv6, IpAddr ipaddr)
 {
     if (is_ipv6)
@@ -403,7 +403,7 @@ inline void set_ip_addr_loopback_val(bool is_ipv6, IpAddr ipaddr)
     }
 }
 
-/** @ingroup ipaddr */
+
 inline void set_ip_addr_hton(IpAddr* dest, IpAddr* src)
 {
     if (is_ipaddr_v6(src))
@@ -420,7 +420,7 @@ inline void set_ip_addr_hton(IpAddr* dest, IpAddr* src)
 }
 
 
-/** @ingroup ipaddr */
+
 inline void get_ip_addr_net(IpAddr* target, IpAddr* host, IpAddr* netmask)
 {
     if (is_ipaddr_v6(host))
@@ -437,7 +437,7 @@ inline void get_ip_addr_net(IpAddr* target, IpAddr* host, IpAddr* netmask)
     }
 }
 
-/** @ingroup ipaddr */
+
 inline bool compare_ip_addr_mask(IpAddr* addr1, IpAddr* addr2, IpAddr* mask)
 {
     return is_ipaddr_v6(addr1) && is_ipaddr_v6(addr2)
@@ -447,7 +447,7 @@ inline bool compare_ip_addr_mask(IpAddr* addr1, IpAddr* addr2, IpAddr* mask)
                                  &mask->u_addr.ip4);
 }
 
-/** @ingroup ipaddr */
+
 inline bool compare_ip_addr(const IpAddr* addr1, const IpAddr* addr2)
 {
     return get_ip_addr_type(addr1) != get_ip_addr_type(addr2)
@@ -458,7 +458,7 @@ inline bool compare_ip_addr(const IpAddr* addr1, const IpAddr* addr2)
 }
 
 
-/** @ingroup ipaddr */
+
 inline bool compare_ip_addr_zoneless(IpAddr* addr1, IpAddr* addr2)
 {
     if ((get_ip_addr_type(addr1) != get_ip_addr_type(addr2)))
@@ -469,7 +469,7 @@ inline bool compare_ip_addr_zoneless(IpAddr* addr1, IpAddr* addr2)
 } 
 
 
-/** @ingroup ipaddr */
+
 inline bool is_ip_addr_any(IpAddr* ipaddr)
 {
     if (((ipaddr) == nullptr))
@@ -552,18 +552,18 @@ inline void unmap_ipv4_mapped_ipv6(Ip4Addr* ip4addr, Ip6Addr* ip6addr)
 //   return (((type) == IPADDR_TYPE_V6) ? Ip6Addr : IP4_ADDR_ANY);
 // }
 
-inline void IP_ADDR6(IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
+inline void make_ip_addr_ip6(IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
 {
     IP6_ADDR(&ipaddr->u_addr.ip6, i0, i1, i2, i3);
 }         
 
 inline void ip_addr_ip6_host(struct IpAddr* ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)
 {
-    IP_ADDR6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
+    make_ip_addr_ip6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
 }
 
 
-inline IpAddr kIpAddrIp4Broadcast()
+inline IpAddr create_ip_addr_ip4_bcast()
 {
     IpAddr addr{};
     addr.u_addr.ip4.addr = make_u32(255,255,255,255);
@@ -572,7 +572,7 @@ inline IpAddr kIpAddrIp4Broadcast()
 }
 
 
-inline IpAddr kIpAddrIp4Any()
+inline IpAddr create_ip_addr_ip4_any()
 {
     IpAddr addr{};
     addr.u_addr.ip4.addr = make_u32(0,0,0,0);
@@ -580,7 +580,7 @@ inline IpAddr kIpAddrIp4Any()
     return addr;
 }
 
-inline IpAddr kIpAddrIp6Any() {
+inline IpAddr ip_addr_ip6_any() {
     IpAddr addr{};
     addr.u_addr.ip6.addr[0] = 0;
     addr.u_addr.ip6.addr[1] = 0;

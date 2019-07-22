@@ -359,7 +359,7 @@ void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
          */
         Ip4Addr dipaddr{};
         EthAddr netifaddr{};
-        memcpy(netifaddr.addr,netif->hwaddr,ETH_HWADDR_LEN);
+        memcpy(netifaddr.addr,netif->hwaddr,ETH_ADDR_LEN);
         /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
                    * structure packing (not using structure copy which breaks strict-aliasing rules).
                    */

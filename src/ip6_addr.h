@@ -1,20 +1,30 @@
+//
+// file: ip6_addr.h
+//
 #pragma once
 
 #include <def.h>
 #include <lwip_debug.h>
 #include <array>
 
+//
+//
+//
 enum Ip6Zone : uint8_t
 {
     IP6_NO_ZONE = 0,
 };
 
-/** This is the aligned version of Ip6Addr,
-    used as local variable, on the stack, etc. */
+// This is the aligned version of Ip6Addr used as local variable, on the stack, etc.
 struct Ip6Addr
 {
     std::array<uint32_t, 4>addr;
     Ip6Zone zone;
+};
+
+struct Ip6HdrAddr
+{
+    uint32_t addr[4];  // NOLINT(cppcoreguidelines-avoid-c-arrays)
 };
 
 /** Symbolic constants for the 'type' parameters in some of the macros.
@@ -212,8 +222,10 @@ inline void IP6_ADDR(Ip6Addr* ip6addr, uint32_t idx0, uint32_t idx1,
 }
 
 /** Access address in 16-bit block */
-#define IP6_ADDR_BLOCK1(ip6addr) \
-  ((uint16_t)((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xffff))
+inline uint16_t IP6_ADDR_BLOCK1(Ip6Addr* ip6addr)
+{
+    return ((uint16_t)((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xffff));
+}
 /** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK2(ip6addr) \
   ((uint16_t)((lwip_htonl((ip6addr)->addr[0])) & 0xffff))
@@ -255,14 +267,14 @@ inline void ip6_addr_set(Ip6Addr* dest, Ip6Addr* src) {
     ip6_addr_clear_zone(&dest);              \
   } while (0)
 
-/** Copy unpacked IPv6 address to packed IPv6 address; zone is lost */
-#define ip6_addr_copy_to_packed(dest, src) \
-  do {                                     \
-    (dest).addr[0] = (src).addr[0];        \
-    (dest).addr[1] = (src).addr[1];        \
-    (dest).addr[2] = (src).addr[2];        \
-    (dest).addr[3] = (src).addr[3];        \
-  } while (0)
+// Copy unpacked IPv6 address to packed IPv6 address; zone is lost
+inline void ip6_addr_copy_to_packed(Ip6HdrAddr* dest, const Ip6Addr* src)
+{
+    (dest)->addr[0] = (src)->addr[0];
+    (dest)->addr[1] = (src)->addr[1];
+    (dest)->addr[2] = (src)->addr[2];
+    (dest)->addr[3] = (src)->addr[3];
+}
 
 /** Set complete address to zero */
 inline void ip6_addr_set_zero(Ip6Addr* ip6addr) {
@@ -486,9 +498,17 @@ inline void ip6_addr_set_allnodes_linklocal(Ip6Addr* ip6addr)
 
 #define ip6_addr_isinvalid(addr_state) (addr_state == IP6_ADDR_INVALID)
 #define ip6_addr_istentative(addr_state) (addr_state & IP6_ADDR_TENTATIVE)
-#define ip6_addr_isvalid(addr_state)                                         \
-  (addr_state & IP6_ADDR_VALID) /* Include valid, preferred, and deprecated. \
-                                 */
+
+//
+//
+//
+inline bool ip6_addr_isvalid(const uint8_t addr_state)
+{
+    return addr_state & IP6_ADDR_VALID;
+}
+
+
+// Include valid, preferred, and deprecated.
 #define ip6_addr_ispreferred(addr_state) (addr_state == IP6_ADDR_PREFERRED)
 #define ip6_addr_isdeprecated(addr_state) (addr_state == IP6_ADDR_DEPRECATED)
 #define ip6_addr_isduplicated(addr_state) (addr_state == IP6_ADDR_DUPLICATED)

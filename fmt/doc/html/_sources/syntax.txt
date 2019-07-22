@@ -82,7 +82,7 @@ The general form of a *standard format specifier* is:
    width: `integer` | "{" `arg_id` "}"
    precision: `integer` | "{" `arg_id` "}"
    type: `int_type` | "a" | "A" | "c" | "e" | "E" | "f" | "F" | "g" | "G" | "p" | "s"
-   int_type: "b" | "B" | "d" | "n" | "o" | "x" | "X"
+   int_type: "b" | "B" | d | "n" | "o" | "x" | "X"
 
 The *fill* character can be any character other than '{', '}' or '\\0'. The
 presence of a fill character is signaled by the character following it, which

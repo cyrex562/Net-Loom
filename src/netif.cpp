@@ -405,7 +405,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->netmask), netmask);
     IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
     mib2_add_route_ip4(0, netif);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_netmask(netif)),
 //                ip4_addr2_16(netif_ip4_netmask(netif)),
@@ -463,7 +463,7 @@ netif_do_set_gw(NetIfc*netif, const Ip4Addr *gw, IpAddr *old_gw)
 
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_gw(netif)),
 //                ip4_addr2_16(netif_ip4_gw(netif)),
@@ -1107,7 +1107,7 @@ netif_ip6_addr_set_parts(NetIfc*netif, int8_t addr_idx, uint32_t i0, uint32_t i1
       (ip_2_ip6(&old_addr)->addr[2] != i2) || (ip_2_ip6(&old_addr)->addr[3] != i3)) {
     Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
 
-    IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
+    make_ip_addr_ip6(&new_ipaddr, i0, i1, i2, i3);
     ip6_addr_assign_zone(ip_2_ip6(&new_ipaddr), IP6_UNICAST, netif);
 
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addr_idx))) {

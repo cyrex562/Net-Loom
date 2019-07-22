@@ -242,7 +242,7 @@ inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
 }
 
 #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
-  Logf(debug, ("%d.%d.%d.%" U16_F, a, b, c, d))
+  Logf(debug, ("%d.%d.%d.%" d, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
@@ -270,7 +270,7 @@ inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
 #define ip4_addr3_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 2)
 #define ip4_addr4_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 3)
 /* These are cast to uint16_t, with the intent that they are often arguments
- * to printf using the U16_F format from cc.h. */
+ * to printf using the d format from cc.h. */
 #define ip4_addr1_16(ipaddr) ((uint16_t)ip4_addr1(ipaddr))
 #define ip4_addr2_16(ipaddr) ((uint16_t)ip4_addr2(ipaddr))
 #define ip4_addr3_16(ipaddr) ((uint16_t)ip4_addr3(ipaddr))

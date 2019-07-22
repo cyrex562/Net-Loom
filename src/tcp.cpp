@@ -737,7 +737,7 @@ tcp_bind(struct TcpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
   }
   pcb->local_port = port;
   TCP_REG(&tcp_bound_pcbs, pcb);
-  Logf(TCP_DEBUG, ("tcp_bind: bind to port %"U16_F"\n", port));
+  Logf(TCP_DEBUG, ("tcp_bind: bind to port %d\n", port));
   return ERR_OK;
 }
 
@@ -988,7 +988,7 @@ tcp_recved(struct TcpPcb *pcb, uint16_t len)
     tcp_output(pcb);
   }
 
-  Logf(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F").\n",
+  Logf(TCP_DEBUG, ("tcp_recved: received %d bytes, wnd %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F").\n",
            len, pcb->rcv_wnd, (uint16_t)(TCP_WND_MAX(pcb) - pcb->rcv_wnd)));
 }
 
@@ -1069,7 +1069,7 @@ tcp_connect(struct TcpPcb *pcb, const IpAddr *ipaddr, uint16_t port,
 
   LWIP_ERROR("tcp_connect: can only connect from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
-  Logf(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
+  Logf(TCP_DEBUG, ("tcp_connect to port %d\n", port));
   set_ip_addr(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
 
@@ -2243,7 +2243,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif, const IpAddr *dest)
     if (IpIsV6(dest))
 
     {
-      offset = IP6_HLEN + TCP_HDR_LEN;
+      offset = IP6_HDR_LEN + TCP_HDR_LEN;
     }
 
     else

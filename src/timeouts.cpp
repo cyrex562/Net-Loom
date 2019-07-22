@@ -16,7 +16,7 @@
 #include <tcpip_priv.h>
 #include <timeouts.h>
 #include <lwip_debug.h>
-
+#include "dhcp.h"
 #define HANDLER(x) x, #x
 
 constexpr auto LWIP_MAX_TIMEOUT = 0x7fffffff;
@@ -54,13 +54,34 @@ static uint32_t current_timeout_due_time;
 /** global variable that shows if the tcp timer is currently scheduled or not */
 static int tcpip_tcp_timer_active;
 
+
+/**
+ * Create a one-shot timer (aka timeout). Timeouts are processed in the
+ * following cases:
+ * - while waiting for a message using sys_timeouts_mbox_fetch()
+ * - by calling sys_check_timeouts() (NO_SYS==1 only)
+ *
+ * @param msecs time in milliseconds after that the timer should expire
+ * @param handler callback function to call when msecs have elapsed
+ * @param arg argument to pass to the callback function
+ */
+void sys_timeout(uint32_t msecs, SysTimeoutHandler handler, void* arg)
+{
+    lwip_assert("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs",
+                msecs <= (kLwipUint32Max / 4));
+    uint32_t next_timeout_time = uint32_t(sys_now() + msecs);
+    /* overflow handled by TIME_LESS_THAN macro */
+    // fixme: handler_name missing
+    // sys_timeout_abs(next_timeout_time, handler, arg, handler_name);
+}
+
 /**
  * Timer callback function that calls tcp_tmr() and reschedules itself.
  *
  * @param arg unused argument
  */
 static void
-tcpip_tcp_timer(uint8_t *arg)
+tcpip_tcp_timer(void* arg)
 {
 
 
@@ -97,7 +118,7 @@ tcp_timer_needed(void)
 
 static void
 
-sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, uint8_t *arg, const char *handler_name)
+sys_timeout_abs(uint32_t abs_time, SysTimeoutHandler handler, void* arg, const char *handler_name)
 
 {
   struct SysTimeoutContext *timeout, *t;
@@ -116,8 +137,12 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, uint8_t *arg, co
 
 
   timeout->handler_name = handler_name;
-  Logf(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
-                             (uint8_t *)timeout, abs_time, handler_name, (uint8_t *)arg));
+  Logf(TIMERS_DEBUG,
+       "sys_timeout: %p abs_time=%d handler=%s arg=%p\n",
+       timeout,
+       abs_time,
+       handler_name,
+       arg);
 
 
   if (next_timeout == nullptr) {
@@ -146,7 +171,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, uint8_t *arg, co
 
 static
 void
-lwip_cyclic_timer(uint8_t *arg)
+lwip_cyclic_timer(void* arg)
 {
   uint32_t now;
   uint32_t next_timeout_time;
@@ -161,13 +186,13 @@ lwip_cyclic_timer(uint8_t *arg)
   if (TIME_LESS_THAN(next_timeout_time, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
 
-    sys_timeout_abs((uint32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, arg, cyclic->handler_name);
+    sys_timeout_abs((uint32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, (void*)arg, cyclic->handler_name);
 
 
   } else {
     /* correct cyclic interval with handler execution delay and sys_check_timeouts jitter */
 
-    sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, arg, cyclic->handler_name);
+    sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, (void*)arg, cyclic->handler_name);
 
   }
 }
@@ -186,25 +211,7 @@ void sys_timeouts_init(void)
     }
 }
 
-/**
- * Create a one-shot timer (aka timeout). Timeouts are processed in the
- * following cases:
- * - while waiting for a message using sys_timeouts_mbox_fetch()
- * - by calling sys_check_timeouts() (NO_SYS==1 only)
- *
- * @param msecs time in milliseconds after that the timer should expire
- * @param handler callback function to call when msecs have elapsed
- * @param arg argument to pass to the callback function
- */
 
-void
-sys_timeout(uint32_t msecs, sys_timeout_handler handler, uint8_t *arg)
-{
-    LWIP_ASSERT_CORE_LOCKED();
-  lwip_assert("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (kLwipUint32Max / 4));
-  uint32_t next_timeout_time = uint32_t(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */ 
-  sys_timeout_abs(next_timeout_time, handler, arg, handler_name);
-}
 
 /**
  * Go through timeout list (for this task only) and remove the first matching
@@ -215,7 +222,7 @@ sys_timeout(uint32_t msecs, sys_timeout_handler handler, uint8_t *arg)
  * @param arg callback argument that would be passed to handler
 */
 void
-sys_untimeout(sys_timeout_handler handler, uint8_t *arg)
+sys_untimeout(SysTimeoutHandler handler, void* arg)
 {
   struct SysTimeoutContext *prev_t, *t;
 
@@ -261,13 +268,12 @@ sys_check_timeouts(void)
   now = sys_now();
 
   do {
-    struct SysTimeoutContext *tmptimeout;
-    sys_timeout_handler handler;
-    uint8_t *arg;
+      SysTimeoutHandler handler;
+    void *arg;
 
-    PbufCheckFreeOoseq();
+    PBUF_CHECK_FREE_OOSEQ();
 
-    tmptimeout = next_timeout;
+    struct SysTimeoutContext* tmptimeout = next_timeout;
     if (tmptimeout == nullptr) {
       return;
     }
@@ -283,8 +289,8 @@ sys_check_timeouts(void)
     current_timeout_due_time = tmptimeout->time;
 
     if (handler != nullptr) {
-      Logf(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
-                                 tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
+      Logf(TIMERS_DEBUG, "sct calling h=%s t=%d arg=%p\n",
+                                 tmptimeout->handler_name, sys_now() - tmptimeout->time, arg);
     }
 
     // memp_free(MEMP_SYS_TIMEOUT, tmptimeout);

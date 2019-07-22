@@ -517,7 +517,7 @@ void np_finished(PppPcb* pcb, int proto)
  * check_idle - check whether the link has been idle for long
  * enough that we can shut it down.
  */
-static void check_idle(uint8_t *arg) {
+static void check_idle(void* arg) {
     const auto pcb = static_cast<PppPcb*>(arg);
     // struct ppp_idle idle;
     time_t itime;

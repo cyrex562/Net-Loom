@@ -135,7 +135,7 @@ inline void LwipPlatformDiag(const char* fmt, ...)
 
 /** Define this to 1 in cc.h of your port if your compiler does not provide
  * the inttypes.h header. You need to define the format strings listed in
- * arch.h yourself in this case (X8_F, U16_F...).
+ * arch.h yourself in this case (X8_F, d...).
  */
 
 /* Define (sn)printf formatters for these lwIP types */

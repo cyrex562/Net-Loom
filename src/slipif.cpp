@@ -63,7 +63,7 @@
 #include <opt.h>
 #include <def.h>
 #include <packet_buffer.h>
-#include <stats.h>
+
 //#include <snmp.h>
 #include <sys.h>
 #include <sio.h>
@@ -76,32 +76,22 @@
 #define SLIP_ESC_ESC 0xDD /* 0335: following escape: original byte is 0xDB (ESC) */
 
 /** Maximum packet size that is received by this netif */
-#ifndef SLIP_MAX_SIZE
-#define SLIP_MAX_SIZE 1500
-#endif
-
-/** Define this to the interface speed for SNMP
- * (sio_fd is the sio_fd_t returned by sio_open).
- * The default value of zero means 'unknown'.
- */
-
-#define SLIP_SIO_SPEED(sio_fd) 0
+constexpr auto SLIP_MAX_SIZE = 1500;
 
 
-enum slipif_recv_state {
+enum SlipifRecvState {
   SLIP_RECV_NORMAL,
   SLIP_RECV_ESCAPE
 };
 
-struct slipif_priv {
-  sio_fd_t sd;
-  /* q is the whole PacketBuffer chain for a packet, p is the current PacketBuffer in the chain */
-  struct PacketBuffer *p, *q;
-  uint8_t state;
-  uint16_t i, recved;
-
-  struct PacketBuffer *rxpackets;
-
+struct SlipifPriv
+{
+    SioFd sd;
+    /* q is the whole PacketBuffer chain for a packet, p is the current PacketBuffer in the chain */
+    struct PacketBuffer *p, *q;
+    uint8_t state;
+    uint16_t i, recved;
+    struct PacketBuffer* rxpackets;
 };
 
 /**
@@ -116,7 +106,7 @@ struct slipif_priv {
 static LwipStatus
 slipif_output(NetIfc*netif, struct PacketBuffer *p)
 {
-  struct slipif_priv *priv;
+  struct SlipifPriv *priv;
   struct PacketBuffer *q;
   uint16_t i;
   uint8_t c;
@@ -125,8 +115,8 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
   lwip_assert("netif->state != NULL", (netif->state != nullptr));
   lwip_assert("p != NULL", (p != nullptr));
 
-//  Logf(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
-  priv = (struct slipif_priv *)netif->state;
+//  Logf(SLIP_DEBUG, ("slipif_output: sending %d bytes\n", p->tot_len));
+  priv = (struct SlipifPriv *)netif->state;
 
   /* Send PacketBuffer out on the serial I/O device. */
   /* Start with packet delimiter. */
@@ -205,13 +195,13 @@ slipif_output_v6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
 static struct PacketBuffer *
 slipif_rxbyte(NetIfc*netif, uint8_t c)
 {
-  struct slipif_priv *priv;
+  struct SlipifPriv *priv;
   struct PacketBuffer *t;
 
   lwip_assert("netif != NULL", (netif != nullptr));
   lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
-  priv = (struct slipif_priv *)netif->state;
+  priv = (struct SlipifPriv *)netif->state;
 
   switch (priv->state) {
     case SLIP_RECV_NORMAL:
@@ -222,9 +212,7 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
             /* Trim the PacketBuffer to the size of the received packet. */
             pbuf_realloc(priv->q, priv->recved);
 
-            LINK_STATS_INC(link.recv);
-
-//            Logf(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+//            Logf(SLIP_DEBUG, ("slipif: Got packet (%d bytes)\n", priv->recved));
             t = priv->q;
             priv->p = priv->q = nullptr;
             priv->i = priv->recved = 0;
@@ -264,7 +252,6 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
     priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN), PBUF_POOL);
 
     if (priv->p == nullptr) {
-      LINK_STATS_INC(link.drop);
       Logf(SLIP_DEBUG, ("slipif_input: no new PacketBuffer! (DROP)\n"));
       /* don't process any further since we got no PacketBuffer to receive to */
       return nullptr;
@@ -330,7 +317,7 @@ slipif_loop_thread(uint8_t *nf)
 {
   uint8_t c;
   NetIfc*netif = (NetIfc*)nf;
-  struct slipif_priv *priv = (struct slipif_priv *)netif->state;
+  struct SlipifPriv *priv = (struct SlipifPriv *)netif->state;
 
   while (1) {
     if (sio_read(priv->sd, &c, 1) > 0) {
@@ -358,18 +345,18 @@ slipif_loop_thread(uint8_t *nf)
 LwipStatus
 slipif_init(NetIfc*netif)
 {
-  struct slipif_priv *priv;
+  struct SlipifPriv *priv;
   uint8_t sio_num;
 
   lwip_assert("slipif needs an input callback", netif->input != nullptr);
 
   /* netif->state contains serial port number */
-  sio_num = LWIP_PTR_NUMERIC_CAST(uint8_t, netif->state);
+  sio_num = (uint8_t)netif->state;
 
-//  Logf(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
+//  Logf(SLIP_DEBUG, ("slipif_init: netif->num=%d\n", (uint16_t)sio_num));
 
   /* Allocate private data */
-  priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));
+  priv = new struct SlipifPriv;
   if (!priv) {
     return ERR_MEM;
   }
@@ -419,12 +406,12 @@ void
 slipif_poll(NetIfc*netif)
 {
   uint8_t c;
-  struct slipif_priv *priv;
+  struct SlipifPriv *priv;
 
   lwip_assert("netif != NULL", (netif != nullptr));
   lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
-  priv = (struct slipif_priv *)netif->state;
+  priv = (struct SlipifPriv *)netif->state;
 
   while (sio_tryread(priv->sd, &c, 1) > 0) {
     slipif_rxbyte_input(netif, c);
@@ -437,36 +424,31 @@ slipif_poll(NetIfc*netif)
  *
  * @param netif The lwip network interface structure for this slipif
  */
-void
-slipif_process_rxqueue(NetIfc*netif)
+void slipif_process_rxqueue(NetIfc* netif)
 {
-  struct slipif_priv *priv;
-  SYS_ARCH_DECL_PROTECT(old_level);
-
-  lwip_assert("netif != NULL", (netif != nullptr));
-  lwip_assert("netif->state != NULL", (netif->state != nullptr));
-
-  priv = (struct slipif_priv *)netif->state;
-
-  SYS_ARCH_PROTECT(old_level);
-  while (priv->rxpackets != nullptr) {
-    struct PacketBuffer *p = priv->rxpackets;
-
-    /* dequeue packet */
-    struct PacketBuffer *q = p;
-    while ((q->len != q->tot_len) && (q->next != nullptr)) {
-      q = q->next;
-    }
-    priv->rxpackets = q->next;
-    q->next = nullptr;
-
-    SYS_ARCH_UNPROTECT(old_level);
-    if (netif->input(p, netif) != ERR_OK) {
-      pbuf_free(p);
-    }
+    sys_prot_t old_level;
+    lwip_assert("netif != NULL", (netif != nullptr));
+    lwip_assert("netif->state != NULL", (netif->state != nullptr));
+    struct SlipifPriv* priv = (struct SlipifPriv *)netif->state;
     SYS_ARCH_PROTECT(old_level);
-  }
-  SYS_ARCH_UNPROTECT(old_level);
+    while (priv->rxpackets != nullptr)
+    {
+        struct PacketBuffer* p = priv->rxpackets; /* dequeue packet */
+        struct PacketBuffer* q = p;
+        while ((q->len != q->tot_len) && (q->next != nullptr))
+        {
+            q = q->next;
+        }
+        priv->rxpackets = q->next;
+        q->next = nullptr;
+        sys_arch_unprotect(old_level);
+        if (netif->input(p, netif) != ERR_OK)
+        {
+            pbuf_free(p);
+        }
+        SYS_ARCH_PROTECT(old_level);
+    }
+    sys_arch_unprotect(old_level);
 }
 
 /** Like slipif_rxbyte, but queues completed packets.
@@ -474,30 +456,31 @@ slipif_process_rxqueue(NetIfc*netif)
  * @param netif The lwip network interface structure for this slipif
  * @param data Received serial byte
  */
-static void
-slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
+static void slipif_rxbyte_enqueue(NetIfc* netif, uint8_t data)
 {
-  struct PacketBuffer *p;
-  struct slipif_priv *priv = (struct slipif_priv *)netif->state;
-  SYS_ARCH_DECL_PROTECT(old_level);
-
-  p = slipif_rxbyte(netif, data);
-  if (p != nullptr) {
-    SYS_ARCH_PROTECT(old_level);
-    if (priv->rxpackets != nullptr) {
-
-      /* queue multiple pbufs */
-      struct PacketBuffer *q = p;
-      while (q->next != nullptr) {
-        q = q->next;
-      }
-      q->next = p;
-    } else {
-
-      priv->rxpackets = p;
+    struct PacketBuffer* p;
+    struct SlipifPriv* priv = (struct SlipifPriv *)netif->state;
+    sys_prot_t old_level;
+    p = slipif_rxbyte(netif, data);
+    if (p != nullptr)
+    {
+        SYS_ARCH_PROTECT(old_level);
+        if (priv->rxpackets != nullptr)
+        {
+            /* queue multiple pbufs */
+            struct PacketBuffer* q = p;
+            while (q->next != nullptr)
+            {
+                q = q->next;
+            }
+            q->next = p;
+        }
+        else
+        {
+            priv->rxpackets = p;
+        }
+        SYS_ARCH_UNPROTECT(old_level);
     }
-    SYS_ARCH_UNPROTECT(old_level);
-  }
 }
 
 /**

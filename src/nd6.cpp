@@ -878,7 +878,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     Ip6Addr destination_address;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
-    if (p->len < (sizeof(struct Icmp6Hdr) + IP6_HLEN)) {
+    if (p->len < (sizeof(struct Icmp6Hdr) + IP6_HDR_LEN)) {
       /* drop short packets */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);

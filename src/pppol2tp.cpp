@@ -351,7 +351,7 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
   }
 
   /* printf("LEN=%d, TUNNEL_ID=%d, SESSION_ID=%d, NS=%d, NR=%d, OFFSET=%d\n", len, tunnel_id, session_id, ns, nr, offset); */
-  PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%"U16_F", tunnel=%"U16_F", session=%"U16_F", ns=%"U16_F", nr=%"U16_F"\n",
+  PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%d, tunnel=%d, session=%d, ns=%d, nr=%d\n",
     len, tunnel_id, session_id, ns, nr));
 
   /* Control packet */
@@ -515,7 +515,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
                return;
             }
             GETSHORT(l2tp->source_tunnel_id, inp);
-            PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %"U16_F"\n", l2tp->source_tunnel_id));
+            PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %d\n", l2tp->source_tunnel_id));
             goto nextavp;
 
           case PPPOL2TP_AVPTYPE_CHALLENGE:
@@ -573,7 +573,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
                return;
             }
             GETSHORT(l2tp->source_session_id, inp);
-            // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned session ID %"U16_F"\n", l2tp->source_session_id));
+            // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned session ID %d\n", l2tp->source_session_id));
             goto nextavp;
           default:
             break;

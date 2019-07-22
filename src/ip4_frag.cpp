@@ -64,7 +64,7 @@ void ip_reass_tmr(void)
         if (r->timer > 0)
         {
             r->timer--;
-            //      Logf(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n", (uint16_t)r->timer));
+            //      Logf(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %d\n", (uint16_t)r->timer));
             prev = r;
             r = r->next;
         }
@@ -484,7 +484,7 @@ ip4_reass(struct PacketBuffer *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if (IP_ADDRESSES_AND_ID_MATCH(&ipr->iphdr, fraghdr)) {
-//      Logf(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
+//      Logf(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%x\n",
 //                                   lwip_ntohs(IPH_ID(fraghdr))));
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;

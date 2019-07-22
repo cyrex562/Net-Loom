@@ -245,10 +245,16 @@ void pbuf_free_ooseq(TcpPcb* active_tcp_pcbs);
 /** When not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
     at regular intervals from main level to check if ooseq pbufs need to be
     freed! */
-#define PBUF_CHECK_FREE_OOSEQ() do { if(pbuf_free_ooseq_pending) { \
-  /* pbuf_alloc() reported PBUF_POOL to be empty -> try to free some \
-     ooseq queued pbufs now */ \
-  pbuf_free_ooseq(); }}while(0)
+inline void PBUF_CHECK_FREE_OOSEQ()
+{
+    // fixme: missing global ref and param ref.
+    // if (pbuf_free_ooseq_pending)
+    // {
+    //     /* pbuf_alloc() reported PBUF_POOL to be empty -> try to free some \
+    //        ooseq queued pbufs now */
+    //     pbuf_free_ooseq();
+    // }
+}
 
 
 
@@ -279,32 +285,65 @@ inline bool pbuf_match_type(PacketBuffer* p, uint8_t type)
     return pbuf_match_allocsrc(p, type);
 }
 
-uint8_t pbuf_header(struct PacketBuffer *p, int16_t header_size);
-uint8_t pbuf_header_force(struct PacketBuffer *p, int16_t header_size);
-uint8_t pbuf_add_header(struct PacketBuffer *p, size_t header_size_increment);
-uint8_t pbuf_add_header_force(struct PacketBuffer *p, size_t header_size_increment);
-uint8_t pbuf_remove_header(struct PacketBuffer *p, size_t header_size);
-struct PacketBuffer *pbuf_free_header(struct PacketBuffer *q, uint16_t size);
-void pbuf_ref(struct PacketBuffer *p);
-uint8_t pbuf_free(struct PacketBuffer *p);
-uint16_t pbuf_clen(const struct PacketBuffer *p);
-void pbuf_cat(struct PacketBuffer *head, struct PacketBuffer *tail);
-void pbuf_chain(struct PacketBuffer *head, struct PacketBuffer *tail);
-struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p);
-LwipStatus pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_from);
-uint16_t pbuf_copy_partial(const struct PacketBuffer *p, uint8_t *dataptr, uint16_t len, uint16_t offset);
-uint8_t *pbuf_get_contiguous(const struct PacketBuffer *p, uint8_t *buffer, size_t bufsize, uint16_t len, uint16_t offset);
-LwipStatus pbuf_take(struct PacketBuffer *buf, const uint8_t *dataptr, uint16_t len);
-LwipStatus pbuf_take_at(struct PacketBuffer *buf, const uint8_t *dataptr, uint16_t len, uint16_t offset);
-struct PacketBuffer *pbuf_skip(struct PacketBuffer* in, uint16_t in_offset, uint16_t* out_offset);
-struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer);
-struct PacketBuffer *pbuf_clone(PbufLayer l, PbufType type, struct PacketBuffer *p);
+uint8_t pbuf_header(struct PacketBuffer* p, int16_t header_size);
 
-LwipStatus pbuf_fill_chksum(struct pbuf *p, uint16_t start_offset, const uint8_t *dataptr,
-                       uint16_t len, uint16_t *chksum);
+uint8_t pbuf_header_force(struct PacketBuffer* p, int16_t header_size);
 
+uint8_t pbuf_add_header(struct PacketBuffer* p, size_t header_size_increment);
 
-void pbuf_split_64k(struct pbuf *p, struct pbuf **rest);
+uint8_t pbuf_add_header_force(struct PacketBuffer* p, size_t header_size_increment);
+
+uint8_t pbuf_remove_header(struct PacketBuffer* p, size_t header_size);
+
+struct PacketBuffer* pbuf_free_header(struct PacketBuffer* q, uint16_t size);
+
+void pbuf_ref(struct PacketBuffer* p);
+
+uint8_t pbuf_free(struct PacketBuffer* p);
+
+uint16_t pbuf_clen(const struct PacketBuffer* p);
+
+void pbuf_cat(struct PacketBuffer* head, struct PacketBuffer* tail);
+
+void pbuf_chain(struct PacketBuffer* head, struct PacketBuffer* tail);
+
+struct PacketBuffer* pbuf_dechain(struct PacketBuffer* p);
+
+LwipStatus pbuf_copy(struct PacketBuffer* p_to, const struct PacketBuffer* p_from);
+
+uint16_t pbuf_copy_partial(const struct PacketBuffer* pbuf,
+                           uint8_t* dataptr,
+                           size_t len,
+                           size_t offset);
+
+uint8_t* pbuf_get_contiguous(const struct PacketBuffer* p,
+                             uint8_t* buffer,
+                             size_t bufsize,
+                             uint16_t len,
+                             uint16_t offset);
+
+LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, size_t len);
+
+LwipStatus pbuf_take_at(struct PacketBuffer* buf,
+                        const uint8_t* dataptr,
+                        uint16_t len,
+                        uint16_t offset);
+
+struct PacketBuffer* pbuf_skip(struct PacketBuffer* in,
+                               uint16_t in_offset,
+                               uint16_t* out_offset);
+
+struct PacketBuffer* pbuf_coalesce(struct PacketBuffer* p, PbufLayer layer);
+
+struct PacketBuffer* pbuf_clone(PbufLayer l, PbufType type, struct PacketBuffer* p);
+
+LwipStatus pbuf_fill_chksum(struct pbuf* p,
+                            uint16_t start_offset,
+                            const uint8_t* dataptr,
+                            uint16_t len,
+                            uint16_t* chksum);
+
+void pbuf_split_64k(struct pbuf* p, struct pbuf** rest);
 
 
 uint8_t pbuf_get_at(const struct PacketBuffer* p, uint16_t offset);
@@ -315,3 +354,12 @@ uint16_t pbuf_memfind(const struct PacketBuffer* p, const void* mem, uint16_t me
 uint16_t pbuf_strstr(const struct PacketBuffer* p, const char* substr);
 
 
+/** pbufs passed to IP must have a ref-count of 1 as their payload pointer
+    gets altered as the packet is passed down the stack */
+inline void check_pbuf_ip_rec_cnt_for_tx(PacketBuffer* p)
+{
+    lwip_assert("p->ref == 1", (p)->ref == 1);
+}
+//
+// end of file
+//

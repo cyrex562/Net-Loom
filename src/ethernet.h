@@ -1,16 +1,18 @@
+//
+// file: ethernet.h
+//
+
 #pragma once
 #include <opt.h>
 #include <packet_buffer.h>
 #include <netif.h>
 #include <ethernet.h>
 #include <cstring>
-#ifdef __cplusplus
-extern "C" {
-#endif
-constexpr auto ETH_HWADDR_LEN = 6; // An Ethernet MAC address
+
+constexpr auto ETH_ADDR_LEN = 6; // An Ethernet MAC address
 struct EthAddr
 {
-    uint8_t addr[ETH_HWADDR_LEN];
+    uint8_t addr[ETH_ADDR_LEN];
 }; /** Initialize a struct EthAddr with its 6 bytes (takes care of correct braces) */
 inline EthAddr MakeEthAddrFromBytes(uint8_t b0,
                                     uint8_t b1,
@@ -58,7 +60,7 @@ constexpr uint8_t kLLIp6McastAddrPrefix[] = {0x33, 0x33};
 
 inline bool eth_addr_cmp(const EthAddr* addr1, const EthAddr* addr2)
 {
-    return (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0);
+    return (memcmp((addr1)->addr, (addr2)->addr, ETH_ADDR_LEN) == 0);
 }
 
 LwipStatus ethernet_input(struct PacketBuffer* p, struct NetIfc* netif);
@@ -67,8 +69,9 @@ LwipStatus ethernet_output(struct NetIfc* netif,
                       const struct EthAddr* src,
                       const struct EthAddr* dst,
                       uint16_t eth_type);
-extern const struct EthAddr kEthbroadcast;
+extern const struct EthAddr ETH_BCAST_ADDR;
 extern const struct EthAddr kEthzero;
-#ifdef __cplusplus
-}
-#endif
+
+//
+// end of file
+//

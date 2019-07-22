@@ -70,15 +70,14 @@ struct DnsHdr
     uint16_t numextrarr;
 };
 
-#define SIZEOF_DNS_HDR 12
+constexpr auto DNS_HDR_LEN = 12;
 
 
 /* Multicast DNS definitions */
 
 /** UDP port for multicast DNS queries */
-#ifndef DNS_MQUERY_PORT
-#define DNS_MQUERY_PORT             5353
-#endif
+constexpr auto DNS_MQUERY_PORT = 5353;
+
 
 /* IPv4 group for multicast DNS queries: 224.0.0.251 */
 
@@ -90,7 +89,7 @@ struct DnsHdr
 #define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
 
 /** DNS timer period */
-#define DNS_TMR_INTERVAL          1000
+constexpr auto DNS_TMR_INTERVAL = 1000;
 
 /* DNS resolve types: */
 enum dns_addr_type

@@ -48,8 +48,8 @@ LwipStatus  pbuf_free_callback(struct PacketBuffer *p);
 LwipStatus  mem_free_callback(uint8_t *m);
 
 
-LwipStatus  tcpip_timeout(uint32_t msecs, sys_timeout_handler h, uint8_t *arg);
-LwipStatus  tcpip_untimeout(sys_timeout_handler h, uint8_t *arg);
+LwipStatus  tcpip_timeout(uint32_t msecs, SysTimeoutHandler h, uint8_t *arg);
+LwipStatus  tcpip_untimeout(SysTimeoutHandler h, uint8_t *arg);
 
 
 int tcpip_thread_poll_one(void);

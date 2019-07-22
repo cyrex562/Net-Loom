@@ -66,7 +66,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
     }
     if (p->len < sizeof(uint16_t) * 2)
     {
-        //    Logf(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
+        //    Logf(ICMP_DEBUG, ("icmp_input: short ICMP (%d bytes) received\n", p->tot_len));
         goto lenerr;
     }
     type = *static_cast<uint8_t *>(p->payload);

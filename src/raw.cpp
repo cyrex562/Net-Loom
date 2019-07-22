@@ -411,7 +411,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst
 
   header_size = (
 
-                  IpIsV6(dst_ip) ? IP6_HLEN : IP_HLEN);
+                  IpIsV6(dst_ip) ? IP6_HDR_LEN : IP_HLEN);
 
 
   /* Handle the HDRINCL option as an exception: none of the code below applies

@@ -48,7 +48,7 @@ struct tcpip_msg
         struct
         {
             uint32_t msecs;
-            sys_timeout_handler h;
+            SysTimeoutHandler h;
             uint8_t* arg;
         } tmo;
     } msg;

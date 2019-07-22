@@ -279,9 +279,9 @@ pppos_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *pb, uint16_t 
 
   err = pppos_output_last(pppos, err, nb, &fcs_out);
   if (err == ERR_OK) {
-    PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+    PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%x, len = %d\n", ppp->netif->num, protocol, pb->tot_len));
   } else {
-    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: output failed proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: output failed proto=0x%x, len = %d\n", ppp->netif->num, protocol, pb->tot_len));
   }
   return err;
 }
@@ -453,7 +453,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
         /* If the fcs is invalid, drop the packet. */
         } else if (pppos->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
-                   ("pppos_input[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
+                   ("pppos_input[%d]: Dropping bad fcs 0x%x proto=0x%x\n",
                     ppp->netif->num, pppos->in_fcs, pppos->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);

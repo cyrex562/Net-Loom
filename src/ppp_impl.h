@@ -259,7 +259,7 @@ const char * protocol_name(int proto);
  */
 // #define Timeout(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
 
-inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t time)
+inline void Timeout(SysTimeoutHandler timeout_fn, void* arg, const uint32_t time)
 {
     sys_untimeout(timeout_fn, arg);
     sys_timeout(time * 1000, timeout_fn, arg);
@@ -267,14 +267,14 @@ inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t ti
 
 
 //#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-inline void Timeoutms(sys_timeout_handler time_fn, void* arg, const uint32_t time)
+inline void Timeoutms(SysTimeoutHandler time_fn, void* arg, const uint32_t time)
 {
     sys_untimeout(time_fn, arg);
     sys_timeout(time * 1000, time_fn, arg);
 }
     
     
-inline void Untimeout(sys_timeout_handler time_fn, void* arg) {
+inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
     sys_untimeout((time_fn), (arg));
 }
 #define BZERO(s, n)		memset(s, 0, n)

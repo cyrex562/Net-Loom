@@ -143,7 +143,7 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
                     {
                         Logf(kBridgeIfcFwDebug,
                              "br -> flood(%p:%d) -> %d\n",
-                             static_cast<uint8_t *>(p),
+                             reinterpret_cast<uint8_t *>(p),
                              p->if_idx,
                              netif_get_index(portif));
                         return portif->linkoutput(portif, p);
@@ -190,10 +190,10 @@ static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
 LwipStatus bridgeif_output(NetIfc* netif, struct PacketBuffer* p)
 {
     const auto br = static_cast<BridgeIfcPrivate *>(netif->state);
-    const auto dst = static_cast<struct EthAddr *>(p->payload);
+    const auto dst = reinterpret_cast<EthAddr *>(p->payload);
     const auto dstports = bridgeif_find_dst_ports(br, dst);
     const auto err = bridgeif_send_to_ports(br, p, dstports);
-    if (static_cast<uint8_t *>(p->payload)[0] & 1)
+    if (p->payload[0] & 1)
     {
         /* broadcast or multicast packet*/
     }
@@ -225,7 +225,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
     auto* br = reinterpret_cast<BridgeIfcPrivate *>(port->bridge);
     const auto rx_idx = netif_get_index(netif); /* store receive index in pbuf */
     p->if_idx = rx_idx;
-    auto dst = static_cast<struct EthAddr *>(p->payload);
+    auto dst = reinterpret_cast<struct EthAddr *>(p->payload);
     auto src = reinterpret_cast<struct EthAddr *>(static_cast<uint8_t *>(p->payload) +
         sizeof(struct EthAddr));
     if ((src->addr[0] & 1) == 0)
@@ -241,7 +241,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
         if (dstports & (1 << kBridgeIfcMaxPorts))
         {
             /* we pass the reference to ->input or have to free it */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<uint8_t *>(p));
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", p);
             if (br->netif->input(p, br->netif) != ERR_OK)
             {
                 pbuf_free(p);
@@ -260,7 +260,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetIfc* netif)
         if (bridgeif_is_local_mac(br, dst))
         {
             /* yes, send to cpu port only */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", static_cast<uint8_t *>(p));
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", p);
             return br->netif->input(p, br->netif);
         } /* get dst port */
         dstports = bridgeif_find_dst_ports(br, dst);
@@ -370,8 +370,8 @@ LwipStatus bridgeif_init(NetIfc* netif)
     netif->output = etharp_output;
     netif->output_ip6 = ethip6_output;
     netif->linkoutput = bridgeif_output; /* set MAC hardware address length */
-    netif->hwaddr_len = ETH_HWADDR_LEN; /* set MAC hardware address */
-    memcpy(netif->hwaddr, &br->ethaddr, ETH_HWADDR_LEN); /* maximum transfer unit */
+    netif->hwaddr_len = ETH_ADDR_LEN; /* set MAC hardware address */
+    memcpy(netif->hwaddr, &br->ethaddr, ETH_ADDR_LEN); /* maximum transfer unit */
     netif->mtu = 1500; /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BCAST | kNetifFlagEtharp | kNetifFlagEthernet |

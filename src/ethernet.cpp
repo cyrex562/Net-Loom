@@ -57,12 +57,10 @@
 
 #include <lwip_snmp.h>
 
-#include <stats.h>
-
 #include <cstring>
 
 
-const struct EthAddr kEthbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const struct EthAddr ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
 
 /**
@@ -159,7 +157,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
             p->flags |= PBUF_FLAG_LLMCAST;
         }
 
-        else if (eth_addr_cmp(&ethhdr->dest, &kEthbroadcast))
+        else if (eth_addr_cmp(&ethhdr->dest, &ETH_BCAST_ADDR))
         {
             /* mark the pbuf as link-layer broadcast */
             p->flags |= PBUF_FLAG_LLBCAST;
@@ -178,7 +176,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if (pbuf_remove_header(p, next_hdr_offset))
         {
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //                    ("ethernet_input: IPv4 packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //                    ("ethernet_input: IPv4 packet dropped, too short (%d/%d)\n",
             //                     p->tot_len, next_hdr_offset));
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
             goto free_and_return;
@@ -199,7 +197,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if (pbuf_remove_header(p, next_hdr_offset))
         {
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //                    ("ethernet_input: ARP response packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //                    ("ethernet_input: ARP response packet dropped, too short (%d/%d)\n",
             //                     p->tot_len, next_hdr_offset));
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
             ETHARP_STATS_INC(etharp.lenerr);
@@ -225,7 +223,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset))
         {
             // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //      ("ethernet_input: IPv6 packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
             //          p->tot_len, next_hdr_offset));
             goto free_and_return;
         }
@@ -309,11 +307,11 @@ LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
 
     ethhdr = (struct EthHdr *)p->payload;
     ethhdr->type = eth_type_be;
-    SMEMCPY(&ethhdr->dest, dst, ETH_HWADDR_LEN);
-    SMEMCPY(&ethhdr->src, src, ETH_HWADDR_LEN);
+    SMEMCPY(&ethhdr->dest, dst, ETH_ADDR_LEN);
+    SMEMCPY(&ethhdr->src, src, ETH_ADDR_LEN);
 
     lwip_assert("netif->hwaddr_len must be 6 for ethernet_output!",
-                (netif->hwaddr_len == ETH_HWADDR_LEN));
+                (netif->hwaddr_len == ETH_ADDR_LEN));
     // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
     //      ("ethernet_output: sending packet %p\n", (uint8_t *)p));
 
