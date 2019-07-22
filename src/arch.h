@@ -70,14 +70,14 @@
 #define BYTE_ORDER LITTLE_ENDIAN
 
 /** Define random number generator function of your system */
-inline uint32_t LwipRand() {
+inline uint32_t lwip_rand() {
     return uint32_t(rand());
 }
 
 
 /** Platform specific diagnostic output.\n
  * Note the default implementation pulls in printf, which may
- * in turn pull in a lot of standard libary code. In resource-constrained 
+ * in turn pull in a lot of standard libary code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
  */
 // #define LWIP_PLATFORM_DIAG(x) do {printf x;} while(0)
@@ -92,7 +92,7 @@ inline void LwipPlatformDiag(const char* fmt, ...)
 
 /** Platform specific assertion handling.\n
  * Note the default implementation pulls in printf, fflush and abort, which may
- * in turn pull in a lot of standard libary code. In resource-constrained 
+ * in turn pull in a lot of standard libary code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
  */
 // #define LWIP_PLATFORM_ASSERT(x) do {printf("Assertion \"%s\" failed at line %d in %s\n", \

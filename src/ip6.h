@@ -52,12 +52,9 @@
  /** This is the packed version of Ip6Addr,
      used in network headers that are itself packed */
 
-struct Ip6AddrPacked {
-    uint32_t addr[4];
-};
-typedef struct Ip6AddrPacked Ip6AddrPT;
 
-constexpr auto kIp6Hlen = 40;
+
+constexpr auto IP6_HDR_LEN = 40;
 
 enum Ip6NextHdr
 {
@@ -86,8 +83,8 @@ struct Ip6Hdr {
     /** hop limit */
     uint8_t _hoplim;
     /** source and destination IP addresses */
-    Ip6AddrPT src;
-    Ip6AddrPT dest;
+    Ip6AddrWireFmt src;
+    Ip6AddrWireFmt dest;
 } ;
 
 #define IP6H_V(hdr)  ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f)
@@ -188,7 +185,7 @@ struct Ip6FragHdr
 
 
 NetIfc*ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
-const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
+
 
 LwipStatus         ip6_input(struct PacketBuffer *p, NetIfc* inp);
 LwipStatus         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
@@ -202,9 +199,6 @@ LwipStatus         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src,
 
 LwipStatus         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
 
-inline const IpAddr* ip6_netif_get_local_ip(NetIfc* netif, Ip6Addr* dest)
-{
-    return (((netif) != nullptr) ? ip6_select_source_address(netif, dest) : nullptr);
-}
+
 
 #define ip6_debug_print(p)

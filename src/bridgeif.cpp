@@ -374,7 +374,7 @@ LwipStatus bridgeif_init(NetIfc* netif)
     memcpy(netif->hwaddr, &br->ethaddr, ETH_HWADDR_LEN); /* maximum transfer unit */
     netif->mtu = 1500; /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
-    netif->flags = NETIF_FLAG_BCAST | kNetifFlagEtharp | kNetifFlagEthernet |
+    netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | kNetifFlagEthernet |
         kNetifFlagIgmp | kNetifFlagMld6 | NETIF_FLAG_LINK_UP; /*
      * For hardware/netifs that implement MAC filtering.
      * All-nodes link-local is handled by default, so we must let the hardware know
@@ -398,7 +398,7 @@ LwipStatus bridgeif_add_port(NetIfc* bridgeif, NetIfc* portif)
     lwip_assert("bridgeif != NULL", bridgeif != nullptr);
     lwip_assert("bridgeif->state != NULL", bridgeif->state != nullptr);
     lwip_assert("portif != NULL", portif != nullptr);
-    if (!(portif->flags & kNetifFlagEtharp) || !(portif->flags & kNetifFlagEthernet))
+    if (!(portif->flags & NETIF_FLAG_ETH_ARP) || !(portif->flags & kNetifFlagEthernet))
     {
         /* can only add ETHERNET/ETHARP interfaces */
         return ERR_VAL;
@@ -416,7 +416,7 @@ LwipStatus bridgeif_add_port(NetIfc* bridgeif, NetIfc* portif)
     portif->input = bridgeif_input; /* store pointer to bridge in netif */
     netif_set_client_data(portif, bridgeif_netif_client_id, port);
     /* remove ETHARP flag to prevent sending report events on netif-up */
-    netif_clear_flags(portif, kNetifFlagEtharp);
+    netif_clear_flags(portif, NETIF_FLAG_ETH_ARP);
     return ERR_OK;
 }
 

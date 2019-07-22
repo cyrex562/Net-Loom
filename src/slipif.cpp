@@ -125,7 +125,7 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
   lwip_assert("netif->state != NULL", (netif->state != nullptr));
   lwip_assert("p != NULL", (p != nullptr));
 
-//  Logf(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
+//  Logf(SLIP_DEBUG, ("slipif_output: sending %d bytes\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
 
   /* Send PacketBuffer out on the serial I/O device. */
@@ -224,7 +224,7 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
 
             LINK_STATS_INC(link.recv);
 
-//            Logf(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+//            Logf(SLIP_DEBUG, ("slipif: Got packet (%d bytes)\n", priv->recved));
             t = priv->q;
             priv->p = priv->q = nullptr;
             priv->i = priv->recved = 0;
@@ -366,7 +366,7 @@ slipif_init(NetIfc*netif)
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(uint8_t, netif->state);
 
-//  Logf(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (uint16_t)sio_num));
+//  Logf(SLIP_DEBUG, ("slipif_init: netif->num=%d\n", (uint16_t)sio_num));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));
@@ -404,7 +404,7 @@ slipif_init(NetIfc*netif)
 
   /* Create a thread to poll the serial line. */
   sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop_thread, netif,
-                 SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
+                 SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO),;
 
   return ERR_OK;
 }
@@ -443,8 +443,8 @@ slipif_process_rxqueue(NetIfc*netif)
   struct slipif_priv *priv;
   SYS_ARCH_DECL_PROTECT(old_level);
 
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   priv = (struct slipif_priv *)netif->state;
 
@@ -513,8 +513,8 @@ slipif_rxbyte_enqueue(NetIfc*netif, uint8_t data)
 void
 slipif_received_byte(NetIfc*netif, uint8_t data)
 {
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
   slipif_rxbyte_enqueue(netif, data);
 }
 
@@ -534,8 +534,8 @@ slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len)
 {
   uint8_t i;
   uint8_t *rxdata = data;
-  LWIP_ASSERT("netif != NULL", (netif != nullptr));
-  LWIP_ASSERT("netif->state != NULL", (netif->state != nullptr));
+  lwip_assert("netif != NULL", (netif != nullptr));
+  lwip_assert("netif->state != NULL", (netif->state != nullptr));
 
   for (i = 0; i < len; i++, rxdata++) {
     slipif_rxbyte_enqueue(netif, *rxdata);

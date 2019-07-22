@@ -24,12 +24,7 @@ inline uint8_t get_ip_hdr_version(void* ptr)
     return ((*static_cast<uint8_t *>(ptr)) >> 4);
 }
 
-/** pbufs passed to IP must have a ref-count of 1 as their payload pointer
-    gets altered as the packet is passed down the stack */
-inline void check_pbuf_ip_rec_cnt_for_tx(PacketBuffer* p)
-{
-    lwip_assert("p->ref == 1", (p)->ref == 1);
-}
+
 
 struct IpPcb
 {

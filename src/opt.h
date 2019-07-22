@@ -1185,6 +1185,7 @@
 #define LWIP_CALLBACK_API               0
 #endif
 #endif
+#include "lwip_debug.h"
 
 /**
  * LWIP_WND_SCALE and TCP_RCV_SCALE:
@@ -1325,7 +1326,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 #endif
 
 /**
- * LWIP_NETIF_EXT_STATUS_CALLBACK==1: Support an extended callback function 
+ * LWIP_NETIF_EXT_STATUS_CALLBACK==1: Support an extended callback function
  * for several netif related event that supports multiple subscribers.
  * @see netif_ext_status_callback
  */
@@ -2085,7 +2086,7 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * All addresses that have a scope according to the default policy (link-local
  * unicast addresses, interface-local and link-local multicast addresses) should
  * now have a zone set on them before being passed to the core API, although
- * lwIP will currently attempt to select a zone on the caller's behalf when 
+ * lwIP will currently attempt to select a zone on the caller's behalf when
  * necessary. Applications that directly assign IPv6 addresses to interfaces
  * (which is NOT recommended) must now ensure that link-local addresses carry
  * the netif's zone. See the new ip6_zone.h header file for more information and
@@ -2707,8 +2708,8 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * - src: source eth address
  * - dst: destination eth address
  * - eth_type: ethernet type to packet to be sent\n
- * 
- * 
+ *
+ *
  * Return values:
  * - &lt;0: Packet shall not contain VLAN header.
  * - 0 &lt;= return value &lt;= 0xFFFF: Packet shall contain VLAN header. Return value is prio_vid in host byte order.
@@ -2766,7 +2767,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  *                    (must be increased when options are added!)
  *
  * Options need to appended like this:
- *   LWIP_ASSERT("dhcp option overflow", *options_len_ptr + option_len + 2 <= DHCP_OPTIONS_LEN);
+ *   lwip_assert("dhcp option overflow", *options_len_ptr + option_len + 2 <= DHCP_OPTIONS_LEN);
  *   msg->options[(*options_len_ptr)++] = &lt;option_number&gt;;
  *   msg->options[(*options_len_ptr)++] = &lt;option_len&gt;;
  *   msg->options[(*options_len_ptr)++] = &lt;option_bytes&gt;;
@@ -2824,7 +2825,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  *
  * Options need to appended like this:
  *   uint8_t *options = (uint8_t *)(msg + 1);
- *   LWIP_ASSERT("dhcp option overflow", sizeof(struct dhcp6_msg) + *options_len_ptr + newoptlen <= max_len);
+ *   lwip_assert("dhcp option overflow", sizeof(struct dhcp6_msg) + *options_len_ptr + newoptlen <= max_len);
  *   options[(*options_len_ptr)++] = &lt;option_data&gt;;
  *   [...]
  */
@@ -3133,9 +3134,8 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
 /**
  * DHCP_DEBUG: Enable debugging in dhcp.c.
  */
-#if !defined DHCP_DEBUG || defined __DOXYGEN__
-#define DHCP_DEBUG                      LWIP_DBG_OFF
-#endif
+constexpr auto DHCP_DEBUG           =           LWIP_DBG_OFF;
+
 
 /**
  * AUTOIP_DEBUG: Enable debugging in autoip.c.

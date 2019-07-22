@@ -94,7 +94,7 @@ struct LnkLyrAddrOpt
 {
     uint8_t type;
     uint8_t length;
-    uint8_t addr[kNetifMaxHwaddrLen];
+    uint8_t addr[NETIF_MAX_HWADDR_LEN];
 };
 
 

@@ -262,7 +262,7 @@
   </component>
   <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="693" />
+    <option name=x value="693" />
     <option name="y" value="168" />
     <option name="width" value="2454" />
     <option name="height" value="1754" />

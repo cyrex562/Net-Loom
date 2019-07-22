@@ -150,7 +150,7 @@ TEST(PrintfTest, PlusFlag) {
   EXPECT_PRINTF("+0042", "%0++5d", 42);
 
   // '+' flag is ignored for non-numeric types.
-  EXPECT_PRINTF("x", "%+c", 'x');
+  EXPECT_PRINTF(x, "%+c", 'x');
 }
 
 TEST(PrintfTest, MinusFlag) {
@@ -165,7 +165,7 @@ TEST(PrintfTest, SpaceFlag) {
   EXPECT_PRINTF(" 0042", "%0  5d", 42);
 
   // ' ' flag is ignored for non-numeric types.
-  EXPECT_PRINTF("x", "% c", 'x');
+  EXPECT_PRINTF(x, "% c", 'x');
 }
 
 TEST(PrintfTest, HashFlag) {
@@ -200,7 +200,7 @@ TEST(PrintfTest, HashFlag) {
   EXPECT_PRINTF(buffer, "%#A", 16.0);
 
   // '#' flag is ignored for non-numeric types.
-  EXPECT_PRINTF("x", "%#c", 'x');
+  EXPECT_PRINTF(x, "%#c", 'x');
 }
 
 TEST(PrintfTest, Width) {
@@ -427,11 +427,11 @@ TEST(PrintfTest, Inf) {
 }
 
 TEST(PrintfTest, Char) {
-  EXPECT_PRINTF("x", "%c", 'x');
+  EXPECT_PRINTF(x, "%c", 'x');
   int max = std::numeric_limits<int>::max();
   EXPECT_PRINTF(fmt::format("{}", static_cast<char>(max)), "%c", max);
-  //EXPECT_PRINTF("x", "%lc", L'x');
-  EXPECT_PRINTF(L"x", L"%c", L'x');
+  //EXPECT_PRINTF(x, "%lc", L'x');
+  EXPECT_PRINTF(Lx, L"%c", L'x');
   EXPECT_PRINTF(fmt::format(L"{}", static_cast<wchar_t>(max)), L"%c", max);
 }
 

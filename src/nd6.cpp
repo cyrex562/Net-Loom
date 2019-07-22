@@ -198,7 +198,7 @@ nd6_process_autoconfig_prefix(NetIfc*netif,
       } else if (remaining_life > ND6_2HRS) {
         netif_ip6_addr_set_valid_life(netif, i, ND6_2HRS);
       }
-      LWIP_ASSERT("bad valid lifetime", !netif_ip6_addr_isstatic(netif, i));
+      lwip_assert("bad valid lifetime", !netif_ip6_addr_isstatic(netif, i));
       /* Update the preferred lifetime. No bounds checks are needed here. In
        * rare cases the advertisement may un-deprecate the address, though.
        * Deprecation is left to the timer code where it is handled anyway. */
@@ -230,7 +230,7 @@ nd6_process_autoconfig_prefix(NetIfc*netif,
    * all. As a side effect, find a free slot. Note that we cannot use
    * netif_add_ip6_address() here, as it would return ERR_OK if the address
    * already did exist, resulting in that address being given lifetimes. */
-  IP6_ADDR(&ip6addr, prefix_addr->addr[0], prefix_addr->addr[1],
+  set_ip6_addr(&ip6addr, prefix_addr->addr[0], prefix_addr->addr[1],
     netif_ip6_addr(netif, 0)->addr[2], netif_ip6_addr(netif, 0)->addr[3]);
   ip6_addr_assign_zone(&ip6addr, IP6_UNICAST, netif);
 
@@ -1069,7 +1069,7 @@ nd6_tmr(void)
         } else {
           if (!ip6_addr_life_isinfinite(life)) {
             life -= ND6_TMR_INTERVAL / 1000;
-            LWIP_ASSERT("bad valid lifetime", life != IP6_ADDR_LIFE_STATIC);
+            lwip_assert("bad valid lifetime", life != IP6_ADDR_LIFE_STATIC);
             netif_ip6_addr_set_valid_life(netif, i, life);
           }
           /* The address is still here. Update the preferred lifetime too. */
@@ -1162,7 +1162,7 @@ nd6_send_ns(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
   const Ip6Addr *src_addr;
   uint16_t lladdr_opt_len;
 
-  LWIP_ASSERT("target address is required", target_addr != nullptr);
+  lwip_assert("target address is required", target_addr != nullptr);
 
   if (!(flags & ND6_SEND_FLAG_ANY_SRC) &&
       ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
@@ -1236,7 +1236,7 @@ nd6_send_na(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
   const Ip6Addr *dest_addr;
   uint16_t lladdr_opt_len;
 
-  LWIP_ASSERT("target address is required", target_addr != nullptr);
+  lwip_assert("target address is required", target_addr != nullptr);
 
   /* Use link-local address as source address. */
   /* src_addr = netif_ip6_addr(netif, 0); */
@@ -1732,7 +1732,7 @@ nd6_find_route(const Ip6Addr *ip6addr)
   /* No on-link prefix match. Find a router that can forward the packet. */
   i = nd6_select_router(ip6addr, nullptr);
   if (i >= 0) {
-    LWIP_ASSERT("selected router must have a neighbor entry",
+    lwip_assert("selected router must have a neighbor entry",
       default_router_list[i].neighbor_entry != NULL);
     return default_router_list[i].neighbor_entry->netif;
   }
@@ -1924,14 +1924,14 @@ nd6_get_next_hop_entry(const Ip6Addr *ip6addr, NetIfc*netif)
     dst_idx = nd6_find_destination_cache_entry(ip6addr);
     if (dst_idx >= 0) {
       /* found destination entry. make it our new cached index. */
-      LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
+      lwip_assert("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
       nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
     } else {
       /* Not found. Create a new destination entry. */
       dst_idx = nd6_new_destination_cache_entry();
       if (dst_idx >= 0) {
         /* got new destination entry. make it our new cached index. */
-        LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
+        lwip_assert("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
         nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
       } else {
         /* Could not create a destination cache entry. */
@@ -2116,12 +2116,12 @@ static void
 nd6_free_q(struct nd6_q_entry *q)
 {
   struct nd6_q_entry *r;
-  LWIP_ASSERT("q != NULL", q != nullptr);
-  LWIP_ASSERT("q->p != NULL", q->p != NULL);
+  lwip_assert("q != NULL", q != nullptr);
+  lwip_assert("q->p != NULL", q->p != NULL);
   while (q) {
     r = q;
     q = q->next;
-    LWIP_ASSERT("r->p != NULL", (r->p != NULL));
+    lwip_assert("r->p != NULL", (r->p != NULL));
     pbuf_free(r->p);
     memp_free(MEMP_ND6_QUEUE, r);
   }

@@ -226,7 +226,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   uint8_t hidden_header_len;
   LwipStatus err;
 
-//  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
+//  lwip_assert("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
 
   /* We'll use a dedicated PacketBuffer for building BLE fragments.
@@ -236,7 +236,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   if (p_frag == nullptr) {
     return ERR_MEM;
   }
-//  LWIP_ASSERT("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
+//  lwip_assert("this needs a PacketBuffer in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IP6 header (with IPHC). */
   buffer = (uint8_t*)p_frag->payload;

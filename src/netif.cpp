@@ -133,7 +133,7 @@ netif_input(struct PacketBuffer *p, NetIfc*inp)
   lwip_assert("netif_input: invalid pbuf", p != nullptr);
   lwip_assert("netif_input: invalid netif", inp != nullptr);
 
-  if (inp->flags & (kNetifFlagEtharp | kNetifFlagEthernet)) {
+  if (inp->flags & (NETIF_FLAG_ETH_ARP | kNetifFlagEthernet)) {
     return ethernet_input(p, inp);
   } else
 
@@ -196,23 +196,23 @@ NetIfc* netif_add(NetIfc* netif,
     {
         lwip_assert("single netif already set", 0);
         return nullptr;
-    } // LWIP_ERROR("netif_add: invalid netif", netif != NULL, return NULL);
+    } // 
     if (netif == nullptr)
     {
         return nullptr;
-    } // LWIP_ERROR("netif_add: No init function given", init != NULL, return NULL);
+    } // 
     if (ipaddr == nullptr)
     {
 
-        ipaddr = convert_ip_addr_to_ip4_addr(get_ip4_addr_any);
+        ipaddr = convert_ip_addr_to_ip4_addr(ip4_addr_any);
     }
     if (netmask == nullptr)
     {
-        netmask = convert_ip_addr_to_ip4_addr(get_ip4_addr_any);
+        netmask = convert_ip_addr_to_ip4_addr(ip4_addr_any);
     }
     if (gw == nullptr)
     {
-        gw = convert_ip_addr_to_ip4_addr(get_ip4_addr_any);
+        gw = convert_ip_addr_to_ip4_addr(ip4_addr_any);
     } /* reset new interface configuration state */
     zerp_ip_addr_ip4(&netif->ip_addr);
     zerp_ip_addr_ip4(&netif->netmask);
@@ -372,7 +372,7 @@ netif_set_ipaddr(NetIfc*netif, const Ip4Addr *ipaddr)
 {
   IpAddr old_addr;
 
-  LWIP_ERROR("netif_set_ipaddr: invalid netif", netif != nullptr, return);
+  
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == nullptr) {
@@ -395,7 +395,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
 {
   /* address is actually being changed? */
   if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
-    LWIP_ASSERT("invalid pointer", old_nm != nullptr);
+    lwip_assert("invalid pointer", old_nm != nullptr);
     ip_addr_copy(*old_nm, *netif_ip_netmask4(netif));
 
     mib2_remove_route_ip4(0, netif);
@@ -403,7 +403,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->netmask), netmask);
     IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
     mib2_add_route_ip4(0, netif);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_netmask(netif)),
 //                ip4_addr2_16(netif_ip4_netmask(netif)),
@@ -433,7 +433,7 @@ netif_set_netmask(NetIfc*netif, const Ip4Addr *netmask)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_netmask: invalid netif", netif != nullptr, return);
+  
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (netmask == nullptr) {
@@ -455,13 +455,13 @@ netif_do_set_gw(NetIfc*netif, const Ip4Addr *gw, IpAddr *old_gw)
   /* address is actually being changed? */
   if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
 
-    LWIP_ASSERT("invalid pointer", old_gw != nullptr);
+    lwip_assert("invalid pointer", old_gw != nullptr);
     ip_addr_copy(*old_gw, *netif_ip_gw4(netif));
 
 
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_gw(netif)),
 //                ip4_addr2_16(netif_ip4_gw(netif)),
@@ -490,7 +490,7 @@ netif_set_gw(NetIfc*netif, const Ip4Addr *gw)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_gw: invalid netif", netif != nullptr, return);
+  
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (gw == nullptr) {
@@ -674,7 +674,7 @@ netif_set_up(NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_up: invalid netif", netif != nullptr, return);
+  
 
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif_set_flags(netif, NETIF_FLAG_UP);
@@ -716,7 +716,7 @@ netif_issue_reports(NetIfc*netif, uint8_t report_type)
       !ip4_addr_isany_val(*get_net_ifc_ip4_addr(netif))) {
 
     /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */
-    if (netif->flags & (kNetifFlagEtharp)) {
+    if (netif->flags & (NETIF_FLAG_ETH_ARP)) {
       etharp_gratuitous(netif);
     }
 
@@ -745,7 +745,7 @@ netif_set_down(NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_down: invalid netif", netif != nullptr, return);
+  
 
   if (netif->flags & NETIF_FLAG_UP) {
 
@@ -760,7 +760,7 @@ netif_set_down(NetIfc*netif)
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
 
-    if (netif->flags & kNetifFlagEtharp) {
+    if (netif->flags & NETIF_FLAG_ETH_ARP) {
       etharp_cleanup_netif(netif);
     }
 
@@ -811,7 +811,7 @@ netif_set_link_up(NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_link_up: invalid netif", netif != nullptr, return);
+  
 
   if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
     netif_set_flags(netif, NETIF_FLAG_LINK_UP);
@@ -842,7 +842,7 @@ netif_set_link_down(NetIfc*netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ERROR("netif_set_link_down: invalid netif", netif != nullptr, return);
+  
 
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif_clear_flags(netif, NETIF_FLAG_LINK_UP);
@@ -901,8 +901,8 @@ netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
 
   SYS_ARCH_DECL_PROTECT(lev);
 
-  LWIP_ASSERT("netif_loop_output: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_loop_output: invalid PacketBuffer", p != nullptr);
+  lwip_assert("netif_loop_output: invalid netif", netif != nullptr);
+  lwip_assert("netif_loop_output: invalid PacketBuffer", p != nullptr);
 
   /* Allocate a new PacketBuffer */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
@@ -945,7 +945,7 @@ netif_loop_output(NetIfc*netif, struct PacketBuffer *p)
 
   SYS_ARCH_PROTECT(lev);
   if (netif->loop_first != nullptr) {
-    LWIP_ASSERT("if first != NULL, last must also be != NULL", netif->loop_last != nullptr);
+    lwip_assert("if first != NULL, last must also be != NULL", netif->loop_last != nullptr);
     netif->loop_last->next = r;
     netif->loop_last = last;
   } else {
@@ -995,7 +995,7 @@ netif_poll(NetIfc*netif)
 
   SYS_ARCH_DECL_PROTECT(lev);
 
-  LWIP_ASSERT("netif_poll: invalid netif", netif != nullptr);
+  lwip_assert("netif_poll: invalid netif", netif != nullptr);
 
   /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
   SYS_ARCH_PROTECT(lev);
@@ -1007,7 +1007,7 @@ netif_poll(NetIfc*netif)
 
     in = in_end = netif->loop_first;
     while (in_end->len != in_end->tot_len) {
-      LWIP_ASSERT("bogus PacketBuffer: len != tot_len but next == NULL!", in_end->next != nullptr);
+      lwip_assert("bogus PacketBuffer: len != tot_len but next == NULL!", in_end->next != nullptr);
       in_end = in_end->next;
 
       clen++;
@@ -1071,8 +1071,8 @@ netif_ip6_addr_set(NetIfc*netif, int8_t addr_idx, const Ip6Addr *addr6)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_ip6_addr_set: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_ip6_addr_set: invalid addr6", addr6 != nullptr);
+  lwip_assert("netif_ip6_addr_set: invalid netif", netif != nullptr);
+  lwip_assert("netif_ip6_addr_set: invalid addr6", addr6 != nullptr);
 
   netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
                            addr6->addr[2], addr6->addr[3]);
@@ -1094,8 +1094,8 @@ netif_ip6_addr_set_parts(NetIfc*netif, int8_t addr_idx, uint32_t i0, uint32_t i1
   IpAddr old_addr;
   IpAddr new_ipaddr;
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("netif != NULL", netif != nullptr);
-  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+  lwip_assert("netif != NULL", netif != nullptr);
+  lwip_assert("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
   ip6_addr_copy(*ip_2_ip6(&old_addr), *netif_ip6_addr(netif, addr_idx));
   IpAdderSetTypeVal(old_addr, IPADDR_TYPE_V6);
@@ -1148,8 +1148,8 @@ netif_ip6_addr_set_state(NetIfc*netif, int8_t addr_idx, uint8_t state)
 {
   uint8_t old_state;
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("netif != NULL", netif != nullptr);
-  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+  lwip_assert("netif != NULL", netif != nullptr);
+  lwip_assert("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
   old_state = netif_ip6_addr_state(netif, addr_idx);
   /* state is actually being changed? */
@@ -1217,8 +1217,8 @@ netif_get_ip6_addr_match(NetIfc*netif, const Ip6Addr *ip6addr)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_get_ip6_addr_match: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != nullptr);
+  lwip_assert("netif_get_ip6_addr_match: invalid netif", netif != nullptr);
+  lwip_assert("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != nullptr);
 
   if (ip6_addr_has_zone(ip6addr) && !LwipIp6Addrest_zone(ip6addr, netif)) {
     return -1; /* wrong zone, no match */
@@ -1249,10 +1249,10 @@ netif_create_ip6_linklocal_address(NetIfc*netif, uint8_t from_mac_48bit)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_create_ip6_linklocal_address: invalid netif", netif != nullptr);
+  lwip_assert("netif_create_ip6_linklocal_address: invalid netif", netif != nullptr);
 
   /* Link-local prefix. */
-  ip_2_ip6(&netif->ip6_addr[0])->addr[0] = PP_HTONL(0xfe800000ul);
+  ip_2_ip6(&netif->ip6_addr[0])->addr[0] = pp_htonl(0xfe800000ul);
   ip_2_ip6(&netif->ip6_addr[0])->addr[1] = 0;
 
   /* Generate interface ID. */
@@ -1314,8 +1314,8 @@ netif_add_ip6_address(NetIfc*netif, const Ip6Addr *ip6addr, int8_t *chosen_idx)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  LWIP_ASSERT("netif_add_ip6_address: invalid netif", netif != nullptr);
-  LWIP_ASSERT("netif_add_ip6_address: invalid ip6addr", ip6addr != nullptr);
+  lwip_assert("netif_add_ip6_address: invalid netif", netif != nullptr);
+  lwip_assert("netif_add_ip6_address: invalid ip6addr", ip6addr != nullptr);
 
   i = netif_get_ip6_addr_match(netif, ip6addr);
   if (i >= 0) {
@@ -1478,8 +1478,8 @@ void
 netif_add_ext_callback(netif_ext_callback_t *callback, netif_ext_callback_fn fn)
 {
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("callback must be != NULL", callback != nullptr);
-  LWIP_ASSERT("fn must be != NULL", fn != nullptr);
+  lwip_assert("callback must be != NULL", callback != nullptr);
+  lwip_assert("fn must be != NULL", fn != nullptr);
 
   callback->callback_fn = fn;
   callback->next        = ext_callback;
@@ -1497,7 +1497,7 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
   netif_ext_callback_t *last, *iter;
 
   LWIP_ASSERT_CORE_LOCKED();
-  LWIP_ASSERT("callback must be != NULL", callback != nullptr);
+  lwip_assert("callback must be != NULL", callback != nullptr);
 
   if (ext_callback == nullptr) {
     return;
@@ -1509,7 +1509,7 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
     last = ext_callback;
     for (iter = ext_callback->next; iter != nullptr; last = iter, iter = iter->next) {
       if (iter == callback) {
-        LWIP_ASSERT("last != NULL", last != nullptr);
+        lwip_assert("last != NULL", last != nullptr);
         last->next = callback->next;
         callback->next = nullptr;
         return;
@@ -1529,7 +1529,7 @@ netif_invoke_ext_callback(NetIfc*netif, netif_nsc_reason_t reason, const netif_e
 {
   netif_ext_callback_t *callback = ext_callback;
 
-  LWIP_ASSERT("netif must be != NULL", netif != nullptr);
+  lwip_assert("netif must be != NULL", netif != nullptr);
 
   while (callback != nullptr) {
     callback->callback_fn(netif, reason, args);
@@ -1537,3 +1537,105 @@ netif_invoke_ext_callback(NetIfc*netif, netif_nsc_reason_t reason, const netif_e
   }
 }
 
+
+/**
+ * @ingroup ip6
+ * Select the best IPv6 source address for a given destination IPv6 address.
+ *
+ * This implementation follows RFC 6724 Sec. 5 to the following extent:
+ * - Rules 1, 2, 3: fully implemented
+ * - Rules 4, 5, 5.5: not applicable
+ * - Rule 6: not implemented
+ * - Rule 7: not applicable
+ * - Rule 8: limited to "prefer /64 subnet match over non-match"
+ *
+ * For Rule 2, we deliberately deviate from RFC 6724 Sec. 3.1 by considering
+ * ULAs to be of smaller scope than global addresses, to avoid that a preferred
+ * ULA is picked over a deprecated global address when given a global address
+ * as destination, as that would likely result in broken two-way communication.
+ *
+ * As long as temporary addresses are not supported (as used in Rule 7), a
+ * proper implementation of Rule 8 would obviate the need to implement Rule 6.
+ *
+ * @param netif the netif on which to send a packet
+ * @param dest the destination we are trying to reach (possibly not properly
+ *             zoned)
+ * @return the most suitable source address to use, or NULL if no suitable
+ *         source address is found
+ */
+const IpAddr *
+ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
+{
+  const IpAddr *best_addr;
+  const Ip6Addr *cand_addr;
+  int8_t dest_scope, cand_scope;
+  int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
+  uint8_t i, cand_pref, cand_bits;
+  uint8_t best_pref = 0;
+  uint8_t best_bits = 0;
+
+  /* Start by determining the scope of the given destination address. These
+   * tests are hopefully (roughly) in order of likeliness to match. */
+  if (ip6_addr_isglobal(dest)) {
+    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
+  } else if (ip6_addr_islinklocal(dest) || ip6_addr_isloopback(dest)) {
+    dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
+  } else if (ip6_addr_isuniquelocal(dest)) {
+    dest_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
+  } else if (ip6_addr_ismulticast(dest)) {
+    dest_scope = ip6_addr_multicast_scope(dest);
+  } else if (ip6_addr_issitelocal(dest)) {
+    dest_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
+  } else {
+    /* no match, consider scope global */
+    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
+  }
+
+  best_addr = nullptr;
+
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    /* Consider only valid (= preferred and deprecated) addresses. */
+    if (!ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
+      continue;
+    }
+    /* Determine the scope of this candidate address. Same ordering idea. */
+    cand_addr = netif_ip6_addr(netif, i);
+    if (ip6_addr_isglobal(cand_addr)) {
+      cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
+    } else if (ip6_addr_islinklocal(cand_addr)) {
+      cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
+    } else if (ip6_addr_isuniquelocal(cand_addr)) {
+      cand_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
+    } else if (ip6_addr_issitelocal(cand_addr)) {
+      cand_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
+    } else {
+      /* no match, treat as low-priority global scope */
+      cand_scope = IP6_MULTICAST_SCOPE_RESERVEDF;
+    }
+    cand_pref = ip6_addr_ispreferred(netif_ip6_addr_state(netif, i));
+    /* @todo compute the actual common bits, for longest matching prefix. */
+    /* We cannot count on the destination address having a proper zone
+     * assignment, so do not compare zones in this case. */
+    cand_bits = ip6_addr_netcmp_zoneless(cand_addr, dest); /* just 1 or 0 for now */
+    if (cand_bits && ip6_addr_nethostcmp(cand_addr, dest)) {
+      return netif_ip_addr6(netif, i); /* Rule 1 */
+    }
+    if ((best_addr == nullptr) || /* no alternative yet */
+        ((cand_scope < best_scope) && (cand_scope >= dest_scope)) ||
+        ((cand_scope > best_scope) && (best_scope < dest_scope)) || /* Rule 2 */
+        ((cand_scope == best_scope) && ((cand_pref > best_pref) || /* Rule 3 */
+        ((cand_pref == best_pref) && (cand_bits > best_bits))))) { /* Rule 8 */
+      /* We found a new "winning" candidate. */
+      best_addr = netif_ip_addr6(netif, i);
+      best_scope = cand_scope;
+      best_pref = cand_pref;
+      best_bits = cand_bits;
+    }
+  }
+
+  return best_addr; /* may be NULL */
+}
+
+//
+// END OF FILE
+//

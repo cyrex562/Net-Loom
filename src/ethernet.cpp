@@ -170,7 +170,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
     {
         /* IP packet? */
     case pp_htons(ETHTYPE_IP):
-        if (!(netif->flags & kNetifFlagEtharp))
+        if (!(netif->flags & NETIF_FLAG_ETH_ARP))
         {
             goto free_and_return;
         }
@@ -178,7 +178,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if (pbuf_remove_header(p, next_hdr_offset))
         {
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //                    ("ethernet_input: IPv4 packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //                    ("ethernet_input: IPv4 packet dropped, too short (%d/%d)\n",
             //                     p->tot_len, next_hdr_offset));
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
             goto free_and_return;
@@ -191,7 +191,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         break;
 
     case pp_htons(ETHTYPE_ARP):
-        if (!(netif->flags & kNetifFlagEtharp))
+        if (!(netif->flags & NETIF_FLAG_ETH_ARP))
         {
             goto free_and_return;
         }
@@ -199,7 +199,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if (pbuf_remove_header(p, next_hdr_offset))
         {
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //                    ("ethernet_input: ARP response packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //                    ("ethernet_input: ARP response packet dropped, too short (%d/%d)\n",
             //                     p->tot_len, next_hdr_offset));
             //        Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
             ETHARP_STATS_INC(etharp.lenerr);
@@ -225,7 +225,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
         if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset))
         {
             // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //      ("ethernet_input: IPv6 packet dropped, too short (%"U16_F"/%"U16_F")\n",
+            //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
             //          p->tot_len, next_hdr_offset));
             goto free_and_return;
         }
@@ -284,7 +284,7 @@ LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
     // {
     //     struct eth_vlan_hdr* vlanhdr;
     //
-    //     LWIP_ASSERT("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
+    //     lwip_assert("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
     //
     //     if (pbuf_add_header(p, SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) != 0)
     //     {

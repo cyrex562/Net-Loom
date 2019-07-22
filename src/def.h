@@ -69,7 +69,7 @@ uint16_t lwip_ntohs(uint16_t n);
 
 constexpr uint8_t kLwipMacAddrBase[] = { 0x00,0x01,0x02,0x03,0x04,0x5 };
 
-constexpr auto kNetifMaxHwaddrLen = 6;
+constexpr unsigned int NETIF_MAX_HWADDR_LEN = 6;
 
 // typedef int64_t LONGLONG;
 

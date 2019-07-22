@@ -57,16 +57,17 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
     uint8_t code;
     struct IcmpEchoHdr* iecho;
     const Ip4Addr* src;
-    const struct Ip4Hdr* iphdr_in = ip4_current_header();
-    uint16_t hlen = IPH_HL_BYTES(iphdr_in);
-    if (hlen < kIp4HdrLen)
+    // todo: get current header
+    const struct Ip4Hdr* iphdr_in = nullptr;
+    uint16_t hlen = get_ip4_hdr_hdr_len_bytes(iphdr_in);
+    if (hlen < IP4_HDR_LEN)
     {
         //    Logf(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
         goto lenerr;
     }
     if (p->len < sizeof(uint16_t) * 2)
     {
-        //    Logf(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
+        //    Logf(ICMP_DEBUG, ("icmp_input: short ICMP (%d bytes) received\n", p->tot_len));
         goto lenerr;
     }
     type = *static_cast<uint8_t *>(p->payload);
@@ -97,7 +98,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             Logf(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
             goto lenerr;
         }
-        IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_ICMP)
+        is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP)
         {
             if (inet_chksum_pbuf(p) != 0)
             {
@@ -177,7 +178,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             copy_ip4_addr(&iphdr->src, src);
             copy_ip4_addr(&iphdr->dest, ip4_current_src_addr());
             IcmphTypeSet(iecho, ICMP_ER);
-            IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP)
+            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP)
             {
                 /* adjust the checksum */
                 if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
@@ -195,7 +196,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             } /* Set the correct TTL and recalculate the header checksum. */
             IPH_TTL_SET(iphdr, ICMP_TTL);
             IPH_CHKSUM_SET(iphdr, 0);
-            IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_IP)
+            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP)
             {
                 IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, hlen));
             } /* increase number of messages attempted to send */
@@ -287,7 +288,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
     NetIfc* netif; /* increase number of messages attempted to send */
     /* ICMP header + IP header + 8 bytes of data */
     q = pbuf_alloc(PBUF_IP,
-                   sizeof(struct IcmpEchoHdr) + kIp4HdrLen + kIcmpDestUnreachDatasize,
+                   sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN + kIcmpDestUnreachDatasize,
                    PBUF_RAM);
     if (q == nullptr)
     {
@@ -296,7 +297,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
         return;
     }
     lwip_assert("check that first PacketBuffer can hold icmp message",
-                (q->len >= (sizeof(struct IcmpEchoHdr) + kIp4HdrLen +
+                (q->len >= (sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
                     kIcmpDestUnreachDatasize)));
     iphdr = (struct Ip4Hdr *)p->payload;
     Logf(ICMP_DEBUG, ("icmp_time_exceeded from "));
@@ -310,14 +311,14 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
     icmphdr->seqno = 0; /* copy fields from original packet */
     SMEMCPY((uint8_t *)q->payload + sizeof(struct IcmpEchoHdr),
             (uint8_t *)p->payload,
-            kIp4HdrLen + kIcmpDestUnreachDatasize);
+            IP4_HDR_LEN + kIcmpDestUnreachDatasize);
     copy_ip4_addr(&iphdr_src, &iphdr->src);
     netif = ip4_route(&iphdr_src);
     if (netif != nullptr)
     {
         /* calculate checksum */
         icmphdr->chksum = 0;
-        IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_ICMP)
+        is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_ICMP)
         {
             icmphdr->chksum = inet_chksum(icmphdr, q->len);
         }

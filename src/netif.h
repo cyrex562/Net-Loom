@@ -53,7 +53,7 @@ enum NetIfcFlag : uint8_t
     /** If set, the netif is an ethernet device using ARP.
     * Set by the netif driver in its init function.
     * Used to check input packet types and use of DHCP. */
-    kNetifFlagEtharp = 0x08U,
+    NETIF_FLAG_ETH_ARP = 0x08U,
     /** If set, the netif is an ethernet device. It might not use
     * ARP or TCP/IP if it is used for PPPoE only.
     */
@@ -247,11 +247,11 @@ struct NetIfc
     uint16_t chksum_flags; /** maximum transfer unit (in bytes) */
     uint16_t mtu; /** maximum transfer unit (in bytes), updated by RA */
     uint16_t mtu6; /** link level hardware address of this interface */
-    uint8_t hwaddr[kNetifMaxHwaddrLen]; /** number of bytes used in hwaddr */
+    uint8_t hwaddr[NETIF_MAX_HWADDR_LEN]; /** number of bytes used in hwaddr */
     uint8_t hwaddr_len; /** flags (@see @ref netif_flags) */
     uint8_t flags; /** descriptive abbreviation */
     char name[2];
-    /** number of this interface. Used for @ref if_api and @ref netifapi_netif, 
+    /** number of this interface. Used for @ref if_api and @ref netifapi_netif,
          * as well as for IPv6 zones */
     uint8_t num; /** is this netif enabled for IPv6 autoconfiguration */
     uint8_t ip6_autoconfig_enabled;
@@ -299,7 +299,7 @@ inline void NetifSetChecksumCtrl(NetIfc* netif, const uint16_t chksumflags)
 //
 //
 //
-inline bool IfNetifChecksumEnabled(NetIfc* netif, uint16_t chksumflag)
+inline bool is_netif_checksum_enabled(NetIfc* netif, uint16_t chksumflag)
 {
     return netif == nullptr || (netif->chksum_flags & chksumflag) != 0;
 }
@@ -377,7 +377,7 @@ inline IpAddr* netif_ip_addr4(NetIfc* netif)
     return static_cast<IpAddr *>(&((netif)->ip_addr));
 }
 
-    
+
 /** @ingroup netif_ip4 */
 #define netif_ip_netmask4(netif) ((const IpAddr*)&((netif)->netmask))
 /** @ingroup netif_ip4 */
@@ -476,7 +476,7 @@ char * netif_index_to_name(uint8_t idx, char *name);
 struct NetIfc* netif_get_by_index(uint8_t idx);
 
 /* Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 (internal index is 0..254)*/
-#define netif_get_index(netif)      ((uint8_t)((netif)->num + 1))
+inline uint8_t netif_get_index(NetIfc* netif) { return uint8_t(netif->num + 1); }
 #define NETIF_NO_INDEX              (0)
 
 /**
@@ -612,7 +612,31 @@ inline void ip6_addr_assign_zone(Ip6Addr* ip6addr,
         (ip6_addr_set_zone((ip6addr), netif_get_index(netif)));
     else
         (ip6_addr_set_zone((ip6addr), 0));
-} 
+}
+
+
+const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
+
+inline IpAddr* ip4_netif_get_local_ip(NetIfc* netif)
+{
+    return netif != nullptr ? netif_ip_addr4(netif) : nullptr;
+}
+
+inline const IpAddr* ip6_netif_get_local_ip(NetIfc* netif, Ip6Addr* dest)
+{
+    return (((netif) != nullptr) ? ip6_select_source_address(netif, dest) : nullptr);
+}
+
+
+inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
+{
+    const auto selected_netif = ip6_route((src), (dest));
+    if (selected_netif != nullptr)
+    {
+        ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif);
+    }
+}
+
 
 //
 // END OF FILE

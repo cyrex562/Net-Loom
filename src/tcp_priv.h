@@ -35,14 +35,22 @@
  *
  */
 #pragma once
-#include "opt.h"
-#include "tcp.h"
-#include "packet_buffer.h"
-#include "ip.h"
 #include "icmp.h"
-#include "lwip_error.h"
+
+#include "ip.h"
+
 #include "ip6.h"
+
 #include "ip6_addr.h"
+
+#include "lwip_error.h"
+
+#include "opt.h"
+
+#include "packet_buffer.h"
+
+#include "tcp.h"
+
 #include "tcp.h"
 
 /* Functions for interfacing with TCP: */
@@ -66,17 +74,17 @@ void             tcp_txnow   (void);
 /* Only used by IP to pass a TCP segment to TCP: */
 void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
 /* Used within the TCP code only: */
-struct TcpProtoCtrlBlk * tcp_alloc   (uint8_t prio);
-void             tcp_free    (struct TcpProtoCtrlBlk *pcb);
-void             tcp_abandon (struct TcpProtoCtrlBlk *pcb, int reset);
-LwipStatus            tcp_send_empty_ack(struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_rexmit  (struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_rexmit_rto_prepare(struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_rto_commit(struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_rto  (struct TcpProtoCtrlBlk *pcb);
-void             tcp_rexmit_fast (struct TcpProtoCtrlBlk *pcb);
-uint32_t            tcp_update_rcv_ann_wnd(struct TcpProtoCtrlBlk *pcb);
-LwipStatus            tcp_process_refused_data(struct TcpProtoCtrlBlk *pcb);
+struct TcpPcb * tcp_alloc   (uint8_t prio);
+void             tcp_free    (struct TcpPcb *pcb);
+void             tcp_abandon (struct TcpPcb *pcb, int reset);
+LwipStatus            tcp_send_empty_ack(struct TcpPcb *pcb);
+LwipStatus            tcp_rexmit  (struct TcpPcb *pcb);
+LwipStatus            tcp_rexmit_rto_prepare(struct TcpPcb *pcb);
+void             tcp_rexmit_rto_commit(struct TcpPcb *pcb);
+void             tcp_rexmit_rto  (struct TcpPcb *pcb);
+void             tcp_rexmit_fast (struct TcpPcb *pcb);
+uint32_t            tcp_update_rcv_ann_wnd(struct TcpPcb *pcb);
+LwipStatus            tcp_process_refused_data(struct TcpPcb *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
@@ -260,30 +268,30 @@ struct tcp_seg {
 
 #define TCPWNDSIZE_F       U32_F
 #define TCPWND_MAX         0xFFFFFFFFU
-#define TCPWND_CHECK16(x)  LWIP_ASSERT("window size > 0xFFFF", (x) <= 0xFFFF)
+#define TCPWND_CHECK16(x)  lwip_assert("window size > 0xFFFF", (x) <= 0xFFFF)
 #define TCPWND_MIN16(x)    ((uint16_t)LWIP_MIN((x), 0xFFFF))
 
 
 /* Global variables: */
-extern struct TcpProtoCtrlBlk *tcp_input_pcb;
+extern struct TcpPcb *tcp_input_pcb;
 extern uint32_t tcp_ticks;
 extern uint8_t tcp_active_pcbs_changed;
 
 /* The TCP PCB lists. */
 union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
-  struct tcp_pcb_listen *listen_pcbs;
-  struct TcpProtoCtrlBlk *pcbs;
+  struct TcpPcbListen *listen_pcbs;
+  struct TcpPcb *pcbs;
 };
-extern struct TcpProtoCtrlBlk *tcp_bound_pcbs;
+extern struct TcpPcb *tcp_bound_pcbs;
 extern union tcp_listen_pcbs_t tcp_listen_pcbs;
-extern struct TcpProtoCtrlBlk *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
+extern struct TcpPcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               state in which they accept or send
               data. */
-extern struct TcpProtoCtrlBlk *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
+extern struct TcpPcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 #define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
 #define NUM_TCP_PCB_LISTS               4
-extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
+extern struct TcpPcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 /* Axioms about the above lists:
    1) Every TCP PCB that is not CLOSED is in one of the lists.
@@ -294,46 +302,58 @@ extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 /* Define two macros, TCP_REG and TCP_RMV that registers a TCP PCB
    with a PCB list or removes a PCB from a list, respectively. */
 
-
-#define TCP_REG(pcbs, npcb)                        \
-  do {                                             \
-    (npcb)->next = *pcbs;                          \
-    *(pcbs) = (npcb);                              \
-    tcp_timer_needed();                            \
-  } while (0)
-
-#define TCP_RMV(pcbs, npcb)                        \
-  do {                                             \
-    if(*(pcbs) == (npcb)) {                        \
-      (*(pcbs)) = (*pcbs)->next;                   \
-    }                                              \
-    else {                                         \
-      struct TcpProtoCtrlBlk *tcp_tmp_pcb;                 \
-      for (tcp_tmp_pcb = *pcbs;                    \
-          tcp_tmp_pcb != NULL;                     \
-          tcp_tmp_pcb = tcp_tmp_pcb->next) {       \
-        if(tcp_tmp_pcb->next == (npcb)) {          \
-          tcp_tmp_pcb->next = (npcb)->next;        \
-          break;                                   \
-        }                                          \
-      }                                            \
-    }                                              \
-    (npcb)->next = NULL;                           \
-  } while(0)
+/** External function (implemented in timers.c), called when TCP detects
+ * that a timer is needed (i.e. active- or time-wait-pcb found). */
+void tcp_timer_needed(void);
 
 
+//
+//
+//
+inline void remove_tcp_pcb_from_list(TcpPcb** pcbs, TcpPcb* npcb)
+{
+    if (*(pcbs) == (npcb))
+    {
+        (*(pcbs)) = (*pcbs)->next;
+    }
+    else
+    {
+        for (auto tcp_tmp_pcb = *pcbs;
+             tcp_tmp_pcb != nullptr;
+             tcp_tmp_pcb = tcp_tmp_pcb->next)
+        {
+            if (tcp_tmp_pcb->next == (npcb))
+            {
+                tcp_tmp_pcb->next = (npcb)->next;
+                break;
+            }
+        }
+    }
+    (npcb)->next = nullptr;
+}
 
-#define TCP_REG_ACTIVE(npcb)                       \
-  do {                                             \
-    TCP_REG(&tcp_active_pcbs, npcb);               \
-    tcp_active_pcbs_changed = 1;                   \
-  } while (0)
+inline void reg_tcp_pcb(TcpPcb** pcbs, TcpPcb* npcb)
+{
+    (npcb)->next = *pcbs;
+    *(pcbs) = (npcb);
+    tcp_timer_needed();
+}
 
-#define TCP_RMV_ACTIVE(npcb)                       \
-  do {                                             \
-    TCP_RMV(&tcp_active_pcbs, npcb);               \
-    tcp_active_pcbs_changed = 1;                   \
-  } while (0)
+inline unsigned int reg_active_tcp_pcb(TcpPcb* npcb)
+{
+    auto tcp_active_pcbs_changed = 0;
+    reg_tcp_pcb(&tcp_active_pcbs, npcb);
+    tcp_active_pcbs_changed = 1;
+    return tcp_active_pcbs_changed;
+}
+
+inline unsigned int remove_active_tcp_pcb(TcpPcb* npcb)
+{
+    auto tcp_active_pcbs_changed = 0;
+    remove_tcp_pcb_from_list(&tcp_active_pcbs, npcb);
+    tcp_active_pcbs_changed = 1;
+    return tcp_active_pcbs_changed;
+}
 
 #define TCP_PCB_REMOVE_ACTIVE(pcb)                 \
   do {                                             \
@@ -343,9 +363,9 @@ extern struct TcpProtoCtrlBlk ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 
 /* Internal functions: */
-struct TcpProtoCtrlBlk *tcp_pcb_copy(struct TcpProtoCtrlBlk *pcb);
-void tcp_pcb_purge(struct TcpProtoCtrlBlk *pcb);
-void tcp_pcb_remove(struct TcpProtoCtrlBlk **pcblist, struct TcpProtoCtrlBlk *pcb);
+struct TcpPcb *tcp_pcb_copy(struct TcpPcb *pcb);
+void tcp_pcb_purge(struct TcpPcb *pcb);
+void tcp_pcb_remove(struct TcpPcb **pcblist, struct TcpPcb *pcb);
 
 void tcp_segs_free(struct tcp_seg *seg);
 void tcp_seg_free(struct tcp_seg *seg);
@@ -365,20 +385,20 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   tcp_set_flags(pcb, TF_ACK_NOW)
 
-LwipStatus tcp_send_fin(struct TcpProtoCtrlBlk *pcb);
-LwipStatus tcp_enqueue_flags(struct TcpProtoCtrlBlk *pcb, uint8_t flags);
+LwipStatus tcp_send_fin(struct TcpPcb *pcb);
+LwipStatus tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags);
 
-void tcp_rexmit_seg(struct TcpProtoCtrlBlk *pcb, struct tcp_seg *seg);
+void tcp_rexmit_seg(struct TcpPcb *pcb, struct tcp_seg *seg);
 
-void tcp_rst(const struct TcpProtoCtrlBlk* pcb, uint32_t seqno, uint32_t ackno,
+void tcp_rst(const struct TcpPcb* pcb, uint32_t seqno, uint32_t ackno,
        const IpAddr *local_ip, const IpAddr *remote_ip,
        uint16_t local_port, uint16_t remote_port);
 
-uint32_t tcp_next_iss(struct TcpProtoCtrlBlk *pcb);
+uint32_t tcp_next_iss(struct TcpPcb *pcb);
 
-LwipStatus tcp_keepalive(struct TcpProtoCtrlBlk *pcb);
-LwipStatus tcp_split_unsent_seg(struct TcpProtoCtrlBlk *pcb, uint16_t split);
-LwipStatus tcp_zero_window_probe(struct TcpProtoCtrlBlk *pcb);
+LwipStatus tcp_keepalive(struct TcpPcb *pcb);
+LwipStatus tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split);
+LwipStatus tcp_zero_window_probe(struct TcpPcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
@@ -386,7 +406,7 @@ uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 
-LwipStatus tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBuffer *p, LwipStatus err);
+LwipStatus tcp_recv_null(void *arg, struct TcpPcb *pcb, struct PacketBuffer *p, LwipStatus err);
 
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)
@@ -395,14 +415,12 @@ LwipStatus tcp_recv_null(void *arg, struct TcpProtoCtrlBlk *pcb, struct PacketBu
 #  define tcp_pcbs_sane() 1
 
 
-/** External function (implemented in timers.c), called when TCP detects
- * that a timer is needed (i.e. active- or time-wait-pcb found). */
-void tcp_timer_needed(void);
+
 
 void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
 
-void tcp_free_ooseq(struct TcpProtoCtrlBlk *pcb);
+void tcp_free_ooseq(struct TcpPcb *pcb);
 
 
-LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct TcpProtoCtrlBlk *cpcb);
+LwipStatus tcp_ext_arg_invoke_callbacks_passive_open(struct TcpPcbListen *lpcb, struct TcpPcb *cpcb);
 

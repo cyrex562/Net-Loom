@@ -319,12 +319,12 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(uint8_t *token, size_t le
 
   /* should be safe to access *sc now */
   if (sc->sc_state < PPPOE_STATE_PADI_SENT || sc->sc_state >= PPPOE_STATE_SESSION) {
-    PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": host unique tag found, but it belongs to a connection in state %d\n",
+    PPPDEBUG(LOG_DEBUG, ("%c%c%d: host unique tag found, but it belongs to a connection in state %d\n",
       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, sc->sc_state));
     return nullptr;
   }
   if (sc->sc_ethif != rcvif) {
-    PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": wrong interface, not accepting host unique\n",
+    PPPDEBUG(LOG_DEBUG, ("%c%c%d: wrong interface, not accepting host unique\n",
       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
     return nullptr;
   }
@@ -453,7 +453,7 @@ pppoe_disc_input(NetIfc*netif, struct PacketBuffer *pb)
       strncpy(error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
       error_tmp[error_len] = '\0';
       if (sc) {
-        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": %s: %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err_msg, error_tmp));
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: %s: %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err_msg, error_tmp));
       } else {
         PPPDEBUG(LOG_DEBUG, ("pppoe: %s: %s\n", err_msg, error_tmp));
       }
@@ -523,7 +523,7 @@ breakbreak:;
         goto done;
       }
       if (sc->sc_state != PPPOE_STATE_PADO_SENT) {
-        PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": received unexpected PADR\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+        PPPDEBUG(LOG_DEBUG, ("%c%c%d: received unexpected PADR\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
         goto done;
       }
       if (hunique) {
@@ -551,7 +551,7 @@ breakbreak:;
         goto done;
       }
       if (sc->sc_state != PPPOE_STATE_PADI_SENT) {
-        PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": received unexpected PADO\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+        PPPDEBUG(LOG_DEBUG, ("%c%c%d: received unexpected PADO\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
         goto done;
       }
       if (ac_cookie) {
@@ -563,7 +563,7 @@ breakbreak:;
       sc->sc_padr_retried = 0;
       sc->sc_state = PPPOE_STATE_PADR_SENT;
       if ((err = pppoe_send_padr(sc)) != 0) {
-        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
       sys_timeout_debug((5*1000) * (1 + sc->sc_padr_retried), pppoe_timeout, sc, "pppoe_timeout");
@@ -574,7 +574,7 @@ breakbreak:;
       }
       sc->sc_session = session;
       sys_untimeout(pppoe_timeout, sc);
-      PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": session 0x%x connected\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, session));
+      PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: session 0x%x connected\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, session));
       sc->sc_state = PPPOE_STATE_SESSION;
       ppp_start(sc->pcb); /* notify upper layers */
       break;
@@ -588,7 +588,7 @@ breakbreak:;
       break;
     default:
       if(sc) {
-        PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": unknown code (0x%"X16_F") session = 0x%"X16_F"\n",
+        PPPDEBUG(LOG_DEBUG, ("%c%c%d: unknown code (0x%"X16_F") session = 0x%"X16_F"\n",
             sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num,
             (uint16_t)ph->code, session));
       } else {
@@ -654,7 +654,7 @@ pppoe_data_input(NetIfc*netif, struct PacketBuffer *pb)
     goto drop;
   } 
 
-  PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: %c%c%"U16_F": pkthdr.len=%d, pppoe.len=%d\n",
+  PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: %c%c%d: pkthdr.len=%d, pppoe.len=%d\n",
         sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num,
         pb->len, plen));
 
@@ -676,7 +676,7 @@ pppoe_output(struct pppoe_softc *sc, struct PacketBuffer *pb)
     /* make room for Ethernet header - should not fail */
   if (pbuf_add_header(pb, sizeof(struct EthHdr)) != 0) {
     /* bail out */
-    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_output: could not allocate room for Ethernet header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_output: could not allocate room for Ethernet header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
     LINK_STATS_INC(link.lenerr);
     pbuf_free(pb);
     return ERR_BUF;
@@ -687,7 +687,7 @@ pppoe_output(struct pppoe_softc *sc, struct PacketBuffer *pb)
   MEMCPY(&ethhdr->dest.addr, &sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
   MEMCPY(&ethhdr->src.addr, &sc->sc_ethif->hwaddr, sizeof(ethhdr->src.addr));
 
-  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F" (%x) state=%d, session=0x%x output -> %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F", len=%d\n",
+  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d (%x) state=%d, session=0x%x output -> %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F", len=%d\n",
       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, etype,
       sc->sc_state, sc->sc_session,
       sc->sc_dest.addr[0], sc->sc_dest.addr[1], sc->sc_dest.addr[2], sc->sc_dest.addr[3], sc->sc_dest.addr[4], sc->sc_dest.addr[5],
@@ -747,7 +747,7 @@ pppoe_timeout(void *arg)
   int err;
   struct pppoe_softc *sc = (struct pppoe_softc*)arg;
 
-  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": timeout\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: timeout\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
 
   switch (sc->sc_state) {
     case PPPOE_STATE_PADI_SENT:
@@ -774,7 +774,7 @@ pppoe_timeout(void *arg)
       retry_wait = LWIP_MIN(PPPOE_DISC_TIMEOUT * sc->sc_padi_retried, PPPOE_SLOW_RETRY);
       if ((err = pppoe_send_padi(sc)) != 0) {
         sc->sc_padi_retried--;
-        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
       sys_timeout_debug(retry_wait, pppoe_timeout, sc, "pppoe_timeout");
@@ -787,7 +787,7 @@ pppoe_timeout(void *arg)
         sc->sc_state = PPPOE_STATE_PADI_SENT;
         sc->sc_padr_retried = 0;
         if ((err = pppoe_send_padi(sc)) != 0) {
-          PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
+          PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
           ; /* if PPPDEBUG is disabled */
         }
         sys_timeout_debug((5*1000) * (1 + sc->sc_padi_retried), pppoe_timeout, sc, "pppoe_timeout");
@@ -795,7 +795,7 @@ pppoe_timeout(void *arg)
       }
       if ((err = pppoe_send_padr(sc)) != 0) {
         sc->sc_padr_retried--;
-        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         ; /* if PPPDEBUG is disabled */
       }
       sys_timeout_debug((5*1000) * (1 + sc->sc_padr_retried), pppoe_timeout, sc, "pppoe_timeout");
@@ -858,7 +858,7 @@ pppoe_connect(PppPcb *ppp, void *ctx)
   /* save state, in case we fail to send PADI */
   sc->sc_state = PPPOE_STATE_PADI_SENT;
   if ((err = pppoe_send_padi(sc)) != 0) {
-    PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
+    PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
   }
   sys_timeout_debug((5*1000), pppoe_timeout, sc, "pppoe_timeout");
 }
@@ -869,7 +869,7 @@ pppoe_disconnect(PppPcb *ppp, void *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
 
-  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%d: disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
   if (sc->sc_state == PPPOE_STATE_SESSION) {
     pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const uint8_t *)&sc->sc_dest);
   }
@@ -892,7 +892,7 @@ pppoe_disconnect(PppPcb *ppp, void *ctx)
 static void
 pppoe_abort_connect(struct pppoe_softc *sc)
 {
-  PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  PPPDEBUG(LOG_DEBUG, ("%c%c%d: could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
   sc->sc_state = PPPOE_STATE_INITIAL;
   ppp_link_failed(sc->pcb); /* notify upper layers */
 }
@@ -991,7 +991,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
   p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
   PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
@@ -1024,7 +1024,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
   if (!pb) {
     return ERR_MEM;
   }
-  LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
+  lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
   p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADS, sc->sc_session, len);
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1053,7 +1053,7 @@ pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb)
   /* make room for PPPoE header - should not fail */
   if (pbuf_add_header(pb, PPPOE_HEADERLEN) != 0) {
     /* bail out */
-    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_xmit: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_xmit: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
     LINK_STATS_INC(link.lenerr);
     pbuf_free(pb);
     return ERR_BUF;

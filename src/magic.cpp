@@ -115,7 +115,7 @@ static void magic_churnrand(char *rand_data, uint32_t rand_len) {
     magic_randomseed += sys_jiffies();
     sys_data.jiffies = magic_randomseed;
 
-    sys_data.rand = LWIP_RAND();
+    sys_data.rand = lwip_rand();
 
     /* Load sys_data fields here. */
     lwip_md5_update(&md5_ctx, (uint8_t *)&sys_data, sizeof(sys_data));

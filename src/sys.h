@@ -3,10 +3,10 @@
 //
 
 #pragma once
+
 #include <cstdint>
 
 #include "lwip_error.h"
-#include "sys_arch.h"
 
 
 using sys_prot_t = int;
@@ -19,11 +19,24 @@ constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 
 constexpr auto MAX_QUEUE_ENTRIES = 100;
 
+
+/** Function prototype for thread functions */
+using lwip_thread_fn = void (*)(void*);
+
+
 struct Mailbox
 {
     void* sem;
     void* q_mem[MAX_QUEUE_ENTRIES];
     uint32_t head, tail;
+};
+
+struct ThreadList
+{
+    lwip_thread_fn function;
+    void* arg;
+    uint32_t id;
+    struct ThreadList* next;
 };
 
 /* HANDLE is used for Semaphore but we won't include windows.h */
@@ -39,13 +52,14 @@ struct Mutex
 };
 
 
+
+
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
 // #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
-/** Function prototype for thread functions */
-using lwip_thread_fn = void (*)(void*);
+
 
 /* Function prototypes for functions to be implemented by platform ports
    (in sys_arch.c) */
@@ -55,7 +69,9 @@ using lwip_thread_fn = void (*)(void*);
 /** Define LWIP_COMPAT_MUTEX if the port has no mutexes and binary semaphores
     should be used instead */
 
+extern uint64_t freq;
 
+inline bool sys_initialized(){return (freq != 0);}
 
 /**
  * @ingroup sys_mutex
@@ -245,10 +261,7 @@ inline void sys_mbox_tryfetch(Mailbox* mbox, void** msg)
  * 
  * @param mbox mbox to delete
  */
-inline void sys_mbox_free(Mailbox *mbox)
-{
-    
-}
+void sys_free_mailbox(Mailbox *mbox);
 
 /**
  * @ingroup sys_misc
@@ -265,22 +278,18 @@ inline void sys_mbox_free(Mailbox *mbox)
  * @param arg parameter passed to 'thread'
  * @param stacksize stack size in bytes for the new thread (may be ignored by ports)
  * @param prio priority of the new thread (may be ignored by ports) */
-sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio);
+sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio, ThreadList* thread_list);
 
 /**
  * @ingroup sys_misc
  * sys_init() must be called before anything else.
  * Initialize the sys_arch layer.
  */
-inline void sys_init()
-{
-    
-}
-
+void sys_init();
 /**
  * Ticks/jiffies since power up.
  */
-uint32_t sys_jiffies();
+uint64_t sys_jiffies();
 
 
 /**
@@ -291,7 +300,7 @@ uint32_t sys_jiffies();
  * Not implementing this function means you cannot use some modules (e.g. TCP
  * timestamps, internal timeouts for NO_SYS==1).
  */
-uint32_t sys_now();
+uint64_t sys_now();
 
 /* Critical Region Protection */
 /* These functions must be implemented in the sys_arch.c file.
@@ -348,30 +357,30 @@ void sys_arch_unprotect(sys_prot_t pval);
  */
 
 
-#define SYS_ARCH_INC(var, val) do { \
-                                sys_prot_t old_level; \
-                                SYS_ARCH_PROTECT(old_level); \
-                                var += val; \
-                                SYS_ARCH_UNPROTECT(old_level); \
-                              } while(0)
+// #define SYS_ARCH_INC(var, val) do { \
+//                                 sys_prot_t old_level; \
+//                                 SYS_ARCH_PROTECT(old_level); \
+//                                 var += val; \
+//                                 SYS_ARCH_UNPROTECT(old_level); \
+//                               } while(0)
 
 
 
-#define SYS_ARCH_DEC(var, val) do { \
-                                sys_prot_t lev; \
-                                SYS_ARCH_PROTECT(old_level); \
-                                var -= val; \
-                                SYS_ARCH_UNPROTECT(old_level); \
-                              } while(0)
+// #define SYS_ARCH_DEC(var, val) do { \
+//                                 sys_prot_t lev; \
+//                                 SYS_ARCH_PROTECT(old_level); \
+//                                 var -= val; \
+//                                 SYS_ARCH_UNPROTECT(old_level); \
+//                               } while(0)
 
 
 
-#define SYS_ARCH_GET(var, ret) do { \
-                                sys_prot_t lev; \
-                                SYS_ARCH_PROTECT(old_level); \
-                                ret = var; \
-                                SYS_ARCH_UNPROTECT(old_level); \
-                              } while(0)
+// #define SYS_ARCH_GET(var, ret) do { \
+//                                 sys_prot_t lev; \
+//                                 SYS_ARCH_PROTECT(old_level); \
+//                                 ret = var; \
+//                                 SYS_ARCH_UNPROTECT(old_level); \
+//                               } while(0)
 
 
 
@@ -454,15 +463,7 @@ inline void sys_mbox_set_invalid(Mailbox* mbox){ ((mbox)->sem = nullptr);}
  * @param size (minimum) number of messages in this mbox
  * @return ERR_OK if successful, another LwipStatus otherwise
  */
-inline LwipStatus sys_mbox_new(Mailbox *mbox, int size)
-{
-    
-}
-
-
-
-
-
+LwipStatus sys_new_mailbox(Mailbox *mbox, size_t size);
 
 Semaphore* sys_arch_netconn_sem_get(void);
 void sys_arch_netconn_sem_alloc(void);

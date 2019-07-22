@@ -40,6 +40,7 @@
 #include "opt.h"
 #include "lwip_error.h"
 #include <cstdint>
+#include "tcp.h"
 
 
 struct PacketBuffer;
@@ -196,7 +197,7 @@ struct PacketBuffer {
 
 
 
-/** @ingroup pbuf 
+/** @ingroup pbuf
  * PBUF_NEEDS_COPY(p): return a boolean value indicating whether the given
  * pbuf needs to be copied in order to be kept around beyond the current call
  * stack without risking being corrupted. The default setting provides safety:
@@ -242,7 +243,7 @@ struct pbuf_custom {
 /** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
 
 extern volatile uint8_t pbuf_free_ooseq_pending;
-void pbuf_free_ooseq(void);
+void pbuf_free_ooseq(TcpPcb* tcp_active_pcbs);
 /** When not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
     at regular intervals from main level to check if ooseq pbufs need to be
     freed! */
@@ -302,4 +303,13 @@ uint16_t pbuf_memcmp(const struct PacketBuffer* p, uint16_t offset, const void* 
 uint16_t pbuf_memfind(const struct PacketBuffer* p, const void* mem, uint16_t mem_len, uint16_t start_offset);
 uint16_t pbuf_strstr(const struct PacketBuffer* p, const char* substr);
 
+/** pbufs passed to IP must have a ref-count of 1 as their payload pointer
+    gets altered as the packet is passed down the stack */
+inline void check_pbuf_ip_rec_cnt_for_tx(PacketBuffer* p)
+{
+    lwip_assert("p->ref == 1", (p)->ref == 1);
+}
 
+//
+// END OF FILE
+//

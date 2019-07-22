@@ -157,7 +157,7 @@ NetIfc* ip4_route(const Ip4Addr* dest)
     {
         /* No matching netif found and default netif is not usable.
            If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
-        //    Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+        //    Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %d.%d.%d.%d\n",
         //                ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
         return nullptr;
     }
@@ -227,7 +227,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
 
   /* RFC3927 2.7: do not forward link-local addresses */
   if (ip4_addr_islinklocal(ip4_current_dest_addr())) {
-    Logf(IP_DEBUG, ("ip4_forward: not forwarding LLA %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+    Logf(IP_DEBUG, ("ip4_forward: not forwarding LLA %d.%d.%d.%d\n",
                            ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
                            ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
     goto return_noroute;
@@ -236,7 +236,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
   /* Find network interface where to forward this IP packet to. */
   netif = ip4_route_src(ip4_current_src_addr(), ip4_current_dest_addr());
   if (netif == nullptr) {
-    Logf(IP_DEBUG, ("ip4_forward: no forwarding route for %"U16_F".%"U16_F".%"U16_F".%"U16_F" found\n",
+    Logf(IP_DEBUG, ("ip4_forward: no forwarding route for %d.%d.%d.%d found\n",
                            ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
                            ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
     /* @todo: send ICMP_DUR_NET? */
@@ -272,7 +272,7 @@ ip4_forward(struct PacketBuffer *p, struct Ip4Hdr *iphdr, NetIfc*inp)
     IPH_CHKSUM_SET(iphdr, (uint16_t)(IPH_CHKSUM(iphdr) + PpHtons(0x100)));
   }
 
-  Logf(IP_DEBUG, ("ip4_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+  Logf(IP_DEBUG, ("ip4_forward: forwarding packet to %d.%d.%d.%d\n",
                          ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
                          ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
 
@@ -307,7 +307,7 @@ return_noroute:
 static int
 ip4_input_accept(NetIfc*netif)
 {
-//  Logf(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
+//  Logf(IP_DEBUG, ("ip_input: iphdr->dest 0x%x netif->ip_addr 0x%x (0x%x, 0x%x, 0x%x)\n",
 //                         ip4_addr_get_u32(ip4_current_dest_addr()), ip4_addr_get_u32(netif_ip4_addr(netif)),
 //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
 //                         ip4_addr_get_u32(netif_ip4_addr(netif)) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
@@ -320,7 +320,7 @@ ip4_input_accept(NetIfc*netif)
         /* or broadcast on this interface network address? */
         ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
 
-        || (get_ip4_addr(ip4_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
+        || (get_ip4_addr(ip4_current_dest_addr()) == pp_htonl(IPADDR_LOOPBACK))
 
        ) {
       Logf(IP_DEBUG, ("ip4_input: packet accepted on interface %c%c\n",
@@ -378,7 +378,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   /* identify the IP header */
   iphdr = (struct Ip4Hdr *)p->payload;
   if (get_ip4_hdr_version(iphdr) != 4) {
-//    Logf(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", (uint16_t)IPH_V(iphdr)));
+//    Logf(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %d\n", (uint16_t)IPH_V(iphdr)));
     ip4_debug_print(p);
     pbuf_free(p);
     IP_STATS_INC(ip.err);
@@ -405,19 +405,19 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   }
 
   /* header length exceeds first PacketBuffer length, or ip length exceeds total PacketBuffer length? */
-  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len) || (iphdr_hlen < kIp4HdrLen)) {
-    if (iphdr_hlen < kIp4HdrLen) {
+  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len) || (iphdr_hlen < IP4_HDR_LEN)) {
+    if (iphdr_hlen < IP4_HDR_LEN) {
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-//                  ("ip4_input: short IP header (%"U16_F" bytes) received, IP packet dropped\n", iphdr_hlen));
+//                  ("ip4_input: short IP header (%d bytes) received, IP packet dropped\n", iphdr_hlen));
     }
     if (iphdr_hlen > p->len) {
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-//                  ("IP header (len %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IP packet dropped.\n",
+//                  ("IP header (len %d) does not fit in first PacketBuffer (len %d), IP packet dropped.\n",
 //                   iphdr_hlen, p->len));
     }
     if (iphdr_len > p->tot_len) {
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-//                  ("IP (len %"U16_F") is longer than PacketBuffer (len %"U16_F"), IP packet dropped.\n",
+//                  ("IP (len %d) is longer than PacketBuffer (len %d), IP packet dropped.\n",
 //                   iphdr_len, p->tot_len));
     }
     /* free (drop) packet pbufs */
@@ -430,7 +430,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
   /* verify checksum */
 
-  IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_IP) {
+  is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_IP) {
     if (inet_chksum(iphdr, iphdr_hlen) != 0) {
 
 //      Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
@@ -508,7 +508,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       const struct udp_hdr *udphdr = (const struct udp_hdr *)((const uint8_t *)iphdr + iphdr_hlen);
-      Logf(IP_DEBUG | LWIP_DBG_TRACE, ("ip4_input: UDP packet to DHCP client port %"U16_F"\n",
+      Logf(IP_DEBUG | LWIP_DBG_TRACE, ("ip4_input: UDP packet to DHCP client port %d\n",
                                               lwip_ntohs(udphdr->dest)));
       if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(udphdr->dest)) {
         Logf(IP_DEBUG | LWIP_DBG_TRACE, ("ip4_input: DHCP packet accepted.\n"));
@@ -564,7 +564,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   /* packet consists of multiple fragments? */
   if ((IPH_OFFSET(iphdr) & pp_htons(IP_OFFMASK | IP_MF)) != 0) {
 
-//    Logf(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip4_reass()\n",
+//    Logf(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%d len=%d MF=%d offset=%d), calling ip4_reass()\n",
 //                           lwip_ntohs(IPH_ID(iphdr)), p->tot_len, lwip_ntohs(IPH_LEN(iphdr)), (uint16_t)!!(IPH_OFFSET(iphdr) & PpHtons(IP_MF)), (uint16_t)((lwip_ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK) * 8)));
     /* reassemble the packet*/
     p = ip4_reass(p);
@@ -593,7 +593,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
   /* send to upper layers */
   Logf(IP_DEBUG, ("ip4_input: \n"));
   ip4_debug_print(p);
-//  Logf(IP_DEBUG, ("ip4_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len));
+//  Logf(IP_DEBUG, ("ip4_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 
   ip_data.current_netif = netif;
   ip_data.current_input_netif = inp;
@@ -648,7 +648,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
           }
 
 
-//          Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Unsupported transport protocol %"U16_F"\n", (uint16_t)IPH_PROTO(iphdr)));
+//          Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Unsupported transport protocol %d\n", (uint16_t)IPH_PROTO(iphdr)));
 
           IP_STATS_INC(ip.proterr);
           IP_STATS_INC(ip.drop);
@@ -772,7 +772,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       /* Should the IP header be generated or is it already included in p? */
       if (dest != nullptr)
       {
-          uint16_t ip_hlen = kIp4HdrLen;
+          uint16_t ip_hlen = IP4_HDR_LEN;
 
     uint16_t optlen_aligned = 0;
     if (optlen != 0) {
@@ -809,7 +809,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
     }
 
           /* generate IP header */
-          if (pbuf_add_header(p, kIp4HdrLen))
+          if (pbuf_add_header(p, IP4_HDR_LEN))
           {
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: not enough room for IP header in PacketBuffer\n"));
 
@@ -876,7 +876,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       } else
       {
           /* IP header already included in p */
-          if (p->len < kIp4HdrLen)
+          if (p->len < IP4_HDR_LEN)
           {
               Logf(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n"));
               IP_STATS_INC(ip.err);
@@ -890,7 +890,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
       IP_STATS_INC(ip.xmit);
 
-      //  Logf(IP_DEBUG, ("ip4_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], (uint16_t)netif->num));
+      //  Logf(IP_DEBUG, ("ip4_output_if: %c%c%d\n", netif->name[0], netif->name[1], (uint16_t)netif->num));
       ip4_debug_print(p);
 
 
@@ -951,7 +951,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
       if ((netif = ip4_route_src(src, dest)) == nullptr)
       {
-          //    Logf(IP_DEBUG, ("ip4_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+          //    Logf(IP_DEBUG, ("ip4_output: No route to %d.%d.%d.%d\n",
           //                           ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
           IP_STATS_INC(ip.rterr);
           return ERR_RTE;
@@ -995,7 +995,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
       if ((netif = ip4_route_src(src, dest)) == nullptr) {
           Logf(IP_DEBUG,
-               ("ip4_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+               ("ip4_output: No route to %d.%d.%d.%d\n",
                    ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
           IP_STATS_INC(ip.rterr);
           return ERR_RTE;

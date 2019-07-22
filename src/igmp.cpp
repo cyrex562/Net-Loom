@@ -350,8 +350,8 @@ igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
-  // LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
-  // LWIP_ERROR("igmp_joingroup: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+  // 
+  // 
 
   /* loop through netif's */
   NETIF_FOREACH(netif) {
@@ -385,11 +385,11 @@ igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr)
   LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
-  // LWIP_ERROR("igmp_joingroup_netif: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
-  // LWIP_ERROR("igmp_joingroup_netif: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+  // 
+  // 
 
   /* make sure it is an igmp-enabled netif */
-  // LWIP_ERROR("igmp_joingroup_netif: attempt to join on non-IGMP netif", netif->flags & NETIF_FLAG_IGMP, return ERR_VAL;);
+  // 
 
   /* find group or create a new one if not found */
   group = igmp_lookup_group(netif, groupaddr);
@@ -447,8 +447,8 @@ igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
-  // LWIP_ERROR("igmp_leavegroup: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
-  // LWIP_ERROR("igmp_leavegroup: attempt to leave allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+  // 
+  // 
 
   /* loop through netif's */
   NETIF_FOREACH(netif) {
@@ -481,11 +481,11 @@ igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr)
   LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
-  // LWIP_ERROR("igmp_leavegroup_netif: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
-  // LWIP_ERROR("igmp_leavegroup_netif: attempt to leave allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+  // 
+  // 
 
   /* make sure it is an igmp-enabled netif */
-  // LWIP_ERROR("igmp_leavegroup_netif: attempt to leave on non-IGMP netif", netif->flags & NETIF_FLAG_IGMP, return ERR_VAL;);
+  // 
 
   /* find group */
   group = igmp_lookfor_group(netif, groupaddr);
@@ -587,12 +587,12 @@ igmp_timeout(NetIfc*netif, struct IgmpGroup *group)
 static void
 igmp_start_timer(struct IgmpGroup *group, uint8_t max_time)
 {
-#ifdef LWIP_RAND
-  group->timer = (uint16_t)(max_time > 2 ? (LWIP_RAND() % max_time) : 1);
-#else /* LWIP_RAND */
+#ifdef lwip_rand
+  group->timer = (uint16_t)(max_time > 2 ? (lwip_rand() % max_time) : 1);
+#else /* lwip_rand */
   /* ATTENTION: use this only if absolutely necessary! */
   group->timer = max_time / 2;
-#endif /* LWIP_RAND */
+#endif /* lwip_rand */
 
   if (group->timer == 0) {
     group->timer = 1;

@@ -55,14 +55,19 @@ inline Ip4Addr init_ip4_addr_bytes(const uint8_t a,
 }
 
 
-inline Ip4Addr get_ip4_addr_any()
+inline void zero_ip4_addr(Ip4Addr* ip)
+{
+    ip->addr = 0;
+}
+
+inline Ip4Addr ip4_addr_any()
 {
     Ip4Addr addr{};
     addr.addr = 0;
     return addr;
 }
 
-inline Ip4Addr get_ip4_addr_broadcast()
+inline Ip4Addr ip4_addr_bcast()
 {
     Ip4Addr addr{};
     addr.addr = make_u32(255,255,255,255);
@@ -73,9 +78,17 @@ inline Ip4Addr get_ip4_addr_broadcast()
 struct NetIfc;
 
 /** 255.255.255.255 */
-constexpr uint32_t kIpaddrNone = uint32_t(0xffffffffUL);
+inline Ip4Addr ip4_addr_none() {
+    Ip4Addr addr = {uint32_t(0xffffffffUL)};
+}
+
+//constexpr uint32_t kIpaddrNone = ;
 /** 127.0.0.1 */
-constexpr uint32_t kIpaddrLoopback = uint32_t(0x7f000001UL);
+
+inline Ip4Addr ip4_addr_loopback() {
+    Ip4Addr addr = {uint32_t(0x7f000001UL)};
+}
+
 /** 0.0.0.0 */
 constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
@@ -152,7 +165,7 @@ inline void ip4_addr_set_any(Ip4Addr* ipaddr)
 /** Set address to loopback address */
 inline void ip4_addr_set_loopback(Ip4Addr* ipaddr)
 {
-    ((ipaddr)->addr = pp_htonl(kIpaddrLoopback));
+    ((ipaddr)->addr = pp_htonl(ip4_addr_loopback().addr));
 }
 
 

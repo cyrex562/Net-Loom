@@ -527,7 +527,7 @@ lowpan6_hwaddr_to_addr(NetIfc*netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
-    // LWIP_ERROR("NETIF_MAX_HWADDR_LEN >= 8 required", sizeof(netif->hwaddr) >= 8, return ERR_VAL;);
+    // 
     if (sizeof(netif->hwaddr) < 8)
     {
         printf("netif hwaddr must be greater than 8\n");

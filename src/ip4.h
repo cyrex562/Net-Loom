@@ -18,7 +18,7 @@
 // typedef struct Ip4AddrPacked Ip4AddrPT;
 
 /* Size of the IPv4 header. Same as 'sizeof(struct Ip4Hdr)'. */
-constexpr auto kIp4HdrLen = 20; /* Maximum size of the IPv4 header with options. */
+constexpr auto IP4_HDR_LEN = 20; /* Maximum size of the IPv4 header with options. */
 constexpr auto kIp4HdrLenMax = 60;
 constexpr auto kIpResFlag = 0x8000U; /* reserved fragment flag */
 constexpr auto kIpDFFlag = 0x4000U; /* don't fragment flag */
@@ -42,57 +42,57 @@ struct Ip4Hdr
 };
 
 /* Macros to get struct Ip4Hdr fields: */
-inline uint8_t get_ip4_hdr_version(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_version(const Ip4Hdr* hdr)
 {
     return ((hdr)->_v_hl >> 4);
 }
 
-inline uint8_t get_ip4_hdr_hdr_len(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len(const Ip4Hdr* hdr)
 {
     return ((hdr)->_v_hl & 0x0f);
 }
 
-inline uint8_t get_ip4_hdr_hdr_len_bytes(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len_bytes(const Ip4Hdr* hdr)
 {
     return uint8_t(get_ip4_hdr_hdr_len(hdr) * 4);
 }
 
-inline uint8_t get_ip4_hdr_tos(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_tos(const Ip4Hdr* hdr)
 {
     return ((hdr)->_tos);
 }
 
-inline uint16_t get_ip4_hdr_len(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_len(const Ip4Hdr* hdr)
 {
     return ((hdr)->_len);
 }
 
-inline uint16_t get_ip4_hdr_id(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_id(const Ip4Hdr* hdr)
 {
     return ((hdr)->_id);
 }
 
-inline uint16_t get_ip4_hdr_offset(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset(const Ip4Hdr* hdr)
 {
     return ((hdr)->_offset);
 }
 
-inline uint16_t get_ip4_hdr_offset_bytes(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset_bytes(const Ip4Hdr* hdr)
 {
     return uint16_t((lwip_ntohs(get_ip4_hdr_offset(hdr)) & kIpOffMask) * 8U);
 }
 
-inline uint8_t get_ip4_hdr_ttl(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_ttl(const Ip4Hdr* hdr)
 {
     return ((hdr)->_ttl);
 }
 
-inline uint8_t get_ip4_hdr_proto(Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_proto(const Ip4Hdr* hdr)
 {
     return ((hdr)->_proto);
 }
 
-inline uint16_t get_ip4_hdr_checksum(Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_checksum(const Ip4Hdr* hdr)
 {
     return ((hdr)->_chksum);
 }
@@ -174,10 +174,7 @@ LwipStatus ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, con
 
 void  ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
 
-inline IpAddr* ip4_netif_get_local_ip(NetIfc* netif)
-{
-    return netif != nullptr ? netif_ip_addr4(netif) : nullptr;
-}
+
 
 
 // void ip4_debug_print(struct PacketBuffer *p);
@@ -185,3 +182,6 @@ inline IpAddr* ip4_netif_get_local_ip(NetIfc* netif)
 
 
 
+//
+// END OF FILE
+//

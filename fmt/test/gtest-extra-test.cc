@@ -216,10 +216,10 @@ TEST(AssertionSyntaxTest, SystemErrorAssertionBehavesLikeSingleStatement) {
 
 TEST(AssertionSyntaxTest, WriteAssertionBehavesLikeSingleStatement) {
   if (::testing::internal::AlwaysFalse())
-    EXPECT_WRITE(stdout, std::printf("x"), "x");
+    EXPECT_WRITE(stdout, std::printf(x), x);
 
   if (::testing::internal::AlwaysTrue())
-    EXPECT_WRITE(stdout, std::printf("x"), "x");
+    EXPECT_WRITE(stdout, std::printf(x), x);
   else
     do_nothing();
 }

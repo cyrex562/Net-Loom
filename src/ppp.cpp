@@ -321,7 +321,7 @@ ppp_do_connect(void* arg)
 {
     PppPcb* pcb = (PppPcb*)arg;
 
-    // LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF",
+    // lwip_assert("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF",
     //             pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
     new_phase(pcb, PPP_PHASE_INITIALIZE);
@@ -526,8 +526,8 @@ PppPcb* init_ppp_pcb(NetIfc* pppif,
     pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
     pcb->netif = pppif;
-    Ip4Addr ip4_any = get_ip4_addr_any();
-    Ip4Addr ip4_bcast = get_ip4_addr_broadcast();
+    Ip4Addr ip4_any = ip4_addr_any();
+    Ip4Addr ip4_bcast = ip4_addr_bcast();
     if (!netif_add(pcb->netif,
                    &ip4_any,
                    &ip4_bcast,
@@ -994,7 +994,7 @@ get_mask(uint32_t addr)
 }
 
 #define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \
-  ip6.addr[0] = PP_HTONL(0xfe800000);             \
+  ip6.addr[0] = pp_htonl(0xfe800000);             \
   ip6.addr[1] = 0;                                \
   eui64_copy(eui64, ip6.addr[2]);                 \
   } while (0)

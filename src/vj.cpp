@@ -120,13 +120,13 @@ inline void DecodeShort(uint16_t f, uint8_t* cp)
     }
 }
 
-inline uint16_t DECODEU(uint16_t f, uint8_t* cp) { 
+inline uint16_t DECODEU(uint16_t f, uint8_t* cp) {
   if (*cp == 0) {
-    f = lwip_htons(uint16_t(cp[1]) << 8 | cp[2]); 
-    cp += 3; 
-  } else { 
-    (f) = lwip_htons(uint16_t(*cp++)); 
-  } 
+    f = lwip_htons(uint16_t(cp[1]) << 8 | cp[2]);
+    cp += 3;
+  } else {
+    (f) = lwip_htons(uint16_t(*cp++));
+  }
 }
 
 /* Helper structures for unaligned *uint32_t and *uint16_t accesses */
@@ -256,7 +256,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         return (kTypeIp);
     }
     auto th = reinterpret_cast<struct TcpHdr *>(&reinterpret_cast<struct vj_uint32_t*>(ip)[ilen]);
-    if ((TCPH_FLAGS(th) & (TCP_SYN | TCP_FIN | kTcpRst | kTcpAck)) != kTcpAck)
+    if ((TCPH_FLAGS(th) & (TCP_SYN | TCP_FIN | TCP_RST | TCP_ACK)) != TCP_ACK)
     {
         return (kTypeIp);
     }
@@ -380,7 +380,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
      * ack, seq (the order minimizes the number of temporaries
      * needed in this section of code).
      */
-    if (TCPH_FLAGS(th) & kTcpUrg)
+    if (TCPH_FLAGS(th) & TCP_URG)
     {
         deltaS = lwip_ntohs(th->urgp);
         Encodez(deltaS);
@@ -477,7 +477,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         Encodez(deltaS);
         changes |= NEW_I;
     }
-    if (TCPH_FLAGS(th) & kTcpPsh)
+    if (TCPH_FLAGS(th) & TCP_PSH)
     {
         changes |= TCP_PUSH_BIT;
     }
@@ -557,7 +557,7 @@ vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
     hlen = IPH_HL(ip) << 2;
     if (IPH_PROTO(ip) >= MAX_SLOTS
         || hlen + sizeof(struct TcpHdr) > nb->len
-        || (hlen += TcphHdrlenBytes((struct TcpHdr *)&((char *)ip)[hlen]))
+        || (hlen += calc_tcp_hdr_len((struct TcpHdr *)&((char *)ip)[hlen], true))
         > nb->len
         || hlen > MAX_HDR)
     {
@@ -636,11 +636,11 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     cp += 2;
     if (changes & TCP_PUSH_BIT)
     {
-        TCPH_SET_FLAG(th, kTcpPsh);
+        TCPH_SET_FLAG(th, TCP_PSH);
     }
     else
     {
-        TCPH_UNSET_FLAG(th, kTcpPsh);
+        TCPH_UNSET_FLAG(th, TCP_PSH);
     }
 
     switch (changes & SPECIALS_MASK)
@@ -665,12 +665,12 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     default:
         if (changes & NEW_U)
         {
-            TCPH_SET_FLAG(th, kTcpUrg);
+            TCPH_SET_FLAG(th, TCP_URG);
             DECODEU(th->urgp);
         }
         else
         {
-            TCPH_UNSET_FLAG(th, kTcpUrg);
+            TCPH_UNSET_FLAG(th, TCP_URG);
         }
         if (changes & NEW_W)
         {
@@ -750,7 +750,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     if (pbuf_remove_header(n0, vjlen))
     {
         /* Can we cope with this failing?  Just assert for now */
-        LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+        lwip_assert("pbuf_remove_header failed\n", 0);
         goto bad;
     }
 
@@ -776,7 +776,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 //         if (pbuf_remove_header(np, cs->cs_hlen))
 //         {
 //             /* Can we cope with this failing?  Just assert for now */
-//             LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+//             lwip_assert("pbuf_remove_header failed\n", 0);
 //             goto bad;
 //         }
 //
@@ -795,7 +795,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
     {
         struct PacketBuffer* np;
 
-        LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
+        lwip_assert("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
         np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
         if (!np)
         {
@@ -805,7 +805,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
         pbuf_cat(np, n0);
         n0 = np;
     }
-    LWIP_ASSERT("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
+    lwip_assert("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
     MEMCPY(n0->payload, &cs->cs_ip, cs->cs_hlen);
 
     *nb = n0;

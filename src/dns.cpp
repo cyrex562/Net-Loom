@@ -658,7 +658,7 @@ static LwipStatus dns_send(const uint8_t idx)
     uint8_t n;
     uint8_t pcb_idx;
     auto entry = &dns_table[idx];
-    // Logf(DNS_DEBUG, ("dns_send: dns_servers[%"U16_F"] \"%s\": request\n",
+    // Logf(DNS_DEBUG, ("dns_send: dns_servers[%d] \"%s\": request\n",
     //                         (uint16_t)(entry->server_idx), entry->name));
     lwip_assert("dns server out of array", entry->server_idx < DNS_MAX_SERVERS);
     if (ip_addr_isany_val(dns_servers[entry->server_idx]) && !entry->is_mdns)
@@ -762,7 +762,7 @@ static UdpPcb* dns_alloc_random_port(void)
     }
     do
     {
-        auto port = static_cast<uint16_t>(LwipRand());
+        auto port = static_cast<uint16_t>(lwip_rand());
         if (DNS_PORT_ALLOWED(port))
         {
             IpAddr any_addr = kIpAddrAny();
@@ -843,10 +843,10 @@ dns_call_found(uint8_t idx, IpAddr *addr)
   if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
     if (is_ip_addr_ip6_val(*addr)) {
-      // LWIP_ASSERT("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+      // lwip_assert("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
     } else {
-      // LWIP_ASSERT("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
+      // lwip_assert("invalid response", !LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
     }
   }
@@ -891,7 +891,7 @@ dns_create_txid(void)
   uint8_t i;
 
 again:
-  txid = (uint16_t)LwipRand();
+  txid = (uint16_t)lwip_rand();
 
   /* check whether the ID is unique */
   for (i = 0; i < DNS_TABLE_SIZE; i++) {
@@ -1197,7 +1197,7 @@ static void dns_recv(void* arg,
                                 }
                             }
                             if ((ans.type == pp_htons(DNS_RRTYPE_AAAA)) && (ans.len ==
-                                pp_htons(sizeof(Ip6AddrPT))))
+                                pp_htons(sizeof(Ip6AddrWireFmt))))
                             {
                                 if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
                                 {
@@ -1449,12 +1449,12 @@ LwipStatus dns_gethostbyname_addrtype(const char* hostname,
     } /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
-        if ((is_ipaddr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
+        if ((is_ip_addr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
             is_ip_addr_ip4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
             return ERR_OK;
         }
-    } 
+    }
     // already have this address cached?
     if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK)
     {

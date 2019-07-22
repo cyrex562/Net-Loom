@@ -177,7 +177,7 @@ LwipStatus autoip_start(NetIfc* netif)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    auto any_addr = get_ip4_addr_any();
+    auto any_addr = ip4_addr_any();
 
     netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
@@ -255,7 +255,7 @@ LwipStatus autoip_stop(NetIfc* netif)
         autoip->state = AUTOIP_STATE_OFF;
         if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
         {
-            auto any_addr = get_ip4_addr_any();
+            auto any_addr = ip4_addr_any();
             netif_set_addr(netif,
                            &any_addr,
                            &any_addr,

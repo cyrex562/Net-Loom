@@ -162,7 +162,7 @@ etharp_free_entry(const int index)
     if (arp_table[index].next != nullptr)
     {
         /* remove all queued packets */
-        //    Logf(ETHARP_DEBUG, ("etharp_free_entry: freeing entry %"U16_F", packet queue %p.\n", (uint16_t)i, (void *)(arp_table[i].q)));
+        //    Logf(ETHARP_DEBUG, ("etharp_free_entry: freeing entry %d, packet queue %p.\n", (uint16_t)i, (void *)(arp_table[i].q)));
         free_etharp_q(arp_table[index].next);
         arp_table[index].next = nullptr;
     }
@@ -397,7 +397,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
         }
 
         /* { empty or recyclable entry found } */
-        // LWIP_ASSERT("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
+        // lwip_assert("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
         etharp_free_entry(i);
     }
 
@@ -440,7 +440,7 @@ etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthA
 {
     int16_t i;
     lwip_assert("netif->hwaddr_len == ETH_HWADDR_LEN", netif->hwaddr_len == ETH_HWADDR_LEN);
-    //  Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
+    //  Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
     //              ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
     //              (uint16_t)ethaddr->addr[0], (uint16_t)ethaddr->addr[1], (uint16_t)ethaddr->addr[2],
     //              (uint16_t)ethaddr->addr[3], (uint16_t)ethaddr->addr[4], (uint16_t)ethaddr->addr[5]));
@@ -524,7 +524,7 @@ etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthAddr* ethaddr)
 {
     LWIP_ASSERT_CORE_LOCKED();
     // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-    //      ("etharp_add_static_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F
+    //      ("etharp_add_static_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F
     //          ":%02"X16_F":%02"X16_F"\n",
     //          ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
     //          (uint16_t)ethaddr->addr[0], (uint16_t)ethaddr->addr[1], (uint16_t)ethaddr->addr[2],
@@ -552,7 +552,7 @@ etharp_remove_static_entry(const Ip4Addr* ipaddr)
 {
     int16_t i;
     LWIP_ASSERT_CORE_LOCKED();
-    // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_remove_static_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+    // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_remove_static_entry: %d.%d.%d.%d\n",
     //          ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr)));
 
     /* find or create ARP entry */
@@ -689,7 +689,7 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
         (hdr->proto != pp_htons(ETHTYPE_IP)))
     {
         //    Logf(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-        //                ("etharp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
+        //                ("etharp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%d/%d/%d/%d)\n",
         //                 hdr->hwtype, (uint16_t)hdr->hwlen, hdr->proto, (uint16_t)hdr->protolen));
         // ETHARP_STATS_INC(etharp.proterr);
         // ETHARP_STATS_INC(etharp.drop);
@@ -1125,7 +1125,7 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
                     delete old;
                 }
 
-                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"U16_F"\n", (void *)q, i));
+                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %d\n", (void *)q, i));
                 result = ERR_OK;
             }
             else

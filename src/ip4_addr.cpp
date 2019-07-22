@@ -87,7 +87,8 @@ uint32_t ipaddr_addr(const char* cp)
     {
         return get_ip4_addr(&val);
     }
-    return (kIpaddrNone);
+    Ip4Addr addr_none = ip4_addr_none();
+    return addr_none.addr;
 }
 
 /**

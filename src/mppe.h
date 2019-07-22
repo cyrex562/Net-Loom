@@ -35,8 +35,6 @@
 
 #pragma once
 #include "ppp_opts.h"
-
-
 #include "pppcrypt.h"
 
 #ifdef __cplusplus
@@ -77,57 +75,57 @@ extern "C" {
 /* Build a CI from mppe opts (see RFC 3078) */
 #define MPPE_OPTS_TO_CI(opts, ci)		\
     do {					\
-	uint8_t *ptr = ci; /* uint8_t[4] */	\
-						\
-	/* H bit */				\
-	if (opts & MPPE_OPT_STATEFUL)		\
-	    *ptr++ = 0x0;			\
-	else					\
-	    *ptr++ = MPPE_H_BIT;		\
-	*ptr++ = 0;				\
-	*ptr++ = 0;				\
-						\
-	/* S,L bits */				\
-	*ptr = 0;				\
-	if (opts & MPPE_OPT_128)		\
-	    *ptr |= MPPE_S_BIT;			\
-	if (opts & MPPE_OPT_40)			\
-	    *ptr |= MPPE_L_BIT;			\
-	/* M,D,C bits not supported */		\
+    uint8_t *ptr = ci; /* uint8_t[4] */	\
+                        \
+    /* H bit */				\
+    if (opts & MPPE_OPT_STATEFUL)		\
+        *ptr++ = 0x0;			\
+    else					\
+        *ptr++ = MPPE_H_BIT;		\
+    *ptr++ = 0;				\
+    *ptr++ = 0;				\
+                        \
+    /* S,L bits */				\
+    *ptr = 0;				\
+    if (opts & MPPE_OPT_128)		\
+        *ptr |= MPPE_S_BIT;			\
+    if (opts & MPPE_OPT_40)			\
+        *ptr |= MPPE_L_BIT;			\
+    /* M,D,C bits not supported */		\
     } while (/* CONSTCOND */ 0)
 
 /* The reverse of the above */
 #define MPPE_CI_TO_OPTS(ci, opts)		\
     do {					\
-	const uint8_t *ptr = ci; /* uint8_t[4] */	\
-						\
-	opts = 0;				\
-						\
-	/* H bit */				\
-	if (!(ptr[0] & MPPE_H_BIT))		\
-	    opts |= MPPE_OPT_STATEFUL;		\
-						\
-	/* S,L bits */				\
-	if (ptr[3] & MPPE_S_BIT)		\
-	    opts |= MPPE_OPT_128;		\
-	if (ptr[3] & MPPE_L_BIT)		\
-	    opts |= MPPE_OPT_40;		\
-						\
-	/* M,D,C bits */			\
-	if (ptr[3] & MPPE_M_BIT)		\
-	    opts |= MPPE_OPT_56;		\
-	if (ptr[3] & MPPE_D_BIT)		\
-	    opts |= MPPE_OPT_D;			\
-	if (ptr[3] & MPPE_C_BIT)		\
-	    opts |= MPPE_OPT_MPPC;		\
-						\
-	/* Other bits */			\
-	if (ptr[0] & ~MPPE_H_BIT)		\
-	    opts |= MPPE_OPT_UNKNOWN;		\
-	if (ptr[1] || ptr[2])			\
-	    opts |= MPPE_OPT_UNKNOWN;		\
-	if (ptr[3] & ~MPPE_ALL_BITS)		\
-	    opts |= MPPE_OPT_UNKNOWN;		\
+    const uint8_t *ptr = ci; /* uint8_t[4] */	\
+                        \
+    opts = 0;				\
+                        \
+    /* H bit */				\
+    if (!(ptr[0] & MPPE_H_BIT))		\
+        opts |= MPPE_OPT_STATEFUL;		\
+                        \
+    /* S,L bits */				\
+    if (ptr[3] & MPPE_S_BIT)		\
+        opts |= MPPE_OPT_128;		\
+    if (ptr[3] & MPPE_L_BIT)		\
+        opts |= MPPE_OPT_40;		\
+                        \
+    /* M,D,C bits */			\
+    if (ptr[3] & MPPE_M_BIT)		\
+        opts |= MPPE_OPT_56;		\
+    if (ptr[3] & MPPE_D_BIT)		\
+        opts |= MPPE_OPT_D;			\
+    if (ptr[3] & MPPE_C_BIT)		\
+        opts |= MPPE_OPT_MPPC;		\
+                        \
+    /* Other bits */			\
+    if (ptr[0] & ~MPPE_H_BIT)		\
+        opts |= MPPE_OPT_UNKNOWN;		\
+    if (ptr[1] || ptr[2])			\
+        opts |= MPPE_OPT_UNKNOWN;		\
+    if (ptr[3] & ~MPPE_ALL_BITS)		\
+        opts |= MPPE_OPT_UNKNOWN;		\
     } while (/* CONSTCOND */ 0)
 
 /* Shared MPPE padding between MSCHAP and MPPE */
@@ -150,18 +148,18 @@ static const uint8_t mppe_sha1_pad2[SHA1_PAD_SIZE] = {
  * State for an MPPE (de)compressor.
  */
 typedef struct ppp_mppe_state {
-	lwip_arc4_context arc4;
-	uint8_t master_key[MPPE_MAX_KEY_LEN];
-	uint8_t session_key[MPPE_MAX_KEY_LEN];
-	uint8_t keylen;                /* key length in bytes */
-	/* NB: 128-bit == 16, 40-bit == 8!
-	 * If we want to support 56-bit, the unit has to change to bits
-	 */
-	uint8_t bits;                  /* MPPE control bits */
-	uint16_t ccount;               /* 12-bit coherency count (seqno)  */
-	uint16_t sanity_errors;        /* take down LCP if too many */
-	unsigned int stateful  :1;  /* stateful mode flag */
-	unsigned int discard   :1;  /* stateful mode packet loss flag */
+    lwip_arc4_context arc4;
+    uint8_t master_key[MPPE_MAX_KEY_LEN];
+    uint8_t session_key[MPPE_MAX_KEY_LEN];
+    uint8_t keylen;                /* key length in bytes */
+    /* NB: 128-bit == 16, 40-bit == 8!
+     * If we want to support 56-bit, the unit has to change to bits
+     */
+    uint8_t bits;                  /* MPPE control bits */
+    uint16_t ccount;               /* 12-bit coherency count (seqno)  */
+    uint16_t sanity_errors;        /* take down LCP if too many */
+    unsigned int stateful  :1;  /* stateful mode flag */
+    unsigned int discard   :1;  /* stateful mode packet loss flag */
 } ppp_mppe_state;
 
 void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key);

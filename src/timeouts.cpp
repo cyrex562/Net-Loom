@@ -116,7 +116,7 @@ sys_timeout_abs(uint32_t abs_time, sys_timeout_handler handler, void *arg, const
 
 
   timeout->handler_name = handler_name;
-  Logf(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
+  Logf(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%d handler=%s arg=%p\n",
                              (void *)timeout, abs_time, handler_name, (void *)arg));
 
 
@@ -283,7 +283,7 @@ sys_check_timeouts(void)
     current_timeout_due_time = tmptimeout->time;
 
     if (handler != nullptr) {
-      Logf(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
+      Logf(TIMERS_DEBUG, ("sct calling h=%s t=%d arg=%p\n",
                                  tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
     }
 

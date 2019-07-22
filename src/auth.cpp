@@ -53,7 +53,7 @@ void link_terminated(PppPcb* pcb)
     {
         ppp_notice("Link terminated.");
     }
-        
+
 
     lcp_lowerdown(pcb);
 
@@ -296,7 +296,7 @@ int auth_check_passwd(PppPcb* pcb,
  * The peer has failed to authenticate himself using `protocol'.
  */
 void auth_peer_fail(PppPcb *pcb, int protocol) {
-    
+
     /*
      * Authentication failure: take the link down
      */
@@ -367,7 +367,7 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* n
  */
 void auth_withpeer_fail(PppPcb* pcb, int protocol)
 {
-    
+
     /*
      * We've failed to authenticate ourselves to our peer.
      *
@@ -456,21 +456,21 @@ void np_up(PppPcb* pcb, int proto)
          */
         new_phase(pcb, PPP_PHASE_RUNNING);
         const int tlim = pcb->settings.idle_time_limit;
-	if (tlim > 0)
-	    Timeout(check_idle, static_cast<void*>(pcb), tlim);
+    if (tlim > 0)
+        Timeout(check_idle, static_cast<void*>(pcb), tlim);
 
 
 
-	/*
-	 * Set a timeout to close the connection once the maximum
-	 * connect time has expired.
-	 */
-	if (pcb->settings.maxconnect > 0)
+    /*
+     * Set a timeout to close the connection once the maximum
+     * connect time has expired.
+     */
+    if (pcb->settings.maxconnect > 0)
         Timeout(connect_time_expired, static_cast<void*>(pcb), pcb->settings.maxconnect);
 
 
-	// if (maxoctets > 0)
-	    // Timeout(check_maxoctets, NULL, maxoctets_timeout);
+    // if (maxoctets > 0)
+        // Timeout(check_maxoctets, NULL, maxoctets_timeout);
 
 
     }
@@ -482,17 +482,17 @@ void np_up(PppPcb* pcb, int proto)
  */
 void np_down(PppPcb* pcb, int proto)
 {
-    
+
     if (--pcb->num_np_up == 0)
     {
 
-	Untimeout(check_idle, static_cast<void*>(pcb));
+    Untimeout(check_idle, static_cast<void*>(pcb));
 
 
-	Untimeout(connect_time_expired, nullptr);
+    Untimeout(connect_time_expired, nullptr);
 
 
-	// Untimeout(check_maxoctets, NULL);
+    // Untimeout(check_maxoctets, NULL);
 
         new_phase(pcb, PPP_PHASE_NETWORK);
     }
@@ -503,7 +503,7 @@ void np_down(PppPcb* pcb, int proto)
  */
 void np_finished(PppPcb* pcb, int proto)
 {
-    
+
     if (--pcb->num_np_open <= 0)
     {
         /* no further use for the link: shut up shop. */
@@ -524,18 +524,18 @@ static void check_idle(void *arg) {
     auto tlim = 0;
 
  //    if (!get_idle_time(pcb, &idle))
-	// return;
+    // return;
 
-	// itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
-	// tlim = pcb->settings.idle_time_limit - itime;
+    // itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
+    // tlim = pcb->settings.idle_time_limit - itime;
 
     if (tlim <= 0) {
-	/* link is idle: shut it down. */
-	ppp_notice("Terminating connection due to lack of activity.");
-	pcb->err_code = PPPERR_IDLETIMEOUT;
-	lcp_close(pcb, "Link inactive");
+    /* link is idle: shut it down. */
+    ppp_notice("Terminating connection due to lack of activity.");
+    pcb->err_code = PPPERR_IDLETIMEOUT;
+    lcp_close(pcb, "Link inactive");
     } else {
-	Timeout(check_idle, static_cast<void*>(pcb), tlim);
+    Timeout(check_idle, static_cast<void*>(pcb), tlim);
     }
 }
 
@@ -549,7 +549,7 @@ static void connect_time_expired(void *arg) {
     ppp_info("Connect time expired");
     pcb->err_code = PPPERR_CONNECTTIME;
     /* Close connection */
-    lcp_close(pcb, "Connect time expired");	
+    lcp_close(pcb, "Connect time expired");
 }
 
 

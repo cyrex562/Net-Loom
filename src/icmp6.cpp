@@ -83,14 +83,17 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
         pbuf_free(p);
         return;
     }
-    struct Icmp6Hdr* icmp6hdr = (struct Icmp6Hdr *)p->payload;
-    IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_CHECK_ICMP6)
+    const auto icmp6hdr = static_cast<struct Icmp6Hdr *>(p->payload);
+    if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP6))
     {
+        // TODO: get current addresses
+        Ip6Addr* curr_src_addr = nullptr;
+        Ip6Addr* curr_dst_addr = nullptr;
         if (ip6_chksum_pseudo(p,
                               IP6_NEXTH_ICMP6,
                               p->tot_len,
-                              ip6_current_src_addr(),
-                              ip6_current_dest_addr()) != 0)
+                              curr_src_addr,
+                              curr_dst_addr) != 0)
         {
             /* Checksum failed */
             pbuf_free(p);
@@ -161,7 +164,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
         ((struct Icmp6EchoHdr *)(r->payload))->type = ICMP6_TYPE_EREP;
         ((struct Icmp6EchoHdr *)(r->payload))->chksum = 0;
 
-        IfNetifChecksumEnabled(inp, NETIF_CHECKSUM_GEN_ICMP6)
+        is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP6)
         {
             ((struct Icmp6EchoHdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
                                                                               IP6_NEXTH_ICMP6,
@@ -366,7 +369,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     struct PacketBuffer* q;
     struct Icmp6Hdr* icmp6hdr; /* ICMPv6 header + IPv6 header + data */
     q = pbuf_alloc(PBUF_IP,
-                   sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE,
+                   sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE,
                    PBUF_RAM);
     if (q == nullptr)
     {
@@ -376,17 +379,17 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
         return;
     }
     lwip_assert("check that first PacketBuffer can hold icmp 6message",
-                (q->len >= (sizeof(struct Icmp6Hdr) + kIp6Hlen + LWIP_ICMP6_DATASIZE)));
+                (q->len >= (sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE)));
     icmp6hdr = (struct Icmp6Hdr *)q->payload;
     icmp6hdr->type = type;
     icmp6hdr->code = code;
     icmp6hdr->data = lwip_htonl(data); /* copy fields from original packet */
     SMEMCPY((uint8_t *)q->payload + sizeof(struct Icmp6Hdr),
             (uint8_t *)p->payload,
-            kIp6Hlen + LWIP_ICMP6_DATASIZE); /* calculate checksum */
+            IP6_HDR_LEN + LWIP_ICMP6_DATASIZE); /* calculate checksum */
     icmp6hdr->chksum = 0;
 
-    IfNetifChecksumEnabled(netif, NETIF_CHECKSUM_GEN_ICMP6)
+    is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_ICMP6)
     {
         icmp6hdr->chksum = ip6_chksum_pseudo(q,
                                              IP6_NEXTH_ICMP6,

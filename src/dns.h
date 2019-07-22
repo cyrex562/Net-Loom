@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "opt.h"
 #include "ip_addr.h"
 #include "lwip_error.h"
-#include "ip4_addr.h"
 
- /** DNS server port address */
+/** DNS server port address */
 
 constexpr auto DNS_SERVER_PORT = 53;
 
@@ -156,7 +154,7 @@ inline bool lwip_dns_addrtype_is_ipv6(uint8_t t)
 
 inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddr* ip)
 {
-    return (is_ipaddr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
+    return (is_ip_addr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }
 
 

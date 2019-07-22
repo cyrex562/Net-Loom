@@ -53,7 +53,7 @@ extern "C" {
 #define RAW_FLAGS_HDRINCL        0x02U
 #define RAW_FLAGS_MULTICAST_LOOP 0x04U
 
-struct raw_pcb;
+struct RawPcb;
 
 /** Function prototype for raw pcb receive callback functions.
  * @param arg user supplied argument (raw_pcb.recv_arg)
@@ -65,13 +65,15 @@ struct raw_pcb;
  * If returning 1, the callback is responsible for freeing the PacketBuffer
  * if it's not used any more.
  */
-typedef uint8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct PacketBuffer *p,
+typedef uint8_t (*raw_recv_fn)(void *arg, struct RawPcb *pcb, struct PacketBuffer *p,
     const IpAddr *addr);
 
 /** the RAW protocol control block */
-struct raw_pcb {
-  /* Common members of all PCB types */
+struct RawPcb
+{
+    /* Common members of all PCB types */
     IpAddr local_ip;
+    IpAddr remote_ip;
     /* Bound netif index */
     uint8_t netif_idx;
     /* Socket options */
@@ -80,46 +82,38 @@ struct raw_pcb {
     uint8_t tos;
     /* Time To Live */
     uint8_t ttl;
-    NetIfc*cHint netif_hints;;
-
-  struct raw_pcb *next;
-
-  uint8_t protocol;
-  uint8_t flags;
-
-
-  /** outgoing network interface for multicast packets, by interface index (if nonzero) */
-  uint8_t mcast_ifindex;
-  /** TTL for outgoing multicast packets */
-  uint8_t mcast_ttl;
-
-
-  /** receive callback function */
-  raw_recv_fn recv;
-  /* user-supplied argument for the recv callback */
-  void *recv_arg;
-
-  /* fields for handling checksum computations as per RFC3542. */
-  uint16_t chksum_offset;
-  uint8_t  chksum_reqd;
-
+    NetIfc* netif_hints;
+    struct RawPcb* next;
+    uint8_t protocol;
+    uint8_t flags;
+    /** outgoing network interface for multicast packets, by interface index (if nonzero) */
+    uint8_t mcast_ifindex;
+    /** TTL for outgoing multicast packets */
+    uint8_t mcast_ttl;
+    /** receive callback function */
+    raw_recv_fn recv;
+    /* user-supplied argument for the recv callback */
+    void* recv_arg;
+    /* fields for handling checksum computations as per RFC3542. */
+    uint16_t chksum_offset;
+    uint8_t chksum_reqd;
 };
 
 /* The following functions is the application layer interface to the
    RAW code. */
-struct raw_pcb * raw_new        (uint8_t proto);
-struct raw_pcb * raw_new_ip_type(uint8_t type, uint8_t proto);
-void             raw_remove     (struct raw_pcb *pcb);
-LwipStatus            raw_bind       (struct raw_pcb *pcb, const IpAddr *ipaddr);
-void             raw_bind_netif (struct raw_pcb *pcb, const NetIfc*netif);
-LwipStatus            raw_connect    (struct raw_pcb *pcb, const IpAddr *ipaddr);
-void             raw_disconnect (struct raw_pcb *pcb);
+struct RawPcb * raw_new        (uint8_t proto);
+struct RawPcb * raw_new_ip_type(uint8_t type, uint8_t proto);
+void             raw_remove     (struct RawPcb *pcb);
+LwipStatus            raw_bind       (struct RawPcb *pcb, const IpAddr *ipaddr);
+void             raw_bind_netif (struct RawPcb *pcb, const NetIfc*netif);
+LwipStatus            raw_connect    (struct RawPcb *pcb, const IpAddr *ipaddr);
+void             raw_disconnect (struct RawPcb *pcb);
 
-LwipStatus            raw_sendto     (struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr);
-LwipStatus            raw_sendto_if_src(struct raw_pcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, NetIfc*netif, const IpAddr *src_ip);
-LwipStatus            raw_send       (struct raw_pcb *pcb, struct PacketBuffer *p);
+LwipStatus            raw_sendto     (struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr);
+LwipStatus            raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, NetIfc*netif, const IpAddr *src_ip);
+LwipStatus            raw_send       (struct RawPcb *pcb, struct PacketBuffer *p);
 
-void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
+void             raw_recv       (struct RawPcb *pcb, raw_recv_fn recv, void *recv_arg);
 
 #define          raw_flags(pcb) ((pcb)->flags)
 #define          raw_setflags(pcb,f)  ((pcb)->flags = (f))

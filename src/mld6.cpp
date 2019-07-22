@@ -531,8 +531,8 @@ mld6_delayed_report(struct mld_group *group, uint16_t maxresp_in)
   }
 
 
-  /* Randomize maxresp. (if LWIP_RAND is supported) */
-  maxresp = (uint16_t)(LWIP_RAND() % maxresp);
+  /* Randomize maxresp. (if lwip_rand is supported) */
+  maxresp = (uint16_t)(lwip_rand() % maxresp);
   if (maxresp == 0) {
     maxresp = 1;
   }

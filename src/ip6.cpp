@@ -240,103 +240,6 @@ ip6_route(const Ip6Addr *src, const Ip6Addr *dest)
   return netif_default;
 }
 
-/**
- * @ingroup ip6
- * Select the best IPv6 source address for a given destination IPv6 address.
- *
- * This implementation follows RFC 6724 Sec. 5 to the following extent:
- * - Rules 1, 2, 3: fully implemented
- * - Rules 4, 5, 5.5: not applicable
- * - Rule 6: not implemented
- * - Rule 7: not applicable
- * - Rule 8: limited to "prefer /64 subnet match over non-match"
- *
- * For Rule 2, we deliberately deviate from RFC 6724 Sec. 3.1 by considering
- * ULAs to be of smaller scope than global addresses, to avoid that a preferred
- * ULA is picked over a deprecated global address when given a global address
- * as destination, as that would likely result in broken two-way communication.
- *
- * As long as temporary addresses are not supported (as used in Rule 7), a
- * proper implementation of Rule 8 would obviate the need to implement Rule 6.
- *
- * @param netif the netif on which to send a packet
- * @param dest the destination we are trying to reach (possibly not properly
- *             zoned)
- * @return the most suitable source address to use, or NULL if no suitable
- *         source address is found
- */
-const IpAddr *
-ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
-{
-  const IpAddr *best_addr;
-  const Ip6Addr *cand_addr;
-  int8_t dest_scope, cand_scope;
-  int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
-  uint8_t i, cand_pref, cand_bits;
-  uint8_t best_pref = 0;
-  uint8_t best_bits = 0;
-
-  /* Start by determining the scope of the given destination address. These
-   * tests are hopefully (roughly) in order of likeliness to match. */
-  if (ip6_addr_isglobal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-  } else if (ip6_addr_islinklocal(dest) || ip6_addr_isloopback(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
-  } else if (ip6_addr_isuniquelocal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
-  } else if (ip6_addr_ismulticast(dest)) {
-    dest_scope = ip6_addr_multicast_scope(dest);
-  } else if (ip6_addr_issitelocal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
-  } else {
-    /* no match, consider scope global */
-    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-  }
-
-  best_addr = nullptr;
-
-  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    /* Consider only valid (= preferred and deprecated) addresses. */
-    if (!ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
-      continue;
-    }
-    /* Determine the scope of this candidate address. Same ordering idea. */
-    cand_addr = netif_ip6_addr(netif, i);
-    if (ip6_addr_isglobal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-    } else if (ip6_addr_islinklocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
-    } else if (ip6_addr_isuniquelocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
-    } else if (ip6_addr_issitelocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
-    } else {
-      /* no match, treat as low-priority global scope */
-      cand_scope = IP6_MULTICAST_SCOPE_RESERVEDF;
-    }
-    cand_pref = ip6_addr_ispreferred(netif_ip6_addr_state(netif, i));
-    /* @todo compute the actual common bits, for longest matching prefix. */
-    /* We cannot count on the destination address having a proper zone
-     * assignment, so do not compare zones in this case. */
-    cand_bits = ip6_addr_netcmp_zoneless(cand_addr, dest); /* just 1 or 0 for now */
-    if (cand_bits && ip6_addr_nethostcmp(cand_addr, dest)) {
-      return netif_ip_addr6(netif, i); /* Rule 1 */
-    }
-    if ((best_addr == nullptr) || /* no alternative yet */
-        ((cand_scope < best_scope) && (cand_scope >= dest_scope)) ||
-        ((cand_scope > best_scope) && (best_scope < dest_scope)) || /* Rule 2 */
-        ((cand_scope == best_scope) && ((cand_pref > best_pref) || /* Rule 3 */
-        ((cand_pref == best_pref) && (cand_bits > best_bits))))) { /* Rule 8 */
-      /* We found a new "winning" candidate. */
-      best_addr = netif_ip_addr6(netif, i);
-      best_scope = cand_scope;
-      best_pref = cand_pref;
-      best_bits = cand_bits;
-    }
-  }
-
-  return best_addr; /* may be NULL */
-}
 
 
 /**
@@ -509,7 +412,7 @@ ip6_input(struct PacketBuffer *p, NetIfc*inp)
   /* identify the IP header */
   ip6hdr = (struct ip6_hdr *)p->payload;
   if (IP6H_V(ip6hdr) != 6) {
-    Logf(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IPv6 packet dropped due to bad version number %"U32_F"\n",
+    Logf(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IPv6 packet dropped due to bad version number %d\n",
         IP6H_V(ip6hdr)));
     pbuf_free(p);
     IP6_STATS_INC(ip6.err);
@@ -528,12 +431,12 @@ ip6_input(struct PacketBuffer *p, NetIfc*inp)
   if ((IP6_HLEN > p->len) || (IP6H_PLEN(ip6hdr) > (p->tot_len - IP6_HLEN))) {
     if (IP6_HLEN > p->len) {
       Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-        ("IPv6 header (len %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IP packet dropped.\n",
+        ("IPv6 header (len %d) does not fit in first PacketBuffer (len %d), IP packet dropped.\n",
             (uint16_t)IP6_HLEN, p->len));
     }
     if ((IP6H_PLEN(ip6hdr) + IP6_HLEN) > p->tot_len) {
       Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-        ("IPv6 (plen %"U16_F") is longer than PacketBuffer (len %"U16_F"), IP packet dropped.\n",
+        ("IPv6 (plen %d) is longer than PacketBuffer (len %d), IP packet dropped.\n",
             (uint16_t)(IP6H_PLEN(ip6hdr) + IP6_HLEN), p->tot_len));
     }
     /* free (drop) packet pbufs */
@@ -686,7 +589,7 @@ netif_found:
 
       if ((p->len < 8) || (hlen > p->len)) {
         Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-          ("IPv6 options header (hlen %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IPv6 packet dropped.\n",
+          ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
         pbuf_free(p);
@@ -775,7 +678,7 @@ netif_found:
       hlen = 8 * (1 + dest_hdr->_hlen);
       if ((p->len < 8) || (hlen > p->len)) {
         Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-          ("IPv6 options header (hlen %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IPv6 packet dropped.\n",
+          ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
         pbuf_free(p);
@@ -869,7 +772,7 @@ netif_found:
 
       if ((p->len < 8) || (hlen > p->len)) {
         Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-          ("IPv6 options header (hlen %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IPv6 packet dropped.\n",
+          ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
         pbuf_free(p);
@@ -929,7 +832,7 @@ netif_found:
       /* Make sure this header fits in current PacketBuffer. */
       if (hlen > p->len) {
         Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-          ("IPv6 options header (hlen %"U16_F") does not fit in first PacketBuffer (len %"U16_F"), IPv6 packet dropped.\n",
+          ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
         pbuf_free(p);
@@ -995,7 +898,7 @@ options_done:
   /* send to upper layers */
   Logf(IP6_DEBUG, ("ip6_input: \n"));
   ip6_debug_print(p);
-  Logf(IP6_DEBUG, ("ip6_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len));
+  Logf(IP6_DEBUG, ("ip6_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 
   ip_data.current_ip_header_tot_len = hlen_tot;
   
@@ -1047,7 +950,7 @@ options_done:
           icmp6_param_problem(p, ICMP6_PP_HEADER, nexth);
         }
 
-        Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", (uint16_t)IP6H_NEXTH(ip6hdr)));
+        Logf(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %d\n", (uint16_t)IP6H_NEXTH(ip6hdr)));
         IP6_STATS_INC(ip6.proterr);
         IP6_STATS_INC(ip6.drop);
       }
@@ -1153,7 +1056,7 @@ ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
     }
 
     ip6hdr = (struct ip6_hdr *)p->payload;
-    LWIP_ASSERT("check that first PacketBuffer can hold struct ip6_hdr",
+    lwip_assert("check that first PacketBuffer can hold struct ip6_hdr",
                (p->len >= sizeof(struct ip6_hdr)));
 
     IP6H_HOPLIM_SET(ip6hdr, hl);
@@ -1181,7 +1084,7 @@ ip6_output_if_src(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *des
 
   IP6_STATS_INC(ip6.xmit);
 
-  Logf(IP6_DEBUG, ("ip6_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], (uint16_t)netif->num));
+  Logf(IP6_DEBUG, ("ip6_output_if: %c%c%d\n", netif->name[0], netif->name[1], (uint16_t)netif->num));
   ip6_debug_print(p);
 
 

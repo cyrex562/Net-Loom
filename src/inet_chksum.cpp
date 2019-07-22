@@ -249,7 +249,7 @@ static uint16_t inet_cksum_pseudo_base(struct PacketBuffer* p,
         //      ("inet_chksum_pseudo(): checksumming PacketBuffer %p (has next %p) \n", (void
         //          *)q, (void *)q->next));
         acc += lwip_standard_checksum(q->payload, q->len);
-        /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%"X32_F"
+        /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%x
             * \n", acc));*/
         /* just executing this next line is probably faster that the if statement
               needed to check whether we really need to execute it, and does no harm */
@@ -258,7 +258,7 @@ static uint16_t inet_cksum_pseudo_base(struct PacketBuffer* p,
         {
             swapped = !swapped;
             acc = SWAP_BYTES_IN_WORD(acc);
-        } /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_standard_checksum()=%"X32_F"
+        } /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_standard_checksum()=%x
      * \n", acc));*/
     }
     if (swapped)
@@ -270,7 +270,7 @@ static uint16_t inet_cksum_pseudo_base(struct PacketBuffer* p,
      calling this twice is probably faster than if statements... */
     acc = FOLD_U32T(acc);
     acc = FOLD_U32T(acc); //  Logf(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain
-    //  lwip_standard_checksum()=%"X32_F"\n", acc));
+    //  lwip_standard_checksum()=%x\n", acc));
     return (uint16_t)~(acc & 0xffffUL);
 } /* inet_chksum_pseudo:
  *
@@ -355,7 +355,7 @@ uint16_t ip_chksum_pseudo(struct PacketBuffer* p,
                           const IpAddr* src,
                           const IpAddr* dest)
 {
-  if (is_ipaddr_v6(dest)) {
+  if (is_ip_addr_v6(dest)) {
       return ip6_chksum_pseudo(p,
                                proto,
                                proto_len,
@@ -394,14 +394,14 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
         acc += lwip_standard_checksum(q->payload, chklen);
         chksum_len = (uint16_t)(chksum_len - chklen);
         lwip_assert("delete me", chksum_len < 0x7fff);
-        /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%"X32_F"
+        /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_standard_checksum()=%x
             * \n", acc));*/ /* fold the upper bit down */
         acc = FOLD_U32T(acc);
         if (q->len % 2 != 0)
         {
             swapped = !swapped;
             acc = SWAP_BYTES_IN_WORD(acc);
-        } /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_standard_checksum()=%"X32_F"
+        } /*Logf(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_standard_checksum()=%x
      * \n", acc));*/
     }
     if (swapped)
@@ -413,7 +413,7 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
      calling this twice is probably faster than if statements... */
     acc = FOLD_U32T(acc);
     acc = FOLD_U32T(acc); //  Logf(INET_DEBUG, ("inet_chksum_pseudo(): PacketBuffer chain
-    //  lwip_standard_checksum()=%"X32_F"\n", acc));
+    //  lwip_standard_checksum()=%x\n", acc));
     return (uint16_t)~(acc & 0xffffUL);
 }
 
@@ -509,7 +509,7 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                   const IpAddr* src,
                                   const IpAddr* dest)
 {
-    if (is_ipaddr_v6(dest))
+    if (is_ip_addr_v6(dest))
     {
         return ip6_chksum_pseudo_partial(p,
                                          proto,

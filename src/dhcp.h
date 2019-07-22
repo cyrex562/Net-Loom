@@ -7,7 +7,7 @@
 #include "udp.h"
 
 /* DHCP message item offsets and length */
-constexpr auto DHCP_CHADDR_LEN = 16U;
+constexpr unsigned int DHCP_CHADDR_LEN = 16U;
 constexpr auto DHCP_SNAME_OFS = 44U;
 constexpr auto DHCP_SNAME_LEN = 64U;
 constexpr auto DHCP_FILE_OFS = 108U;
@@ -87,55 +87,51 @@ constexpr auto DHCP_MAGIC_COOKIE = 0x63825363UL;
 /* This is a list of options for BOOTP and DHCP, see RFC 2132 for descriptions */
 
 /* BootP options */
-#define DHCP_OPTION_PAD             0
-#define DHCP_OPTION_SUBNET_MASK     1 /* RFC 2132 3.3 */
-#define DHCP_OPTION_ROUTER          3
-#define DHCP_OPTION_DNS_SERVER      6
-#define DHCP_OPTION_HOSTNAME        12
-#define DHCP_OPTION_IP_TTL          23
-#define DHCP_OPTION_MTU             26
-#define DHCP_OPTION_BROADCAST       28
-#define DHCP_OPTION_TCP_TTL         37
-#define DHCP_OPTION_NTP             42
-#define DHCP_OPTION_END             255
+enum DhcpOptions
+{
+    DHCP_OPTION_PAD = 0,
+    DHCP_OPTION_SUBNET_MASK = 1, /* RFC 2132 3.3 */
+    DHCP_OPTION_ROUTER = 3,
+    DHCP_OPTION_DNS_SERVER = 6,
+    DHCP_OPTION_HOSTNAME = 12,
+    DHCP_OPTION_IP_TTL = 23,
+    DHCP_OPTION_MTU = 26,
+    DHCP_OPTION_BROADCAST = 28,
+    DHCP_OPTION_TCP_TTL = 37,
+    DHCP_OPTION_NTP = 42,
+    DHCP_OPTION_END = 255,
+    /* DHCP options */
+    DHCP_OPTION_REQUESTED_IP = 50, /* RFC 2132 9.1, requested IP address */
+    DHCP_OPTION_LEASE_TIME = 51, /* RFC 2132 9.2, time in seconds, in 4 bytes */
+    DHCP_OPTION_OVERLOAD = 52, /* RFC2132 9.3, use file and/or sname field for options */
+    DHCP_OPTION_MESSAGE_TYPE = 53, /* RFC 2132 9.6, important for DHCP */
+    DHCP_OPTION_MESSAGE_TYPE_LEN = 1,
+    DHCP_OPTION_SERVER_ID = 54, /* RFC 2132 9.7, server IP address */
+    DHCP_OPTION_PARAMETER_REQUEST_LIST = 55, /* RFC 2132 9.8, requested option types */
+    DHCP_OPTION_MAX_MSG_SIZE = 57, /* RFC 2132 9.10, message size accepted >= 576 */
+    DHCP_OPTION_US = 60,
+    DHCP_OPTION_CLIENT_ID = 61,
+    DHCP_OPTION_TFTP_SERVERNAME = 66,
+    DHCP_OPTION_BOOTFILE = 67,
+    /* possible combinations of overloading the file and sname fields with options */
+    DHCP_OVERLOAD_NONE = 0,
+    DHCP_OVERLOAD_FILE = 1,
+    DHCP_OVERLOAD_SNAME = 2,
+    DHCP_OVERLOAD_SNAME_FILE = 3,
+};
 
-/* DHCP options */
-#define DHCP_OPTION_REQUESTED_IP    50 /* RFC 2132 9.1, requested IP address */
-#define DHCP_OPTION_LEASE_TIME      51 /* RFC 2132 9.2, time in seconds, in 4 bytes */
-#define DHCP_OPTION_OVERLOAD        52 /* RFC2132 9.3, use file and/or sname field for options */
-
-#define DHCP_OPTION_MESSAGE_TYPE    53 /* RFC 2132 9.6, important for DHCP */
-#define DHCP_OPTION_MESSAGE_TYPE_LEN 1
-
-#define DHCP_OPTION_SERVER_ID       54 /* RFC 2132 9.7, server IP address */
-#define DHCP_OPTION_PARAMETER_REQUEST_LIST  55 /* RFC 2132 9.8, requested option types */
-
-#define DHCP_OPTION_MAX_MSG_SIZE    57 /* RFC 2132 9.10, message size accepted >= 576 */
-#define DHCP_OPTION_MAX_MSG_SIZE_LEN 2
-
-#define DHCP_OPTION_T1              58 /* T1 renewal time */
-#define DHCP_OPTION_T2              59 /* T2 rebinding time */
-#define DHCP_OPTION_US              60
-#define DHCP_OPTION_CLIENT_ID       61
-#define DHCP_OPTION_TFTP_SERVERNAME 66
-#define DHCP_OPTION_BOOTFILE        67
-
-/* possible combinations of overloading the file and sname fields with options */
-#define DHCP_OVERLOAD_NONE          0
-#define DHCP_OVERLOAD_FILE          1
-#define DHCP_OVERLOAD_SNAME         2
-#define DHCP_OVERLOAD_SNAME_FILE    3
-
-
+constexpr auto DHCP_OPTION_MAX_MSG_SIZE_LEN = 2;
+constexpr auto DHCP_OPTION_T1 = 58; /* T1 renewal time */
+constexpr auto DHCP_OPTION_T2 = 59; /* T2 rebinding time */
 
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
-#define DHCP_COARSE_TIMER_SECS  60
+constexpr auto DHCP_COARSE_TIMER_SECS = 60;
 /** period (in milliseconds) of the application calling dhcp_coarse_tmr() */
-#define DHCP_COARSE_TIMER_MSECS (DHCP_COARSE_TIMER_SECS * 1000UL)
+constexpr auto DHCP_COARSE_TIMER_MSECS = (DHCP_COARSE_TIMER_SECS * 1000UL);
 /** period (in milliseconds) of the application calling dhcp_fine_tmr() */
-#define DHCP_FINE_TIMER_MSECS   500
+constexpr auto DHCP_FINE_TIMER_MSECS =  500;
 
-#define DHCP_BOOT_FILE_LEN      128U
+constexpr auto DHCP_BOOT_FILE_LEN   =  128U;
 
 /* AutoIP cooperation flags (struct dhcp.autoip_coop_state) */
 enum DhcpAutoipCoopStateEnumT
@@ -174,6 +170,8 @@ struct DhcpContext
     uint32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
     Ip4Addr offered_si_addr;
     char boot_file_name[DHCP_BOOT_FILE_LEN];
+
+    uint8_t dhcp_options[0xff];
 };
 
 
@@ -200,7 +198,7 @@ void dhcp_fine_tmr(void);
  * See LWIP_DHCP_MAX_NTP_SERVERS */
 extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
 
-inline DhcpContext* netif_dhcp_data(NetIfc* netif)
+inline DhcpContext* netif_dhcp_data(const NetIfc* netif)
 {
     return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
 }
