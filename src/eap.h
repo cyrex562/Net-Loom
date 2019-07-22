@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "ppp_opts.h"
-#include "eap_state.h"
+#include <ppp_opts.h>
+#include <eap_state.h>
 #include <cstdint>
 #ifdef	__cplusplus
 struct PppPcb;

@@ -60,30 +60,30 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
+#include <opt.h>
+#include <def.h>
 
-#include "inet_chksum.h"
+#include <inet_chksum.h>
 
-#include "ip6.h"
+#include <ip6.h>
 
-#include "ip6_addr.h"
+#include <ip6_addr.h>
 
-#include "ip_addr.h"
-#include "mem.h"
+#include <ip_addr.h>
+#include <mem.h>
 
-#include "memp.h"
+#include <memp.h>
 
-#include "netif.h"
+#include <netif.h>
 
-#include "stats.h"
+#include <stats.h>
 
-#include "sys.h"
+#include <sys.h>
 
-#include "tcp_priv.h"
+#include <tcp_priv.h>
 
 #include <cstring>
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
 
 /* Allow to add custom TCP header options by defining this hook */
@@ -528,7 +528,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
         /* If the last unsent PacketBuffer is of type PBUF_ROM, try to extend it. */
         struct PacketBuffer *p;
         for (p = last_unsent->p; p->next != nullptr; p = p->next);
-        if (((p->type_internal & (kPbufTypeFlagStructDataContiguous | kPbufTypeFlagDataVolatile)) == 0) &&
+        if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | kPbufTypeFlagDataVolatile)) == 0) &&
             (const uint8_t *)p->payload + p->len == (const uint8_t *)arg) {
           lwip_assert("tcp_write: ROM pbufs cannot be oversized", pos == 0);
           extendlen = seglen;
@@ -1210,7 +1210,7 @@ tcp_output(struct TcpPcb *pcb)
 
   if (seg == nullptr) {
     Logf(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n",
-             (void *)pcb->unsent));
+             (uint8_t *)pcb->unsent));
     Logf(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F
              ", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
              ", seg == NULL, ack %d\n",
@@ -1429,7 +1429,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
   /* cast through void* to get rid of alignment warnings */
-  opts = (uint32_t *)(void *)(seg->tcphdr + 1);
+  opts = (uint32_t *)(uint8_t *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
     uint16_t mss;
 
@@ -1523,7 +1523,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
 
     if (chksum_slow != seg->tcphdr->chksum) {
       TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(
-        ("tcp_output_segment: calculated checksum is %"X16_F" instead of %"X16_F"\n",
+        ("tcp_output_segment: calculated checksum is %x instead of %x\n",
          seg->tcphdr->chksum, chksum_slow));
       seg->tcphdr->chksum = chksum_slow;
     }
@@ -1801,7 +1801,7 @@ tcp_output_fill_options(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_
   lwip_assert("tcp_output_fill_options: invalid pbuf", p != nullptr);
 
   tcphdr = (struct TcpHdr *)p->payload;
-  opts = (uint32_t *)(void *)(tcphdr + 1);
+  opts = (uint32_t *)(uint8_t *)(tcphdr + 1);
 
   /* NB. MSS and window scale options are only sent on SYNs, so ignore them here */
 

@@ -38,9 +38,9 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "lwip_error.h"
-#include "netif.h"
+#include <opt.h>
+#include <lwip_error.h>
+#include <netif.h>
 #include <cstdint>
 
 constexpr auto DHCP6_CLIENT_PORT = 546;
@@ -146,7 +146,7 @@ struct Dhcp6
 };
 
 void dhcp6_set_struct(NetIfc*netif, struct Dhcp6 *dhcp6);
-/** Remove a struct dhcp6 previously set to the netif using dhcp6_set_struct() */
+/** Remove a Dhcp6 previously set to the netif using dhcp6_set_struct() */
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
 void dhcp6_cleanup(NetIfc*netif);
 

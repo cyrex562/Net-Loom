@@ -1,7 +1,7 @@
 #pragma once
 
-#include "lwip_error.h"
-#include "ethernet.h"
+#include <lwip_error.h>
+#include <ethernet.h>
 
 struct NetIfc;
 typedef uint64_t BridgeIfcPortMask;
@@ -28,6 +28,20 @@ struct BridgeIfcFdbStaticEntry
     struct EthAddr addr;
 };
 
+struct BridgeIfDfDbEntry
+{
+    uint8_t used;
+    uint8_t port;
+    uint32_t ts;
+    struct EthAddr addr;
+};
+
+struct BridgeIfcFdb
+{
+    uint16_t max_fdb_entries;
+    BridgeIfDfDbEntry* fdb;
+};
+
 struct BridgeIfcPrivate
 {
     NetIfc* netif;
@@ -38,20 +52,11 @@ struct BridgeIfcPrivate
     uint16_t max_fdbs_entries;
     BridgeIfcFdbStaticEntry* fdbs;
     uint16_t max_fdbd_entries;
-    void* fdbd;
+    BridgeIfcFdb* fdbd;
 };
 
-struct BridgeIfDfDbEntry {
-  uint8_t used;
-  uint8_t port;
-  uint32_t ts;
-  struct EthAddr addr;
-};
 
-struct BridgeIfcFdb {
-  uint16_t max_fdb_entries;
-  BridgeIfDfDbEntry *fdb;
-};
+
 
 
 /** @ingroup bridgeif
@@ -90,8 +95,9 @@ LwipStatus bridgeif_fdb_remove(NetIfc*bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct EthAddr *dst_addr);
-void*               bridgeif_fdb_init(uint16_t max_fdb_entries);
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct EthAddr *dst_addr);
+
+BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 
 static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);
 

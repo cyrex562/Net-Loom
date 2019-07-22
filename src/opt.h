@@ -1756,9 +1756,9 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * pending datagram in bytes. This is the way linux does it. This code is only
  * here for compatibility.
  */
-#if !defined LWIP_FIONREAD_LINUXMODE || defined __DOXYGEN__
+
 #define LWIP_FIONREAD_LINUXMODE         0
-#endif
+
 
 /**
  * LWIP_SOCKET_SELECT==1 (default): enable select() for sockets (uses a NetconnDesc
@@ -1766,17 +1766,17 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
  * This saves RAM (counters per socket) and code (NetconnDesc event callback), which
  * should improve performance a bit).
  */
-#if !defined LWIP_SOCKET_SELECT || defined __DOXYGEN__
+
 #define LWIP_SOCKET_SELECT              1
-#endif
+
 
 /**
  * LWIP_SOCKET_POLL==1 (default): enable poll() for sockets (including
  * struct pollfd, nfds_t, and constants)
  */
-#if !defined LWIP_SOCKET_POLL || defined __DOXYGEN__
+
 #define LWIP_SOCKET_POLL                1
-#endif
+
 /**
  * @}
  */
@@ -2113,9 +2113,8 @@ constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 /**
  * LWIP_IPV6_NUM_ADDRESSES: Number of IPv6 addresses per netif.
  */
-#if !defined LWIP_IPV6_NUM_ADDRESSES || defined __DOXYGEN__
-#define LWIP_IPV6_NUM_ADDRESSES         3
-#endif
+constexpr auto LWIP_IPV6_NUM_ADDRESSES = 3;
+
 
 /**
  * LWIP_IPV6_FORWARD==1: Forward IPv6 packets across netifs
@@ -2811,12 +2810,12 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * This hook is called just before the DHCP6 message is sent, so the
  * options are at the end of a DHCP6 message.
  * Signature:\code{.c}
- *   void my_hook(NetIfc*netif, struct dhcp6 *dhcp, uint8_t state, struct dhcp6_msg *msg,
+ *   void my_hook(NetIfc*netif, Dhcp6 *dhcp, uint8_t state, struct dhcp6_msg *msg,
  *                uint8_t msg_type, uint16_t *options_len_ptr);
  * \endcode
  * Arguments:
  * - netif: NetIfc* that the packet will be sent through
- * - dhcp6: struct dhcp6 on that netif
+ * - dhcp6: Dhcp6 on that netif
  * - state: current dhcp6 state (dhcp6_state_enum_t as an uint8_t)
  * - msg: struct dhcp6_msg that will be sent
  * - msg_type: dhcp6 message type to be sent (uint8_t)
@@ -2838,7 +2837,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Called from socket API to implement setsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, LwipSocklen optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const uint8_t *optval, LwipSocklen optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor
@@ -2861,7 +2860,7 @@ constexpr auto LWIP_ICMP6_DATASIZE      =       8;
  * Called from socket API to implement getsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
  * Signature:\code{.c}
- *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, LwipSocklen *optlen, int *err)
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, uint8_t *optval, LwipSocklen *optlen, int *err)
  * \endcode
  * Arguments:
  * - s: socket file descriptor

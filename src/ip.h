@@ -1,12 +1,9 @@
 #pragma once
-
-#include "def.h"
-#include "ip4.h"
-#include "ip6.h"
-#include "ip_addr.h"
-#include "lwip_error.h"
-#include "netif.h"
-#include "packet_buffer.h"
+#include <ip4.h>
+#include <ip6.h>
+#include <ip_addr.h>
+#include <lwip_error.h>
+#include <packet_buffer.h>
 
 enum IpProto
 {
@@ -21,7 +18,7 @@ enum IpProto
 /** This operates on a void* by loading the first byte */
 inline uint8_t get_ip_hdr_version(void* ptr)
 {
-    return ((*static_cast<uint8_t *>(ptr)) >> 4);
+    return *static_cast<uint8_t *>(ptr) >> 4;
 }
 
 
@@ -140,7 +137,7 @@ struct IpGlobals
 //                       : IPH_PROTO(ip4_current_header()))
 /** Get the transport layer header */
 // #define ip_next_header_ptr()                                      \
-//   ((const void *)((ip_current_is_v6()                             \
+//   ((const uint8_t *)((ip_current_is_v6()                             \
 //                        ? (const uint8_t *)ip6_current_header()    \
 //                        : (const uint8_t *)ip4_current_header()) + \
 //                   ip_current_header_tot_len()))
@@ -161,14 +158,29 @@ struct IpGlobals
 // inline IpAddr* ip_current_dest_addr()
 //  { return &ip_data.current_iphdr_dest; }
 
-/** Gets an IP pcb option (SOF_* flags) */
-#define ip_get_option(pcb, opt) ((pcb)->so_options & (opt))
-/** Sets an IP pcb option (SOF_* flags) */
-#define ip_set_option(pcb, opt) \
-  ((pcb)->so_options = (uint8_t)((pcb)->so_options | (opt)))
-/** Resets an IP pcb option (SOF_* flags) */
-#define ip_reset_option(pcb, opt) \
-  ((pcb)->so_options = (uint8_t)((pcb)->so_options & ~(opt)))
+//
+// Gets an IP pcb option (SOF_* flags)
+//
+inline uint8_t ip_get_option(IpPcb* pcb, const uint8_t opt)
+{
+    return ((pcb)->so_options & (opt));
+}
+
+//
+// Sets an IP pcb option (SOF_* flags)
+//
+inline void ip_set_option(uint8_t* so_options, const uint8_t opt)
+{
+    *so_options = uint8_t(*so_options | opt);
+}
+
+//
+// Resets an IP pcb option (SOF_* flags)
+//
+inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
+{
+    pcb->so_options = uint8_t(pcb->so_options & ~opt);
+}
 
 /**
  * @ingroup ip

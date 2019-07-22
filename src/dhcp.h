@@ -1,10 +1,10 @@
 #pragma once
 
-#include "arch.h"
-#include "ip4.h"
-#include "opt.h"
-#include "netif.h"
-#include "udp.h"
+#include <arch.h>
+#include <ip4.h>
+#include <opt.h>
+#include <netif.h>
+#include <udp.h>
 
 /* DHCP message item offsets and length */
 constexpr unsigned int DHCP_CHADDR_LEN = 16U;

@@ -38,8 +38,8 @@
  *  http://www.ietf.org/rfc/rfc1321.txt
  */
 
-#include "ppp_opts.h"
-#include "polarssl/md5.h"
+#include <ppp_opts.h>
+#include <polarssl/md5.h>
 #include <string.h>
 
 /*
@@ -222,7 +222,7 @@ void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, fill );
         md5_process( ctx, ctx->buffer );
         input += fill;
@@ -239,7 +239,7 @@ void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        MEMCPY( (void *) (ctx->buffer + left),
+        MEMCPY( (uint8_t *) (ctx->buffer + left),
                 input, ilen );
     }
 }

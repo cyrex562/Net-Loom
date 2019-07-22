@@ -72,13 +72,13 @@
 *   Extracted from avos.
 *****************************************************************************/
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 #include <cstdint>
-#include "sys.h"
-#include "pppcrypt.h"
-#include "ppp_impl.h"
-#include "magic.h"
-#include "pppcrypt.h"
+#include <sys.h>
+#include <pppcrypt.h>
+#include <ppp_impl.h>
+#include <magic.h>
+#include <pppcrypt.h>
 
 #define MD5_HASH_SIZE 16
 static char magic_randpool[MD5_HASH_SIZE];   /* Pool of randomness. */

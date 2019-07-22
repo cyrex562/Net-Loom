@@ -47,11 +47,11 @@
  */
 
 
-#include "fsm.h"
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "pppdebug.h"
-static void fsm_timeout (void *);
+#include <fsm.h>
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <pppdebug.h>
+static void fsm_timeout (uint8_t *);
 static void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
 static void fsm_rconfack(Fsm *f, int id, uint8_t *inp, int len);
 static void fsm_rconfnakrej(Fsm *f, int code, int id, uint8_t *inp, int len);
@@ -254,7 +254,7 @@ void fsm_close(Fsm *f, const char *reason) {
 /*
  * fsm_timeout - Timeout expired.
  */
-static void fsm_timeout(void *arg) {
+static void fsm_timeout(uint8_t *arg) {
     Fsm *f = (Fsm *) arg;
     PppPcb *pcb = f->pcb;
 

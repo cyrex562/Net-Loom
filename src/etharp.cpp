@@ -1,70 +1,27 @@
-/**
- * @file
- * Address Resolution Protocol module for IP over Ethernet
- *
- * Functionally, ARP is divided into two parts. The first maps an IP address
- * to a physical address when sending a packet, and the second part answers
- * requests from other machines for our physical address.
- *
- * This implementation complies with RFC 826 (Ethernet ARP). It supports
- * Gratuitious ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6
- * if an interface calls etharp_gratuitous(our_netif) upon address change.
- */
+//
+// file: etharp.cpp
+//
 
-/*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * Copyright (c) 2003-2004 Leon Woestenberg <leon.woestenberg@axon.tv>
- * Copyright (c) 2003-2004 Axon Digital Design B.V., The Netherlands.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- */
+#include <opt.h>
+#include <autoip.h>
 
-#include "opt.h"
-#include "autoip.h"
+#include <dhcp.h>
 
-#include "dhcp.h"
+#include <etharp.h>
 
-#include "etharp.h"
+#include <ethernet.h>
 
-#include "ethernet.h"
+#include <iana.h>
 
-#include "iana.h"
+#include <ieee.h>
 
-#include "ieee.h"
+#include <lwip_debug.h>
 
-#include "lwip_debug.h"
-
-#include "lwip_snmp.h"
-
-#include "stats.h"
+#include <lwip_snmp.h>
 
 #include <cstring>
 #include <dhcp.cpp>
-#include "ip4.h"
+#include <ip4.h>
 
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
@@ -386,7 +343,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetIfc* netif)
             /* recycle oldest pending (queued packets are free in etharp_free_entry) */
             i = old_queue;
             // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-            //      ("etharp_find_entry: selecting oldest pending entry %d, freeing packet queue %p\n", (int)i, (void *)(
+            //      ("etharp_find_entry: selecting oldest pending entry %d, freeing packet queue %p\n", (int)i, (uint8_t *)(
             //          arp_table[i].next)));
             /* no empty or recyclable entries found */
         }
@@ -484,7 +441,7 @@ etharp_update_arp_entry(struct NetIfc* netif, const Ip4Addr* ipaddr, struct EthA
 
     //  Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: updating stable entry %"S16_F"\n", i));
     /* update address */
-    SMEMCPY(&arp_table[i].ethaddr, ethaddr, ETH_HWADDR_LEN);
+    SMEMCPY(&arp_table[i].ethaddr, ethaddr, ETH_ADDR_LEN);
     /* reset time stamp */
     arp_table[i].ctime = 0;
     /* this is where we will send out queued packets! */
@@ -684,7 +641,7 @@ etharp_input(struct PacketBuffer* p, struct NetIfc* netif)
 
     /* RFC 826 "Packet Reception": */
     if ((hdr->hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) ||
-        (hdr->hwlen != ETH_HWADDR_LEN) ||
+        (hdr->hwlen != ETH_ADDR_LEN) ||
         (hdr->protolen != sizeof(Ip4Addr)) ||
         (hdr->proto != pp_htons(ETHTYPE_IP)))
     {
@@ -852,7 +809,7 @@ etharp_output(struct NetIfc* netif, struct PacketBuffer* q, const Ip4Addr* ipadd
     if (ip4_addr_isbroadcast(ipaddr, netif))
     {
         /* broadcast on Ethernet also */
-        dest = (const struct EthAddr *)&kEthbroadcast;
+        dest = (const struct EthAddr *)&ETH_BCAST_ADDR;
         /* multicast destination IP address? */
     }
     else if (ip4_addr_ismulticast(ipaddr))
@@ -1132,14 +1089,14 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
             {
                 /* the pool MEMP_ARP_QUEUE is empty */
                 pbuf_free(p);
-                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
+                // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (uint8_t *)q));
                 result = ERR_MEM;
             }
         }
         else
         {
             // ETHARP_STATS_INC(etharp.memerr);
-            //      Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
+            //      Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (uint8_t *)q));
             result = ERR_MEM;
         }
     }
@@ -1192,11 +1149,11 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
     hdr->opcode = lwip_htons(opcode);
 
     lwip_assert("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
-                (netif->hwaddr_len == ETH_HWADDR_LEN));
+                (netif->hwaddr_len == ETH_ADDR_LEN));
 
     /* Write the ARP MAC-Addresses */
-    SMEMCPY(&hdr->shwaddr, hwsrc_addr, ETH_HWADDR_LEN);
-    SMEMCPY(&hdr->dhwaddr, hwdst_addr, ETH_HWADDR_LEN);
+    SMEMCPY(&hdr->shwaddr, hwsrc_addr, ETH_ADDR_LEN);
+    SMEMCPY(&hdr->dhwaddr, hwdst_addr, ETH_ADDR_LEN);
     /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
      * structure packing. */
     IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, ipsrc_addr);
@@ -1205,7 +1162,7 @@ etharp_raw(struct NetIfc* netif, const struct EthAddr* ethsrc_addr,
     hdr->hwtype = pp_htons(LWIP_IANA_HWTYPE_ETHERNET);
     hdr->proto = pp_htons(ETHTYPE_IP);
     /* set hwlen and protolen */
-    hdr->hwlen = ETH_HWADDR_LEN;
+    hdr->hwlen = ETH_ADDR_LEN;
     hdr->protolen = sizeof(Ip4Addr);
 
     /* send ARP query */
@@ -1263,7 +1220,7 @@ LwipStatus
 etharp_request(struct NetIfc* netif, const Ip4Addr* ipaddr)
 {
     Logf(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
-    return etharp_request_dst(netif, ipaddr, &kEthbroadcast);
+    return etharp_request_dst(netif, ipaddr, &ETH_BCAST_ADDR);
 }
 
 //

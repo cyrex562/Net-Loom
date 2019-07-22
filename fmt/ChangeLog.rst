@@ -882,7 +882,7 @@
 
   .. code:: c++
 
-    #include "fmt/string.h"
+    #include <fmt/string.h>
   
     std::string answer = fmt::to_string(42);
 
@@ -900,7 +900,7 @@
 
   .. code:: c++
 
-    #include "fmt/printf.h"
+    #include <fmt/printf.h>
  
     // %s format specifier can be used with any argument type.
     fmt::printf("%s", 42);
@@ -923,7 +923,7 @@
 
   .. code:: c++
 
-    #include "fmt/format.h"
+    #include <fmt/format.h>
  
     std::vector<double> v = {1.2, 3.4, 5.6};
     // Prints "(+01.20, +03.40, +05.60)".
@@ -1110,7 +1110,7 @@
 
   .. code:: c++
 
-    #include "fmt/format.h"
+    #include <fmt/format.h>
 
   Including ``format.h`` from the ``cppformat`` directory is deprecated
   but works via a proxy header which will be removed in the next major version.
@@ -1123,7 +1123,7 @@
 
   .. code:: c++
 
-    #include "fmt/time.h"
+    #include <fmt/time.h>
 
     std::time_t t = std::time(nullptr);
     // Prints "The date is 2016-04-29." (with the current date)
@@ -1134,7 +1134,7 @@
 
   .. code:: c++
 
-    #include "fmt/ostream.h"
+    #include <fmt/ostream.h>
 
     class Date {
       int year_, month_, day_;
@@ -1750,7 +1750,7 @@ Fixes
   .. code:: c++
 
     #define FMT_HEADER_ONLY
-    #include "format.h"
+    #include <format.h>
 
 * Compute string length in the constructor of ``BasicStringRef``
   instead of the ``size`` method

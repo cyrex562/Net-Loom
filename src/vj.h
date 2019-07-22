@@ -23,9 +23,9 @@
  */
 
 #pragma once
-#include "ppp_opts.h"
-#include "ip.h"
-#include "tcp_priv.h"
+#include <ppp_opts.h>
+#include <ip.h>
+#include <tcp_priv.h>
 
 #ifdef __cplusplus
 extern "C" {

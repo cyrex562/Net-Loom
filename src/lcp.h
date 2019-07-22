@@ -2,9 +2,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct PppPcb;
 
 /*
  * Options.
@@ -96,9 +94,8 @@ void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len);    /* send protocol reject 
 
 extern const struct Protent kLcpProtent;
 
-
-#ifdef __cplusplus
-}
-#endif
+//
+// END OF FILE
+//
 
 

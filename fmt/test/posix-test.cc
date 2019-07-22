@@ -8,9 +8,9 @@
 #include <cstdlib>  // std::exit
 #include <cstring>
 
-#include "fmt/posix.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include <fmt/posix.h>
+#include <gtest-extra.h>
+#include <util.h>
 
 #ifdef fileno
 # undef fileno

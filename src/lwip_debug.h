@@ -1,6 +1,6 @@
 #pragma once
-#include "arch.h"
-#include "opt.h"
+#include <arch.h>
+#include <opt.h>
 
 /**
  * @defgroup debugging_levels LWIP_DBG_MIN_LEVEL and LWIP_DBG_TYPES_ON values

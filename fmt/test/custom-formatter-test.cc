@@ -5,8 +5,8 @@
 //
 // For the license information refer to format.h.
 
-#include "fmt/format.h"
-#include "gtest-extra.h"
+#include <fmt/format.h>
+#include <gtest-extra.h>
 
 // MSVC 2013 is known to be broken.
 #if !FMT_MSC_VER || FMT_MSC_VER > 1800

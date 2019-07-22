@@ -20,11 +20,11 @@
 # include <windows.h>
 #endif
 
-#include "fmt/format.h"
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "mock-allocator.h"
-#include "util.h"
+#include <fmt/format.h>
+#include <gmock.h>
+#include <gtest-extra.h>
+#include <mock-allocator.h>
+#include <util.h>
 
 #undef ERROR
 #undef min
@@ -825,7 +825,7 @@ TEST(FormatterTest, NamedArg) {
   EXPECT_EQ("st", format("{0:.{precision}}", "str", fmt::arg("precision", 2)));
   EXPECT_EQ("1 2", format("{} {two}", 1, fmt::arg("two", 2)));
   EXPECT_EQ("42", format("{c}",
-        fmt::arg("a", 0), fmt::arg("b", 0), fmt::arg("c", 42), fmt::arg("d", 0),
+        fmt::arg("a", 0), fmt::arg("b", 0), fmt::arg("c", 42), fmt::arg(d, 0),
         fmt::arg("e", 0), fmt::arg("f", 0), fmt::arg("g", 0), fmt::arg("h", 0),
         fmt::arg("i", 0), fmt::arg("j", 0), fmt::arg("k", 0), fmt::arg("l", 0),
         fmt::arg("m", 0), fmt::arg("n", 0), fmt::arg("o", 0), fmt::arg("p", 0)));
@@ -1808,7 +1808,7 @@ TEST(FormatTest, JoinArg) {
   std::vector<float> v2;
   v2.push_back(1.2f);
   v2.push_back(3.4f);
-  void *v3[2] = { &v1[0], &v1[1] };
+  uint8_t *v3[2] = { &v1[0], &v1[1] };
 
   EXPECT_EQ("(1, 2, 3)", format("({})", join(v1, v1 + 3, ", ")));
   EXPECT_EQ("(1)", format("({})", join(v1, v1 + 1, ", ")));
@@ -2175,7 +2175,7 @@ TEST(FormatTest, ConstexprParseFormatSpecs) {
   static_assert(parse_test_specs("{42}").width_ref.index == 42, "");
   static_assert(parse_test_specs(".42").precision == 42, "");
   static_assert(parse_test_specs(".{42}").precision_ref.index == 42, "");
-  static_assert(parse_test_specs("d").type == 'd', "");
+  static_assert(parse_test_specs(d).type == 'd', "");
   static_assert(parse_test_specs("{<").res == handler::ERROR, "");
 }
 
@@ -2225,7 +2225,7 @@ TEST(FormatTest, ConstexprSpecsHandler) {
   static_assert(parse_specs(".42").precision == 42, "");
   static_assert(parse_specs(".{}").precision == 11, "");
   static_assert(parse_specs(".{0}").precision == 22, "");
-  static_assert(parse_specs("d").type == 'd', "");
+  static_assert(parse_specs(d).type == 'd', "");
 }
 
 template <size_t N>
@@ -2252,7 +2252,7 @@ TEST(FormatTest, ConstexprDynamicSpecsHandler) {
   static_assert(parse_dynamic_specs(".42").precision == 42, "");
   static_assert(parse_dynamic_specs(".{}").precision_ref.index == 33, "");
   static_assert(parse_dynamic_specs(".{42}").precision_ref.index == 42, "");
-  static_assert(parse_dynamic_specs("d").type == 'd', "");
+  static_assert(parse_dynamic_specs(d).type == 'd', "");
 }
 
 template <size_t N>
@@ -2276,7 +2276,7 @@ TEST(FormatTest, ConstexprSpecsChecker) {
   static_assert(check_specs("{42}").width_ref.index == 42, "");
   static_assert(check_specs(".42").precision == 42, "");
   static_assert(check_specs(".{42}").precision_ref.index == 42, "");
-  static_assert(check_specs("d").type == 'd', "");
+  static_assert(check_specs(d).type == 'd', "");
   static_assert(check_specs("{<").res == handler::ERROR, "");
 }
 
@@ -2393,7 +2393,7 @@ TEST(FormatTest, FormatStringErrors) {
   EXPECT_ERROR("{:s}", "invalid type specifier", double);
   EXPECT_ERROR("{:d}", "invalid type specifier", const char *);
   EXPECT_ERROR("{:d}", "invalid type specifier", std::string);
-  EXPECT_ERROR("{:s}", "invalid type specifier", void *);
+  EXPECT_ERROR("{:s}", "invalid type specifier", uint8_t *);
 #endif
   EXPECT_ERROR("{foo", "missing '}' in format string", int);
   EXPECT_ERROR_NOARGS("{10000000000}", "number is too big");

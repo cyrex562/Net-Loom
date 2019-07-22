@@ -37,8 +37,8 @@
  *
  */
 #pragma once
-#include "opt.h"
-#include "netif.h"
+#include <opt.h>
+#include <netif.h>
 
 #define IF_NAMESIZE NETIF_NAMESIZE
 

@@ -44,19 +44,19 @@
 
 /* @todo Check the use of '(UdpPcb).chksum_len_rx'!
  */
-#include "udp.h"
-#include "def.h"
-#include "icmp.h"
-#include "icmp6.h"
-#include "inet_chksum.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "ip_addr.h"
-#include "lwip_debug.h"
-#include "lwip_snmp.h"
-#include "netif.h"
-#include "opt.h"
-#include "stats.h"
+#include <udp.h>
+#include <def.h>
+#include <icmp.h>
+#include <icmp6.h>
+#include <inet_chksum.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <ip_addr.h>
+#include <lwip_debug.h>
+#include <lwip_snmp.h>
+#include <netif.h>
+#include <opt.h>
+#include <stats.h>
 #include <cstring>
 
 /* From http://www.iana.org/assignments/port-numbers:
@@ -721,7 +721,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
 
       ip_addr_isbroadcast(dst_ip, netif)) {
     Logf(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                ("udp_sendto_if: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+                ("udp_sendto_if: SOF_BROADCAST not enabled on pcb %p\n", (uint8_t *)pcb));
     return ERR_VAL;
   }
 
@@ -755,12 +755,12 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     }
     /* first PacketBuffer q points to header PacketBuffer */
     Logf(UDP_DEBUG,
-         ("udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
+         ("udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (uint8_t *)q, (uint8_t *)p));
   } else {
     /* adding space for header within p succeeded */
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
-    Logf(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (void *)p));
+    Logf(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (uint8_t *)p));
   }
   lwip_assert("check that first PacketBuffer can hold struct udp_hdr",
               (q->len >= sizeof(struct UdpHdr)));
@@ -868,8 +868,8 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   ttl = (ip_addr_ismulticast(dst_ip) ? udp_get_multicast_ttl(pcb) : pcb->ttl);
 
 
-  Logf(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
-  Logf(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (uint16_t)ip_proto));
+  Logf(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
+  Logf(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02x,)\n", (uint16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HINTS(netif, &(pcb->netif_hints));
   err = ip_output_if_src(q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
@@ -1132,8 +1132,7 @@ udp_disconnect(struct UdpPcb *pcb)
  * @param recv function pointer of the callback function
  * @param recv_arg additional argument to pass to the callback function
  */
-void
-udp_recv(struct UdpPcb *pcb, udp_recv_fn recv, void *recv_arg)
+void udp_recv(struct UdpPcb* pcb, UdpRecvFn recv, void* recv_arg)
 {
   LWIP_ASSERT_CORE_LOCKED();
 

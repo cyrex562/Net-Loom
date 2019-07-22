@@ -333,8 +333,8 @@ static LwipStatus dhcp_select(NetIfc * netif)
                                       &options_out_len);
         dhcp_option_trailer(options_out_len, msg_out->options, p_out);
         /* send broadcast to any DHCP server */
-        auto ip_bcast = kIpAddrIp4Broadcast();
-        auto ip_any = kIpAddrIp4Any();
+        auto ip_bcast = create_ip_addr_ip4_bcast();
+        auto ip_any = create_ip_addr_ip4_any();
         result = udp_sendto_if_src(dhcp_pcb,
                                    p_out,
                                    &ip_bcast,

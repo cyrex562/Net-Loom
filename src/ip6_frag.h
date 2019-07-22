@@ -39,11 +39,11 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include "opt.h"
-#include "packet_buffer.h"
-#include "ip6_addr.h"
-#include "ip6.h"
-#include "netif.h"
+#include <opt.h>
+#include <packet_buffer.h>
+#include <ip6_addr.h>
+#include <ip6.h>
+#include <netif.h>
 
 /** The IPv6 reassembly timer interval in milliseconds. */
 #define IP6_REASS_TMR_INTERVAL 1000
@@ -76,7 +76,7 @@
 struct ip6_reassdata {
   struct ip6_reassdata *next;
   struct PacketBuffer *p;
-  struct ip6_hdr *iphdr; /* pointer to the first (original) IPv6 header */
+  struct Ip6Hdr *iphdr; /* pointer to the first (original) IPv6 header */
 
   ip6_addr_p_t src; /* copy of the source address in the IP header */
   ip6_addr_p_t dest; /* copy of the destination address in the IP header */

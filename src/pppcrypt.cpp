@@ -30,9 +30,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "pppcrypt.h"
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <pppcrypt.h>
 
 
 static uint8_t pppcrypt_get_7bits(uint8_t *input, int startBit) {

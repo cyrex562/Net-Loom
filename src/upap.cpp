@@ -40,16 +40,16 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
 /*
  * @todo:
  */
 
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
-#include "upap.h"
+#include <upap.h>
 
 /*
  * Protocol entry points.
@@ -75,9 +75,9 @@ const struct protent pap_protent = {
 
 };
 
-static void upap_timeout(void *arg);
+static void upap_timeout(uint8_t *arg);
 
-static void upap_reqtimeout(void *arg);
+static void upap_reqtimeout(uint8_t *arg);
 static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len);
 
 static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len);
@@ -155,7 +155,7 @@ void upap_authpeer(PppPcb *pcb) {
 /*
  * upap_timeout - Retransmission timer for sending auth-reqs expired.
  */
-static void upap_timeout(void *arg) {
+static void upap_timeout(uint8_t *arg) {
     PppPcb *pcb = (PppPcb*)arg;
 
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
@@ -177,7 +177,7 @@ static void upap_timeout(void *arg) {
 /*
  * upap_reqtimeout - Give up waiting for the peer to send an auth-req.
  */
-static void upap_reqtimeout(void *arg) {
+static void upap_reqtimeout(uint8_t *arg) {
     PppPcb *pcb = (PppPcb*)arg;
 
     if (pcb->upap.us_serverstate != UPAPSS_LISTEN)

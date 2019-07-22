@@ -43,14 +43,14 @@
  * Based on draft-ietf-pppext-eap-srp-03.txt.
  */
 
-#include "eap.h"
-#include "eap_state.h"
-#include "auth.h"
-#include "magic.h"
-#include "ppp_impl.h"
-#include "ppp_opts.h"
-#include "pppcrypt.h"
-#include "ppp.h"
+#include <eap.h>
+#include <eap_state.h>
+#include <auth.h>
+#include <magic.h>
+#include <ppp_impl.h>
+#include <ppp_opts.h>
+#include <pppcrypt.h>
+#include <ppp.h>
 #include <cerrno>
 #include <ctime>
 
@@ -64,7 +64,7 @@ static void eap_lowerup(PppPcb *pcb);
 static void eap_lowerdown(PppPcb *pcb);
 // #if PRINTPKT_SUPPORT
 // static int eap_printpkt(const uint8_t *inp, int inlen,
-//                         void (*)(void *arg, const char *fmt, ...), void *arg);
+//                         void (*)(uint8_t *arg, const char *fmt, ...), uint8_t *arg);
 // #endif /* PRINTPKT_SUPPORT */
 // const Protent eap_protent = {
 //     PPP_EAP,
@@ -95,7 +95,7 @@ static void eap_lowerdown(PppPcb *pcb);
 // #endif
 
 /* Local forward declarations. */
-static void eap_server_timeout(void *arg);
+static void eap_server_timeout(uint8_t *arg);
 
 inline bool eap_client_active(PppPcb* ppp_pcb)
 {
@@ -125,7 +125,7 @@ static void eap_init(PppPcb* pcb, EapState* eap)
  * eap_client_timeout - Give up waiting for the peer to send any
  * Request messages.
  */
-static void eap_client_timeout(void *arg) {
+static void eap_client_timeout(uint8_t *arg) {
     auto pcb = static_cast<PppPcb *>(arg);
 
   if (!eap_client_active(pcb)) return;
@@ -466,7 +466,7 @@ static void eap_figure_next_state(PppPcb* pcb, int status)
         //     tpw.pebuf.salt.len = t_fromb64((char *)tpw.saltbuf, cp2);
         //     tpw.pebuf.salt.data = tpw.saltbuf;
         //     if ((ts = t_serveropenraw(&tpw.pebuf, tce)) == NULL) break;
-        //     pcb->eap.es_server.ea_session = (void *)ts;
+        //     pcb->eap.es_server.ea_session = (uint8_t *)ts;
         //     pcb->eap.es_server.ea_state = eapSRP1;
         //     vals[0] = pcb->eap.es_server.ea_id + 1;
         //     vals[1] = EAPT_SRP;
@@ -700,7 +700,7 @@ void eap_authpeer(PppPcb *pcb, const char *localname) {
  * eap_server_timeout - Retransmission timer for sending Requests
  * expired.
  */
-static void eap_server_timeout(void *arg) {
+static void eap_server_timeout(uint8_t *arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (!eap_server_active(pcb)) return;
@@ -714,7 +714,7 @@ static void eap_server_timeout(void *arg) {
  * called.  Once the rechallenge is successful, the response handler
  * will restart the timer.  If it fails, then the link is dropped.
  */
-static void eap_rechallenge(void *arg) {
+static void eap_rechallenge(uint8_t *arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (pcb->eap.es_server.ea_state != eapOpen &&
@@ -728,7 +728,7 @@ static void eap_rechallenge(void *arg) {
   eap_send_request(pcb);
 }
 
-static void srp_lwrechallenge(void *arg) {
+static void srp_lwrechallenge(uint8_t *arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (pcb->eap.es_server.ea_state != eapOpen ||
@@ -775,11 +775,11 @@ static void eap_lowerdown(PppPcb *pcb) {
     if ((pcb->eap.es_server.ea_state == eapOpen ||
          pcb->eap.es_server.ea_state == eapSRP4) &&
         pcb->eap.es_rechallenge > 0) {
-      Untimeout(eap_rechallenge, (void *)pcb);
+      Untimeout(eap_rechallenge, (uint8_t *)pcb);
     }
     if (pcb->eap.es_server.ea_state == eapOpen &&
         pcb->eap.es_lwrechallenge > 0) {
-      Untimeout(srp_lwrechallenge, (void *)pcb);
+      Untimeout(srp_lwrechallenge, (uint8_t *)pcb);
     }
   }
 

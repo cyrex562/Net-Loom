@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
 /**
  * PPP_SUPPORT==1: Enable PPP.
@@ -175,7 +175,7 @@
 #endif
 
 /**
- * pbuf_type PPP is using for LCP, PAP, CHAP, EAP, CCP, IPCP and IP6CP packets.
+ * PbufType PPP is using for LCP, PAP, CHAP, EAP, CCP, IPCP and IP6CP packets.
  *
  * Memory allocated must be single buffered for PPP to works, it requires PacketBuffer
  * that are not going to be chained when allocated. This requires setting

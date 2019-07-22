@@ -15,16 +15,16 @@
 #include <type_traits>
 #include <memory>
 
-#include "test-assert.h"
+#include <test-assert.h>
 
-#include "gmock.h"
+#include <gmock.h>
 
 // Check if fmt/core.h compiles with windows.h included before it.
 #ifdef _WIN32
 # include <windows.h>
 #endif
 
-#include "fmt/core.h"
+#include <fmt/core.h>
 
 #undef min
 #undef max
@@ -369,8 +369,8 @@ TEST(ArgTest, WStringArg) {
 }
 
 TEST(ArgTest, PointerArg) {
-  void *p = FMT_NULL;
-  const void *cp = FMT_NULL;
+  uint8_t *p = FMT_NULL;
+  const uint8_t *cp = FMT_NULL;
   CHECK_ARG_(char, cp, p);
   CHECK_ARG_(wchar_t, cp, p);
   CHECK_ARG(cp, );

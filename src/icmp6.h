@@ -40,11 +40,11 @@
  */
 #pragma once
 
-#include "opt.h"
-#include "packet_buffer.h"
-#include "ip6_addr.h"
-#include "netif.h"
-#include "arch.h"
+#include <opt.h>
+#include <packet_buffer.h>
+#include <ip6_addr.h>
+#include <netif.h>
+#include <arch.h>
 
 // ICMP TYPE
 enum Icmp6Type
@@ -162,7 +162,7 @@ void icmp6_time_exceeded(struct PacketBuffer *p, enum Icmp6TeCode c);
 void icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum Icmp6TeCode c,
                                     const Ip6Addr *src_addr,
                                     const Ip6Addr *dest_addr);
-void icmp6_param_problem(struct PacketBuffer *p, enum Icmp6PpCode c, const void *pointer);
+void icmp6_param_problem(struct PacketBuffer *p, enum Icmp6PpCode c, const uint8_t *pointer);
 
 //
 // END OF FILE

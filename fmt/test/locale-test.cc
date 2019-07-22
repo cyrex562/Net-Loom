@@ -5,8 +5,8 @@
 //
 // For the license information refer to format.h.
 
-#include "fmt/locale.h"
-#include "gmock.h"
+#include <fmt/locale.h>
+#include <gmock.h>
 
 template <typename Char>
 struct numpunct : std::numpunct<Char> {

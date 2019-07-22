@@ -84,14 +84,14 @@
  * Includes
  *----------------------------------------------------------------------------*/
 
-#include "dns.h"
-#include "opt.h"
-#include "def.h"
-#include "udp.h"
-#include "lwip_debug.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
-#include "ip4_addr.h"
+#include <dns.h>
+#include <opt.h>
+#include <def.h>
+#include <udp.h>
+#include <lwip_debug.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
+#include <ip4_addr.h>
 #include <cstring>
 #include <cctype>
 
@@ -137,7 +137,7 @@ struct DnsQuery
     uint16_t type;
     uint16_t cls;
 };
-#define SIZEOF_DNS_QUERY 4
+constexpr auto DNS_QUERY_LEN = 4;
 
 /** DNS answer message structure.
     No packing needed: only used locally on the stack. */
@@ -201,7 +201,8 @@ static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_A
 
 
 /* forward declarations */
-static void dns_recv(void *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc*
+                     netif);
 static void dns_check_entries(void);
 static void dns_call_found(uint8_t idx, IpAddr *addr);
 
@@ -226,42 +227,29 @@ const IpAddr dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
  * Initialize the resolver: set up the UDP pcb and configure the default server
  * (if DNS_SERVER_ADDRESS is set).
  */
-void
-dns_init(void)
+void dns_init(void)
 {
-
-  /* initialize default DNS server address */
-  IpAddr dnsserver;
-  // DNS_SERVER_ADDRESS(&dnsserver);
-  dns_setserver(0, &dnsserver);
-
-
-  lwip_assert("sanity check SIZEOF_DNS_QUERY",
-              sizeof(struct DnsQuery) == SIZEOF_DNS_QUERY);
-  lwip_assert("sanity check SIZEOF_DNS_ANSWER",
-              sizeof(struct DnsAnswer) <= SIZEOF_DNS_ANSWER_ASSERT);
-
-  Logf(DNS_DEBUG, ("dns_init: initializing\n"));
-
-  /* if dns client not yet initialized... */
-
-  if (dns_pcbs[0] == nullptr) {
-    dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
-    lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != nullptr);
-
-    /* initialize DNS table not needed (initialized to zero since it is a
-     * global variable) */
-    lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
-                DNS_STATE_UNUSED == 0);
-
-    /* initialize DNS client */
-      IpAddr any_addr = kIpAddrAny();
-    udp_bind(dns_pcbs[0], &any_addr, 0);
-    udp_recv(dns_pcbs[0], dns_recv, nullptr);
-  }
-
-  dns_init_local();
-
+    /* initialize default DNS server address */
+    IpAddr dnsserver{}; // DNS_SERVER_ADDRESS(&dnsserver);
+    dns_setserver(0, &dnsserver);
+    lwip_assert("sanity check SIZEOF_DNS_QUERY",
+                sizeof(struct DnsQuery) == DNS_QUERY_LEN);
+    lwip_assert("sanity check SIZEOF_DNS_ANSWER",
+                sizeof(struct DnsAnswer) <= SIZEOF_DNS_ANSWER_ASSERT);
+    Logf(DNS_DEBUG, ("dns_init: initializing\n"));
+    /* if dns client not yet initialized... */
+    if (dns_pcbs[0] == nullptr)
+    {
+        dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
+        lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != nullptr);
+        /* initialize DNS table not needed (initialized to zero since it is a
+            * global variable) */
+        lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
+                    DNS_STATE_UNUSED == 0); /* initialize DNS client */
+        IpAddr any_addr = kIpAddrAny();
+        udp_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
+    }
+    dns_init_local();
 }
 
 /**
@@ -356,7 +344,7 @@ static void dns_init_local(void)
  * @return the number of entries in the local host-list
  */
 size_t
-dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
+dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg)
 {
   size_t i;
 
@@ -669,22 +657,22 @@ static LwipStatus dns_send(const uint8_t idx)
         entry->state = DNS_STATE_UNUSED;
         return ERR_OK;
     } /* if here, we have either a new query or a retry on a previous query to process */
-    auto p = pbuf_alloc(PBUF_TRANSPORT,
-                        static_cast<uint16_t>(SIZEOF_DNS_HDR + strlen(entry->name) + 2 +
-                            SIZEOF_DNS_QUERY),
+    auto pbuf = pbuf_alloc(PBUF_TRANSPORT,
+                        static_cast<uint16_t>(DNS_HDR_LEN + strlen(entry->name) + 2 +
+                            DNS_QUERY_LEN),
                         PBUF_RAM);
-    if (p != nullptr)
+    if (pbuf != nullptr)
     {
         const IpAddr* dst;
         uint16_t dst_port; /* fill dns header */
-        memset(&hdr, 0, SIZEOF_DNS_HDR);
+        memset(&hdr, 0, DNS_HDR_LEN);
         hdr.id = lwip_htons(entry->txid);
         hdr.flags1 = DNS_FLAG1_RD;
         hdr.numquestions = pp_htons(1);
-        pbuf_take(p, &hdr, SIZEOF_DNS_HDR);
+        pbuf_take(pbuf, reinterpret_cast<uint8_t*>(&hdr), DNS_HDR_LEN);
         const char* hostname = entry->name;
         --hostname; /* convert hostname into suitable query format. */
-        uint16_t query_idx = SIZEOF_DNS_HDR;
+        uint16_t query_idx = DNS_HDR_LEN;
         do
         {
             ++hostname;
@@ -699,15 +687,15 @@ static LwipStatus dns_send(const uint8_t idx)
                 /* uint16_t overflow */
                 goto overflow_return;
             }
-            pbuf_put_at(p, query_idx, n);
-            pbuf_take_at(p,
-                         hostname_part,
+            pbuf_put_at(pbuf, query_idx, n);
+            pbuf_take_at(pbuf,
+                         (uint8_t*)hostname_part,
                          copy_len,
                          static_cast<uint16_t>(query_idx + 1));
             query_idx = static_cast<uint16_t>(query_idx + n + 1);
         }
         while (*hostname != 0);
-        pbuf_put_at(p, query_idx, 0);
+        pbuf_put_at(pbuf, query_idx, 0);
         query_idx++; /* fill dns query */
         if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
         {
@@ -718,7 +706,7 @@ static LwipStatus dns_send(const uint8_t idx)
             qry.type = pp_htons(DNS_RRTYPE_A);
         }
         qry.cls = pp_htons(DNS_RRCLASS_IN);
-        pbuf_take_at(p, &qry, SIZEOF_DNS_QUERY, query_idx);
+        pbuf_take_at(pbuf, (uint8_t*)&qry, DNS_QUERY_LEN, query_idx);
         pcb_idx = entry->pcb_idx; /* send dns packet */ // Logf(DNS_DEBUG,
         //      ("sending DNS request ID %d for name \"%s\" to server %d\r\n", entry->txid,
         //          entry->name, entry->server_idx));
@@ -739,15 +727,15 @@ static LwipStatus dns_send(const uint8_t idx)
             dst_port = DNS_SERVER_PORT;
             dst = &dns_servers[entry->server_idx];
         }
-        err = udp_sendto(dns_pcbs[pcb_idx], p, dst, dst_port); /* free PacketBuffer */
-        pbuf_free(p);
+        err = udp_sendto(dns_pcbs[pcb_idx], pbuf, dst, dst_port); /* free PacketBuffer */
+        pbuf_free(pbuf);
     }
     else
     {
         err = ERR_MEM;
     }
     return err;
-overflow_return: pbuf_free(p);
+overflow_return: pbuf_free(pbuf);
     return ERR_VAL;
 }
 
@@ -780,7 +768,7 @@ static UdpPcb* dns_alloc_random_port(void)
         udp_remove(pcb);
         return nullptr;
     }
-    udp_recv(pcb, dns_recv, nullptr);
+    // udp_recv(pcb, dns_recv, nullptr);
     return pcb;
 }
 
@@ -852,14 +840,14 @@ dns_call_found(uint8_t idx, IpAddr *addr)
   }
 
 
-
-  for (i = 0; i < DNS_MAX_REQUESTS; i++) {
-    if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
-      (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
-      /* flush this entry */
-      dns_requests[i].found = nullptr;
-    }
-  }
+  // fixme: 
+  // for (i = 0; i < DNS_MAX_REQUESTS; i++) {
+  //   if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
+  //     (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
+  //     /* flush this entry */
+  //     dns_requests[i].found = nullptr;
+  //   }
+  // }
 
   /* close the pcb used unless other request are using it */
   for (i = 0; i < DNS_MAX_REQUESTS; i++) {
@@ -1058,19 +1046,19 @@ static void dns_recv(void* arg,
                      UdpPcb* pcb,
                      struct PacketBuffer* p,
                      const IpAddr* addr,
-                     uint16_t port)
+                     uint16_t port,
+                     NetIfc* netif)
 {
-    uint16_t res_idx;
     struct DnsHdr hdr;
     struct DnsAnswer ans;
     struct DnsQuery qry; /* is the dns message big enough ? */
-    if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY))
+    if (p->tot_len < (DNS_HDR_LEN + DNS_QUERY_LEN))
     {
         Logf(DNS_DEBUG, ("dns_recv: PacketBuffer too small\n"));
         /* free PacketBuffer and return */
         goto ignore_packet;
     } /* copy dns payload inside static buffer for processing */
-    if (pbuf_copy_partial(p, &hdr, SIZEOF_DNS_HDR, 0) == SIZEOF_DNS_HDR)
+    if (pbuf_copy_partial(p, (uint8_t*)&hdr, DNS_HDR_LEN, 0) == DNS_HDR_LEN)
     {
         /* Match the ID in the DNS header with the name table. */
         uint16_t txid = lwip_htons(hdr.id);
@@ -1108,7 +1096,7 @@ static void dns_recv(void* arg,
                     }
                 } /* Check if the name in the "question" part match with the name in the entry and
            skip it if equal. */
-                res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
+                uint16_t res_idx = dns_compare_name(entry->name, p, DNS_HDR_LEN);
                 if (res_idx == 0xFFFF)
                 {
                     Logf(DNS_DEBUG,
@@ -1116,8 +1104,8 @@ static void dns_recv(void* arg,
                          ));
                     goto ignore_packet; /* ignore this packet */
                 } /* check if "question" part matches the request */
-                if (pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx) !=
-                    SIZEOF_DNS_QUERY)
+                if (pbuf_copy_partial(p, (uint8_t*)&qry, DNS_QUERY_LEN, res_idx) !=
+                    DNS_QUERY_LEN)
                 {
                     goto ignore_packet; /* ignore this packet */
                 }
@@ -1132,11 +1120,11 @@ static void dns_recv(void* arg,
                          ));
                     goto ignore_packet; /* ignore this packet */
                 } /* skip the rest of the "question" part */
-                if (res_idx + SIZEOF_DNS_QUERY > 0xFFFF)
+                if (res_idx + DNS_QUERY_LEN > 0xFFFF)
                 {
                     goto ignore_packet;
                 }
-                res_idx = (uint16_t)(res_idx + SIZEOF_DNS_QUERY);
+                res_idx = (uint16_t)(res_idx + DNS_QUERY_LEN);
                 /* Check for error. If so, call callback to inform. */
                 if (hdr.flags2 & DNS_FLAG2_ERR_MASK)
                 {
@@ -1163,7 +1151,7 @@ static void dns_recv(void* arg,
                         {
                             goto ignore_packet; /* ignore this packet */
                         } /* Check for IP address type and Internet class. Others are discarded. */
-                        if (pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx) !=
+                        if (pbuf_copy_partial(p, (uint8_t*)&ans, SIZEOF_DNS_ANSWER, res_idx) !=
                             SIZEOF_DNS_ANSWER)
                         {
                             goto ignore_packet; /* ignore this packet */
@@ -1184,7 +1172,7 @@ static void dns_recv(void* arg,
                                     /* read the IP address after answer resource record's header */
                                     if (pbuf_copy_partial(
                                         p,
-                                        &ip4addr,
+                                        (uint8_t*)&ip4addr,
                                         sizeof(Ip4Addr),
                                         res_idx) != sizeof(Ip4Addr))
                                     {
@@ -1205,7 +1193,7 @@ static void dns_recv(void* arg,
                                     /* read the IP address after answer resource record's header */
                                     if (pbuf_copy_partial(
                                         p,
-                                        &ip6addr,
+                                        (uint8_t*)&ip6addr,
                                         sizeof(Ip6Addr),
                                         res_idx) != sizeof(Ip6Addr))
                                     {
@@ -1403,7 +1391,7 @@ static LwipStatus dns_enqueue(const char* name,
  */
 LwipStatus
 dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
-                  void *callback_arg)
+                  uint8_t *callback_arg)
 {
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
 }

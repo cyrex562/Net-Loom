@@ -1,12 +1,11 @@
-#include "opt.h"
-#include "def.h"
-#include "icmp.h"
-#include "inet_chksum.h"
-#include "ip4_frag.h"
-#include "netif.h"
-#include "stats.h"
-#include "ip4.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <def.h>
+#include <icmp.h>
+#include <inet_chksum.h>
+#include <ip4_frag.h>
+#include <netif.h>
+#include <ip4.h>
+#include <lwip_debug.h>
 #include <cstring>
 
 constexpr auto kIpReassFlagLastfrag = 0x01;
@@ -485,7 +484,7 @@ ip4_reass(struct PacketBuffer *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if (IP_ADDRESSES_AND_ID_MATCH(&ipr->iphdr, fraghdr)) {
-//      Logf(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
+//      Logf(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%x\n",
 //                                   lwip_ntohs(IPH_ID(fraghdr))));
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;
@@ -644,7 +643,7 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
 {
   struct PbufCustomRef *pcr = (struct PbufCustomRef *)p;
   lwip_assert("pcr != NULL", pcr != nullptr);
-  lwip_assert("pcr == p", (void *)pcr == (void *)p);
+  lwip_assert("pcr == p", (uint8_t *)pcr == (uint8_t *)p);
   if (pcr->original != nullptr) {
     pbuf_free(pcr->original);
   }

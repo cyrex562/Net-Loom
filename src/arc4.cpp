@@ -38,8 +38,8 @@
  *  http://groups.google.com/group/sci.crypt/msg/10a300c9d21afca0
  */
 
-#include "ppp_opts.h"
-#include "arc4.h"
+#include <ppp_opts.h>
+#include <arc4.h>
 /*
  * ARC4 key schedule
  */

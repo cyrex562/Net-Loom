@@ -11,10 +11,10 @@
 
 using sys_prot_t = int;
 
-/* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
+// DWORD (thread id) is used for sys_thread_t but we won't include windows.h
 using sys_thread_t = uint32_t;
 
-/** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
+// Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait
 constexpr auto SYS_ARCH_TIMEOUT = 0xffffffffUL;
 
 constexpr auto MAX_QUEUE_ENTRIES = 100;
@@ -27,8 +27,9 @@ using lwip_thread_fn = void (*)(void*);
 struct Mailbox
 {
     void* sem;
-    void* q_mem[MAX_QUEUE_ENTRIES];
-    uint32_t head, tail;
+    std::array<void*, MAX_QUEUE_ENTRIES>q_mem;
+    uint32_t head;
+    uint32_t tail;
 };
 
 struct ThreadList
@@ -45,7 +46,7 @@ struct Semaphore
     void* sem;
 };
 
-/* HANDLE is used for sys_mutex_t but we won't include windows.h */
+// HANDLE is used for sys_mutex_t but we won't include windows.h
 struct Mutex
 {
     void* mut;
@@ -165,6 +166,34 @@ void sys_sem_free(Semaphore *sem);
 
 
 
+// Deallocates a mailbox. If there are messages still present in the
+// mailbox when the mailbox is deallocated, it is an indication of a
+// programming error in lwIP and the developer should be notified.
+// 
+// mbox: mbox to delete
+//
+void sys_mbox_free(Mailbox *mbox);
+
+
+// @ingroup sys_misc
+// The only thread function:
+// Starts a new thread named "name" with priority "prio" that will begin its
+// execution in the function "thread()". The "arg" argument will be passed as an
+// argument to the thread() function. The stack size to used for this thread is
+// the "stacksize" parameter. The id of the new thread is returned. Both the id
+// and the priority are system dependent.
+// ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
+// 
+// name: human-readable name for the thread (used for debugging purposes)
+// thread: thread-function
+// arg: parameter passed to 'thread'
+// stacksize: stack size in bytes for the new thread (may be ignored by ports)
+// prio: priority of the new thread (may be ignored by ports) */
+sys_thread_t sys_thread_new(const char* name,
+                            lwip_thread_fn function,
+                            void* arg,
+                            int stacksize,
+                            int prio);
 
 /**
  * @ingroup sys_misc
@@ -382,12 +411,10 @@ void sys_arch_unprotect(sys_prot_t pval);
 //                                 SYS_ARCH_UNPROTECT(old_level); \
 //                               } while(0)
 
-
-
 #define SYS_ARCH_SET(var, val) do { \
                                sys_prot_t lev); \
                                 SYS_ARCH_PROTECT(old_level); \
-                                var = val; \
+                                (var) = val; \
                                 SYS_ARCH_UNPROTECT(old_level); \
                               } while(0)
 
@@ -431,11 +458,6 @@ inline void sys_mutex_set_invalid(Mutex* mutex)
     ((mutex)->mut = nullptr);
 }
 
-
-
-
-
-
 inline bool sys_mbox_valid_val(const Mailbox mbox)
 {
     return mbox.sem != nullptr && mbox.sem != reinterpret_cast<void*>(-1);/**/
@@ -472,8 +494,10 @@ void sys_arch_netconn_sem_free(void);
 #define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
 #define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
 
-#define LWIP_EXAMPLE_APP_ABORT() lwip_win32_keypressed()
-int lwip_win32_keypressed(void);
+Semaphore* sys_arch_netconn_sem_get();
+void sys_arch_netconn_sem_alloc();
+void sys_arch_netconn_sem_free();
+int lwip_win32_keypressed();
 
 
 

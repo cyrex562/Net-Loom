@@ -473,7 +473,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
       pbuf_chain(q, p);
     }
     /* { first PacketBuffer q points to header PacketBuffer } */
-    Logf(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (void *)q, (void *)p));
+    Logf(RAW_DEBUG, ("raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n", (uint8_t *)q, (uint8_t *)p));
   } else {
     /* first PacketBuffer q equals given PacketBuffer */
     q = p;
@@ -487,7 +487,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   if (IP_IS_V4(dst_ip)) {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
-      Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+      Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (uint8_t *)pcb));
       /* free any temporary header PacketBuffer allocated by pbuf_header() */
       if (q != p) {
         pbuf_free(q);

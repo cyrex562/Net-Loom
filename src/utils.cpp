@@ -28,12 +28,12 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
-#include "fsm.h"
-#include "lcp.h"
+#include <fsm.h>
+#include <lcp.h>
 
 #if defined(SUNOS4)
 extern char *strerror();
@@ -338,7 +338,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
  * ppp_print_string - print a readable representation of a string using
  * printer.
  */
-void ppp_print_string(const uint8_t *p, int len, void (*printer) (void *, const char *, ...), void *arg) {
+void ppp_print_string(const uint8_t *p, int len, void (*printer) (uint8_t *, const char *, ...), uint8_t *arg) {
     int c;
 
     printer(arg, "\"");

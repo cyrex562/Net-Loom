@@ -55,26 +55,52 @@ sys_win_rand(void)
   return 0;
 }
 
-static void
-sys_win_rand_init(void)
+//
+//
+//
+uint32_t sys_win_rand()
 {
-  if (!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, 0)) {
-    auto err = GetLastError();
-    LwipPlatformDiag(
-        "CryptAcquireContext failed with error %d, trying to create NEWKEYSET",
-        err);
-    if(!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
-      char errbuf[128];
-      err = GetLastError();
-      snprintf(errbuf, sizeof(errbuf), "CryptAcquireContext failed with error %d", (int)err);
-  
-      lwip_assert(errbuf, 0);
+    uint32_t ret;
+    if (CryptGenRandom(hcrypt, sizeof(ret), reinterpret_cast<uint8_t*>(&ret)) != 0)
+    {
+        return ret;
     }
-  }
+    lwip_assert("CryptGenRandom failed", false);
+    return 0;
 }
 
-static void
-sys_init_timing(void)
+//
+//
+//
+static void sys_win_rand_init()
+{
+    if (!CryptAcquireContext(&hcrypt, nullptr, nullptr, PROV_RSA_FULL, 0))
+    {
+        auto err = GetLastError();
+        LwipPlatformDiag(
+            "CryptAcquireContext failed with error %d, trying to create NEWKEYSET",
+            err);
+        if (!CryptAcquireContext(&hcrypt,
+                                 nullptr,
+                                 nullptr,
+                                 PROV_RSA_FULL,
+                                 CRYPT_NEWKEYSET))
+        {
+            char errbuf[128];
+            err = GetLastError();
+            snprintf(errbuf,
+                     sizeof(errbuf),
+                     "CryptAcquireContext failed with error %d",
+                     static_cast<int>(err));
+            lwip_assert(errbuf, 0);
+        }
+    }
+}
+
+//
+//
+//
+static void sys_init_timing()
 {
     // QueryPerformanceFrequency(&freq);
     // QueryPerformanceCounter(&sys_start_time);
@@ -116,14 +142,11 @@ sys_arch_protect_int(void)
 
 void sys_arch_unprotect(sys_prot_t pval)
 {
-    LeaveCriticalSection(&critSec);
+    LeaveCriticalSection(&crit_sec);
 }
 
-/** This checks that SYS_ARCH_PROTECT() hasn't been called by protecting
- * and then checking the level
- */
-static void
-sys_arch_check_not_protected(void)
+// This checks that SYS_ARCH_PROTECT() hasn't been called by protecting and then checking the level
+static void sys_arch_check_not_protected(void)
 {
     sys_arch_protect_int();
 
@@ -376,6 +399,9 @@ SetThreadName(DWORD dwThreadID, const char* thread_name)
 }
 
 
+//
+//
+//
 static void
 sys_thread_function(void* arg)
 {
@@ -418,17 +444,19 @@ sys_thread_new(const char* name, lwip_thread_fn function, void* arg, int stacksi
 }
 
 
-static DWORD lwip_core_lock_holder_thread_id;
-
-void
-sys_lock_tcpip_core(void)
+//
+//
+//
+void sys_lock_tcpip_core()
 {
-  sys_mutex_lock(&lock_tcpip_core);
-  lwip_core_lock_holder_thread_id = GetCurrentThreadId();
+    sys_mutex_lock(&lock_tcpip_core);
+    lwip_core_lock_holder_thread_id = GetCurrentThreadId();
 }
 
-void
-sys_unlock_tcpip_core(void)
+//
+//
+//
+void sys_unlock_tcpip_core()
 {
     lwip_core_lock_holder_thread_id = 0;
     sys_mutex_unlock(&lock_tcpip_core);
@@ -652,15 +680,19 @@ sys_arch_mbox_tryfetch(Mailbox* q, void** msg)
 }
 
 
-Semaphore*
-sys_arch_netconn_sem_get(void)
+//
+//
+//
+Semaphore* sys_arch_netconn_sem_get()
 {
     LPVOID tls_data = TlsGetValue(netconn_sem_tls_index);
     return (Semaphore*)tls_data;
 }
 
-void
-sys_arch_netconn_sem_alloc(void)
+//
+//
+//
+void sys_arch_netconn_sem_alloc()
 {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
     LwipStatus err = sys_sem_new(sem, 0);

@@ -113,7 +113,7 @@ Formatting of user-defined types is supported via a simple
 
 .. code:: c++
 
-    #include "fmt/format.h"
+    #include <fmt/format.h>
 
     struct date {
       int year, month, day;

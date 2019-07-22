@@ -57,7 +57,7 @@
 # define FMT_CUDA_VERSION 0
 #endif
 
-#include "core.h"
+#include <core.h>
 
 #if FMT_GCC_VERSION >= 406 || FMT_CLANG_VERSION
 # pragma GCC diagnostic push
@@ -1330,7 +1330,7 @@ class arg_formatter_base {
       writer_.write(value);
   }
 
-  void write_pointer(const void *p) {
+  void write_pointer(const uint8_t *p) {
     format_specs specs = specs_ ? *specs_ : format_specs();
     specs.flags = HASH_FLAG;
     specs.type = 'x';
@@ -1435,7 +1435,7 @@ class arg_formatter_base {
     return out();
   }
 
-  iterator operator()(const void *value) {
+  iterator operator()(const uint8_t *value) {
     if (specs_)
       check_pointer_type_spec(specs_->type, internal::error_handler());
     write_pointer(value);
@@ -3135,7 +3135,7 @@ typename Context::iterator vformat_to(
 // Example:
 //   auto s = format("{}", ptr(p));
 template <typename T>
-inline const void *ptr(const T *p) { return p; }
+inline const uint8_t *ptr(const T *p) { return p; }
 
 template <typename It, typename Char>
 struct arg_join {

@@ -40,17 +40,17 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
 /*
  * @todo:
  */
 
 
-#include "ppp_impl.h"
+#include <ppp_impl.h>
 
-#include "fsm.h"
-#include "ipcp.h"
+#include <fsm.h>
+#include <ipcp.h>
 
 
 

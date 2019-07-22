@@ -5,8 +5,8 @@
 //
 // For the license information refer to format.h.
 
-#include "fmt/core.h"
-#include "gtest.h"
+#include <fmt/core.h>
+#include <gtest.h>
 
 #if GTEST_HAS_DEATH_TEST
 # define EXPECT_DEBUG_DEATH_IF_SUPPORTED(statement, regex) \

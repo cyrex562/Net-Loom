@@ -32,36 +32,28 @@
  * It needs to be implemented by those platforms which need SLIP or PPP
  */
 
-#ifndef SIO_H
-#define SIO_H
+#pragma once
 
-#include "arch.h"
-#include "opt.h"
+#include <arch.h>
+#include <opt.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* If you want to define sio_fd_t elsewhere or differently,
    define this in your cc.h file. */
-#ifndef __sio_fd_t_defined
-typedef void * sio_fd_t;
-#endif
+using SioFd = uint8_t *;
+
 
 /* The following functions can be defined to something else in your cc.h file
    or be implemented in your custom sio.c file. */
 
-#ifndef sio_open
 /**
  * Opens a serial device for communication.
  *
  * @param devnum device number
  * @return handle to serial device if successful, NULL otherwise
  */
-sio_fd_t sio_open(uint8_t devnum);
-#endif
+SioFd sio_open(uint8_t devnum);
 
-#ifndef sio_send
 /**
  * Sends a single character to the serial device.
  *
@@ -70,10 +62,8 @@ sio_fd_t sio_open(uint8_t devnum);
  *
  * @note This function will block until the character can be sent.
  */
-void sio_send(uint8_t c, sio_fd_t fd);
-#endif
+void sio_send(uint8_t c, SioFd fd);
 
-#ifndef sio_recv
 /**
  * Receives a single character from the serial device.
  *
@@ -81,10 +71,8 @@ void sio_send(uint8_t c, sio_fd_t fd);
  *
  * @note This function will block until a character is received.
  */
-uint8_t sio_recv(sio_fd_t fd);
-#endif
+uint8_t sio_recv(SioFd fd);
 
-#ifndef sio_read
 /**
  * Reads from the serial device.
  *
@@ -96,10 +84,8 @@ uint8_t sio_recv(sio_fd_t fd);
  * @note This function will block until data can be received. The blocking
  * can be cancelled by calling sio_read_abort().
  */
-uint32_t sio_read(sio_fd_t fd, uint8_t *data, uint32_t len);
-#endif
+uint32_t sio_read(SioFd fd, uint8_t *data, uint32_t len);
 
-#ifndef sio_tryread
 /**
  * Tries to read from the serial device. Same as sio_read but returns
  * immediately if no data is available and never blocks.
@@ -109,10 +95,8 @@ uint32_t sio_read(sio_fd_t fd, uint8_t *data, uint32_t len);
  * @param len maximum length (in bytes) of data to receive
  * @return number of bytes actually received
  */
-uint32_t sio_tryread(sio_fd_t fd, uint8_t *data, uint32_t len);
-#endif
+uint32_t sio_tryread(SioFd fd, uint8_t *data, uint32_t len);
 
-#ifndef sio_write
 /**
  * Writes to the serial device.
  *
@@ -123,20 +107,15 @@ uint32_t sio_tryread(sio_fd_t fd, uint8_t *data, uint32_t len);
  *
  * @note This function will block until all data can be sent.
  */
-uint32_t sio_write(sio_fd_t fd, uint8_t *data, uint32_t len);
-#endif
+uint32_t sio_write(SioFd fd, uint8_t *data, uint32_t len);
 
-#ifndef sio_read_abort
 /**
  * Aborts a blocking sio_read() call.
  *
  * @param fd serial device handle
  */
-void sio_read_abort(sio_fd_t fd);
-#endif
+void sio_read_abort(SioFd fd);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* SIO_H */
+//
+// END OF FILE
+//

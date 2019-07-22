@@ -97,19 +97,19 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
-#include "ip6.h"
+#include <opt.h>
+#include <def.h>
+#include <ip6.h>
 
-#include "ip6_addr.h"
+#include <ip6_addr.h>
 
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
 #include "nd6.h"
 
 #include "tcp.h"
 
-#include "tcp_priv.h"
+#include <tcp_priv.h>
 
 #include <cstring>
 
@@ -2551,7 +2551,7 @@ tcp_free_ooseq(struct TcpPcb* pcb)
  * When LWIP_TCP_PCB_NUM_EXT_ARGS is > 0, every tcp pcb (including listen pcb)
  * includes a number of additional argument entries in an array.
  *
- * To support memory management, in addition to a 'void *', callbacks can be
+ * To support memory management, in addition to a 'uint8_t *', callbacks can be
  * provided to manage transition from listening pcbs to connections and to
  * deallocate memory when a pcb is deallocated (see struct @ref tcp_ext_arg_callbacks).
  *
@@ -2570,7 +2570,7 @@ static uint8_t tcp_ext_arg_id;
  * When @ref LWIP_TCP_PCB_NUM_EXT_ARGS is > 0, every tcp pcb (including listen pcb)
  * includes a number of additional argument entries in an array.
  *
- * To support memory management, in addition to a 'void *', callbacks can be
+ * To support memory management, in addition to a 'uint8_t *', callbacks can be
  * provided to manage transition from listening pcbs to connections and to
  * deallocate memory when a pcb is deallocated (see struct @ref tcp_ext_arg_callbacks).
  *

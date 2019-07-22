@@ -13,6 +13,8 @@ This project is an attempt to re-write the Light Weight IP stack in modern C++.
 * Create C API interfaces for calling with external programs that are not C++
 * Re-implement all code using C++ 17 spec.
 * Document using google style
+* Implement VXLAN protocol
+* Replace LinkedLists with arrays or vectors
 
 ## References
 

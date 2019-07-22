@@ -135,7 +135,7 @@ inline void LwipPlatformDiag(const char* fmt, ...)
 
 /** Define this to 1 in cc.h of your port if your compiler does not provide
  * the inttypes.h header. You need to define the format strings listed in
- * arch.h yourself in this case (X8_F, U16_F...).
+ * arch.h yourself in this case (X8_F, d...).
  */
 
 /* Define (sn)printf formatters for these lwIP types */
@@ -217,7 +217,7 @@ inline size_t LWIP_MEM_ALIGN_SIZE(const size_t size)
  * so that ADDR % MEM_ALIGNMENT == 0
  */
 
-// #define LWIP_MEM_ALIGN(addr) ((void *)(((uintptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(uintptr_t)(MEM_ALIGNMENT-1)))
+// #define LWIP_MEM_ALIGN(addr) ((uint8_t *)(((uintptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(uintptr_t)(MEM_ALIGNMENT-1)))
 // inline void LWIP_MEM_ALIGN(void* addr)
 // {
 //     ((void*)(((addr)+MEM_ALIGNMENT - 1) & ~(uint_ptr_t)

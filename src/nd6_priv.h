@@ -41,10 +41,10 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include "opt.h"
-#include "packet_buffer.h"
-#include "ip6_addr.h"
-#include "netif.h"
+#include <opt.h>
+#include <packet_buffer.h>
+#include <ip6_addr.h>
+#include <netif.h>
 
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h

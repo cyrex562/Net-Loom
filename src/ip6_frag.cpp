@@ -39,17 +39,12 @@
  * <delamer@inicotech.com>
  */
 
-#include "opt.h"
-#include "ip6_frag.h"
-#include "ip6.h"
-#include "icmp6.h"
-#include "nd6.h"
-#include "ip.h"
-
-#include "packet_buffer.h"
-#include "stats.h"
-
-#include <string.h>
+#include <opt.h>
+#include <ip6_frag.h>
+#include <ip6.h>
+#include <icmp6.h>
+#include <nd6.h>
+#include <packet_buffer.h>
 
 /* The number of bytes we need to "borrow" from (i.e., overwrite in) the header
  * that precedes the fragment header for reassembly pruposes. */
@@ -514,7 +509,7 @@ ip6_reass(struct PacketBuffer *p)
 
   if (valid) {
     /* All fragments have been received */
-    struct ip6_hdr* iphdr_ptr;
+    struct Ip6Hdr* iphdr_ptr;
 
     /* chain together the pbufs contained within the ip6_reassdata list. */
     iprh = (struct ip6_reass_helper*) ipr->p->payload;
@@ -573,12 +568,12 @@ ip6_reass(struct PacketBuffer *p)
       (size_t)((uint8_t*)p->payload - (uint8_t*)ipr->iphdr));
 
     /* This is where the IPv6 header is now. */
-    iphdr_ptr = (struct ip6_hdr*)((uint8_t*)ipr->iphdr +
+    iphdr_ptr = (struct Ip6Hdr*)((uint8_t*)ipr->iphdr +
       sizeof(struct ip6_frag_hdr));
 
     /* Adjust datagram length by adding header lengths. */
     ipr->datagram_len = (uint16_t)(ipr->datagram_len + ((uint8_t*)p->payload - (uint8_t*)iphdr_ptr)
-                         - IP6_HLEN);
+                         - IP6_HDR_LEN);
 
     /* Set payload length in ip header. */
     iphdr_ptr->_plen = lwip_htons(ipr->datagram_len);
@@ -590,7 +585,7 @@ ip6_reass(struct PacketBuffer *p)
     if (IP6H_NEXTH(iphdr_ptr) == IP6_NEXTH_FRAGMENT) {
       iphdr_ptr->_nexth = ipr->nexth;
     } else {
-      uint8_t *ptr = (uint8_t *)iphdr_ptr + IP6_HLEN;
+      uint8_t *ptr = (uint8_t *)iphdr_ptr + IP6_HDR_LEN;
       while (*ptr != IP6_NEXTH_FRAGMENT) {
         ptr += 8 * (1 + ptr[1]);
       }
@@ -676,8 +671,8 @@ ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
 LwipStatus
 ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
 {
-  struct ip6_hdr *original_ip6hdr;
-  struct ip6_hdr *ip6hdr;
+  struct Ip6Hdr *original_ip6hdr;
+  struct Ip6Hdr *ip6hdr;
   struct ip6_frag_hdr *frag_hdr;
   struct PacketBuffer *rambuf;
 
@@ -688,14 +683,14 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
   static uint32_t identification;
   uint16_t left, cop;
   const uint16_t mtu = nd6_get_destination_mtu(dest, netif);
-  const uint16_t nfb = (uint16_t)((mtu - (IP6_HLEN + IP6_FRAG_HLEN)) & IP6_FRAG_OFFSET_MASK);
+  const uint16_t nfb = (uint16_t)((mtu - (IP6_HDR_LEN + IP6_FRAG_HLEN)) & IP6_FRAG_OFFSET_MASK);
   uint16_t fragment_offset = 0;
   uint16_t last;
-  uint16_t poff = IP6_HLEN;
+  uint16_t poff = IP6_HDR_LEN;
 
   identification++;
 
-  original_ip6hdr = (struct ip6_hdr *)p->payload;
+  original_ip6hdr = (struct Ip6Hdr *)p->payload;
 
   /* @todo we assume there are no options in the unfragmentable part (IPv6 header). */
   lwip_assert("p->tot_len >= IP6_HLEN", p->tot_len >= IP6_HLEN);
@@ -712,7 +707,7 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
      * The rest will be PBUF_REFs mirroring the PacketBuffer chain to be fragged,
      * but limited to the size of an mtu.
      */
-    rambuf = pbuf_alloc(PBUF_LINK, IP6_HLEN + IP6_FRAG_HLEN, PBUF_RAM);
+    rambuf = pbuf_alloc(PBUF_LINK, IP6_HDR_LEN + IP6_FRAG_HLEN, PBUF_RAM);
     if (rambuf == nullptr) {
       IP6_FRAG_STATS_INC(ip6_frag.memerr);
       return ERR_MEM;

@@ -4,9 +4,11 @@
 //
 
 #pragma once
-#include "opt.h"
-#include "lwip_error.h"
-#include "sys.h"
+#include <opt.h>
+#include <lwip_error.h>
+#include <sys.h>
+
+
 
 /** Returned by sys_timeouts_sleeptime() to indicate there is no timer, so we
  * can sleep forever.
@@ -38,13 +40,15 @@ extern const int NUM_CYCLIC_TIMERS;
  *
  * @param arg Additional argument to pass to the function - set up by sys_timeout()
  */
-typedef void (* sys_timeout_handler)(void *arg);
+using SysTimeoutHandler = void (*)(void*);
+
+void sys_timeout(uint32_t msecs, SysTimeoutHandler handler, void* arg);
 
 struct SysTimeoutContext
 {
     struct SysTimeoutContext* next;
     uint32_t time;
-    sys_timeout_handler h;
+    SysTimeoutHandler h;
     void* arg;
     const char* handler_name;
 };
@@ -52,17 +56,17 @@ struct SysTimeoutContext
 
 void sys_timeouts_init(void);
 
-void sys_timeout_debug(uint32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name);
-#define sys_timeout(msecs, handler, arg) sys_timeout_debug(msecs, handler, arg, #handler)
+void sys_timeout_debug(uint32_t msecs, SysTimeoutHandler handler, void* arg, const char* handler_name);
 
 
-void sys_untimeout(sys_timeout_handler handler, void *arg);
+
+void sys_untimeout(SysTimeoutHandler handler, void* arg);
 void sys_restart_timeouts(void);
 void sys_check_timeouts(void);
 uint32_t sys_timeouts_sleeptime(void);
 
 struct SysTimeoutContext** sys_timeouts_get_next_timeout(void);
-void lwip_cyclic_timer(void *arg);
+void lwip_cyclic_timer(void* arg);
 
 //
 // END OF FILE

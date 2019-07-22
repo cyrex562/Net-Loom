@@ -1,15 +1,16 @@
-/*
- * netif API (to be used from TCPIP thread)
- */
+//
+// netif API (to be used from TCPIP thread)
+//
 
 #pragma once
 
-#include "lwip_error.h"
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "def.h"
-#include "ip4_addr.h"
-#include "ip6_addr.h"
+#include <lwip_error.h>
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <def.h>
+#include <ip4_addr.h>
+#include <ip6_addr.h>
+#include <array>
 
 struct Ip6Addr;
 
@@ -124,7 +125,7 @@ typedef LwipStatus (*NetifInitFn)(struct NetIfc *netif);
  *         != ERR_OK is the packet was NOT handled, in this case, the caller has
  *                   to free the PacketBuffer
  */
-typedef LwipStatus (*netif_input_fn)(struct PacketBuffer *p, struct NetIfc *inp);
+typedef LwipStatus (*NetifInputFn)(struct PacketBuffer *p, struct NetIfc *inp);
 
 
 // Function prototype for netif->output functions. Called by lwIP when a packet
@@ -206,7 +207,7 @@ struct NetIfc
     IpAddr ip_addr;
     IpAddr netmask;
     IpAddr gw; /** Array of IPv6 addresses for this netif. */
-    IpAddr ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
+    std::array<IpAddr, LWIP_IPV6_NUM_ADDRESSES>ip6_addr;
     /** The state of each IPv6 address (Tentative, Preferred, etc).
          * @see ip6_addr.h */
     uint8_t ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
@@ -217,7 +218,7 @@ struct NetIfc
     uint32_t ip6_addr_pref_life[LWIP_IPV6_NUM_ADDRESSES];
     /** This function is called by the network device driver
          *  to pass a packet up the TCP/IP stack. */
-    netif_input_fn input; /** This function is called by the IP module when it wants
+    NetifInputFn input; /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet.
    *  For ethernet physical layer, this is usually etharp_output() */
@@ -312,21 +313,22 @@ extern struct NetIfc *netif_list;
 /** The default network interface. */
 extern struct NetIfc *netif_default;
 
-void netif_init(void);
+void netif_init(NetIfc* loop_netif);
 
 struct NetIfc *netif_add_noaddr(struct NetIfc *netif,
-                               void *state,
+                               uint8_t *state,
                                NetifInitFn init,
-                               netif_input_fn input);
+                               NetifInputFn input);
 
 
-struct NetIfc *netif_add(struct NetIfc *netif,
+struct NetIfc *netif_add(NetIfc *netif,
                         const Ip4Addr *ipaddr,
                         const Ip4Addr *netmask,
                         const Ip4Addr *gw,
-                        void *state,
+                        uint8_t *state,
                         NetifInitFn init,
-                        netif_input_fn input);
+                        NetifInputFn input);
+
 bool netif_set_addr(struct NetIfc* netif,
                     const Ip4Addr* ipaddr,
                     const Ip4Addr* netmask,
@@ -432,7 +434,7 @@ void netif_set_link_callback(struct NetIfc *netif, netif_status_callback_fn link
 #define netif_get_mld_mac_filter(netif) (((netif) != NULL) ? ((netif)->mld_mac_filter) : NULL)
 #define netif_mld_mac_filter(netif, addr, action) do { if((netif) && (netif)->mld_mac_filter) { (netif)->mld_mac_filter((netif), (addr), (action)); }}while(0)
 
-LwipStatus netif_loop_output(struct NetIfc *netif, struct PacketBuffer *p);
+LwipStatus netif_loop_output(struct NetIfc *netif, struct PacketBuffer *p, NetIfc* loop_netif);
 void netif_poll(struct NetIfc *netif);
 
 void netif_poll_all(void);
@@ -444,7 +446,12 @@ LwipStatus netif_input(struct PacketBuffer *p, struct NetIfc *inp);
 /** @ingroup netif_ip6 */
 #define netif_ip_addr6(netif, i)  ((const IpAddr*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif_ip6 */
-#define netif_ip6_addr(netif, i)  ((const Ip6Addr*)ip_2_ip6(&((netif)->ip6_addr[i])))
+inline Ip6Addr* netif_ip6_addr(NetIfc* netif, const size_t index)
+{
+    return &netif->ip6_addr[index].u_addr.ip6;
+}
+
+
 void netif_ip6_addr_set(struct NetIfc *netif, int8_t addr_idx, const Ip6Addr*addr6);
 void netif_ip6_addr_set_parts(struct NetIfc *netif, int8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3);
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
@@ -572,18 +579,23 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_f
 void netif_remove_ext_callback(netif_ext_callback_t* callback);
 void netif_invoke_ext_callback(struct NetIfc* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 
-inline bool LwipIp6Addrest_zone(const Ip6Addr* ip6addr, const NetIfc* netif)
+//
+// 
+//
+inline bool ip6_addr_est_zone(const Ip6Addr* ip6addr, const NetIfc* netif)
 {
     return (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)));
 }
 
-/** Verify that the given IPv6 address is properly zoned for the given netif. */
+// Verify that the given IPv6 address is properly zoned for the given netif.
+//
+//
 inline void IP6_ADDR_ZONECHECK_NETIF(const Ip6Addr* ip6addr, NetIfc* netif)
 {
     lwip_assert("IPv6 netif zone check failed",
                 ip6_addr_has_scope(ip6addr, IP6_UNKNOWN)
                     ? (ip6_addr_has_zone(ip6addr) && (((netif) == nullptr) ||
-                        LwipIp6Addrest_zone((ip6addr), (netif))))
+                        ip6_addr_est_zone((ip6addr), (netif))))
                     : !ip6_addr_has_zone(ip6addr));
 }
 

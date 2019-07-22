@@ -41,31 +41,31 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
+#include <opt.h>
+#include <def.h>
 
-#include "inet_chksum.h"
+#include <inet_chksum.h>
 
-#include "ip6.h"
+#include <ip6.h>
 
-#include "ip6_addr.h"
+#include <ip6_addr.h>
 
-#include "ip_addr.h"
+#include <ip_addr.h>
 
-#include "mem.h"
+#include <mem.h>
 
-#include "memp.h"
+#include <memp.h>
 
-#include "nd6.h"
+#include <nd6.h>
 
-#include "netif.h"
+#include <netif.h>
 
-#include "stats.h"
+#include <stats.h>
 
-#include "tcp_priv.h"
+#include <tcp_priv.h>
 
 #include <cstring>
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
 
 /** Initial CWND calculation as defined RFC 2581 */
@@ -161,7 +161,7 @@ tcp_input(struct PacketBuffer *p, NetIfc*inp)
     uint16_t chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
                                     ip_current_src_addr(), ip_current_dest_addr());
     if (chksum != 0) {
-      Logf(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
+      Logf(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04x\n",
                chksum));
       tcp_debug_print(tcphdr);
       TCP_STATS_INC(tcp.chkerr);

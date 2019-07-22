@@ -36,14 +36,14 @@
  */
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "ip6_addr.h"
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <ip6_addr.h>
 
 
 /** This netbuf has dest-addr/port set */
@@ -64,14 +64,14 @@ struct netbuf {
 /* Network buffer functions: */
 struct netbuf *   netbuf_new      (void);
 void              netbuf_delete   (struct netbuf *buf);
-void *            netbuf_alloc    (struct netbuf *buf, uint16_t size);
+uint8_t *            netbuf_alloc    (struct netbuf *buf, uint16_t size);
 void              netbuf_free     (struct netbuf *buf);
 LwipStatus             netbuf_ref      (struct netbuf *buf,
-                                   const void *dataptr, uint16_t size);
+                                   const uint8_t *dataptr, uint16_t size);
 void              netbuf_chain    (struct netbuf *head, struct netbuf *tail);
 
 LwipStatus             netbuf_data     (struct netbuf *buf,
-                                   void **dataptr, uint16_t *len);
+                                   uint8_t **dataptr, uint16_t *len);
 int8_t              netbuf_next     (struct netbuf *buf);
 void              netbuf_first    (struct netbuf *buf);
 

@@ -8,7 +8,7 @@
 #ifndef FMT_LOCALE_H_
 #define FMT_LOCALE_H_
 
-#include "format.h"
+#include <format.h>
 #include <locale>
 
 FMT_BEGIN_NAMESPACE

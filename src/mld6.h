@@ -40,7 +40,7 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include "opt.h"
+#include <opt.h>
 
 
 #define MLD6_HBH_HLEN 8
@@ -53,12 +53,12 @@ struct mld_header {
     uint16_t chksum;
     uint16_t max_resp_delay;
    uint16_t reserved;
-    Ip6AddrPT multicast_address;
+    Ip6Addr multicast_address;
     /* Options follow. */
 } ;
 
-#include "packet_buffer.h"
-#include "netif.h"
+#include <packet_buffer.h>
+#include <netif.h>
 
 /** MLD group */
 struct mld_group {

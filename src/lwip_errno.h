@@ -37,7 +37,7 @@
 #ifndef LWIP_HDR_ERRNO_H
 #define LWIP_HDR_ERRNO_H
 
-#include "opt.h"
+#include <opt.h>
 
 #ifdef __cplusplus
 extern "C" {

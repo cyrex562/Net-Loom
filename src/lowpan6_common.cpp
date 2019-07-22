@@ -48,13 +48,13 @@
  * 6LowPAN netif implementation
  */
 
-#include "lowpan6_common.h"
+#include <lowpan6_common.h>
 
-#include "ip.h"
-#include "packet_buffer.h"
-#include "ip_addr.h"
-#include "netif.h"
-#include "udp.h"
+#include <ip.h>
+#include <packet_buffer.h>
+#include <ip_addr.h>
+#include <netif.h>
+#include <udp.h>
 
 #include <string.h>
 
@@ -146,11 +146,11 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   buffer = outbuf;
   inptr = inbuf;
 
-  if (inbuf_size < IP6_HLEN) {
+  if (inbuf_size < IP6_HDR_LEN) {
     /* input buffer too short */
     return ERR_VAL;
   }
-  if (outbuf_size < IP6_HLEN) {
+  if (outbuf_size < IP6_HDR_LEN) {
     /* output buffer too short for worst case */
     return ERR_MEM;
   }
@@ -197,25 +197,25 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   if (IP6H_FL(ip6hdr) == 0) {
     /* Flow label is elided. */
     buffer[0] |= 0x10;
-    if (IP6H_TC(ip6hdr) == 0) {
+    if (get_ip6_hdr_tc(ip6hdr) == 0) {
       /* Traffic class (ECN+DSCP) elided too. */
       buffer[0] |= 0x08;
     } else {
       /* Traffic class (ECN+DSCP) appended. */
-      buffer[lowpan6_header_len++] = IP6H_TC(ip6hdr);
+      buffer[lowpan6_header_len++] = get_ip6_hdr_tc(ip6hdr);
     }
   } else {
-    if (((IP6H_TC(ip6hdr) & 0x3f) == 0)) {
+    if (((get_ip6_hdr_tc(ip6hdr) & 0x3f) == 0)) {
       /* DSCP portion of Traffic Class is elided, ECN and FL are appended (3 bytes) */
       buffer[0] |= 0x08;
 
-      buffer[lowpan6_header_len] = IP6H_TC(ip6hdr) & 0xc0;
+      buffer[lowpan6_header_len] = get_ip6_hdr_tc(ip6hdr) & 0xc0;
       buffer[lowpan6_header_len++] |= (IP6H_FL(ip6hdr) >> 16) & 0x0f;
       buffer[lowpan6_header_len++] = (IP6H_FL(ip6hdr) >> 8) & 0xff;
       buffer[lowpan6_header_len++] = IP6H_FL(ip6hdr) & 0xff;
     } else {
       /* Traffic class and flow label are appended (4 bytes) */
-      buffer[lowpan6_header_len++] = IP6H_TC(ip6hdr);
+      buffer[lowpan6_header_len++] = get_ip6_hdr_tc(ip6hdr);
       buffer[lowpan6_header_len++] = (IP6H_FL(ip6hdr) >> 16) & 0x0f;
       buffer[lowpan6_header_len++] = (IP6H_FL(ip6hdr) >> 8) & 0xff;
       buffer[lowpan6_header_len++] = IP6H_FL(ip6hdr) & 0xff;
@@ -306,14 +306,14 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   }
 
   /* Move to payload. */
-  inptr += IP6_HLEN;
-  hidden_header_len += IP6_HLEN;
+  inptr += IP6_HDR_LEN;
+  hidden_header_len += IP6_HDR_LEN;
 
   /* Compress UDP header? */
   if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
     /* @todo support optional checksum compression */
 
-    if (inbuf_size < IP6_HLEN + UDP_HLEN) {
+    if (inbuf_size < IP6_HDR_LEN + UDP_HLEN) {
       /* input buffer too short */
       return ERR_VAL;
     }
@@ -392,7 +392,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   struct ip6_hdr *ip6hdr;
   int8_t i;
   uint32_t header_temp;
-  uint16_t ip6_offset = IP6_HLEN;
+  uint16_t ip6_offset = IP6_HDR_LEN;
 
   lwip_assert("lowpan6_buffer != NULL", lowpan6_buffer != nullptr);
   lwip_assert("decomp_buffer != NULL", decomp_buffer != nullptr);
@@ -402,7 +402,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   lwip_assert("dehdr_size_decompst != NULL", hdr_size_decomp != nullptr);
 
   ip6hdr = (struct ip6_hdr *)decomp_buffer;
-  if (decomp_bufsize < IP6_HLEN) {
+  if (decomp_bufsize < IP6_HDR_LEN) {
     return ERR_MEM;
   }
 
@@ -701,7 +701,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       /* UDP compression */
       IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_UDP);
       udphdr = (struct udp_hdr *)((uint8_t *)decomp_buffer + ip6_offset);
-      if (decomp_bufsize < IP6_HLEN + UDP_HLEN) {
+      if (decomp_bufsize < IP6_HDR_LEN + UDP_HLEN) {
         return ERR_MEM;
       }
 
@@ -738,7 +738,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       if (datagram_size == 0) {
         datagram_size = compressed_size - lowpan6_offset + ip6_offset;
       }
-      udphdr->len = lwip_htons(datagram_size - IP6_HLEN);
+      udphdr->len = lwip_htons(datagram_size - IP6_HDR_LEN);
 
     } else
 
@@ -752,7 +752,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
     datagram_size = compressed_size - lowpan6_offset + ip6_offset;
   }
   /* Infer IPv6 payload length for header */
-  IP6H_PLEN_SET(ip6hdr, datagram_size - IP6_HLEN);
+  IP6H_PLEN_SET(ip6hdr, datagram_size - IP6_HDR_LEN);
 
   if (lowpan6_offset > lowpan6_bufsize) {
     /* input buffer overflow */
@@ -777,12 +777,12 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
 
   /* Allocate a buffer for decompression. This buffer will be too big and will be
      trimmed once the final size is known. */
-  q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN_ALLOC, PBUF_POOL);
+  q = pbuf_alloc(PBUF_IP, p->len + IP6_HDR_LEN + UDP_HLEN_ALLOC, PBUF_POOL);
   if (q == nullptr) {
     pbuf_free(p);
     return nullptr;
   }
-  if (q->len < IP6_HLEN + UDP_HLEN_ALLOC) {
+  if (q->len < IP6_HDR_LEN + UDP_HLEN_ALLOC) {
     /* The headers need to fit into the first PacketBuffer */
     pbuf_free(p);
     pbuf_free(q);

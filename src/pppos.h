@@ -33,10 +33,10 @@
 
 #pragma once
 
-#include "ppp_opts.h"
-#include "sys.h"
-#include "ppp.h"
-#include "vj.h"
+#include <ppp_opts.h>
+#include <sys.h>
+#include <ppp.h>
+#include <vj.h>
 
 
 
@@ -59,7 +59,7 @@ enum {
 };
 
 /* PPPoS serial output callback function prototype */
-typedef uint32_t (*pppos_output_cb_fn)(PppPcb *pcb, uint8_t *data, uint32_t len, void *ctx);
+typedef uint32_t (*pppos_output_cb_fn)(PppPcb *pcb, uint8_t *data, uint32_t len, uint8_t *ctx);
 
 /*
  * Extended asyncmap - allows any character to be escaped.
@@ -99,7 +99,7 @@ struct pppos_pcb_s {
 
 /* Create a new PPPoS session. */
 PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb);
 
 
 

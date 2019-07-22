@@ -28,15 +28,15 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "demand.h"
-#include "ppp_opts.h"
-#include "fsm.h"
-#include "ipcp.h"
-#include "lcp.h"
-#include "ppp_impl.h"
+#include <demand.h>
+#include <ppp_opts.h>
+#include <fsm.h>
+#include <ipcp.h>
+#include <lcp.h>
+#include <ppp_impl.h>
 #include <cstdlib>
 #include <cstring>
-#include "pppos.h"
+#include <pppos.h>
 #ifdef _MSC_VER
 
 #else

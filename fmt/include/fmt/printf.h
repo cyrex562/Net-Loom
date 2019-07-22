@@ -11,7 +11,7 @@
 #include <algorithm>  // std::fill_n
 #include <limits>     // std::numeric_limits
 
-#include "ostream.h"
+#include <ostream.h>
 
 FMT_BEGIN_NAMESPACE
 namespace internal {
@@ -440,7 +440,7 @@ class printf_arg_formatter:
   }
 
   /** Formats a pointer. */
-  iterator operator()(const void *value) {
+  iterator operator()(const uint8_t *value) {
     if (value)
       return base::operator()(value);
     this->spec()->type = 0;

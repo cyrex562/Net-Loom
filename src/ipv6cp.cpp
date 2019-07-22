@@ -147,12 +147,12 @@
  *   interface up / set address.
  */
 
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "fsm.h"
-#include "ipcp.h"
-#include "ipv6cp.h"
-#include "magic.h"
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <fsm.h>
+#include <ipcp.h>
+#include <ipv6cp.h>
+#include <magic.h>
 
 /* global vars */
 

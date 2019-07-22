@@ -33,11 +33,11 @@
  */
 #pragma once
 
-#include "opt.h"
+#include <opt.h>
 
-#include "arch.h"
-#include "inet.h"
-#include "sockets.h"
+#include <arch.h>
+#include <inet.h>
+#include <sockets.h>
 
 /* some rarely used options */
 

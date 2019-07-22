@@ -68,16 +68,16 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
-#include "netif.h"
-#include "packet_buffer.h"
-#include "sys.h"
-#include "tcpip.h"
-#include "tcp_priv.h"
-#include "inet_chksum.h"
+#include <opt.h>
+#include <def.h>
+#include <netif.h>
+#include <packet_buffer.h>
+#include <sys.h>
+#include <tcpip.h>
+#include <tcp_priv.h>
+#include <inet_chksum.h>
 #include <cstring>
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
 #define SIZEOF_STRUCT_PBUF LWIP_MEM_ALIGN_SIZE(sizeof(struct PacketBuffer))
 /* Since the pool is created in memp, PBUF_POOL_BUFSIZE will be automatically
@@ -335,21 +335,23 @@ struct PacketBuffer* pbuf_alloc(PbufLayer layer, uint16_t length, PbufType type)
  *
  * @return the allocated PacketBuffer.
  */
-struct PacketBuffer *pbuf_alloc_reference(void *payload, uint16_t length,
-                                  PbufType type) {
-  struct PacketBuffer *p;
-  lwip_assert("invalid pbuf_type", (type == PBUF_REF) || (type == PBUF_ROM));
-  /* only allocate memory for the PacketBuffer structure */
-  // p = (struct PacketBuffer *)memp_malloc(MEMP_PBUF);
-  p = new PacketBuffer;
-  if (p == nullptr) {
-    Logf(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-         ("pbuf_alloc_reference: Could not allocate MEMP_PBUF for PBUF_%s.\n",
-             (type == PBUF_ROM) ? "ROM" : "REF"));
-    return nullptr;
-  }
-  pbuf_init_alloced_pbuf(p, payload, length, length, type, 0);
-  return p;
+struct PacketBuffer* pbuf_alloc_reference(uint8_t* payload,
+                                          const size_t length,
+                                          const PbufType type)
+{
+    lwip_assert("invalid PbufType", (type == PBUF_REF) || (type == PBUF_ROM));
+    /* only allocate memory for the PacketBuffer structure */
+    // p = (struct PacketBuffer *)memp_malloc(MEMP_PBUF);
+    auto p = new PacketBuffer;
+    if (p == nullptr)
+    {
+        Logf(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+             "pbuf_alloc_reference: Could not allocate MEMP_PBUF for PBUF_%s.\n",
+             type == PBUF_ROM ? "ROM" : "REF");
+        return nullptr;
+    }
+    pbuf_init_alloced_pbuf(p, payload, length, length, type, 0);
+    return p;
 }
 
 /**
@@ -602,15 +604,36 @@ uint8_t pbuf_add_header_force(struct PacketBuffer *p, size_t header_size_increme
  * @return non-zero on failure, zero on success.
  *
  */
-uint8_t pbuf_remove_header(struct PacketBuffer *p, size_t header_size_decrement) {
-  void *payload;
-  uint16_t increment_magnitude;
-
-  lwip_assert("p != NULL", p != nullptr);
-  if ((p == nullptr) || (header_size_decrement > 0xFFFF)) {
-    return 1;
-  }
-  if (header_size_decrement == 0) {
+uint8_t pbuf_remove_header(struct PacketBuffer* p, size_t header_size_decrement)
+{
+    lwip_assert("p != NULL", p != nullptr);
+    if ((p == nullptr) || (header_size_decrement > 0xFFFF))
+    {
+        return 1;
+    }
+    if (header_size_decrement == 0)
+    {
+        return 0;
+    }
+    uint16_t increment_magnitude = (uint16_t)header_size_decrement;
+    /* Check that we aren't going to move off the end of the pbuf */
+    // LWIP_ERROR("increment_magnitude <= p->len", (increment_magnitude <= p->len),
+    //            return 1;);
+    if (increment_magnitude > p->len)
+    {
+        return 1;
+    } /* remember current payload pointer */
+    void* payload = p->payload; // ; /* only used in Logf below */
+    /* increase payload pointer (guarded by length check above) */
+    p->payload = (uint8_t *)p->payload + header_size_decrement;
+    /* modify PacketBuffer length fields */
+    p->len = (uint16_t)(p->len - increment_magnitude);
+    p->tot_len = (uint16_t)(p->tot_len - increment_magnitude);
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+         "pbuf_remove_header: old %p new %p (%d)\n",
+         payload,
+         p->payload,
+         increment_magnitude);
     return 0;
   }
 
@@ -871,16 +894,8 @@ void pbuf_cat(struct PacketBuffer *h, struct PacketBuffer *t) {
   for (p = h; p->next != nullptr; p = p->next) {
     /* add total length of second chain to all totals of first chain */
     p->tot_len = (uint16_t)(p->tot_len + t->tot_len);
-  }
-  /* { p is last PacketBuffer of first h chain, p->next == NULL } */
-  lwip_assert("p->tot_len == p->len (of last PacketBuffer in chain)",
-              p->tot_len == p->len);
-  lwip_assert("p->next == NULL", p->next == nullptr);
-  /* add total length of second chain to last pbuf total of first chain */
-  p->tot_len = (uint16_t)(p->tot_len + t->tot_len);
-  /* chain last PacketBuffer of head (p) with first of tail (t) */
-  p->next = t;
-  /* p->next now references t, but the caller will drop its reference to t,
+    /* chain last PacketBuffer of head (p) with first of tail (t) */
+    p->next = t; /* p->next now references t, but the caller will drop its reference to t,
    * so netto there is no change to the reference count of t.
    */
 }
@@ -902,12 +917,14 @@ void pbuf_cat(struct PacketBuffer *h, struct PacketBuffer *t) {
  * The ->ref field of the first PacketBuffer of the tail chain is adjusted.
  *
  */
-void pbuf_chain(struct PacketBuffer *h, struct PacketBuffer *t) {
-  pbuf_cat(h, t);
-  /* t is now referenced by h */
-  pbuf_ref(t);
-  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-       ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
+void pbuf_chain(struct PacketBuffer* h, struct PacketBuffer* t)
+{
+    pbuf_cat(h, t); /* t is now referenced by h */
+    pbuf_ref(t);
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+         "pbuf_chain: %p references %p\n",
+         (uint8_t *)h,
+         (uint8_t *)t);
 }
 
 /**
@@ -918,38 +935,34 @@ void pbuf_chain(struct PacketBuffer *h, struct PacketBuffer *t) {
  * @return remainder of the PacketBuffer chain, or NULL if it was de-allocated.
  * @note May not be called on a packet queue.
  */
-struct PacketBuffer *pbuf_dechain(struct PacketBuffer *p) {
-  struct PacketBuffer *q;
-  uint8_t tail_gone = 1;
-  /* tail */
-  q = p->next;
-  /* PacketBuffer has successor in chain? */
-  if (q != nullptr) {
-    /* assert tot_len invariant: (p->tot_len == p->len + (p->next?
-     * p->next->tot_len: 0) */
-    lwip_assert("p->tot_len == p->len + q->tot_len",
-                q->tot_len == p->tot_len - p->len);
-    /* enforce invariant if assertion is disabled */
-    q->tot_len = (uint16_t)(p->tot_len - p->len);
-    /* decouple PacketBuffer from remainder */
-    p->next = nullptr;
-    /* total length of PacketBuffer p is its own length only */
-    p->tot_len = p->len;
-    /* q is no longer referenced by p, free it */
-    Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-         ("pbuf_dechain: unreferencing %p\n", (void *)q));
-    tail_gone = pbuf_free(q);
-    if (tail_gone > 0) {
-      Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-           ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n",
-               (void *)q));
-    }
-    /* return remaining tail or NULL if deallocated */
-  }
-  /* assert tot_len invariant: (p->tot_len == p->len + (p->next?
+struct PacketBuffer* pbuf_dechain(struct PacketBuffer* p)
+{
+    uint8_t tail_gone = 1; /* tail */
+    struct PacketBuffer* q = p->next; /* PacketBuffer has successor in chain? */
+    if (q != nullptr)
+    {
+        /* assert tot_len invariant: (p->tot_len == p->len + (p->next?
+         * p->next->tot_len: 0) */
+        lwip_assert("p->tot_len == p->len + q->tot_len",
+                    q->tot_len == p->tot_len - p->len);
+        /* enforce invariant if assertion is disabled */
+        q->tot_len = (uint16_t)(p->tot_len - p->len);
+        /* decouple PacketBuffer from remainder */
+        p->next = nullptr; /* total length of PacketBuffer p is its own length only */
+        p->tot_len = p->len; /* q is no longer referenced by p, free it */
+        Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+             "pbuf_dechain: unreferencing %p\n", (uint8_t *)q);
+        tail_gone = pbuf_free(q);
+        if (tail_gone > 0)
+        {
+            Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
+                 "pbuf_dechain: deallocated %p (as it is no longer referenced)\n", (
+                     uint8_t *)q);
+        } /* return remaining tail or NULL if deallocated */
+    } /* assert tot_len invariant: (p->tot_len == p->len + (p->next?
    * p->next->tot_len: 0) */
-  lwip_assert("p->tot_len == p->len", p->tot_len == p->len);
-  return ((tail_gone > 0) ? nullptr : q);
+    lwip_assert("p->tot_len == p->len", p->tot_len == p->len);
+    return ((tail_gone > 0) ? nullptr : q);
 }
 
 /**
@@ -1021,10 +1034,9 @@ LwipStatus pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_fro
       lwip_error("pbuf_copy() does not allow packet queues!",
                  (p_to->next == nullptr), return ERR_VAL;);
     }
-  } while (p_from);
-  Logf(PBUF_DEBUG | LWIP_DBG_TRACE,
-       ("pbuf_copy: end of chain reached.\n"));
-  return ERR_OK;
+    while (p_from);
+    Logf(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_copy: end of chain reached.\n"));
+    return ERR_OK;
 }
 
 /**
@@ -1042,10 +1054,8 @@ LwipStatus pbuf_copy(struct PacketBuffer *p_to, const struct PacketBuffer *p_fro
  */
 uint16_t pbuf_copy_partial(const struct PacketBuffer* buf, void* dataptr, uint16_t len, uint16_t offset)
 {
-  const struct PacketBuffer *p;
-  uint16_t left = 0;
-  uint16_t buf_copy_len;
-  uint16_t copied_total = 0;
+    uint16_t left = 0;
+    uint16_t copied_total = 0;
 
   
   lwip_error("pbuf_copy_partial: invalid dataptr", (dataptr != nullptr),
@@ -1053,13 +1063,13 @@ uint16_t pbuf_copy_partial(const struct PacketBuffer* buf, void* dataptr, uint16
 
   /* Note some systems use byte copy if dataptr or one of the PacketBuffer payload
    * pointers are unaligned. */
-  for (p = buf; len != 0 && p != nullptr; p = p->next) {
+  for (const struct PacketBuffer* p = buf; len != 0 && p != nullptr; p = p->next) {
     if ((offset != 0) && (offset >= p->len)) {
       /* don't copy from this buffer -> on to the next */
       offset = (uint16_t)(offset - p->len);
     } else {
       /* copy from this buffer. maybe only partially. */
-      buf_copy_len = (uint16_t)(p->len - offset);
+      uint16_t buf_copy_len = (uint16_t)(p->len - offset);
       if (buf_copy_len > len) {
         buf_copy_len = len;
       }
@@ -1090,10 +1100,9 @@ uint16_t pbuf_copy_partial(const struct PacketBuffer* buf, void* dataptr, uint16
  * bytes
  * @return the number of bytes copied, or 0 on failure
  */
-void *pbuf_get_contiguous(const struct PacketBuffer *p, void *buffer, size_t bufsize,
+uint8_t *pbuf_get_contiguous(const struct PacketBuffer *p, uint8_t *buffer, size_t bufsize,
                           uint16_t len, uint16_t offset) {
-  const struct PacketBuffer *q;
-  uint16_t out_offset;
+    uint16_t out_offset;
 
   
   lwip_error("pbuf_get_contiguous: invalid dataptr", (buffer != nullptr),
@@ -1101,7 +1110,7 @@ void *pbuf_get_contiguous(const struct PacketBuffer *p, void *buffer, size_t buf
   lwip_error("pbuf_get_contiguous: invalid dataptr", (bufsize >= len),
              return NULL;);
 
-  q = pbuf_skip_const(p, offset, &out_offset);
+  const struct PacketBuffer* q = pbuf_skip_const(p, offset, &out_offset);
   if (q != nullptr) {
     if (q->len >= (out_offset + len)) {
       /* all data in this PacketBuffer, return zero-copy */
@@ -1195,10 +1204,12 @@ static const struct PacketBuffer *pbuf_skip_const(const struct PacketBuffer *in,
  * @param out_offset resulting offset in the returned PacketBuffer
  * @return the PacketBuffer in the queue where the offset is
  */
-struct PacketBuffer *pbuf_skip(struct PacketBuffer *in, uint16_t in_offset,
-                       uint16_t *out_offset) {
-  const struct PacketBuffer *out = pbuf_skip_const(in, in_offset, out_offset);
-  return LWIP_CONST_CAST(struct PacketBuffer *, out);
+struct PacketBuffer* pbuf_skip(struct PacketBuffer* in,
+                               uint16_t in_offset,
+                               uint16_t* out_offset)
+{
+    PacketBuffer* out = pbuf_skip(in, in_offset, out_offset);
+    return out;
 }
 
 /**
@@ -1229,21 +1240,21 @@ LwipStatus pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len
 
   /* Note some systems use byte copy if dataptr or one of the PacketBuffer payload
    * pointers are unaligned. */
-  for (p = buf; total_copy_len != 0; p = p->next) {
-    lwip_assert("pbuf_take: invalid pbuf", p != nullptr);
-    buf_copy_len = total_copy_len;
-    if (buf_copy_len > p->len) {
-      /* this PacketBuffer cannot hold all remaining data */
-      buf_copy_len = p->len;
+    for (struct PacketBuffer* p = buf; total_copy_len != 0; p = p->next)
+    {
+        lwip_assert("pbuf_take: invalid pbuf", p != nullptr);
+        size_t buf_copy_len = total_copy_len;
+        if (buf_copy_len > p->len)
+        {
+            /* this PacketBuffer cannot hold all remaining data */
+            buf_copy_len = p->len;
+        } /* copy the necessary parts of the buffer */
+        MEMCPY(p->payload, &((const char *)dataptr)[copied_total], buf_copy_len);
+        total_copy_len -= buf_copy_len;
+        copied_total += buf_copy_len;
     }
-    /* copy the necessary parts of the buffer */
-    MEMCPY(p->payload, &((const char *)dataptr)[copied_total], buf_copy_len);
-    total_copy_len -= buf_copy_len;
-    copied_total += buf_copy_len;
-  }
-  lwip_assert("did not copy all data",
-              total_copy_len == 0 && copied_total == len);
-  return ERR_OK;
+    lwip_assert("did not copy all data", total_copy_len == 0 && copied_total == len);
+    return ERR_OK;
 }
 
 /**
@@ -1257,7 +1268,7 @@ LwipStatus pbuf_take(struct PacketBuffer *buf, const void *dataptr, uint16_t len
  *
  * @return ERR_OK if successful, ERR_MEM if the PacketBuffer is not big enough
  */
-LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t len,
+LwipStatus pbuf_take_at(struct PacketBuffer *buf, const uint8_t *dataptr, uint16_t len,
                    uint16_t offset) {
   uint16_t target_offset;
   struct PacketBuffer *q = pbuf_skip(buf, offset, &target_offset);
@@ -1266,10 +1277,8 @@ LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t 
   if ((q != nullptr) && (q->tot_len >= target_offset + len)) {
     uint16_t remaining_len = len;
     const uint8_t *src_ptr = (const uint8_t *)dataptr;
-    /* copy the part that goes into the first PacketBuffer */
-    uint16_t first_copy_len;
     lwip_assert("check pbuf_skip result", target_offset < q->len);
-    first_copy_len = (uint16_t)LWIP_MIN(q->len - target_offset, len);
+    uint16_t first_copy_len = (uint16_t)LWIP_MIN(q->len - target_offset, len);
     MEMCPY(((uint8_t *)q->payload) + target_offset, dataptr, first_copy_len);
     remaining_len = (uint16_t)(remaining_len - first_copy_len);
     src_ptr += first_copy_len;
@@ -1289,17 +1298,16 @@ LwipStatus pbuf_take_at(struct PacketBuffer *buf, const void *dataptr, uint16_t 
  *          PacketBuffer 'p' is returned, therefore the caller has to check the result!
  *
  * @param p the source PacketBuffer
- * @param layer pbuf_layer of the new PacketBuffer
+ * @param layer PbufLayer of the new PacketBuffer
  *
  * @return a new, single PacketBuffer (p->next is NULL)
  *         or the old PacketBuffer if allocation fails
  */
 struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
-  struct PacketBuffer *q;
-  if (p->next == nullptr) {
+    if (p->next == nullptr) {
     return p;
   }
-  q = pbuf_clone(layer, PBUF_RAM, p);
+  struct PacketBuffer* q = pbuf_clone(layer, PBUF_RAM, p);
   if (q == nullptr) {
     /* @todo: what do we do now? */
     return p;
@@ -1313,7 +1321,7 @@ struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
  * Allocates a new PacketBuffer of same length (via pbuf_alloc()) and copies the source
  * PacketBuffer into this new PacketBuffer (using pbuf_copy()).
  *
- * @param layer pbuf_layer of the new PacketBuffer
+ * @param layer PbufLayer of the new PacketBuffer
  * @param type this parameter decides how and where the PacketBuffer should be allocated
  *             (@see pbuf_alloc())
  * @param p the source PacketBuffer
@@ -1321,13 +1329,11 @@ struct PacketBuffer *pbuf_coalesce(struct PacketBuffer *p, PbufLayer layer) {
  * @return a new PacketBuffer or NULL if allocation fails
  */
 struct PacketBuffer *pbuf_clone(PbufLayer layer, PbufType type, struct PacketBuffer *p) {
-  struct PacketBuffer *q;
-  LwipStatus err;
-  q = pbuf_alloc(layer, p->tot_len, type);
+    struct PacketBuffer* q = pbuf_alloc(layer, p->tot_len, type);
   if (q == nullptr) {
     return nullptr;
   }
-  err = pbuf_copy(q, p);
+  LwipStatus err = pbuf_copy(q, p);
   ; /* in case of LWIP_NOASSERT */
   lwip_assert("pbuf_copy failed", err == ERR_OK);
   return q;
@@ -1438,13 +1444,10 @@ void pbuf_put_at(struct PacketBuffer *p, uint16_t offset, uint8_t data) {
  * @return zero if equal, nonzero otherwise
  *         (0xffff if p is too short, diffoffset+1 otherwise)
  */
-uint16_t pbuf_memcmp(const struct PacketBuffer *p, uint16_t offset, const void *s2,
+uint16_t pbuf_memcmp(const struct PacketBuffer *p, uint16_t offset, const uint8_t *s2,
                      uint16_t n) {
   uint16_t start = offset;
-  const struct PacketBuffer *q = p;
-  uint16_t i;
-
-  /* PacketBuffer long enough to perform check? */
+  const struct PacketBuffer *q = p; /* PacketBuffer long enough to perform check? */
   if (p->tot_len < (offset + n)) {
     return 0xffff;
   }
@@ -1457,7 +1460,7 @@ uint16_t pbuf_memcmp(const struct PacketBuffer *p, uint16_t offset, const void *
   }
 
   /* return requested data if PacketBuffer is OK */
-  for (i = 0; i < n; i++) {
+  for (uint16_t i = 0; i < n; i++) {
     /* We know pbuf_get_at() succeeds because of p->tot_len check above. */
     uint8_t a = pbuf_get_at(q, (uint16_t)(start + i));
     uint8_t b = ((const uint8_t *)s2)[i];
@@ -1480,12 +1483,11 @@ uint16_t pbuf_memcmp(const struct PacketBuffer *p, uint16_t offset, const void *
  * @param start_offset offset into p at which to start searching
  * @return 0xFFFF if substr was not found in p or the index where it was found
  */
-uint16_t pbuf_memfind(const struct PacketBuffer *p, const void *mem, uint16_t mem_len,
+uint16_t pbuf_memfind(const struct PacketBuffer *p, const uint8_t *mem, uint16_t mem_len,
                       uint16_t start_offset) {
-  uint16_t i;
-  uint16_t max_cmp_start = (uint16_t)(p->tot_len - mem_len);
+    uint16_t max_cmp_start = (uint16_t)(p->tot_len - mem_len);
   if (p->tot_len >= mem_len + start_offset) {
-    for (i = start_offset; i <= max_cmp_start; i++) {
+    for (uint16_t i = start_offset; i <= max_cmp_start; i++) {
       uint16_t plus = pbuf_memcmp(p, i, mem, mem_len);
       if (plus == 0) {
         return i;
@@ -1507,11 +1509,10 @@ uint16_t pbuf_memfind(const struct PacketBuffer *p, const void *mem, uint16_t me
  * @return 0xFFFF if substr was not found in p or the index where it was found
  */
 uint16_t pbuf_strstr(const struct PacketBuffer *p, const char *substr) {
-  size_t substr_len;
-  if ((substr == nullptr) || (substr[0] == 0) || (p->tot_len == 0xFFFF)) {
+    if ((substr == nullptr) || (substr[0] == 0) || (p->tot_len == 0xFFFF)) {
     return 0xFFFF;
   }
-  substr_len = strlen(substr);
+  size_t substr_len = strlen(substr);
   if (substr_len >= 0xFFFF) {
     return 0xFFFF;
   }

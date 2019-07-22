@@ -35,39 +35,39 @@
  */
 
 /* include the port-dependent configuration */
-// #include "lwipcfg.h"
-#include "opt.h"
-#include "def.h"
+// #include <lwipcfg.h>
+#include <opt.h>
+#include <def.h>
 
-#include "etharp.h"
+#include <etharp.h>
 
-#include "ethip6.h"
+#include <ethip6.h>
 
-#include "ip.h"
+#include <ip.h>
 
-#include "lwip_debug.h"
-
-
-#include "packet_buffer.h"
-
-#include "pcapif.h"
-
-#include "stats.h"
-
-#include "sys.h"
-
-#include "tcpip.h"
-
-#include "timeouts.h"
+#include <lwip_debug.h>
 
 
-#include "lwip_snmp.h"
+#include <packet_buffer.h>
 
-// #include "pcap.h"
+#include <pcapif.h>
 
-#include "pcapif_helper.h"
+#include <stats.h>
 
-#include "../npcap/Include/pcap/pcap.h"
+#include <sys.h>
+
+#include <tcpip.h>
+
+#include <timeouts.h>
+
+
+#include <lwip_snmp.h>
+
+// #include <pcap.h>
+
+#include <pcapif_helper.h>
+
+#include <../npcap/Include/pcap/pcap.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -77,26 +77,26 @@
 
 // // #ifdef _MSC_VER
 // // #pragma warning( push, 3 )
-// // #include "pcap.h"
+// // #include <pcap.h>
 // // #pragma warning ( pop )
 // // #else
 // // /* e.g. mingw */
 // // #define _MSC_VER 1500
-// // #include "pcap.h"
+// // #include <pcap.h>
 // // #undef _MSC_VER
 // // #endif
 //
-// // #include "opt.h"
+// // #include <opt.h>
 //
 // #if LWIP_ETHERNET
 //
-// #include "pcapif.h"
+// #include <pcapif.h>
 //
 // #include <stdlib.h>
 // #include <stdio.h>
 //
 //
-// #include "debug.h"
+// #include <debug.h>
 
 
 
@@ -176,8 +176,9 @@ pcapif_init_tx_packets(struct pcapif_private *priv)
   }
 }
 
-static void
-pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t tot_len)
+static void pcapif_add_tx_packet(struct pcapif_private* priv,
+                                 unsigned char* buf,
+                                 uint16_t tot_len)
 {
   struct pcapipf_pending_packet *tx;
   struct pcapipf_pending_packet *pack;
@@ -213,7 +214,7 @@ pcapif_add_tx_packet(struct pcapif_private *priv, unsigned char *buf, uint16_t t
 }
 
 static int
-pcapif_compare_packets(struct pcapipf_pending_packet *pack, const void *packet, int packet_len)
+pcapif_compare_packets(struct pcapipf_pending_packet *pack, const uint8_t *packet, int packet_len)
 {
   if (pack->len == packet_len) {
     if (!memcmp(pack->data, packet, packet_len)) {
@@ -224,7 +225,7 @@ pcapif_compare_packets(struct pcapipf_pending_packet *pack, const void *packet, 
 }
 
 static int
-pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
+pcaipf_is_tx_packet(NetIfc*netif, const uint8_t *packet, int packet_len)
 {
   struct pcapif_private *priv = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   struct pcapipf_pending_packet *iter, *last;
@@ -243,14 +244,14 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
     last->next = priv->free_packets;
     priv->free_packets = last;
     last->len = 0;
-    SYS_ARCH_UNPROTECT(lev);
+    sys_arch_unprotect(lev);
     return 1;
   }
   SYS_ARCH_PROTECT(lev);
   for (iter = last->next; iter != nullptr; last = iter, iter = iter->next) {
     /* unlock while comparing (this works because we have a clean threading separation
        of adding and removing items and adding is only done at the end) */
-    SYS_ARCH_UNPROTECT(lev);
+    sys_arch_unprotect(lev);
     if (pcapif_compare_packets(iter, packet, packet_len)) {
       SYS_ARCH_PROTECT(lev);
       lwip_assert("last != NULL", last != nullptr);
@@ -258,12 +259,12 @@ pcaipf_is_tx_packet(NetIfc*netif, const void *packet, int packet_len)
       iter->next = priv->free_packets;
       priv->free_packets = iter;
       last->len = 0;
-      SYS_ARCH_UNPROTECT(lev);
+      sys_arch_unprotect(lev);
       return 1;
     }
     SYS_ARCH_PROTECT(lev);
   }
-  SYS_ARCH_UNPROTECT(lev);
+  sys_arch_unprotect(lev);
   return 0;
 }
 
@@ -394,7 +395,7 @@ pcapif_open_adapter(const char* adapter_name, char* errbuf)
  * @return an adapter handle on success, NULL on failure
  */
 static struct pcapif_private*
-pcapif_init_adapter(int adapter_num, void *arg)
+pcapif_init_adapter(int adapter_num, uint8_t *arg)
 {
   int i;
   int number_of_adapters;
@@ -535,7 +536,7 @@ pcapif_init_adapter(int adapter_num, void *arg)
 }
 
 static void
-pcapif_check_linkstate(void *netif_ptr)
+pcapif_check_linkstate(uint8_t *netif_ptr)
 {
   NetIfc*netif = (NetIfc**)netif_ptr;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
@@ -592,7 +593,7 @@ pcapif_shutdown(NetIfc*netif)
 
 /** RX running in its own thread */
 static void
-pcapif_input_thread(void *arg)
+pcapif_input_thread(uint8_t *arg)
 {
   NetIfc*netif = (NetIfc*)arg;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
@@ -612,7 +613,7 @@ pcapif_input_thread(void *arg)
 static void
 pcapif_low_level_init(NetIfc*netif)
 {
-  uint8_t my_mac_addr[ETH_HWADDR_LEN] = LWIP_MAC_ADDR_BASE;
+  uint8_t my_mac_addr[ETH_ADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
   struct pcapif_private *pa;
 
@@ -661,9 +662,9 @@ pcapif_low_level_init(NetIfc*netif)
   /* change the MAC address to a unique value
      so that multiple ethernetifs are supported */
   /* @todo: this does NOT support multiple processes using this adapter! */
-  my_mac_addr[ETH_HWADDR_LEN - 1] += netif->num;
+  my_mac_addr[ETH_ADDR_LEN - 1] += netif->num;
   /* Copy MAC addr */
-  SMEMCPY(&netif->hwaddr, my_mac_addr, ETH_HWADDR_LEN);
+  SMEMCPY(&netif->hwaddr, my_mac_addr, ETH_ADDR_LEN);
 
   /* get the initial link state of the selected interface */
 
@@ -765,7 +766,7 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
  * packet from the interface into the PacketBuffer.
  */
 static struct PacketBuffer *
-pcapif_low_level_input(NetIfc*netif, const void *packet, int packet_len)
+pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
 {
   struct PacketBuffer *p, *q;
   int start;
@@ -902,7 +903,7 @@ pcapif_init(NetIfc*netif)
   sys_prot_t lev;
   SYS_ARCH_PROTECT(lev);
   local_index = ethernetif_index++;
-  SYS_ARCH_UNPROTECT(lev);
+  sys_arch_unprotect(lev);
 
   lwip_assert("pcapif needs an input callback", netif->input != nullptr);
 
@@ -918,7 +919,7 @@ pcapif_init(NetIfc*netif)
   netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | kNetifFlagEthernet | kNetifFlagIgmp;
 
   netif->flags |= NETIF_FLAG_MLD6;
-  netif->hwaddr_len = ETH_HWADDR_LEN;
+  netif->hwaddr_len = ETH_ADDR_LEN;
 
   NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, 100000000);
 

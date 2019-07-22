@@ -1,31 +1,22 @@
 #pragma once
-#include "packet_buffer.h"
-#include "ip4_addr.h"
-#include "lwip_error.h"
-#include "netif.h"
-#include "arch.h"
-
-
- /** This is the packed version of Ip4Addr,
-     used in network headers that are itself packed */
-
-
-// struct Ip4AddrPacked {
+#include <packet_buffer.h>
+#include <ip4_addr.h>
+#include <lwip_error.h>
+#include <netif.h>
+#include <arch.h>
+#include <ip_addr.h>
+/** This is the packed version of Ip4Addr,
+     used in network headers that are itself packed */ // struct Ip4AddrPacked {
 //     uint32_t addr;
 // } ;
-
-
 // typedef struct Ip4AddrPacked Ip4AddrPT;
-
 /* Size of the IPv4 header. Same as 'sizeof(struct Ip4Hdr)'. */
 constexpr auto IP4_HDR_LEN = 20; /* Maximum size of the IPv4 header with options. */
 constexpr auto kIp4HdrLenMax = 60;
 constexpr auto kIpResFlag = 0x8000U; /* reserved fragment flag */
 constexpr auto kIpDFFlag = 0x4000U; /* don't fragment flag */
 constexpr auto kIpMFFlag = 0x2000U; /* more fragments flag */
-constexpr auto kIpOffMask = 0x1fffU;   /* mask for fragmenting bits */
-
-/* The IPv4 header */
+constexpr auto kIpOffMask = 0x1fffU; /* mask for fragmenting bits */ /* The IPv4 header */
 struct Ip4Hdr
 {
     /* version / header length */
@@ -95,9 +86,7 @@ inline uint8_t get_ip4_hdr_proto(const Ip4Hdr* hdr)
 inline uint16_t get_ip4_hdr_checksum(const Ip4Hdr* hdr)
 {
     return ((hdr)->_chksum);
-}
-
-/* Macros to set struct Ip4Hdr fields: */
+} /* Macros to set struct Ip4Hdr fields: */
 // ReSharper disable once CppInconsistentNaming
 inline void set_ip4_hdr_vhl(Ip4Hdr* hdr, const uint8_t v, const uint8_t hl)
 {
@@ -134,15 +123,12 @@ inline void set_ip4_hdr_proto(Ip4Hdr* hdr, const uint8_t proto)
     (hdr)->_proto = uint8_t(proto);
 }
 
-inline void set_ip4_hdr_checksum(Ip4Hdr *hdr, const uint16_t chksum) {
-  (hdr)->_chksum = (chksum);
+inline void set_ip4_hdr_checksum(Ip4Hdr* hdr, const uint16_t chksum)
+{
+    (hdr)->_chksum = (chksum);
 }
 
-constexpr auto kLwipIpv4SrcRouting = 1;
-
-
-
-/* Compatibility define, no init needed. */
+constexpr auto kLwipIpv4SrcRouting = 1; /* Compatibility define, no init needed. */
 inline bool ip_init()
 {
     return true;

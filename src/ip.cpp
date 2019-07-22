@@ -53,9 +53,9 @@
  *
  */
 
-#include "opt.h"
-#include "ip_addr.h"
-#include "ip.h"
+#include <opt.h>
+#include <ip_addr.h>
+#include <ip.h>
 
 /** Global data for both IPv4 and IPv6 */
 struct IpGlobals ip_data;

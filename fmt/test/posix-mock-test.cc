@@ -10,8 +10,8 @@
 # define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "posix-mock.h"
-#include "../src/posix.cc"
+#include <posix-mock.h>
+#include <../src/posix.cc>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -23,9 +23,9 @@
 # undef ERROR
 #endif
 
-#include "gmock.h"
-#include "gtest-extra.h"
-#include "util.h"
+#include <gmock.h>
+#include <gtest-extra.h>
+#include <util.h>
 
 using fmt::buffered_file;
 using fmt::error_code;
@@ -137,13 +137,13 @@ FILE *test::fdopen(int fildes, const char *mode) {
   return ::FMT_POSIX(fdopen(fildes, mode));
 }
 
-test::ssize_t test::read(int fildes, void *buf, test::size_t nbyte) {
+test::ssize_t test::read(int fildes, uint8_t *buf, test::size_t nbyte) {
   read_nbyte = nbyte;
   EMULATE_EINTR(read, -1);
   return ::FMT_POSIX(read(fildes, buf, nbyte));
 }
 
-test::ssize_t test::write(int fildes, const void *buf, test::size_t nbyte) {
+test::ssize_t test::write(int fildes, const uint8_t *buf, test::size_t nbyte) {
   write_nbyte = nbyte;
   EMULATE_EINTR(write, -1);
   return ::FMT_POSIX(write(fildes, buf, nbyte));

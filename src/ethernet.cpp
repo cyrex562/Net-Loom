@@ -38,31 +38,29 @@
  *
  */
 
-#include "opt.h"
-#include "def.h"
+#include <opt.h>
+#include <def.h>
 
-#include "etharp.h"
+#include <etharp.h>
 
-#include "ethernet.h"
+#include <ethernet.h>
 
-#include "ieee.h"
+#include <ieee.h>
 
-#include "ip.h"
+#include <ip.h>
 
-#include "lwip_debug.h"
+#include <lwip_debug.h>
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 
-#include "pppoe.h"
+#include <pppoe.h>
 
-#include "lwip_snmp.h"
-
-#include "stats.h"
+#include <lwip_snmp.h>
 
 #include <cstring>
 
 
-const struct EthAddr kEthbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const struct EthAddr ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 const struct EthAddr kEthzero = {{0, 0, 0, 0, 0, 0}};
 
 /**
@@ -159,7 +157,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
             p->flags |= PBUF_FLAG_LLMCAST;
         }
 
-        else if (eth_addr_cmp(&ethhdr->dest, &kEthbroadcast))
+        else if (eth_addr_cmp(&ethhdr->dest, &ETH_BCAST_ADDR))
         {
             /* mark the pbuf as link-layer broadcast */
             p->flags |= PBUF_FLAG_LLBCAST;
@@ -309,13 +307,13 @@ LwipStatus ethernet_output(NetIfc* netif, struct PacketBuffer* p,
 
     ethhdr = (struct EthHdr *)p->payload;
     ethhdr->type = eth_type_be;
-    SMEMCPY(&ethhdr->dest, dst, ETH_HWADDR_LEN);
-    SMEMCPY(&ethhdr->src, src, ETH_HWADDR_LEN);
+    SMEMCPY(&ethhdr->dest, dst, ETH_ADDR_LEN);
+    SMEMCPY(&ethhdr->src, src, ETH_ADDR_LEN);
 
     lwip_assert("netif->hwaddr_len must be 6 for ethernet_output!",
-                (netif->hwaddr_len == ETH_HWADDR_LEN));
+                (netif->hwaddr_len == ETH_ADDR_LEN));
     // Logf(ETHARP_DEBUG | LWIP_DBG_TRACE,
-    //      ("ethernet_output: sending packet %p\n", (void *)p));
+    //      ("ethernet_output: sending packet %p\n", (uint8_t *)p));
 
     /* send the packet */
     areturn netif->linkoutput(netif, p);

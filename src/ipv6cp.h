@@ -139,8 +139,8 @@
  */
 #pragma  once
 
-#include "ppp_opts.h"
-#include "eui64.h"
+#include <ppp_opts.h>
+#include <eui64.h>
 
 #ifdef __cplusplus
 extern "C" {

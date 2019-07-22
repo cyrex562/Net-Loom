@@ -28,11 +28,11 @@
  * 
  */
 
-#include "opt.h"
-#include "sio.h"
-#include "def.h"
-#include "sys.h"
-#include "lwip_debug.h"
+#include <opt.h>
+#include <sio.h>
+#include <def.h>
+#include <sys.h>
+#include <lwip_debug.h>
 #include <cstdarg>
 #include <cstdio>
 #define WIN32_LEAN_AND_MEAN
@@ -48,7 +48,7 @@
 // #ifdef _MSC_VER
 // #pragma warning (pop)
 // #endif
-// #include "lwipcfg.h"
+// #include <lwipcfg.h>
 
 /** When 1, use COM ports, when 0, use named pipes (for simulation). */
 #ifndef SIO_USE_COMPORT
@@ -146,7 +146,7 @@ sio_setup(HANDLE fd)
  * @param devnum device number
  * @return handle to serial device if successful, NULL otherwise
  */
-sio_fd_t sio_open(uint8_t devnum)
+SioFd sio_open(uint8_t devnum)
 {
   HANDLE fileHandle = (PVOID*)-1ll; // INVALID_HANDLE_VALUE
   char   fileName[256];
@@ -187,7 +187,7 @@ sio_fd_t sio_open(uint8_t devnum)
 #endif /* SIO_USE_COMPORT */
     Logf(SIO_DEBUG, ("sio_open: file \"%s\" successfully opened.\n", fileName));
     printf("sio_open: file \"%s\" (%d) successfully opened: 0x%08x\n", fileName, devnum, LWIP_PTR_NUMERIC_CAST(unsigned int, fileHandle));
-    return (sio_fd_t)(fileHandle);
+    return (SioFd)(fileHandle);
   }
   Logf(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
            (DWORD)devnum, GetLastError()));
@@ -204,7 +204,7 @@ sio_fd_t sio_open(uint8_t devnum)
  * 
  * @note This function will block until the character can be sent.
  */
-void sio_send(uint8_t c, sio_fd_t fd)
+void sio_send(uint8_t c, SioFd fd)
 {
   DWORD dwNbBytesWritten = 0;
   Logf(SIO_DEBUG, ("sio_send(%lu)\n", (DWORD)c));
@@ -219,7 +219,7 @@ void sio_send(uint8_t c, sio_fd_t fd)
  * 
  * @note This function will block until a character is received.
  */
-uint8_t sio_recv(sio_fd_t fd)
+uint8_t sio_recv(SioFd fd)
 {
   DWORD dwNbBytesReadden = 0;
   uint8_t byte = 0;
@@ -240,7 +240,7 @@ uint8_t sio_recv(sio_fd_t fd)
  * @note This function will block until data can be received. The blocking
  * can be cancelled by calling sio_read_abort().
  */
-uint32_t sio_read(sio_fd_t fd, uint8_t* data, uint32_t len)
+uint32_t sio_read(SioFd fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
@@ -260,7 +260,7 @@ uint32_t sio_read(sio_fd_t fd, uint8_t* data, uint32_t len)
  * @param len maximum length (in bytes) of data to receive
  * @return number of bytes actually received
  */
-uint32_t sio_tryread(sio_fd_t fd, uint8_t* data, uint32_t len)
+uint32_t sio_tryread(SioFd fd, uint8_t* data, uint32_t len)
 {
   /* @todo: implement non-blocking read */
   BOOL ret;
@@ -282,7 +282,7 @@ uint32_t sio_tryread(sio_fd_t fd, uint8_t* data, uint32_t len)
  * 
  * @note This function will block until all data can be sent.
  */
-uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
+uint32_t sio_write(SioFd fd, uint8_t* data, uint32_t len)
 {
   BOOL ret;
   DWORD dwNbBytesWritten = 0;
@@ -299,7 +299,7 @@ uint32_t sio_write(sio_fd_t fd, uint8_t* data, uint32_t len)
  * 
  * @param fd serial device handle
  */
-void sio_read_abort(sio_fd_t fd)
+void sio_read_abort(SioFd fd)
 {
   ;
   Logf(SIO_DEBUG, ("sio_read_abort() !!!!!...\n"));

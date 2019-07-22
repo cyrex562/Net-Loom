@@ -1,7 +1,7 @@
 
 #pragma once
-#include "packet_buffer.h"
-#include "icmp6.h"
+#include <packet_buffer.h>
+#include <icmp6.h>
 
 enum IcmpType
 {

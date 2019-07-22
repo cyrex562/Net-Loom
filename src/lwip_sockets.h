@@ -38,11 +38,11 @@
 
 #pragma once
 
-#include "lwip_error.h"
-#include "ip_addr.h"
-#include "lwip_inet.h"
-#include "netif.h"
-#include "opt.h"
+#include <lwip_error.h>
+#include <ip_addr.h>
+#include <lwip_inet.h>
+#include <netif.h>
+#include <opt.h>
 #include <cerrno>
 #include <cstring>
 
@@ -169,17 +169,21 @@ will need to increase long long */
                            length)
 
 /* Set socket options argument */
-constexpr auto kIfnamsiz = NETIF_NAMESIZE;
+constexpr auto IFC_NAME_SZ = 0xff;
 
 struct LwipIfreq
 {
-    char ifr_name[kIfnamsiz]; /* Interface name */
+    char ifr_name[IFC_NAME_SZ]; /* Interface name */
 };
 
 /* Socket protocol types (TCP/UDP/RAW) */
-#define LWIP_SOCK_STREAM     1
-#define LWIP_SOCK_DGRAM      2
-#define LWIP_SOCK_RAW        3
+enum SockProtoType
+{
+    LWIP_SOCK_STREAM =1,
+    LWIP_SOCK_DGRAM =2,
+    LWIP_SOCK_RAW =3,
+};
+
 
 /*
  * Option flags per-socket. These must match the SOF_ flags in ip.h (checked in init.c)
@@ -449,22 +453,18 @@ struct LwipFdSet
     unsigned char fd_bits[(LWIP_FD_SETSIZE + 7) / 8];
 };
 
-
-/* poll-related defines and types */
-/* @todo: find a better way to guard the definition of these defines and types if already defined */
-
 #define LWIP_POLLIN     0x1
 #define LWIP_POLLOUT    0x2
 #define LWIP_POLLERR    0x4
 #define LWIP_POLLNVAL   0x8
-/* Below values are unimplemented */
 #define LWIP_POLLRDNORM 0x10
 #define LWIP_POLLRDBAND 0x20
 #define LWIP_POLLPRI    0x40
 #define LWIP_POLLWRNORM 0x80
 #define LWIP_POLLWRBAND 0x100
 #define LWIP_POLLHUP    0x200
-typedef unsigned int LwipNfds;
+
+using LwipNfds = unsigned int;
 
 struct LwipPolllfd
 {
@@ -475,7 +475,7 @@ struct LwipPolllfd
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
  * by your system, set this to 0 and include <sys/time.h> in cc.h */
-#define LWIP_TIMEVAL_PRIVATE 1
+constexpr auto LWIP_TIMEVAL_PRIVATE = 1;
 
 struct LwipTimeval
 {

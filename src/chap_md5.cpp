@@ -28,11 +28,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ppp_opts.h"
-#include "ppp_impl.h"
-#include "chap_md5.h"
-#include "magic.h"
-#include "pppcrypt.h"
+#include <ppp_opts.h>
+#include <ppp_impl.h>
+#include <chap_md5.h>
+#include <magic.h>
+#include <pppcrypt.h>
 
 void chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
 {

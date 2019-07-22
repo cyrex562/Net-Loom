@@ -1,11 +1,11 @@
 
-#include "opt.h"
-#include "igmp.h"
-#include "def.h"
-#include "ip.h"
-#include "inet_chksum.h"
-#include "netif.h"
-#include "stats.h"
+#include <opt.h>
+#include <igmp.h>
+#include <def.h>
+#include <ip.h>
+#include <inet_chksum.h>
+#include <netif.h>
+#include <stats.h>
 #include <cstring>
 static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr);
 static LwipStatus igmp_remove_group(NetIfc* netif, struct IgmpGroup* group);
@@ -38,7 +38,7 @@ void init_igmp_module(void)
 LwipStatus igmp_start(NetIfc* netif)
 {
     struct IgmpGroup* group;
-    // Logf(IGMP_DEBUG, ("igmp_start: starting IGMP processing on if %p\n", (void *)netif));
+    // Logf(IGMP_DEBUG, ("igmp_start: starting IGMP processing on if %p\n", (uint8_t *)netif));
     group = igmp_lookup_group(netif, &allsystems);
     if (group != nullptr)
     {
@@ -48,7 +48,7 @@ LwipStatus igmp_start(NetIfc* netif)
         {
             Logf(IGMP_DEBUG, ("igmp_start: igmp_mac_filter(ADD "));
             // ip4_addr_debug_print_val(IGMP_DEBUG, allsystems);
-            // Logf(IGMP_DEBUG, (") on if %p\n", (void *)netif));
+            // Logf(IGMP_DEBUG, (") on if %p\n", (uint8_t *)netif));
             netif->igmp_mac_filter(netif, &allsystems, NETIF_ADD_MAC_FILTER);
         }
         return ERR_OK;
@@ -73,7 +73,7 @@ LwipStatus igmp_stop(NetIfc* netif)
         {
             Logf(IGMP_DEBUG, ("igmp_stop: igmp_mac_filter(DEL "));
             // ip4_addr_debug_print_val(IGMP_DEBUG, group->group_address);
-            // Logf(IGMP_DEBUG, (") on if %p\n", (void *)netif));
+            // Logf(IGMP_DEBUG, (") on if %p\n", (uint8_t *)netif));
             netif->igmp_mac_filter(netif, &(group->group_address), NETIF_DEL_MAC_FILTER);
         } /* free group */ // memp_free(MEMP_IGMP_GROUP, group);
         delete group; /* move to "next" */
@@ -90,7 +90,7 @@ LwipStatus igmp_stop(NetIfc* netif)
 void igmp_report_groups(NetIfc* netif)
 {
     struct IgmpGroup* group = netif_igmp_data(netif);
-    // Logf(IGMP_DEBUG, ("igmp_report_groups: sending IGMP reports on if %p\n", (void *)netif));
+    // Logf(IGMP_DEBUG, ("igmp_report_groups: sending IGMP reports on if %p\n", (uint8_t *)netif));
     /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
     if (group != nullptr)
     {
@@ -177,7 +177,7 @@ static struct IgmpGroup* igmp_lookup_group(NetIfc* ifp, const Ip4Addr* addr)
              group ? "" : "impossible to ")));
     // ip4_addr_debug_print(IGMP_DEBUG, addr)
     // ;
-    // Logf(IGMP_DEBUG, (" on if %p\n", (void *)ifp));
+    // Logf(IGMP_DEBUG, (" on if %p\n", (uint8_t *)ifp));
     return group;
 }
 
@@ -236,7 +236,7 @@ igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest)
   // ip4_addr_debug_print_val(IGMP_DEBUG, ip4_current_header()->src);
   Logf(IGMP_DEBUG, (" to address "));
   // ip4_addr_debug_print_val(IGMP_DEBUG, ip4_current_header()->dest);
-  // Logf(IGMP_DEBUG, (" on if %p\n", (void *)inp));
+  // Logf(IGMP_DEBUG, (" on if %p\n", (uint8_t *)inp));
 
   /* Now calculate and check the checksum */
   igmp = (struct IgmpMsg *)p->payload;
@@ -324,7 +324,7 @@ igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest)
       break;
     default:
       // Logf(IGMP_DEBUG, ("igmp_input: unexpected msg %d in state %d on group %p on if %p\n",
-      //                          igmp->igmp_msgtype, group->group_state, (void *)&group, (void *)inp));
+      //                          igmp->igmp_msgtype, group->group_state, (uint8_t *)&group, (uint8_t *)inp));
       IGMP_STATS_INC(igmp.proterr);
       break;
   }
@@ -408,7 +408,7 @@ igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr)
       if ((group->use == 0) && (netif->igmp_mac_filter != nullptr)) {
         Logf(IGMP_DEBUG, ("igmp_joingroup_netif: igmp_mac_filter(ADD "));
         // ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-        // Logf(IGMP_DEBUG, (") on if %p\n", (void *)netif));
+        // Logf(IGMP_DEBUG, (") on if %p\n", (uint8_t *)netif));
         netif->igmp_mac_filter(netif, groupaddr, NETIF_ADD_MAC_FILTER);
       }
 
@@ -512,7 +512,7 @@ igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr)
       if (netif->igmp_mac_filter != nullptr) {
         Logf(IGMP_DEBUG, ("igmp_leavegroup_netif: igmp_mac_filter(DEL "));
         // ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-        // Logf(IGMP_DEBUG, (") on if %p\n", (void *)netif));
+        // Logf(IGMP_DEBUG, (") on if %p\n", (uint8_t *)netif));
         netif->igmp_mac_filter(netif, groupaddr, NETIF_DEL_MAC_FILTER);
       }
 
@@ -568,7 +568,7 @@ igmp_timeout(NetIfc*netif, struct IgmpGroup *group)
       (!(ip4_addr_cmp(&(group->group_address), &allsystems)))) {
     Logf(IGMP_DEBUG, ("igmp_timeout: report membership for group with address "));
     // ip4_addr_debug_print_val(IGMP_DEBUG, group->group_address);
-    // Logf(IGMP_DEBUG, (" on if %p\n", (void *)netif));
+    // Logf(IGMP_DEBUG, (" on if %p\n", (uint8_t *)netif));
 
     group->group_state = IGMP_GROUP_IDLE_MEMBER;
 

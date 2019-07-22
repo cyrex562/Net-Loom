@@ -3,12 +3,12 @@
  * for managing the link state.
  */
 
-#include "pcapif_helper.h"
+#include <pcapif_helper.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "arch.h"
+#include <arch.h>
 
 #ifdef WIN32
 

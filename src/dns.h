@@ -68,15 +68,14 @@ struct DnsHdr
     uint16_t numextrarr;
 };
 
-#define SIZEOF_DNS_HDR 12
+constexpr auto DNS_HDR_LEN = 12;
 
 
 /* Multicast DNS definitions */
 
 /** UDP port for multicast DNS queries */
-#ifndef DNS_MQUERY_PORT
-#define DNS_MQUERY_PORT             5353
-#endif
+constexpr auto DNS_MQUERY_PORT = 5353;
+
 
 /* IPv4 group for multicast DNS queries: 224.0.0.251 */
 
@@ -88,7 +87,7 @@ struct DnsHdr
 #define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
 
 /** DNS timer period */
-#define DNS_TMR_INTERVAL          1000
+constexpr auto DNS_TMR_INTERVAL = 1000;
 
 /* DNS resolve types: */
 enum dns_addr_type
@@ -129,19 +128,19 @@ extern const IpAddr dns_mquery_v6group;
  *        or NULL if the name could not be found (or on any other error).
  * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, void *callback_arg);
+typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, uint8_t *callback_arg);
 
 void             dns_init(void);
 void             dns_tmr(void);
 void             dns_setserver(uint8_t numdns, const IpAddr *dnsserver);
 IpAddr dns_getserver(uint8_t numdns);
 LwipStatus            dns_gethostbyname(const char *hostname, IpAddr *addr,
-                                   dns_found_callback found, void *callback_arg);
+                                   dns_found_callback found, uint8_t *callback_arg);
 LwipStatus            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
-                                   dns_found_callback found, void *callback_arg,
+                                   dns_found_callback found, uint8_t *callback_arg,
                                    uint8_t dns_addrtype);
 
-size_t         dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg);
+size_t         dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg);
 LwipStatus          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
 
 int            dns_local_removehost(const char *hostname, const IpAddr *addr);

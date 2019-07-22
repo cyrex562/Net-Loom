@@ -1,18 +1,18 @@
 /* ARP has been moved to core/ipv4, provide this #include for compatibility only */
-//#include "etharp.h"
-//#include "ethernet.h"
+//#include <etharp.h>
+//#include <ethernet.h>
 
 #pragma once
 
-#include "arch.h"
+#include <arch.h>
 
-#include "ethernet.h"
+#include <ethernet.h>
 
-#include "ip4_addr.h"
-#include "netif.h"
-#include "opt.h"
+#include <ip4_addr.h>
+#include <netif.h>
+#include <opt.h>
 
-#include "packet_buffer.h"
+#include <packet_buffer.h>
 
 
 /**
@@ -31,7 +31,7 @@ struct Ip4AddrWordaligned
  * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
 inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4Addr* src)
 {
-    SMEMCPY(dest, src, sizeof(Ip4Addr));
+    memcpy(dest,src,sizeof(Ip4Addr));
     return true;
 }
     
@@ -42,7 +42,7 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4A
 * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
 inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddr* dest, const Ip4AddrWordaligned* src)
 {
-    SMEMCPY(dest, src, sizeof(Ip4Addr));
+    memcpy(dest,src,sizeof(Ip4Addr));
 }
     
 // the ARP message, see RFC 826 ("Packet format")

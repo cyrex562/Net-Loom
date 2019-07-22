@@ -36,15 +36,15 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#include "opt.h"
-#include "icmp6.h"
-#include "ip6.h"
-#include "ip6_addr.h"
-#include "inet_chksum.h"
-#include "packet_buffer.h"
-#include "netif.h"
-#include "nd6.h"
-#include "ip.h"
+#include <opt.h>
+#include <icmp6.h>
+#include <ip6.h>
+#include <ip6_addr.h>
+#include <inet_chksum.h>
+#include <packet_buffer.h>
+#include <netif.h>
+#include <nd6.h>
+#include <ip.h>
 #include <cstring>
 
 /* Forward declarations */
@@ -327,8 +327,8 @@ static void icmp6_send_response_with_addrs(struct PacketBuffer* p,
     lwip_assert("must provide both source and destination", dest_addr != nullptr);
     /* Special case, as ip6_current_xxx is either NULL, or points
         to a different packet than the one that expired. */
-    IP6_ADDR_ZONECHECK(src_addr);
-    IP6_ADDR_ZONECHECK(dest_addr); /* Swap source and destination for the reply. */
+    ip6_addr_zonecheck(src_addr);
+    ip6_addr_zonecheck(dest_addr); /* Swap source and destination for the reply. */
     auto reply_dest = src_addr;
     auto reply_src = dest_addr;
     NetIfc* netif = ip6_route(reply_src, reply_dest);

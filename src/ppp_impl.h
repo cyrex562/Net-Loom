@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ppp_opts.h"
+#include <ppp_opts.h>
 #include <cstdarg>
 #include <cstring>
 #include <cstdlib>
-#include "netif.h"
-#include "timeouts.h"
-#include "ppp.h"
-#include "protent.h"
-#include "lwip_error.h"
+#include <netif.h>
+#include <timeouts.h>
+#include <ppp.h>
+#include <protent.h>
+#include <lwip_error.h>
 
 constexpr auto kPppCtrlPbufMaxSize = 512;
 
@@ -51,21 +51,21 @@ constexpr auto PPP_EAP = 0xc227	/* Extensible Authentication Protocol */;
  */
 struct LinkCallbacks {
   /* Start a connection (e.g. Initiate discovery phase) */
-  void (*connect) (PppPcb *pcb, void *ctx);
+  void (*connect) (PppPcb *pcb, uint8_t *ctx);
   /* Listen for an incoming connection (Passive mode) */
-  void (*listen) (PppPcb *pcb, void *ctx);
+  void (*listen) (PppPcb *pcb, uint8_t *ctx);
   /* End a connection (i.e. initiate disconnect phase) */
-  void (*disconnect) (PppPcb *pcb, void *ctx);
+  void (*disconnect) (PppPcb *pcb, uint8_t *ctx);
   /* Free lower protocol control block */
-  LwipStatus (*free) (PppPcb *pcb, void *ctx);
+  LwipStatus (*free) (PppPcb *pcb, uint8_t *ctx);
   /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
-  LwipStatus (*write)(PppPcb *pcb, void *ctx, struct PacketBuffer *p);
+  LwipStatus (*write)(PppPcb *pcb, uint8_t *ctx, struct PacketBuffer *p);
   /* Send a packet from lwIP core (IPv4 or IPv6) */
-  LwipStatus (*netif_output)(PppPcb *pcb, void *ctx, struct PacketBuffer *p, u_short protocol);
+  LwipStatus (*netif_output)(PppPcb *pcb, uint8_t *ctx, struct PacketBuffer *p, u_short protocol);
   /* configure the transmit-side characteristics of the PPP interface */
-  void (*send_config)(PppPcb *pcb, void *ctx, uint32_t accm, int pcomp, int accomp);
+  void (*send_config)(PppPcb *pcb, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
-  void (*recv_config)(PppPcb *pcb, void *ctx, uint32_t accm, int pcomp, int accomp);
+  void (*recv_config)(PppPcb *pcb, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
 };
 
 /*
@@ -160,9 +160,9 @@ int init_ppp_subsys(void);
 
 /* Create a new PPP control block */
 PppPcb *init_ppp_pcb(NetIfc*pppif,
-                     void *link_ctx_cb,
+                     uint8_t *link_ctx_cb,
                      ppp_link_status_cb_fn link_status_cb,
-                     void *ctx_cb);
+                     uint8_t *ctx_cb);
 
 /* Initiate LCP open request */
 void ppp_start(PppPcb *pcb);
@@ -259,7 +259,7 @@ const char * protocol_name(int proto);
  */
 // #define Timeout(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
 
-inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t time)
+inline void Timeout(SysTimeoutHandler timeout_fn, void* arg, const uint32_t time)
 {
     sys_untimeout(timeout_fn, arg);
     sys_timeout(time * 1000, timeout_fn, arg);
@@ -267,14 +267,14 @@ inline void Timeout(sys_timeout_handler timeout_fn, void* arg, const uint32_t ti
 
 
 //#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-inline void Timeoutms(sys_timeout_handler time_fn, void* arg, const uint32_t time)
+inline void Timeoutms(SysTimeoutHandler time_fn, void* arg, const uint32_t time)
 {
     sys_untimeout(time_fn, arg);
     sys_timeout(time * 1000, time_fn, arg);
 }
     
     
-inline void Untimeout(sys_timeout_handler time_fn, void* arg) {
+inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
     sys_untimeout((time_fn), (arg));
 }
 #define BZERO(s, n)		memset(s, 0, n)
@@ -355,7 +355,7 @@ int  str_to_epdisc (struct Epdisc *, char *); /* endpt disc. from str */
 
 
 /* Procedures exported from utils.c. */
-void ppp_print_string(const uint8_t *p, int len, void (*printer) (void *, const char *, ...), void *arg);   /* Format a string for output */
+void ppp_print_string(const uint8_t *p, int len, void (*printer) (uint8_t *, const char *, ...), uint8_t *arg);   /* Format a string for output */
 int ppp_slprintf(char *buf, int buflen, const char *fmt, ...);            /* sprintf++ */
 int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args);  /* vsprintf++ */
 size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */

@@ -10,7 +10,7 @@ Alternatively, you can :ref:`build the library with CMake <building>`.
 If you are using Visual C++ with precompiled headers, you might need to add
 the line ::
 
-   #include "stdafx.h"
+   #include <stdafx.h>
 
 before other includes in :file:`format.cc`.
 
