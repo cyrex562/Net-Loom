@@ -1,10 +1,8 @@
 #pragma once
-#include <tcp.h>
 #include <icmp.h>
 #include <ip.h>
 #include <lwip_status.h>
 #include <opt.h>
-#include <packet_buffer.h>
 #include <tcpbase.h>
 #include <cstdint>
 
@@ -327,7 +325,7 @@ extern "C" {
     // LwipStatus lwip_tcp_event(void* arg,
     //                      struct TcpProtoCtrlBlk* pcb,
     //                      enum LwipEvent,
-    //                      struct pbuf* p,
+    //                      PacketBuffer* p,
     //                      uint16_t size,
     //                      LwipStatus err);
 
@@ -419,6 +417,9 @@ extern "C" {
                                    const struct tcp_ext_arg_callbacks* const callbacks);
     void tcp_ext_arg_set(struct TcpPcb* pcb, uint8_t id, void* arg);
     void* tcp_ext_arg_get(const struct TcpPcb* pcb, uint8_t id);
+
+void pbuf_free_ooseq(TcpPcb* tcp_active_pcbs);
+
 #ifdef __cplusplus
 }
 #endif

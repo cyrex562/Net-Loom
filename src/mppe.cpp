@@ -86,7 +86,7 @@ static void mppe_rekey(PppMppeState * state, int initial_key)
 	lwip_sha1_update(&sha1_ctx, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
 	lwip_sha1_finish(&sha1_ctx, sha1_digest);
 	lwip_sha1_free(&sha1_ctx);
-	MEMCPY(state->session_key, sha1_digest, state->keylen);
+	memcpy(state->session_key, sha1_digest, state->keylen);
 
 	if (!initial_key) {
 		lwip_arc4_init(&state->arc4);
@@ -110,7 +110,7 @@ static void mppe_rekey(PppMppeState * state, int initial_key)
  */
 void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key) {
 	;
-	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
+	memcpy(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
 
 /*
@@ -127,7 +127,7 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 
 
 	/* Save keys. */
-	MEMCPY(state->session_key, state->master_key, sizeof(state->master_key));
+	memcpy(state->session_key, state->master_key, sizeof(state->master_key));
 
 	if (options & MPPE_OPT_128)
 		state->keylen = 16;
@@ -212,7 +212,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	/* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.
 	 */
-	np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol) + (*pb)->tot_len, PBUF_RAM);
+	np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol) + (*pb)->tot_len);
 	if (!np) {
 		return ERR_MEM;
 	}
@@ -221,7 +221,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
 
 	if ((err = pbuf_copy(np, *pb)) != ERR_OK) {
-		pbuf_free(np);
+		free_pkt_buf(np);
 		return err;
 	}
 

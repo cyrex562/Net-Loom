@@ -139,7 +139,7 @@ raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
  * @param inp network interface on which the datagram was received.
  * @return - 1 if the packet has been eaten by a RAW PCB receive
  *           callback function. The caller MAY NOT not reference the
- *           packet any longer, and MAY NOT call pbuf_free().
+ *           packet any longer, and MAY NOT call free_pkt_buf().
  * @return - 0 if packet is not eaten (PacketBuffer is still referenced by the
  *           caller).
  *
@@ -230,7 +230,7 @@ raw_input(struct PacketBuffer* p, NetIfc* inp)
 LwipStatus
 raw_bind(struct RawPcb *pcb, const IpAddr *ipaddr)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
   if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
@@ -261,7 +261,7 @@ raw_bind(struct RawPcb *pcb, const IpAddr *ipaddr)
 void
 raw_bind_netif(struct RawPcb *pcb, const NetIfc*netif)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
   if (netif != nullptr) {
     pcb->netif_idx = netif_get_index(netif);
   } else {
@@ -286,7 +286,7 @@ raw_bind_netif(struct RawPcb *pcb, const NetIfc*netif)
 LwipStatus
 raw_connect(struct RawPcb *pcb, const IpAddr *ipaddr)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
   if ((pcb == nullptr) || (ipaddr == nullptr)) {
     return ERR_VAL;
   }
@@ -311,7 +311,7 @@ raw_connect(struct RawPcb *pcb, const IpAddr *ipaddr)
 void
 raw_disconnect(struct RawPcb *pcb)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
   /* reset remote address association */
   if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
     copy_ip_addr(pcb->remote_ip, *IP_ANY_TYPE);
@@ -330,7 +330,7 @@ raw_disconnect(struct RawPcb *pcb)
  * raw PCB's protocol and binding.
  *
  * The callback function MUST either
- * - eat the packet by calling pbuf_free() and returning non-zero. The
+ * - eat the packet by calling free_pkt_buf() and returning non-zero. The
  *   packet will not be passed to other raw PCBs or other protocol layers.
  * - not free the packet, and return zero. The packet will be matched
  *   against further PCBs and/or forwarded to another protocol layers.
@@ -338,7 +338,7 @@ raw_disconnect(struct RawPcb *pcb)
 void
 raw_recv(struct RawPcb *pcb, raw_recv_fn recv, void *recv_arg)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
   /* remember recv() callback and user data */
   pcb->recv = recv;
   pcb->recv_arg = recv_arg;
@@ -428,7 +428,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   LwipStatus err;
   struct PacketBuffer *q; /* q will be sent down the stack */
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   if ((pcb == nullptr) || (dst_ip == nullptr) || (netif == nullptr) || (src_ip == nullptr) ||
       !match_ip_addr_pcb_version(pcb, src_ip) || !match_ip_addr_pcb_version(pcb, dst_ip)) {
@@ -462,7 +462,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   /* not enough space to add an IP header to first PacketBuffer in given p chain? */
   if (pbuf_add_header(p, header_size)) {
     /* allocate header in new PacketBuffer */
-    q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
+    q = pbuf_alloc(PBUF_IP, 0);
     /* new header PacketBuffer could not be allocated? */
     if (q == nullptr) {
       Logf(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\n"));
@@ -490,7 +490,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
       Logf(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (uint8_t *)pcb));
       /* free any temporary header PacketBuffer allocated by pbuf_header() */
       if (q != p) {
-        pbuf_free(q);
+        free_pkt_buf(q);
       }
       return ERR_VAL;
     }
@@ -510,7 +510,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   if (IpIsV6(dst_ip) && pcb->chksum_reqd) {
     uint16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
     lwip_assert("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
-    SMEMCPY(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
+    memcpy(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
   }
 
 
@@ -526,7 +526,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   /* did we chain a header earlier? */
   if (q != p) {
     /* free the header */
-    pbuf_free(q);
+    free_pkt_buf(q);
   }
   return err;
 }
@@ -557,7 +557,7 @@ raw_send(struct RawPcb *pcb, struct PacketBuffer *p)
 void
 raw_remove(struct RawPcb *pcb)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
   /* pcb to be removed is first in list? */
   if (raw_pcbs == pcb) {
     /* make list start at 2nd pcb */
@@ -591,7 +591,7 @@ struct RawPcb *
 raw_new(uint8_t proto)
 {
     Logf(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   struct RawPcb* pcb = (struct RawPcb *)memp_malloc(MEMP_RAW_PCB);
   /* could allocate RAW PCB? */
@@ -627,7 +627,7 @@ raw_new(uint8_t proto)
 struct RawPcb *
 raw_new_ip_type(uint8_t type, uint8_t proto)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
   struct RawPcb* pcb = raw_new(proto);
 
   if (pcb != nullptr) {

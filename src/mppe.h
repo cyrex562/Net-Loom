@@ -2,14 +2,16 @@
 // file: mppe.h
 //
 #pragma once
-#include "pppcrypt.h"
+#include <pppcrypt.h>
+#include <lwip_status.h>
 
 constexpr auto MPPE_PAD = 4	/* MPPE growth per frame */;
 constexpr auto MPPE_MAX_KEY_LEN = 16	/* largest key length (128-bit) */;
 
 /* option bits for CcpOptions.mppe */
-enum MppeOptions : uint8_t
+enum MppeOptions
 {
+    MPPE_OPT_NONE = 0,
     MPPE_OPT_40 =0x01,
     /* 40 bit */
     MPPE_OPT_128 =0x02,
@@ -74,7 +76,7 @@ inline void mppe_opts_to_ci(const MppeOptions opts, uint8_t* ci)
 }
 
 /* The reverse of the above */
-inline uint8_t MPPE_CI_TO_OPTS(uint8_t* ci, uint8_t opts)
+inline uint8_t MPPE_CI_TO_OPTS(const uint8_t* ci, uint8_t opts)
 {
     const uint8_t* ptr = ci; /* uint8_t[4] */
     opts = 0; /* H bit */

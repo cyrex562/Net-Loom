@@ -1462,11 +1462,11 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
      * Process all his options.
      */
     next = inp;
-    nakp = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE), PPP_CTRL_PBUF_TYPE);
+    nakp = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE));
     if(nullptr == nakp)
         return 0;
     if(nakp->tot_len != nakp->len) {
-        pbuf_free(nakp);
+        free_pkt_buf(nakp);
         return 0;
     }
 
@@ -1828,7 +1828,7 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
 	    ho->neg_endpoint = 1;
 	    ho->endpoint.class_ = cichar;
 	    ho->endpoint.length = cilen;
-	    MEMCPY(ho->endpoint.value, p, cilen);
+	    memcpy(ho->endpoint.value, p, cilen);
 	    INCPTR(cilen, p);
 	    break;
 
@@ -1856,7 +1856,7 @@ endswitch:
 	if (orc == CONFREJ) {		/* Reject this CI */
 	    rc = CONFREJ;
 	    if (cip != rejp)		/* Need to move rejected CI? */
-		MEMCPY(rejp, cip, cilen); /* Move it */
+		memcpy(rejp, cip, cilen); /* Move it */
 	    INCPTR(cilen, rejp);	/* Update output pointer */
 	}
     }
@@ -1877,7 +1877,7 @@ endswitch:
 	 * Copy the Nak'd options from the nak buffer to the caller's buffer.
 	 */
 	*lenp = nakoutp - (uint8_t*)nakp->payload;
-	MEMCPY(inp, nakp->payload, *lenp);
+	memcpy(inp, nakp->payload, *lenp);
 	break;
     case CONFREJ:
 	*lenp = rejp - inp;
@@ -1886,7 +1886,7 @@ endswitch:
 	break;
     }
 
-    pbuf_free(nakp);
+    free_pkt_buf(nakp);
     LCPDEBUG(("lcp_reqci: returning CONF%s.", CODENAME(rc)));
     return (rc);			/* Return final code */
 }

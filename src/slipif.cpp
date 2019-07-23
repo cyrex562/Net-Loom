@@ -68,7 +68,7 @@
 #include <sys.h>
 #include <sio.h>
 #include <lwip_debug.h>
-#include <lwip_snmp.h>
+
 
 #define SLIP_END     0xC0 /* 0300: start and end of every packet */
 #define SLIP_ESC     0xDB /* 0333: escape start (one byte escaped data follows) */
@@ -251,7 +251,7 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
   if (priv->p == nullptr) {
     /* allocate a new PacketBuffer */
     Logf(SLIP_DEBUG, ("slipif_input: alloc\n"));
-    priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN), PBUF_POOL);
+    priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN));
 
     if (priv->p == nullptr) {
       Logf(SLIP_DEBUG, ("slipif_input: no new PacketBuffer! (DROP)\n"));
@@ -301,7 +301,7 @@ slipif_rxbyte_input(NetIfc*netif, uint8_t c)
   p = slipif_rxbyte(netif, c);
   if (p != nullptr) {
     if (netif->input(p, netif) != ERR_OK) {
-      pbuf_free(p);
+      free_pkt_buf(p);
     }
   }
 }
@@ -450,7 +450,7 @@ void slipif_process_rxqueue(NetIfc* netif)
 
     SYS_ARCH_UNPROTECT(old_level);
     if (netif->input(p, netif) != ERR_OK) {
-      pbuf_free(p);
+      free_pkt_buf(p);
     }
     SYS_ARCH_PROTECT(old_level);
     while (priv->rxpackets != nullptr)
@@ -466,7 +466,7 @@ void slipif_process_rxqueue(NetIfc* netif)
         sys_arch_unprotect(old_level);
         if (netif->input(p, netif) != ERR_OK)
         {
-            pbuf_free(p);
+            free_pkt_buf(p);
         }
         SYS_ARCH_PROTECT(old_level);
     }

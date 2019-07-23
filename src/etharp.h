@@ -26,7 +26,7 @@ struct Ip4AddrWordaligned
 };
 
 
-/** MEMCPY-like copying of IP addresses where addresses are known to be
+/** memcpy-like copying of IP addresses where addresses are known to be
  * 16-bit-aligned if the port is correctly configured (so a port could define
  * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
 inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4Addr* src)
@@ -37,7 +37,7 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4A
     
 
 
-/** MEMCPY-like copying of IP addresses where addresses are known to be
+/** memcpy-like copying of IP addresses where addresses are known to be
 * 16-bit-aligned if the port is correctly configured (so a port could define
 * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
 inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddr* dest, const Ip4AddrWordaligned* src)
@@ -67,10 +67,6 @@ enum EtharpOpcode
     ARP_REQUEST = 1,
     ARP_REPLY = 2
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** 1 seconds period */
 constexpr auto kArpTmrInterval = 1000;
@@ -110,7 +106,4 @@ LwipStatus etharp_remove_static_entry(const Ip4Addr* ipaddr);
 
 void etharp_input(struct PacketBuffer* p, struct NetIfc* netif);
 
-#ifdef __cplusplus
-}
-#endif
 

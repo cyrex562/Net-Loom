@@ -44,34 +44,30 @@
 /* API for application */
 
 /* Used for netfiapi_arp_* APIs */
-enum netifapi_arp_entry {
+enum NetifapiArpEntry {
   NETIFAPI_ARP_PERM /* Permanent entry */
   /* Other entry types can be added here */
 };
 
-/** @ingroup netifapi_arp */
-LwipStatus netifapi_arp_add(const Ip4Addr *ipaddr, struct EthAddr *ethaddr, enum netifapi_arp_entry type);
-/** @ingroup netifapi_arp */
-LwipStatus netifapi_arp_remove(const Ip4Addr *ipaddr, enum netifapi_arp_entry type);
-#endif /* LWIP_ARP && LWIP_IPV4 */
+///
+// LwipStatus netifapi_arp_add(const Ip4Addr *ipaddr, struct EthAddr *ethaddr, enum NetifapiArpEntry type);
+
+///
+// LwipStatus netifapi_arp_remove(const Ip4Addr *ipaddr, enum NetifapiArpEntry type);
+
+///
+// LwipStatus netifapi_netif_set_addr(NetIfc*netif, const Ip4Addr *ipaddr,
+//                               const Ip4Addr *netmask, const Ip4Addr *gw);
 
 
-                         const Ip4Addr *ipaddr, const Ip4Addr *netmask, const Ip4Addr *gw,
+// LwipStatus netifapi_netif_common(NetIfc*netif, netifapi_void_fn voidfunc,
+//                             netifapi_errt_fn errtfunc);
 
-                         uint8_t *state, netif_init_fn init, netif_input_fn input);
+///
+// LwipStatus netifapi_netif_name_to_index(const char *name, uint8_t *index);
 
-
-LwipStatus netifapi_netif_set_addr(NetIfc*netif, const Ip4Addr *ipaddr,
-                              const Ip4Addr *netmask, const Ip4Addr *gw);
-
-
-LwipStatus netifapi_netif_common(NetIfc*netif, netifapi_void_fn voidfunc,
-                            netifapi_errt_fn errtfunc);
-
-/** @ingroup netifapi_netif */
-LwipStatus netifapi_netif_name_to_index(const char *name, uint8_t *index);
-/** @ingroup netifapi_netif */
-LwipStatus netifapi_netif_index_to_name(uint8_t index, char *name);
+///
+// LwipStatus netifapi_netif_index_to_name(uint8_t index, char *name);
 
 /** @ingroup netifapi_netif
   * @see netif_remove()

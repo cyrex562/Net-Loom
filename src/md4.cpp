@@ -204,7 +204,7 @@ void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        MEMCPY( (uint8_t *) (ctx->buffer + left),
+        memcpy( (uint8_t *) (ctx->buffer + left),
                 input, fill );
         md4_process( ctx, ctx->buffer );
         input += fill;
@@ -221,7 +221,7 @@ void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        MEMCPY( (uint8_t *) (ctx->buffer + left),
+        memcpy( (uint8_t *) (ctx->buffer + left),
                 input, ilen );
     }
 }

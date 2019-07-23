@@ -123,11 +123,6 @@ struct Dhcp6Msg
 #define DHCP6_OPTION_SNTP_SERVERS   31 /* RFC 4075 */
 
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** period (in milliseconds) of the application calling dhcp6_tmr() */
 constexpr auto DHCP6_TIMER_MSECS = 500;
 
@@ -170,8 +165,3 @@ inline Dhcp6* netif_dhcp6_data(NetIfc* netif)
         netif,
         LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
 }
-
-#ifdef __cplusplus
-}
-#endif
-

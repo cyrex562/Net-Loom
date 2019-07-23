@@ -217,8 +217,8 @@ static void ccp_resetci(Fsm* f, PppPcb* pcb)
     int res;
     if (pcb->settings.require_mppe)
     {
-        wo->mppe = ao->mppe = (pcb->settings.refuse_mppe_40 ? 0 : MPPE_OPT_40) | (
-            pcb->settings.refuse_mppe_128 ? 0 : MPPE_OPT_128);
+        wo->mppe = ao->mppe = MppeOptions((pcb->settings.refuse_mppe_40 ? MPPE_OPT_NONE : MPPE_OPT_40) | (
+            pcb->settings.refuse_mppe_128 ? MPPE_OPT_NONE : MPPE_OPT_128));
     }
     *go = *wo;
     pcb->ccp_all_rejected = false;
@@ -269,8 +269,8 @@ static void ccp_resetci(Fsm* f, PppPcb* pcb)
             if (go->mppe & MPPE_OPT_40)
             {
                 ppp_notice("Disabling 40-bit MPPE; MS-CHAP LM not supported");
-                go->mppe &= ~MPPE_OPT_40;
-                wo->mppe &= ~MPPE_OPT_40;
+                go->mppe = MppeOptions(go->mppe & ~MPPE_OPT_40);
+                wo->mppe = MppeOptions(wo->mppe & ~MPPE_OPT_40);
             }
         } /* Last check: can we actually negotiate something? */
         if (!(go->mppe & (MPPE_OPT_40 | MPPE_OPT_128)))
@@ -426,7 +426,7 @@ static void ccp_addci(Fsm* f, uint8_t* p, int* lenp, PppPcb* pcb)
     {
         p[0] = CI_MPPE;
         p[1] = CILEN_MPPE;
-        MPPE_OPTS_TO_CI(go->mppe, &p[2]);
+        mppe_opts_to_ci(go->mppe, &p[2]);
         mppe_init(pcb, &pcb->mppe_decomp, go->mppe);
         p += CILEN_MPPE;
     }
@@ -493,7 +493,7 @@ static int ccp_ackci(Fsm* f, uint8_t* p, int len, PppPcb* pcb)
 
         opt_buf[0] = CI_MPPE;
         opt_buf[1] = CILEN_MPPE;
-        MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
+        mppe_opts_to_ci(go->mppe, &opt_buf[2]);
         if (len < CILEN_MPPE || memcmp(opt_buf, p, CILEN_MPPE))
             return 0;
         p += CILEN_MPPE;
@@ -586,7 +586,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
     if (go->mppe && len >= CILEN_MPPE
         && p[0] == CI_MPPE && p[1] == CILEN_MPPE)
     {
-        no.mppe = 1;
+        no.mppe = MPPE_OPT_40;
         /*
          * Peer wants us to use a different strength or other setting.
          * Fail if we aren't willing to use his suggestion.
@@ -595,12 +595,12 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
         if ((try_.mppe & MPPE_OPT_STATEFUL) && pcb->settings.refuse_mppe_stateful)
         {
             ppp_error("Refusing MPPE stateful mode offered by peer");
-            try_.mppe = 0;
+            try_.mppe = MPPE_OPT_NONE;
         }
         else if (((go->mppe | MPPE_OPT_STATEFUL) & try_.mppe) != try_.mppe)
         {
             /* Peer must have set options we didn't request (suggest) */
-            try_.mppe = 0;
+            try_.mppe = MPPE_OPT_NONE;
         }
 
         if (!try_.mppe)
@@ -782,12 +782,12 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                 if (ho->mppe & MPPE_OPT_UNSUPPORTED)
                 {
                     newret = CONFNAK;
-                    ho->mppe &= ~MPPE_OPT_UNSUPPORTED;
+                    ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_UNSUPPORTED);
                 }
                 if (ho->mppe & MPPE_OPT_UNKNOWN)
                 {
                     newret = CONFNAK;
-                    ho->mppe &= ~MPPE_OPT_UNKNOWN;
+                    ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_UNKNOWN);
                 } /* Check state opt */
                 if (ho->mppe & MPPE_OPT_STATEFUL)
                 {
@@ -809,9 +809,9 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                     /* Both are set, negotiate the strongest. */
                     newret = CONFNAK;
                     if (ao->mppe & MPPE_OPT_128)
-                        ho->mppe &= ~MPPE_OPT_40;
+                        ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_40);
                     else if (ao->mppe & MPPE_OPT_40)
-                        ho->mppe &= ~MPPE_OPT_128;
+                        ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_128);
                     else
                     {
                         newret = CONFREJ;
@@ -841,7 +841,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                        so it can choose and confirm */
                     ho->mppe = ao->mppe;
                 } /* rebuild the opts */
-                MPPE_OPTS_TO_CI(ho->mppe, &p[2]);
+                mppe_opts_to_ci(ho->mppe, &p[2]);
                 if (newret == CONFACK)
                 {
                     mppe_init(pcb, &pcb->mppe_comp, ho->mppe); /*
@@ -988,7 +988,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
             if (newret == CONFREJ && ret == CONFNAK)
                 retp = p0;
             ret = newret;
-            if (p != retp) MEMCPY(retp, p, clen);
+            if (p != retp) memcpy(retp, p, clen);
             retp += clen;
         }
         p += clen;
@@ -1127,7 +1127,7 @@ static void ccp_down(Fsm* f, Fsm* lcp_fsm, PppPcb* pcb)
     ccp_set(pcb, 1, 0, 0, 0);
     if (go->mppe)
     {
-        go->mppe = 0;
+        go->mppe = MPPE_OPT_NONE;
         if (lcp_fsm->state == PPP_FSM_OPENED)
         {
             /* If LCP is not already going down, make sure it does. */

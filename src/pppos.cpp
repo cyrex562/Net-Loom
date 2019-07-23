@@ -41,7 +41,7 @@
 #include <sys.h>
 
 #include <netif.h>
-#include <lwip_snmp.h>
+
 #include <tcpip_priv.h>
 
 #include <ip4.h> /* for ip4_input() */
@@ -153,7 +153,7 @@ PppPcb *pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
 {
   pppos_pcb *pppos;
   PppPcb *ppp;
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   pppos = (pppos_pcb *)LWIP_MEMPOOL_ALLOC(PPPOS_PCB);
   if (pppos == nullptr) {
@@ -187,13 +187,13 @@ pppos_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p)
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
      cannot starve rx. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  nb = pbuf_alloc(PBUF_RAW, 0);
   if (nb == nullptr) {
     PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
     MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
-    pbuf_free(p);
+    free_pkt_buf(p);
     return ERR_MEM;
   }
 
@@ -221,7 +221,7 @@ pppos_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p)
   } else {
     PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: output failed len=%d\n", ppp->netif->num, p->len));
   }
-  pbuf_free(p);
+  free_pkt_buf(p);
   return err;
 }
 
@@ -238,7 +238,7 @@ pppos_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *pb, uint16_t 
   /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
      gets freed by 'pppos_output_last' before this function returns and thus
      cannot starve rx. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  nb = pbuf_alloc(PBUF_RAW, 0);
   if (nb == nullptr) {
     PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
@@ -489,7 +489,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
 
           if(tcpip_try_callback(pppos_input_callback, inp) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
-            pbuf_free(inp);
+            free_pkt_buf(inp);
             LINK_STATS_INC(link.drop);
             MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
           }
@@ -589,7 +589,7 @@ pppos_input(PppPcb *ppp, uint8_t *s, int l)
             if (pppos->in_head == nullptr) {
               pbuf_alloc_len = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
             }
-            next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len, PBUF_POOL);
+            next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len);
             if (next_pbuf == nullptr) {
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
@@ -647,7 +647,7 @@ static void pppos_input_callback(uint8_t *arg) {
 drop:
   LINK_STATS_INC(link.drop);
   MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
-  pbuf_free(pb);
+  free_pkt_buf(pb);
 }
 
 
@@ -701,9 +701,9 @@ pppos_input_free_current_packet(pppos_pcb *pppos)
 {
   if (pppos->in_head != nullptr) {
     if (pppos->in_tail && (pppos->in_tail != pppos->in_head)) {
-      pbuf_free(pppos->in_tail);
+      free_pkt_buf(pppos->in_tail);
     }
-    pbuf_free(pppos->in_head);
+    free_pkt_buf(pppos->in_head);
     pppos->in_head = nullptr;
   }
   pppos->in_tail = nullptr;
@@ -795,7 +795,7 @@ pppos_output_last(pppos_pcb *pppos, LwipStatus err, struct PacketBuffer *nb, uin
   MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, nb->tot_len);
   MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
   LINK_STATS_INC(link.xmit);
-  pbuf_free(nb);
+  free_pkt_buf(nb);
   return ERR_OK;
 
 failed:
@@ -803,7 +803,7 @@ failed:
   LINK_STATS_INC(link.err);
   LINK_STATS_INC(link.drop);
   MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
-  pbuf_free(nb);
+  free_pkt_buf(nb);
   return err;
 }
 

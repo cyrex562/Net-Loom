@@ -43,8 +43,6 @@
 
 #include "ip6_addr.h"
 
-#include "lwip_error.h"
-
 #include "opt.h"
 
 #include "packet_buffer.h"
@@ -252,8 +250,8 @@ struct tcp_seg {
 #define LWIP_TCP_OPT_LEN_WS_OUT 4 /* aligned for output (includes NOP padding) */
 
 #define LWIP_TCP_OPT_LEN_SACK_PERM     2
-#define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 4 /* aligned for output (includes NOP padding) */
-#define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 0
+constexpr auto LWIP_TCP_OPT_LEN_SACK_PERM_OUT = 4 /* aligned for output (includes NOP padding) */;
+// #define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 0
 
 
 #define LWIP_TCP_OPT_LENGTH(flags) \

@@ -86,7 +86,7 @@ enum icmp_dur_type {
   ICMP_DUR_SR    = 5
 };
 
-/** ICMP time exceeded codes */
+/// ICMP time exceeded codes */
 enum icmp_te_type {
   /** time to live exceeded in transit */
   ICMP_TE_TTL  = 0,

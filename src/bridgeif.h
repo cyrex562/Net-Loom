@@ -6,7 +6,7 @@
 struct NetIfc;
 typedef uint64_t BridgeIfcPortMask;
 
-constexpr auto kBrFlood = BridgeIfcPortMask(-1);
+constexpr auto BRIDGE_FLOOD = BridgeIfcPortMask(-1);
 constexpr auto kBridgeIfcMaxPorts = 7;
 constexpr auto kBridgeIfcDebug = true;
 constexpr auto kBridgeIfcFdbDebug = true;
@@ -79,7 +79,7 @@ struct BridgeIfcInitData {
 
 /** @ingroup bridgeif
  * Use this for constant initialization of a bridgeif_initdat_t
- * (ethaddr must be passed as MakeEthAddrFromBytes())
+ * (ethaddr must be passed as make_eth_addr_from_bytes())
  */
 //#define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, ethaddr) {ethaddr, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 /** @ingroup bridgeif
@@ -91,7 +91,7 @@ struct BridgeIfcInitData {
 LwipStatus bridgeif_init(NetIfc*netif);
 LwipStatus bridgeif_add_port(NetIfc*bridgeif, NetIfc*portif);
 LwipStatus bridgeif_fdb_add(NetIfc*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
-LwipStatus bridgeif_fdb_remove(NetIfc*bridgeif, const struct EthAddr *addr);
+LwipStatus remove_bridgeif_fdb(NetIfc*bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);

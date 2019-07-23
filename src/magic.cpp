@@ -171,7 +171,7 @@ void magic_random_bytes(unsigned char *buf, uint32_t buf_len) {
     lwip_md5_free(&md5_ctx);
     magic_randcount++;
     n = LWIP_MIN(buf_len, MD5_HASH_SIZE);
-    MEMCPY(buf, tmp, n);
+    memcpy(buf, tmp, n);
     buf += n;
     buf_len -= n;
   }

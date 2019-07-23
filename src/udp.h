@@ -77,8 +77,8 @@ struct UdpPcb;
  * @param port the remote port from which the packet was received
  */
 using UdpRecvFn = void (*)(void*,
-                           struct UdpPcb*,
-                           struct PacketBuffer*,
+                           UdpPcb*,
+                           PacketBuffer*,
                            const IpAddr*,
                            uint16_t,
                            NetIfc*);

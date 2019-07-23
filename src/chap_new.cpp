@@ -32,7 +32,6 @@
 #include <ppp_impl.h>
 #include <chap_new.h>
 #include <chap_md5.h>
-#include <chap_ms.h>
 #include <magic.h>
 #include <auth.h>
 
@@ -67,46 +66,16 @@ constexpr auto kChallengeValid = 0x20;
 /*
  * Prototypes.
  */
-static void chap_init(PppPcb* pcb);
-static void chap_lowerup(PppPcb* pcb);
-static void chap_lowerdown(PppPcb* pcb);
-static void chap_timeout(void* arg);
-static void chap_generate_challenge(PppPcb* pcb);
-static void chap_handle_response(PppPcb* pcb,
-                                 int code,
-                                 unsigned char* pkt,
-                                 size_t len,
-                                 Protent** protocols);
-static int chap_verify_response(PppPcb* pcb,
-                                const char* name,
-                                const char* ourname,
-                                int id,
-                                const struct ChapDigestType* digest,
-                                const unsigned char* challenge,
-                                const unsigned char* response,
-                                char* message,
-                                int message_space);
-static void chap_respond(PppPcb* pcb,
-                         int id,
-                         unsigned char* pkt,
-                         int len);
-static void chap_handle_status(PppPcb* pcb,
-                               int code,
-                               int id,
-                               unsigned char* pkt,
-                               int len,
-                               Protent** protocols);
-static void chap_protrej(PppPcb* pcb);
-static void chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols);
+
 
 
 /* List of digest types that we know about */
-static const struct ChapDigestType* chap_digests[] = {
-    &kMd5Digest,
-    &kChapmsDigest,
-    &kChapms2Digest,
-    nullptr
-};
+// static const struct ChapDigestType* chap_digests[] = {
+//     &kMd5Digest,
+//     &kChapmsDigest,
+//     &kChapms2Digest,
+//     nullptr
+// };
 
 /*
  * chap_init - reset to initial state.
@@ -155,9 +124,9 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
         ppp_error("CHAP: peer authentication already started!");
         return;
     }
-    for (auto i = 0; (dp = chap_digests[i]) != nullptr; ++i)
-        if (dp->code == digest_code)
-            break;
+    // for (auto i = 0; (dp = chap_digests[i]) != nullptr; ++i)
+    //     if (dp->code == digest_code)
+    //         break;
     if (dp == nullptr)
         ppp_fatal("CHAP digest 0x%x requested but not available",
                   digest_code);
@@ -190,9 +159,9 @@ chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_code)
         ppp_error("CHAP: authentication with peer already started!");
         return;
     }
-    for (i = 0; (dp = chap_digests[i]) != nullptr; ++i)
-        if (dp->code == digest_code)
-            break;
+    // for (i = 0; (dp = chap_digests[i]) != nullptr; ++i)
+    //     if (dp->code == digest_code)
+    //         break;
 
     if (dp == nullptr)
         ppp_fatal("CHAP digest 0x%x requested but not available",
@@ -234,10 +203,10 @@ chap_timeout(void* arg)
         return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
-    MEMCPY(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
+    memcpy(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
     ppp_write(pcb, p);
     ++pcb->chap_server.challenge_xmits;
     pcb->chap_server.flags |= kTimeoutPending;
@@ -338,7 +307,7 @@ chap_handle_response(PppPcb* pcb,
         return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -389,7 +358,7 @@ chap_handle_response(PppPcb* pcb,
  * what we think it should be.  Returns 1 if it does (authentication
  * succeeded), or 0 if it doesn't.
  */
-static int
+int
 chap_verify_response(PppPcb* pcb,
                      const char* name,
                      const char* ourname,
@@ -442,7 +411,7 @@ chap_respond(PppPcb* pcb,
         return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -607,17 +576,17 @@ chap_protrej(PppPcb* pcb)
     }
 }
 
-const struct Protent kChapProtent = {
-    PPP_CHAP,
-    chap_init,
-    chap_input,
-    chap_protrej,
-    chap_lowerup,
-    chap_lowerdown,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-};
+// const struct Protent kChapProtent = {
+//     PPP_CHAP,
+//     chap_init,
+//     chap_input,
+//     chap_protrej,
+//     chap_lowerup,
+//     chap_lowerdown,
+//     nullptr,
+//     nullptr,
+//     nullptr,
+//     nullptr,
+//     nullptr,
+//     nullptr,
+// };

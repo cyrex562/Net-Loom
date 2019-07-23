@@ -347,7 +347,7 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* n
      */
     if (namelen > int(sizeof(pcb->peer_authname)) - 1)
         namelen = int(sizeof(pcb->peer_authname)) - 1;
-    MEMCPY(pcb->peer_authname, name, namelen);
+    memcpy(pcb->peer_authname, name, namelen);
     pcb->peer_authname[namelen] = 0;
 
 
@@ -573,7 +573,7 @@ int get_secret(PppPcb* pcb, const char* client, const char* server, char* secret
         len = MAXSECRETLEN;
     }
 
-    MEMCPY(secret, pcb->settings.passwd, len);
+    memcpy(secret, pcb->settings.passwd, len);
     *secret_len = len;
     return 1;
 }

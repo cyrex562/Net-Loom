@@ -222,7 +222,7 @@ void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        MEMCPY( (uint8_t *) (ctx->buffer + left),
+        memcpy( (uint8_t *) (ctx->buffer + left),
                 input, fill );
         md5_process( ctx, ctx->buffer );
         input += fill;
@@ -239,7 +239,7 @@ void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        MEMCPY( (uint8_t *) (ctx->buffer + left),
+        memcpy( (uint8_t *) (ctx->buffer + left),
                 input, ilen );
     }
 }

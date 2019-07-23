@@ -282,7 +282,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check that na header fits in packet. */
     if (p->len < (sizeof(struct NeighAdvHdr))) {
       /* @todo debug message */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -297,7 +297,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check a subset of the other RFC 4861 Sec. 7.1.2 requirements. */
     if (IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || na_hdr->code != 0 ||
         ip6_addr_ismulticast(&target_address)) {
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.proterr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -321,7 +321,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
           /* We are using a duplicate address. */
           nd6_duplicate_addr_detected(inp, i);
 
-          pbuf_free(p);
+          free_pkt_buf(p);
           return;
         }
       }
@@ -330,7 +330,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
       /* Check that link-layer address option also fits in packet. */
       if (p->len < (sizeof(struct NeighAdvHdr) + 2)) {
         /* @todo debug message */
-        pbuf_free(p);
+        free_pkt_buf(p);
         ND6_STATS_INC(nd6.lenerr);
         ND6_STATS_INC(nd6.drop);
         return;
@@ -340,7 +340,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
 
       if (p->len < (sizeof(struct NeighAdvHdr) + (lladdr_opt->length << 3))) {
         /* @todo debug message */
-        pbuf_free(p);
+        free_pkt_buf(p);
         ND6_STATS_INC(nd6.lenerr);
         ND6_STATS_INC(nd6.drop);
         return;
@@ -350,7 +350,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
       i = nd6_find_neighbor_cache_entry(&target_address);
       if (i >= 0) {
         if (na_hdr->flags & ND6_FLAG_OVERRIDE) {
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
         }
       }
     } else {
@@ -362,7 +362,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
       i = nd6_find_neighbor_cache_entry(&target_address);
       if (i < 0) {
         /* We no longer care about this target address. drop it. */
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
       }
 
@@ -372,7 +372,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
         /* Check that link-layer address option also fits in packet. */
         if (p->len < (sizeof(struct NeighAdvHdr) + 2)) {
           /* @todo debug message */
-          pbuf_free(p);
+          free_pkt_buf(p);
           ND6_STATS_INC(nd6.lenerr);
           ND6_STATS_INC(nd6.drop);
           return;
@@ -382,13 +382,13 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
 
         if (p->len < (sizeof(struct NeighAdvHdr) + (lladdr_opt->length << 3))) {
           /* @todo debug message */
-          pbuf_free(p);
+          free_pkt_buf(p);
           ND6_STATS_INC(nd6.lenerr);
           ND6_STATS_INC(nd6.drop);
           return;
         }
 
-        MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+        memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
       }
 
       neighbor_cache[i].netif = inp;
@@ -413,7 +413,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check that ns header fits in packet. */
     if (p->len < sizeof(struct ns_header)) {
       /* @todo debug message */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -428,7 +428,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check a subset of the other RFC 4861 Sec. 7.1.1 requirements. */
     if (IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || ns_hdr->code != 0 ||
        ip6_addr_ismulticast(&target_address)) {
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.proterr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -462,7 +462,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
 
     /* NS not for us? */
     if (!accepted) {
-      pbuf_free(p);
+      free_pkt_buf(p);
       return;
     }
 
@@ -485,7 +485,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
       /* Verify that they included their own link-layer address. */
       if (lladdr_opt == nullptr) {
         /* Not a valid message. */
-        pbuf_free(p);
+        free_pkt_buf(p);
         ND6_STATS_INC(nd6.proterr);
         ND6_STATS_INC(nd6.drop);
         return;
@@ -496,7 +496,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
         /* We already have a record for the solicitor. */
         if (neighbor_cache[i].state == ND6_INCOMPLETE) {
           neighbor_cache[i].netif = inp;
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
 
           /* Delay probe in case we get confirmation of reachability from upper layer (TCP). */
           neighbor_cache[i].state = ND6_DELAY;
@@ -510,12 +510,12 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
         if (i < 0) {
           /* We couldn't assign a cache entry for this neighbor.
            * we won't be able to reply. drop it. */
-          pbuf_free(p);
+          free_pkt_buf(p);
           ND6_STATS_INC(nd6.memerr);
           return;
         }
         neighbor_cache[i].netif = inp;
-        MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+        memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
         ip6_addr_set(&(neighbor_cache[i].next_hop_address), ip6_current_src_addr());
 
         /* Receiving a message does not prove reachability: only in one direction.
@@ -543,7 +543,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check that RA header fits in packet. */
     if (p->len < sizeof(struct ra_header)) {
       /* @todo debug message */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -554,7 +554,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check a subset of the other RFC 4861 Sec. 6.1.2 requirements. */
     if (!ip6_addr_islinklocal(ip6_current_src_addr()) ||
         IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || ra_hdr->code != 0) {
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.proterr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -582,7 +582,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
 
     if (i < 0) {
       /* Could not create a new router entry. */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.memerr);
       return;
     }
@@ -656,7 +656,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
         lladdr_opt = (struct LnkLyrAddrOpt *)buffer;
         if ((default_router_list[i].neighbor_entry != NULL) &&
             (default_router_list[i].neighbor_entry->state == ND6_INCOMPLETE)) {
-          SMEMCPY(default_router_list[i].neighbor_entry->lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          memcpy(default_router_list[i].neighbor_entry->lladdr, lladdr_opt->addr, inp->hwaddr_len);
           default_router_list[i].neighbor_entry->state = ND6_REACHABLE;
           default_router_list[i].neighbor_entry->counter.reachable_time = reachable_time;
         }
@@ -790,7 +790,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct RedirectMsgHdr)) {
       /* @todo debug message */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -806,7 +806,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     if (!ip6_addr_islinklocal(ip6_current_src_addr()) ||
         IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM ||
         redir_hdr->code != 0 || ip6_addr_ismulticast(&destination_address)) {
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.proterr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -829,7 +829,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     dest_idx = nd6_find_destination_cache_entry(&destination_address);
     if (dest_idx < 0) {
       /* Destination not in cache, drop packet. */
-      pbuf_free(p);
+      free_pkt_buf(p);
       return;
     }
 
@@ -848,7 +848,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
           i = nd6_new_neighbor_cache_entry();
           if (i >= 0) {
             neighbor_cache[i].netif = inp;
-            MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+            memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
             ip6_addr_copy(neighbor_cache[i].next_hop_address, target_address);
 
             /* Receiving a message does not prove reachability: only in one direction.
@@ -859,7 +859,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
         }
         if (i >= 0) {
           if (neighbor_cache[i].state == ND6_INCOMPLETE) {
-            MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+            memcpy(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
             neighbor_cache[i].state = ND6_DELAY;
@@ -880,7 +880,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct Icmp6Hdr) + IP6_HDR_LEN)) {
       /* drop short packets */
-      pbuf_free(p);
+      free_pkt_buf(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
       return;
@@ -897,7 +897,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     dest_idx = nd6_find_destination_cache_entry(&destination_address);
     if (dest_idx < 0) {
       /* Destination not in cache, drop packet. */
-      pbuf_free(p);
+      free_pkt_buf(p);
       return;
     }
 
@@ -914,12 +914,12 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     break; /* default */
   }
 
-  pbuf_free(p);
+  free_pkt_buf(p);
   return;
 lenerr_drop_free_return:
   ND6_STATS_INC(nd6.lenerr);
   ND6_STATS_INC(nd6.drop);
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 
 
@@ -1177,7 +1177,7 @@ nd6_send_ns(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
   }
 
   /* Allocate a packet. */
-  p = pbuf_alloc(PBUF_IP, sizeof(struct ns_header) + (lladdr_opt_len << 3), PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct ns_header) + (lladdr_opt_len << 3));
   if (p == nullptr) {
     ND6_STATS_INC(nd6.memerr);
     return;
@@ -1196,7 +1196,7 @@ nd6_send_ns(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
     struct LnkLyrAddrOpt *lladdr_opt = (struct LnkLyrAddrOpt *)((uint8_t*)p->payload + sizeof(struct ns_header));
     lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
     lladdr_opt->length = (uint8_t)lladdr_opt_len;
-    SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
+    memcpy(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
   }
 
   /* Generate the solicited node address for the target address. */
@@ -1216,7 +1216,7 @@ nd6_send_ns(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
   ND6_STATS_INC(nd6.xmit);
   ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? nullptr : src_addr, target_addr,
       ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 
 /**
@@ -1245,7 +1245,7 @@ nd6_send_na(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
 
   /* Allocate a packet. */
   lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
-  p = pbuf_alloc(PBUF_IP, sizeof(struct NeighAdvHdr) + (lladdr_opt_len << 3), PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct NeighAdvHdr) + (lladdr_opt_len << 3));
   if (p == nullptr) {
     ND6_STATS_INC(nd6.memerr);
     return;
@@ -1266,7 +1266,7 @@ nd6_send_na(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
 
   lladdr_opt->type = ND6_OPTION_TYPE_TARGET_LLADDR;
   lladdr_opt->length = (uint8_t)lladdr_opt_len;
-  SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
+  memcpy(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
 
   /* Generate the solicited node address for the target address. */
   if (flags & ND6_SEND_FLAG_MULTICAST_DEST) {
@@ -1291,7 +1291,7 @@ nd6_send_na(NetIfc*netif, const Ip6Addr *target_addr, uint8_t flags)
   ND6_STATS_INC(nd6.xmit);
   ip6_output_if(p, src_addr, dest_addr,
       ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 
 /**
@@ -1324,7 +1324,7 @@ nd6_send_rs(NetIfc*netif)
   if (src_addr != IP6_ADDR_ANY6) {
     lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   }
-  p = pbuf_alloc(PBUF_IP, sizeof(struct RtrSolicitHdr) + (lladdr_opt_len << 3), PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct RtrSolicitHdr) + (lladdr_opt_len << 3));
   if (p == nullptr) {
     ND6_STATS_INC(nd6.memerr);
     return ERR_BUF;
@@ -1343,7 +1343,7 @@ nd6_send_rs(NetIfc*netif)
     lladdr_opt = (struct LnkLyrAddrOpt *)((uint8_t*)p->payload + sizeof(struct RtrSolicitHdr));
     lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
     lladdr_opt->length = (uint8_t)lladdr_opt_len;
-    SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
+    memcpy(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
   }
 
 
@@ -1358,7 +1358,7 @@ nd6_send_rs(NetIfc*netif)
 
   err = ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? nullptr : src_addr, &multicast_address,
       ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
-  pbuf_free(p);
+  free_pkt_buf(p);
 
   return err;
 }
@@ -2094,7 +2094,7 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer *q)
       result = ERR_OK;
     } else {
       /* the pool MEMP_ND6_QUEUE is empty */
-      pbuf_free(p);
+      free_pkt_buf(p);
       Logf(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (uint8_t *)p));
       /* { result == ERR_MEM } through initialization */
     }
@@ -2122,7 +2122,7 @@ nd6_free_q(struct nd6_q_entry *q)
     r = q;
     q = q->next;
     lwip_assert("r->p != NULL", (r->p != NULL));
-    pbuf_free(r->p);
+    free_pkt_buf(r->p);
     memp_free(MEMP_ND6_QUEUE, r);
   }
 }
@@ -2161,7 +2161,7 @@ nd6_send_q(int8_t i)
     /* send the queued IPv6 packet */
     (neighbor_cache[i].netif)->output_ip6(neighbor_cache[i].netif, q->p, &dest);
     /* free the queued IP packet */
-    pbuf_free(q->p);
+    free_pkt_buf(q->p);
     /* now queue entry can be freed */
     memp_free(MEMP_ND6_QUEUE, q);
   }

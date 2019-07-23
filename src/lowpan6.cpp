@@ -57,7 +57,7 @@
 #include <nd6.h>
 #include <udp.h>
 #include <tcpip.h>
-#include <lwip_snmp.h>
+
 #include <ieee802154.h>
 #include <lowpan6_common.h>
 #include <lwip_debug.h>
@@ -287,10 +287,10 @@ static void
 free_reass_datagram(struct lowpan6_reass_helper *lrh)
 {
   if (lrh->reass) {
-    pbuf_free(lrh->reass);
+    free_pkt_buf(lrh->reass);
   }
   if (lrh->frags) {
-    pbuf_free(lrh->frags);
+    free_pkt_buf(lrh->frags);
   }
   mem_free(lrh);
 }
@@ -354,7 +354,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
   lwip_assert("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != nullptr);
 
   /* We'll use a dedicated PacketBuffer for building 6LowPAN fragments. */
-  p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
+  p_frag = pbuf_alloc(PBUF_RAW, 127);
   if (p_frag == nullptr) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
@@ -374,7 +374,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     &hidden_header_len, LWIP_6LOWPAN_CONTEXTS(netif), src, dst);
   if (err != ERR_OK) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-    pbuf_free(p_frag);
+    free_pkt_buf(p_frag);
     return err;
   }
   pbuf_remove_header(p, hidden_header_len);
@@ -388,7 +388,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
   if (remaining_len > 0x7FF) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     /* datagram_size must fit into 11 bit */
-    pbuf_free(p_frag);
+    free_pkt_buf(p_frag);
     return ERR_VAL;
   }
 
@@ -483,7 +483,7 @@ lowpan6_frag(NetIfc*netif, struct PacketBuffer *p, const struct Lowpan6LinkAddr 
     err = netif->linkoutput(netif, p_frag);
   }
 
-  pbuf_free(p_frag);
+  free_pkt_buf(p_frag);
 
   return err;
 }
@@ -534,12 +534,12 @@ lowpan6_hwaddr_to_addr(NetIfc*netif, struct Lowpan6LinkAddr *addr)
         return ERR_VAL;
     }
 
-    SMEMCPY(addr->addr, netif->hwaddr, 8);
+    memcpy(addr->addr, netif->hwaddr, 8);
   } else if (netif->hwaddr_len == 6) {
     /* Copy from MAC-48 */
-    SMEMCPY(addr->addr, netif->hwaddr, 3);
+    memcpy(addr->addr, netif->hwaddr, 3);
     addr->addr[3] = addr->addr[4] = 0xff;
-    SMEMCPY(&addr->addr[5], &netif->hwaddr[3], 3);
+    memcpy(&addr->addr[5], &netif->hwaddr[3], 3);
   } else {
     /* Invalid address length, don't know how to convert this */
     return ERR_VAL;
@@ -625,7 +625,7 @@ lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
   /* XXX: Inferring the length of the source address from the destination address
    * is not correct for IEEE 802.15.4, but currently we don't get this information
    * from the neighbor cache */
-  SMEMCPY(dest.addr, hwaddr, netif->hwaddr_len);
+  memcpy(dest.addr, hwaddr, netif->hwaddr_len);
   return lowpan6_frag(netif, q, &src, &dest);
 }
 /**
@@ -780,7 +780,7 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
             goto lowpan6_input_discard;
           }
           /* duplicate, ignore */
-          pbuf_free(p);
+          free_pkt_buf(p);
           return ERR_OK;
         }
       }
@@ -847,7 +847,7 @@ lowpan6_input(struct PacketBuffer *p, NetIfc*netif)
     return ip6_input(p, netif);
   }
 lowpan6_input_discard:
-  pbuf_free(p);
+  free_pkt_buf(p);
   /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
   return ERR_OK;
 }

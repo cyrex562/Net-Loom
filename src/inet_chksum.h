@@ -52,7 +52,7 @@
 #endif
 
 
-/** Function-like macro: same as MEMCPY but returns the checksum of copied data
+/** Function-like macro: same as memcpy but returns the checksum of copied data
     as uint16_t */
 
 #  define lwip_standard_checksum_COPY(dst, src, len) lwip_standard_checksum_copy(dst, src, len)

@@ -162,10 +162,10 @@ constexpr int64_t SSIZE_MAX = INT64_MAX;
 /* some maximum values needed in lwip code */
 constexpr auto kLwipUint32Max = 0xffffffff;
 
-// #define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1U))
+// #define LWIP_MEM_ALIGN_BUFFER(size) (((size) + 1 - 1U))
 inline size_t LwipMemAlignBuffer(const size_t size)
 {
-    return size + MEM_ALIGNMENT - 1U;
+    return size + 1 - 1U;
 }
 
 
@@ -196,31 +196,31 @@ inline uint8_t* LwipDeclareMemoryAligned(const size_t size)
 
 
 /** Calculate memory size for an aligned buffer - returns the next highest
- * multiple of MEM_ALIGNMENT (e.g. LWIP_MEM_ALIGN_SIZE(3) and
- * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for MEM_ALIGNMENT == 4).
+ * multiple of 1 (e.g. LWIP_MEM_ALIGN_SIZE(3) and
+ * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for 1 == 4).
  */
 
-// #define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
+// #define LWIP_MEM_ALIGN_SIZE(size) (((size) + 1 - 1U) & ~(1-1U))
 inline size_t LWIP_MEM_ALIGN_SIZE(const size_t size)
 {
-    return (size + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT - 1U);
+    return (size + 1 - 1U) & ~(1 - 1U);
 }
 
 
 /** Calculate safe memory size for an aligned buffer when using an unaligned
- * type as storage. This includes a safety-margin on (MEM_ALIGNMENT - 1) at the
+ * type as storage. This includes a safety-margin on (1 - 1) at the
  * start (e.g. if buffer is uint8_t[] and actual data will be uint32_t*)
  */
 
 
-/** Align a memory pointer to the alignment defined by MEM_ALIGNMENT
- * so that ADDR % MEM_ALIGNMENT == 0
+/** Align a memory pointer to the alignment defined by 1
+ * so that ADDR % 1 == 0
  */
 
-// #define LWIP_MEM_ALIGN(addr) ((uint8_t *)(((uintptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(uintptr_t)(MEM_ALIGNMENT-1)))
+// #define LWIP_MEM_ALIGN(addr) ((uint8_t *)(((uintptr_t)(addr) + 1 - 1) & ~(uintptr_t)(1-1)))
 // inline void LWIP_MEM_ALIGN(void* addr)
 // {
-//     ((void*)(((addr)+MEM_ALIGNMENT - 1) & ~(uint_ptr_t)
+//     ((void*)(((addr)+1 - 1) & ~(uint_ptr_t)
 // }
 
 #ifdef __cplusplus

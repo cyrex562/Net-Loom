@@ -61,7 +61,7 @@
 #include <timeouts.h>
 
 
-#include <lwip_snmp.h>
+
 
 // #include <pcap.h>
 
@@ -316,14 +316,14 @@ get_adapter_index_from_addr(struct LwipInAddrStruct *netaddr, char *guid, size_t
                if(len > 127) {
                   len = 127;
                }
-               MEMCPY(name, d->name, len);
+               memcpy(name, d->name, len);
                name[len] = 0;
                start = strstr(name, "{");
                if (start != nullptr) {
                   end = strstr(start, "}");
                   if (end != nullptr) {
                      size_t len = end - start + 1;
-                     MEMCPY(guid, start, len);
+                     memcpy(guid, start, len);
                      ret = index;
                   }
                }
@@ -664,7 +664,7 @@ pcapif_low_level_init(NetIfc*netif)
   /* @todo: this does NOT support multiple processes using this adapter! */
   my_mac_addr[ETH_ADDR_LEN - 1] += netif->num;
   /* Copy MAC addr */
-  SMEMCPY(&netif->hwaddr, my_mac_addr, ETH_ADDR_LEN);
+  memcpy(&netif->hwaddr, my_mac_addr, ETH_ADDR_LEN);
 
   /* get the initial link state of the selected interface */
 
@@ -723,10 +723,10 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
       /* send data from(q->payload, q->len); */
       Logf(NETIF_DEBUG, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
-        MEMCPY(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
+        memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
         ptr += q->len - ETH_PAD_SIZE;
       } else {
-        MEMCPY(ptr, q->payload, q->len);
+        memcpy(ptr, q->payload, q->len);
         ptr += q->len;
       }
     }
@@ -787,7 +787,7 @@ pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
 
 
   /* We allocate a PacketBuffer chain of pbufs from the pool. */
-  p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE);
   Logf(NETIF_DEBUG, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
 
   if (p != nullptr) {
@@ -803,9 +803,9 @@ pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
       Logf(NETIF_DEBUG, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
 
-        MEMCPY(&((char*)q->payload)[ETH_PAD_SIZE], &((const char*)packet)[start], copy_len);
+        memcpy(&((char*)q->payload)[ETH_PAD_SIZE], &((const char*)packet)[start], copy_len);
       } else {
-        MEMCPY(q->payload, &((const char*)packet)[start], copy_len);
+        memcpy(q->payload, &((const char*)packet)[start], copy_len);
       }
       start += copy_len;
       length -= copy_len;
@@ -837,7 +837,7 @@ pcapif_rx_pbuf_free_custom(struct PacketBuffer *p)
   lwip_assert("NULL pointer", p != nullptr);
   ppc = (struct pcapif_pbuf_custom*)p;
   lwip_assert("NULL pointer", ppc->p != nullptr);
-  pbuf_free(ppc->p);
+  free_pkt_buf(ppc->p);
   ppc->p = nullptr;
   mem_free(p);
 }
@@ -886,7 +886,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
     /* pass all packets to ethernet_input, which decides what packets it supports */
     if (netif->input(p, netif) != ERR_OK) {
       Logf(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-      pbuf_free(p);
+      free_pkt_buf(p);
     }
   }
   PCAPIF_RX_UNLOCK_LWIP();
@@ -916,7 +916,7 @@ pcapif_init(NetIfc*netif)
   /* Initialize interface hostname */
   netif_set_hostname(netif, "lwip");
   netif->mtu = 1500;
-  netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | kNetifFlagEthernet | kNetifFlagIgmp;
+  netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH | NETIF_FLAG_IGMP;
 
   netif->flags |= NETIF_FLAG_MLD6;
   netif->hwaddr_len = ETH_ADDR_LEN;

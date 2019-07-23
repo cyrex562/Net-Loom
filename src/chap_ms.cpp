@@ -279,7 +279,7 @@ static void chapms_handle_failure(PppPcb* pcb, unsigned char* inp, int len)
     const char* p;
     char msg[64]; /* We want a null-terminated string for strxxx(). */
     len = LWIP_MIN(len, 63);
-    MEMCPY(msg, inp, len);
+    memcpy(msg, inp, len);
     msg[len] = 0;
     p = msg; /*
 	 * Deal with MS-CHAP formatted failure messages; just print the
@@ -336,7 +336,7 @@ static void challenge_response(const uint8_t* challenge,
     lwip_des_context des;
     uint8_t des_key[8];
     BZERO(ZPasswordHash, sizeof(ZPasswordHash));
-    MEMCPY(ZPasswordHash, password_hash, MD4_SIGNATURE_SIZE);
+    memcpy(ZPasswordHash, password_hash, MD4_SIGNATURE_SIZE);
     pppcrypt_56_to_64_bit_key(ZPasswordHash + 0, des_key);
     // lwip_des_init(&des);
     des_setkey_enc(&des, des_key);
@@ -373,7 +373,7 @@ static void challenge_hash(const uint8_t PeerChallenge[16],
     lwip_sha1_update(&sha1Context, reinterpret_cast<const unsigned char*>(user), strlen(user));
     lwip_sha1_finish(&sha1Context, sha1_hash);
     lwip_sha1_free(&sha1Context);
-    MEMCPY(Challenge, sha1_hash, 8);
+    memcpy(Challenge, sha1_hash, 8);
 }
 
 /*
@@ -644,7 +644,7 @@ static void ChapMS2(PppPcb* pcb,
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
         magic_random_bytes(&response[MS_CHAP2_PEER_CHALLENGE], MS_CHAP2_PEER_CHAL_LEN);
-    else MEMCPY(&response[MS_CHAP2_PEER_CHALLENGE],
+    else memcpy(&response[MS_CHAP2_PEER_CHALLENGE],
                 PeerChallenge,
                 MS_CHAP2_PEER_CHAL_LEN); /* Generate the NT-Response */
     ChapMS2_NT(rchallenge,

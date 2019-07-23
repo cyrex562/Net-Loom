@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ip_addr.h"
-#include "lwip_error.h"
+#include "lwip_status.h"
 
 /** DNS server port address */
 

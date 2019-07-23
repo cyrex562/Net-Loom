@@ -169,7 +169,7 @@ inline uint8_t ip_get_option(IpPcb* pcb, const uint8_t opt)
 //
 // Sets an IP pcb option (SOF_* flags)
 //
-inline void ip_set_option(uint8_t* so_options, const uint8_t opt)
+inline void set_ip4_option(uint8_t* so_options, const uint8_t opt)
 {
     *so_options = uint8_t(*so_options | opt);
 }

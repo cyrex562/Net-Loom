@@ -1,5 +1,8 @@
 #pragma once
+#include <cstdint>
+#include "chap_new.h"
 
+struct PppPcb;
 constexpr auto kMd5HashSize = 16;
 constexpr uint32_t kMd5MinChallenge = 17;
 constexpr auto kMd5MaxChallenge = 24;
@@ -15,7 +18,7 @@ void chap_md5_make_response(PppPcb* pcb,
                                    unsigned char* private_);
 
 
-static int chap_md5_verify_response(PppPcb* pcb,
+int chap_md5_verify_response(PppPcb* pcb,
                                     const int id,
                                     const char* name,
                                     const unsigned char* secret,
@@ -29,17 +32,17 @@ static int chap_md5_verify_response(PppPcb* pcb,
 void chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp);
 
 
-constexpr ChapDigestType kMd5Digest = {
-    CHAP_MD5,
-    /* code */
-    chap_md5_generate_challenge,
-    chap_md5_verify_response,
-    chap_md5_make_response,
-    nullptr,
-    /* check_success */
-    nullptr,
-    /* handle_failure */
-};
+// constexpr ChapDigestType kMd5Digest = {
+//     CHAP_MD5,
+//     /* code */
+//     chap_md5_generate_challenge,
+//     chap_md5_verify_response,
+//     chap_md5_make_response,
+//     nullptr,
+//     /* check_success */
+//     nullptr,
+//     /* handle_failure */
+// };
 
 //
 // END OF FILE

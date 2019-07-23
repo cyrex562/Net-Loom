@@ -3,7 +3,6 @@
 #include <ip4_addr.h>
 #include <lwip_status.h>
 #include <netif.h>
-#include <arch.h>
 #include <ip_addr.h>
 /** This is the packed version of Ip4Addr,
      used in network headers that are itself packed */ // struct Ip4AddrPacked {
@@ -12,11 +11,12 @@
 // typedef struct Ip4AddrPacked Ip4AddrPT;
 /* Size of the IPv4 header. Same as 'sizeof(struct Ip4Hdr)'. */
 constexpr auto IP4_HDR_LEN = 20; /* Maximum size of the IPv4 header with options. */
-constexpr auto kIp4HdrLenMax = 60;
-constexpr auto kIpResFlag = 0x8000U; /* reserved fragment flag */
-constexpr auto kIpDFFlag = 0x4000U; /* don't fragment flag */
-constexpr auto kIpMFFlag = 0x2000U; /* more fragments flag */
-constexpr auto kIpOffMask = 0x1fffU; /* mask for fragmenting bits */ /* The IPv4 header */
+constexpr auto IP4_HDR_LEN_MAX = 60;
+constexpr auto IP4_RES_FLAG = 0x8000U; /* reserved fragment flag */
+constexpr auto IP4_DF_FLAG = 0x4000U; /* don't fragment flag */
+constexpr auto IP4_MF_FLAG = 0x2000U; /* more fragments flag */
+constexpr auto IP4_OFF_MASK = 0x1fffU; /* mask for fragmenting bits */ /* The IPv4 header */
+
 struct Ip4Hdr
 {
     /* version / header length */
@@ -70,7 +70,7 @@ inline uint16_t get_ip4_hdr_offset(const Ip4Hdr* hdr)
 
 inline uint16_t get_ip4_hdr_offset_bytes(const Ip4Hdr* hdr)
 {
-    return uint16_t((lwip_ntohs(get_ip4_hdr_offset(hdr)) & kIpOffMask) * 8U);
+    return uint16_t((lwip_ntohs(get_ip4_hdr_offset(hdr)) & IP4_OFF_MASK) * 8U);
 }
 
 inline uint8_t get_ip4_hdr_ttl(const Ip4Hdr* hdr)
@@ -146,24 +146,36 @@ LwipStatus ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Ad
 LwipStatus ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif);
 
-LwipStatus ip4_output_hinted(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc* netif_hint);
+LwipStatus ip4_output_hinted(struct PacketBuffer *p,
+                             const Ip4Addr *src,
+                             const Ip4Addr *dest,
+                             uint8_t ttl,
+                             uint8_t tos,
+                             uint8_t proto,
+                             NetIfcHint* netif_hint);
 
 
-LwipStatus ip4_output_if_opt(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
-       uint16_t optlen);
+LwipStatus ip4_output_if_opt(struct PacketBuffer* p,
+                             const Ip4Addr* src,
+                             const Ip4Addr* dest,
+                             uint8_t ttl,
+                             uint8_t tos,
+                             uint8_t proto,
+                             NetIfc* netif,
+                             uint8_t* ip_options,
+                             uint16_t optlen);
 
-LwipStatus ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, void *ip_options,
-       uint16_t optlen);
+LwipStatus ip4_output_if_opt_src(struct PacketBuffer* p,
+                                 const Ip4Addr* src,
+                                 const Ip4Addr* dest,
+                                 uint8_t ttl,
+                                 uint8_t tos,
+                                 uint8_t proto,
+                                 NetIfc* netif,
+                                 uint8_t* ip_options,
+                                 uint16_t optlen);
 
-void  ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
-
-
-
-
-// void ip4_debug_print(struct PacketBuffer *p);
+void ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
 
 
 

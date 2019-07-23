@@ -456,7 +456,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
      * state with this packet's header.
      */
     deltaA = lwip_ntohs(th->chksum);
-    MEMCPY(&cs->cs_ip, ip, hlen);
+    memcpy(&cs->cs_ip, ip, hlen);
 
     /*
      * We want to use the original packet as our compressed packet.
@@ -486,7 +486,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
   }
   *cp++ = (uint8_t)(deltaA >> 8);
   *cp++ = (uint8_t)deltaA;
-  MEMCPY(cp, new_seq, deltaS);
+  memcpy(cp, new_seq, deltaS);
   INCR(vjs_compressed);
   return (TYPE_COMPRESSED_TCP);
 
@@ -496,7 +496,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
    * to use on future compressed packets in the protocol field).
    */
 uncompressed:
-    MEMCPY(&cs->cs_ip, ip, hlen);
+    memcpy(&cs->cs_ip, ip, hlen);
     set_ip4_hdr_proto(ip, cs->cs_id);
     comp->last_xmit = cs->cs_id;
     return (TYPE_UNCOMPRESSED_TCP);
@@ -541,7 +541,7 @@ vj_uncompress_uncomp(struct PacketBuffer* nb, struct vjcompress* comp)
     set_ip4_hdr_proto(ip, IP_PROTO_TCP);
     /* copy from/to bigger buffers checked above instead of cs->cs_ip and ip
        just to help static code analysis to see this is correct ;-) */
-    MEMCPY(&cs->cs_hdr, nb->payload, hlen);
+    memcpy(&cs->cs_hdr, nb->payload, hlen);
     cs->cs_hlen = (uint16_t)hlen;
     INCR(vjs_uncompressedin);
     return 0;
@@ -726,7 +726,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 
 //     if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
 //     {
-//         struct pbuf* np;
+//         PacketBuffer* np;
 //
 // #if IP_FORWARD
 //     /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
@@ -757,7 +757,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
 //             pbuf_chain(np, n0->next);
 //             pbuf_dechain(n0);
 //         }
-//         pbuf_free(n0);
+//         free_pkt_buf(n0);
 //         n0 = np;
 //     }
 
@@ -776,7 +776,7 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct vjcompress* comp)
         n0 = np;
     }
     lwip_assert("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
-    MEMCPY(n0->payload, &cs->cs_ip, cs->cs_hlen);
+    memcpy(n0->payload, &cs->cs_ip, cs->cs_hlen);
 
     *nb = n0;
 

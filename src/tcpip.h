@@ -22,23 +22,23 @@ struct PacketBuffer;
 struct NetIfc;
 
 /** Function prototype for the init_done function passed to tcpip_init */
-using tcpip_init_done_fn = void (*)(uint8_t*);
+using TcpipInitDoneFn = void (*)(void*);
 /** Function prototype for functions passed to tcpip_callback() */
-using tcpip_callback_fn = void (*)(uint8_t*);
+using TcpipCallbackFn = void (*)(void*);
 
 /* Forward declarations */
 struct tcpip_callback_msg;
 
-void   tcpip_init(tcpip_init_done_fn tcpip_init_done, uint8_t *arg);
+void   tcpip_init(TcpipInitDoneFn tcpip_init_done, uint8_t *arg);
 
 LwipStatus  tcpip_inpkt(struct PacketBuffer *p, NetIfc*inp, NetifInputFn input_fn);
 LwipStatus  tcpip_input(struct PacketBuffer *p, NetIfc*inp);
 
-LwipStatus  tcpip_try_callback(tcpip_callback_fn function, uint8_t *ctx);
-LwipStatus  tcpip_callback(tcpip_callback_fn function, uint8_t *ctx);
+LwipStatus  tcpip_try_callback(TcpipCallbackFn function, uint8_t *ctx);
+LwipStatus  tcpip_callback(TcpipCallbackFn function, uint8_t *ctx);
 
 
-struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, uint8_t *ctx);
+struct tcpip_callback_msg* tcpip_callbackmsg_new(TcpipCallbackFn function, uint8_t *ctx);
 void   tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg);
 LwipStatus  tcpip_callbackmsg_trycallback(struct tcpip_callback_msg* msg);
 LwipStatus  tcpip_callbackmsg_trycallback_fromisr(struct tcpip_callback_msg* msg);

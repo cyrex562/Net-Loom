@@ -465,17 +465,17 @@ static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len) {
  * upap_sauthreq - Send an Authenticate-Request.
  */
 static void upap_sauthreq(PppPcb *pcb) {
-    struct pbuf *p;
+    PacketBuffer *p;
     uint8_t *outp;
     int outlen;
 
     outlen = UPAP_HEADERLEN + 2 * sizeof (uint8_t) +
 	pcb->upap.us_userlen + pcb->upap.us_passwdlen;
-    p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
+    p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen));
     if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -486,10 +486,10 @@ static void upap_sauthreq(PppPcb *pcb) {
     PUTCHAR(++pcb->upap.us_id, outp);
     PUTSHORT(outlen, outp);
     PUTCHAR(pcb->upap.us_userlen, outp);
-    MEMCPY(outp, pcb->upap.us_user, pcb->upap.us_userlen);
+    memcpy(outp, pcb->upap.us_user, pcb->upap.us_userlen);
     INCPTR(pcb->upap.us_userlen, outp);
     PUTCHAR(pcb->upap.us_passwdlen, outp);
-    MEMCPY(outp, pcb->upap.us_passwd, pcb->upap.us_passwdlen);
+    memcpy(outp, pcb->upap.us_passwd, pcb->upap.us_passwdlen);
 
     ppp_write(pcb, p);
 
@@ -501,16 +501,16 @@ static void upap_sauthreq(PppPcb *pcb) {
  * upap_sresp - Send a response (ack or nak).
  */
 static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, int msglen) {
-    struct pbuf *p;
+    PacketBuffer *p;
     uint8_t *outp;
     int outlen;
 
     outlen = UPAP_HEADERLEN + sizeof (uint8_t) + msglen;
-    p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
+    p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN +outlen));
     if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -521,7 +521,7 @@ static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, const char *msg, i
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
     PUTCHAR(msglen, outp);
-    MEMCPY(outp, msg, msglen);
+    memcpy(outp, msg, msglen);
 
     ppp_write(pcb, p);
 }

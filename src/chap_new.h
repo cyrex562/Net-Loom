@@ -32,11 +32,8 @@
 #include <ppp_opts.h>
 #include <ppp_defs.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-    struct PppPcb;
+struct PppPcb;
 
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
@@ -123,37 +120,54 @@ struct ChapDigestType
      * a length byte followed by the actual challenge/response data.
      */
     void (*generate_challenge)(PppPcb* pcb, unsigned char* challenge);
-    int (*verify_response)(PppPcb* pcb, int id, const char* name,
-                           const unsigned char* secret, int secret_len,
-                           const unsigned char* challenge, const unsigned char* response,
-                           char* message, int message_space);
 
-    void (*make_response)(PppPcb* pcb, unsigned char* response, int id, const char* our_name,
-                          const unsigned char* challenge, const char* secret, int secret_len,
+    int (*verify_response)(PppPcb* pcb,
+                           int id,
+                           const char* name,
+                           const unsigned char* secret,
+                           int secret_len,
+                           const unsigned char* challenge,
+                           const unsigned char* response,
+                           char* message,
+                           int message_space);
+
+    void (*make_response)(PppPcb* pcb,
+                          unsigned char* response,
+                          int id,
+                          const char* our_name,
+                          const unsigned char* challenge,
+                          const char* secret,
+                          int secret_len,
                           unsigned char* priv);
+
     int (*check_success)(PppPcb* pcb, unsigned char* pkt, int len, unsigned char* priv);
+
     void (*handle_failure)(PppPcb* pcb, unsigned char* pkt, int len);
 };
+
 
 /*
  * Each interface is described by chap structure.
  */
 
-typedef struct chap_client_state {
-	uint8_t flags;
-	const char *name;
-	const ChapDigestType *digest;
-	unsigned char priv[64];		/* private area for digest's use */
+typedef struct chap_client_state
+{
+    uint8_t flags;
+    const char* name;
+    const ChapDigestType* digest;
+    unsigned char priv[64]; /* private area for digest's use */
 } chap_client_state;
 
-typedef struct chap_server_state {
-	uint8_t flags;
-	uint8_t id;
-	const char *name;
-	const ChapDigestType *digest;
-	int challenge_xmits;
-	int challenge_pktlen;
-	unsigned char challenge[CHAL_MAX_PKTLEN];
+
+typedef struct chap_server_state
+{
+    uint8_t flags;
+    uint8_t id;
+    const char* name;
+    const ChapDigestType* digest;
+    int challenge_xmits;
+    int challenge_pktlen;
+    unsigned char challenge[CHAL_MAX_PKTLEN];
 } chap_server_state;
 
 
@@ -167,6 +181,44 @@ extern void chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_co
 /* Represents the CHAP protocol to the main pppd code */
 extern const struct Protent kChapProtent;
 
-#ifdef __cplusplus
-}
-#endif
+static void chap_init(PppPcb* pcb);
+
+static void chap_lowerup(PppPcb* pcb);
+
+static void chap_lowerdown(PppPcb* pcb);
+
+static void chap_timeout(void* arg);
+
+static void chap_generate_challenge(PppPcb* pcb);
+
+static void chap_handle_response(PppPcb* pcb,
+                                 int code,
+                                 unsigned char* pkt,
+                                 size_t len,
+                                 Protent** protocols);
+
+int chap_verify_response(PppPcb* pcb,
+                                const char* name,
+                                const char* ourname,
+                                int id,
+                                const struct ChapDigestType* digest,
+                                const unsigned char* challenge,
+                                const unsigned char* response,
+                                char* message,
+                                int message_space);
+
+static void chap_respond(PppPcb* pcb,
+                         int id,
+                         unsigned char* pkt,
+                         int len);
+
+static void chap_handle_status(PppPcb* pcb,
+                               int code,
+                               int id,
+                               unsigned char* pkt,
+                               int len,
+                               Protent** protocols);
+
+static void chap_protrej(PppPcb* pcb);
+
+static void chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols);

@@ -140,7 +140,7 @@ LwipStatus autoip_arp_probe(NetIfc* netif)
 //
 // @param netif network interface used to send the announce
 //
-static LwipStatus
+LwipStatus
 autoip_arp_announce(NetIfc* netif)
 {
   return etharp_gratuitous(netif);
@@ -151,7 +151,7 @@ autoip_arp_announce(NetIfc* netif)
 //
 // @param netif network interface to configure with current LL IP-Address
 //
-static LwipStatus autoip_bind(NetIfc* netif)
+ LwipStatus autoip_bind(NetIfc* netif)
 {
     auto autoip = netif_autoip_data(netif);
     Ip4Addr sn_mask{};
@@ -176,7 +176,7 @@ LwipStatus autoip_start(NetIfc* netif)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    auto any_addr = ip4_addr_any();
+    auto any_addr = create_ip4_addr_any();
 
     netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
@@ -253,7 +253,7 @@ LwipStatus autoip_stop(NetIfc* netif)
         autoip->state = AUTOIP_STATE_OFF;
         if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
         {
-            auto any_addr = ip4_addr_any();
+            auto any_addr = create_ip4_addr_any();
             netif_set_addr(netif,
                            &any_addr,
                            &any_addr,
@@ -373,7 +373,7 @@ void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
              */
             if ((ip4_addr_cmp(&sipaddr, &autoip->llipaddr)) || (
                 ip4_addr_isany_val(sipaddr) && ip4_addr_cmp(&dipaddr, &autoip->llipaddr)
-                && !eth_addr_cmp(&netifaddr, &hdr->shwaddr)))
+                && !cmp_eth_addr(&netifaddr, &hdr->shwaddr)))
             {
                 autoip_restart(netif);
             }
@@ -384,7 +384,7 @@ void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
              * in any state we have a conflict if
              * ip.src == llipaddr && hw.src != own hwaddr
              */
-            if (ip4_addr_cmp(&sipaddr, &autoip->llipaddr) && !eth_addr_cmp(
+            if (ip4_addr_cmp(&sipaddr, &autoip->llipaddr) && !cmp_eth_addr(
                 &netifaddr,
                 &hdr->shwaddr))
             {

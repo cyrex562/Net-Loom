@@ -231,7 +231,7 @@ mld6_input(struct PacketBuffer *p, NetIfc*inp)
   /* Check that mld header fits in packet. */
   if (p->len < sizeof(struct mld_header)) {
     /* @todo debug message */
-    pbuf_free(p);
+    free_pkt_buf(p);
     MLD6_STATS_INC(mld6.lenerr);
     MLD6_STATS_INC(mld6.drop);
     return;
@@ -290,7 +290,7 @@ mld6_input(struct PacketBuffer *p, NetIfc*inp)
     break;
   }
 
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 
 /**
@@ -314,7 +314,7 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   LwipStatus         err = ERR_VAL; /* no matching interface */
   NetIfc*netif;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
@@ -357,7 +357,7 @@ mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* find group or create a new one if not found */
   group = mld6_lookfor_group(netif, groupaddr);
@@ -403,7 +403,7 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   LwipStatus         err = ERR_VAL; /* no matching interface */
   NetIfc*netif;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
@@ -445,7 +445,7 @@ mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr)
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* find group */
   group = mld6_lookfor_group(netif, groupaddr);
@@ -564,7 +564,7 @@ mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
   const Ip6Addr *src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
-  p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + MLD6_HBH_HLEN, PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + MLD6_HBH_HLEN);
   if (p == nullptr) {
     MLD6_STATS_INC(mld6.memerr);
     return;
@@ -572,7 +572,7 @@ mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
 
   /* Move to make room for Hop-by-hop options header. */
   if (pbuf_remove_header(p, MLD6_HBH_HLEN)) {
-    pbuf_free(p);
+    free_pkt_buf(p);
     MLD6_STATS_INC(mld6.lenerr);
     return;
   }
@@ -616,6 +616,6 @@ mld6_send(NetIfc*netif, struct mld_group *group, uint8_t type)
   MLD6_STATS_INC(mld6.xmit);
   ip6_output_if(p, (ip6_addr_isany(src_addr)) ? nullptr : src_addr, &(group->group_address),
       MLD6_HL, 0, IP6_NEXTH_HOPBYHOP, netif);
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 

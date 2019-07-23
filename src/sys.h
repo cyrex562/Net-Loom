@@ -5,9 +5,8 @@
 #pragma once
 
 #include <cstdint>
-
-#include "lwip_error.h"
-
+#include <array>
+#include "lwip_status.h"
 
 using sys_prot_t = int;
 
@@ -21,7 +20,7 @@ constexpr auto MAX_QUEUE_ENTRIES = 100;
 
 
 /** Function prototype for thread functions */
-using lwip_thread_fn = void (*)(void*);
+using LwipThreadFn = void (*)(void*);
 
 
 struct Mailbox
@@ -34,7 +33,7 @@ struct Mailbox
 
 struct ThreadList
 {
-    lwip_thread_fn function;
+    LwipThreadFn function;
     void* arg;
     uint32_t id;
     struct ThreadList* next;
@@ -190,7 +189,7 @@ void sys_mbox_free(Mailbox *mbox);
 // stacksize: stack size in bytes for the new thread (may be ignored by ports)
 // prio: priority of the new thread (may be ignored by ports) */
 sys_thread_t sys_thread_new(const char* name,
-                            lwip_thread_fn function,
+                            LwipThreadFn function,
                             void* arg,
                             int stacksize,
                             int prio);
@@ -307,7 +306,7 @@ void sys_free_mailbox(Mailbox *mbox);
  * @param arg parameter passed to 'thread'
  * @param stacksize stack size in bytes for the new thread (may be ignored by ports)
  * @param prio priority of the new thread (may be ignored by ports) */
-sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio, ThreadList* thread_list);
+sys_thread_t sys_thread_new(const char *name, LwipThreadFn thread, void *arg, int stacksize, int prio, ThreadList* thread_list);
 
 /**
  * @ingroup sys_misc

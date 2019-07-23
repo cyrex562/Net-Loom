@@ -51,7 +51,7 @@
 #include <ppp_opts.h>
 #include <ppp_impl.h>
 #include <pppdebug.h>
-static void fsm_timeout (uint8_t *);
+static void fsm_timeout (void*);
 static void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
 static void fsm_rconfack(Fsm *f, int id, uint8_t *inp, int len);
 static void fsm_rconfnakrej(Fsm *f, int code, int id, uint8_t *inp, int len);
@@ -254,7 +254,7 @@ void fsm_close(Fsm *f, const char *reason) {
 /*
  * fsm_timeout - Timeout expired.
  */
-static void fsm_timeout(uint8_t *arg) {
+static void fsm_timeout(void* arg) {
     Fsm *f = (Fsm *) arg;
     PppPcb *pcb = f->pcb;
 
@@ -315,25 +315,25 @@ void fsm_input(Fsm *f, uint8_t *inpacket, int l) {
      */
     inp = inpacket;
     if (l < kHeaderlen) {
-	FSMDEBUG(("fsm_input(%x): Rcvd short header.", f->protocol));
+	// FSMDEBUG(("fsm_input(%x): Rcvd short header.", f->protocol));
 	return;
     }
     GETCHAR(code, inp);
     GETCHAR(id, inp);
     GETSHORT(len, inp);
     if (len < kHeaderlen) {
-	FSMDEBUG(("fsm_input(%x): Rcvd illegal length.", f->protocol));
+	// FSMDEBUG(("fsm_input(%x): Rcvd illegal length.", f->protocol));
 	return;
     }
     if (len > l) {
-	FSMDEBUG(("fsm_input(%x): Rcvd short packet.", f->protocol));
+	// FSMDEBUG(("fsm_input(%x): Rcvd short packet.", f->protocol));
 	return;
     }
     len -= kHeaderlen;		/* subtract header length */
 
     if( f->state == PPP_FSM_INITIAL || f->state == PPP_FSM_STARTING ){
-	FSMDEBUG(("fsm_input(%x): Rcvd packet in state %d.",
-		  f->protocol, f->state));
+	// FSMDEBUG(("fsm_input(%x): Rcvd packet in state %d.",
+		  // f->protocol, f->state));
 	return;
     }
 
@@ -637,7 +637,7 @@ static void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len) {
     uint8_t code, id;
 
     if (len < kHeaderlen) {
-	FSMDEBUG(("fsm_rcoderej: Rcvd short Code-Reject packet!"));
+	// FSMDEBUG(("fsm_rcoderej: Rcvd short Code-Reject packet!"));
 	return;
     }
     GETCHAR(code, inp);
@@ -684,8 +684,9 @@ void fsm_protreject(Fsm* f) {
 	break;
 
     default:
-	FSMDEBUG(("%s: Protocol-reject event in state %d!",
-		  PROTO_NAME(f), f->state));
+        auto a = true;
+	// FSMDEBUG(("%s: Protocol-reject event in state %d!",
+	// 	  PROTO_NAME(f), f->state));
 	/* no break */
     }
 }
@@ -730,7 +731,7 @@ static void fsm_sconfreq(Fsm* f, int retransmit) {
     if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -774,13 +775,13 @@ void fsm_sdata(Fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datale
     if(nullptr == p)
         return;
     if(p->tot_len != p->len) {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
     outp = (uint8_t*)p->payload;
     if (datalen) /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
-	MEMCPY(outp + PPP_HDRLEN + kHeaderlen, data, datalen);
+	memcpy(outp + PPP_HDRLEN + kHeaderlen, data, datalen);
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);

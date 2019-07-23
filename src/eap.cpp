@@ -95,7 +95,7 @@ static void eap_lowerdown(PppPcb *pcb);
 // #endif
 
 /* Local forward declarations. */
-static void eap_server_timeout(uint8_t *arg);
+static void eap_server_timeout(void* arg);
 
 inline bool eap_client_active(PppPcb* ppp_pcb)
 {
@@ -125,8 +125,8 @@ static void eap_init(PppPcb* pcb, EapState* eap)
  * eap_client_timeout - Give up waiting for the peer to send any
  * Request messages.
  */
-static void eap_client_timeout(uint8_t *arg) {
-    auto pcb = static_cast<PppPcb *>(arg);
+static void eap_client_timeout(void* arg) {
+    auto pcb = reinterpret_cast<PppPcb *>(arg);
 
   if (!eap_client_active(pcb)) return;
 
@@ -173,7 +173,7 @@ static void eap_send_failure(PppPcb* pcb)
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -209,7 +209,7 @@ static void eap_send_success(PppPcb* pcb)
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -255,6 +255,7 @@ static bool pncrypt_setkey(int timeoffs)
     // /* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL
     //  * des_context instead of using static memory */
     // return (DesSetkey(dig));
+    return false;
 }
 
 
@@ -401,7 +402,7 @@ static void eap_figure_next_state(PppPcb* pcb, int status)
                 if ((i = plen = *(unsigned char *)clear) > 7) i = 7;
                 pcb->eap.es_server.ea_peerlen = plen;
                 dp = (unsigned char *)pcb->eap.es_server.ea_peer;
-                MEMCPY(dp, clear + 1, i);
+                memcpy(dp, clear + 1, i);
                 plen -= i;
                 dp += i;
                 sp = secbuf + 8;
@@ -588,7 +589,7 @@ static void eap_send_request(PppPcb* pcb)
             {
                 len = MAXNAMELEN;
             }
-            MEMCPY(pcb->eap.es_server.ea_peer, pcb->peer_authname, len);
+            memcpy(pcb->eap.es_server.ea_peer, pcb->peer_authname, len);
             pcb->eap.es_server.ea_peer[len] = '\0';
             pcb->eap.es_server.ea_peerlen = len;
             eap_figure_next_state(pcb, 0);
@@ -612,7 +613,7 @@ static void eap_send_request(PppPcb* pcb)
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -631,7 +632,7 @@ static void eap_send_request(PppPcb* pcb)
         PUTCHAR(EAPT_IDENTITY, outp);
         str = "Name";
         len = strlen(str);
-        MEMCPY(outp, str, len);
+        memcpy(outp, str, len);
         INCPTR(len, outp);
         break;
 
@@ -646,9 +647,9 @@ static void eap_send_request(PppPcb* pcb)
             magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
         PUTCHAR(pcb->eap.es_challen, outp);
         magic_random_bytes(pcb->eap.es_challenge, pcb->eap.es_challen);
-        MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
+        memcpy(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
         INCPTR(pcb->eap.es_challen, outp);
-        MEMCPY(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
+        memcpy(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
         INCPTR(pcb->eap.es_server.ea_namelen, outp);
         break;
 
@@ -700,7 +701,7 @@ void eap_authpeer(PppPcb *pcb, const char *localname) {
  * eap_server_timeout - Retransmission timer for sending Requests
  * expired.
  */
-static void eap_server_timeout(uint8_t *arg) {
+static void eap_server_timeout(void* arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (!eap_server_active(pcb)) return;
@@ -714,7 +715,7 @@ static void eap_server_timeout(uint8_t *arg) {
  * called.  Once the rechallenge is successful, the response handler
  * will restart the timer.  If it fails, then the link is dropped.
  */
-static void eap_rechallenge(uint8_t *arg) {
+static void eap_rechallenge(void* arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (pcb->eap.es_server.ea_state != eapOpen &&
@@ -728,7 +729,7 @@ static void eap_rechallenge(uint8_t *arg) {
   eap_send_request(pcb);
 }
 
-static void srp_lwrechallenge(uint8_t *arg) {
+static void srp_lwrechallenge(void* arg) {
   PppPcb *pcb = (PppPcb *)arg;
 
   if (pcb->eap.es_server.ea_state != eapOpen ||
@@ -827,7 +828,7 @@ static void eap_send_response(PppPcb* pcb, uint8_t id, uint8_t typenum,
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -842,7 +843,7 @@ static void eap_send_response(PppPcb* pcb, uint8_t id, uint8_t typenum,
     PUTCHAR(typenum, outp);
     if (lenstr > 0)
     {
-        MEMCPY(outp, str, lenstr);
+        memcpy(outp, str, lenstr);
     }
 
     ppp_write(pcb, p);
@@ -864,7 +865,7 @@ static void eap_chap_response(PppPcb* pcb, uint8_t id, uint8_t* hash,
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -878,11 +879,11 @@ static void eap_chap_response(PppPcb* pcb, uint8_t id, uint8_t* hash,
     PUTSHORT(msglen, outp);
     PUTCHAR(EAPT_MD5CHAP, outp);
     PUTCHAR(MD5_SIGNATURE_SIZE, outp);
-    MEMCPY(outp, hash, MD5_SIGNATURE_SIZE);
+    memcpy(outp, hash, MD5_SIGNATURE_SIZE);
     INCPTR(MD5_SIGNATURE_SIZE, outp);
     if (namelen > 0)
     {
-        MEMCPY(outp, name, namelen);
+        memcpy(outp, name, namelen);
     }
 
     ppp_write(pcb, p);
@@ -900,7 +901,7 @@ static void eap_send_nak(PppPcb* pcb, uint8_t id, uint8_t type)
     if (nullptr == p) return;
     if (p->tot_len != p->len)
     {
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
 
@@ -1003,12 +1004,12 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, int len)
         if (vallen >= len + sizeof(rhostname))
         {
             ppp_dbglog("EAP: trimming really long peer name down");
-            MEMCPY(rhostname, inp + vallen, sizeof(rhostname) - 1);
+            memcpy(rhostname, inp + vallen, sizeof(rhostname) - 1);
             rhostname[sizeof(rhostname) - 1] = '\0';
         }
         else
         {
-            MEMCPY(rhostname, inp + vallen, len - vallen);
+            memcpy(rhostname, inp + vallen, len - vallen);
             rhostname[len - vallen] = '\0';
         }
 
@@ -1102,7 +1103,7 @@ static void eap_response(PppPcb* pcb, uint8_t* inp, int id, int len)
         {
             len = MAXNAMELEN;
         }
-        MEMCPY(pcb->eap.es_server.ea_peer, inp, len);
+        memcpy(pcb->eap.es_server.ea_peer, inp, len);
         pcb->eap.es_server.ea_peer[len] = '\0';
         pcb->eap.es_server.ea_peerlen = len;
         eap_figure_next_state(pcb, 0);
@@ -1192,12 +1193,12 @@ static void eap_response(PppPcb* pcb, uint8_t* inp, int id, int len)
         if (vallen >= len + sizeof(rhostname))
         {
             ppp_dbglog("EAP: trimming really long peer name down");
-            MEMCPY(rhostname, inp + vallen, sizeof(rhostname) - 1);
+            memcpy(rhostname, inp + vallen, sizeof(rhostname) - 1);
             rhostname[sizeof(rhostname) - 1] = '\0';
         }
         else
         {
-            MEMCPY(rhostname, inp + vallen, len - vallen);
+            memcpy(rhostname, inp + vallen, len - vallen);
             rhostname[len - vallen] = '\0';
         }
 

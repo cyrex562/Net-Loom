@@ -76,7 +76,7 @@ ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
     EthAddr dest{};
     const uint8_t* hwaddr;
 
-    LWIP_ASSERT_CORE_LOCKED();
+   
 
     /* The destination IP address must be properly zoned from here on down. */
     IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
@@ -113,7 +113,7 @@ ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
     }
 
     /* Send out the packet using the returned hardware address. */
-    SMEMCPY(dest.addr, hwaddr, 6);
+    memcpy(dest.addr, hwaddr, 6);
     return ethernet_output(netif, q, reinterpret_cast<const struct EthAddr*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
 }
 

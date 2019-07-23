@@ -7,7 +7,7 @@
 #include <timeouts.h>
 
 struct PacketBuffer;
-LwipStatus tcpip_send_msg_wait_sem(tcpip_callback_fn fn, uint8_t* apimsg, Semaphore* sem);
+LwipStatus tcpip_send_msg_wait_sem(TcpipCallbackFn fn, uint8_t* apimsg, Semaphore* sem);
 
 struct TcpipApiCallData
 {
@@ -41,7 +41,7 @@ struct tcpip_msg
 
         struct
         {
-            tcpip_callback_fn function;
+            TcpipCallbackFn function;
             uint8_t* ctx;
         } cb;
 

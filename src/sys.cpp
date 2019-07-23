@@ -1,6 +1,5 @@
 
 #include "opt.h"
-#include "opt.h"
 #include "arch.h"
 #include "lwip_debug.h"
 #include "sys.h"
@@ -417,7 +416,7 @@ sys_thread_function(void* arg)
 
 
 sys_thread_t
-sys_thread_new(const char* name, lwip_thread_fn function, void* arg, int stacksize, int prio, ThreadList* thread_list)
+sys_thread_new(const char* name, LwipThreadFn function, void* arg, int stacksize, int prio, ThreadList* thread_list)
 {
     sys_prot_t lev;
 

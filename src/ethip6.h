@@ -47,15 +47,6 @@
 
 #include <packet_buffer.h>
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 LwipStatus ethip6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
 
-#ifdef __cplusplus
-}
-#endif
 

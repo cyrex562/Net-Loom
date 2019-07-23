@@ -109,12 +109,12 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     p = ipr->p;
     ipr->p = iprh->next_pbuf;
     /* Then, copy the original header into it. */
-    SMEMCPY(p->payload, &ipr->iphdr, IP4_HDR_LEN);
+    memcpy(p->payload, &ipr->iphdr, IP4_HDR_LEN);
     icmp_time_exceeded(p, ICMP_TE_FRAG);
     clen = pbuf_clen(p);
     lwip_assert("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
     pbufs_freed = (uint16_t)(pbufs_freed + clen);
-    pbuf_free(p);
+    free_pkt_buf(p);
   }
 
 
@@ -130,7 +130,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     clen = pbuf_clen(pcur);
     lwip_assert("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
     pbufs_freed = (uint16_t)(pbufs_freed + clen);
-    pbuf_free(pcur);
+    free_pkt_buf(pcur);
   }
   /* Then, unchain the struct ip_reassdata from the list and free it. */
   ip_reass_dequeue_datagram(ipr, prev);
@@ -232,7 +232,7 @@ ip_reass_enqueue_new_datagram(struct Ip4Hdr *fraghdr, int clen)
   reassdatagrams = ipr;
   /* copy the ip header for later tests and input */
   /* @todo: no ip options supported? */
-  SMEMCPY(&(ipr->iphdr), fraghdr, IP4_HDR_LEN);
+  memcpy(&(ipr->iphdr), fraghdr, IP4_HDR_LEN);
   return ipr;
 }
 
@@ -505,7 +505,7 @@ ip4_reass(struct PacketBuffer *p)
        * -> copy fraghdr into ipr->iphdr since we want to have the header
        * of the first fragment (for ICMP time exceeded and later, for copying
        * all options, if supported)*/
-      SMEMCPY(&ipr->iphdr, fraghdr, IP4_HDR_LEN);
+      memcpy(&ipr->iphdr, fraghdr, IP4_HDR_LEN);
     }
   }
 
@@ -553,7 +553,7 @@ ip4_reass(struct PacketBuffer *p)
 
     /* copy the original ip header back to the first PacketBuffer */
     fraghdr = (struct Ip4Hdr *)(ipr->p->payload);
-    SMEMCPY(fraghdr, &ipr->iphdr, IP4_HDR_LEN);
+    memcpy(fraghdr, &ipr->iphdr, IP4_HDR_LEN);
     IPH_LEN_SET(fraghdr, lwip_htons(datagram_len));
     set_ip4_hdr_offset(fraghdr, 0);
     IPH_CHKSUM_SET(fraghdr, 0);
@@ -615,7 +615,7 @@ nullreturn_ipr:
 nullreturn:
   Logf(IP_REASS_DEBUG, ("ip4_reass: nullreturn\n"));
   IPFRAG_STATS_INC(ip_frag.drop);
-  pbuf_free(p);
+  free_pkt_buf(p);
   return nullptr;
 }
 
@@ -637,7 +637,7 @@ ip_frag_free_pbuf_custom_ref(struct PbufCustomRef *p)
 }
 
 /** Free-callback function to free a 'struct pbuf_custom_ref', called by
- * pbuf_free. */
+ * free_pkt_buf. */
 static void
 ipfrag_free_pbuf_custom(struct PacketBuffer *p)
 {
@@ -645,7 +645,7 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
   lwip_assert("pcr != NULL", pcr != nullptr);
   lwip_assert("pcr == p", (uint8_t *)pcr == (uint8_t *)p);
   if (pcr->original != nullptr) {
-    pbuf_free(pcr->original);
+    free_pkt_buf(pcr->original);
   }
   ip_frag_free_pbuf_custom_ref(pcr);
 }
@@ -714,13 +714,13 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
      * The rest will be PBUF_REFs mirroring the PacketBuffer chain to be fragged,
      * but limited to the size of an mtu.
      */
-    rambuf = pbuf_alloc(PBUF_LINK, IP4_HDR_LEN, PBUF_RAM);
+    rambuf = pbuf_alloc(PBUF_LINK, IP4_HDR_LEN);
     if (rambuf == nullptr) {
       goto memerr;
     }
     lwip_assert("this needs a PacketBuffer in one piece!",
                 (rambuf->len >= (IP4_HDR_LEN)));
-    SMEMCPY(rambuf->payload, original_iphdr, IP4_HDR_LEN);
+    memcpy(rambuf->payload, original_iphdr, IP4_HDR_LEN);
     iphdr = (struct Ip4Hdr *)rambuf->payload;
 
     left_to_copy = fragsize;
@@ -737,7 +737,7 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
       }
       pcr = ip_frag_alloc_pbuf_custom_ref();
       if (pcr == nullptr) {
-        pbuf_free(rambuf);
+        free_pkt_buf(rambuf);
         goto memerr;
       }
       /* Mirror this PacketBuffer, although we might not need all of it. */
@@ -745,7 +745,7 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
                                     (uint8_t *)p->payload + poff, newpbuflen);
       if (newpbuf == nullptr) {
         ip_frag_free_pbuf_custom_ref(pcr);
-        pbuf_free(rambuf);
+        free_pkt_buf(rambuf);
         goto memerr;
       }
       pbuf_ref(p);
@@ -796,7 +796,7 @@ ip4_frag(struct PacketBuffer *p, NetIfc*netif, const Ip4Addr *dest)
      * there will be zero memory penalty.
      */
 
-    pbuf_free(rambuf);
+    free_pkt_buf(rambuf);
     left = (uint16_t)(left - fragsize);
     ofo = (uint16_t)(ofo + nfb);
   }

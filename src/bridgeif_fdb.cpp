@@ -82,7 +82,7 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthAddr* dst_
             }
         }
     }
-    return kBrFlood;
+    return BRIDGE_FLOOD;
 }
 
 

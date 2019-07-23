@@ -74,20 +74,18 @@
 #include <ppp.h>
 #include <etharp.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cstdint>
 
 struct pppoehdr {
-  (uint8_t vertype);
-  (uint8_t code);
-  (uint16_t session);
-  (uint16_t plen);
+  uint8_t vertype;
+  uint8_t code;
+  uint16_t session;
+uint16_t plen;
 } ;
 
 struct pppoetag {
-  (uint16_t tag);
-  (uint16_t len);
+  uint16_t tag;
+  uint16_t len;
 } ;
 
 constexpr auto PPPOE_STATE_INITIAL = 0;
@@ -148,7 +146,3 @@ PppPcb *pppoe_create(NetIfc*pppif,
  */
 void pppoe_disc_input(NetIfc*netif, struct PacketBuffer *p);
 void pppoe_data_input(NetIfc*netif, struct PacketBuffer *p);
-
-#ifdef __cplusplus
-}
-#endif

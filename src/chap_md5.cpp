@@ -28,46 +28,47 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ppp_opts.h>
-#include <ppp_impl.h>
 #include <chap_md5.h>
+#include <ppp.h>
+#include <ppp_impl.h>
 #include <magic.h>
 #include <pppcrypt.h>
 
-void chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
+
+void
+chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
 {
     const auto clen = kMd5MinChallenge + magic_pow(kMd5MinMaxPowerOfTwoChallenge);
     *cp++ = clen;
     magic_random_bytes(cp, clen);
 }
 
-static int chap_md5_verify_response(PppPcb* pcb,
-                                    const int id,
-                                    const char* name,
-                                    const unsigned char* secret,
-                                    const int secret_len,
-                                    const unsigned char* challenge,
-                                    const unsigned char* response,
-                                    char* message,
-                                    const int message_space)
+
+int chap_md5_verify_response(PppPcb* pcb,
+                         const int id,
+                         const char* name,
+                         const unsigned char* secret,
+                         const int secret_len,
+                         const unsigned char* challenge,
+                         const unsigned char* response,
+                         char* message,
+                         const int message_space)
 {
-    lwip_md5_context ctx;
+    md5_context ctx;
     unsigned char idbyte = id;
     unsigned char hash[kMd5HashSize];
     const int challenge_len = *challenge++;
     const int response_len = *response++;
-    if (response_len == kMd5HashSize)
-    {
+    if (response_len == kMd5HashSize) {
         /* Generate hash of ID, secret, challenge */
-        lwip_md5_init(&ctx);
-        lwip_md5_starts(&ctx);
-        lwip_md5_update(&ctx, &idbyte, 1);
-        lwip_md5_update(&ctx, secret, secret_len);
+        
+        md5_starts(&ctx);
+        md5_update(&ctx, &idbyte, 1);
+        md5_update(&ctx, secret, secret_len);
         lwip_md5_update(&ctx, challenge, challenge_len);
         lwip_md5_finish(&ctx, hash);
         lwip_md5_free(&ctx); /* Test if our hash matches the peer's response */
-        if (memcmp(hash, response, kMd5HashSize) == 0)
-        {
+        if (memcmp(hash, response, kMd5HashSize) == 0) {
             ppp_slprintf(message, message_space, "Access granted");
             return 1;
         }
@@ -76,14 +77,16 @@ static int chap_md5_verify_response(PppPcb* pcb,
     return 0;
 }
 
-void chap_md5_make_response(PppPcb* pcb,
-                                   unsigned char* response,
-                                   const int id,
-                                   const char* our_name,
-                                   const unsigned char* challenge,
-                                   const char* secret,
-                                   const int secret_len,
-                                   unsigned char* private_)
+
+void
+chap_md5_make_response(PppPcb* pcb,
+                       unsigned char* response,
+                       const int id,
+                       const char* our_name,
+                       const unsigned char* challenge,
+                       const char* secret,
+                       const int secret_len,
+                       unsigned char* private_)
 {
     lwip_md5_context ctx;
     unsigned char idbyte = id;
@@ -97,6 +100,7 @@ void chap_md5_make_response(PppPcb* pcb,
     lwip_md5_free(&ctx);
     response[0] = kMd5HashSize;
 }
+
 
 //
 // END OF FILE

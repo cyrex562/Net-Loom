@@ -139,7 +139,7 @@ uint16_t lwip_standard_chksum_2(const void* dataptr, const size_t len)
         local_len--;
     } 
     /* Add the bulk of the data */
-    const auto* ps = static_cast<const uint16_t *>(static_cast<const uint8_t *>(pb));
+    const auto* ps = reinterpret_cast<const uint16_t *>(static_cast<const uint8_t *>(pb));
     while (local_len > 1)
     {
         sum += *ps++;
@@ -571,19 +571,19 @@ uint16_t inet_chksum_pbuf(struct PacketBuffer* p)
 
 
 /* These are some implementations for lwip_standard_checksum_COPY, which copies data
- * like MEMCPY but generates a checksum at the same time. Since this is a
+ * like memcpy but generates a checksum at the same time. Since this is a
  * performance-sensitive function, you might want to create your own version
  * in assembly targeted at your hardware by defining it in lwipopts.h:
  *   #define lwip_standard_checksum_COPY(dst, src, len) your_chksum_copy(dst, src, len)
  */
 
-/** Safe but slow: first call MEMCPY, then call lwip_standard_checksum.
+/** Safe but slow: first call memcpy, then call lwip_standard_checksum.
  * For architectures with big caches, data might still be in cache when
  * generating the checksum after copying.
  */
 uint16_t lwip_standard_checksum_copy(void* dst, const void* src, uint16_t len)
 {
-    MEMCPY(dst, src, len);
+    memcpy(dst, src, len);
     return lwip_standard_checksum(dst, len);
 }
 

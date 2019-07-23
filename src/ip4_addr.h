@@ -60,18 +60,14 @@ inline void zero_ip4_addr(Ip4Addr* ip)
     ip->addr = 0;
 }
 
-inline Ip4Addr ip4_addr_any()
+inline Ip4Addr create_ip4_addr_any()
 {
-    Ip4Addr addr{};
-    addr.addr = 0;
-    return addr;
+   return {0};
 }
 
 inline Ip4Addr ip4_addr_bcast()
 {
-    Ip4Addr addr{};
-    addr.addr = make_u32(255,255,255,255);
-    return addr;
+    return {make_u32(255,255,255,255)};
 }
 
 /* Forward declaration to not include netif.h */
@@ -79,34 +75,35 @@ struct NetIfc;
 
 /** 255.255.255.255 */
 inline Ip4Addr ip4_addr_none() {
-    Ip4Addr addr = {uint32_t(0xffffffffUL)};
+    return {uint32_t(0xffffffffUL)};
 }
+
 
 //constexpr uint32_t kIpaddrNone = ;
 /** 127.0.0.1 */
 
 inline Ip4Addr ip4_addr_loopback() {
-    Ip4Addr addr = {uint32_t(0x7f000001UL)};
+    return {uint32_t(0x7f000001UL)};
 }
 
 /** 0.0.0.0 */
-constexpr uint32_t kIp4AddrAny4 = uint32_t(0x00000000UL);
+constexpr uint32_t IP4_ADDR_ANY4 = uint32_t(0x00000000UL);
 /** 255.255.255.255 */
-constexpr uint32_t kIpaddr4Broadcast = uint32_t(0xffffffffUL);
+constexpr uint32_t IP4_ADDR_BCAST = uint32_t(0xffffffffUL);
 
 /* Definitions of the bits in an Internet address integer.
 
    On subnets, host and network parts are found according to
    the subnet mask, not these masks.  */
-inline bool IsIp4ClassA(const uint32_t a)
+inline bool is_ip4_class_a(const uint32_t a)
 {
     return (uint32_t(a) & 0x80000000UL) == 0;
 }
 
-constexpr auto Ip4ClassANet = 0xff000000;
-constexpr auto Ip4ClassANShift = 24;
-constexpr auto Ip4ClassAHost = (0xffffffff & ~Ip4ClassANet);
-constexpr auto Ip4ClassAMax     =  128;
+constexpr auto IP4_CLASS_A_NET = 0xff000000;
+constexpr auto IP4_CLASS_A_NSHIFT = 24;
+constexpr auto IP4_CLASS_A_HOST = (0xffffffff & ~IP4_CLASS_A_NET);
+constexpr auto IP4_CLASS_A_MAX     =  128;
 
 inline bool IsIp4ClassB(const uint32_t a)
 {
@@ -115,24 +112,24 @@ inline bool IsIp4ClassB(const uint32_t a)
 
 constexpr auto IP_CLASSB_NET = 0xffff0000;
 constexpr auto IP_CLASSB_NSHIFT = 16;
-#define IP_CLASSB_HOST      (0xffffffff & ~IP_CLASSB_NET)
-#define IP_CLASSB_MAX       65536
+constexpr auto IP_CLASSB_HOST   =   (0xffffffff & ~IP_CLASSB_NET);
+constexpr auto IP_CLASSB_MAX   =    65536;
 
-#define IP_CLASSC(a)        ((((uint32_t)(a)) & 0xe0000000UL) == 0xc0000000UL)
-#define IP_CLASSC_NET       0xffffff00
-#define IP_CLASSC_NSHIFT    8
-#define IP_CLASSC_HOST      (0xffffffff & ~IP_CLASSC_NET)
+inline bool IP_CLASSC(const uint32_t a) {return       ((((uint32_t)(a)) & 0xe0000000UL) == 0xc0000000UL);}
+constexpr auto IP_CLASSC_NET   =    0xffffff00;
+constexpr auto IP_CLASSC_NSHIFT  =  8;
+constexpr auto IP_CLASSC_HOST   =   (0xffffffff & ~IP_CLASSC_NET);
 
-#define IP_CLASSD(a)        (((uint32_t)(a) & 0xf0000000UL) == 0xe0000000UL)
-#define IP_CLASSD_NET       0xf0000000          /* These ones aren't really */
-#define IP_CLASSD_NSHIFT    28                  /*   net and host fields, but */
-#define IP_CLASSD_HOST      0x0fffffff          /*   routing needn't know. */
-#define IP_MULTICAST(a)     IP_CLASSD(a)
+inline bool IP_CLASSD(const uint32_t a){return        (((uint32_t)(a) & 0xf0000000UL) == 0xe0000000UL);}
+constexpr auto IP_CLASSD_NET   =    0xf0000000   ;       /* These ones aren't really */
+constexpr auto IP_CLASSD_NSHIFT  =  28    ;              /*   net and host fields, but */
+constexpr auto IP_CLASSD_HOST   =   0x0fffffff   ;       /*   routing needn't know. */
+inline bool IP_MULTICAST(const uint32_t a){return     IP_CLASSD(a);}
 
-#define IP_EXPERIMENTAL(a)  (((uint32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
-#define IP_BADCLASS(a)      (((uint32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
+inline bool IP_EXPERIMENTAL(const uint32_t a){ return (((uint32_t)(a) & 0xf0000000UL) == 0xf0000000UL);}
+inline bool IP_BADCLASS(const uint32_t a)   {return   (((uint32_t)(a) & 0xf0000000UL) == 0xf0000000UL);}
 
-#define IP_LOOPBACKNET      127                 /* official! */
+constexpr auto IP_LOOPBACKNET   =   127;                 /* official! */
 
 /** Set an IP address given by the four byte-parts */
 inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
@@ -172,7 +169,7 @@ inline void ip4_addr_set_loopback(Ip4Addr* ipaddr)
 /** Check if an address is in the loopback region */
 inline bool ip4_addr_isloopback(const Ip4Addr* ipaddr)
 {
-    return (ipaddr->addr & pp_htonl(Ip4ClassANet)) == pp_htonl(
+    return (ipaddr->addr & pp_htonl(IP4_CLASS_A_NET)) == pp_htonl(
         uint32_t(IP_LOOPBACKNET) << 24);
 }
 
@@ -224,13 +221,13 @@ inline bool ip4_addr_cmp(const Ip4Addr* addr1, const Ip4Addr* addr2)
 //
 inline bool ip4_addr_isany_val(const Ip4Addr addr1)
 {
-    return addr1.addr == kIp4AddrAny4;
+    return addr1.addr == IP4_ADDR_ANY4;
 }
 
 
 inline bool ip4_addr_isany(const Ip4Addr* addr1)
 {
-    return addr1 == nullptr || addr1->addr == kIp4AddrAny4;
+    return addr1 == nullptr || addr1->addr == IP4_ADDR_ANY4;
 }
 
 uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetIfc *netif);
@@ -240,9 +237,10 @@ inline bool ip4_addr_isbroadcast(const Ip4Addr *addr1, const NetIfc *netif) {
   return ip4_addr_isbroadcast_u32((addr1)->addr, netif);
 }
 
-
-#define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
 uint8_t ip4_addr_netmask_valid(uint32_t netmask);
+
+inline bool ip_addr_netmask_valid(Ip4Addr* netmask){return ip4_addr_netmask_valid((netmask)->addr);}
+
 
 inline bool ip4_addr_ismulticast(const Ip4Addr* addr1)
 {
@@ -254,49 +252,76 @@ inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
     return (addr1->addr & pp_htonl(0xffff0000UL)) == pp_htonl(0xa9fe0000UL);
 }
 
-#define ip4_addr_debug_print_parts(debug, a, b, c, d) \
-  Logf(debug, ("%d.%d.%d.%" d, a, b, c, d))
-#define ip4_addr_debug_print(debug, ipaddr) \
-  ip4_addr_debug_print_parts(debug, \
-                      (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
-                      (uint16_t)((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
-                      (uint16_t)((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
-                      (uint16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
-#define ip4_addr_debug_print_val(debug, ipaddr) \
-  ip4_addr_debug_print_parts(debug, \
-                      ip4_addr1_16_val(ipaddr),       \
-                      ip4_addr2_16_val(ipaddr),       \
-                      ip4_addr3_16_val(ipaddr),       \
-                      ip4_addr4_16_val(ipaddr))
+// #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
+//   Logf(debug, ("%d.%d.%d.%" d, a, b, c, d))
+// #define ip4_addr_debug_print(debug, ipaddr) \
+//   ip4_addr_debug_print_parts(debug, \
+//                       (uint16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
+//                       (uint16_t)((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
+//                       (uint16_t)((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
+//                       (uint16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
+// #define ip4_addr_debug_print_val(debug, ipaddr) \
+//   ip4_addr_debug_print_parts(debug, \
+//                       ip4_addr1_16_val(ipaddr),       \
+//                       ip4_addr2_16_val(ipaddr),       \
+//                       ip4_addr3_16_val(ipaddr),       \
+//                       ip4_addr4_16_val(ipaddr))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr_get_byte(ipaddr, idx) (((const uint8_t*)(&(ipaddr)->addr))[idx])
-#define ip4_addr1(ipaddr) ip4_addr_get_byte(ipaddr, 0)
-#define ip4_addr2(ipaddr) ip4_addr_get_byte(ipaddr, 1)
-#define ip4_addr3(ipaddr) ip4_addr_get_byte(ipaddr, 2)
-#define ip4_addr4(ipaddr) ip4_addr_get_byte(ipaddr, 3)
+inline uint8_t
+ip4_addr_get_byte(const Ip4Addr* ipaddr, const size_t idx)
+{
+    return reinterpret_cast<const uint8_t*>(&ipaddr->addr)[idx];
+}
+
+inline uint8_t
+ip4_addr1(const Ip4Addr* ipaddr)
+{
+    return ip4_addr_get_byte(ipaddr, 0);
+}
+
+
+inline uint8_t
+ip4_addr2(const Ip4Addr* ipaddr)
+{
+    return ip4_addr_get_byte(ipaddr, 1);
+}
+
+
+inline uint8_t
+ip4_addr3(const Ip4Addr* ipaddr)
+{
+    return ip4_addr_get_byte(ipaddr, 2);
+}
+
+
+inline uint8_t
+ip4_addr4(const Ip4Addr* ipaddr)
+{
+    return ip4_addr_get_byte(ipaddr, 3);
+}
 /* Get one byte from the 4-byte address, but argument is 'Ip4Addr',
  * not a pointer */
-#define ip4_addr_get_byte_val(ipaddr, idx) ((uint8_t)(((ipaddr).addr >> (idx * 8)) & 0xff))
-#define ip4_addr1_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 0)
-#define ip4_addr2_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 1)
-#define ip4_addr3_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 2)
-#define ip4_addr4_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 3)
+// #define ip4_addr_get_byte_val(ipaddr, idx) ((uint8_t)(((ipaddr).addr >> (idx * 8)) & 0xff))
+// #define ip4_addr1_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 0)
+// #define ip4_addr2_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 1)
+// #define ip4_addr3_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 2)
+// #define ip4_addr4_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 3)
 /* These are cast to uint16_t, with the intent that they are often arguments
  * to printf using the d format from cc.h. */
-#define ip4_addr1_16(ipaddr) ((uint16_t)ip4_addr1(ipaddr))
-#define ip4_addr2_16(ipaddr) ((uint16_t)ip4_addr2(ipaddr))
-#define ip4_addr3_16(ipaddr) ((uint16_t)ip4_addr3(ipaddr))
-#define ip4_addr4_16(ipaddr) ((uint16_t)ip4_addr4(ipaddr))
-#define ip4_addr1_16_val(ipaddr) ((uint16_t)ip4_addr1_val(ipaddr))
-#define ip4_addr2_16_val(ipaddr) ((uint16_t)ip4_addr2_val(ipaddr))
-#define ip4_addr3_16_val(ipaddr) ((uint16_t)ip4_addr3_val(ipaddr))
-#define ip4_addr4_16_val(ipaddr) ((uint16_t)ip4_addr4_val(ipaddr))
+// #define ip4_addr1_16(ipaddr) ((uint16_t)ip4_addr1(ipaddr))
+// #define ip4_addr2_16(ipaddr) ((uint16_t)ip4_addr2(ipaddr))
+// #define ip4_addr3_16(ipaddr) ((uint16_t)ip4_addr3(ipaddr))
+// #define ip4_addr4_16(ipaddr) ((uint16_t)ip4_addr4(ipaddr))
+// #define ip4_addr1_16_val(ipaddr) ((uint16_t)ip4_addr1_val(ipaddr))
+// #define ip4_addr2_16_val(ipaddr) ((uint16_t)ip4_addr2_val(ipaddr))
+// #define ip4_addr3_16_val(ipaddr) ((uint16_t)ip4_addr3_val(ipaddr))
+// #define ip4_addr4_16_val(ipaddr) ((uint16_t)ip4_addr4_val(ipaddr))
 
-#define IP4ADDR_STRLEN_MAX  16
+constexpr auto IP4ADDR_STRLEN_MAX = 16;
 
 /** For backwards compatibility */
-#define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
+// inline const char* ip_ntoa(Ip4Addr* ipaddr){return  ipaddr_ntoa(ipaddr);}
 
 uint32_t ipaddr_addr(const char *cp);
 int ip4addr_aton(const char *cp, Ip4Addr* addr);

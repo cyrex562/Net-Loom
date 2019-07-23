@@ -33,7 +33,12 @@ struct IpAddr
 
 struct NetIfc;
 
-extern const struct IpAddr kIpAddrAnyType;
+// extern const struct IpAddr kIpAddrAnyType;
+
+inline IpAddr kIpAddrAnyType()
+{
+         return {{{{0UL, 0UL, 0UL, 0UL}, IP6_NO_ZONE}}, IPADDR_TYPE_ANY};
+}
 
 inline IpAddr init_ip_addr_ip4(const uint32_t u32_val)
 {

@@ -2,7 +2,7 @@
 #include <packet_buffer.h>
 #include <sys.h>
 #include <tcpip.h>
-#include <lwip_snmp.h>
+
 #include <ip4.h> /* for ip4_input() */
 #include <ip6.h> /* for ip6_input() */
 #include <dns.h>
@@ -119,7 +119,7 @@ void ppp_set_notify_phase_callback(PppPcb* pcb,
 LwipStatus
 ppp_connect(PppPcb* pcb, uint16_t holdoff)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
     if (pcb->phase != PPP_PHASE_DEAD)
     {
         return ERR_ALREADY;
@@ -151,7 +151,7 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
 LwipStatus
 ppp_listen(PppPcb* pcb)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
     if (pcb->phase != PPP_PHASE_DEAD)
     {
         return ERR_ALREADY;
@@ -184,7 +184,7 @@ ppp_listen(PppPcb* pcb)
 LwipStatus
 ppp_close(PppPcb *pcb, uint8_t nocarrier)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
 
     pcb->err_code = PPPERR_USER;
 
@@ -253,7 +253,7 @@ LwipStatus
 ppp_free(PppPcb* pcb)
 {
     LwipStatus err;
-    LWIP_ASSERT_CORE_LOCKED();
+   
     if (pcb->phase != PPP_PHASE_DEAD)
     {
         return ERR_CONN;
@@ -275,7 +275,7 @@ ppp_free(PppPcb* pcb)
 LwipStatus
 ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
     if (pcb == nullptr)
     {
         return ERR_VAL;
@@ -437,7 +437,7 @@ ppp_netif_output(NetIfc* netif, struct PacketBuffer* pb, uint16_t protocol)
         /* if VJ compressor returned a new allocated PacketBuffer, free it */
         if (fpb)
         {
-            pbuf_free(fpb);
+            free_pkt_buf(fpb);
         }
         /* mppe_compress() returns a new allocated PacketBuffer, indicate we should free
          * our duplicated PacketBuffer later */
@@ -460,7 +460,7 @@ err_rte_drop:
 err:
     if (fpb)
     {
-        pbuf_free(fpb);
+        free_pkt_buf(fpb);
     }
     return err;
 }
@@ -528,7 +528,7 @@ PppPcb* init_ppp_pcb(NetIfc* pppif,
     pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
     pcb->netif = pppif;
-    Ip4Addr ip4_any = ip4_addr_any();
+    Ip4Addr ip4_any = create_ip4_addr_any();
     Ip4Addr ip4_bcast = ip4_addr_bcast();
     if (!netif_add(pcb->netif,
                    &ip4_any,
@@ -620,7 +620,7 @@ bool ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
     magic_randomize();
     if (pb->len < 2)
     {
-        pbuf_free(pb);
+        free_pkt_buf(pb);
         return false;
     }
 
@@ -773,7 +773,7 @@ bool ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
         break;
     }
     drop: 
-    out: pbuf_free(pb);
+    out: free_pkt_buf(pb);
     }
 
 /*
@@ -992,7 +992,7 @@ sifdown(PppPcb* pcb)
 uint32_t
 get_mask(uint32_t addr)
 {
-    return kIpaddr4Broadcast;
+    return IP4_ADDR_BCAST;
 }
 
 #define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \

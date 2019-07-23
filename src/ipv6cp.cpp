@@ -860,7 +860,7 @@ endswitch:
 
 	/* Need to move CI? */
 	if (ucp != cip)
-	    MEMCPY(ucp, cip, cilen);	/* Move it */
+	    memcpy(ucp, cip, cilen);	/* Move it */
 
 	/* Update output pointer */
 	INCPTR(cilen, ucp);

@@ -17,8 +17,8 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
   set_ip4_addr_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((~addr == kIp4AddrAny4) ||
-      (addr == kIp4AddrAny4)) {
+  if ((~addr == IP4_ADDR_ANY4) ||
+      (addr == IP4_ADDR_ANY4)) {
     return 1;
     /* no broadcast support on this network interface? */
   }
@@ -35,7 +35,7 @@ ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
   if (ip4_addr_netcmp(&ipaddr, get_net_ifc_ip4_addr(netif), netif_ip4_netmask(netif))
       /* ...and host identifier bits are all ones? =>... */
       && ((addr & ~get_ip4_addr(netif_ip4_netmask(netif))) ==
-          (kIpaddr4Broadcast & ~get_ip4_addr(netif_ip4_netmask(netif))))) {
+          (IP4_ADDR_BCAST & ~get_ip4_addr(netif_ip4_netmask(netif))))) {
       /* => network broadcast address */
       return 1;
   }

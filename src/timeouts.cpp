@@ -105,7 +105,7 @@ tcpip_tcp_timer(void* arg)
 void
 tcp_timer_needed(void)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* timer is off but needed again? */
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
@@ -222,7 +222,7 @@ sys_untimeout(SysTimeoutHandler handler, void* arg)
 {
   struct SysTimeoutContext *prev_t, *t;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   if (next_timeout == nullptr) {
     return;
@@ -258,7 +258,7 @@ sys_check_timeouts(void)
 {
   uint32_t now;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   /* Process only timers expired at the start of the function. */
   now = sys_now();
@@ -332,7 +332,7 @@ sys_timeouts_sleeptime(void)
 {
   uint32_t now;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   if (next_timeout == nullptr) {
     return SYS_TIMEOUTS_SLEEPTIME_INFINITE;

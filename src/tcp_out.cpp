@@ -157,7 +157,7 @@ tcp_create_segment(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_t hdr
     seg = new tcp_seg;
   if (seg  == nullptr) {
     Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_create_segment: no memory.\n"));
-    pbuf_free(p);
+    free_pkt_buf(p);
     return nullptr;
   }
   seg->flags = optflags;
@@ -245,7 +245,7 @@ tcp_pbuf_prealloc(PbufLayer layer, uint16_t length, uint16_t max_length,
     }
   }
 
-  p = pbuf_alloc(layer, alloc, PBUF_RAM);
+  p = pbuf_alloc(layer, alloc);
   if (p == nullptr) {
     return nullptr;
   }
@@ -398,7 +398,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
   mss_local = LWIP_MIN(pcb->mss, TCPWND_MIN16(pcb->snd_wnd_max / 2));
   mss_local = mss_local ? mss_local : pcb->mss;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
 
 
@@ -533,7 +533,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
           lwip_assert("tcp_write: ROM pbufs cannot be oversized", pos == 0);
           extendlen = seglen;
         } else {
-          if ((concat_p = pbuf_alloc(PBUF_RAW, seglen, PBUF_ROM)) == nullptr) {
+          if ((concat_p = pbuf_alloc(PBUF_RAW, seglen)) == nullptr) {
             Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                  ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"));
             goto memerr;
@@ -596,7 +596,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 
       lwip_assert("oversize == 0", oversize == 0);
 
-      if ((p2 = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == nullptr) {
+      if ((p2 = pbuf_alloc(PBUF_TRANSPORT, seglen)) == nullptr) {
         Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"));
         goto memerr;
       }
@@ -612,10 +612,10 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
       ((struct pbuf_rom *)p2)->payload = (const uint8_t *)arg + pos;
 
       /* Second, allocate a PacketBuffer for the headers. */
-      if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == nullptr) {
+      if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen)) == nullptr) {
         /* If allocation fails, we have to deallocate the data PacketBuffer as
          * well. */
-        pbuf_free(p2);
+        free_pkt_buf(p2);
         Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_write: could not allocate memory for header PacketBuffer\n"));
         goto memerr;
       }
@@ -631,7 +631,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
     if (queuelen > LWIP_MIN(TCP_SND_QUEUELEN, TCP_SNDQUEUELEN_OVERFLOW)) {
       Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_write: queue too long %d (%d)\n",
                queuelen, (int)TCP_SND_QUEUELEN));
-      pbuf_free(p);
+      free_pkt_buf(p);
       goto memerr;
     }
 
@@ -758,7 +758,7 @@ memerr:
   TCP_STATS_INC(tcp.memerr);
 
   if (concat_p != nullptr) {
-    pbuf_free(concat_p);
+    free_pkt_buf(concat_p);
   }
   if (queue != nullptr) {
     tcp_segs_free(queue);
@@ -834,7 +834,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   remainder = useg->len - split;
 
   /* Create new PacketBuffer for the remainder of the split */
-  p = pbuf_alloc(PBUF_TRANSPORT, remainder + optlen, PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, remainder + optlen);
   if (p == nullptr) {
     Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
          ("tcp_split_unsent_seg: could not allocate memory for PacketBuffer remainder %u\n", remainder));
@@ -938,7 +938,7 @@ memerr:
 
   lwip_assert("seg == NULL", seg == nullptr);
   if (p != nullptr) {
-    pbuf_free(p);
+    free_pkt_buf(p);
   }
 
   return ERR_MEM;
@@ -1027,7 +1027,7 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
   optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb);
 
   /* Allocate PacketBuffer with room for TCP header + options */
-  if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == nullptr) {
+  if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen)) == nullptr) {
     tcp_set_flags(pcb, TF_NAGLEMEMERR);
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
@@ -1041,7 +1041,7 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
-  lwip_assert("seg->tcphdr not aligned", ((uintptr_t)seg->tcphdr % LWIP_MIN(MEM_ALIGNMENT, 4)) == 0);
+  lwip_assert("seg->tcphdr not aligned", ((uintptr_t)seg->tcphdr % LWIP_MIN(1, 4)) == 0);
   lwip_assert("tcp_enqueue_flags: invalid segment length", seg->len == 0);
 
   Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE,
@@ -1189,7 +1189,7 @@ tcp_output(struct TcpPcb *pcb)
   NetIfc*netif;
 
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   lwip_assert("tcp_output: invalid pcb", pcb != nullptr);
   /* pcb->state LISTEN not allowed here */
@@ -1745,7 +1745,7 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
   struct TcpHdr *tcphdr;
   struct PacketBuffer *p;
 
-  p = pbuf_alloc(PBUF_IP, TCP_HDR_LEN + optlen + datalen, PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, TCP_HDR_LEN + optlen + datalen);
   if (p != nullptr) {
     lwip_assert("check that first pbuf can hold struct tcp_hdr",
                 (p->len >= TCP_HDR_LEN + optlen));
@@ -1871,7 +1871,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
     err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
     NETIF_RESET_HINTS(netif);
   }
-  pbuf_free(p);
+  free_pkt_buf(p);
   return err;
 }
 
@@ -1925,7 +1925,7 @@ tcp_rst(const struct TcpPcb *pcb, uint32_t seqno, uint32_t ackno,
   
 
   tcp_output_control_segment(pcb, p, local_ip, remote_ip);
-  Logf(TCP_RST_DEBUG, ("tcp_rst: seqno %d ackno %d.\n", seqno, ackno));
+  Logf(true, ("tcp_rst: seqno %d ackno %d.\n", seqno, ackno));
 }
 
 /**

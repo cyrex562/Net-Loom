@@ -45,7 +45,6 @@
 #include <def.h>
 #include <packet_buffer.h>
 #include <netif.h>
-
 #include <lwip_status.h>
 
 
@@ -255,3 +254,12 @@ LwipStatus         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth
 
 
 #define ip6_debug_print(p)
+
+inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
+{
+    const auto selected_netif = ip6_route((src), (dest));
+    if (selected_netif != nullptr)
+    {
+        ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif);
+    }
+}

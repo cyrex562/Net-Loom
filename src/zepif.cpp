@@ -121,7 +121,7 @@ zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
         return;
     }
 err_return:
-    pbuf_free(p);
+    free_pkt_buf(p);
 }
 
 /* Send 6LoWPAN TX packets as UDP broadcast */
@@ -142,7 +142,7 @@ zepif_linkoutput(NetIfc* netif, struct PacketBuffer* p)
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
     lwip_assert("state->pcb != NULL", state->pcb != nullptr);
 
-  q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len, PBUF_RAM);
+  q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len);
   if (q == nullptr) {
     return ERR_MEM;
   }
@@ -166,7 +166,7 @@ zepif_linkoutput(NetIfc* netif, struct PacketBuffer* p)
         zepif_udp_recv(netif, state->pcb, pbuf_clone(PBUF_RAW, PBUF_RAM, q), nullptr, 0);
         err = udp_sendto(state->pcb, q, state->init.zep_dst_ip_addr, state->init.zep_dst_udp_port);
     }
-    pbuf_free(q);
+    free_pkt_buf(q);
 
     return err;
 }
@@ -208,7 +208,7 @@ zepif_init(NetIfc* netif)
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
-        state->init.zep_dst_ip_addr = kIpaddr4Broadcast();
+        state->init.zep_dst_ip_addr = IP4_ADDR_BCAST();
     }
 
 
@@ -238,7 +238,7 @@ zepif_init(NetIfc* netif)
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }
     lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == ERR_OK);
-    ip_set_option(state->pcb, SOF_BROADCAST);
+    set_ip4_option(state->pcb, SOF_BROADCAST);
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);

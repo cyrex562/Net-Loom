@@ -10,6 +10,7 @@
 #include <def.h>
 #include <ip4_addr.h>
 #include <ip6_addr.h>
+#include <igmp_grp.h>
 #include <array>
 
 struct Ip6Addr;
@@ -58,13 +59,13 @@ enum NetIfcFlag : uint8_t
     /** If set, the netif is an ethernet device. It might not use
     * ARP or TCP/IP if it is used for PPPoE only.
     */
-    kNetifFlagEthernet = 0x10U,
+    NETIF_FLAG_ETH = 0x10U,
     /** If set, the netif has IGMP capability.
     * Set by the netif driver in its init function. */
-    kNetifFlagIgmp = 0x20U,
+    NETIF_FLAG_IGMP = 0x20U,
     /** If set, the netif has MLD6 capability.
     * Set by the netif driver in its init function. */
-    kNetifFlagMld6 = 0x40U,
+    NETIF_FLAG_MLD6 = 0x40U,
 };
 
 
@@ -114,7 +115,7 @@ enum NetifMacFilterAction {
 // netif: The netif to initialize
 // returns LwipStatus
 //
-using NetifInitFn = LwipStatus (*)(struct NetIfc*);
+using NetifInitFn = LwipStatus (*)(NetIfc*);
 
 /** Function prototype for netif->input functions. This function is saved as 'input'
  * callback function in the netif struct. Call it when a packet has been received.
@@ -125,7 +126,7 @@ using NetifInitFn = LwipStatus (*)(struct NetIfc*);
  *         != ERR_OK is the packet was NOT handled, in this case, the caller has
  *                   to free the PacketBuffer
  */
-using NetifInputFn = LwipStatus (*)(struct PacketBuffer*, struct NetIfc*);
+using NetifInputFn = LwipStatus (*)(PacketBuffer*, NetIfc*);
 
 
 // Function prototype for netif->output functions. Called by lwIP when a packet
@@ -137,8 +138,8 @@ using NetifInputFn = LwipStatus (*)(struct PacketBuffer*, struct NetIfc*);
 // @param p The packet to send (p->payload points to IP header)
 // @param ipaddr The IP address to which the packet shall be sent
 //
-using netif_output_fn = LwipStatus (*)(struct NetIfc*,
-                                       struct PacketBuffer*,
+using netif_output_fn = LwipStatus (*)(NetIfc*,
+                                       PacketBuffer*,
                                        const Ip4Addr*);
 
 
@@ -150,8 +151,8 @@ using netif_output_fn = LwipStatus (*)(struct NetIfc*,
  * @param p The packet to send (p->payload points to IP header)
  * @param ipaddr The IPv6 address to which the packet shall be sent
  */
-using netif_output_ip6_fn = LwipStatus (*)(struct NetIfc*,
-                                           struct PacketBuffer*,
+using netif_output_ip6_fn = LwipStatus (*)(NetIfc*,
+                                           PacketBuffer*,
                                            const Ip6Addr*);
 
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
@@ -160,19 +161,19 @@ using netif_output_ip6_fn = LwipStatus (*)(struct NetIfc*,
  * @param netif The netif which shall send a packet
  * @param p The packet to send (raw ethernet packet)
  */
-using netif_linkoutput_fn = LwipStatus (*)(struct NetIfc*, struct PacketBuffer*);
+using netif_linkoutput_fn = LwipStatus (*)(NetIfc*, PacketBuffer*);
 /** Function prototype for netif status- or link-callback functions. */
-using netif_status_callback_fn = void (*)(struct NetIfc*);
+using netif_status_callback_fn = void (*)(NetIfc*);
 
 /** Function prototype for netif igmp_mac_filter functions */
-using netif_igmp_mac_filter_fn = LwipStatus (*)(struct NetIfc*,
+using NetifIgmpMacFilterFn = LwipStatus (*)(NetIfc*,
                                                 const Ip4Addr*,
-                                                enum NetifMacFilterAction);
+                                                NetifMacFilterAction);
 
 /** Function prototype for netif mld_mac_filter functions */
-using netif_mld_mac_filter_fn = LwipStatus (*)(struct NetIfc*,
-                                               const Ip6Addr*,
-                                               enum NetifMacFilterAction);
+using netif_mld_mac_filter_fn = LwipStatus (*)( NetIfc*,
+                                                Ip6Addr*,
+                                                NetifMacFilterAction);
 
 /** @ingroup netif_cd
  * Set client data. Obtain ID from netif_alloc_client_data_id().
@@ -261,7 +262,7 @@ struct NetIfc
     uint32_t ts; /** counters */ //  struct stats_mib2_netif_ctrs mib2_counters;
     /** This function could be called to add or delete an entry in the multicast
         filter table of the ethernet MAC.*/
-    netif_igmp_mac_filter_fn igmp_mac_filter;
+    NetifIgmpMacFilterFn igmp_mac_filter;
     /** This function could be called to add or delete an entry in the IPv6 multicast
             filter table of the ethernet MAC. */
     netif_mld_mac_filter_fn mld_mac_filter;
@@ -551,7 +552,7 @@ inline uint8_t netif_get_index(const NetIfc* netif)
     return uint8_t(netif->num + 1);
 }
 
-constexpr auto NETIF_NO_INDEX = (0);
+constexpr auto NETIF_NO_INDEX = -1;
 
 /**
  * @ingroup netif
@@ -707,15 +708,43 @@ inline const IpAddr* ip6_netif_get_local_ip(NetIfc* netif, Ip6Addr* dest)
 }
 
 
-inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
+
+
+
+/** @ingroup igmp 
+ * Get list head of IGMP groups for netif.
+ * Note: The allsystems group IP is contained in the list as first entry.
+ * @see @ref netif_set_igmp_mac_filter()
+ */
+inline IgmpGroup* netif_igmp_data(NetIfc* netif)
 {
-    const auto selected_netif = ip6_route((src), (dest));
-    if (selected_netif != nullptr)
-    {
-        ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif);
-    }
+    return static_cast<IgmpGroup *>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_IGMP]
+    );
 }
 
+
+/**
+ * Search for a group in the netif's igmp group list
+ *
+ * @param ifp the network interface for which to look
+ * @param addr the group ip address to search for
+ * @return a struct igmp_group* if the group has been found,
+ *         NULL if the group wasn't found.
+ */
+inline IgmpGroup*
+igmp_lookfor_group(NetIfc* ifp, const Ip4Addr* addr)
+{
+    IgmpGroup* group = netif_igmp_data(ifp);
+    while (group != nullptr) {
+        if (ip4_addr_cmp(&(group->group_address), addr)) {
+            return group;
+        }
+        group = group->next;
+    } /* to be clearer, we return NULL here instead of
+   * 'group' (which is also NULL at this point).
+   */
+    return nullptr;
+}
 
 //
 // END OF FILE

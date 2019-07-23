@@ -75,7 +75,7 @@
 #include <mem.h>
 #include <udp.h>
 #include <tcpip.h>
-#include <lwip_snmp.h>
+
 #include <lowpan6_common.h>
 #include <string.h>
 
@@ -232,7 +232,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
   /* We'll use a dedicated PacketBuffer for building BLE fragments.
    * We'll over-allocate it by the bytes saved for header compression.
    */
-  p_frag = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+  p_frag = pbuf_alloc(PBUF_RAW, p->tot_len);
   if (p_frag == nullptr) {
     return ERR_MEM;
   }
@@ -245,7 +245,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
     &lowpan6_header_len, &hidden_header_len, rfc7668_context, &rfc7668_local_addr, &rfc7668_peer_addr);
   if (err != ERR_OK) {
 
-    pbuf_free(p_frag);
+    free_pkt_buf(p_frag);
     return err;
   }
   pbuf_remove_header(p, hidden_header_len);
@@ -264,7 +264,7 @@ rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
 //  Logf(LWIP_LOWPAN6_DEBUG|LWIP_DBG_TRACE, ("rfc7668_output: sending packet %p\n", (uint8_t *)p));
   err = netif->linkoutput(netif, p_frag);
 
-  pbuf_free(p_frag);
+  free_pkt_buf(p_frag);
 
   return err;
 
@@ -347,7 +347,7 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
   /* invalid header byte, discard */
   } else {
 //    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, discarding: 0x%2x \n", *puc));
-    pbuf_free(p);
+    free_pkt_buf(p);
     return ERR_OK;
   }
   /* @todo: distinguish unicast/multicast */

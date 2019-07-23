@@ -7,7 +7,7 @@
 #include <lwip_status.h>
 #include <netif.h>
 #include <udp.h>
-#include <lwip_snmp.h>
+
 #include <ppp_impl.h>
 #include <lcp.h>
 #include <ipcp.h>
@@ -87,14 +87,13 @@ static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
     struct PacketBuffer* ph; /* UDP + L2TP header */
     LwipStatus ret;
     ph = pbuf_alloc(PBUF_TRANSPORT,
-                    (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN),
-                    PBUF_RAM);
+                    (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN));
     if (!ph)
     {
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.proterr);
         MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
-        pbuf_free(p);
+        free_pkt_buf(p);
         return ERR_MEM;
     }
     pbuf_remove_header(ph, PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
@@ -125,7 +124,7 @@ static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct Packet
 #endif /* MIB2_STATS */
 
   /* @todo: try to use pbuf_header() here! */
-  pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol), PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol));
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
@@ -391,7 +390,7 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
 packet_too_short:
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
 free_and_return:
-  pbuf_free(p);
+  free_pkt_buf(p);
 }
 
 /* L2TP Control packet entry point */
@@ -730,7 +729,7 @@ static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp) {
 
 
   /* allocate a buffer */
-    auto pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+    auto pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -774,14 +773,14 @@ static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp) {
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6+sizeof(PPPOL2TP_HOSTNAME)-1, p); /* Mandatory flag + len field */
   PUTSHORT(0, p); /* Vendor ID */
   PUTSHORT(PPPOL2TP_AVPTYPE_HOSTNAME, p); /* Attribute type: Hostname */
-  MEMCPY(p, PPPOL2TP_HOSTNAME, sizeof(PPPOL2TP_HOSTNAME)-1); /* Attribute value: Hostname */
+  memcpy(p, PPPOL2TP_HOSTNAME, sizeof(PPPOL2TP_HOSTNAME)-1); /* Attribute value: Hostname */
   INCPTR(sizeof(PPPOL2TP_HOSTNAME)-1, p);
 
   /* AVP - Vendor name */
   PUTSHORT(6+sizeof(PPPOL2TP_VENDORNAME)-1, p); /* len field */
   PUTSHORT(0, p); /* Vendor ID */
   PUTSHORT(PPPOL2TP_AVPTYPE_VENDORNAME, p); /* Attribute type: Vendor name */
-  MEMCPY(p, PPPOL2TP_VENDORNAME, sizeof(PPPOL2TP_VENDORNAME)-1); /* Attribute value: Vendor name */
+  memcpy(p, PPPOL2TP_VENDORNAME, sizeof(PPPOL2TP_VENDORNAME)-1); /* Attribute value: Vendor name */
   INCPTR(sizeof(PPPOL2TP_VENDORNAME)-1, p);
 
   /* AVP - Assign tunnel ID */
@@ -802,7 +801,7 @@ static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp) {
     PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6 + sizeof(l2tp->secret_rv), p); /* Mandatory flag + len field */
     PUTSHORT(0, p); /* Vendor ID */
     PUTSHORT(PPPOL2TP_AVPTYPE_CHALLENGE, p); /* Attribute type: Challenge */
-    MEMCPY(p, l2tp->secret_rv, sizeof(l2tp->secret_rv)); /* Attribute value: Random vector */
+    memcpy(p, l2tp->secret_rv, sizeof(l2tp->secret_rv)); /* Attribute value: Random vector */
     INCPTR(sizeof(l2tp->secret_rv), p);
   }
 
@@ -825,7 +824,7 @@ static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -853,7 +852,7 @@ static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
     PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 6 + sizeof(l2tp->challenge_hash), p); /* Mandatory flag + len field */
     PUTSHORT(0, p); /* Vendor ID */
     PUTSHORT(PPPOL2TP_AVPTYPE_CHALLENGERESPONSE, p); /* Attribute type: Challenge response */
-    MEMCPY(p, l2tp->challenge_hash, sizeof(l2tp->challenge_hash)); /* Attribute value: Computed challenge */
+    memcpy(p, l2tp->challenge_hash, sizeof(l2tp->challenge_hash)); /* Attribute value: Computed challenge */
     INCPTR(sizeof(l2tp->challenge_hash), p);
   }
 
@@ -872,7 +871,7 @@ static LwipStatus pppol2tp_send_icrq(Pppol2tpPcb *l2tp, uint16_t ns) {
   len = 12 +8 +8 +10;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -920,7 +919,7 @@ static LwipStatus pppol2tp_send_iccn(Pppol2tpPcb *l2tp, uint16_t ns) {
   len = 12 +8 +10 +10;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -967,7 +966,7 @@ static LwipStatus pppol2tp_send_zlb(Pppol2tpPcb *l2tp, uint16_t ns, uint16_t nr)
   len = 12;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -996,7 +995,7 @@ static LwipStatus pppol2tp_send_stopccn(Pppol2tpPcb *l2tp, uint16_t ns) {
   len = 12 +8 +8 +8;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+  pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -1041,7 +1040,7 @@ static LwipStatus pppol2tp_xmit(Pppol2tpPcb *l2tp, struct PacketBuffer *pb) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
     LINK_STATS_INC(link.lenerr);
-    pbuf_free(pb);
+    free_pkt_buf(pb);
     return ERR_BUF;
   }
 
@@ -1060,7 +1059,7 @@ static LwipStatus pppol2tp_udp_send(Pppol2tpPcb *l2tp, struct PacketBuffer *pb) 
   } else {
     err = udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
-  pbuf_free(pb);
+  free_pkt_buf(pb);
   return err;
 }
 

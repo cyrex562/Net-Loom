@@ -371,7 +371,7 @@ LwipStatus ip6_input(struct PacketBuffer* p, NetIfc* inp)
   raw_input_state_t raw_status;
 
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   IP6_STATS_INC(ip6.recv);
 
@@ -380,7 +380,7 @@ LwipStatus ip6_input(struct PacketBuffer* p, NetIfc* inp)
   if (IP6H_V(ip6hdr) != 6) {
     Logf(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IPv6 packet dropped due to bad version number %d\n",
         IP6H_V(ip6hdr)));
-    pbuf_free(p);
+    free_pkt_buf(p);
     IP6_STATS_INC(ip6.err);
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
@@ -406,7 +406,7 @@ LwipStatus ip6_input(struct PacketBuffer* p, NetIfc* inp)
             (uint16_t)(IP6H_PLEN(ip6hdr) + IP6_HLEN), p->tot_len));
     }
     /* free (drop) packet pbufs */
-    pbuf_free(p);
+    free_pkt_buf(p);
     IP6_STATS_INC(ip6.lenerr);
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
@@ -426,7 +426,7 @@ LwipStatus ip6_input(struct PacketBuffer* p, NetIfc* inp)
      ip6_addr_isipv4mappedipv6(ip_2_ip6(&ip_data.current_iphdr_src)) ||
      ip6_addr_ismulticast(ip_2_ip6(&ip_data.current_iphdr_src))) {
     /* free (drop) packet pbufs */
-    pbuf_free(p);
+    free_pkt_buf(p);
     IP6_STATS_INC(ip6.err);
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
@@ -501,7 +501,7 @@ netif_found:
     /* packet source is not valid */
     /* free (drop) packet pbufs */
     Logf(IP6_DEBUG, ("ip6_input: packet with src ANY_ADDRESS dropped\n"));
-    pbuf_free(p);
+    free_pkt_buf(p);
     IP6_STATS_INC(ip6.drop);
     goto ip6_input_cleanup;
   }
@@ -517,7 +517,7 @@ netif_found:
       ip6_forward(p, ip6hdr, inp);
     }
 
-    pbuf_free(p);
+    free_pkt_buf(p);
     goto ip6_input_cleanup;
   }
 
@@ -558,7 +558,7 @@ netif_found:
           ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
-        pbuf_free(p);
+        free_pkt_buf(p);
         IP6_STATS_INC(ip6.err);
         IP6_STATS_INC(ip6.drop);
         return ERR_OK;
@@ -582,7 +582,7 @@ netif_found:
           ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
-        pbuf_free(p);
+        free_pkt_buf(p);
         IP6_STATS_INC(ip6.lenerr);
         IP6_STATS_INC(ip6.drop);
         return ERR_OK;
@@ -614,7 +614,7 @@ netif_found:
           ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
-        pbuf_free(p);
+        free_pkt_buf(p);
         IP6_STATS_INC(ip6.err);
         IP6_STATS_INC(ip6.drop);
         return ERR_OK;
@@ -663,7 +663,7 @@ netif_found:
           ("IPv6 options header (hlen %d) does not fit in first PacketBuffer (len %d), IPv6 packet dropped.\n",
               hlen, p->len));
         /* free (drop) packet pbufs */
-        pbuf_free(p);
+        free_pkt_buf(p);
         IP6_STATS_INC(ip6.drop);
         goto ip6_input_cleanup;
     } /* packet not for us? */
@@ -677,7 +677,7 @@ netif_found:
             /* try to forward IP packet on (other) interfaces */
             ip6_forward(p, ip6hdr, inp,,);
         }
-        pbuf_free(p);
+        free_pkt_buf(p);
         goto ip6_input_cleanup;
     } /* current netif pointer. */
     ip_data.current_netif = netif; /* Save next header type. */
@@ -705,7 +705,7 @@ netif_found:
                          ") does not fit in first PacketBuffer (len %"d
                          "), IPv6 packet dropped.\n", hlen, p->len));
                 /* free (drop) packet pbufs */
-                pbuf_free(p);
+                free_pkt_buf(p);
                 IP6_STATS_INC(ip6.lenerr);
                 IP6_STATS_INC(ip6.drop);
                 goto ip6_input_cleanup;
@@ -740,7 +740,7 @@ netif_found:
                             IP6_DEBUG,
                             ("ip6_input: packet with invalid Hop-by-Hop option type dropped.\n"
                             ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     case 2: /* Send ICMP Parameter Problem */ icmp6_param_problem(
@@ -750,7 +750,7 @@ netif_found:
                         Logf(IP6_DEBUG,
                              ("ip6_input: packet with invalid Hop-by-Hop option type dropped.\n"
                              ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     case 3:
@@ -762,7 +762,7 @@ netif_found:
                         Logf(IP6_DEBUG,
                              ("ip6_input: packet with invalid Hop-by-Hop option type dropped.\n"
                              ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     default: /* Skip over this option. */ opt_dlen =
@@ -791,7 +791,7 @@ netif_found:
                          ") does not fit in first PacketBuffer (len %"d
                          "), IPv6 packet dropped.\n", hlen, p->len));
                 /* free (drop) packet pbufs */
-                pbuf_free(p);
+                free_pkt_buf(p);
                 IP6_STATS_INC(ip6.lenerr);
                 IP6_STATS_INC(ip6.drop);
                 goto ip6_input_cleanup;
@@ -829,7 +829,7 @@ netif_found:
                             IP6_DEBUG,
                             ("ip6_input: packet with invalid destination option type dropped.\n"
                             ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     case 2: /* Send ICMP Parameter Problem */ icmp6_param_problem(
@@ -839,7 +839,7 @@ netif_found:
                         Logf(IP6_DEBUG,
                              ("ip6_input: packet with invalid destination option type dropped.\n"
                              ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     case 3:
@@ -851,7 +851,7 @@ netif_found:
                         Logf(IP6_DEBUG,
                              ("ip6_input: packet with invalid destination option type dropped.\n"
                              ));
-                        pbuf_free(p);
+                        free_pkt_buf(p);
                         IP6_STATS_INC(ip6.drop);
                         goto ip6_input_cleanup;
                     default: /* Skip over this option. */ opt_dlen =
@@ -879,7 +879,7 @@ netif_found:
                          ") does not fit in first PacketBuffer (len %"d
                          "), IPv6 packet dropped.\n", hlen, p->len));
                 /* free (drop) packet pbufs */
-                pbuf_free(p);
+                free_pkt_buf(p);
                 IP6_STATS_INC(ip6.lenerr);
                 IP6_STATS_INC(ip6.drop);
                 goto ip6_input_cleanup;
@@ -895,7 +895,7 @@ netif_found:
                     icmp6_param_problem(p, ICMP6_PP_FIELD, &rout_hdr->_hlen);
                     Logf(IP6_DEBUG,
                          ("ip6_input: packet with invalid routing type dropped\n"));
-                    pbuf_free(p);
+                    free_pkt_buf(p);
                     IP6_STATS_INC(ip6.drop);
                     goto ip6_input_cleanup;
                 }
@@ -911,7 +911,7 @@ netif_found:
                     icmp6_param_problem(p, ICMP6_PP_FIELD, &IP6_ROUT_TYPE(rout_hdr));
                     Logf(IP6_DEBUG,
                          ("ip6_input: packet with invalid routing type dropped\n"));
-                    pbuf_free(p);
+                    free_pkt_buf(p);
                     IP6_STATS_INC(ip6.drop);
                     goto ip6_input_cleanup;
                 }
@@ -933,7 +933,7 @@ netif_found:
                          ") does not fit in first PacketBuffer (len %"d
                          "), IPv6 packet dropped.\n", hlen, p->len));
                 /* free (drop) packet pbufs */
-                pbuf_free(p);
+                free_pkt_buf(p);
                 IP6_FRAG_STATS_INC(ip6_frag.lenerr);
                 IP6_FRAG_STATS_INC(ip6_frag.drop);
                 goto ip6_input_cleanup;
@@ -948,7 +948,7 @@ netif_found:
                                     LWIP_PACKED_CAST(const uint8_t *, &ip6hdr->_plen));
                 Logf(IP6_DEBUG,
                      ("ip6_input: packet with invalid payload length dropped\n"));
-                pbuf_free(p);
+                free_pkt_buf(p);
                 IP6_STATS_INC(ip6.drop);
                 goto ip6_input_cleanup;
             } /* Offset == 0 and more_fragments == 0? */
@@ -985,7 +985,7 @@ netif_found:
             Logf(IP6_DEBUG,
                  ("ip6_input: packet with Hop-by-Hop options header dropped (only valid as a first option)\n"
                  ));
-            pbuf_free(p);
+            free_pkt_buf(p);
             IP6_STATS_INC(ip6.drop);
             goto ip6_input_cleanup;
         }
@@ -1013,7 +1013,7 @@ options_done:
 
     switch (*nexth) {
     case IP6_NEXTH_NONE:
-      pbuf_free(p);
+      free_pkt_buf(p);
       break;
 
     case IP6_NEXTH_UDP:
@@ -1041,7 +1041,7 @@ options_done:
 
         {
         case IP6_NEXTH_NONE:
-            pbuf_free(p);
+            free_pkt_buf(p);
             break;
         case IP6_NEXTH_UDP: case IP6_NEXTH_UDPLITE:
             udp_input(p, inp);
@@ -1073,7 +1073,7 @@ options_done:
                 IP6_STATS_INC(ip6.proterr);
                 IP6_STATS_INC(ip6.drop);
             }
-            pbuf_free(p);
+            free_pkt_buf(p);
             break;
         }
 
@@ -1081,7 +1081,7 @@ options_done:
         IP6_STATS_INC(ip6.proterr);
         IP6_STATS_INC(ip6.drop);
       }
-      pbuf_free(p);
+      free_pkt_buf(p);
       break;
     }
 ip6_input_cleanup: ip_data.current_netif = NULL;

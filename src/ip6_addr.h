@@ -102,7 +102,7 @@ inline bool ip6_addr_islinklocal(const Ip6Addr* ip6_addr)
 
 inline bool ip6_addr_ismulticast_iflocal(const Ip6Addr* ip6addr)
 {
-    (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff010000UL));
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff010000UL));
 }
 
 inline bool ip6_addr_ismulticast_linklocal(const Ip6Addr* ip6addr)

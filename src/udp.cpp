@@ -53,7 +53,7 @@
 #include <ip6_addr.h>
 #include <ip_addr.h>
 #include <lwip_debug.h>
-#include <lwip_snmp.h>
+
 #include <netif.h>
 #include <opt.h>
 #include <stats.h>
@@ -151,7 +151,7 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
             if (ip_get_option(pcb, SOF_BROADCAST))
             {
                 if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip)) || ((ip4_current_dest_addr()
-                    ->addr == kIpaddr4Broadcast)) || ip4_addr_netcmp(
+                    ->addr == IP4_ADDR_BCAST)) || ip4_addr_netcmp(
                     convert_ip_addr_to_ip4_addr(&pcb->local_ip),
                     ip4_current_dest_addr(),
                     netif_ip4_netmask(inp)))
@@ -195,7 +195,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
 
   ;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   lwip_assert("udp_input: invalid pbuf", p != nullptr);
   lwip_assert("udp_input: invalid netif", inp != nullptr);
@@ -212,7 +212,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
     UDP_STATS_INC(udp.lenerr);
     UDP_STATS_INC(udp.drop);
     
-    pbuf_free(p);
+    free_pkt_buf(p);
     goto end;
   }
 
@@ -259,7 +259,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
           /* the first unconnected matching PCB */
           uncon_pcb = pcb;
 
-        } else if (broadcast && ip4_current_dest_addr()->addr == kIpaddr4Broadcast) {
+        } else if (broadcast && ip4_current_dest_addr()->addr == IP4_ADDR_BCAST) {
           /* global broadcast address (only valid for IPv4; match was checked before) */
           if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
             /* uncon_pcb does not match the input netif, check this pcb */
@@ -360,7 +360,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
       lwip_assert("pbuf_remove_header failed\n", 0);
       UDP_STATS_INC(udp.drop);
       
-      pbuf_free(p);
+      free_pkt_buf(p);
       goto end;
     }
 
@@ -395,7 +395,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
         pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);
       } else {
         /* no recv function registered? then we have to free the PacketBuffer! */
-        pbuf_free(p);
+        free_pkt_buf(p);
         goto end;
       }
     } else {
@@ -413,10 +413,10 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
       UDP_STATS_INC(udp.proterr);
       UDP_STATS_INC(udp.drop);
       
-      pbuf_free(p);
+      free_pkt_buf(p);
     }
   } else {
-    pbuf_free(p);
+    free_pkt_buf(p);
   }
 end:
   PERF_STOP("udp_input");
@@ -428,7 +428,7 @@ chkerr:
   UDP_STATS_INC(udp.chkerr);
   UDP_STATS_INC(udp.drop);
   
-  pbuf_free(p);
+  free_pkt_buf(p);
   PERF_STOP("udp_input");
 
 }
@@ -700,7 +700,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   uint8_t ip_proto;
   uint8_t ttl;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   
   
@@ -743,7 +743,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   /* not enough space to add an UDP header to first PacketBuffer in given p chain? */
   if (pbuf_add_header(p, UDP_HLEN)) {
     /* allocate header in a separate new PacketBuffer */
-    q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
+    q = pbuf_alloc(PBUF_IP, UDP_HLEN);
     /* new header PacketBuffer could not be allocated? */
     if (q == nullptr) {
       Logf(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: could not allocate header\n"));
@@ -881,7 +881,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   /* did we chain a separate header PacketBuffer earlier? */
   if (q != p) {
     /* free the header PacketBuffer */
-    pbuf_free(q);
+    free_pkt_buf(q);
     q = nullptr;
     /* p is still referenced by the caller, and will live on */
   }
@@ -919,12 +919,12 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
   IpAddr zoned_ipaddr;
 
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == nullptr) {
-    ipaddr = ip4_addr_any;
+    ipaddr = create_ip4_addr_any;
   }
 
 
@@ -1020,7 +1020,7 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 void
 udp_bind_netif(struct UdpPcb *pcb, const NetIfc*netif)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   if (netif != nullptr) {
     pcb->netif_idx = netif_get_index(netif);
@@ -1051,7 +1051,7 @@ udp_connect(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 {
   struct UdpPcb *ipcb;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   
   
@@ -1103,7 +1103,7 @@ udp_connect(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 void
 udp_disconnect(struct UdpPcb *pcb)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   
 
@@ -1134,7 +1134,7 @@ udp_disconnect(struct UdpPcb *pcb)
  */
 void udp_recv(struct UdpPcb* pcb, UdpRecvFn recv, void* recv_arg)
 {
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   
 
@@ -1157,7 +1157,7 @@ udp_remove(struct UdpPcb *pcb)
 {
   struct UdpPcb *pcb2;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   
 
@@ -1197,7 +1197,7 @@ udp_new(void)
 {
   struct UdpPcb *pcb;
 
-  LWIP_ASSERT_CORE_LOCKED();
+ 
 
   // pcb = (UdpPcb *)memp_malloc(MEMP_UDP_PCB);
   pcb = new UdpPcb;
@@ -1233,7 +1233,7 @@ udp_new(void)
 struct UdpPcb *
 udp_new_ip_type(uint8_t type)
 {
-    LWIP_ASSERT_CORE_LOCKED();
+   
 
   struct UdpPcb* pcb = udp_new();
   if (pcb != nullptr) {

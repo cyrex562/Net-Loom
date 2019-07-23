@@ -80,7 +80,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
     if (p->len < sizeof(struct Icmp6Hdr))
     {
         /* drop short packets */
-        pbuf_free(p);
+        free_pkt_buf(p);
         return;
     }
     const auto icmp6hdr = static_cast<struct Icmp6Hdr *>(p->payload);
@@ -96,7 +96,7 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
                               curr_dst_addr) != 0)
         {
             /* Checksum failed */
-            pbuf_free(p);
+            free_pkt_buf(p);
             return;
         }
     }
@@ -126,23 +126,23 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
             ip6_current_dest_addr()))
         {
             /* drop */
-            pbuf_free(p);
+            free_pkt_buf(p);
             return;
         }
 
         /* Allocate reply. */
-        r = pbuf_alloc(PBUF_IP, p->tot_len, PBUF_RAM);
+        r = pbuf_alloc(PBUF_IP, p->tot_len);
         if (r == nullptr)
         {
             /* drop */
-            pbuf_free(p);
+            free_pkt_buf(p);
             return;
         } /* Copy echo request. */
         if (pbuf_copy(r, p) != ERR_OK)
         {
             /* drop */
-            pbuf_free(p);
-            pbuf_free(r);
+            free_pkt_buf(p);
+            free_pkt_buf(r);
             return;
         } /* Determine reply source IPv6 address. */
 
@@ -150,8 +150,8 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
       reply_src = ip_2_ip6(ip6_select_source_address(inp, ip6_current_src_addr()));
       if (reply_src == nullptr) {
         /* drop */
-        pbuf_free(p);
-        pbuf_free(r);
+        free_pkt_buf(p);
+        free_pkt_buf(r);
         
         return;
       }
@@ -181,12 +181,12 @@ void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
                       0,
                       IP6_NEXTH_ICMP6,
                       inp);
-        pbuf_free(r);
+        free_pkt_buf(r);
         break;
     default:
         break;
     }
-    pbuf_free(p);
+    free_pkt_buf(p);
 } /**
  * Send an icmpv6 'destination unreachable' packet.
  *
@@ -369,11 +369,10 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     struct PacketBuffer* q;
     struct Icmp6Hdr* icmp6hdr; /* ICMPv6 header + IPv6 header + data */
     q = pbuf_alloc(PBUF_IP,
-                   sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE,
-                   PBUF_RAM);
+                   sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE);
     if (q == nullptr)
     {
-        Logf(ICMP_DEBUG,
+        Logf(true,
              ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMPv6 packet.\n"
              ));
         return;
@@ -384,7 +383,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     icmp6hdr->type = type;
     icmp6hdr->code = code;
     icmp6hdr->data = lwip_htonl(data); /* copy fields from original packet */
-    SMEMCPY((uint8_t *)q->payload + sizeof(struct Icmp6Hdr),
+    memcpy((uint8_t *)q->payload + sizeof(struct Icmp6Hdr),
             (uint8_t *)p->payload,
             IP6_HDR_LEN + LWIP_ICMP6_DATASIZE); /* calculate checksum */
     icmp6hdr->chksum = 0;
@@ -399,5 +398,5 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     }
 
     ip6_output_if(q, reply_src, reply_dest, LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
-    pbuf_free(q);
+    free_pkt_buf(q);
 }
