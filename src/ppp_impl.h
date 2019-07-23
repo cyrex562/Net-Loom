@@ -8,7 +8,7 @@
 #include <timeouts.h>
 #include <ppp.h>
 #include <protent.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 
 constexpr auto kPppCtrlPbufMaxSize = 512;
 

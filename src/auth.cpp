@@ -537,18 +537,17 @@ static void check_idle(void* arg) {
     } else {
     Timeout(check_idle, static_cast<void*>(pcb), tlim);
     }
-}
+} 
 
 
-
-/*
- * connect_time_expired - log a message and close the connection.
- */
-static void connect_time_expired(uint8_t *arg) {
-    auto*pcb = static_cast<PppPcb*>(arg);
+//
+// connect_time_expired - log a message and close the connection.
+//
+static void connect_time_expired(void* arg)
+{
+    const auto pcb = static_cast<PppPcb*>(arg);
     ppp_info("Connect time expired");
-    pcb->err_code = PPPERR_CONNECTTIME;
-    /* Close connection */
+    pcb->err_code = PPPERR_CONNECTTIME; /* Close connection */
     lcp_close(pcb, "Connect time expired");
 }
 

@@ -43,7 +43,6 @@ bool autoip_start_probing(NetIfc* netif);
 //
 bool autoip_set_struct(NetIfc* netif, struct AutoipState* autoip)
 {
-    LWIP_ASSERT_CORE_LOCKED();
     lwip_assert("netif != NULL", netif != nullptr);
     lwip_assert("autoip != NULL", autoip != nullptr);
     lwip_assert("netif already has a struct autoip set",
@@ -249,7 +248,6 @@ bool autoip_network_changed(NetIfc* netif)
 LwipStatus autoip_stop(NetIfc* netif)
 {
     const auto autoip = netif_autoip_data(netif);
-    LWIP_ASSERT_CORE_LOCKED();
     if (autoip != nullptr)
     {
         autoip->state = AUTOIP_STATE_OFF;

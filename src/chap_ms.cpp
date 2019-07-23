@@ -575,9 +575,9 @@ static void SetMasterKeys(PppPcb *pcb, const char *secret, int secret_len, uint8
     lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
-    lwip_sha1_update(&sha1Context, mppe_sha1_pad1, SHA1_PAD_SIZE);
+    lwip_sha1_update(&sha1Context, MPPE_SHA1_PAD1, SHA1_PAD_SIZE);
     lwip_sha1_update(&sha1Context, s, 84);
-    lwip_sha1_update(&sha1Context, mppe_sha1_pad2, SHA1_PAD_SIZE);
+    lwip_sha1_update(&sha1Context, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
     lwip_sha1_finish(&sha1Context, Digest);
     lwip_sha1_free(&sha1Context);
 
@@ -593,9 +593,9 @@ static void SetMasterKeys(PppPcb *pcb, const char *secret, int secret_len, uint8
     lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
-    lwip_sha1_update(&sha1Context, mppe_sha1_pad1, SHA1_PAD_SIZE);
+    lwip_sha1_update(&sha1Context, MPPE_SHA1_PAD1, SHA1_PAD_SIZE);
     lwip_sha1_update(&sha1Context, s, 84);
-    lwip_sha1_update(&sha1Context, mppe_sha1_pad2, SHA1_PAD_SIZE);
+    lwip_sha1_update(&sha1Context, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
     lwip_sha1_finish(&sha1Context, Digest);
     lwip_sha1_free(&sha1Context);
 

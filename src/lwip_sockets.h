@@ -38,7 +38,7 @@
 
 #pragma once
 
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <ip_addr.h>
 #include <lwip_inet.h>
 #include <netif.h>

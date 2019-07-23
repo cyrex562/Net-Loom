@@ -480,7 +480,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 
       {
 
-        NETIF_FOREACH(netif) {
+        for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
           if (netif == inp) {
             /* we checked that before already */
             continue;

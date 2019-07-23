@@ -37,7 +37,7 @@
 #include <pppoe.h>
 #include <pppol2tp.h>
 #include <pppos.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 
 #define PPPAPI_VAR_REF(name)               API_VAR_REF(name)
 #define PPPAPI_VAR_DECLARE(name)           API_VAR_DECLARE(struct pppapi_msg, name)

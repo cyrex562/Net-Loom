@@ -220,7 +220,7 @@ nd6_process_autoconfig_prefix(NetIfc*netif,
    * creating addresses even if the link-local address is still in tentative
    * state though, and deal with the fallout of that upon DAD collision. */
   addr_state = netif_ip6_addr_state(netif, 0);
-  if (!netif->ip6_autoconfig_enabled || valid_life == IP6_ADDR_LIFE_STATIC ||
+  if (!netif->ip6_autoconfig_enabled || valid_life == (0) ||
       ip6_addr_isinvalid(addr_state) || ip6_addr_isduplicated(addr_state)) {
     return;
   }
@@ -1039,7 +1039,7 @@ nd6_tmr(void)
   }
 
   /* Process our own addresses, updating address lifetimes and/or DAD state. */
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
       uint8_t addr_state;
 
@@ -1069,7 +1069,7 @@ nd6_tmr(void)
         } else {
           if (!ip6_addr_life_isinfinite(life)) {
             life -= ND6_TMR_INTERVAL / 1000;
-            lwip_assert("bad valid lifetime", life != IP6_ADDR_LIFE_STATIC);
+            lwip_assert("bad valid lifetime", life != (0));
             netif_ip6_addr_set_valid_life(netif, i, life);
           }
           /* The address is still here. Update the preferred lifetime too. */
@@ -1119,7 +1119,7 @@ nd6_tmr(void)
   /* Send router solicitation messages, if necessary. */
   if (!nd6_tmr_rs_reduction) {
     nd6_tmr_rs_reduction = (ND6_RTR_SOLICITATION_INTERVAL / ND6_TMR_INTERVAL) - 1;
-    NETIF_FOREACH(netif) {
+    for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
       if ((netif->rs_count > 0) && netif_is_up(netif) &&
           netif_is_link_up(netif) &&
           !ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)) &&

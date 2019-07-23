@@ -4,7 +4,7 @@
 
 #include <pppol2tp.h>
 #include <ppp_opts.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <netif.h>
 #include <udp.h>
 #include <lwip_snmp.h>

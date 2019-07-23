@@ -287,7 +287,7 @@ inline void ip6_addr_set(Ip6Addr* dest, const Ip6Addr* src)
     (dest)->addr[1] = (src) == nullptr ? 0 : (src)->addr[1];
     (dest)->addr[2] = (src) == nullptr ? 0 : (src)->addr[2];
     (dest)->addr[3] = (src) == nullptr ? 0 : (src)->addr[3];
-    ip6_addr_set_zone((dest), (src) == nullptr ? kIp6NoZone : ip6_addr_zone(src));
+    ip6_addr_set_zone((dest), (src) == nullptr ? IP6_NO_ZONE : ip6_addr_zone(src));
 }
 
 /** Copy packed IPv6 address to unpacked IPv6 address; zone is not set */
@@ -341,7 +341,7 @@ inline void ip6_addr_set_hton(Ip6Addr* dest, Ip6Addr* src) {
 }
 
 /** Compare IPv6 networks, ignoring zone information. To be used sparingly! */
-inline bool ip6_addr_netcmp_zoneless(Ip6Addr* addr1, Ip6Addr* addr2)
+inline bool ip6_addr_netcmp_zoneless(const Ip6Addr* addr1, const Ip6Addr* addr2)
 {
     return
     (((addr1)->addr[0] == (addr2)->addr[0]) &&
@@ -355,14 +355,17 @@ inline bool ip6_addr_netcmp_zoneless(Ip6Addr* addr1, Ip6Addr* addr2)
  * @param addr2 IPv6 address 2
  * @return 1 if the network identifiers of both address match, 0 if not
  */
-#define ip6_addr_netcmp(addr1, addr2)            \
-  (ip6_addr_netcmp_zoneless((addr1), (addr2)) && \
-   ip6_addr_cmp_zone((addr1), (addr2)))
+inline bool ip6_addr_netcmp(const Ip6Addr* addr1, const Ip6Addr* addr2)
+{
+    return ip6_addr_netcmp_zoneless(addr1, addr2) && ip6_addr_cmp_zone(addr1, addr2);
+}
 
 /* Exact-host comparison *after* ip6_addr_netcmp() succeeded, for efficiency. */
-#define ip6_addr_nethostcmp(addr1, addr2)    \
-  (((addr1)->addr[2] == (addr2)->addr[2]) && \
-   ((addr1)->addr[3] == (addr2)->addr[3]))
+inline bool ip6_addr_nethostcmp(const Ip6Addr* addr1, const Ip6Addr* addr2)
+{
+    return (((addr1)->addr[2] == (addr2)->addr[2]) && ((addr1)->addr[3] == (addr2)->addr[3
+    ]));
+}
 
 /**
  * Determine if two IPv6 addresses are the same. In particular, the address
@@ -374,15 +377,19 @@ inline bool ip6_addr_netcmp_zoneless(Ip6Addr* addr1, Ip6Addr* addr2)
  */
 
 /** Compare IPv6 address to packed address and zone */
-#define ip6_addr_cmp_packed(ip6addr, paddr, zone_idx) \
-  (((ip6addr)->addr[0] == (paddr)->addr[0]) &&        \
-   ((ip6addr)->addr[1] == (paddr)->addr[1]) &&        \
-   ((ip6addr)->addr[2] == (paddr)->addr[2]) &&        \
-   ((ip6addr)->addr[3] == (paddr)->addr[3]) &&        \
-   ip6_addr_equals_zone((ip6addr), (zone_idx)))
+inline bool ip6_addr_cmp_packed(Ip6Addr* ip6_addr,
+                                Ip6AddrWireFmt* paddr,
+                                unsigned zone_idx)
+{
+    return (((ip6_addr)->addr[0] == (paddr)->addr[0]) && ((ip6_addr)->addr[1] == (paddr)->
+        addr[1]) && ((ip6_addr)->addr[2] == (paddr)->addr[2]) && ((ip6_addr)->addr[3] == (
+        paddr)->addr[3]) && ip6_addr_equals_zone((ip6_addr), (zone_idx)));
+}
 
-#define ip6_get_subnet_id(ip6addr) \
-  (lwip_htonl((ip6addr)->addr[2]) & 0x0000ffffUL)
+inline uint32_t ip6_get_subnet_id(Ip6Addr* ip6addr)
+{
+    return (lwip_htonl((ip6addr)->addr[2]) & 0x0000ffffUL);
+}
 
 inline bool ip6_addr_isany_val(const Ip6Addr ip6_addr) {
   return (((ip6_addr).addr[0] == 0) && ((ip6_addr).addr[1] == 0) &&
@@ -399,33 +406,52 @@ inline bool ip6_addr_isloopback(const Ip6Addr* ip6_addr) {
           ((ip6_addr)->addr[3] == pp_htonl(0x00000001UL)));
 }
 
-#define ip6_addr_isglobal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xe0000000UL)) == pp_htonl(0x20000000UL))
+inline bool ip6_addr_isglobal(Ip6Addr* ip6_addr)
+{
+    return (((ip6_addr)->addr[0] & pp_htonl(0xe0000000UL)) == pp_htonl(0x20000000UL));
+}
 
-#define ip6_addr_issitelocal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfec00000UL))
+inline bool ip6_addr_issitelocal(Ip6Addr* ip6_addr)
+{
+    return (((ip6_addr)->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfec00000UL));
+}
 
-#define ip6_addr_isuniquelocal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xfe000000UL)) == pp_htonl(0xfc000000UL))
+inline bool ip6_addr_isuniquelocal(Ip6Addr* ip6_addr)
+{
+    return (((ip6_addr)->addr[0] & pp_htonl(0xfe000000UL)) == pp_htonl(0xfc000000UL));
+}
 
-#define ip6_addr_isipv4mappedipv6(ip6addr)                   \
-  (((ip6addr)->addr[0] == 0) && ((ip6addr)->addr[1] == 0) && \
-   (((ip6addr)->addr[2]) == pp_htonl(0x0000FFFFUL)))
+inline bool ip6_addr_isipv4mappedipv6(Ip6Addr* ip6_addr)
+{
+    return (((ip6_addr)->addr[0] == 0) && ((ip6_addr)->addr[1] == 0) && (((ip6_addr)->addr[2]
+    ) == pp_htonl(0x0000FFFFUL)));
+}
 
 inline bool ip6_addr_ismulticast(const Ip6Addr* ip6_addr) {
   return (ip6_addr->addr[0] & pp_htonl(0xff000000UL)) == pp_htonl(0xff000000UL);
 }
 
-#define ip6_addr_multicast_transient_flag(ip6addr) \
-  ((ip6addr)->addr[0] & pp_htonl(0x00100000UL))
-#define ip6_addr_multicast_prefix_flag(ip6addr) \
-  ((ip6addr)->addr[0] & pp_htonl(0x00200000UL))
-#define ip6_addr_multicast_rendezvous_flag(ip6addr) \
-  ((ip6addr)->addr[0] & pp_htonl(0x00400000UL))
-#define ip6_addr_multicast_scope(ip6addr) \
-  ((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xf)
+inline uint32_t ip6_addr_multicast_transient_flag(Ip6Addr* ip6addr)
+{
+    return ((ip6addr)->addr[0] & pp_htonl(0x00100000UL));
+}
 
-enum Ip6MulticastScopes
+inline uint32_t ip6_addr_multicast_prefix_flag(Ip6Addr* ip6addr)
+{
+    return ((ip6addr)->addr[0] & pp_htonl(0x00200000UL));
+}
+
+inline uint32_t ip6_addr_multicast_rendezvous_flag(Ip6Addr* ip6addr)
+{
+    return ((ip6addr)->addr[0] & pp_htonl(0x00400000UL));
+}
+
+inline uint32_t ip6_addr_multicast_scope(Ip6Addr* ip6addr)
+{
+    return ((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xf);
+}
+
+enum Ip6MulticastScopes: uint8_t
 {
     IP6_MULTICAST_SCOPE_RESERVED =0x0,
     IP6_MULTICAST_SCOPE_RESERVED0 =0x0,
@@ -439,15 +465,25 @@ enum Ip6MulticastScopes
     IP6_MULTICAST_SCOPE_RESERVEDF =0xf,
 };
 
+inline bool ip6_addr_ismulticast_adminlocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff040000UL));
+}
 
-#define ip6_addr_ismulticast_adminlocal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff040000UL))
-#define ip6_addr_ismulticast_sitelocal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff050000UL))
-#define ip6_addr_ismulticast_orglocal(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff080000UL))
-#define ip6_addr_ismulticast_global(ip6addr) \
-  (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff0e0000UL))
+inline bool ip6_addr_ismulticast_sitelocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff050000UL));
+}
+
+inline bool ip6_addr_ismulticast_orglocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff080000UL));
+}
+
+inline bool ip6_addr_ismulticast_global(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] & pp_htonl(0xff8f0000UL)) == pp_htonl(0xff0e0000UL));
+}
 
 /* Scoping note: while interface-local and link-local multicast addresses do
  * have a scope (i.e., they are meaningful only in the context of a particular
@@ -455,16 +491,17 @@ enum Ip6MulticastScopes
  * indices. The reason for this is backward compatibility. Any call site that
  * produces a non-global multicast address must assign a multicast address as
  * appropriate itself. */
+inline bool ip6_addr_isallnodes_iflocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] == pp_htonl(0xff010000UL)) && ((ip6addr)->addr[1] == 0UL)
+        && ((ip6addr)->addr[2] == 0UL) && ((ip6addr)->addr[3] == pp_htonl(0x00000001UL)));
+}
 
-#define ip6_addr_isallnodes_iflocal(ip6addr)                     \
-  (((ip6addr)->addr[0] == pp_htonl(0xff010000UL)) &&             \
-   ((ip6addr)->addr[1] == 0UL) && ((ip6addr)->addr[2] == 0UL) && \
-   ((ip6addr)->addr[3] == pp_htonl(0x00000001UL)))
-
-#define ip6_addr_isallnodes_linklocal(ip6addr)                   \
-  (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) &&             \
-   ((ip6addr)->addr[1] == 0UL) && ((ip6addr)->addr[2] == 0UL) && \
-   ((ip6addr)->addr[3] == pp_htonl(0x00000001UL)))
+inline bool ip6_addr_isallnodes_linklocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && ((ip6addr)->addr[1] == 0UL)
+        && ((ip6addr)->addr[2] == 0UL) && ((ip6addr)->addr[3] == pp_htonl(0x00000001UL)));
+}
 
 inline void ip6_addr_set_allnodes_linklocal(Ip6Addr* ip6addr)
 {
@@ -475,102 +512,116 @@ inline void ip6_addr_set_allnodes_linklocal(Ip6Addr* ip6addr)
     ip6_addr_clear_zone(ip6addr);
 }
 
-#define ip6_addr_isallrouters_linklocal(ip6addr)                 \
-  (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) &&             \
-   ((ip6addr)->addr[1] == 0UL) && ((ip6addr)->addr[2] == 0UL) && \
-   ((ip6addr)->addr[3] == pp_htonl(0x00000002UL)))
-#define ip6_addr_set_allrouters_linklocal(ip6addr) \
-  do {                                             \
-    (ip6addr)->addr[0] = pp_htonl(0xff020000UL);   \
-    (ip6addr)->addr[1] = 0;                        \
-    (ip6addr)->addr[2] = 0;                        \
-    (ip6addr)->addr[3] = pp_htonl(0x00000002UL);   \
-    ip6_addr_clear_zone(ip6addr);                  \
-  } while (0)
+inline bool ip6_addr_isallrouters_linklocal(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && ((ip6addr)->addr[1] == 0UL)
+        && ((ip6addr)->addr[2] == 0UL) && ((ip6addr)->addr[3] == pp_htonl(0x00000002UL)));
+}
 
-#define ip6_addr_issolicitednode(ip6addr)            \
-  (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && \
-   ((ip6addr)->addr[2] == pp_htonl(0x00000001UL)) && \
-   (((ip6addr)->addr[3] & pp_htonl(0xff000000UL)) == pp_htonl(0xff000000UL)))
+inline void ip6_addr_set_allrouters_linklocal(Ip6Addr* ip6addr)
+{
+    (ip6addr)->addr[0] = pp_htonl(0xff020000UL);
+    (ip6addr)->addr[1] = 0;
+    (ip6addr)->addr[2] = 0;
+    (ip6addr)->addr[3] = pp_htonl(0x00000002UL);
+    ip6_addr_clear_zone(ip6addr);
+}
 
-#define ip6_addr_set_solicitednode(ip6addr, if_id)           \
-  do {                                                       \
-    (ip6addr)->addr[0] = pp_htonl(0xff020000UL);             \
-    (ip6addr)->addr[1] = 0;                                  \
-    (ip6addr)->addr[2] = pp_htonl(0x00000001UL);             \
-    (ip6addr)->addr[3] = (pp_htonl(0xff000000UL) | (if_id)); \
-    ip6_addr_clear_zone(ip6addr);                            \
-  } while (0)
+inline bool ip6_addr_issolicitednode(Ip6Addr* ip6addr)
+{
+    return (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && ((ip6addr)->addr[2] ==
+        pp_htonl(0x00000001UL)) && (((ip6addr)->addr[3] & pp_htonl(0xff000000UL)) ==
+        pp_htonl(0xff000000UL)));
+}
 
-#define ip6_addr_cmp_solicitednode(ip6addr, sn_addr) \
-  (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && \
-   ((ip6addr)->addr[1] == 0) &&                      \
-   ((ip6addr)->addr[2] == pp_htonl(0x00000001UL)) && \
-   ((ip6addr)->addr[3] == (pp_htonl(0xff000000UL) | (sn_addr)->addr[3])))
+inline void ip6_addr_set_solicitednode(Ip6Addr* ip6addr, uint32_t if_id)
+{
+    (ip6addr)->addr[0] = pp_htonl(0xff020000UL);
+    (ip6addr)->addr[1] = 0;
+    (ip6addr)->addr[2] = pp_htonl(0x00000001UL);
+    (ip6addr)->addr[3] = (pp_htonl(0xff000000UL) | (if_id));
+    ip6_addr_clear_zone(ip6addr);
+}
+
+inline bool ip6_addr_cmp_solicitednode(Ip6Addr* ip6addr, Ip6Addr* sn_addr)
+{
+    return (((ip6addr)->addr[0] == pp_htonl(0xff020000UL)) && ((ip6addr)->addr[1] == 0) &&
+        ((ip6addr)->addr[2] == pp_htonl(0x00000001UL)) && ((ip6addr)->addr[3] == (
+            pp_htonl(0xff000000UL) | (sn_addr)->addr[3])));
+}
 
 /* IPv6 address states. */
-#define IP6_ADDR_INVALID 0x00
-#define IP6_ADDR_TENTATIVE 0x08
-#define IP6_ADDR_TENTATIVE_1 0x09 /* 1 probe sent */
-#define IP6_ADDR_TENTATIVE_2 0x0a /* 2 probes sent */
-#define IP6_ADDR_TENTATIVE_3 0x0b /* 3 probes sent */
-#define IP6_ADDR_TENTATIVE_4 0x0c /* 4 probes sent */
-#define IP6_ADDR_TENTATIVE_5 0x0d /* 5 probes sent */
-#define IP6_ADDR_TENTATIVE_6 0x0e /* 6 probes sent */
-#define IP6_ADDR_TENTATIVE_7 0x0f /* 7 probes sent */
-#define IP6_ADDR_VALID \
-  0x10 /* This bit marks an address as valid (preferred or deprecated) */
-#define IP6_ADDR_PREFERRED 0x30
-#define IP6_ADDR_DEPRECATED 0x10 /* Same as VALID (valid but not preferred) */
-#define IP6_ADDR_DUPLICATED 0x40 /* Failed DAD test, not valid */
+enum Ip6AddrStates
+{
+    IP6_ADDR_INVALID = 0x00,
+    IP6_ADDR_TENTATIVE = 0x08,
+    IP6_ADDR_TENTATIVE_1 = 0x09,
+    IP6_ADDR_TENTATIVE_2 = 0x0,
+    IP6_ADDR_TENTATIVE_3 = 0x0,
+    IP6_ADDR_TENTATIVE_4 = 0x0,
+    IP6_ADDR_TENTATIVE_5 = 0x0,
+    IP6_ADDR_TENTATIVE_6 = 0x0,
+    IP6_ADDR_TENTATIVE_7 = 0x0,
+    IP6_ADDR_VALID = 0x10,
+    /* This bit marks an address as valid (preferred or deprecated) */
+    IP6_ADDR_PREFERRED = 0x30,
+    IP6_ADDR_DEPRECATED = 0x10,
+    /* Same as VALID (valid but not preferred) */
+    IP6_ADDR_DUPLICATED = 0x40,
+    /* Failed DAD test, not valid */
+    IP6_ADDR_TENTATIVE_COUNT_MASK = 0x07,
+    /* 1-7 probes sent */
+};
 
-#define IP6_ADDR_TENTATIVE_COUNT_MASK 0x07 /* 1-7 probes sent */
+inline bool ip6_addr_isinvalid(Ip6AddrStates addr_state)
+{
+    return (addr_state == IP6_ADDR_INVALID);
+}
 
-#define ip6_addr_isinvalid(addr_state) (addr_state == IP6_ADDR_INVALID)
-#define ip6_addr_istentative(addr_state) (addr_state & IP6_ADDR_TENTATIVE)
+inline bool ip6_addr_istentative(Ip6AddrStates addr_state)
+{
+    return (addr_state & IP6_ADDR_TENTATIVE);
+}
 
 //
 //
 //
-inline bool ip6_addr_isvalid(const uint8_t addr_state)
+inline bool ip6_addr_isvalid(Ip6AddrStates addr_state)
 {
     return addr_state & IP6_ADDR_VALID;
 }
 
 
 // Include valid, preferred, and deprecated.
-#define ip6_addr_ispreferred(addr_state) (addr_state == IP6_ADDR_PREFERRED)
-#define ip6_addr_isdeprecated(addr_state) (addr_state == IP6_ADDR_DEPRECATED)
-#define ip6_addr_isduplicated(addr_state) (addr_state == IP6_ADDR_DUPLICATED)
+inline bool ip6_addr_ispreferred(Ip6AddrStates addr_state)
+{
+    return (addr_state == IP6_ADDR_PREFERRED);
+}
 
-#define IP6_ADDR_LIFE_STATIC (0)
-#define IP6_ADDR_LIFE_INFINITE (0xffffffffUL)
-#define ip6_addr_life_isstatic(addr_life) ((addr_life) == IP6_ADDR_LIFE_STATIC)
-#define ip6_addr_life_isinfinite(addr_life) \
-  ((addr_life) == IP6_ADDR_LIFE_INFINITE)
+inline bool ip6_addr_isdeprecated(Ip6AddrStates addr_state)
+{
+    return (addr_state == IP6_ADDR_DEPRECATED);
+}
 
-#define ip6_addr_debug_print_parts(debug, a, b, c, d, e, f, g, h)    \
-  Logf(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F \
-               ":%" X16_F ":%" X16_F ":%" X16_F,                     \
-               a, b, c, d, e, f, g, h))
-#define ip6_addr_debug_print(debug, ipaddr)                              \
-  ip6_addr_debug_print_parts(                                            \
-      debug, (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK1(ipaddr) : 0), \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK2(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK3(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK4(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK5(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK6(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK7(ipaddr) : 0),        \
-      (uint16_t)((ipaddr) != NULL ? IP6_ADDR_BLOCK8(ipaddr) : 0))
-#define ip6_addr_debug_print_val(debug, ipaddr)                      \
-  ip6_addr_debug_print_parts(                                        \
-      debug, IP6_ADDR_BLOCK1(&(ipaddr)), IP6_ADDR_BLOCK2(&(ipaddr)), \
-      IP6_ADDR_BLOCK3(&(ipaddr)), IP6_ADDR_BLOCK4(&(ipaddr)),        \
-      IP6_ADDR_BLOCK5(&(ipaddr)), IP6_ADDR_BLOCK6(&(ipaddr)),        \
-      IP6_ADDR_BLOCK7(&(ipaddr)), IP6_ADDR_BLOCK8(&(ipaddr)))
+inline bool ip6_addr_isduplicated(Ip6AddrStates addr_state)
+{
+    return (addr_state == IP6_ADDR_DUPLICATED);
+}
 
-#define IP6ADDR_STRLEN_MAX 46
+constexpr auto IP6_ADDR_LIFE_INFINITE = (0xffffffffUL);
+
+inline bool ip6_addr_life_isstatic(uint32_t addr_life)
+{
+    return ((addr_life) == 0);
+}
+
+inline bool ip6_addr_life_isinfinite(uint32_t addr_life)
+{
+    return ((addr_life) == IP6_ADDR_LIFE_INFINITE);
+}
+
+
+constexpr auto IP6ADDR_STRLEN_MAX = 46;
 
 int ip6addr_aton(const char* cp, const Ip6Addr* addr);
 /** returns ptr to static buffer; not reentrant! */

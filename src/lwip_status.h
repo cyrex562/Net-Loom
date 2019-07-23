@@ -2,10 +2,11 @@
 // file: lwip_error.h
 //
 #pragma once
-
+#include <string>
+#include <map>
 
 /** Definitions for error constants. */
-enum LwipStatus {
+enum LwipStatus: int {
 /** No error, everything OK. */
   ERR_OK         = 0,
 /** Out of memory error.     */
@@ -42,14 +43,33 @@ enum LwipStatus {
   ERR_ARG        = -16
 } ;
 
-/** Define LWIP_ERR_T in cc.h if you want to use
- *  a different type for your platform (must be signed). */
+inline std::map<int, std::string> status_strings = {
+        {0, "success"},
+        {-1, "out of memory"},
+        {-2, "buffer error"},
+        {-3, "timeout"},
+        {-4, "routing error"},
+        {-5, "operation in progress"},
+        {-6, "illegal value"},
+        {-7, "operation would block"},
+        {-8, "address in use"},
+        {-9, "already connecting"},
+        {-10, "connection already established"},
+        {-11, "not connected"},
+        {-12, "low-level network interface error"},
+        {-13, "connection aborted"},
+        {-14, "connection reset"},
+        {-15, "connection closed"},
+        {-16, "illegal argument"}
+};
 
-
-extern const char *lwip_strerr(LwipStatus err);
-
-int err_to_errno(LwipStatus err);
-
+//
+//
+//
+inline std::string status_to_string(const LwipStatus status)
+{
+    return status_strings[status];
+}
 
 //
 // END OF FILE

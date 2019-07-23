@@ -2,7 +2,7 @@
 #include <ip4.h>
 #include <ip6.h>
 #include <ip_addr.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <packet_buffer.h>
 
 enum IpProto

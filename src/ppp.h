@@ -45,12 +45,6 @@
 #include <eap_state.h>
 #include <upap.h>
 
-
-#ifdef __cplusplus
-extern "C" 
-{
-#endif
-
 // Values for phase.
 enum PppPhase
 {
@@ -238,8 +232,8 @@ struct PppPcb
     /* Local state (mainly for handling reset-reqs and reset-acks). */
     uint8_t ccp_receive_method; /* Method chosen on receive path */
     uint8_t ccp_transmit_method; /* Method chosen on transmit path */
-    ppp_mppe_state mppe_comp; /* MPPE "compressor" structure */
-    ppp_mppe_state mppe_decomp; /* MPPE "decompressor" structure */
+    PppMppeState mppe_comp; /* MPPE "compressor" structure */
+    PppMppeState mppe_decomp; /* MPPE "decompressor" structure */
     Fsm ipcp_fsm; /* IPCP fsm structure */
     IpcpOptions ipcp_wantoptions; /* Options that we want to request */
     IpcpOptions ipcp_gotoptions; /* Options that peer ack'd */
@@ -528,9 +522,5 @@ LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg);
 /* Set an lwIP-style link-callback for the selected PPP device */
 #define ppp_set_netif_linkcallback(ppp, link_cb)           \
         netif_set_link_callback((ppp)->netif, link_cb);
-
-#ifdef __cplusplus
-}
-#endif
 
 

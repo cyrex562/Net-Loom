@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <ethernet.h>
 
 struct NetIfc;

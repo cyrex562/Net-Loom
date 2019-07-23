@@ -35,7 +35,7 @@
  *
  */
 #include <opt.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <lwip_sockets.h>
 #include <sys.h>
 

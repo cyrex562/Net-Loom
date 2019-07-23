@@ -142,7 +142,7 @@ inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b,
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
 
 /** Safely copy one IP address to another (src may be NULL) */
-inline void ip4_addr_set(Ip4Addr* dest, Ip4Addr* src)
+inline void ip4_addr_set(Ip4Addr* dest, const Ip4Addr* src)
 {
     ((dest)->addr = ((src) == nullptr ? 0 : (src)->addr));
 }

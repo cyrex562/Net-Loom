@@ -6,7 +6,7 @@
 #include <opt.h>
 #include <cstring>
 #include <ethip6.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <tcpip.h>
 #include <packet_buffer.h>
 

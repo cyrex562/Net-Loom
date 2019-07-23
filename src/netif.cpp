@@ -10,15 +10,13 @@
 #include <tcp_priv.h>
 #include <udp.h>
 #include <raw_priv.h>
-#include <lwip_snmp.h>
 #include <igmp.h>
 #include <etharp.h>
 #include <sys.h>
 #include <ip.h>
 #include <ethernet.h>
 #include <lwip_debug.h>
-#include <lwip_error.h>
-#include <lwip_snmp.h>
+#include <lwip_status.h>
 #include <tcpip.h>
 #include <autoip.h>
 #include <dhcp6.h>
@@ -224,8 +222,8 @@ NetIfc* netif_add(NetIfc* netif,
     {
         zero_ip_addr_ip6(&netif->ip6_addr[i]);
         netif->ip6_addr_state[i] = IP6_ADDR_INVALID;
-        netif->ip6_addr_valid_life[i] = IP6_ADDR_LIFE_STATIC;
-        netif->ip6_addr_pref_life[i] = IP6_ADDR_LIFE_STATIC;
+        netif->ip6_addr_valid_life[i] = (0);
+        netif->ip6_addr_pref_life[i] = (0);
     }
     netif->output_ip6 = netif_null_output_ip6;
     NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
@@ -623,7 +621,7 @@ netif_remove(NetIfc*netif)
   } else {
     /*  look for netif further down the list */
     NetIfc*tmp_netif;
-    NETIF_FOREACH(tmp_netif) {
+    for ((tmp_netif) = netif_list; (tmp_netif) != NULL; (tmp_netif) = (tmp_netif)->next) {
       if (tmp_netif->next == netif) {
         tmp_netif->next = netif->next;
         break;
@@ -1427,7 +1425,7 @@ netif_get_by_index(uint8_t idx)
   LWIP_ASSERT_CORE_LOCKED();
 
   if (idx != NETIF_NO_INDEX) {
-    NETIF_FOREACH(netif) {
+    for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
       if (idx == netif_get_index(netif)) {
         return netif; /* found! */
       }
@@ -1458,7 +1456,7 @@ netif_find(const char *name)
 
   num = (uint8_t)atoi(&name[2]);
 
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     if (num == netif->num &&
         name[0] == netif->name[0] &&
         name[1] == netif->name[1]) {
@@ -1527,7 +1525,7 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
  * @param args depends on reason, see reason description
  */
 void
-netif_invoke_ext_callback(NetIfc*netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
+netif_invoke_ext_callback(NetIfc*netif, NetifNscReason reason, const netif_ext_callback_args_t *args)
 {
   netif_ext_callback_t *callback = ext_callback;
 

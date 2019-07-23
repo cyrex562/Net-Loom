@@ -17,8 +17,6 @@
 
 #include <lwip_debug.h>
 
-#include <lwip_snmp.h>
-
 #include <cstring>
 #include <dhcp.cpp>
 #include <ip4.h>
@@ -969,7 +967,7 @@ etharp_query(struct NetIfc* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q
         }
         return (LwipStatus)i_err;
     }
-    lwip_assert("type overflow", (size_t)i_err < kNetifAddrIdxMax);
+    lwip_assert("type overflow", (size_t)i_err < NETIF_ADDR_IDX_MAX);
     i = (NetIfcAddrIdx)i_err;
 
     /* mark a fresh entry as pending (we just sent a request) */

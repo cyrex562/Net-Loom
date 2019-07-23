@@ -36,7 +36,7 @@
 #include <cstring>
 
 #include <arch.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <packet_buffer.h>
 #include <sys.h>
 

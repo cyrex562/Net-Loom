@@ -2,6 +2,7 @@
 #pragma once
 #include <packet_buffer.h>
 #include <icmp6.h>
+#include <netif.h>
 
 enum IcmpType
 {
@@ -66,11 +67,8 @@ inline void IcmphTypeSet(IcmpEchoHdr* hdr, const IcmpType t)
     ((hdr)->type = (t));
 }
 
-#define ICMPH_CODE_SET(hdr, c) ((hdr)->code = (c))
+inline void ICMPH_CODE_SET(IcmpEchoHdr* hdr, const uint8_t c){ ((hdr)->code = (c));}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** ICMP destination unreachable codes */
 enum icmp_dur_type {
@@ -101,14 +99,10 @@ void icmp_dest_unreach(struct PacketBuffer *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct PacketBuffer *p, enum icmp_te_type t);
 void icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code);
 
-inline void icmp_port_unreach(bool isipv6, PacketBuffer* pbuf)
+inline void icmp_port_unreach(const bool isipv6, PacketBuffer* pbuf)
 {
     isipv6
         ? icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT)
         : icmp_dest_unreach(pbuf, ICMP_DUR_PORT);
 }
 
-
-#ifdef __cplusplus
-}
-#endif

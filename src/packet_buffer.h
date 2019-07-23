@@ -38,7 +38,7 @@
 #pragma once
 
 #include <opt.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <cstdint>
 #include "tcp.h"
 

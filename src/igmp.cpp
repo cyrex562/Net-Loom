@@ -354,7 +354,7 @@ igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   // 
 
   /* loop through netif's */
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     /* Should we join this interface ? */
     if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(get_net_ifc_ip4_addr(netif), ifaddr)))) {
       err = igmp_joingroup_netif(netif, groupaddr);
@@ -451,7 +451,7 @@ igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr)
   // 
 
   /* loop through netif's */
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     /* Should we leave this interface ? */
     if ((netif->flags & kNetifFlagIgmp) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(get_net_ifc_ip4_addr(netif), ifaddr)))) {
       LwipStatus res = igmp_leavegroup_netif(netif, groupaddr);
@@ -538,7 +538,7 @@ igmp_tmr(void)
 {
   NetIfc*netif;
 
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     struct IgmpGroup *group = netif_igmp_data(netif);
 
     while (group != nullptr) {

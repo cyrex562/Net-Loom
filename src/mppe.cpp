@@ -25,7 +25,7 @@
 
 #include <ppp_opts.h>
 #include <cstring>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <ppp_impl.h>
 #include <ccp.h>
 #include <mppe.h>
@@ -33,29 +33,43 @@
 #include <pppcrypt.h>
 #include <lcp.h>
 
-#define SHA1_SIGNATURE_SIZE 20
+constexpr auto SHA1_SIGNATURE_SIZE = 20;
 
 /* ppp_mppe_state.bits definitions */
-#define MPPE_BIT_A	0x80	/* Encryption table were (re)inititalized */
-#define MPPE_BIT_B	0x40	/* MPPC only (not implemented) */
-#define MPPE_BIT_C	0x20	/* MPPC only (not implemented) */
-#define MPPE_BIT_D	0x10	/* This is an encrypted frame */
+enum MppeStateBits : uint8_t
+{
+    MPPE_BIT_A =0x80,
+    /* Encryption table were (re)inititalized */
+    MPPE_BIT_B =0x40,
+    /* MPPC only (not implemented) */
+    MPPE_BIT_C =0x20,
+    /* MPPC only (not implemented) */
+    MPPE_BIT_D =0x10,
+    /* This is an encrypted frame */
+    MPPE_BIT_FLUSHED =MPPE_BIT_A,
+    MPPE_BIT_ENCRYPTED =MPPE_BIT_D,
+};
 
-#define MPPE_BIT_FLUSHED	MPPE_BIT_A
-#define MPPE_BIT_ENCRYPTED	MPPE_BIT_D
+inline uint8_t MPPE_BITS(uint8_t* p)
+{
+    return ((p)[0] & 0xf0);
+}
 
-#define MPPE_BITS(p) ((p)[0] & 0xf0)
-#define MPPE_CCOUNT(p) ((((p)[0] & 0x0f) << 8) + (p)[1])
-#define MPPE_CCOUNT_SPACE 0x1000	/* The size of the ccount space */
+inline uint8_t MPPE_CCOUNT(uint8_t* p)
+{
+    return ((((p)[0] & 0x0f) << 8) + (p)[1]);
+}
 
-#define MPPE_OVHD	2	/* MPPE overhead/packet */
+constexpr auto MPPE_CCOUNT_SPACE =0x1000;	/* The size of the ccount space */
+
+constexpr auto MPPE_OVHD=2;	/* MPPE overhead/packet */
 #define SANITY_MAX	1600	/* Max bogon factor we will tolerate */
 
 /*
  * Perform the MPPE rekey algorithm, from RFC 3078, sec. 7.3.
  * Well, not what's written there, but rather what they meant.
  */
-static void mppe_rekey(ppp_mppe_state * state, int initial_key)
+static void mppe_rekey(PppMppeState * state, int initial_key)
 {
 	lwip_sha1_context sha1_ctx;
 	uint8_t sha1_digest[SHA1_SIGNATURE_SIZE];
@@ -67,9 +81,9 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 	lwip_sha1_init(&sha1_ctx);
 	lwip_sha1_starts(&sha1_ctx);
 	lwip_sha1_update(&sha1_ctx, state->master_key, state->keylen);
-	lwip_sha1_update(&sha1_ctx, mppe_sha1_pad1, SHA1_PAD_SIZE);
+	lwip_sha1_update(&sha1_ctx, MPPE_SHA1_PAD1, SHA1_PAD_SIZE);
 	lwip_sha1_update(&sha1_ctx, state->session_key, state->keylen);
-	lwip_sha1_update(&sha1_ctx, mppe_sha1_pad2, SHA1_PAD_SIZE);
+	lwip_sha1_update(&sha1_ctx, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
 	lwip_sha1_finish(&sha1_ctx, sha1_digest);
 	lwip_sha1_free(&sha1_ctx);
 	MEMCPY(state->session_key, sha1_digest, state->keylen);
@@ -94,7 +108,7 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
  * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
  * don't have to keep multiple copies of keys.
  */
-void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
+void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key) {
 	;
 	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
@@ -103,7 +117,7 @@ void mppe_set_key(PppPcb *pcb, ppp_mppe_state *state, uint8_t *key) {
  * Initialize (de)compressor state.
  */
 void
-mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
+mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 {
 
 	const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";
@@ -175,7 +189,7 @@ mppe_init(PppPcb *pcb, ppp_mppe_state *state, uint8_t options)
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
+void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
 {
 	;
 	state->bits |= MPPE_BIT_FLUSHED;
@@ -187,7 +201,7 @@ void mppe_comp_reset(PppPcb *pcb, ppp_mppe_state *state)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 LwipStatus
-mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint16_t protocol)
+mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16_t protocol)
 {
 	struct PacketBuffer *n, *np;
 	uint8_t *pl;
@@ -262,7 +276,7 @@ mppe_compress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb, uint
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
+void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state)
 {
 	;
 	;
@@ -273,7 +287,7 @@ void mppe_decomp_reset(PppPcb *pcb, ppp_mppe_state *state)
  * Decompress (decrypt) an MPPE packet.
  */
 LwipStatus
-mppe_decompress(PppPcb *pcb, ppp_mppe_state *state, struct PacketBuffer **pb)
+mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 {
 	struct PacketBuffer *n0 = *pb, *n;
 	uint8_t *pl;

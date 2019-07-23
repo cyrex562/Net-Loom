@@ -767,7 +767,7 @@ dhcp6_tmr(void)
 {
   NetIfc*netif;
   /* loop through netif's */
-  NETIF_FOREACH(netif) {
+  for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next) {
     struct Dhcp6 *dhcp6 = netif_dhcp6_data(netif);
     /* only act on DHCPv6 configured interfaces */
     if (dhcp6 != nullptr) {

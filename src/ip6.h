@@ -46,7 +46,7 @@
 #include <packet_buffer.h>
 #include <netif.h>
 
-#include <lwip_error.h>
+#include <lwip_status.h>
 
 
  /** This is the packed version of Ip6Addr,

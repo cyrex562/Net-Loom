@@ -1,7 +1,7 @@
 #pragma once
 #include <packet_buffer.h>
 #include <ip4_addr.h>
-#include <lwip_error.h>
+#include <lwip_status.h>
 #include <netif.h>
 #include <arch.h>
 #include <ip_addr.h>

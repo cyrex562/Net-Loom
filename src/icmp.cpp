@@ -40,9 +40,11 @@
 #include <icmp.h>
 #include <inet_chksum.h>
 #include <ip.h>
+#include <ip4.h>
+#include <ip6.h>
 #include <lwip_debug.h>
 #include <cstring>
-constexpr auto kIcmpDestUnreachDatasize = 8; /**
+constexpr auto ICMP_DEST_UNREACH_DATA_SZ = 8; /**
  * Processes ICMP input packets, called from ip_input().
  *
  * Currently only processes icmp echo requests and sends
@@ -53,12 +55,13 @@ constexpr auto kIcmpDestUnreachDatasize = 8; /**
  */
 void icmp_input(struct PacketBuffer* p, NetIfc* inp)
 {
-    uint8_t type;
-    uint8_t code;
     struct IcmpEchoHdr* iecho;
     const Ip4Addr* src;
     // todo: get current header
     const struct Ip4Hdr* iphdr_in = nullptr;
+    IpAddr* curr_src_addr = nullptr;
+    IpAddr* curr_dst_addr = nullptr;
+    NetIfc* curr_netif = nullptr;
     uint16_t hlen = get_ip4_hdr_hdr_len_bytes(iphdr_in);
     if (hlen < IP4_HDR_LEN)
     {
@@ -70,9 +73,9 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
         //    Logf(ICMP_DEBUG, ("icmp_input: short ICMP (%d bytes) received\n", p->tot_len));
         goto lenerr;
     }
-    type = *static_cast<uint8_t *>(p->payload);
+    uint8_t type = *static_cast<uint8_t *>(p->payload);
 
-  code = *(((uint8_t *)p->payload) + 1);
+  uint8_t code = *((uint8_t *)p->payload + 1);
   /* if debug is enabled but debug statement below is somehow disabled: */
   ;
 
@@ -81,57 +84,52 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
     case ICMP_ER: /* This is OK, echo reply might have been parsed by a raw PCB
          (as obviously, an echo request has been sent, too). */ break;
     case ICMP_ECHO:
-        src = ip4_current_dest_addr(); /* multicast destination address? */
-        if (ip4_addr_ismulticast(ip4_current_dest_addr()))
+        src = &curr_dst_addr->u_addr.ip4; /* multicast destination address? */
+        if (ip4_addr_ismulticast(&curr_dst_addr->u_addr.ip4))
         {
             /* For multicast, use address of receiving interface as source address */
             src = get_net_ifc_ip4_addr(inp);
         } /* broadcast destination address? */
-        if (ip4_addr_isbroadcast(ip4_current_dest_addr(), ip_current_netif()))
+        if (ip4_addr_isbroadcast(&curr_dst_addr->u_addr.ip4, curr_netif))
         {
             /* For broadcast, use address of receiving interface as source address */
             src = get_net_ifc_ip4_addr(inp);
         }
-        Logf(ICMP_DEBUG, ("icmp_input: ping\n"));
+        Logf(true, "icmp_input: ping\n");
         if (p->tot_len < sizeof(struct IcmpEchoHdr))
         {
-            Logf(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
+            Logf(true, "icmp_input: bad ICMP echo received\n");
             goto lenerr;
         }
-        is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP)
+        if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP))
         {
             if (inet_chksum_pbuf(p) != 0)
             {
                 Logf(ICMP_DEBUG,
-                     ("icmp_input: checksum failed for received ICMP echo\n"));
+                     "icmp_input: checksum failed for received ICMP echo\n");
                 pbuf_free(p);
                 return;
             }
         }
         if (pbuf_add_header(p, hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
         {
-            /* p is not big enough to contain link headers
-             * allocate a new one and copy p into it
-             */
-            struct PacketBuffer* r;
             uint16_t alloc_len = (uint16_t)(p->tot_len + hlen);
             if (alloc_len < p->tot_len)
             {
                 Logf(ICMP_DEBUG,
-                     ("icmp_input: allocating new PacketBuffer failed (tot_len overflow)\n"
-                     ));
+                     "icmp_input: allocating new PacketBuffer failed (tot_len overflow)\n");
                 goto icmperr;
             } /* allocate new packet buffer with space for link headers */
-            r = pbuf_alloc(PBUF_LINK, alloc_len, PBUF_RAM);
+            struct PacketBuffer* r = pbuf_alloc(PBUF_LINK, alloc_len, PBUF_RAM);
             if (r == nullptr)
             {
-                Logf(ICMP_DEBUG, ("icmp_input: allocating new PacketBuffer failed\n"));
+                Logf(ICMP_DEBUG, "icmp_input: allocating new PacketBuffer failed\n");
                 goto icmperr;
             }
             if (r->len < hlen + sizeof(struct IcmpEchoHdr))
             {
                 Logf(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                     ("first PacketBuffer cannot hold the ICMP header"));
+                     "first PacketBuffer cannot hold the ICMP header");
                 pbuf_free(r);
                 goto icmperr;
             } /* copy the ip header */
@@ -146,7 +144,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             if (pbuf_copy(r, p) != ERR_OK)
             {
                 Logf(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                     ("icmp_input: copying to new PacketBuffer failed"));
+                     "icmp_input: copying to new PacketBuffer failed");
                 pbuf_free(r);
                 goto icmperr;
             } /* free the original p */
@@ -166,19 +164,19 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
         } /* At this point, all checks are OK. */
         /* We generate an answer by switching the dest and src ip addresses,
               * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
-        iecho = static_cast<struct IcmpEchoHdr *>(p->payload);
+        iecho = reinterpret_cast<struct IcmpEchoHdr *>(p->payload);
         if (pbuf_add_header(p, hlen))
         {
-            Logf(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                 ("Can't move over header in packet"));
+            Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+                 "Can't move over header in packet");
         }
         else
         {
-            auto iphdr = static_cast<struct Ip4Hdr *>(p->payload);
+            auto iphdr = reinterpret_cast<struct Ip4Hdr *>(p->payload);
             copy_ip4_addr(&iphdr->src, src);
-            copy_ip4_addr(&iphdr->dest, ip4_current_src_addr());
+            copy_ip4_addr(&iphdr->dest, &curr_src_addr->u_addr.ip4);
             IcmphTypeSet(iecho, ICMP_ER);
-            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP)
+            if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP))
             {
                 /* adjust the checksum */
                 if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
@@ -194,11 +192,11 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
             {
                 iecho->chksum = 0;
             } /* Set the correct TTL and recalculate the header checksum. */
-            IPH_TTL_SET(iphdr, ICMP_TTL);
-            IPH_CHKSUM_SET(iphdr, 0);
-            is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP)
+            set_ip4_hdr_ttl(iphdr, ICMP_TTL);
+            set_ip4_hdr_checksum(iphdr, 0);
+            if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP))
             {
-                IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, hlen));
+                set_ip4_hdr_checksum(iphdr, inet_chksum(reinterpret_cast<uint8_t*>(iphdr), hlen));
             } /* increase number of messages attempted to send */
             /* increase number of echo replies attempted to send */
             /* send an ICMP packet */
@@ -249,7 +247,10 @@ lenerr: pbuf_free(p);
 icmperr: pbuf_free(p);
     return;
 
-} /**
+}
+
+
+/**
  * Send an icmp 'destination unreachable' packet, called from ip_input() if
  * the transport layer protocol is unknown and from udp_input() if the local
  * port is not bound.
@@ -281,39 +282,35 @@ void icmp_time_exceeded(struct PacketBuffer* p, enum icmp_te_type t)
  */
 static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t code)
 {
-    struct PacketBuffer* q;
-    struct Ip4Hdr* iphdr; /* we can use the echo header here */
-    struct IcmpEchoHdr* icmphdr;
-    Ip4Addr iphdr_src;
-    NetIfc* netif; /* increase number of messages attempted to send */
-    /* ICMP header + IP header + 8 bytes of data */
-    q = pbuf_alloc(PBUF_IP,
-                   sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN + kIcmpDestUnreachDatasize,
-                   PBUF_RAM);
+    Ip4Addr iphdr_src; /* ICMP header + IP header + 8 bytes of data */
+    struct PacketBuffer* q = pbuf_alloc(PBUF_IP,
+                                        sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
+                                        ICMP_DEST_UNREACH_DATA_SZ,
+                                        PBUF_RAM);
     if (q == nullptr)
     {
         Logf(ICMP_DEBUG,
-             ("icmp_time_exceeded: failed to allocate PacketBuffer for ICMP packet.\n"));
+             "icmp_time_exceeded: failed to allocate PacketBuffer for ICMP packet.\n");
         return;
     }
     lwip_assert("check that first PacketBuffer can hold icmp message",
-                (q->len >= (sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
-                    kIcmpDestUnreachDatasize)));
-    iphdr = (struct Ip4Hdr *)p->payload;
-    Logf(ICMP_DEBUG, ("icmp_time_exceeded from "));
+                q->len >= sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
+                ICMP_DEST_UNREACH_DATA_SZ);
+    struct Ip4Hdr* iphdr = (struct Ip4Hdr *)p->payload;
+    Logf(ICMP_DEBUG, "icmp_time_exceeded from ");
 
-    Logf(ICMP_DEBUG, (" to "));
-    Logf(ICMP_DEBUG, ("\n"));
-    icmphdr = (struct IcmpEchoHdr *)q->payload;
+    Logf(ICMP_DEBUG, " to ");
+    Logf(ICMP_DEBUG, "\n");
+    struct IcmpEchoHdr* icmphdr = (struct IcmpEchoHdr *)q->payload;
     icmphdr->type = type;
     icmphdr->code = code;
     icmphdr->id = 0;
     icmphdr->seqno = 0; /* copy fields from original packet */
     SMEMCPY((uint8_t *)q->payload + sizeof(struct IcmpEchoHdr),
             (uint8_t *)p->payload,
-            IP4_HDR_LEN + kIcmpDestUnreachDatasize);
+            IP4_HDR_LEN + ICMP_DEST_UNREACH_DATA_SZ);
     copy_ip4_addr(&iphdr_src, &iphdr->src);
-    netif = ip4_route(&iphdr_src);
+    NetIfc* netif = ip4_route(&iphdr_src);
     if (netif != nullptr)
     {
         /* calculate checksum */

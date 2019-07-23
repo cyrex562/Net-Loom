@@ -368,7 +368,7 @@ dhcp_coarse_tmr(void)
     NetIfc* netif;
     Logf(DHCP_DEBUG | LWIP_DBG_TRACE, "dhcp_coarse_tmr()\n");
     /* iterate through all network interfaces */
-    NETIF_FOREACH(netif)
+    for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next)
     {
         /* only act on DHCP configured interfaces */
         DhcpContext* dhcp = netif_dhcp_data(netif);
@@ -406,7 +406,7 @@ dhcp_fine_tmr(void)
 {
     NetIfc* netif;
     /* loop through netif's */
-    NETIF_FOREACH(netif)
+    for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next)
     {
         DhcpContext* dhcp = netif_dhcp_data(netif);
         /* only act on DHCP configured interfaces */

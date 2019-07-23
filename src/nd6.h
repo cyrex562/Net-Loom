@@ -2,7 +2,7 @@
 
 #include <ip6_addr.h>
 
-#include <lwip_error.h>
+#include <lwip_status.h>
 
 #include <opt.h>
 
