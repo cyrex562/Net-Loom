@@ -217,80 +217,74 @@ mld6_remove_group(NetIfc*netif, struct mld_group *group)
 /**
  * Process an input MLD message. Called by icmp6_input.
  *
- * @param p the mld packet, p->payload pointing to the icmpv6 header
- * @param inp the netif on which this packet was received
+ * @param pkt_buf the mld packet, p->payload pointing to the icmpv6 header
+ * @param in_netif the netif on which this packet was received
  */
-void
-mld6_input(struct PacketBuffer *p, NetIfc*inp)
+void mld6_input(struct PacketBuffer* pkt_buf, NetIfc* in_netif)
 {
-  struct mld_header *mld_hdr;
-  struct mld_group *group;
-
-  MLD6_STATS_INC(mld6.recv);
-
-  /* Check that mld header fits in packet. */
-  if (p->len < sizeof(struct mld_header)) {
-    /* @todo debug message */
-    free_pkt_buf(p);
-    MLD6_STATS_INC(mld6.lenerr);
-    MLD6_STATS_INC(mld6.drop);
-    return;
-  }
-
-  mld_hdr = (struct mld_header *)p->payload;
-
-  switch (mld_hdr->type) {
-  case ICMP6_TYPE_MLQ: /* Multicast listener query. */
-    /* Is it a general query? */
-    if (ip6_addr_isallnodes_linklocal(ip6_current_dest_addr()) &&
-        ip6_addr_isany(&(mld_hdr->multicast_address))) {
-      MLD6_STATS_INC(mld6.rx_general);
-      /* Report all groups, except all nodes group, and if-local groups. */
-      group = netif_mld6_data(inp);
-      while (group != nullptr) {
-        if ((!(ip6_addr_ismulticast_iflocal(&(group->group_address)))) &&
-            (!(ip6_addr_isallnodes_linklocal(&(group->group_address))))) {
-          mld6_delayed_report(group, mld_hdr->max_resp_delay);
+    struct mld_header* mld_hdr;
+    struct mld_group* group;
+    Ip6Addr* curr_dst_addr = nullptr; /* Check that mld header fits in packet. */
+    if (pkt_buf->len < sizeof(struct mld_header))
+    {
+        /* @todo debug message */
+        free_pkt_buf(pkt_buf);
+        return;
+    }
+    mld_hdr = (struct mld_header *)pkt_buf->payload;
+    switch (mld_hdr->type)
+    {
+    case ICMP6_TYPE_MLQ: /* Multicast listener query. */ /* Is it a general query? */ if (
+            ip6_addr_isallnodes_linklocal(curr_dst_addr) && ip6_addr_isany(
+                &(mld_hdr->multicast_address)))
+        {
+            /* Report all groups, except all nodes group, and if-local groups. */
+            group = netif_mld6_data(in_netif);
+            while (group != nullptr)
+            {
+                if ((!(ip6_addr_ismulticast_iflocal(&(group->group_address)))) && (!(
+                    ip6_addr_isallnodes_linklocal(&(group->group_address)))))
+                {
+                    mld6_delayed_report(group, mld_hdr->max_resp_delay);
+                }
+                group = group->next;
+            }
         }
-        group = group->next;
-      }
-    } else {
-      /* Have we joined this group?
-       * We use IP6 destination address to have a memory aligned copy.
-       * mld_hdr->multicast_address should be the same. */
-      MLD6_STATS_INC(mld6.rx_group);
-      group = mld6_lookfor_group(inp, ip6_current_dest_addr());
-      if (group != nullptr) {
-        /* Schedule a report. */
-        mld6_delayed_report(group, mld_hdr->max_resp_delay);
-      }
-    }
-    break; /* ICMP6_TYPE_MLQ */
-  case ICMP6_TYPE_MLR: /* Multicast listener report. */
-    /* Have we joined this group?
+        else
+        {
+            /* Have we joined this group?
+             * We use IP6 destination address to have a memory aligned copy.
+             * mld_hdr->multicast_address should be the same. */
+            group = mld6_lookfor_group(in_netif, curr_dst_addr);
+            if (group != nullptr)
+            {
+                /* Schedule a report. */
+                mld6_delayed_report(group, mld_hdr->max_resp_delay);
+            }
+        }
+        break; /* ICMP6_TYPE_MLQ */
+    case ICMP6_TYPE_MLR: /* Multicast listener report. */ /* Have we joined this group?
      * We use IP6 destination address to have a memory aligned copy.
-     * mld_hdr->multicast_address should be the same. */
-    MLD6_STATS_INC(mld6.rx_report);
-    group = mld6_lookfor_group(inp, ip6_current_dest_addr());
-    if (group != nullptr) {
-      /* If we are waiting to report, cancel it. */
-      if (group->group_state == MLD6_GROUP_DELAYING_MEMBER) {
-        group->timer = 0; /* stopped */
-        group->group_state = MLD6_GROUP_IDLE_MEMBER;
-        group->last_reporter_flag = 0;
-      }
+     * mld_hdr->multicast_address should be the same. */ group = mld6_lookfor_group(
+            in_netif,
+            curr_dst_addr);
+        if (group != nullptr)
+        {
+            /* If we are waiting to report, cancel it. */
+            if (group->group_state == MLD6_GROUP_DELAYING_MEMBER)
+            {
+                group->timer = 0; /* stopped */
+                group->group_state = MLD6_GROUP_IDLE_MEMBER;
+                group->last_reporter_flag = 0;
+            }
+        }
+        break; /* ICMP6_TYPE_MLR */
+    case ICMP6_TYPE_MLD: /* Multicast listener done. */
+        /* Do nothing, router will query us. */ break; /* ICMP6_TYPE_MLD */
+    default:
+        break;
     }
-    break; /* ICMP6_TYPE_MLR */
-  case ICMP6_TYPE_MLD: /* Multicast listener done. */
-    /* Do nothing, router will query us. */
-    break; /* ICMP6_TYPE_MLD */
-  default:
-    MLD6_STATS_INC(mld6.proterr);
-    MLD6_STATS_INC(mld6.drop);
-    break;
-  }
-
-  free_pkt_buf(p);
+    free_pkt_buf(pkt_buf);
 }
 
 /**

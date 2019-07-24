@@ -268,7 +268,7 @@ tcp_seg_add_chksum(uint16_t chksum, uint16_t len, uint16_t *seg_chksum,
   uint32_t helper;
   /* add chksum to old chksum and fold to uint16_t */
   helper = chksum + *seg_chksum;
-  chksum = FOLD_U32T(helper);
+  chksum = fold_u32(helper);
   if ((len & 1) != 0) {
     *seg_chksum_swapped = 1 - *seg_chksum_swapped;
     chksum = SWAP_BYTES_IN_WORD(chksum);
@@ -858,7 +858,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   /* Options are created when calling tcp_output() */
 
   /* Migrate flags from original segment */
-  split_flags = TCPH_FLAGS(useg->tcphdr);
+  split_flags = tcph_flags(useg->tcphdr);
   remainder_flags = 0; /* ACK added in tcp_output() */
 
   if (split_flags & TCP_PSH) {
@@ -963,7 +963,7 @@ tcp_send_fin(struct TcpPcb *pcb)
     for (last_unsent = pcb->unsent; last_unsent->next != nullptr;
          last_unsent = last_unsent->next);
 
-    if ((TCPH_FLAGS(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | TCP_RST)) == 0) {
+    if ((tcph_flags(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | TCP_RST)) == 0) {
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
       tcp_set_flags(pcb, TF_FIN);
@@ -1277,7 +1277,7 @@ tcp_output(struct TcpPcb *pcb)
   while (seg != nullptr &&
          lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
     lwip_assert("RST not expected here!",
-                (TCPH_FLAGS(seg->tcphdr) & TCP_RST) == 0);
+                (tcph_flags(seg->tcphdr) & TCP_RST) == 0);
     /* Stop sending if the nagle algorithm would prevent it
      * Don't stop:
      * - if tcp_write had a memory error before (prevent delayed ACK timeout) or
@@ -1519,7 +1519,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
       seg->chksum_swapped = 0;
     }
     acc = (uint16_t)~acc + seg->chksum;
-    seg->tcphdr->chksum = (uint16_t)~FOLD_U32T(acc);
+    seg->tcphdr->chksum = (uint16_t)~fold_u32(acc);
 
     if (chksum_slow != seg->tcphdr->chksum) {
       TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(
@@ -2067,7 +2067,7 @@ tcp_zero_window_probe(struct TcpPcb *pcb)
     ++pcb->persist_probe;
   }
 
-  is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
+  is_fin = ((tcph_flags(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
   /* we want to send one seqno: either FIN or data (no options) */
   len = is_fin ? 0 : 1;
 

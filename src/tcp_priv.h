@@ -110,48 +110,60 @@ LwipStatus            tcp_process_refused_data(struct TcpPcb *pcb);
 
 #define TCP_SEQ_BETWEEN(a,b,c) (TCP_SEQ_GEQ(a,b) && TCP_SEQ_LEQ(a,c))
 
-#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
+constexpr auto TCP_TMR_INTERVAL = 250;  /* The TCP timer interval in milliseconds. */
 
 
 
-#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in milliseconds */
+constexpr auto TCP_FAST_INTERVAL   =   TCP_TMR_INTERVAL; /* the fine grained timeout in milliseconds */
 
 
 
-#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in milliseconds */
+constexpr auto TCP_SLOW_INTERVAL  =    (2*TCP_TMR_INTERVAL);  /* the coarse grained timeout in milliseconds */
 
 
-#define TCP_FIN_WAIT_TIMEOUT 20000 /* milliseconds */
-#define TCP_SYN_RCVD_TIMEOUT 20000 /* milliseconds */
+constexpr auto TCP_FIN_WAIT_TIMEOUT = 20000 /* milliseconds */;
+constexpr auto TCP_SYN_RCVD_TIMEOUT = 20000 /* milliseconds */;
 
-#define TCP_OOSEQ_TIMEOUT        6U /* x RTO */
+constexpr auto TCP_OOSEQ_TIMEOUT = 6U /* x RTO */;
 
 
-#define TCP_MSL 60000UL /* The maximum segment lifetime in milliseconds */
+constexpr auto TCP_MSL = 60000UL /* The maximum segment lifetime in milliseconds */;
 
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
 
-#define  TCP_KEEPIDLE_DEFAULT     7200000UL /* Default KEEPALIVE timer in milliseconds */
+constexpr auto TCP_KEEPIDLE_DEFAULT = 7200000UL /* Default KEEPALIVE timer in milliseconds */;
 
 
 
-#define  TCP_KEEPINTVL_DEFAULT    75000UL   /* Default Time between KEEPALIVE probes in milliseconds */
+constexpr auto TCP_KEEPINTVL_DEFAULT = 75000UL   /* Default Time between KEEPALIVE probes in milliseconds */;
 
 
 
-#define  TCP_KEEPCNT_DEFAULT      9U        /* Default Counter for KEEPALIVE probes */
+constexpr auto TCP_KEEPCNT_DEFAULT = 9U        /* Default Counter for KEEPALIVE probes */;
 
 
-#define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */
-
-#define TCP_TCPLEN(seg) ((seg)->len + (((TCPH_FLAGS((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0) ? 1U : 0U))
+constexpr auto  TCP_MAXIDLE        =      TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT;  /* Maximum KEEPALIVE probe time */
+inline size_t TCP_TCPLEN(TcpHdr* seg)
+{
+    return ((seg)->len + (((tcph_flags((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0)
+                              ? 1U
+                              : 0U));
+}
 
 /** Flags used on input processing, not on pcb->flags
 */
-#define TF_RESET     (uint8_t)0x08U   /* Connection was reset. */
-#define TF_CLOSED    (uint8_t)0x10U   /* Connection was successfully closed. */
-#define TF_GOT_FIN   (uint8_t)0x20U   /* Connection was closed by the remote end. */
+enum TcpProcFlags
+{
+    TF_RESET = 0x08U,
+    /* Connection was reset. */
+    TF_CLOSED = 0x10U,
+    /* Connection was successfully closed. */
+    TF_GOT_FIN = 0x20U,
+    /* Connection was closed by the remote end. */
+};
+
+
 
 
 #define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret)                 \

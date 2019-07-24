@@ -815,7 +815,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
       if (have_chksum) {
         uint32_t acc;
         acc = udphdr->chksum + (uint16_t)~(chksum);
-        udphdr->chksum = FOLD_U32T(acc);
+        udphdr->chksum = fold_u32(acc);
       }
 
 
@@ -844,7 +844,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
           udpchksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDP,
                                                q->tot_len, UDP_HLEN, src_ip, dst_ip);
           acc = udpchksum + (uint16_t)~(chksum);
-          udpchksum = FOLD_U32T(acc);
+          udpchksum = fold_u32(acc);
         } else
 
         {

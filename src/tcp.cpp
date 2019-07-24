@@ -968,7 +968,7 @@ tcp_update_rcv_ann_wnd(struct TcpPcb* pcb)
             /* keep the right edge of window constant */
             uint32_t new_rcv_ann_wnd = pcb->rcv_ann_right_edge - pcb->rcv_nxt;
 
-            pcb->rcv_ann_wnd = (TcpWndSizeT)new_rcv_ann_wnd;
+            pcb->rcv_ann_wnd = (TcpWndSize)new_rcv_ann_wnd;
         }
         return 0;
     }
@@ -987,7 +987,7 @@ void
 tcp_recved(struct TcpPcb* pcb, uint16_t len)
 {
     uint32_t wnd_inflation;
-    TcpWndSizeT rcv_wnd;
+    TcpWndSize rcv_wnd;
 
    
 
@@ -996,7 +996,7 @@ tcp_recved(struct TcpPcb* pcb, uint16_t len)
     lwip_assert("don't call tcp_recved for listen-pcbs",
                 pcb->state != LISTEN);
 
-    rcv_wnd = (TcpWndSizeT)(pcb->rcv_wnd + len);
+    rcv_wnd = (TcpWndSize)(pcb->rcv_wnd + len);
     if ((rcv_wnd > TCP_WND_MAX(pcb)) || (rcv_wnd < pcb->rcv_wnd))
     {
         /* window got too big or TcpWndSizeT overflow */
@@ -1226,7 +1226,7 @@ void
 tcp_slowtmr(void)
 {
     struct TcpPcb *pcb, *prev;
-    TcpWndSizeT eff_wnd;
+    TcpWndSize eff_wnd;
     uint8_t pcb_remove; /* flag if a PCB should be removed */
     uint8_t pcb_reset; /* flag if a RST should be sent when removing */
     LwipStatus err;
@@ -1358,9 +1358,9 @@ tcp_slowtmr_start:
                         /* Reduce congestion window and ssthresh. */
                         eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
                         pcb->ssthresh = eff_wnd >> 1;
-                        if (pcb->ssthresh < (TcpWndSizeT)(pcb->mss << 1))
+                        if (pcb->ssthresh < (TcpWndSize)(pcb->mss << 1))
                         {
-                            pcb->ssthresh = (TcpWndSizeT)(pcb->mss << 1);
+                            pcb->ssthresh = (TcpWndSize)(pcb->mss << 1);
                         }
                         pcb->cwnd = pcb->mss;
                         Logf(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"TCPWNDSIZE_F

@@ -78,11 +78,11 @@ struct ip6_reassdata {
   struct PacketBuffer *p;
   struct Ip6Hdr *iphdr; /* pointer to the first (original) IPv6 header */
 
-  ip6_addr_p_t src; /* copy of the source address in the IP header */
-  ip6_addr_p_t dest; /* copy of the destination address in the IP header */
+  Ip6AddrWireFmt src; /* copy of the source address in the IP header */
+  Ip6AddrWireFmt dest; /* copy of the destination address in the IP header */
   /* This buffer (for the part of the original header that we overwrite) will
    * be slightly oversized, but we cannot compute the exact size from here. */
-  uint8_t orig_hdr[sizeof(struct ip6_frag_hdr) + sizeof(void*)];
+  uint8_t orig_hdr[sizeof(Ip6FragHdr) + sizeof(void*)];
 
   uint32_t identification;
   uint16_t datagram_len;
