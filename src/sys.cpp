@@ -4,6 +4,7 @@
 #include "lwip_debug.h"
 #include "sys.h"
 #include "tcpip.h"
+#define NOMINMAX
 #include <windows.h>
 #include <cstdio> 
 #include <cstdlib>

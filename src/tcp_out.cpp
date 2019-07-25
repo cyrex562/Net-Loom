@@ -114,7 +114,7 @@
 
 
 /* Forward declarations.*/
-static LwipStatus tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif);
+static LwipStatus tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetIfc*netif);
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
 static NetIfc*
@@ -143,10 +143,10 @@ tcp_route(const struct TcpPcb *pcb, const IpAddr *src, const IpAddr *dst)
  * The TCP header is filled in except ackno and wnd.
  * p is freed on failure.
  */
-static struct tcp_seg *
+static struct TcpSeg *
 tcp_create_segment(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_t hdrflags, uint32_t seqno, uint8_t optflags)
 {
-  struct tcp_seg *seg;
+  struct TcpSeg *seg;
   uint8_t optlen;
 
   lwip_assert("tcp_create_segment: invalid pcb", pcb != nullptr);
@@ -154,7 +154,7 @@ tcp_create_segment(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_t hdr
 
   optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb);
 
-    seg = new tcp_seg;
+    seg = new TcpSeg;
   if (seg  == nullptr) {
     Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_create_segment: no memory.\n"));
     free_pkt_buf(p);
@@ -301,13 +301,13 @@ tcp_write_checks(struct TcpPcb *pcb, uint16_t len)
 
   /* fail on too much data */
   if (len > pcb->snd_buf) {
-    Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too much data (len=%d > snd_buf=%"TCPWNDSIZE_F")\n",
+    Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too much data (len=%d > snd_buf=%d)\n",
              len, pcb->snd_buf));
     tcp_set_flags(pcb, TF_NAGLEMEMERR);
     return ERR_MEM;
   }
 
-  Logf(TCP_QLEN_DEBUG, ("tcp_write: queuelen: %"TCPWNDSIZE_F"\n", (tcpwnd_size_t)pcb->snd_queuelen));
+  Logf(TCP_QLEN_DEBUG, ("tcp_write: queuelen: %d\n", (tcpwnd_size_t)pcb->snd_queuelen));
 
   /* If total number of pbufs on the unsent/unacked queues exceeds the
    * configured maximum, return an error */
@@ -372,7 +372,7 @@ LwipStatus
 tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 {
   struct PacketBuffer *concat_p = nullptr;
-  struct tcp_seg *last_unsent = nullptr, *seg = nullptr, *prev_seg = nullptr, *queue = nullptr;
+  struct TcpSeg *last_unsent = nullptr, *seg = nullptr, *prev_seg = nullptr, *queue = nullptr;
   uint16_t pos = 0; /* position in 'arg' data */
   uint16_t queuelen;
   uint8_t optlen;
@@ -657,7 +657,7 @@ tcp_write(struct TcpPcb *pcb, const void *arg, uint16_t len, uint8_t apiflags)
 
     Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE, ("tcp_write: queueing %d:%d\n",
              lwip_ntohl(seg->tcphdr->seqno),
-             lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg)));
+             lwip_ntohl(seg->tcphdr->seqno) + tcp_tcplen(seg)));
 
     pos += seglen;
   }
@@ -786,7 +786,7 @@ memerr:
 LwipStatus
 tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
 {
-  struct tcp_seg *seg = nullptr, *useg = nullptr;
+  struct TcpSeg *seg = nullptr, *useg = nullptr;
   struct PacketBuffer *p = nullptr;
   uint8_t optlen;
   uint8_t optflags;
@@ -959,7 +959,7 @@ tcp_send_fin(struct TcpPcb *pcb)
 
   /* first, try to add the fin to the last unsent segment */
   if (pcb->unsent != nullptr) {
-    struct tcp_seg *last_unsent;
+    struct TcpSeg *last_unsent;
     for (last_unsent = pcb->unsent; last_unsent->next != nullptr;
          last_unsent = last_unsent->next);
 
@@ -987,7 +987,7 @@ LwipStatus
 tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
 {
   struct PacketBuffer *p;
-  struct tcp_seg *seg;
+  struct TcpSeg *seg;
   uint8_t optflags = 0;
   uint8_t optlen = 0;
 
@@ -1047,14 +1047,14 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
   Logf(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE,
        ("tcp_enqueue_flags: queueing %d:%d (0x%"X16_F")\n",
            lwip_ntohl(seg->tcphdr->seqno),
-           lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg),
+           lwip_ntohl(seg->tcphdr->seqno) + tcp_tcplen(seg),
            (uint16_t)flags));
 
   /* Now append seg to pcb->unsent queue */
   if (pcb->unsent == nullptr) {
     pcb->unsent = seg;
   } else {
-    struct tcp_seg *useg;
+    struct TcpSeg *useg;
     for (useg = pcb->unsent; useg->next != nullptr; useg = useg->next);
     useg->next = seg;
   }
@@ -1183,7 +1183,7 @@ tcp_build_wnd_scale_option(uint32_t *opts)
 LwipStatus
 tcp_output(struct TcpPcb *pcb)
 {
-  struct tcp_seg *seg, *useg;
+  struct TcpSeg *seg, *useg;
   uint32_t wnd, snd_nxt;
   LwipStatus err;
   NetIfc*netif;
@@ -1212,7 +1212,7 @@ tcp_output(struct TcpPcb *pcb)
     Logf(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n",
              (uint8_t *)pcb->unsent));
     Logf(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F
-             ", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
+             ", cwnd %d, wnd %"U32_F
              ", seg == NULL, ack %d\n",
              pcb->snd_wnd, pcb->cwnd, wnd, pcb->lastack));
 
@@ -1225,7 +1225,7 @@ tcp_output(struct TcpPcb *pcb)
     goto output_done;
   } else {
     Logf(TCP_CWND_DEBUG,
-         ("tcp_output: snd_wnd %"TCPWNDSIZE_F", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
+         ("tcp_output: snd_wnd %d, cwnd %d, wnd %"U32_F
              ", effwnd %d, seq %d, ack %d\n",
              pcb->snd_wnd, pcb->cwnd, wnd,
              lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len,
@@ -1306,12 +1306,12 @@ tcp_output(struct TcpPcb *pcb)
     if (pcb->state != SYN_SENT) {
       tcp_clear_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
     }
-    snd_nxt = lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
+    snd_nxt = lwip_ntohl(seg->tcphdr->seqno) + tcp_tcplen(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
       pcb->snd_nxt = snd_nxt;
     }
     /* put segment on unacknowledged list if length > 0 */
-    if (TCP_TCPLEN(seg) > 0) {
+    if (tcp_tcplen(seg) > 0) {
       seg->next = nullptr;
       /* unacked list is empty? */
       if (pcb->unacked == nullptr) {
@@ -1324,7 +1324,7 @@ tcp_output(struct TcpPcb *pcb)
          * this case. -STJ Jul 27, 2004 */
         if (TCP_SEQ_LT(lwip_ntohl(seg->tcphdr->seqno), lwip_ntohl(useg->tcphdr->seqno))) {
           /* add segment to before tail of unacked list, keeping the list sorted */
-          struct tcp_seg **cur_seg = &(pcb->unacked);
+          struct TcpSeg **cur_seg = &(pcb->unacked);
           while (*cur_seg &&
                  TCP_SEQ_LT(lwip_ntohl((*cur_seg)->tcphdr->seqno), lwip_ntohl(seg->tcphdr->seqno))) {
             cur_seg = &((*cur_seg)->next );
@@ -1365,7 +1365,7 @@ output_done:
  * @return 1 if ref != 1, 0 if ref == 1
  */
 static int
-tcp_output_segment_busy(const struct tcp_seg *seg)
+tcp_output_segment_busy(const struct TcpSeg *seg)
 {
   lwip_assert("tcp_output_segment_busy: invalid seg", seg != nullptr);
 
@@ -1388,7 +1388,7 @@ tcp_output_segment_busy(const struct tcp_seg *seg)
  * @param netif the netif used to send the segment
  */
 static LwipStatus
-tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
+tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetIfc*netif)
 {
   LwipStatus err;
   uint16_t len;
@@ -1558,7 +1558,7 @@ tcp_output_segment(struct tcp_seg *seg, struct TcpPcb *pcb, NetIfc*netif)
 LwipStatus
 tcp_rexmit_rto_prepare(struct TcpPcb *pcb)
 {
-  struct tcp_seg *seg;
+  struct TcpSeg *seg;
 
   lwip_assert("tcp_rexmit_rto_prepare: invalid pcb", pcb != nullptr);
 
@@ -1591,7 +1591,7 @@ tcp_rexmit_rto_prepare(struct TcpPcb *pcb)
   /* Mark RTO in-progress */
   tcp_set_flags(pcb, TF_RTO);
   /* Record the next byte following retransmit */
-  pcb->rto_end = lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
+  pcb->rto_end = lwip_ntohl(seg->tcphdr->seqno) + tcp_tcplen(seg);
   /* Don't take any RTT measurements after retransmitting. */
   pcb->rttest = 0;
 
@@ -1646,8 +1646,8 @@ tcp_rexmit_rto(struct TcpPcb *pcb)
 LwipStatus
 tcp_rexmit(struct TcpPcb *pcb)
 {
-  struct tcp_seg *seg;
-  struct tcp_seg **cur_seg;
+  struct TcpSeg *seg;
+  struct TcpSeg **cur_seg;
 
   lwip_assert("tcp_rexmit: invalid pcb", pcb != nullptr);
 
@@ -2035,7 +2035,7 @@ tcp_zero_window_probe(struct TcpPcb *pcb)
   LwipStatus err;
   struct PacketBuffer *p;
   struct TcpHdr *tcphdr;
-  struct tcp_seg *seg;
+  struct TcpSeg *seg;
   uint16_t len;
   uint8_t is_fin;
   uint32_t snd_nxt;

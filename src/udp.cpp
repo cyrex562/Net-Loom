@@ -261,9 +261,9 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
 
         } else if (broadcast && ip4_current_dest_addr()->addr == IP4_ADDR_BCAST) {
           /* global broadcast address (only valid for IPv4; match was checked before) */
-          if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
+          if (!is_ip_addr_ip4_val(uncon_pcb->local_ip) || !ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
             /* uncon_pcb does not match the input netif, check this pcb */
-            if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
+            if (is_ip_addr_ip4_val(pcb->local_ip) && ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&pcb->local_ip), get_net_ifc_ip4_addr(inp))) {
               /* better match */
               uncon_pcb = pcb;
             }
@@ -635,7 +635,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
 
   /* PCB local address is IP_ANY_ADDR or multicast? */
 
-  if (IpIsV6(dst_ip)) {
+  if (is_ip_addr_v6(dst_ip)) {
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip)) ||
         ip6_addr_ismulticast(ip_2_ip6(&pcb->local_ip))) {
       src_ip = ip6_select_source_address(netif, ip_2_ip6(dst_ip));
@@ -949,7 +949,7 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
    * This is legacy support: scope-aware callers should always provide properly
    * zoned source addresses. Do the zone selection before the address-in-use
    * check below; as such we have to make a temporary copy of the address. */
-  if (IpIsV6(ipaddr) && ip6_addr_lacks_zone(ip_2_ip6(ipaddr), IP6_UNKNOWN)) {
+  if (is_ip_addr_v6(ipaddr) && ip6_addr_lacks_zone(ip_2_ip6(ipaddr), IP6_UNKNOWN)) {
     ip_addr_copy(zoned_ipaddr, *ipaddr);
     ip6_addr_select_zone(ip_2_ip6(&zoned_ipaddr), ip_2_ip6(&zoned_ipaddr));
     ipaddr = &zoned_ipaddr;
@@ -1067,7 +1067,7 @@ udp_connect(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
 
   /* If the given IP address should have a zone but doesn't, assign one now,
    * using the bound address to make a more informed decision when possible. */
-  if (IpIsV6(&pcb->remote_ip) &&
+  if (is_ip_addr_v6(&pcb->remote_ip) &&
       ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
     ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
   }

@@ -682,7 +682,7 @@ pcapif_low_level_init(NetIfc*netif)
   sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0,);
 
 
-  Logf(NETIF_DEBUG, ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
+  Logf(true, ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n",netif->hwaddr[0],netif->hwaddr[1],netif->hwaddr[2],netif->hwaddr[3],netif->hwaddr[4],netif->hwaddr[5]));
 }
 
 /** low_level_output():
@@ -721,7 +721,7 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
          time. The size of the data in each PacketBuffer is kept in the ->len
          variable. */
       /* send data from(q->payload, q->len); */
-      Logf(NETIF_DEBUG, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
+      Logf(true, ("netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
         memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
         ptr += q->len - ETH_PAD_SIZE;
@@ -788,7 +788,7 @@ pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
 
   /* We allocate a PacketBuffer chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE);
-  Logf(NETIF_DEBUG, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
+  Logf(true, ("netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len));
 
   if (p != nullptr) {
     /* We iterate over the PacketBuffer chain until we have read the entire
@@ -800,7 +800,7 @@ pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
          available data in the PacketBuffer is given by the q->len
          variable. */
       /* read data into(q->payload, q->len); */
-      Logf(NETIF_DEBUG, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
+      Logf(true, ("netif: recv start %i length %i q->payload %p q->len %i q->next %p\n", start, length, q->payload, (int)q->len, (void*)q->next));
       if (q == p) {
 
         memcpy(&((char*)q->payload)[ETH_PAD_SIZE], &((const char*)packet)[start], copy_len);
@@ -885,7 +885,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 #endif
     /* pass all packets to ethernet_input, which decides what packets it supports */
     if (netif->input(p, netif) != ERR_OK) {
-      Logf(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+      Logf(true, ("ethernetif_input: IP input error\n"));
       free_pkt_buf(p);
     }
   }

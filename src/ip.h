@@ -113,7 +113,7 @@ struct IpGlobals
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
 // #define ip6_current_header() \
-//   ((const struct ip6_hdr *)(ip_data.current_ip6_header))
+//   ((const Ip6Hdr *)(ip_data.current_ip6_header))
 /** Returns TRUE if the current IP input packet is IPv6, FALSE if it is IPv4 */
 // #define ip_current_is_v6() (ip6_current_header() != NULL)
 
@@ -187,7 +187,7 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
  * Output IP packet, netif is selected by source address
  */
 #define ip_output(p, src, dest, ttl, tos, proto)                       \
-  (IpIsV6(dest)                                                        \
+  (is_ip_addr_v6(dest)                                                        \
        ? ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) \
        : ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
 /**
@@ -195,7 +195,7 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
  * Output IP packet to specified interface
  */
 #define ip_output_if(p, src, dest, ttl, tos, proto, netif)                  \
-  (IpIsV6(dest) ? ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, \
+  (is_ip_addr_v6(dest) ? ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, \
                                 proto, netif)                               \
                 : ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, \
                                 proto, netif))
@@ -204,18 +204,18 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
  * Output IP packet to interface specifying source address
  */
 #define ip_output_if_src(p, src, dest, ttl, tos, proto, netif)             \
-  (IpIsV6(dest) ? ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
+  (is_ip_addr_v6(dest) ? ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
                                     tos, proto, netif)                     \
                 : ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, \
                                     tos, proto, netif))
 /** Output IP packet that already includes an IP header. */
 #define ip_output_if_hdrincl(p, src, dest, netif)                         \
-  (IpIsV6(dest)                                                           \
+  (is_ip_addr_v6(dest)                                                           \
        ? ip6_output_if(p, ip_2_ip6(src), LWIP_IP_HDRINCL, 0, 0, 0, netif) \
        : ip4_output_if(p, ip_2_ip4(src), LWIP_IP_HDRINCL, 0, 0, 0, netif))
 /** Output IP packet with netif_hint */
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint)        \
-  (IpIsV6(dest) ? ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
+  (is_ip_addr_v6(dest) ? ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, \
                                     tos, proto, netif_hint)                \
                 : ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, \
                                     tos, proto, netif_hint))
@@ -223,18 +223,25 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
-#define ip_route(src, dest)                                \
-  (IpIsV6(dest) ? ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) \
-                : ip4_route_src(ip_2_ip4(src), ip_2_ip4(dest)))
+inline NetIfc* ip_route(IpAddr* src, IpAddr* dest)
+{
+    return (is_ip_addr_v6(dest)
+                ? ip6_route((&src->u_addr.ip6), (&dest->u_addr.ip6))
+                : ip4_route_src((&src->u_addr.ip4), (&dest->u_addr.ip4)));
+}
 /**
  * @ingroup ip
  * Get netif for IP.
  */
-#define ip_netif_get_local_ip(netif, dest)                      \
-  (IpIsV6(dest) ? ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) \
-                : ip4_netif_get_local_ip(netif))
-#define ip_debug_print(is_ipv6, p) \
-  ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
+inline const IpAddr* ip_netif_get_local_ip(const NetIfc* netif, const IpAddr* dest)
+{
+    if (is_ip_addr_v6(dest))
+        return ip6_netif_get_local_ip(netif, &dest->u_addr.ip6);
+    return ip4_netif_get_local_ip(netif);
+}
+
+// #define ip_debug_print(is_ipv6, p) \
+//   ((is_ipv6) ? true_print(p) : ip4_debug_print(p))
 
 LwipStatus ip_input(struct PacketBuffer *p, NetIfc *inp);
 

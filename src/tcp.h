@@ -175,28 +175,40 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
 
 #define SND_WND_SCALE(pcb, wnd) (((wnd) << (pcb)->snd_scale))
 #define TCPWND16(x)             ((uint16_t)LWIP_MIN((x), 0xFFFF))
-#define TCP_WND_MAX(pcb)        ((TcpWndSizeT)(((pcb)->flags & TF_WND_SCALE) ? TCP_WND : TCPWND16(TCP_WND)))
-    /* Increments a TcpWndSizeT and holds at max value rather than rollover */
-#define TCP_WND_INC(wnd, inc)   do { \
-                                  if ((TcpWndSizeT)(wnd + inc) >= wnd) { \
-                                    wnd = (TcpWndSizeT)(wnd + inc); \
-                                  } else { \
-                                    wnd = (TcpWndSizeT)-1; \
-                                  } \
-                                } while(0)
-#define TF_ACK_DELAY   0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW     0x02U   /* Immediate ACK. */
-#define TF_INFR        0x04U   /* In fast recovery. */
-#define TF_CLOSEPEND   0x08U   /* If this is set, tcp_close failed to enqueue the FIN (retried in tcp_tmr) */
-#define TF_RXCLOSED    0x10U   /* rx closed by tcp_shutdown */
-#define TF_FIN         0x20U   /* Connection was closed locally (FIN segment enqueued). */
-#define TF_NODELAY     0x40U   /* Disable Nagle algorithm */
-#define TF_NAGLEMEMERR 0x80U   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
-#define TF_WND_SCALE   0x0100U /* Window Scale option enabled */
-#define TF_BACKLOGPEND 0x0200U /* If this is set, a connection pcb has increased the backlog on its listener */
-#define TF_TIMESTAMP   0x0400U   /* Timestamp option enabled */
-#define TF_RTO         0x0800U /* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
-#define TF_SACK        0x1000U /* Selective ACKs enabled */
+
+
+/// Increments a TcpWndSizeT and holds at max value rather than rollover
+inline void tcp_wnd_inc(TcpWndSize wnd, const unsigned inc)
+{
+    if (TcpWndSize(wnd + inc) >= wnd)
+    {
+        wnd = TcpWndSize(wnd + inc);
+    }
+    else
+    {
+        wnd = TcpWndSize(-1);
+    }
+}
+
+constexpr auto TF_ACK_DELAY = 0x01U; /* Delayed ACK. */
+constexpr auto TF_ACK_NOW = 0x02U; /* Immediate ACK. */
+constexpr auto TF_INFR = 0x04U; /* In fast recovery. */
+constexpr auto TF_CLOSEPEND = 0x08U;
+/* If this is set, tcp_close failed to enqueue the FIN (retried in tcp_tmr) */
+constexpr auto TF_RXCLOSED = 0x10U; /* rx closed by tcp_shutdown */
+constexpr auto TF_FIN = 0x20U; /* Connection was closed locally (FIN segment enqueued). */
+constexpr auto TF_NODELAY = 0x40U; /* Disable Nagle algorithm */
+constexpr auto TF_NAGLEMEMERR = 0x80U;
+/* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+constexpr auto TF_WND_SCALE = 0x0100U; /* Window Scale option enabled */
+constexpr auto TF_BACKLOGPEND = 0x0200U;
+/* If this is set, a connection pcb has increased the backlog on its listener */
+constexpr auto TF_TIMESTAMP = 0x0400U; /* Timestamp option enabled */
+constexpr auto TF_RTO = 0x0800U;
+/* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
+constexpr auto TF_SACK = 0x1000U; /* Selective ACKs enabled */
+
+
 
 /** SACK ranges to include in ACK packets.
  * SACK entry is invalid if left==right. */
@@ -249,6 +261,7 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
     {
         /** Common members of all PCB types */
         IpAddr local_ip; /* Bound netif index */
+        IpAddr remote_ip;
         uint8_t netif_idx; /* Socket options */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
@@ -256,7 +269,7 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
         NetIfc* netif_hints; /** Protocol specific PCB members */
         TcpPcbListen* next; /* for the linked list */
         void* callback_arg;
-        struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
+        TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
         enum TcpState state; /* TCP state */
         uint8_t prio; /* ports are in host byte order */
         uint16_t local_port; /* Function to call when a listener has been connected. */
@@ -265,14 +278,14 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
         uint8_t accepts_pending;
     };
 
-
+    struct TcpSeg;
 
     struct TcpPcb
     {
         /** common PCB members */
         IpAddr local_ip; /* Bound netif index */
         IpAddr remote_ip;
-        uint8_t netif_idx; /* Socket options */
+        int netif_idx; /* Socket options */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
@@ -323,12 +336,12 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
         /* Extra bytes available at the end of the last pbuf in unsent. */
         uint16_t unsent_oversize;
         TcpWndSize bytes_acked; /* These are ordered by sequence number: */
-        struct tcp_seg* unsent; /* Unsent (queued) segments. */
-        struct tcp_seg* unacked; /* Sent but unacknowledged segments. */
-        struct tcp_seg* ooseq; /* Received out of sequence segments. */
-        struct PacketBuffer* refused_data;
+        TcpSeg* unsent; /* Unsent (queued) segments. */
+        TcpSeg* unacked; /* Sent but unacknowledged segments. */
+        TcpSeg* ooseq; /* Received out of sequence segments. */
+        PacketBuffer* refused_data;
         /* Data previously received but not yet taken by upper layer */
-        struct TcpPcbListen* listener;
+        TcpPcbListen* listener;
         /* Function to be called when more send buffer space is available. */
         tcp_sent_fn sent; /* Function to be called when (in-sequence) data has arrived. */
         tcp_recv_fn recv; /* Function to be called when a connection has been set up. */
@@ -347,6 +360,12 @@ typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatu
         uint8_t snd_scale;
         uint8_t rcv_scale;
     };
+
+
+inline TcpWndSize TCP_WND_MAX(TcpPcb* pcb)
+{
+    return TcpWndSize(((pcb)->flags & TF_WND_SCALE) ? TCP_WND : TCPWND16(TCP_WND));
+}
 
 inline unsigned int RCV_WND_SCALE(TcpPcb* pcb, const unsigned int wnd)
 {
@@ -378,7 +397,7 @@ inline unsigned int RCV_WND_SCALE(TcpPcb* pcb, const unsigned int wnd)
 
         /* Application program's interface: */
     struct TcpPcb* tcp_new(void);
-    struct TcpPcb* tcp_new_ip_type(uint8_t type);
+    struct TcpPcb* tcp_new_ip_type(IpAddrType type);
     void tcp_arg(struct TcpPcb* pcb, void* arg);
     void tcp_recv(struct TcpPcb* pcb, tcp_recv_fn recv);
     void tcp_sent(struct TcpPcb* pcb, tcp_sent_fn sent);

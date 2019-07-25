@@ -259,8 +259,8 @@ ip6_reass(struct PacketBuffer *p)
   len = lwip_ntohs(ip6_current_header()->_plen);
   hdrdiff = (uint8_t*)p->payload - (const uint8_t*)ip6_current_header();
   lwip_assert("not a valid PacketBuffer (ip6_input check missing?)", hdrdiff <= 0xFFFF);
-  lwip_assert("not a valid PacketBuffer (ip6_input check missing?)", hdrdiff >= IP6_HLEN);
-  hdrdiff -= IP6_HLEN;
+  lwip_assert("not a valid PacketBuffer (ip6_input check missing?)", hdrdiff >= IP6_HDR_LEN);
+  hdrdiff -= IP6_HDR_LEN;
   hdrdiff += IP6_FRAG_HLEN;
   if (hdrdiff > len) {
     IP6_FRAG_STATS_INC(ip6_frag.proterr);
@@ -692,8 +692,8 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
   original_ip6hdr = (struct Ip6Hdr *)p->payload;
 
   /* @todo we assume there are no options in the unfragmentable part (IPv6 header). */
-  lwip_assert("p->tot_len >= IP6_HLEN", p->tot_len >= IP6_HLEN);
-  left = (uint16_t)(p->tot_len - IP6_HLEN);
+  lwip_assert("p->tot_len >= IP6_HDR_LEN", p->tot_len >= IP6_HDR_LEN);
+  left = (uint16_t)(p->tot_len - IP6_HDR_LEN);
 
   while (left) {
     last = (left <= nfb);
@@ -712,10 +712,10 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
       return ERR_MEM;
     }
     lwip_assert("this needs a PacketBuffer in one piece!",
-                (p->len >= (IP6_HLEN)));
-    memcpy(rambuf->payload, original_ip6hdr, IP6_HLEN);
-    ip6hdr = (struct ip6_hdr *)rambuf->payload;
-    frag_hdr = (struct ip6_frag_hdr *)((uint8_t*)rambuf->payload + IP6_HLEN);
+                (p->len >= (IP6_HDR_LEN)));
+    memcpy(rambuf->payload, original_ip6hdr, IP6_HDR_LEN);
+    ip6hdr = (Ip6Hdr *)rambuf->payload;
+    frag_hdr = (struct ip6_frag_hdr *)((uint8_t*)rambuf->payload + IP6_HDR_LEN);
 
     /* Can just adjust p directly for needed offset. */
     p->payload = (uint8_t *)p->payload + poff;

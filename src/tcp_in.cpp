@@ -32,7 +32,7 @@ lwip_tcp_calc_initial_cwnd(const uint16_t mss)
     return TcpWndSize(std::min((4U * (mss)), std::max((2U * (mss)), 4380U)));
 }
 
-static struct tcp_seg inseg;
+static struct TcpSeg inseg;
 static struct TcpHdr *tcphdr;
 static uint16_t tcphdr_optlen;
 static uint16_t tcphdr_opt1_len;
@@ -776,12 +776,12 @@ tcp_process(struct TcpPcb *pcb)
 
         pcb->cwnd = lwip_tcp_calc_initial_cwnd(pcb->mss);
         Logf(TCP_CWND_DEBUG, ("tcp_process (SENT): cwnd %"TCPWNDSIZE_F
-                 " ssthresh %"TCPWNDSIZE_F"\n",
+                 " ssthresh %d\n",
                  pcb->cwnd, pcb->ssthresh));
         lwip_assert("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
         --pcb->snd_queuelen;
-        Logf(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"TCPWNDSIZE_F"\n", (tcpwnd_size_t)pcb->snd_queuelen));
-        struct tcp_seg* rseg = pcb->unacked;
+        Logf(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %d\n", (tcpwnd_size_t)pcb->snd_queuelen));
+        struct TcpSeg* rseg = pcb->unacked;
         if (rseg == nullptr) {
           /* might happen if tcp_output fails in tcp_rexmit_rto()
              in which case the segment is on the unsent list */
@@ -864,7 +864,7 @@ tcp_process(struct TcpPcb *pcb)
 
           pcb->cwnd = lwip_tcp_calc_initial_cwnd(pcb->mss);
           Logf(TCP_CWND_DEBUG, ("tcp_process (SYN_RCVD): cwnd %"TCPWNDSIZE_F
-                   " ssthresh %"TCPWNDSIZE_F"\n",
+                   " ssthresh %d\n",
                    pcb->cwnd, pcb->ssthresh));
 
           if (recv_flags & TF_GOT_FIN) {
@@ -952,7 +952,7 @@ tcp_process(struct TcpPcb *pcb)
  * Called from tcp_receive()
  */
 static void
-tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
+tcp_oos_insert_segment(struct TcpSeg *cseg, struct TcpSeg *next)
 {
     lwip_assert("tcp_oos_insert_segment: invalid cseg", cseg != nullptr);
 
@@ -970,7 +970,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
       if (tcph_flags(next->tcphdr) & TCP_FIN) {
         TCPH_SET_FLAG(cseg->tcphdr, TCP_FIN);
       }
-      struct tcp_seg* old_seg = next;
+      struct TcpSeg* old_seg = next;
       next = next->next;
       tcp_seg_free(old_seg);
     }
@@ -986,25 +986,26 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 
 
 /** Remove segments from a list if the incoming ACK acknowledges them */
-static struct tcp_seg *
-tcp_free_acked_segments(struct TcpPcb *pcb, struct tcp_seg *seg_list, const char *dbg_list_name,
-                        struct tcp_seg *dbg_other_seg_list)
+static struct TcpSeg *
+tcp_free_acked_segments(struct TcpPcb *pcb, struct TcpSeg *seg_list, const char *dbg_list_name,
+                        struct TcpSeg *dbg_other_seg_list)
 {
     ;
   ;
 
   while (seg_list != nullptr &&
-         ((s32_t)((uint32_t)(lwip_ntohl(seg_list->tcphdr->seqno) + TCP_TCPLEN(seg_list)) - (uint32_t)(ackno)) <= 0)) {
+         TCP_SEQ_LEQ(lwip_ntohl(seg_list->tcphdr->seqno) +
+                     tcp_tcplen(seg_list), ackno)) {
     Logf(true, ("tcp_receive: removing %d:%d from pcb->%s\n",
              lwip_ntohl(seg_list->tcphdr->seqno),
-             lwip_ntohl(seg_list->tcphdr->seqno) + TCP_TCPLEN(seg_list),
+             lwip_ntohl(seg_list->tcphdr->seqno) + tcp_tcplen(seg_list),
              dbg_list_name));
 
-    struct tcp_seg* next = seg_list;
+    struct TcpSeg* next = seg_list;
     seg_list = seg_list->next;
 
     uint16_t clen = pbuf_clen(next->p);
-    Logf(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ",
+    Logf(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %d ... ",
              (tcpwnd_size_t)pcb->snd_queuelen));
     lwip_assert("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= clen));
 
@@ -1012,7 +1013,7 @@ tcp_free_acked_segments(struct TcpPcb *pcb, struct tcp_seg *seg_list, const char
     recv_acked = (TcpWndSize)(recv_acked + next->len);
     tcp_seg_free(next);
 
-    Logf(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing %s)\n",
+    Logf(TCP_QLEN_DEBUG, ("%d (after freeing %s)\n",
              (tcpwnd_size_t)pcb->snd_queuelen,
              dbg_list_name));
     if (pcb->snd_queuelen != 0) {
@@ -1058,7 +1059,7 @@ tcp_receive(struct TcpPcb *pcb)
       }
       pcb->snd_wl1 = seqno;
       pcb->snd_wl2 = ackno;
-      Logf(TCP_WND_DEBUG, ("tcp_receive: window update %"TCPWNDSIZE_F"\n", pcb->snd_wnd));
+      Logf(TCP_WND_DEBUG, ("tcp_receive: window update %d\n", pcb->snd_wnd));
 
     }
 
@@ -1098,7 +1099,7 @@ tcp_receive(struct TcpPcb *pcb)
               }
               if (pcb->dupacks > 3) {
                 /* Inflate the congestion window */
-                TCP_WND_INC(pcb->cwnd, pcb->mss);
+                tcp_wnd_inc(pcb->cwnd, pcb->mss);
               }
               if (pcb->dupacks >= 3) {
                 /* Do fast retransmit (checked via TF_INFR, not via dupacks count) */
@@ -1144,16 +1145,16 @@ tcp_receive(struct TcpPcb *pcb)
           uint8_t num_seg = (pcb->flags & TF_RTO) ? 1 : 2;
           /* RFC 3465, section 2.2 Slow Start */
           TcpWndSize increase = LWIP_MIN(acked, (tcpwnd_size_t)(num_seg * pcb->mss));
-          TCP_WND_INC(pcb->cwnd, increase);
-          Logf(TCP_CWND_DEBUG, ("tcp_receive: slow start cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
+          tcp_wnd_inc(pcb->cwnd, increase);
+          Logf(TCP_CWND_DEBUG, ("tcp_receive: slow start cwnd %d\n", pcb->cwnd));
         } else {
           /* RFC 3465, section 2.1 Congestion Avoidance */
-          TCP_WND_INC(pcb->bytes_acked, acked);
+          tcp_wnd_inc(pcb->bytes_acked, acked);
           if (pcb->bytes_acked >= pcb->cwnd) {
             pcb->bytes_acked = (TcpWndSize)(pcb->bytes_acked - pcb->cwnd);
-            TCP_WND_INC(pcb->cwnd, pcb->mss);
+            tcp_wnd_inc(pcb->cwnd, pcb->mss);
           }
-          Logf(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
+          Logf(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %d\n", pcb->cwnd));
         }
       }
       Logf(true, ("tcp_receive: ACK for %d, unacked->seqno %d:%d\n",
@@ -1161,7 +1162,7 @@ tcp_receive(struct TcpPcb *pcb)
                pcb->unacked != nullptr ?
                    lwip_ntohl(pcb->unacked->tcphdr->seqno) : 0,
                pcb->unacked != nullptr ?
-                   lwip_ntohl(pcb->unacked->tcphdr->seqno) + TCP_TCPLEN(pcb->unacked) : 0));
+                   lwip_ntohl(pcb->unacked->tcphdr->seqno) + tcp_tcplen(pcb->unacked) : 0));
 
       /* Remove segment from the unacknowledged list if the incoming
          ACK acknowledges them. */
@@ -1341,7 +1342,7 @@ tcp_receive(struct TcpPcb *pcb)
         /* The incoming segment is the next in sequence. We check if
            we have to trim the end of the segment and update rcv_nxt
            and pass the data to the application. */
-        tcplen = TCP_TCPLEN(&inseg);
+        tcplen = tcp_tcplen(&inseg);
 
         if (tcplen > pcb->rcv_wnd) {
           Logf(true,
@@ -1354,13 +1355,13 @@ tcp_receive(struct TcpPcb *pcb)
             TCPH_FLAGS_SET(inseg.tcphdr, tcph_flags(inseg.tcphdr) & ~(unsigned int)TCP_FIN);
           }
           /* Adjust length of segment to fit in the window. */
-          TCPWND_CHECK16(pcb->rcv_wnd);
+          lwip_assert("window size > 0xFFFF", (pcb->rcv_wnd) <= 0xFFFF);
           inseg.len = (uint16_t)pcb->rcv_wnd;
           if (tcph_flags(inseg.tcphdr) & TCP_SYN) {
             inseg.len -= 1;
           }
           pbuf_realloc(inseg.p, inseg.len);
-          tcplen = TCP_TCPLEN(&inseg);
+          tcplen = tcp_tcplen(&inseg);
           lwip_assert("tcp_receive: segment not trimmed correctly to rcv_wnd\n",
                       (seqno + tcplen) == (pcb->rcv_nxt + pcb->rcv_wnd));
         }
@@ -1376,12 +1377,12 @@ tcp_receive(struct TcpPcb *pcb)
              * out of order must now have been received in-order, so
              * bin the ooseq queue */
             while (pcb->ooseq != nullptr) {
-              struct tcp_seg *old_ooseq = pcb->ooseq;
+              struct TcpSeg *old_ooseq = pcb->ooseq;
               pcb->ooseq = pcb->ooseq->next;
               tcp_seg_free(old_ooseq);
             }
           } else {
-            struct tcp_seg *next = pcb->ooseq;
+            struct TcpSeg *next = pcb->ooseq;
             /* Remove all segments on ooseq that are covered by inseg already.
              * FIN is copied from ooseq to inseg if present. */
             while (next &&
@@ -1391,9 +1392,9 @@ tcp_receive(struct TcpPcb *pcb)
               if ((tcph_flags(next->tcphdr) & TCP_FIN) != 0 &&
                   (tcph_flags(inseg.tcphdr) & TCP_SYN) == 0) {
                 TCPH_SET_FLAG(inseg.tcphdr, TCP_FIN);
-                tcplen = TCP_TCPLEN(&inseg);
+                tcplen = tcp_tcplen(&inseg);
               }
-              struct tcp_seg* tmp = next;
+              struct TcpSeg* tmp = next;
               next = next->next;
               tcp_seg_free(tmp);
             }
@@ -1408,7 +1409,7 @@ tcp_receive(struct TcpPcb *pcb)
                 inseg.len -= 1;
               }
               pbuf_realloc(inseg.p, inseg.len);
-              tcplen = TCP_TCPLEN(&inseg);
+              tcplen = tcp_tcplen(&inseg);
               lwip_assert("tcp_receive: segment not trimmed correctly to ooseq queue\n",
                           (seqno + tcplen) == next->tcphdr->seqno);
             }
@@ -1451,13 +1452,13 @@ tcp_receive(struct TcpPcb *pcb)
         while (pcb->ooseq != nullptr &&
                pcb->ooseq->tcphdr->seqno == pcb->rcv_nxt) {
 
-          struct tcp_seg *cseg = pcb->ooseq;
+          struct TcpSeg *cseg = pcb->ooseq;
           seqno = pcb->ooseq->tcphdr->seqno;
 
-          pcb->rcv_nxt += TCP_TCPLEN(cseg);
+          pcb->rcv_nxt += tcp_tcplen(cseg);
           lwip_assert("tcp_receive: ooseq tcplen > rcv_wnd\n",
-                      pcb->rcv_wnd >= TCP_TCPLEN(cseg));
-          pcb->rcv_wnd -= TCP_TCPLEN(cseg);
+                      pcb->rcv_wnd >= tcp_tcplen(cseg));
+          pcb->rcv_wnd -= tcp_tcplen(cseg);
 
           tcp_update_rcv_ann_wnd(pcb);
 
@@ -1548,7 +1549,7 @@ tcp_receive(struct TcpPcb *pcb)
              It may start before the newly received segment (possibly adjusted below). */
           uint32_t sackbeg = TCP_SEQ_LT(seqno, pcb->ooseq->tcphdr->seqno) ? seqno : pcb->ooseq->tcphdr->seqno;
 
-          struct tcp_seg *next, *prev = nullptr;
+          struct TcpSeg *next, *prev = nullptr;
           for (next = pcb->ooseq; next != nullptr; next = next->next) {
             if (seqno == next->tcphdr->seqno) {
               /* The sequence number of the incoming segment is the
@@ -1559,7 +1560,7 @@ tcp_receive(struct TcpPcb *pcb)
                 /* The incoming segment is larger than the old
                    segment. We replace some segments with the new
                    one. */
-                struct tcp_seg *cseg = tcp_seg_copy(&inseg);
+                struct TcpSeg *cseg = tcp_seg_copy(&inseg);
                 if (cseg != nullptr) {
                   if (prev != nullptr) {
                     prev->next = cseg;
@@ -1582,7 +1583,7 @@ tcp_receive(struct TcpPcb *pcb)
                      than the sequence number of the first segment on the
                      queue. We put the incoming segment first on the
                      queue. */
-                  struct tcp_seg *cseg = tcp_seg_copy(&inseg);
+                  struct TcpSeg *cseg = tcp_seg_copy(&inseg);
                   if (cseg != nullptr) {
                     pcb->ooseq = cseg;
                     tcp_oos_insert_segment(cseg, next);
@@ -1598,7 +1599,7 @@ tcp_receive(struct TcpPcb *pcb)
                      the next segment on ->ooseq. We trim trim the previous
                      segment, delete next segments that included in received segment
                      and trim received, if needed. */
-                  struct tcp_seg *cseg = tcp_seg_copy(&inseg);
+                  struct TcpSeg *cseg = tcp_seg_copy(&inseg);
                   if (cseg != nullptr) {
                     if (TCP_SEQ_GT(prev->tcphdr->seqno + prev->len, seqno)) {
                       /* We need to trim the prev segment. */
@@ -1655,7 +1656,7 @@ tcp_receive(struct TcpPcb *pcb)
                     /* Adjust length of segment to fit in the window. */
                     next->next->len = (uint16_t)(pcb->rcv_nxt + pcb->rcv_wnd - seqno);
                     pbuf_realloc(next->next->p, next->next->len);
-                    tcplen = TCP_TCPLEN(next->next);
+                    tcplen = tcp_tcplen(next->next);
                     lwip_assert("tcp_receive: segment not trimmed correctly to rcv_wnd\n",
                                 (seqno + tcplen) == (pcb->rcv_nxt + pcb->rcv_wnd));
                   }
@@ -1702,8 +1703,8 @@ tcp_receive(struct TcpPcb *pcb)
           const uint16_t ooseq_max_qlen = TCP_OOSEQ_PBUFS_LIMIT(pcb);
           uint16_t ooseq_qlen = 0;
 
-          struct tcp_seg*prev = nullptr;
-          for (struct tcp_seg* next = pcb->ooseq; next != nullptr; prev = next, next = next->next) {
+          struct TcpSeg*prev = nullptr;
+          for (struct TcpSeg* next = pcb->ooseq; next != nullptr; prev = next, next = next->next) {
             struct PacketBuffer *p = next->p;
             int stop_here = 0;
 

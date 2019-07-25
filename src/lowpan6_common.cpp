@@ -133,7 +133,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   uint8_t lowpan6_header_len;
   uint8_t hidden_header_len = 0;
   int8_t i;
-  struct ip6_hdr *ip6hdr;
+  Ip6Hdr *ip6hdr;
   IpAddr ip6src, ip6dst;
 
   lwip_assert("netif != NULL", netif != nullptr);
@@ -156,7 +156,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   }
 
   /* Point to ip6 header and align copies of src/dest addresses. */
-  ip6hdr = (struct ip6_hdr *)inptr;
+  ip6hdr = (Ip6Hdr *)inptr;
   ip_addr_copy_from_ip6_packed(ip6dst, ip6hdr->dest);
   ip6_addr_assign_zone(ip_2_ip6(&ip6dst), IP6_UNKNOWN, netif);
   ip_addr_copy_from_ip6_packed(ip6src, ip6hdr->src);
@@ -389,7 +389,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
                        struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest)
 {
   uint16_t lowpan6_offset;
-  struct ip6_hdr *ip6hdr;
+  Ip6Hdr *ip6hdr;
   int8_t i;
   uint32_t header_temp;
   uint16_t ip6_offset = IP6_HDR_LEN;
@@ -401,7 +401,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   lwip_assert("hdr_size_comp != NULL", hdr_size_comp != nullptr);
   lwip_assert("dehdr_size_decompst != NULL", hdr_size_decomp != nullptr);
 
-  ip6hdr = (struct ip6_hdr *)decomp_buffer;
+  ip6hdr = (Ip6Hdr *)decomp_buffer;
   if (decomp_bufsize < IP6_HDR_LEN) {
     return ERR_MEM;
   }
@@ -433,7 +433,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset+3];
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 00, ECN: 0x%2x, Flowlabel+DSCP: 0x%8X\n", \
       lowpan6_buffer[lowpan6_offset],header_temp));
-    IP6H_VTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset], header_temp);
+    get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset], header_temp);
     /* increase offset, processed 4 bytes here:
      * TF=00:  ECN + DSCP + 4-bit Pad + Flow Label (4 bytes)*/
     lowpan6_offset += 4;
@@ -441,20 +441,20 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
     header_temp = ((lowpan6_buffer[lowpan6_offset] & 0x0f) << 16) | (lowpan6_buffer[lowpan6_offset + 1] << 8) | lowpan6_buffer[lowpan6_offset+2];
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 01, ECN: 0x%2x, Flowlabel: 0x%2X, DSCP ignored\n", \
       lowpan6_buffer[lowpan6_offset] & 0xc0,header_temp));
-    IP6H_VTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset] & 0xc0, header_temp);
+    get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset] & 0xc0, header_temp);
     /* increase offset, processed 3 bytes here:
      * TF=01:  ECN + 2-bit Pad + Flow Label (3 bytes), DSCP is elided.*/
     lowpan6_offset += 3;
   } else if ((lowpan6_buffer[0] & 0x18) == 0x10) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 10, DCSP+ECN: 0x%2x, Flowlabel ignored\n", lowpan6_buffer[lowpan6_offset]));
-    IP6H_VTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset],0);
+    get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset],0);
     /* increase offset, processed 1 byte here:
      * ECN + DSCP (1 byte), Flow Label is elided.*/
     lowpan6_offset += 1;
   } else if ((lowpan6_buffer[0] & 0x18) == 0x18) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 11, DCSP/ECN & Flowlabel ignored\n"));
     /* don't increase offset, no bytes processed here */
-    IP6H_VTCFL_SET(ip6hdr, 6, 0, 0);
+    get_ip6_hdr_vTCFL_SET(ip6hdr, 6, 0, 0);
   }
 
   /* Set Next Header (NH) */
