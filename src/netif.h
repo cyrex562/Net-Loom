@@ -206,17 +206,17 @@ struct NetIfc
     IpAddr ip_addr;
     IpAddr netmask;
     IpAddr gw; /** Array of IPv6 addresses for this netif. */
-    std::array<IpAddr, LWIP_IPV6_NUM_ADDRESSES>ip6_addr;
+    std::array<IpAddr, LWIP_IPV6_NUM_ADDRESSES> ip6_addr;
     /** The state of each IPv6 address (Tentative, Preferred, etc).
-         * @see ip6_addr.h */
+            * @see ip6_addr.h */
     Ip6AddrStates ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
     /** Remaining valid and preferred lifetime of each IPv6 address, in seconds.
-         * For valid lifetimes, the special value of IP6_ADDR_LIFE_STATIC (0)
-         * indicates the address is static and has no lifetimes. */
+            * For valid lifetimes, the special value of IP6_ADDR_LIFE_STATIC (0)
+            * indicates the address is static and has no lifetimes. */
     uint32_t ip6_addr_valid_life[LWIP_IPV6_NUM_ADDRESSES];
     uint32_t ip6_addr_pref_life[LWIP_IPV6_NUM_ADDRESSES];
     /** This function is called by the network device driver
-         *  to pass a packet up the TCP/IP stack. */
+            *  to pass a packet up the TCP/IP stack. */
     NetifInputFn input; /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet.
@@ -226,20 +226,20 @@ struct NetIfc
    *  the PacketBuffer as-is on the link medium. */
     netif_linkoutput_fn linkoutput;
     /** This function is called by the IPv6 module when it wants
-         *  to send a packet on the interface. This function typically
-         *  first resolves the hardware address, then sends the packet.
-         *  For ethernet physical layer, this is usually ethip6_output() */
+            *  to send a packet on the interface. This function typically
+            *  first resolves the hardware address, then sends the packet.
+            *  For ethernet physical layer, this is usually ethip6_output() */
     netif_output_ip6_fn output_ip6;
     /** This function is called when the netif state is set to up or down
-         */
+            */
     netif_status_callback_fn status_callback;
     /** This function is called when the netif link is set to up or down
-         */
+            */
     netif_status_callback_fn link_callback;
     /** This function is called when the netif has been removed */
     netif_status_callback_fn remove_callback;
     /** This field can be set by the device driver and could point
-         *  to state information for the device. */
+            *  to state information for the device. */
     void* state;
     void* client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
     /* the hostname for this netif, NULL is a valid value */
@@ -252,7 +252,7 @@ struct NetIfc
     uint8_t flags; /** descriptive abbreviation */
     char name[2];
     /** number of this interface. Used for @ref if_api and @ref netifapi_netif,
-         * as well as for IPv6 zones */
+            * as well as for IPv6 zones */
     uint8_t num; /** is this netif enabled for IPv6 autoconfiguration */
     uint8_t ip6_autoconfig_enabled;
     /** Number of Router Solicitation messages that remain to be sent. */
@@ -264,7 +264,7 @@ struct NetIfc
         filter table of the ethernet MAC.*/
     NetifIgmpMacFilterFn igmp_mac_filter;
     /** This function could be called to add or delete an entry in the IPv6 multicast
-            filter table of the ethernet MAC. */
+               filter table of the ethernet MAC. */
     netif_mld_mac_filter_fn mld_mac_filter;
     struct NetIfcHint* hints; /* List of packets to be queued for ourselves. */
     struct PacketBuffer* loop_first;
@@ -372,9 +372,9 @@ inline Ip4Addr *netif_ip4_gw(NetIfc *netif) {
 struct IpAddr;
 
 /** @ingroup netif_ip4 */
-inline IpAddr* netif_ip_addr4(NetIfc* netif)
+inline const IpAddr* netif_ip_addr4(const NetIfc* netif)
 {
-    return static_cast<IpAddr *>(&((netif)->ip_addr));
+    return static_cast<const IpAddr *>(&((netif)->ip_addr));
 }
 
 
@@ -695,14 +695,14 @@ inline void ip6_addr_assign_zone(Ip6Addr* ip6addr,
 }
 
 
-const IpAddr* ip6_select_source_address(NetIfc* netif, const Ip6Addr* dest);
+const IpAddr* ip6_select_source_address(const NetIfc* netif, const Ip6Addr* dest);
 
-inline IpAddr* ip4_netif_get_local_ip(NetIfc* netif)
+inline const IpAddr* ip4_netif_get_local_ip(const NetIfc* netif)
 {
     return netif != nullptr ? netif_ip_addr4(netif) : nullptr;
 }
 
-inline const IpAddr* ip6_netif_get_local_ip(NetIfc* netif, Ip6Addr* dest)
+inline const IpAddr* ip6_netif_get_local_ip(const NetIfc* netif, const Ip6Addr* dest)
 {
     return (((netif) != nullptr) ? ip6_select_source_address(netif, dest) : nullptr);
 }

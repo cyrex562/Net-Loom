@@ -35,6 +35,9 @@
  *
  */
 #pragma once
+
+#define NOMINMAX
+
 #include "icmp.h"
 
 #include "ip.h"
@@ -49,25 +52,28 @@
 
 #include "tcp.h"
 
-#include "tcp.h"
+#include <algorithm>
+#include <cstdint>
+
+
 
 /* Functions for interfacing with TCP: */
 
 /* Lower layer interface to TCP: */
-void             tcp_init    (void);  /* Initialize this module. */
-void             tcp_tmr     (void);  /* Must be called every
+void             tcp_init    ();  /* Initialize this module. */
+void             tcp_tmr     ();  /* Must be called every
                                          TCP_TMR_INTERVAL
                                          ms. (Typically 250 ms). */
 /* It is also possible to call these two functions at the right
    intervals (instead of calling tcp_tmr()). */
-void             tcp_slowtmr (void);
-void             tcp_fasttmr (void);
+void             tcp_slowtmr ();
+void             tcp_fasttmr ();
 
 /* Call this from a netif driver (watch out for threading issues!) that has
    returned a memory error on transmit and now has free buffers to send more.
    This iterates all active pcbs that had an error and tries to call
    tcp_output, so use this with care as it might slow down the system. */
-void             tcp_txnow   (void);
+void             tcp_txnow   ();
 
 /* Only used by IP to pass a TCP segment to TCP: */
 void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
@@ -84,74 +90,83 @@ void             tcp_rexmit_fast (struct TcpPcb *pcb);
 uint32_t            tcp_update_rcv_ann_wnd(struct TcpPcb *pcb);
 LwipStatus            tcp_process_refused_data(struct TcpPcb *pcb);
 
-/**
- * This is the Nagle algorithm: try to combine user data to send as few TCP
- * segments as possible. Only send if
- * - no previously transmitted data on the connection remains unacknowledged or
- * - the TF_NODELAY flag is set (nagle algorithm turned off for this pcb) or
- * - the only unsent segment is at least pcb->mss bytes long (or there is more
- *   than one unsent segment - with lwIP, this can happen although unsent->len < mss)
- * - or if we are in fast-retransmit (TF_INFR)
- */
-#define tcp_do_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
-                            ((tpcb)->flags & (TF_NODELAY | TF_INFR)) || \
-                            (((tpcb)->unsent != NULL) && (((tpcb)->unsent->next != NULL) || \
-                              ((tpcb)->unsent->len >= (tpcb)->mss))) || \
-                            ((tcp_sndbuf(tpcb) == 0) || (tcp_sndqueuelen(tpcb) >= TCP_SND_QUEUELEN)) \
-                            ) ? 1 : 0)
-#define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
-
-
-#define TCP_SEQ_LT(a,b)     ((s32_t)((uint32_t)(a) - (uint32_t)(b)) < 0)
-#define TCP_SEQ_LEQ(a,b)    ((s32_t)((uint32_t)(a) - (uint32_t)(b)) <= 0)
-#define TCP_SEQ_GT(a,b)     ((s32_t)((uint32_t)(a) - (uint32_t)(b)) > 0)
-#define TCP_SEQ_GEQ(a,b)    ((s32_t)((uint32_t)(a) - (uint32_t)(b)) >= 0)
-/* is b<=a<=c? */
-
-#define TCP_SEQ_BETWEEN(a,b,c) (TCP_SEQ_GEQ(a,b) && TCP_SEQ_LEQ(a,c))
-
-#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
 
 
 
-#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in milliseconds */
+inline bool tcp_seq_lt(const int a, const int b)
+{
+    return a - b < 0;
+}
+
+inline bool TCP_SEQ_LEQ(const int a, const int b)
+{
+    return a - b <= 0;
+}
+
+inline bool TCP_SEQ_GT(const int a, const int b)
+{
+    return a - b > 0;
+}
+
+inline bool TCP_SEQ_GEQ(const int a, const int b)
+{
+    return a - b >= 0;
+}
+
+inline bool TCP_SEQ_BETWEEN(const int a, const int b, const int c)
+{
+    return (TCP_SEQ_GEQ(a, b) && TCP_SEQ_LEQ(a, c));
+}
+
+constexpr auto TCP_TMR_INTERVAL = 250;  /* The TCP timer interval in milliseconds. */
 
 
 
-#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in milliseconds */
+constexpr auto TCP_FAST_INTERVAL   =   TCP_TMR_INTERVAL; /* the fine grained timeout in milliseconds */
 
 
-#define TCP_FIN_WAIT_TIMEOUT 20000 /* milliseconds */
-#define TCP_SYN_RCVD_TIMEOUT 20000 /* milliseconds */
 
-#define TCP_OOSEQ_TIMEOUT        6U /* x RTO */
+constexpr auto TCP_SLOW_INTERVAL  =    (2*TCP_TMR_INTERVAL);  /* the coarse grained timeout in milliseconds */
 
 
-#define TCP_MSL 60000UL /* The maximum segment lifetime in milliseconds */
+constexpr auto TCP_FIN_WAIT_TIMEOUT = 20000 /* milliseconds */;
+constexpr auto TCP_SYN_RCVD_TIMEOUT = 20000 /* milliseconds */;
+
+constexpr auto TCP_OOSEQ_TIMEOUT = 6U /* x RTO */;
+
+
+constexpr auto TCP_MSL = 60000UL /* The maximum segment lifetime in milliseconds */;
 
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
 
-#define  TCP_KEEPIDLE_DEFAULT     7200000UL /* Default KEEPALIVE timer in milliseconds */
+constexpr auto TCP_KEEPIDLE_DEFAULT = 7200000UL /* Default KEEPALIVE timer in milliseconds */;
 
 
 
-#define  TCP_KEEPINTVL_DEFAULT    75000UL   /* Default Time between KEEPALIVE probes in milliseconds */
+constexpr auto TCP_KEEPINTVL_DEFAULT = 75000UL   /* Default Time between KEEPALIVE probes in milliseconds */;
 
 
 
-#define  TCP_KEEPCNT_DEFAULT      9U        /* Default Counter for KEEPALIVE probes */
+constexpr auto TCP_KEEPCNT_DEFAULT = 9U        /* Default Counter for KEEPALIVE probes */;
 
 
-#define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */
+constexpr auto  TCP_MAXIDLE        =      TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT;  /* Maximum KEEPALIVE probe time */
 
-#define TCP_TCPLEN(seg) ((seg)->len + (((TCPH_FLAGS((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0) ? 1U : 0U))
 
 /** Flags used on input processing, not on pcb->flags
 */
-#define TF_RESET     (uint8_t)0x08U   /* Connection was reset. */
-#define TF_CLOSED    (uint8_t)0x10U   /* Connection was successfully closed. */
-#define TF_GOT_FIN   (uint8_t)0x20U   /* Connection was closed by the remote end. */
+enum TcpProcFlags
+{
+    TF_RESET = 0x08U,
+    /* Connection was reset. */
+    TF_CLOSED = 0x10U,
+    /* Connection was successfully closed. */
+    TF_GOT_FIN = 0x20U,
+    /* Connection was closed by the remote end. */
+};
+
+
 
 
 #define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret)                 \
@@ -207,67 +222,187 @@ LwipStatus            tcp_process_refused_data(struct TcpPcb *pcb);
       (errf)((arg),(err));                                     \
   } while (0)
 
-
-
-/** Enabled extra-check for TCP_OVERSIZE if LWIP_DEBUG is enabled */
-
-
-/** Don't generate checksum on copy if CHECKSUM_GEN_TCP is disabled */
-#define TCP_CHECKSUM_ON_COPY  (LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_TCP)
-
-/* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
-struct tcp_seg {
-  struct tcp_seg *next;    /* used when putting segments on a queue */
-  struct PacketBuffer *p;          /* buffer containing data + TCP header */
-  uint16_t len;               /* the TCP length of this segment */
-
-  uint16_t chksum;
-  uint8_t  chksum_swapped;
-
-  uint8_t  flags;
-#define TF_SEG_OPTS_MSS         (uint8_t)0x01U /* Include MSS option (only used in SYN segments) */
-#define TF_SEG_OPTS_TS          (uint8_t)0x02U /* Include timestamp option. */
-#define TF_SEG_DATA_CHECKSUMMED (uint8_t)0x04U /* ALL data (not the header) is
-                                               checksummed into 'chksum' */
-#define TF_SEG_OPTS_WND_SCALE   (uint8_t)0x08U /* Include WND SCALE option (only used in SYN segments) */
-#define TF_SEG_OPTS_SACK_PERM   (uint8_t)0x10U /* Include SACK Permitted option (only used in SYN segments) */
-  struct TcpHdr *tcphdr;  /* the TCP header */
+///
+///
+///
+enum TcpSegOpts
+{
+    TF_SEG_OPTS_MSS = 0x01U,
+    /* Include MSS option (only used in SYN segments) */
+    TF_SEG_OPTS_TS =0x02U,
+    /* Include timestamp option. */
+    TF_SEG_DATA_CHECKSUMMED =0x04U,
+    /* ALL data (not the header) is checksummed into 'chksum' */
+    TF_SEG_OPTS_WND_SCALE =0x08U,
+    /* Include WND SCALE option (only used in SYN segments) */
+    TF_SEG_OPTS_SACK_PERM =0x10U,
+    /* Include SACK Permitted option (only used in SYN segments) */
 };
 
-#define LWIP_TCP_OPT_EOL        0
-#define LWIP_TCP_OPT_NOP        1
-#define LWIP_TCP_OPT_MSS        2
-#define LWIP_TCP_OPT_WS         3
-#define LWIP_TCP_OPT_SACK_PERM  4
-#define LWIP_TCP_OPT_TS         8
+/// This structure represents a TCP segment on the unsent, unacked and ooseq queues 
+struct TcpSeg
+{
+    struct TcpSeg* next; /* used when putting segments on a queue */
+    struct PacketBuffer* p; /* buffer containing data + TCP header */
+    uint16_t len; /* the TCP length of this segment */
+    uint16_t chksum;
+    uint8_t chksum_swapped;
+    uint8_t flags;
+    struct TcpHdr* tcphdr; /* the TCP header */
+};
 
-#define LWIP_TCP_OPT_LEN_MSS    4
+///
+///
+///
+inline size_t tcp_tcplen(TcpSeg* seg)
+{
+    if (((tcph_flags((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0))
+        return ((seg)->len + 1U);
+    return ((seg)->len + 0U);
+} 
 
-#define LWIP_TCP_OPT_LEN_TS     10
-#define LWIP_TCP_OPT_LEN_TS_OUT 12 /* aligned for output (includes NOP padding) */
 
-#define LWIP_TCP_OPT_LEN_WS     3
-#define LWIP_TCP_OPT_LEN_WS_OUT 4 /* aligned for output (includes NOP padding) */
+///
+/// This is the Nagle algorithm: try to combine user data to send as few TCP
+/// segments as possible. Only send if
+/// - no previously transmitted data on the connection remains unacknowledged or
+/// - the TF_NODELAY flag is set (nagle algorithm turned off for this pcb) or
+/// - the only unsent segment is at least pcb->mss bytes long (or there is more
+///   than one unsent segment - with lwIP, this can happen although unsent->len < mss)
+/// - or if we are in fast-retransmit (TF_INFR)
+///
+inline bool tcp_do_output_nagle(TcpPcb* tpcb)
+{
+    return tpcb->unacked == nullptr || tpcb->flags & (TF_NODELAY | TF_INFR) || tpcb->
+           unsent != nullptr && (tpcb->unsent->next != nullptr || tpcb->unsent->len >=
+               tpcb->mss) || (tcp_sndbuf(tpcb) == 0 || tcp_sndqueuelen(tpcb) >=
+               TCP_SND_QUEUELEN)
+               ? true
+               : false;
+}
 
-#define LWIP_TCP_OPT_LEN_SACK_PERM     2
-constexpr auto LWIP_TCP_OPT_LEN_SACK_PERM_OUT = 4 /* aligned for output (includes NOP padding) */;
+///
+///
+///
+inline LwipStatus tcp_output_nagle(TcpPcb* tpcb)
+{
+    return (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK);
+}
+
+///
+///
+///
+enum TcpOpts
+{
+LWIP_TCP_OPT_EOL        =0,
+LWIP_TCP_OPT_NOP        =1,
+LWIP_TCP_OPT_MSS        =2,
+LWIP_TCP_OPT_WS         =3,
+LWIP_TCP_OPT_SACK_PERM  =4,
+LWIP_TCP_OPT_TS         =8,
+
+};
+
+
+constexpr auto LWIP_TCP_OPT_LEN_MSS = 4;
+constexpr auto LWIP_TCP_OPT_LEN_TS = 10;
+constexpr auto LWIP_TCP_OPT_LEN_TS_OUT = 12;
+/* aligned for output (includes NOP padding) */
+constexpr auto LWIP_TCP_OPT_LEN_WS = 3;
+constexpr auto LWIP_TCP_OPT_LEN_WS_OUT = 4;
+/* aligned for output (includes NOP padding) */
+constexpr auto LWIP_TCP_OPT_LEN_SACK_PERM = 2;
+constexpr auto LWIP_TCP_OPT_LEN_SACK_PERM_OUT = 4;
+/* aligned for output (includes NOP padding) */
 // #define LWIP_TCP_OPT_LEN_SACK_PERM_OUT 0
 
+///
+///
+///
+inline unsigned LWIP_TCP_OPT_LENGTH(const unsigned flags)
+{
+    if ((flags & TF_SEG_OPTS_MSS) != 0U)
+    {
+        if ((flags & TF_SEG_OPTS_TS) != 0U)
+        {
+            if ((flags & TF_SEG_OPTS_WND_SCALE) != 0U)
+            {
+                if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+                {
+                    return LWIP_TCP_OPT_LEN_MSS + LWIP_TCP_OPT_LEN_TS_OUT +
+                        LWIP_TCP_OPT_LEN_WS_OUT + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+                }
+                return LWIP_TCP_OPT_LEN_MSS + LWIP_TCP_OPT_LEN_TS_OUT +
+                    LWIP_TCP_OPT_LEN_WS_OUT + 0;
+            }
+            if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+            {
+                return LWIP_TCP_OPT_LEN_MSS + LWIP_TCP_OPT_LEN_TS_OUT + 0 +
+                    LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+            }
+            return LWIP_TCP_OPT_LEN_MSS + LWIP_TCP_OPT_LEN_TS_OUT + 0 + 0;
+        }
+        if ((flags & TF_SEG_OPTS_WND_SCALE) != 0U)
+        {
+            if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+            {
+                return LWIP_TCP_OPT_LEN_MSS + 0 + LWIP_TCP_OPT_LEN_WS_OUT +
+                    LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+            }
+            return LWIP_TCP_OPT_LEN_MSS + 0 + LWIP_TCP_OPT_LEN_WS_OUT + 0;
+        }
+        if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+        {
+            return LWIP_TCP_OPT_LEN_MSS + 0 + 0 + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+        }
+        return LWIP_TCP_OPT_LEN_MSS + 0 + 0 + 0;
+    }
+    if ((flags & TF_SEG_OPTS_TS) != 0u)
+    {
+        if ((flags & TF_SEG_OPTS_WND_SCALE) != 0U)
+        {
+            if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+            {
+                return 0 + LWIP_TCP_OPT_LEN_TS_OUT + LWIP_TCP_OPT_LEN_WS_OUT +
+                    LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+            }
+            return 0 + LWIP_TCP_OPT_LEN_TS_OUT + LWIP_TCP_OPT_LEN_WS_OUT + 0;
+        }
+        if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+            return 0 + LWIP_TCP_OPT_LEN_TS_OUT + 0 + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+        return 0 + LWIP_TCP_OPT_LEN_TS_OUT + 0 + 0;
+    }
+    if ((flags & TF_SEG_OPTS_WND_SCALE) != 0U)
+    {
+        if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+        {
+            return 0 + 0 + LWIP_TCP_OPT_LEN_WS_OUT + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+        }
+        return 0 + 0 + LWIP_TCP_OPT_LEN_WS_OUT + 0;
+    }
+    if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+    {
+        return 0 + 0 + 0 + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+    }
+    return 0 + 0 + 0 + 0;
+} 
 
-#define LWIP_TCP_OPT_LENGTH(flags) \
-  ((flags) & TF_SEG_OPTS_MSS       ? LWIP_TCP_OPT_LEN_MSS           : 0) + \
-  ((flags) & TF_SEG_OPTS_TS        ? LWIP_TCP_OPT_LEN_TS_OUT        : 0) + \
-  ((flags) & TF_SEG_OPTS_WND_SCALE ? LWIP_TCP_OPT_LEN_WS_OUT        : 0) + \
-  ((flags) & TF_SEG_OPTS_SACK_PERM ? LWIP_TCP_OPT_LEN_SACK_PERM_OUT : 0)
 
 /** This returns a TCP header option for MSS in an uint32_t */
-#define TCP_BUILD_MSS_OPTION(mss) lwip_htonl(0x02040000 | ((mss) & 0xFFFF))
+inline uint32_t TCP_BUILD_MSS_OPTION(uint16_t mss)
+{
+    return lwip_htonl(0x02040000 | ((mss) & 0xFFFF));
+}
 
+constexpr auto TCPWND_MAX = 0xFFFFFFFFU;
 
-#define TCPWNDSIZE_F       U32_F
-#define TCPWND_MAX         0xFFFFFFFFU
-#define TCPWND_CHECK16(x)  lwip_assert("window size > 0xFFFF", (x) <= 0xFFFF)
-#define TCPWND_MIN16(x)    ((uint16_t)LWIP_MIN((x), 0xFFFF))
+///
+///
+///
+inline uint16_t TCPWND_MIN16(const uint16_t x)
+{
+    return (std::min)(x, uint16_t(0xFFFF));
+}
 
 
 /* Global variables: */
@@ -287,8 +422,8 @@ extern struct TcpPcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               data. */
 extern struct TcpPcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
-#define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
-#define NUM_TCP_PCB_LISTS               4
+constexpr auto NUM_TCP_PCB_LISTS_NO_TIME_WAIT = 3;
+constexpr auto NUM_TCP_PCB_LISTS       =        4;
 extern struct TcpPcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 /* Axioms about the above lists:
@@ -302,7 +437,7 @@ extern struct TcpPcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 /** External function (implemented in timers.c), called when TCP detects
  * that a timer is needed (i.e. active- or time-wait-pcb found). */
-void tcp_timer_needed(void);
+void tcp_timer_needed();
 
 
 //
@@ -365,9 +500,9 @@ struct TcpPcb *tcp_pcb_copy(struct TcpPcb *pcb);
 void tcp_pcb_purge(struct TcpPcb *pcb);
 void tcp_pcb_remove(struct TcpPcb **pcblist, struct TcpPcb *pcb);
 
-void tcp_segs_free(struct tcp_seg *seg);
-void tcp_seg_free(struct tcp_seg *seg);
-struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
+void tcp_segs_free(struct TcpSeg *seg);
+void tcp_seg_free(struct TcpSeg *seg);
+struct TcpSeg *tcp_seg_copy(struct TcpSeg *seg);
 
 #define tcp_ack(pcb)                               \
   do {                                             \
@@ -386,7 +521,7 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 LwipStatus tcp_send_fin(struct TcpPcb *pcb);
 LwipStatus tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags);
 
-void tcp_rexmit_seg(struct TcpPcb *pcb, struct tcp_seg *seg);
+void tcp_rexmit_seg(struct TcpPcb *pcb, struct TcpSeg *seg);
 
 void tcp_rst(const struct TcpPcb* pcb, uint32_t seqno, uint32_t ackno,
        const IpAddr *local_ip, const IpAddr *remote_ip,
@@ -397,7 +532,7 @@ uint32_t tcp_next_iss(struct TcpPcb *pcb);
 LwipStatus tcp_keepalive(struct TcpPcb *pcb);
 LwipStatus tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split);
 LwipStatus tcp_zero_window_probe(struct TcpPcb *pcb);
-void  tcp_trigger_input_pcb_close(void);
+void  tcp_trigger_input_pcb_close();
 
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
                              const IpAddr *dest);

@@ -123,7 +123,7 @@ inline uint8_t IP6H_HOPLIM(Ip6Hdr* hdr)
     return ((hdr)->_hoplim);
 }
 
-inline void IP6H_VTCFL_SET(Ip6Hdr* hdr, uint32_t v, uint32_t tc, uint32_t fl)
+inline void get_ip6_hdr_vTCFL_SET(Ip6Hdr* hdr, uint32_t v, uint32_t tc, uint32_t fl)
 {
     (hdr)->_v_tc_fl = (lwip_htonl(
         (((uint32_t)(v)) << 28) | (((uint32_t)(tc)) << 20) | (fl)));
@@ -253,7 +253,7 @@ LwipStatus         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth
 
 
 
-#define ip6_debug_print(p)
+#define true_print(p)
 
 inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
 {

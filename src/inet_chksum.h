@@ -42,14 +42,14 @@
 #include <ip_addr.h>
 
 /** Swap the bytes in an uint16_t: much like lwip_htons() for little-endian */
-#ifndef SWAP_BYTES_IN_WORD
 #define SWAP_BYTES_IN_WORD(w) (((w) & 0xff) << 8) | (((w) & 0xff00) >> 8)
-#endif /* SWAP_BYTES_IN_WORD */
+
 
 /** Split an uint32_t in two u16_ts and add them up */
-#ifndef FOLD_U32T
-#define FOLD_U32T(u)          ((uint32_t)(((u) >> 16) + ((u) & 0x0000ffffUL)))
-#endif
+inline uint32_t fold_u32(uint32_t& u)
+{
+    return uint32_t(((u) >> 16) + ((u) & 0x0000ffffUL));
+}
 
 
 /** Function-like macro: same as memcpy but returns the checksum of copied data
@@ -101,7 +101,7 @@ lwip_standard_chksum_3(const uint8_t *dataptr, const size_t len);
 
 constexpr auto kLwipStandardChecksumAlgorithm = 2;
 
-uint16_t lwip_standard_checksum(const void* dataptr,
+uint16_t lwip_standard_checksum(const uint8_t* dataptr,
                                 const size_t len,
                                 const int checksum_algorithm = kLwipStandardChecksumAlgorithm);
 

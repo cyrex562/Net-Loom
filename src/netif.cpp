@@ -297,17 +297,17 @@ NetIfc* netif_add(NetIfc* netif,
     {
         igmp_start(netif);
     }
-    Logf(NETIF_DEBUG, ("netif: added interface %c%c IP", netif->name[0], netif->name[1]));
-    Logf(NETIF_DEBUG, (" addr "));
-    ip4_addr_debug_print(NETIF_DEBUG, ipaddr)
+    Logf(true, ("netif: added interface %c%c IP", netif->name[0], netif->name[1]));
+    Logf(true, (" addr "));
+    ip4_addr_debug_print(true, ipaddr)
     ;
-    Logf(NETIF_DEBUG, (" netmask "));
-    ip4_addr_debug_print(NETIF_DEBUG, netmask)
+    Logf(true, (" netmask "));
+    ip4_addr_debug_print(true, netmask)
     ;
-    Logf(NETIF_DEBUG, (" gw "));
-    ip4_addr_debug_print(NETIF_DEBUG, gw)
+    Logf(true, (" gw "));
+    ip4_addr_debug_print(true, gw)
     ;
-    Logf(NETIF_DEBUG, ("\n"));
+    Logf(true, ("\n"));
     netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_ADDED, nullptr);
     return netif;
 }
@@ -338,7 +338,7 @@ netif_do_set_ipaddr(NetIfc*netif, const Ip4Addr *ipaddr, IpAddr *old_addr)
 
     copy_ip_addr(*old_addr, *netif_ip_addr4(netif));
 
-    Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
+    Logf(true | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
     netif_do_ip_addr_changed(old_addr, &new_addr);
 
     mib2_remove_ip4(netif);
@@ -403,7 +403,7 @@ netif_do_set_netmask(NetIfc*netif, const Ip4Addr *netmask, IpAddr *old_nm)
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->netmask), netmask);
     IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
     mib2_add_route_ip4(0, netif);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %d.%d.%d.%d\n",
+//    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_netmask(netif)),
 //                ip4_addr2_16(netif_ip4_netmask(netif)),
@@ -461,7 +461,7 @@ netif_do_set_gw(NetIfc*netif, const Ip4Addr *gw, IpAddr *old_gw)
 
     ip4_addr_set(convert_ip_addr_to_ip4_addr(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
-//    Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %d.%d.%d.%d\n",
+//    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_gw(netif)),
 //                ip4_addr2_16(netif_ip4_gw(netif)),
@@ -637,7 +637,7 @@ netif_remove(NetIfc*netif)
     netif->remove_callback(netif);
   }
 
-  Logf(NETIF_DEBUG, ("netif_remove: removed netif\n") );
+  Logf(true, ("netif_remove: removed netif\n") );
 }
 
 /**
@@ -660,7 +660,7 @@ netif_set_default(NetIfc*netif)
     mib2_add_route_ip4(1, netif);
   }
   netif_default = netif;
-  Logf(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
+  Logf(true, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
 
@@ -1103,7 +1103,7 @@ netif_ip6_addr_set_parts(NetIfc*netif, int8_t addr_idx, uint32_t i0, uint32_t i1
   /* address is actually being changed? */
   if ((ip_2_ip6(&old_addr)->addr[0] != i0) || (ip_2_ip6(&old_addr)->addr[1] != i1) ||
       (ip_2_ip6(&old_addr)->addr[2] != i2) || (ip_2_ip6(&old_addr)->addr[3] != i3)) {
-    Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
+    Logf(true | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
 
     make_ip_addr_ip6(&new_ipaddr, i0, i1, i2, i3);
     ip6_addr_assign_zone(ip_2_ip6(&new_ipaddr), IP6_UNICAST, netif);
@@ -1128,7 +1128,7 @@ netif_ip6_addr_set_parts(NetIfc*netif, int8_t addr_idx, uint32_t i0, uint32_t i1
     }
   }
 
-  Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+  Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
               addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
               netif_ip6_addr_state(netif, addr_idx)));
 }
@@ -1156,7 +1156,7 @@ netif_ip6_addr_set_state(NetIfc*netif, int8_t addr_idx, uint8_t state)
   if (old_state != state) {
     uint8_t old_valid = old_state & IP6_ADDR_VALID;
     uint8_t new_valid = state & IP6_ADDR_VALID;
-    Logf(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
+    Logf(true | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
     /* Reevaluate solicited-node multicast group membership. */
     if (netif->flags & NETIF_FLAG_MLD6) {
       nd6_adjust_mld_membership(netif, addr_idx, state);
@@ -1191,7 +1191,7 @@ netif_ip6_addr_set_state(NetIfc*netif, int8_t addr_idx, uint8_t state)
     }
 
   }
-  Logf(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+  Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
               addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
               netif_ip6_addr_state(netif, addr_idx)));
 }
@@ -1460,11 +1460,11 @@ netif_find(const char *name)
     if (num == netif->num &&
         name[0] == netif->name[0] &&
         name[1] == netif->name[1]) {
-      Logf(NETIF_DEBUG, ("netif_find: found %c%c\n", name[0], name[1]));
+      Logf(true, ("netif_find: found %c%c\n", name[0], name[1]));
       return netif;
     }
   }
-  Logf(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
+  Logf(true, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return nullptr;
 }
 
@@ -1563,77 +1563,95 @@ netif_invoke_ext_callback(NetIfc*netif, NetifNscReason reason, const netif_ext_c
  * @return the most suitable source address to use, or NULL if no suitable
  *         source address is found
  */
-const IpAddr *
-ip6_select_source_address(NetIfc*netif, const Ip6Addr *dest)
+const IpAddr* ip6_select_source_address(const NetIfc* netif, const Ip6Addr* dest)
 {
-  const IpAddr *best_addr;
-  const Ip6Addr *cand_addr;
-  int8_t dest_scope, cand_scope;
-  int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
-  uint8_t i, cand_pref, cand_bits;
-  uint8_t best_pref = 0;
-  uint8_t best_bits = 0;
-
-  /* Start by determining the scope of the given destination address. These
-   * tests are hopefully (roughly) in order of likeliness to match. */
-  if (ip6_addr_isglobal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-  } else if (ip6_addr_islinklocal(dest) || ip6_addr_isloopback(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
-  } else if (ip6_addr_isuniquelocal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
-  } else if (ip6_addr_ismulticast(dest)) {
-    dest_scope = ip6_addr_multicast_scope(dest);
-  } else if (ip6_addr_issitelocal(dest)) {
-    dest_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
-  } else {
-    /* no match, consider scope global */
-    dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-  }
-
-  best_addr = nullptr;
-
-  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    /* Consider only valid (= preferred and deprecated) addresses. */
-    if (!ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
-      continue;
+    const IpAddr* best_addr;
+    const Ip6Addr* cand_addr;
+    int8_t dest_scope, cand_scope;
+    int8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
+    uint8_t i, cand_pref, cand_bits;
+    uint8_t best_pref = 0;
+    uint8_t best_bits = 0;
+    /* Start by determining the scope of the given destination address. These
+      * tests are hopefully (roughly) in order of likeliness to match. */
+    if (ip6_addr_isglobal(dest))
+    {
+        dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
     }
-    /* Determine the scope of this candidate address. Same ordering idea. */
-    cand_addr = netif_ip6_addr(netif, i);
-    if (ip6_addr_isglobal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
-    } else if (ip6_addr_islinklocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
-    } else if (ip6_addr_isuniquelocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
-    } else if (ip6_addr_issitelocal(cand_addr)) {
-      cand_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
-    } else {
-      /* no match, treat as low-priority global scope */
-      cand_scope = IP6_MULTICAST_SCOPE_RESERVEDF;
+    else if (ip6_addr_islinklocal(dest) || ip6_addr_isloopback(dest))
+    {
+        dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
     }
-    cand_pref = ip6_addr_ispreferred(netif_ip6_addr_state(netif, i));
-    /* @todo compute the actual common bits, for longest matching prefix. */
-    /* We cannot count on the destination address having a proper zone
-     * assignment, so do not compare zones in this case. */
-    cand_bits = ip6_addr_netcmp_zoneless(cand_addr, dest); /* just 1 or 0 for now */
-    if (cand_bits && ip6_addr_nethostcmp(cand_addr, dest)) {
-      return netif_ip_addr6(netif, i); /* Rule 1 */
+    else if (ip6_addr_isuniquelocal(dest))
+    {
+        dest_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
     }
-    if ((best_addr == nullptr) || /* no alternative yet */
-        ((cand_scope < best_scope) && (cand_scope >= dest_scope)) ||
-        ((cand_scope > best_scope) && (best_scope < dest_scope)) || /* Rule 2 */
-        ((cand_scope == best_scope) && ((cand_pref > best_pref) || /* Rule 3 */
-        ((cand_pref == best_pref) && (cand_bits > best_bits))))) { /* Rule 8 */
-      /* We found a new "winning" candidate. */
-      best_addr = netif_ip_addr6(netif, i);
-      best_scope = cand_scope;
-      best_pref = cand_pref;
-      best_bits = cand_bits;
+    else if (ip6_addr_ismulticast(dest))
+    {
+        dest_scope = ip6_addr_multicast_scope(dest);
     }
-  }
-
-  return best_addr; /* may be NULL */
+    else if (ip6_addr_issitelocal(dest))
+    {
+        dest_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
+    }
+    else
+    {
+        /* no match, consider scope global */
+        dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
+    }
+    best_addr = nullptr;
+    for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++)
+    {
+        /* Consider only valid (= preferred and deprecated) addresses. */
+        if (!ip6_addr_isvalid(netif_ip6_addr_state(netif, i)))
+        {
+            continue;
+        } /* Determine the scope of this candidate address. Same ordering idea. */
+        cand_addr = netif_ip6_addr(netif, i);
+        if (ip6_addr_isglobal(cand_addr))
+        {
+            cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
+        }
+        else if (ip6_addr_islinklocal(cand_addr))
+        {
+            cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
+        }
+        else if (ip6_addr_isuniquelocal(cand_addr))
+        {
+            cand_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
+        }
+        else if (ip6_addr_issitelocal(cand_addr))
+        {
+            cand_scope = IP6_MULTICAST_SCOPE_SITE_LOCAL;
+        }
+        else
+        {
+            /* no match, treat as low-priority global scope */
+            cand_scope = IP6_MULTICAST_SCOPE_RESERVEDF;
+        }
+        cand_pref = ip6_addr_ispreferred(netif_ip6_addr_state(netif, i));
+        /* @todo compute the actual common bits, for longest matching prefix. */
+        /* We cannot count on the destination address having a proper zone
+            * assignment, so do not compare zones in this case. */
+        cand_bits = ip6_addr_netcmp_zoneless(cand_addr, dest); /* just 1 or 0 for now */
+        if (cand_bits && ip6_addr_nethostcmp(cand_addr, dest))
+        {
+            return netif_ip_addr6(netif, i); /* Rule 1 */
+        }
+        if ((best_addr == nullptr) || /* no alternative yet */ ((cand_scope < best_scope)
+            && (cand_scope >= dest_scope)) || ((cand_scope > best_scope) && (best_scope <
+            dest_scope)) || /* Rule 2 */ ((cand_scope == best_scope) && ((cand_pref >
+            best_pref) || /* Rule 3 */ ((cand_pref == best_pref) && (cand_bits > best_bits
+        )))))
+        {
+            /* Rule 8 */ /* We found a new "winning" candidate. */
+            best_addr = netif_ip_addr6(netif, i);
+            best_scope = cand_scope;
+            best_pref = cand_pref;
+            best_bits = cand_bits;
+        }
+    }
+    return best_addr; /* may be NULL */
 }
 
 //

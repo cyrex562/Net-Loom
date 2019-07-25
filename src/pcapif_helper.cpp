@@ -17,6 +17,7 @@
 #ifdef _MSC_VER
 #pragma warning( push, 3 )
 #endif
+#define NOMINMAX
 #include <windows.h>
 #include <packet32.h>
 #include <ntddndis.h>

@@ -82,7 +82,7 @@ LwipStatus  mld6_stop(NetIfc*netif);
 void   mld6_report_groups(NetIfc*netif);
 void   mld6_tmr(void);
 struct mld_group *mld6_lookfor_group(NetIfc*ifp, const Ip6Addr *addr);
-void   mld6_input(struct PacketBuffer *p, NetIfc*inp);
+void   mld6_input(struct PacketBuffer *pkt_buf, NetIfc*in_netif);
 LwipStatus  mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
 LwipStatus  mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
 LwipStatus  mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);

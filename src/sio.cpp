@@ -36,6 +36,7 @@
 #include <cstdarg>
 #include <cstdio>
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <Windows.h>
 //#ifdef _MSC_VER
 //#include <Windows.h>

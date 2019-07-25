@@ -437,7 +437,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
 
   uint16_t header_size = (
 
-      IpIsV6(dst_ip) ? IP6_HLEN : IP_HLEN);
+      is_ip_addr_v6(dst_ip) ? IP6_HDR_LEN : IP_HLEN);
 
 
   /* Handle the HDRINCL option as an exception: none of the code below applies
@@ -507,7 +507,7 @@ raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
 
   /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-  if (IpIsV6(dst_ip) && pcb->chksum_reqd) {
+  if (is_ip_addr_v6(dst_ip) && pcb->chksum_reqd) {
     uint16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
     lwip_assert("Checksum must fit into first PacketBuffer", p->len >= (pcb->chksum_offset + 2));
     memcpy(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));

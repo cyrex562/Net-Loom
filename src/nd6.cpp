@@ -873,7 +873,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
   case ICMP6_TYPE_PTB: /* Packet too big */
   {
     struct Icmp6Hdr *icmp6hdr; /* Packet too big message */
-    struct ip6_hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
+    Ip6Hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
     uint32_t pmtu;
     Ip6Addr destination_address;
 
@@ -887,7 +887,7 @@ nd6_input(struct PacketBuffer *p, NetIfc*inp)
     }
 
     icmp6hdr = (struct Icmp6Hdr *)p->payload;
-    ip6hdr = (struct ip6_hdr *)((uint8_t*)p->payload + sizeof(struct Icmp6Hdr));
+    ip6hdr = (Ip6Hdr *)((uint8_t*)p->payload + sizeof(struct Icmp6Hdr));
 
     /* Create an aligned, zoned copy of the destination address. */
     ip6_addr_copy_from_packed(destination_address, ip6hdr->dest);
@@ -2136,7 +2136,7 @@ nd6_free_q(struct nd6_q_entry *q)
 static void
 nd6_send_q(int8_t i)
 {
-  struct ip6_hdr *ip6hdr;
+  Ip6Hdr *ip6hdr;
   Ip6Addr dest;
 
   struct nd6_q_entry *q;
@@ -2153,7 +2153,7 @@ nd6_send_q(int8_t i)
     /* pop first item off the queue */
     neighbor_cache[i].q = q->next;
     /* Get ipv6 header. */
-    ip6hdr = (struct ip6_hdr *)(q->p->payload);
+    ip6hdr = (Ip6Hdr *)(q->p->payload);
     /* Create an aligned copy. */
     ip6_addr_copy_from_packed(dest, ip6hdr->dest);
     /* Restore the zone, if applicable. */

@@ -8,7 +8,7 @@
 
 /* Length of the TCP header, excluding options. */
 constexpr auto TCP_HDR_LEN = 20;
-constexpr auto kTcpSndQueueLenOvflw = (0xffffU - 3);
+constexpr auto TCP_SND_QUEUE_LEN_OVFLW = (0xffffU - 3);
 
 /* Fields are (of course) in network byte order.
 * Some fields are converted to host byte order in tcp_input().
@@ -42,6 +42,9 @@ enum TcpFlags : uint8_t
 constexpr auto TCP_FLAGS = 0x3fU;
 constexpr auto MAX_TCP_OPT_BYTES = 40;
 
+///
+///
+///
 inline size_t calc_tcp_hdr_len(TcpHdr* tcp_hdr, const bool get_bytes = false)
 {
     if (get_bytes)
@@ -51,111 +54,161 @@ inline size_t calc_tcp_hdr_len(TcpHdr* tcp_hdr, const bool get_bytes = false)
     return lwip_ntohs(tcp_hdr->_hdrlen_rsvd_flags) >> 12;
 }
 
+///
+///
+///
+inline uint8_t tcph_flags(TcpHdr* phdr)
+{
+    return uint8_t((lwip_ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS));
+}
+
+///
+///
+///
+inline void TCPH_HDRLEN_SET(TcpHdr* phdr, size_t len)
+{
+    (phdr)->_hdrlen_rsvd_flags = lwip_htons(((len) << 12) | tcph_flags(phdr));
+}
+
+inline void TCPH_FLAGS_SET(TcpHdr* phdr, uint8_t flags)
+{
+    (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & pp_htons(~TCP_FLAGS)) |
+        lwip_htons(flags));
+}
+
+inline void TCPH_HDRLEN_FLAGS_SET(TcpHdr* phdr, size_t len, uint8_t flags)
+{
+    (phdr)->_hdrlen_rsvd_flags = (uint16_t)(lwip_htons((uint16_t)((len) << 12) | (flags))
+    );
+}
+
+inline void TCPH_SET_FLAG(TcpHdr* phdr, uint8_t flags)
+{
+    (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | lwip_htons(flags));
+}
+
+inline void TCPH_UNSET_FLAG(TcpHdr* phdr, uint8_t flags)
+{
+    (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags & ~lwip_htons(flags));
+}
+
+struct TcpPcb;
+struct TcpPcbListen;
+
+/** Function prototype for tcp accept callback functions. Called when a new
+       * connection can be accepted on a listening pcb.
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param newpcb The new connection pcb
+       * @param err An error code if there has been an error accepting.
+       *            Only return ERR_ABRT if you have called tcp_abort from within the
+       *            callback function!
+       */
+typedef LwipStatus (*tcp_accept_fn)(void* arg, struct TcpPcb* newpcb, LwipStatus err);
+
+/** Function prototype for tcp receive callback functions. Called when data has
+       * been received.
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param tpcb The connection pcb which received data
+       * @param p The received data (or NULL when the connection has been closed!)
+       * @param err An error code if there has been an error receiving
+       *            Only return ERR_ABRT if you have called tcp_abort from within the
+       *            callback function!
+       */
+typedef LwipStatus (*tcp_recv_fn)(void* arg,
+                                  struct TcpPcb* tpcb,
+                                  struct PacketBuffer* p,
+                                  LwipStatus err);
+
+/** Function prototype for tcp sent callback functions. Called when sent data has
+       * been acknowledged by the remote side. Use it to free corresponding resources.
+       * This also means that the pcb has now space available to send new data.
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param tpcb The connection pcb for which data has been acknowledged
+       * @param len The amount of bytes acknowledged
+       * @return ERR_OK: try to send some data by calling tcp_output
+       *            Only return ERR_ABRT if you have called tcp_abort from within the
+       *            callback function!
+       */
+typedef LwipStatus (*tcp_sent_fn)(void* arg, struct TcpPcb* tpcb, uint16_t len);
+
+/** Function prototype for tcp poll callback functions. Called periodically as
+       * specified by @see tcp_poll.
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param tpcb tcp pcb
+       * @return ERR_OK: try to send some data by calling tcp_output
+       *            Only return ERR_ABRT if you have called tcp_abort from within the
+       *            callback function!
+       */
+typedef LwipStatus (*tcp_poll_fn)(void* arg, struct TcpPcb* tpcb);
+
+/** Function prototype for tcp error callback functions. Called when the pcb
+       * receives a RST or is unexpectedly closed for any other reason.
+       *
+       * @note The corresponding pcb is already freed when this callback is called!
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param err Error code to indicate why the pcb has been closed
+       *            ERR_ABRT: aborted through tcp_abort or by a TCP timer
+       *            ERR_RST: the connection was reset by the remote host
+       */
+typedef void (*tcp_err_fn)(void* arg, LwipStatus err);
+
+/** Function prototype for tcp connected callback functions. Called when a pcb
+       * is connected to the remote side after initiating a connection attempt by
+       * calling tcp_connect().
+       *
+       * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+       * @param tpcb The connection pcb which is connected
+       * @param err An unused error code, always ERR_OK currently ;-) @todo!
+       *            Only return ERR_ABRT if you have called tcp_abort from within the
+       *            callback function!
+       *
+       * @note When a connection attempt fails, the error callback is currently called!
+       */
+typedef LwipStatus (*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatus err);
 
 
-#define TCPH_FLAGS(phdr)  ((uint8_t)((lwip_ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)))
-#define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = lwip_htons(((len) << 12) | TCPH_FLAGS(phdr))
-#define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & PpHtons(~TCP_FLAGS)) | lwip_htons(flags))
-#define TCPH_HDRLEN_FLAGS_SET(phdr, len, flags) (phdr)->_hdrlen_rsvd_flags = (uint16_t)(lwip_htons((uint16_t)((len) << 12) | (flags)))
-#define TCPH_SET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | lwip_htons(flags))
-#define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags & ~lwip_htons(flags))
-#ifdef __cplusplus
-extern "C" {
-#endif
-    struct TcpPcb;
-    struct TcpPcbListen;
-    /** Function prototype for tcp accept callback functions. Called when a new
-        * connection can be accepted on a listening pcb.
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param newpcb The new connection pcb
-        * @param err An error code if there has been an error accepting.
-        *            Only return ERR_ABRT if you have called tcp_abort from within the
-        *            callback function!
-        */
-    typedef LwipStatus(*tcp_accept_fn)(void* arg, struct TcpPcb* newpcb, LwipStatus err);
-    /** Function prototype for tcp receive callback functions. Called when data has
-        * been received.
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param tpcb The connection pcb which received data
-        * @param p The received data (or NULL when the connection has been closed!)
-        * @param err An error code if there has been an error receiving
-        *            Only return ERR_ABRT if you have called tcp_abort from within the
-        *            callback function!
-        */
-    typedef LwipStatus(*tcp_recv_fn)(void* arg, struct TcpPcb* tpcb, struct PacketBuffer* p, LwipStatus err);
-    /** Function prototype for tcp sent callback functions. Called when sent data has
-        * been acknowledged by the remote side. Use it to free corresponding resources.
-        * This also means that the pcb has now space available to send new data.
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param tpcb The connection pcb for which data has been acknowledged
-        * @param len The amount of bytes acknowledged
-        * @return ERR_OK: try to send some data by calling tcp_output
-        *            Only return ERR_ABRT if you have called tcp_abort from within the
-        *            callback function!
-        */
-    typedef LwipStatus(*tcp_sent_fn)(void* arg, struct TcpPcb* tpcb, uint16_t len);
-    /** Function prototype for tcp poll callback functions. Called periodically as
-        * specified by @see tcp_poll.
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param tpcb tcp pcb
-        * @return ERR_OK: try to send some data by calling tcp_output
-        *            Only return ERR_ABRT if you have called tcp_abort from within the
-        *            callback function!
-        */
-    typedef LwipStatus(*tcp_poll_fn)(void* arg, struct TcpPcb* tpcb);
-    /** Function prototype for tcp error callback functions. Called when the pcb
-        * receives a RST or is unexpectedly closed for any other reason.
-        *
-        * @note The corresponding pcb is already freed when this callback is called!
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param err Error code to indicate why the pcb has been closed
-        *            ERR_ABRT: aborted through tcp_abort or by a TCP timer
-        *            ERR_RST: the connection was reset by the remote host
-        */
-    typedef void (*tcp_err_fn)(void* arg, LwipStatus err);
-    /** Function prototype for tcp connected callback functions. Called when a pcb
-        * is connected to the remote side after initiating a connection attempt by
-        * calling tcp_connect().
-        *
-        * @param arg Additional argument to pass to the callback function (@see tcp_arg())
-        * @param tpcb The connection pcb which is connected
-        * @param err An unused error code, always ERR_OK currently ;-) @todo!
-        *            Only return ERR_ABRT if you have called tcp_abort from within the
-        *            callback function!
-        *
-        * @note When a connection attempt fails, the error callback is currently called!
-        */
-    typedef LwipStatus(*tcp_connected_fn)(void* arg, struct TcpPcb* tpcb, LwipStatus err);
-#define RCV_WND_SCALE(pcb, wnd) (((wnd) >> (pcb)->rcv_scale))
+
 #define SND_WND_SCALE(pcb, wnd) (((wnd) << (pcb)->snd_scale))
 #define TCPWND16(x)             ((uint16_t)LWIP_MIN((x), 0xFFFF))
-#define TCP_WND_MAX(pcb)        ((TcpWndSizeT)(((pcb)->flags & TF_WND_SCALE) ? TCP_WND : TCPWND16(TCP_WND)))
-    /* Increments a TcpWndSizeT and holds at max value rather than rollover */
-#define TCP_WND_INC(wnd, inc)   do { \
-                                  if ((TcpWndSizeT)(wnd + inc) >= wnd) { \
-                                    wnd = (TcpWndSizeT)(wnd + inc); \
-                                  } else { \
-                                    wnd = (TcpWndSizeT)-1; \
-                                  } \
-                                } while(0)
-#define TF_ACK_DELAY   0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW     0x02U   /* Immediate ACK. */
-#define TF_INFR        0x04U   /* In fast recovery. */
-#define TF_CLOSEPEND   0x08U   /* If this is set, tcp_close failed to enqueue the FIN (retried in tcp_tmr) */
-#define TF_RXCLOSED    0x10U   /* rx closed by tcp_shutdown */
-#define TF_FIN         0x20U   /* Connection was closed locally (FIN segment enqueued). */
-#define TF_NODELAY     0x40U   /* Disable Nagle algorithm */
-#define TF_NAGLEMEMERR 0x80U   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
-#define TF_WND_SCALE   0x0100U /* Window Scale option enabled */
-#define TF_BACKLOGPEND 0x0200U /* If this is set, a connection pcb has increased the backlog on its listener */
-#define TF_TIMESTAMP   0x0400U   /* Timestamp option enabled */
-#define TF_RTO         0x0800U /* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
-#define TF_SACK        0x1000U /* Selective ACKs enabled */
+
+
+/// Increments a TcpWndSizeT and holds at max value rather than rollover
+inline void tcp_wnd_inc(TcpWndSize wnd, const unsigned inc)
+{
+    if (TcpWndSize(wnd + inc) >= wnd)
+    {
+        wnd = TcpWndSize(wnd + inc);
+    }
+    else
+    {
+        wnd = TcpWndSize(-1);
+    }
+}
+
+constexpr auto TF_ACK_DELAY = 0x01U; /* Delayed ACK. */
+constexpr auto TF_ACK_NOW = 0x02U; /* Immediate ACK. */
+constexpr auto TF_INFR = 0x04U; /* In fast recovery. */
+constexpr auto TF_CLOSEPEND = 0x08U;
+/* If this is set, tcp_close failed to enqueue the FIN (retried in tcp_tmr) */
+constexpr auto TF_RXCLOSED = 0x10U; /* rx closed by tcp_shutdown */
+constexpr auto TF_FIN = 0x20U; /* Connection was closed locally (FIN segment enqueued). */
+constexpr auto TF_NODELAY = 0x40U; /* Disable Nagle algorithm */
+constexpr auto TF_NAGLEMEMERR = 0x80U;
+/* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+constexpr auto TF_WND_SCALE = 0x0100U; /* Window Scale option enabled */
+constexpr auto TF_BACKLOGPEND = 0x0200U;
+/* If this is set, a connection pcb has increased the backlog on its listener */
+constexpr auto TF_TIMESTAMP = 0x0400U; /* Timestamp option enabled */
+constexpr auto TF_RTO = 0x0800U;
+/* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
+constexpr auto TF_SACK = 0x1000U; /* Selective ACKs enabled */
+
+
 
 /** SACK ranges to include in ACK packets.
  * SACK entry is invalid if left==right. */
@@ -208,6 +261,7 @@ extern "C" {
     {
         /** Common members of all PCB types */
         IpAddr local_ip; /* Bound netif index */
+        IpAddr remote_ip;
         uint8_t netif_idx; /* Socket options */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
@@ -215,7 +269,7 @@ extern "C" {
         NetIfc* netif_hints; /** Protocol specific PCB members */
         TcpPcbListen* next; /* for the linked list */
         void* callback_arg;
-        struct TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
+        TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
         enum TcpState state; /* TCP state */
         uint8_t prio; /* ports are in host byte order */
         uint16_t local_port; /* Function to call when a listener has been connected. */
@@ -224,14 +278,14 @@ extern "C" {
         uint8_t accepts_pending;
     };
 
-
+    struct TcpSeg;
 
     struct TcpPcb
     {
         /** common PCB members */
         IpAddr local_ip; /* Bound netif index */
         IpAddr remote_ip;
-        uint8_t netif_idx; /* Socket options */
+        int netif_idx; /* Socket options */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
@@ -249,8 +303,8 @@ extern "C" {
         uint8_t last_timer;
         uint32_t tmr; /* receiver variables */
         uint32_t rcv_nxt; /* next seqno expected */
-        TcpWndSizeT rcv_wnd; /* receiver window available */
-        TcpWndSizeT rcv_ann_wnd; /* receiver window to announce */
+        TcpWndSize rcv_wnd; /* receiver window available */
+        TcpWndSize rcv_ann_wnd; /* receiver window to announce */
         uint32_t rcv_ann_right_edge; /* announced right edge of window */
         /* SACK ranges to include in ACK packets (entry is invalid if left==right) */
         struct TcpSackRange rcv_sacks[LWIP_TCP_MAX_SACK_NUM];
@@ -267,27 +321,27 @@ extern "C" {
         uint8_t dupacks;
         uint32_t lastack; /* Highest acknowledged seqno. */
         /* congestion avoidance/control variables */
-        TcpWndSizeT cwnd;
-        TcpWndSizeT ssthresh; /* first byte following last rto byte */
+        TcpWndSize cwnd;
+        TcpWndSize ssthresh; /* first byte following last rto byte */
         uint32_t rto_end; /* sender variables */
         uint32_t snd_nxt; /* next new seqno to be sent */
         uint32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
                                  window update. */
         uint32_t snd_lbb; /* Sequence number of next byte to be buffered. */
-        TcpWndSizeT snd_wnd; /* sender window */
-        TcpWndSizeT snd_wnd_max;
+        TcpWndSize snd_wnd; /* sender window */
+        TcpWndSize snd_wnd_max;
         /* the maximum sender window announced by the remote host */
-        TcpWndSizeT snd_buf; /* Available buffer space for sending (in bytes). */
+        TcpWndSize snd_buf; /* Available buffer space for sending (in bytes). */
         uint16_t snd_queuelen; /* Number of pbufs currently in the send buffer. */
         /* Extra bytes available at the end of the last pbuf in unsent. */
         uint16_t unsent_oversize;
-        TcpWndSizeT bytes_acked; /* These are ordered by sequence number: */
-        struct tcp_seg* unsent; /* Unsent (queued) segments. */
-        struct tcp_seg* unacked; /* Sent but unacknowledged segments. */
-        struct tcp_seg* ooseq; /* Received out of sequence segments. */
-        struct PacketBuffer* refused_data;
+        TcpWndSize bytes_acked; /* These are ordered by sequence number: */
+        TcpSeg* unsent; /* Unsent (queued) segments. */
+        TcpSeg* unacked; /* Sent but unacknowledged segments. */
+        TcpSeg* ooseq; /* Received out of sequence segments. */
+        PacketBuffer* refused_data;
         /* Data previously received but not yet taken by upper layer */
-        struct TcpPcbListen* listener;
+        TcpPcbListen* listener;
         /* Function to be called when more send buffer space is available. */
         tcp_sent_fn sent; /* Function to be called when (in-sequence) data has arrived. */
         tcp_recv_fn recv; /* Function to be called when a connection has been set up. */
@@ -306,6 +360,17 @@ extern "C" {
         uint8_t snd_scale;
         uint8_t rcv_scale;
     };
+
+
+inline TcpWndSize TCP_WND_MAX(TcpPcb* pcb)
+{
+    return TcpWndSize(((pcb)->flags & TF_WND_SCALE) ? TCP_WND : TCPWND16(TCP_WND));
+}
+
+inline unsigned int RCV_WND_SCALE(TcpPcb* pcb, const unsigned int wnd)
+{
+    return wnd >> pcb->rcv_scale;
+}
 
     inline bool LwipTcpSackValid(TcpPcb* pcb, const size_t idx)
     {
@@ -332,7 +397,7 @@ extern "C" {
 
         /* Application program's interface: */
     struct TcpPcb* tcp_new(void);
-    struct TcpPcb* tcp_new_ip_type(uint8_t type);
+    struct TcpPcb* tcp_new_ip_type(IpAddrType type);
     void tcp_arg(struct TcpPcb* pcb, void* arg);
     void tcp_recv(struct TcpPcb* pcb, tcp_recv_fn recv);
     void tcp_sent(struct TcpPcb* pcb, tcp_sent_fn sent);
@@ -420,6 +485,3 @@ extern "C" {
 
 void pbuf_free_ooseq(TcpPcb* tcp_active_pcbs);
 
-#ifdef __cplusplus
-}
-#endif

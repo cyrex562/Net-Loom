@@ -150,7 +150,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
     return (TYPE_IP);
   }
   th = (struct tcp_hdr *)&((struct vj_uint32_t*)ip)[ilen];
-  if ((TCPH_FLAGS(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
+  if ((tcph_flags(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
     return (TYPE_IP);
   }
 
@@ -226,7 +226,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         return (kTypeIp);
     }
     auto th = reinterpret_cast<struct TcpHdr *>(&reinterpret_cast<struct vj_uint32_t*>(ip)[ilen]);
-    if ((TCPH_FLAGS(th) & (TCP_SYN | TCP_FIN | TCP_RST | TCP_ACK)) != TCP_ACK)
+    if ((tcph_flags(th) & (TCP_SYN | TCP_FIN | TCP_RST | TCP_ACK)) != TCP_ACK)
     {
         return (kTypeIp);
     }
@@ -350,7 +350,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
      * ack, seq (the order minimizes the number of temporaries
      * needed in this section of code).
      */
-    if (TCPH_FLAGS(th) & TCP_URG)
+    if (tcph_flags(th) & TCP_URG)
     {
         deltaS = lwip_ntohs(th->urgp);
         Encodez(deltaS);
@@ -447,7 +447,7 @@ vj_compress_tcp(struct vjcompress *comp, struct PacketBuffer **pb)
         Encodez(deltaS);
         changes |= NEW_I;
     }
-    if (TCPH_FLAGS(th) & TCP_PSH)
+    if (tcph_flags(th) & TCP_PSH)
     {
         changes |= TCP_PUSH_BIT;
     }

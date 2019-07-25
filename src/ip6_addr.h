@@ -406,22 +406,22 @@ inline bool ip6_addr_isloopback(const Ip6Addr* ip6_addr) {
           ((ip6_addr)->addr[3] == pp_htonl(0x00000001UL)));
 }
 
-inline bool ip6_addr_isglobal(Ip6Addr* ip6_addr)
+inline bool ip6_addr_isglobal(const Ip6Addr* ip6_addr)
 {
     return (((ip6_addr)->addr[0] & pp_htonl(0xe0000000UL)) == pp_htonl(0x20000000UL));
 }
 
-inline bool ip6_addr_issitelocal(Ip6Addr* ip6_addr)
+inline bool ip6_addr_issitelocal(const Ip6Addr* ip6_addr)
 {
     return (((ip6_addr)->addr[0] & pp_htonl(0xffc00000UL)) == pp_htonl(0xfec00000UL));
 }
 
-inline bool ip6_addr_isuniquelocal(Ip6Addr* ip6_addr)
+inline bool ip6_addr_isuniquelocal(const Ip6Addr* ip6_addr)
 {
     return (((ip6_addr)->addr[0] & pp_htonl(0xfe000000UL)) == pp_htonl(0xfc000000UL));
 }
 
-inline bool ip6_addr_isipv4mappedipv6(Ip6Addr* ip6_addr)
+inline bool ip6_addr_isipv4mappedipv6(const Ip6Addr* ip6_addr)
 {
     return (((ip6_addr)->addr[0] == 0) && ((ip6_addr)->addr[1] == 0) && (((ip6_addr)->addr[2]
     ) == pp_htonl(0x0000FFFFUL)));

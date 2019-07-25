@@ -103,7 +103,7 @@ inline bool is_ip_addr_any_type_val(const IpAddr ipaddr)
 //
 inline IpAddr init_ip_addr_any_type()
 {
-    return {{{{0UL, 0UL, 0UL, 0ul}, IP6_NO_ZONE}}, IPADDR_TYPE_ANY};
+    return {{{{0UL, 0UL, 0UL, 0UL}, IP6_NO_ZONE}}, IPADDR_TYPE_ANY};
 }
 
 //
@@ -175,7 +175,7 @@ inline IpAddr create_new_any_ip_addr()
 }
 
 /** @ingroup ip4addr */
-inline void new_ip_addr_ip4_u8(IpAddr* ipaddr, uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+inline void new_ip_addr_ip4_u8(IpAddr* ipaddr, const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d)
 {
     Ipv4AddrFromBytes(&ipaddr->u_addr.ip4, a, b, c, d);
     set_ip_addr_type_val(*ipaddr, IPADDR_TYPE_V4);
@@ -464,7 +464,7 @@ inline bool compare_ip_addr(const IpAddr* addr1, const IpAddr* addr2)
 
 
 
-inline bool compare_ip_addr_zoneless(IpAddr* addr1, IpAddr* addr2)
+inline bool compare_ip_addr_zoneless(const IpAddr* addr1, const IpAddr* addr2)
 {
     if ((get_ip_addr_type(addr1) != get_ip_addr_type(addr2)))
         return false;
@@ -475,17 +475,19 @@ inline bool compare_ip_addr_zoneless(IpAddr* addr1, IpAddr* addr2)
 
 
 
-inline bool is_ip_addr_any(IpAddr* ipaddr)
+inline bool is_ip_addr_any(const IpAddr* ipaddr)
 {
     if (((ipaddr) == nullptr))
+    {
         return true;
+    }
     if (is_ip_addr_v6(ipaddr))
         return ip6_addr_isany(&ipaddr->u_addr.ip6);
     return ip4_addr_isany(&ipaddr->u_addr.ip4);
 }
 
 
-inline bool ip_addr_isany_val(IpAddr ipaddr)
+inline bool ip_addr_isany_val(const IpAddr ipaddr)
 {
     if (is_ip_addr_ip6_val(ipaddr))
         return ip6_addr_isany_val(*convert_ip_addr_to_ip6_addr(&ipaddr));
@@ -493,7 +495,7 @@ inline bool ip_addr_isany_val(IpAddr ipaddr)
 }
 
 
-inline bool ip_addr_isbroadcast(IpAddr* ipaddr, NetIfc* netif)
+inline bool ip_addr_isbroadcast(const IpAddr* ipaddr, const NetIfc* netif)
 {
     return ((is_ip_addr_v6(ipaddr)) ? 0 : ip4_addr_isbroadcast(&ipaddr->u_addr.ip4, netif));
 }
@@ -523,7 +525,7 @@ inline bool ip_addr_islinklocal(IpAddr* ipaddr)
     return ip4_addr_islinklocal(&ipaddr->u_addr.ip4);
 }
 
-// #define ip_addr_debug_print(debug, ipaddr) do { if(IpIsV6(ipaddr)) { \
+// #define ip_addr_debug_print(debug, ipaddr) do { if(is_ip_addr_v6(ipaddr)) { \
 //   ip6_addr_debug_print(debug, ip_2_ip6(ipaddr)); } else { \
 //   ip4_addr_debug_print(debug, ip_2_ip4(ipaddr)); }}while(0)
 
