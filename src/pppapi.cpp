@@ -129,7 +129,7 @@ pppapi_do_pppos_create(struct TcpipApiCallData *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppos_create(NetIfc*pppif, pppos_output_cb_fn output_cb,
+pppapi_pppos_create(NetworkInterface*pppif, pppos_output_cb_fn output_cb,
                ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {
   PppPcb* result;
@@ -170,7 +170,7 @@ pppapi_do_pppoe_create(struct TcpipApiCallData *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppoe_create(NetIfc*pppif, NetIfc*ethif, const char *service_name,
+pppapi_pppoe_create(NetworkInterface*pppif, NetworkInterface*ethif, const char *service_name,
                             const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                             uint8_t *ctx_cb)
 {
@@ -218,7 +218,7 @@ pppapi_do_pppol2tp_create(struct TcpipApiCallData *m)
  * tcpip_thread context.
  */
 PppPcb*
-pppapi_pppol2tp_create(NetIfc*pppif, NetIfc*netif, IpAddr *ipaddr, uint16_t port,
+pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddr *ipaddr, uint16_t port,
                         const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {

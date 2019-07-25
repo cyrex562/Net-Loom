@@ -72,12 +72,12 @@
 #include <ip_addr.h>
 #include <netif.h>
 #include <nd6.h>
-#include <mem.h>
 #include <udp.h>
 #include <tcpip.h>
 
 #include <lowpan6_common.h>
-#include <string.h>
+#include <cstring>
+#include "lwip_inet.h"
 
 /** context memory, containing IPv6 addresses */
 static Ip6Addr rfc7668_context[LWIP_6LOWPAN_NUM_CONTEXTS];
@@ -139,7 +139,7 @@ eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
 static LwipStatus
 rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in_addr_len, int is_mac_48, int is_public_addr)
 {
-  if ((LwipInAddrStruct == NULL) || (addr == nullptr)) {
+  if ((in_addr == NULL) || (addr == nullptr)) {
     return ERR_VAL;
   }
   if (is_mac_48) {
@@ -147,13 +147,13 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
       return ERR_VAL;
     }
     addr->addr_len = 8;
-    ble_addr_to_eui64(addr->addr, LwipInAddrStruct, is_public_addr);
+    ble_addr_to_eui64(addr->addr, in_addr, is_public_addr);
   } else {
     if (in_addr_len != 8) {
       return ERR_VAL;
     }
     addr->addr_len = 8;
-    memcpy(addr->addr, LwipInAddrStruct, 8);
+    memcpy(addr->addr, in_addr, 8);
   }
   return ERR_OK;
 }
@@ -163,7 +163,7 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
  * This expects an address of 8 bytes.
  */
 LwipStatus
-rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len)
+rfc7668_set_local_addr_eui64(NetworkInterface*netif, const uint8_t *local_addr, size_t local_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   ;
@@ -174,7 +174,7 @@ rfc7668_set_local_addr_eui64(NetIfc*netif, const uint8_t *local_addr, size_t loc
  * This expects an address of 6 bytes.
  */
 LwipStatus
-rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
+rfc7668_set_local_addr_mac48(NetworkInterface*netif, const uint8_t *local_addr, size_t local_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   ;
@@ -185,7 +185,7 @@ rfc7668_set_local_addr_mac48(NetIfc*netif, const uint8_t *local_addr, size_t loc
  * This expects an address of 8 bytes.
  */
 LwipStatus
-rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len)
+rfc7668_set_peer_addr_eui64(NetworkInterface*netif, const uint8_t *peer_addr, size_t peer_addr_len)
 {
   /* netif not used for now, the address is stored globally... */
   ;
@@ -196,7 +196,7 @@ rfc7668_set_peer_addr_eui64(NetIfc*netif, const uint8_t *peer_addr, size_t peer_
  * This expects an address of 6 bytes.
  */
 LwipStatus
-rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
+rfc7668_set_peer_addr_mac48(NetworkInterface*netif, const uint8_t *peer_addr, size_t peer_addr_len, int is_public_addr)
 {
   /* netif not used for now, the address is stored globally... */
   ;
@@ -217,7 +217,7 @@ rfc7668_set_peer_addr_mac48(NetIfc*netif, const uint8_t *peer_addr, size_t peer_
  * @return Same as netif->output.
  */
 static LwipStatus
-rfc7668_compress(NetIfc*netif, struct PacketBuffer *p)
+rfc7668_compress(NetworkInterface*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *p_frag;
   uint16_t remaining_len;
@@ -306,7 +306,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
  * @return See rfc7668_compress
  */
 LwipStatus
-rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
+rfc7668_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
 {
   /* dst ip6addr is not used here, we only have one peer */
   return rfc7668_compress(netif, q);
@@ -323,7 +323,7 @@ rfc7668_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr)
  * @return ERR_OK if everything was fine
  */
 LwipStatus
-rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
+rfc7668_input(struct PacketBuffer * p, NetworkInterface*netif)
 {
   uint8_t * puc;
 
@@ -359,9 +359,9 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
       if ((i%4)==0) {
         Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\n"));
       }
-      Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("%2X ", *((uint8_t *)p->payload+i)));
+      // Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("%2X ", *((uint8_t *)p->payload+i)));
     }
-    Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\np->len: %d\n", p->len));
+    // Logf(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\np->len: %d\n", p->len));
   }
 
   /* pass data to ip6_input */
@@ -380,7 +380,7 @@ rfc7668_input(struct PacketBuffer * p, NetIfc*netif)
  * @return ERR_OK if everything went fine
  */
 LwipStatus
-rfc7668_if_init(NetIfc*netif)
+rfc7668_if_init(NetworkInterface*netif)
 {
   netif->name[0] = 'b';
   netif->name[1] = 't';
@@ -408,7 +408,7 @@ rfc7668_if_init(NetIfc*netif)
  * @return see @ref tcpip_inpkt, same return values
  */
 LwipStatus
-tcpip_rfc7668_input(struct PacketBuffer *p, NetIfc*inp)
+tcpip_rfc7668_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);

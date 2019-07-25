@@ -81,7 +81,7 @@ using UdpRecvFn = void (*)(void*,
                            PacketBuffer*,
                            const IpAddr*,
                            uint16_t,
-                           NetIfc*);
+                           NetworkInterface*);
 
 /** the UDP protocol control block */
 struct UdpPcb
@@ -92,7 +92,7 @@ struct UdpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    NetIfc* netif_hints; /* Protocol specific PCB members */
+    NetworkInterface* netif_hints; /* Protocol specific PCB members */
     struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
     uint16_t local_port, remote_port;
@@ -117,7 +117,7 @@ struct UdpPcb * udp_new_ip_type(uint8_t type);
 void             udp_remove     (struct UdpPcb *pcb);
 LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
-void             udp_bind_netif (struct UdpPcb *pcb, const NetIfc** netif);
+void             udp_bind_netif (struct UdpPcb *pcb, const NetworkInterface** netif);
 LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
@@ -125,17 +125,17 @@ void             udp_recv       (struct UdpPcb *pcb, UdpRecvFn recv,
                                  uint8_t *recv_arg);
 LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
-                                 NetIfc*netif);
+                                 NetworkInterface*netif);
 LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
-                                 NetIfc*netif, const IpAddr *src_ip);
+                                 NetworkInterface*netif, const IpAddr *src_ip);
 LwipStatus            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port);
 LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
 
 LwipStatus            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
-                                 NetIfc*netif, uint8_t have_chksum,
+                                 NetworkInterface*netif, uint8_t have_chksum,
                                  uint16_t chksum);
 LwipStatus            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
@@ -143,7 +143,7 @@ LwipStatus            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
 LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
 LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif,
+                                 const IpAddr *dst_ip, uint16_t dst_port, NetworkInterface*netif,
                                  uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
 
 inline void udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
@@ -162,7 +162,7 @@ inline bool udp_is_flag_set(UdpPcb* pcb, const uint8_t flag)
 }
 
 /* The following functions are the lower layer interface to UDP. */
-void             udp_input      (struct PacketBuffer *p, NetIfc*inp);
+void             udp_input      (struct PacketBuffer *p, NetworkInterface*inp);
 
 void             udp_init       ();
 
@@ -177,6 +177,6 @@ void             udp_init       ();
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 
 
-void udp_debug_print(struct udp_hdr *udphdr);
+void udp_debug_print(UdpHdr *udphdr);
 
 void udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);

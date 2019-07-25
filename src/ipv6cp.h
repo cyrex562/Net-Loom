@@ -139,42 +139,76 @@
  */
 #pragma  once
 
-#include <ppp_opts.h>
 #include <eui64.h>
+#include <cstdint>
+#include "fsm.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Options.
  */
 #define CI_IFACEID	1	/* Interface Identifier */
 
-/* No compression types yet defined.
- *#define IPV6CP_COMP	0x004f
+/*
+ * Lengths of configuration options.
  */
-typedef struct ipv6cp_options {
-    unsigned int neg_ifaceid    :1;  /* Negotiate interface identifier? */
-    unsigned int req_ifaceid    :1;  /* Ask peer to send interface identifier? */
-    unsigned int accept_local   :1;  /* accept peer's value for iface id? */
-    unsigned int opt_local      :1;  /* ourtoken set by option */
-    unsigned int opt_remote     :1;  /* histoken set by option */
-    unsigned int use_ip         :1;  /* use IP as interface identifier */
+// #define CILEN_VOID	2
+// #define CILEN_COMPRESS	4	/* length for RFC2023 compress opt. */
+#define CILEN_IFACEID   10	/* RFC2472, interface identifier    */
 
+#define IPV6CP_COMP	0x004f
 
-    unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
+/*
+ * ipv6_active_pkt - see if this IP packet is worth bringing the link up for.
+ * We don't bring the link up for IP fragments or for TCP FIN packets
+ * with no data.
+ */
+#define IP6_HDRLEN	40	/* bytes */
+#define IP6_NHDR_FRAG	44	/* fragment IPv6 header */
+#define TCP_HDRLEN	20
+#define TH_FIN		0x01
 
+/* No compression types yet defined.
+ *
+ */
+struct Ipv6CpOptions
+{
+    bool neg_ifaceid; /* Negotiate interface identifier? */
+    bool req_ifaceid; /* Ask peer to send interface identifier? */
+    bool accept_local; /* accept peer's value for iface id? */
+    bool opt_local; /* ourtoken set by option */
+    bool opt_remote; /* histoken set by option */
+    bool use_ip; /* use IP as interface identifier */
+    bool neg_vj; /* Van Jacobson Compression? */
+    uint16_t vj_protocol; /* protocol value to use in VJ option */
+    Eui64 ourid;
+    Eui64 hisid;
+};
 
+void ipv6cp_resetci(Fsm *f); /* Reset our CI */
+int  ipv6cp_cilen(Fsm *f); /* Return length of our CI */
+void ipv6cp_addci(Fsm *f, uint8_t *ucp, int *lenp); /* Add our CI */
+int  ipv6cp_ackci(Fsm *f, uint8_t *p, int len); /* Peer ack'd our CI */
+int  ipv6cp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject); /* Peer nak'd our CI */
+int  ipv6cp_rejci(Fsm *f, uint8_t *p, int len); /* Peer rej'd our CI */
+int  ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree); /* Rcv CI */
+void ipv6cp_up(Fsm *f); /* We're UP */
+void ipv6cp_down(Fsm *f); /* We're DOWN */
+void ipv6cp_finished(Fsm *f); /* Don't need lower layer */
+void ipv6cp_init(PppPcb *pcb);
+void ipv6cp_open(PppPcb *pcb);
+void ipv6cp_close(PppPcb *pcb, const char *reason);
+void ipv6cp_lowerup(PppPcb *pcb);
+void ipv6cp_lowerdown(PppPcb *pcb);
+void ipv6cp_input(PppPcb *pcb, uint8_t *p, int len);
+void ipv6cp_protrej(PppPcb *pcb);
 
-    u_short vj_protocol;        /* protocol value to use in VJ option */
+bool ipv6_demand_conf(PppPcb* u);
+int ipv6_active_pkt(uint8_t *pkt, int len);
+void ipv6cp_clear_addrs(PppPcb *pcb, Eui64 ourid, Eui64 hisid);
 
-    Eui64 ourid, hisid;       /* Interface identifiers */
-} ipv6cp_options;
+char *llv6_ntoa(Eui64 ifaceid);
 
-extern const struct Protent ipv6cp_protent;
-
-#ifdef __cplusplus
-}
-#endif
-
+//
+// END OF FILE
+//

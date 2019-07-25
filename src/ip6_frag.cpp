@@ -48,7 +48,7 @@
 
 /* The number of bytes we need to "borrow" from (i.e., overwrite in) the header
  * that precedes the fragment header for reassembly pruposes. */
-#define IPV6_FRAG_REQROOM ((int16_t)(sizeof(struct ip6_reass_helper) - IP6_FRAG_HLEN))
+#define IPV6_FRAG_REQROOM ((int16_t)(sizeof(struct ip6_reass_helper) - IP6_FRAG_OFFSET_MASK))
 
 
 #define IP_REASS_FLAG_LASTFRAG 0x01
@@ -69,18 +69,18 @@ struct ip6_reass_helper {
 
 
 /* static variables */
-static struct ip6_reassdata *reassdatagrams;
+static struct Ip6ReassemblyData *reassdatagrams;
 static uint16_t ip6_reass_pbufcount;
 
 /* Forward declarations. */
-static void ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr);
+static void ip6_reass_free_complete_datagram(struct Ip6ReassemblyData *ipr);
 
-static void ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed);
+static void ip6_reass_remove_oldest_datagram(struct Ip6ReassemblyData *ipr, int pbufs_needed);
 
 void
 ip6_reass_tmr(void)
 {
-  struct ip6_reassdata *r, *tmp;
+  struct Ip6ReassemblyData *r, *tmp;
 
 
   r = reassdatagrams;
@@ -109,9 +109,9 @@ ip6_reass_tmr(void)
  * @param ipr datagram to free
  */
 static void
-ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
+ip6_reass_free_complete_datagram(struct Ip6ReassemblyData *ipr)
 {
-  struct ip6_reassdata *prev;
+  struct Ip6ReassemblyData *prev;
   uint16_t pbufs_freed = 0;
   uint16_t clen;
   struct PacketBuffer *p;
@@ -132,12 +132,11 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
       lwip_assert("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
     }
     else {
-      /* Reconstruct the zoned source and destination addresses, so that we do
-       * not end up sending the ICMP response over the wrong link. */
-      Ip6Addr src_addr, dest_addr;
-      ip6_addr_copy_from_packed(src_addr, IPV6_FRAG_SRC(ipr));
+        Ip6Addr src_addr{};
+        Ip6Addr dest_addr{};
+        ip6_addr_copy_from_packed(&src_addr, &((ipr)->src));
       ip6_addr_set_zone(&src_addr, ipr->src_zone);
-      ip6_addr_copy_from_packed(dest_addr, IPV6_FRAG_DEST(ipr));
+      ip6_addr_copy_from_packed(&dest_addr, &((ipr)->dest));
       ip6_addr_set_zone(&dest_addr, ipr->dest_zone);
       /* Send the actual ICMP response. */
       icmp6_time_exceeded_with_addrs(p, ICMP6_TE_FRAG, &src_addr, &dest_addr);
@@ -179,7 +178,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
       prev->next = ipr->next;
     }
   }
-  memp_free(MEMP_IP6_REASSDATA, ipr);
+  delete ipr;
 
   /* Finally, update number of pbufs in reassembly queue */
   lwip_assert("ip_reass_pbufcount >= clen", ip6_reass_pbufcount >= pbufs_freed);
@@ -195,9 +194,9 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
  *        (used for freeing other datagrams if not enough space)
  */
 static void
-ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
+ip6_reass_remove_oldest_datagram(struct Ip6ReassemblyData *ipr, int pbufs_needed)
 {
-  struct ip6_reassdata *r, *oldest;
+  struct Ip6ReassemblyData *r, *oldest;
 
   /* Free datagrams until being allowed to enqueue 'pbufs_needed' pbufs,
    * but don't free the current datagram! */
@@ -232,22 +231,24 @@ ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
 struct PacketBuffer *
 ip6_reass(struct PacketBuffer *p)
 {
-  struct ip6_reassdata *ipr, *ipr_prev;
+  struct Ip6ReassemblyData *ipr, *ipr_prev;
   struct ip6_reass_helper *iprh, *iprh_tmp, *iprh_prev= nullptr;
-  struct ip6_frag_hdr *frag_hdr;
+  Ip6FragHdr *frag_hdr;
   uint16_t offset, len, start, end;
   ptrdiff_t hdrdiff;
   uint16_t clen;
   uint8_t valid = 1;
-  struct PacketBuffer *q, *next_pbuf;
+  struct PacketBuffer *q;
+    Ip6Hdr* curr_ip6_hdr = nullptr;
+    Ip6Addr* curr_src_addr = nullptr;
+    Ip6Addr* curr_dst_addr = nullptr;
 
-  IP6_FRAG_STATS_INC(ip6_frag.recv);
-
+  
   /* ip6_frag_hdr must be in the first PacketBuffer, not chained. Checked by caller. */
   lwip_assert("IPv6 fragment header does not fit in first PacketBuffer",
-    p->len >= sizeof(struct ip6_frag_hdr));
+    p->len >= sizeof(Ip6FragHdr));
 
-  frag_hdr = (struct ip6_frag_hdr *) p->payload;
+  frag_hdr = (Ip6FragHdr *) p->payload;
 
   clen = pbuf_clen(p);
 
@@ -256,21 +257,21 @@ ip6_reass(struct PacketBuffer *p)
   /* Calculate fragment length from IPv6 payload length.
    * Adjust for headers before Fragment Header.
    * And finally adjust by Fragment Header length. */
-  len = lwip_ntohs(ip6_current_header()->_plen);
-  hdrdiff = (uint8_t*)p->payload - (const uint8_t*)ip6_current_header();
+  len = lwip_ntohs(curr_ip6_hdr->_plen);
+  hdrdiff = (uint8_t*)p->payload - (const uint8_t*)curr_ip6_hdr;
   lwip_assert("not a valid PacketBuffer (ip6_input check missing?)", hdrdiff <= 0xFFFF);
   lwip_assert("not a valid PacketBuffer (ip6_input check missing?)", hdrdiff >= IP6_HDR_LEN);
   hdrdiff -= IP6_HDR_LEN;
-  hdrdiff += IP6_FRAG_HLEN;
+  hdrdiff += IP6_FRAG_OFFSET_MASK;
   if (hdrdiff > len) {
-    IP6_FRAG_STATS_INC(ip6_frag.proterr);
+
     goto nullreturn;
   }
   len = (uint16_t)(len - hdrdiff);
   start = (offset & IP6_FRAG_OFFSET_MASK);
   if (start > (0xFFFF - len)) {
     /* uint16_t overflow, cannot handle this */
-    IP6_FRAG_STATS_INC(ip6_frag.proterr);
+
     goto nullreturn;
   }
 
@@ -281,9 +282,8 @@ ip6_reass(struct PacketBuffer *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if ((frag_hdr->_identification == ipr->identification) &&
-        ip6_addr_cmp_packed(ip6_current_src_addr(), &(IPV6_FRAG_SRC(ipr)), ipr->src_zone) &&
-        ip6_addr_cmp_packed(ip6_current_dest_addr(), &(IPV6_FRAG_DEST(ipr)), ipr->dest_zone)) {
-      IP6_FRAG_STATS_INC(ip6_frag.cachehit);
+        ip6_addr_cmp_packed(curr_src_addr, &(IPV6_FRAG_SRC(ipr)), ipr->src_zone) &&
+        ip6_addr_cmp_packed(curr_dst_addr, &(IPV6_FRAG_DEST(ipr)), ipr->dest_zone)) {
       break;
     }
     ipr_prev = ipr;
@@ -291,12 +291,13 @@ ip6_reass(struct PacketBuffer *p)
 
   if (ipr == nullptr) {
   /* Enqueue a new datagram into the datagram queue */
-    ipr = (struct ip6_reassdata *)memp_malloc(MEMP_IP6_REASSDATA);
+    // ipr = (struct ip6_reassdata *)memp_malloc(MEMP_IP6_REASSDATA);
+      ipr = new Ip6ReassemblyData;
     if (ipr == nullptr) {
 
       /* Make room and try again. */
       ip6_reass_remove_oldest_datagram(ipr, clen);
-      ipr = (struct ip6_reassdata *)memp_malloc(MEMP_IP6_REASSDATA);
+      ipr = new Ip6ReassemblyData;
       if (ipr != nullptr) {
         /* re-search ipr_prev since it might have been removed */
         for (ipr_prev = reassdatagrams; ipr_prev != nullptr; ipr_prev = ipr_prev->next) {
@@ -307,13 +308,12 @@ ip6_reass(struct PacketBuffer *p)
       } else
 
       {
-        IP6_FRAG_STATS_INC(ip6_frag.memerr);
         goto nullreturn;
       }
     }
 
-    memset(ipr, 0, sizeof(struct ip6_reassdata));
-    ipr->timer = IPV6_REASS_MAXAGE;
+    memset(ipr, 0, sizeof(struct Ip6ReassemblyData));
+    ipr->timer = 0xff;
 
     /* enqueue the new structure to the front of the list */
     ipr->next = reassdatagrams;
@@ -323,10 +323,10 @@ ip6_reass(struct PacketBuffer *p)
      * Eventually, we will replace it when we get the first fragment
      * (it might be this one, in any case, it is done later). */
     /* need to use the none-const pointer here: */
-    ipr->iphdr = ip_data.current_ip6_header;
+    ipr->iphdr =curr_ip6_hdr;
 
-    memcpy(&ipr->src, &ip6_current_header()->src, sizeof(ipr->src));
-    memcpy(&ipr->dest, &ip6_current_header()->dest, sizeof(ipr->dest));
+    memcpy(&ipr->src, &curr_ip6_hdr->src, sizeof(ipr->src));
+    memcpy(&ipr->dest, &curr_ip6_hdr->dest, sizeof(ipr->dest));
 
 
     /* Also store the address zone information.
@@ -335,8 +335,8 @@ ip6_reass(struct PacketBuffer *p)
      * risk sending a "time exceeded" ICMP response over the wrong link.
      * Ideally, netif destruction would clean up matching pending reassembly
      * structures, but custom zone mappings would make that non-trivial. */
-    ipr->src_zone = ip6_addr_zone(ip6_current_src_addr());
-    ipr->dest_zone = ip6_addr_zone(ip6_current_dest_addr());
+    ipr->src_zone = ip6_addr_zone(curr_src_addr);
+    ipr->dest_zone = ip6_addr_zone(curr_dst_addr);
 
     /* copy the fragmented packet id. */
     ipr->identification = frag_hdr->_identification;
@@ -361,7 +361,6 @@ ip6_reass(struct PacketBuffer *p)
     {
       /* @todo: send ICMPv6 time exceeded here? */
       /* drop this PacketBuffer */
-      IP6_FRAG_STATS_INC(ip6_frag.memerr);
       goto nullreturn;
     }
   }
@@ -375,14 +374,13 @@ ip6_reass(struct PacketBuffer *p)
     ; /* in case of LWIP_NOASSERT */
     lwip_assert("no room for struct ip6_reass_helper", hdrerr == 0);
   }
-*/
 
   /* Prepare the pointer to the helper structure, and its initial values.
    * Do not yet write to the structure itself, as we still have to make a
    * backup of the original data, and we should not do that until we know for
    * sure that we are going to add this packet to the list. */
   iprh = (struct ip6_reass_helper *)p->payload;
-  next_pbuf = nullptr;
+  struct PacketBuffer* next_pbuf = nullptr;
   end = (uint16_t)(start + len);
 
   /* find the right place to insert this PacketBuffer */
@@ -394,13 +392,11 @@ ip6_reass(struct PacketBuffer *p)
 
       if (end > iprh_tmp->start) {
         /* fragment overlaps with following, throw away */
-        IP6_FRAG_STATS_INC(ip6_frag.proterr);
         goto nullreturn;
       }
       if (iprh_prev != nullptr) {
         if (start < iprh_prev->end) {
           /* fragment overlaps with previous, throw away */
-          IP6_FRAG_STATS_INC(ip6_frag.proterr);
           goto nullreturn;
         }
       }
@@ -421,7 +417,6 @@ ip6_reass(struct PacketBuffer *p)
 
     } else if (start < iprh_tmp->end) {
       /* overlap: no need to keep the new datagram */
-      IP6_FRAG_STATS_INC(ip6_frag.proterr);
       goto nullreturn;
 
     } else {
@@ -467,7 +462,7 @@ ip6_reass(struct PacketBuffer *p)
   /* Remember IPv6 header if this is the first fragment. */
   if (start == 0) {
     /* need to use the none-const pointer here: */
-    ipr->iphdr = ip_data.current_ip6_header;
+    ipr->iphdr = curr_ip6_hdr;
     /* Make a backup of the part of the packet data that we are about to
      * overwrite, so that we can restore the original later. */
     memcpy(ipr->orig_hdr, p->payload, sizeof(*iprh));
@@ -520,7 +515,7 @@ ip6_reass(struct PacketBuffer *p)
         iprh_tmp = (struct ip6_reass_helper*)next_pbuf->payload;
 
         /* hide the fragment header for every succeeding fragment */
-        pbuf_remove_header(next_pbuf, IP6_FRAG_HLEN);
+        pbuf_remove_header(next_pbuf, IP6_FRAG_OFFSET_MASK);
 
         if (IPV6_FRAG_REQROOM > 0) {
           /* hide the extra bytes borrowed from ip6_hdr for struct ip6_reass_helper */
@@ -564,11 +559,11 @@ ip6_reass(struct PacketBuffer *p)
      * accordingly. This works because all these headers are in the first PacketBuffer
      * of the chain, and because the caller adjusts all its pointers on
      * successful reassembly. */
-    memmove((uint8_t*)ipr->iphdr + sizeof(struct ip6_frag_hdr),ipr->iphdr,(size_t)((uint8_t*)p->payload - (uint8_t*)ipr->iphdr));
+    memmove((uint8_t*)ipr->iphdr + sizeof(Ip6FragHdr),ipr->iphdr,(size_t)((uint8_t*)p->payload - (uint8_t*)ipr->iphdr));
 
     /* This is where the IPv6 header is now. */
     iphdr_ptr = (struct Ip6Hdr*)((uint8_t*)ipr->iphdr +
-      sizeof(struct ip6_frag_hdr));
+      sizeof(Ip6FragHdr));
 
     /* Adjust datagram length by adding header lengths. */
     ipr->datagram_len = (uint16_t)(ipr->datagram_len + ((uint8_t*)p->payload - (uint8_t*)iphdr_ptr)
@@ -600,7 +595,7 @@ ip6_reass(struct PacketBuffer *p)
       lwip_assert("sanity check linked list", ipr_prev != nullptr);
       ipr_prev->next = ipr->next;
     }
-    memp_free(MEMP_IP6_REASSDATA, ipr);
+    delete ipr;
 
     /* adjust the number of pbufs currently queued for reassembly. */
     clen = pbuf_clen(p);
@@ -621,24 +616,23 @@ ip6_reass(struct PacketBuffer *p)
   return nullptr;
 
 nullreturn:
-  IP6_FRAG_STATS_INC(ip6_frag.drop);
   free_pkt_buf(p);
   return nullptr;
 }
 
 /** Allocate a new struct pbuf_custom_ref */
-static struct pbuf_custom_ref*
+static struct PbufCustomRef*
 ip6_frag_alloc_pbuf_custom_ref(void)
 {
-  return (struct pbuf_custom_ref*)memp_malloc(MEMP_FRAG_PBUF);
+  return new PbufCustomRef;
 }
 
 /** Free a struct pbuf_custom_ref */
 static void
-ip6_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
+ip6_frag_free_pbuf_custom_ref(struct PbufCustomRef* p)
 {
   lwip_assert("p != NULL", p != nullptr);
-  memp_free(MEMP_FRAG_PBUF, p);
+  delete p;
 }
 
 /** Free-callback function to free a 'struct pbuf_custom_ref', called by
@@ -646,7 +640,7 @@ ip6_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
 static void
 ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
 {
-  struct pbuf_custom_ref *pcr = (struct pbuf_custom_ref*)p;
+  struct PbufCustomRef *pcr = (struct PbufCustomRef*)p;
   lwip_assert("pcr != NULL", pcr != nullptr);
   lwip_assert("pcr == p", (void*)pcr == (void*)p);
   if (pcr->original != nullptr) {
@@ -668,11 +662,11 @@ ip6_frag_free_pbuf_custom(struct PacketBuffer *p)
  * @return ERR_OK if sent successfully, LwipStatus otherwise
  */
 LwipStatus
-ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
+ip6_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip6Addr *dest)
 {
   struct Ip6Hdr *original_ip6hdr;
   struct Ip6Hdr *ip6hdr;
-  struct ip6_frag_hdr *frag_hdr;
+  Ip6FragHdr *frag_hdr;
   struct PacketBuffer *rambuf;
 
   struct PacketBuffer *newpbuf;
@@ -682,7 +676,7 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
   static uint32_t identification;
   uint16_t left, cop;
   const uint16_t mtu = nd6_get_destination_mtu(dest, netif);
-  const uint16_t nfb = (uint16_t)((mtu - (IP6_HDR_LEN + IP6_FRAG_HLEN)) & IP6_FRAG_OFFSET_MASK);
+  const uint16_t nfb = (uint16_t)((mtu - (IP6_HDR_LEN + IP6_FRAG_OFFSET_MASK)) & IP6_FRAG_OFFSET_MASK);
   uint16_t fragment_offset = 0;
   uint16_t last;
   uint16_t poff = IP6_HDR_LEN;
@@ -706,16 +700,15 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
      * The rest will be PBUF_REFs mirroring the PacketBuffer chain to be fragged,
      * but limited to the size of an mtu.
      */
-    rambuf = pbuf_alloc(PBUF_LINK, IP6_HDR_LEN + IP6_FRAG_HLEN);
+    rambuf = pbuf_alloc(PBUF_LINK, IP6_HDR_LEN + IP6_FRAG_OFFSET_MASK);
     if (rambuf == nullptr) {
-      IP6_FRAG_STATS_INC(ip6_frag.memerr);
       return ERR_MEM;
     }
     lwip_assert("this needs a PacketBuffer in one piece!",
                 (p->len >= (IP6_HDR_LEN)));
     memcpy(rambuf->payload, original_ip6hdr, IP6_HDR_LEN);
     ip6hdr = (Ip6Hdr *)rambuf->payload;
-    frag_hdr = (struct ip6_frag_hdr *)((uint8_t*)rambuf->payload + IP6_HDR_LEN);
+    frag_hdr = (Ip6FragHdr *)((uint8_t*)rambuf->payload + IP6_HDR_LEN);
 
     /* Can just adjust p directly for needed offset. */
     p->payload = (uint8_t *)p->payload + poff;
@@ -724,7 +717,7 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
 
     left_to_copy = cop;
     while (left_to_copy) {
-      struct pbuf_custom_ref *pcr;
+      struct PbufCustomRef *pcr;
       newpbuflen = (left_to_copy < p->len) ? left_to_copy : p->len;
       /* Is this PacketBuffer already empty? */
       if (!newpbuflen) {
@@ -734,7 +727,6 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
       pcr = ip6_frag_alloc_pbuf_custom_ref();
       if (pcr == nullptr) {
         free_pkt_buf(rambuf);
-        IP6_FRAG_STATS_INC(ip6_frag.memerr);
         return ERR_MEM;
       }
       /* Mirror this PacketBuffer, although we might not need all of it. */
@@ -742,7 +734,6 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
       if (newpbuf == nullptr) {
         ip6_frag_free_pbuf_custom_ref(pcr);
         free_pkt_buf(rambuf);
-        IP6_FRAG_STATS_INC(ip6_frag.memerr);
         return ERR_MEM;
       }
       pbuf_ref(p);
@@ -768,12 +759,11 @@ ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest)
     frag_hdr->_identification = lwip_htonl(identification);
 
     IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_FRAGMENT);
-    IP6H_PLEN_SET(ip6hdr, (uint16_t)(cop + IP6_FRAG_HLEN));
+    set_ip6_hdr_plen(ip6hdr, (uint16_t)(cop + IP6_FRAG_OFFSET_MASK));
 
     /* No need for separate header PacketBuffer - we allowed room for it in rambuf
      * when allocated.
      */
-    IP6_FRAG_STATS_INC(ip6_frag.xmit);
     netif->output_ip6(netif, rambuf, dest);
 
     /* Unfortunately we can't reuse rambuf - the hardware may still be

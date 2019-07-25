@@ -48,9 +48,9 @@
 
 
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
-const IpAddr ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
+const IpAddr ip6_addr_any = init_ip_addr_ip6(0ul, 0ul, 0ul, 0ul);
 
-#define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
+inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10));}
 
 /**
  * Check whether "cp" is a valid ascii representation
@@ -88,7 +88,7 @@ ip6addr_aton(const char *cp, Ip6Addr *addr)
       }
       break;
 
-    } else if (!lwip_isxdigit(*s)) {
+    } else if (!isxdigit(*s)) {
       break;
     }
   }
@@ -112,7 +112,7 @@ ip6addr_aton(const char *cp, Ip6Addr *addr)
       if (check_ipv4_mapped) {
         if (current_block_index == 6) {
           Ip4Addr ip4;
-          int ret = ip4addr_aton(s + 1, &ip4);
+          int ret = lwip_ip4addr_aton(s + 1, &ip4);
           if (ret) {
             if (addr) {
               addr->addr[3] = lwip_htonl(ip4.addr);
@@ -152,11 +152,11 @@ ip6addr_aton(const char *cp, Ip6Addr *addr)
           }
         }
       }
-    } else if (lwip_isxdigit(*s)) {
+    } else if (isxdigit(*s)) {
       /* add current digit */
       current_block_value = (current_block_value << 4) +
-          (lwip_isdigit(*s) ? (uint32_t)(*s - '0') :
-          (uint32_t)(10 + (lwip_islower(*s) ? *s - 'a' : *s - 'A')));
+          (isdigit(*s) ? (uint32_t)(*s - '0') :
+          (uint32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;
@@ -216,7 +216,7 @@ char *
 ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
 {
   uint32_t current_block_index, current_block_value, next_block_value;
-  s32_t i;
+  int32_t i;
   uint8_t zero_flag, empty_block_flag;
 
 
@@ -232,7 +232,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
     }
     memcpy(buf, IP4MAPPED_HEADER, sizeof(IP4MAPPED_HEADER));
     addr4.addr = addr->addr[3];
-    ret = ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
+    ret = lwip_ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
     if (ret != buf_ip4) {
       return nullptr;
     }

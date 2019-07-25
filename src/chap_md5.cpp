@@ -56,10 +56,10 @@ int chap_md5_verify_response(PppPcb* pcb,
 {
     md5_context ctx;
     unsigned char idbyte = id;
-    unsigned char hash[kMd5HashSize];
+    unsigned char hash[MD5_HASH_SIZE];
     const int challenge_len = *challenge++;
     const int response_len = *response++;
-    if (response_len == kMd5HashSize) {
+    if (response_len == MD5_HASH_SIZE) {
         /* Generate hash of ID, secret, challenge */
         
         md5_starts(&ctx);
@@ -68,7 +68,7 @@ int chap_md5_verify_response(PppPcb* pcb,
         lwip_md5_update(&ctx, challenge, challenge_len);
         lwip_md5_finish(&ctx, hash);
         lwip_md5_free(&ctx); /* Test if our hash matches the peer's response */
-        if (memcmp(hash, response, kMd5HashSize) == 0) {
+        if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
             ppp_slprintf(message, message_space, "Access granted");
             return 1;
         }
@@ -98,7 +98,7 @@ chap_md5_make_response(PppPcb* pcb,
     lwip_md5_update(&ctx, challenge, challenge_len);
     lwip_md5_finish(&ctx, &response[1]);
     lwip_md5_free(&ctx);
-    response[0] = kMd5HashSize;
+    response[0] = MD5_HASH_SIZE;
 }
 
 

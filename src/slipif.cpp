@@ -104,7 +104,7 @@ struct SlipifPriv
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipStatus
-slipif_output(NetIfc*netif, struct PacketBuffer *p)
+slipif_output(NetworkInterface*netif, struct PacketBuffer *p)
 {
   struct SlipifPriv *priv;
   struct PacketBuffer *q;
@@ -160,7 +160,7 @@ slipif_output(NetIfc*netif, struct PacketBuffer *p)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipStatus
-slipif_output_v4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
+slipif_output_v4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
 {
   ;
   return slipif_output(netif, p);
@@ -177,7 +177,7 @@ slipif_output_v4(NetIfc*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static LwipStatus
-slipif_output_v6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
+slipif_output_v6(NetworkInterface*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
 {
   ;
   return slipif_output(netif, p);
@@ -193,7 +193,7 @@ slipif_output_v6(NetIfc*netif, struct PacketBuffer *p, const Ip6Addr *ipaddr)
  * @return The IP packet when SLIP_END is received
  */
 static struct PacketBuffer *
-slipif_rxbyte(NetIfc*netif, uint8_t c)
+slipif_rxbyte(NetworkInterface*netif, uint8_t c)
 {
   struct SlipifPriv *priv;
   struct PacketBuffer *t;
@@ -295,7 +295,7 @@ slipif_rxbyte(NetIfc*netif, uint8_t c)
  * @param c received character
  */
 static void
-slipif_rxbyte_input(NetIfc*netif, uint8_t c)
+slipif_rxbyte_input(NetworkInterface*netif, uint8_t c)
 {
   struct PacketBuffer *p;
   p = slipif_rxbyte(netif, c);
@@ -318,7 +318,7 @@ static void
 slipif_loop_thread(uint8_t *nf)
 {
   uint8_t c;
-  NetIfc*netif = (NetIfc*)nf;
+  NetworkInterface*netif = (NetworkInterface*)nf;
   struct SlipifPriv *priv = (struct SlipifPriv *)netif->state;
 
   while (1) {
@@ -345,7 +345,7 @@ slipif_loop_thread(uint8_t *nf)
  *
  */
 LwipStatus
-slipif_init(NetIfc*netif)
+slipif_init(NetworkInterface*netif)
 {
   struct SlipifPriv *priv;
   uint8_t sio_num;
@@ -388,7 +388,7 @@ slipif_init(NetIfc*netif)
 
   netif->state = priv;
 
-  /* initialize the snmp variables and counters inside the NetIfc*/
+  /* initialize the snmp variables and counters inside the NetworkInterface*/
   MIB2_INIT_NETIF(netif, snmp_ifType_slip, SLIP_SIO_SPEED(priv->sd));
 
   /* Create a thread to poll the serial line. */
@@ -405,7 +405,7 @@ slipif_init(NetIfc*netif)
  * @param netif The lwip network interface structure for this slipif
  */
 void
-slipif_poll(NetIfc*netif)
+slipif_poll(NetworkInterface*netif)
 {
   uint8_t c;
   struct SlipifPriv *priv;
@@ -426,7 +426,7 @@ slipif_poll(NetIfc*netif)
  *
  * @param netif The lwip network interface structure for this slipif
  */
-void slipif_process_rxqueue(NetIfc* netif)
+void slipif_process_rxqueue(NetworkInterface* netif)
 {
   struct slipif_priv *priv;
   SYS_ARCH_DECL_PROTECT(old_level);
@@ -478,7 +478,7 @@ void slipif_process_rxqueue(NetIfc* netif)
  * @param netif The lwip network interface structure for this slipif
  * @param data Received serial byte
  */
-static void slipif_rxbyte_enqueue(NetIfc* netif, uint8_t data)
+static void slipif_rxbyte_enqueue(NetworkInterface* netif, uint8_t data)
 {
     struct PacketBuffer* p;
     struct SlipifPriv* priv = (struct SlipifPriv *)netif->state;
@@ -516,7 +516,7 @@ static void slipif_rxbyte_enqueue(NetIfc* netif, uint8_t data)
  * @param data received character
  */
 void
-slipif_received_byte(NetIfc*netif, uint8_t data)
+slipif_received_byte(NetworkInterface*netif, uint8_t data)
 {
   lwip_assert("netif != NULL", (netif != nullptr));
   lwip_assert("netif->state != NULL", (netif->state != nullptr));
@@ -535,7 +535,7 @@ slipif_received_byte(NetIfc*netif, uint8_t data)
  * @param len Number of received characters
  */
 void
-slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len)
+slipif_received_bytes(NetworkInterface*netif, uint8_t *data, uint8_t len)
 {
   uint8_t i;
   uint8_t *rxdata = data;

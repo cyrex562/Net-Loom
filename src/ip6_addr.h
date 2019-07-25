@@ -18,7 +18,7 @@ enum Ip6Zone : uint8_t
 // This is the aligned version of Ip6Addr used as local variable, on the stack, etc.
 struct Ip6Addr
 {
-    std::array<uint32_t, 4>addr;
+    uint32_t addr[4];
     Ip6Zone zone;
 };
 
@@ -224,58 +224,58 @@ inline void set_ip6_addr(Ip6Addr* ip6_addr, const uint32_t idx0, const uint32_t 
 }
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK1(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK1(const Ip6Addr* ip6_addr)
 {
     return ((uint16_t)((lwip_htonl((ip6_addr)->addr[0]) >> 16) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK2(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK2(const Ip6Addr* ip6_addr)
 {
     return ((uint16_t)((lwip_htonl((ip6_addr)->addr[0])) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK3(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK3(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[1]) >> 16) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[1]) >> 16) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK4(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK4(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[1])) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[1])) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK5(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK5(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[2]) >> 16) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[2]) >> 16) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK6(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK6(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[2])) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[2])) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK7(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK7(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[3]) >> 16) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[3]) >> 16) & 0xffff));
 }
 
 
 /** Access address in 16-bit block */
-inline uint16_t IP6_ADDR_BLOCK8(Ip6Addr* ip6_addr)
+inline uint16_t IP6_ADDR_BLOCK8(const Ip6Addr* ip6_addr)
 {
-    ((uint16_t)((lwip_htonl((ip6_addr)->addr[3])) & 0xffff));
+    return ((uint16_t)((lwip_htonl((ip6_addr)->addr[3])) & 0xffff));
 }
 
 
@@ -301,7 +301,7 @@ inline void ip6_addr_copy_from_packed(Ip6Addr* dest, const Ip6AddrWireFmt* src)
 }
 
 /** Copy unpacked IPv6 address to packed IPv6 address; zone is lost */
-inline void ip6_addr_copy_to_packed(Ip6AddrWireFmt* dest, Ip6Addr* src)
+inline void ip6_addr_copy_to_packed(Ip6AddrWireFmt* dest, const Ip6Addr* src)
 {
     (dest)->addr[0] = (src)->addr[0];
     (dest)->addr[1] = (src)->addr[1];
@@ -396,7 +396,7 @@ inline bool ip6_addr_isany_val(const Ip6Addr ip6_addr) {
           ((ip6_addr).addr[2] == 0) && ((ip6_addr).addr[3] == 0));
 }
 
-inline bool ip6_addr_isany(const Ip6Addr* ip6_addr) {
+inline bool is_ip6_addr_any(const Ip6Addr* ip6_addr) {
   return (((ip6_addr) == nullptr) || ip6_addr_isany_val(*(ip6_addr)));
 }
 
@@ -627,3 +627,17 @@ int ip6addr_aton(const char* cp, const Ip6Addr* addr);
 /** returns ptr to static buffer; not reentrant! */
 char* ip6addr_ntoa(const Ip6Addr* addr);
 char* ip6addr_ntoa_r(const Ip6Addr* addr, char* buf, int buflen);
+
+inline Ip6Addr make_ip6_addr_any()
+{
+    return {0,0,0,0,IP6_NO_ZONE};
+}
+
+inline void set_ip6_addr_any(Ip6Addr* addr)
+{
+    addr->addr[0] = 0;
+    addr->addr[1] = 0;
+    addr->addr[2] = 0;
+    addr->addr[3] = 0;
+    addr->zone = IP6_NO_ZONE;
+}

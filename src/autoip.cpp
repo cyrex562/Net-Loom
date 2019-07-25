@@ -11,7 +11,7 @@
 // Pseudo random macro based on netif informations.
 // You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
 //
-inline uint32_t autoip_gen_rand(NetIfc* netif)
+inline uint32_t autoip_gen_rand(NetworkInterface* netif)
 {
     return (uint32_t(netif->hwaddr[5] & 0xff) << 24 | uint32_t(netif->hwaddr[3] & 0xff) <<
             16 | uint32_t(netif->hwaddr[2] & 0xff) << 8 | uint32_t(
@@ -24,14 +24,14 @@ inline uint32_t autoip_gen_rand(NetIfc* netif)
 // Macro that generates the initial IP address to be tried by AUTOIP.
 // If you want to override this, define it to something else in lwipopts.h.
 //
-inline uint32_t autoip_gen_seed_addr(NetIfc* netif)
+inline uint32_t autoip_gen_seed_addr(NetworkInterface* netif)
 {
     return lwip_htonl(kAutoipRangeStart + uint32_t(
         uint8_t(netif->hwaddr[4]) | uint32_t(uint8_t(netif->hwaddr[5])) << 8));
 }
 
-LwipStatus autoip_arp_announce(NetIfc* netif);
-bool autoip_start_probing(NetIfc* netif);
+LwipStatus autoip_arp_announce(NetworkInterface* netif);
+bool autoip_start_probing(NetworkInterface* netif);
 
 
 //
@@ -41,7 +41,7 @@ bool autoip_start_probing(NetIfc* netif);
 // netif: the netif for which to set the struct autoip
 // autoip; (uninitialised) autoip struct allocated by the application
 //
-bool autoip_set_struct(NetIfc* netif, struct AutoipState* autoip)
+bool autoip_set_struct(NetworkInterface* netif, struct AutoipState* autoip)
 {
     lwip_assert("netif != NULL", netif != nullptr);
     lwip_assert("autoip != NULL", autoip != nullptr);
@@ -57,7 +57,7 @@ bool autoip_set_struct(NetIfc* netif, struct AutoipState* autoip)
 //
 // @param netif The netif under AutoIP control
 //
-bool autoip_restart(NetIfc* netif)
+bool autoip_restart(NetworkInterface* netif)
 {
     // ReSharper disable once CppLocalVariableMayBeConst
     auto autoip = netif_autoip_data(netif);
@@ -70,7 +70,7 @@ bool autoip_restart(NetIfc* netif)
 //
 // Handle a IP address conflict after an ARP conflict detection
 //
-bool autoip_handle_arp_conflict(NetIfc* netif)
+bool autoip_handle_arp_conflict(NetworkInterface* netif)
 {
     const auto autoip = netif_autoip_data(netif);
     /* RFC3927, 2.5 "Conflict Detection and Defense" allows two options where
@@ -99,7 +99,7 @@ bool autoip_handle_arp_conflict(NetIfc* netif)
 // @param netif network interface on which create the IP-Address
 // @param ipaddr ip address to initialize
 //
-bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
+bool autoip_create_addr(NetworkInterface* netif, Ip4Addr* ipaddr)
 {
     const auto autoip = netif_autoip_data(netif);
     /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
@@ -128,7 +128,7 @@ bool autoip_create_addr(NetIfc* netif, Ip4Addr* ipaddr)
 //
 // @param netif network interface used to send the probe
 //
-LwipStatus autoip_arp_probe(NetIfc* netif)
+LwipStatus autoip_arp_probe(NetworkInterface* netif)
 {
     auto autoip = netif_autoip_data(netif);
     /* this works because netif->ip_addr is ANY */
@@ -141,7 +141,7 @@ LwipStatus autoip_arp_probe(NetIfc* netif)
 // @param netif network interface used to send the announce
 //
 LwipStatus
-autoip_arp_announce(NetIfc* netif)
+autoip_arp_announce(NetworkInterface* netif)
 {
   return etharp_gratuitous(netif);
 }
@@ -151,7 +151,7 @@ autoip_arp_announce(NetIfc* netif)
 //
 // @param netif network interface to configure with current LL IP-Address
 //
- LwipStatus autoip_bind(NetIfc* netif)
+ LwipStatus autoip_bind(NetworkInterface* netif)
 {
     auto autoip = netif_autoip_data(netif);
     Ip4Addr sn_mask{};
@@ -169,7 +169,7 @@ autoip_arp_announce(NetIfc* netif)
  *
  * @param netif network interface on which start the AutoIP client
  */
-LwipStatus autoip_start(NetIfc* netif)
+LwipStatus autoip_start(NetworkInterface* netif)
 {
     auto autoip = netif_autoip_data(netif);
     const LwipStatus result = ERR_OK;
@@ -203,7 +203,7 @@ LwipStatus autoip_start(NetIfc* netif)
     return result;
 }
 
-static bool autoip_start_probing(NetIfc* netif)
+static bool autoip_start_probing(NetworkInterface* netif)
 {
     const auto autoip = netif_autoip_data(netif);
     autoip->state = AUTOIP_STATE_PROBING;
@@ -229,7 +229,7 @@ static bool autoip_start_probing(NetIfc* netif)
 // If there is an AutoIP address configured, take the interface down
 // and begin probing with the same address.
 //
-bool autoip_network_changed(NetIfc* netif)
+bool autoip_network_changed(NetworkInterface* netif)
 {
     const auto autoip = netif_autoip_data(netif);
     if (autoip && (autoip->state != AUTOIP_STATE_OFF))
@@ -245,7 +245,7 @@ bool autoip_network_changed(NetIfc* netif)
 //
 // @param netif network interface on which stop the AutoIP client
 //
-LwipStatus autoip_stop(NetIfc* netif)
+LwipStatus autoip_stop(NetworkInterface* netif)
 {
     const auto autoip = netif_autoip_data(netif);
     if (autoip != nullptr)
@@ -345,7 +345,7 @@ void autoip_tmr(void)
 // @param netif network interface to use for autoip processing
 // @param hdr Incoming ARP packet
 //
-void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
+void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
 {
     auto autoip = netif_autoip_data(netif);
     if ((autoip != nullptr) && (autoip->state != AUTOIP_STATE_OFF))
@@ -400,7 +400,7 @@ void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr)
 // @return 1 if AutoIP supplied netif->ip_addr (state BOUND or ANNOUNCING),
 //         0 otherwise
 //
-bool autoip_supplied_address(const NetIfc* netif)
+bool autoip_supplied_address(const NetworkInterface* netif)
 {
     if ((netif != nullptr) && (netif_autoip_data(netif) != nullptr))
     {
@@ -411,7 +411,7 @@ bool autoip_supplied_address(const NetIfc* netif)
     return true;
 }
 
-bool autoip_accept_packet(NetIfc* netif, const Ip4Addr* addr)
+bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr)
 {
     const auto autoip = netif_autoip_data(netif);
     return (autoip != nullptr) && ip4_addr_cmp(addr, &(autoip->llipaddr));

@@ -44,5 +44,5 @@
 
 /** This variable is initialized by the system to contain the wildcard IPv6 address.
  */
-const struct LwipIn6Addr in6addr_any = IN6ADDR_ANY_INIT;
+// const struct LwipIn6Addr in6addr_any = IN6ADDR_ANY_INIT;
 

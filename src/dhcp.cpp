@@ -114,32 +114,32 @@ static UdpPcb* dhcp_pcb;
 static uint8_t dhcp_pcb_refcount;
 
 /* DHCP client state machine functions */
-static LwipStatus dhcp_discover(NetIfc * netif);
-static LwipStatus dhcp_select(NetIfc * netif);
-static void dhcp_bind(NetIfc * netif);
-static LwipStatus dhcp_decline(NetIfc * netif);
-static LwipStatus dhcp_rebind(NetIfc * netif);
-static LwipStatus dhcp_reboot(NetIfc * netif);
+static LwipStatus dhcp_discover(NetworkInterface * netif);
+static LwipStatus dhcp_select(NetworkInterface * netif);
+static void dhcp_bind(NetworkInterface * netif);
+static LwipStatus dhcp_decline(NetworkInterface * netif);
+static LwipStatus dhcp_rebind(NetworkInterface * netif);
+static LwipStatus dhcp_reboot(NetworkInterface * netif);
 static void dhcp_set_state(DhcpContext * dhcp, uint8_t new_state);
 
 /* receive, unfold, parse and free incoming messages */
-static void dhcp_recv(void* arg, UdpPcb * pcb, struct PacketBuffer* p, const IpAddr * addr, uint16_t port, NetIfc* netif);
+static void dhcp_recv(void* arg, UdpPcb * pcb, struct PacketBuffer* p, const IpAddr * addr, uint16_t port, NetworkInterface* netif);
 
 /* set the DHCP timers */
-static void dhcp_timeout(NetIfc * netif);
-static void dhcp_t1_timeout(NetIfc * netif);
-static void dhcp_t2_timeout(NetIfc * netif);
+static void dhcp_timeout(NetworkInterface * netif);
+static void dhcp_t1_timeout(NetworkInterface * netif);
+static void dhcp_t2_timeout(NetworkInterface * netif);
 
 /* build outgoing messages */
 /* create a DHCP message, fill in common headers */
-static struct PacketBuffer* dhcp_create_msg(NetIfc * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len);
+static struct PacketBuffer* dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len);
 /* add a DHCP option (type, then length in bytes) */
 static uint16_t dhcp_option(uint16_t options_out_len, uint8_t * options, uint8_t option_type, uint8_t option_len);
 /* add option values */
 static uint16_t dhcp_option_byte(uint16_t options_out_len, uint8_t * options, uint8_t value);
 static uint16_t dhcp_option_short(uint16_t options_out_len, uint8_t * options, uint16_t value);
 static uint16_t dhcp_option_long(uint16_t options_out_len, uint8_t * options, uint32_t value);
-static uint16_t dhcp_option_hostname(uint16_t options_out_len, uint8_t * options, NetIfc * netif);
+static uint16_t dhcp_option_hostname(uint16_t options_out_len, uint8_t * options, NetworkInterface * netif);
 /* always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(uint16_t options_out_len, uint8_t * options, struct PacketBuffer* p_out);
 
@@ -189,7 +189,7 @@ static void dhcp_dec_pcb_refcount(void)
  *
  * @param netif the netif under DHCP control
  */
-static void dhcp_handle_nak(NetIfc * netif)
+static void dhcp_handle_nak(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     // Logf(true | LWIP_DBG_TRACE,
@@ -214,7 +214,7 @@ static void dhcp_handle_nak(NetIfc * netif)
  * @param netif the netif under DHCP control
  */
 static void
-dhcp_check(NetIfc * netif)
+dhcp_check(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     Logf(true | LWIP_DBG_TRACE, "dhcp_check(netif=%p) %c%c\n", (void*)netif, (int16_t)netif->name[0],
@@ -240,7 +240,7 @@ dhcp_check(NetIfc * netif)
 //
 // param netif: the netif under DHCP control
 //
-static void dhcp_handle_offer(NetIfc * netif, DhcpMsg * msg_in, DhcpContext* dhcp_ctx)
+static void dhcp_handle_offer(NetworkInterface * netif, DhcpMsg * msg_in, DhcpContext* dhcp_ctx)
 {
     auto dhcp = netif_dhcp_data(netif);
     Logf(true | LWIP_DBG_TRACE,
@@ -276,7 +276,7 @@ static void dhcp_handle_offer(NetIfc * netif, DhcpMsg * msg_in, DhcpContext* dhc
  * @param netif the netif under DHCP control
  * @return lwIP specific error (see error.h)
  */
-static LwipStatus dhcp_select(NetIfc * netif)
+static LwipStatus dhcp_select(NetworkInterface * netif)
 {
     LwipStatus result;
     uint16_t options_out_len;
@@ -369,7 +369,7 @@ static LwipStatus dhcp_select(NetIfc * netif)
 void
 dhcp_coarse_tmr(void)
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
     Logf(true | LWIP_DBG_TRACE, "dhcp_coarse_tmr()\n");
     /* iterate through all network interfaces */
     for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next)
@@ -408,7 +408,7 @@ dhcp_coarse_tmr(void)
 void
 dhcp_fine_tmr(void)
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
     /* loop through netif's */
     for ((netif) = netif_list; (netif) != NULL; (netif) = (netif)->next)
     {
@@ -438,7 +438,7 @@ dhcp_fine_tmr(void)
  * @param netif the netif under DHCP control
  */
 static void
-dhcp_timeout(NetIfc * netif)
+dhcp_timeout(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
 
@@ -485,7 +485,7 @@ dhcp_timeout(NetIfc * netif)
  * @param netif the netif under DHCP control
  */
 static void
-dhcp_t1_timeout(NetIfc * netif)
+dhcp_t1_timeout(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
 
@@ -512,7 +512,7 @@ dhcp_t1_timeout(NetIfc * netif)
  * @param netif the netif under DHCP control
  */
 static void
-dhcp_t2_timeout(NetIfc * netif)
+dhcp_t2_timeout(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
 
@@ -538,7 +538,7 @@ dhcp_t2_timeout(NetIfc * netif)
  * @param netif the netif under DHCP control
  */
 static void
-dhcp_handle_ack(NetIfc * netif, DhcpMsg * msg_in)
+dhcp_handle_ack(NetworkInterface * netif, DhcpMsg * msg_in)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
 
@@ -628,7 +628,7 @@ dhcp_handle_ack(NetIfc * netif, DhcpMsg * msg_in)
  * @param netif the netif for which to set the struct dhcp
  * @param dhcp (uninitialised) dhcp struct allocated by the application
  */
-void dhcp_set_struct(NetIfc * netif, DhcpContext * dhcp)
+void dhcp_set_struct(NetworkInterface * netif, DhcpContext * dhcp)
 {
     /* clear data structure */
     memset(dhcp, 0, sizeof(DhcpContext)); /* dhcp_set_state(&dhcp, DHCP_STATE_OFF); */
@@ -644,7 +644,7 @@ void dhcp_set_struct(NetIfc * netif, DhcpContext * dhcp)
  *
  * @param netif the netif from which to remove the struct dhcp
  */
-void dhcp_cleanup(NetIfc * netif)
+void dhcp_cleanup(NetworkInterface * netif)
 {
 
     if (netif_dhcp_data(netif) != nullptr) {
@@ -667,7 +667,7 @@ void dhcp_cleanup(NetIfc * netif)
  * - ERR_MEM - Out of memory
  */
 LwipStatus
-dhcp_start(NetIfc * netif)
+dhcp_start(NetworkInterface * netif)
 {
    
     //
@@ -741,7 +741,7 @@ dhcp_start(NetIfc * netif)
  * @param netif The lwIP network interface
  */
 void
-dhcp_inform(NetIfc * netif)
+dhcp_inform(NetworkInterface * netif)
 {
     DhcpContext dhcp;
     uint16_t options_out_len;
@@ -784,7 +784,7 @@ dhcp_inform(NetIfc * netif)
  * address is still valid.
  */
 void
-dhcp_network_changed(NetIfc * netif)
+dhcp_network_changed(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
 
@@ -829,7 +829,7 @@ dhcp_network_changed(NetIfc * netif)
  * @param addr The IP address we received a reply from
  */
 void
-dhcp_arp_reply(NetIfc * netif, const Ip4Addr * addr)
+dhcp_arp_reply(NetworkInterface * netif, const Ip4Addr * addr)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     Logf(true | LWIP_DBG_TRACE, "dhcp_arp_reply()\n");
@@ -858,7 +858,7 @@ dhcp_arp_reply(NetIfc * netif, const Ip4Addr * addr)
  * @param netif the netif under DHCP control
  */
 static LwipStatus
-dhcp_decline(NetIfc * netif)
+dhcp_decline(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     LwipStatus result;
@@ -904,7 +904,7 @@ dhcp_decline(NetIfc * netif)
  * @param netif the netif under DHCP control
  */
 static LwipStatus
-dhcp_discover(NetIfc * netif)
+dhcp_discover(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     LwipStatus result = ERR_OK;
@@ -961,7 +961,7 @@ dhcp_discover(NetIfc * netif)
  * @param netif network interface to bind to the offered address
  */
 static void
-dhcp_bind(NetIfc * netif)
+dhcp_bind(NetworkInterface * netif)
 {
     uint32_t timeout;
     Ip4Addr sn_mask, gw_addr;
@@ -1070,7 +1070,7 @@ dhcp_bind(NetIfc * netif)
  * @param netif network interface which must renew its lease
  */
 LwipStatus
-dhcp_renew(NetIfc * netif)
+dhcp_renew(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     LwipStatus result;
@@ -1123,7 +1123,7 @@ dhcp_renew(NetIfc * netif)
  * @param netif network interface which must rebind with a DHCP server
  */
 static LwipStatus
-dhcp_rebind(NetIfc * netif)
+dhcp_rebind(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     LwipStatus result;
@@ -1175,7 +1175,7 @@ dhcp_rebind(NetIfc * netif)
  * @param netif network interface which must reboot
  */
 static LwipStatus
-dhcp_reboot(NetIfc * netif)
+dhcp_reboot(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     LwipStatus result;
@@ -1231,7 +1231,7 @@ dhcp_reboot(NetIfc * netif)
  * @param netif network interface
  */
 void
-dhcp_release_and_stop(NetIfc * netif)
+dhcp_release_and_stop(NetworkInterface * netif)
 {
     DhcpContext* dhcp = netif_dhcp_data(netif);
     IpAddr server_ip_addr;
@@ -1305,7 +1305,7 @@ dhcp_release_and_stop(NetIfc * netif)
  * @deprecated Use dhcp_release_and_stop() instead.
  */
 LwipStatus
-dhcp_release(NetIfc * netif)
+dhcp_release(NetworkInterface * netif)
 {
     dhcp_release_and_stop(netif);
     return ERR_OK;
@@ -1317,7 +1317,7 @@ dhcp_release(NetIfc * netif)
  * @deprecated Use dhcp_release_and_stop() instead.
  */
 void
-dhcp_stop(NetIfc * netif)
+dhcp_stop(NetworkInterface * netif)
 {
     dhcp_release_and_stop(netif);
 }
@@ -1383,7 +1383,7 @@ dhcp_option_long(uint16_t options_out_len, uint8_t * options, uint32_t value)
 }
 
 static uint16_t
-dhcp_option_hostname(uint16_t options_out_len, uint8_t * options, NetIfc * netif)
+dhcp_option_hostname(uint16_t options_out_len, uint8_t * options, NetworkInterface * netif)
 {
     if (netif->hostname != nullptr) {
         size_t namelen = strlen(netif->hostname);
@@ -1647,11 +1647,11 @@ again:
  * If an incoming DHCP message is in response to us, then trigger the state machine
  */
 static void
-dhcp_recv(void* arg, UdpPcb * pcb, struct PacketBuffer* p, const IpAddr * addr, uint16_t port, NetIfc* netif)
+dhcp_recv(void* arg, UdpPcb * pcb, struct PacketBuffer* p, const IpAddr * addr, uint16_t port, NetworkInterface* netif)
 {
     // todo: replace ip_current_input_netif();
-    // NetIfc* netif;
-    // NetIfc* netif = ip_current_input_netif();
+    // NetworkInterface* netif;
+    // NetworkInterface* netif = ip_current_input_netif();
     auto dhcp = netif_dhcp_data(netif);
     auto reply_msg = reinterpret_cast<DhcpMsg*>(p->payload);
 
@@ -1756,7 +1756,7 @@ free_pbuf_and_return:
  * @param message_type message type of the request
  */
 static struct PacketBuffer*
-dhcp_create_msg(NetIfc * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len)
+dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len)
 {
     /** default global transaction identifier starting value (easy to match
      *  with a packet analyser). We simply increment for each new request.
@@ -1846,7 +1846,7 @@ dhcp_option_trailer(uint16_t options_out_len, uint8_t * options, struct PacketBu
  *         0 otherwise
  */
 uint8_t
-dhcp_supplied_address(const NetIfc * netif)
+dhcp_supplied_address(const NetworkInterface * netif)
 {
     if (netif != NULL && netif_dhcp_data(netif) != nullptr) {
         DhcpContext* dhcp = netif_dhcp_data(netif);

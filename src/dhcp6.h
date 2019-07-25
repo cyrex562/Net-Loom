@@ -140,18 +140,18 @@ struct Dhcp6
     /* @todo: add more members here to keep track of stateful DHCPv6 data, like lease times */
 };
 
-void dhcp6_set_struct(NetIfc*netif, struct Dhcp6 *dhcp6);
+void dhcp6_set_struct(NetworkInterface*netif, struct Dhcp6 *dhcp6);
 /** Remove a Dhcp6 previously set to the netif using dhcp6_set_struct() */
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
-void dhcp6_cleanup(NetIfc*netif);
+void dhcp6_cleanup(NetworkInterface*netif);
 
-LwipStatus dhcp6_enable_stateful(NetIfc*netif);
-LwipStatus dhcp6_enable_stateless(NetIfc*netif);
-void dhcp6_disable(NetIfc*netif);
+LwipStatus dhcp6_enable_stateful(NetworkInterface*netif);
+LwipStatus dhcp6_enable_stateless(NetworkInterface*netif);
+void dhcp6_disable(NetworkInterface*netif);
 
 void dhcp6_tmr(void);
 
-void dhcp6_nd6_ra_trigger(NetIfc*netif, uint8_t managed_addr_config, uint8_t other_config);
+void dhcp6_nd6_ra_trigger(NetworkInterface*netif, uint8_t managed_addr_config, uint8_t other_config);
 
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
@@ -159,7 +159,7 @@ void dhcp6_nd6_ra_trigger(NetIfc*netif, uint8_t managed_addr_config, uint8_t oth
 extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_server_addrs);
 
 
-inline Dhcp6* netif_dhcp6_data(NetIfc* netif)
+inline Dhcp6* netif_dhcp6_data(NetworkInterface* netif)
 {
     return static_cast<struct Dhcp6 *>(netif_get_client_data(
         netif,

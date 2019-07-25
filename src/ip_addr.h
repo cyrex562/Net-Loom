@@ -31,7 +31,7 @@ struct IpAddr
     IpAddrType type;
 };
 
-struct NetIfc;
+struct NetworkInterface;
 
 // extern const struct IpAddr kIpAddrAnyType;
 
@@ -443,6 +443,17 @@ inline void get_ip_addr_net(IpAddr* target, IpAddr* host, IpAddr* netmask)
 }
 
 
+inline void ip_addr_copy_from_ip6_packed(IpAddr* daddr, const Ip6AddrWireFmt* saddr)
+{
+    memcpy(&daddr->u_addr.ip6, saddr, sizeof(Ip6AddrWireFmt));
+}
+
+
+inline void ip_addr_copy_from_ip6(IpAddr* daddr, const Ip6Addr* saddr)
+{
+    memcpy(&daddr->u_addr.ip6, saddr, sizeof(Ip6Addr));
+}
+
 inline bool compare_ip_addr_mask(IpAddr* addr1, IpAddr* addr2, IpAddr* mask)
 {
     return is_ip_addr_v6(addr1) && is_ip_addr_v6(addr2)
@@ -482,7 +493,7 @@ inline bool is_ip_addr_any(const IpAddr* ipaddr)
         return true;
     }
     if (is_ip_addr_v6(ipaddr))
-        return ip6_addr_isany(&ipaddr->u_addr.ip6);
+        return is_ip6_addr_any(&ipaddr->u_addr.ip6);
     return ip4_addr_isany(&ipaddr->u_addr.ip4);
 }
 
@@ -495,7 +506,7 @@ inline bool ip_addr_isany_val(const IpAddr ipaddr)
 }
 
 
-inline bool ip_addr_isbroadcast(const IpAddr* ipaddr, const NetIfc* netif)
+inline bool ip_addr_isbroadcast(const IpAddr* ipaddr, const NetworkInterface* netif)
 {
     return ((is_ip_addr_v6(ipaddr)) ? 0 : ip4_addr_isbroadcast(&ipaddr->u_addr.ip4, netif));
 }

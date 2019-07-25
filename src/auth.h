@@ -16,7 +16,7 @@ bool upper_layers_down(PppPcb* pcb);
 bool continue_networks(PppPcb* pcb);
 bool link_established(PppPcb* pcb, bool auth_required);
 void link_terminated(PppPcb* pcb);
-void link_down(PppPcb* pcb, Protent** protocols);
+void link_down(PppPcb* pcb);
 int auth_check_passwd(PppPcb* pcb,
                       char* auser,
                       int userlen,

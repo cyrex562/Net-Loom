@@ -178,16 +178,16 @@ struct DhcpContext
 void dhcp_set_struct(struct netif *netif, struct DhcpContext *dhcp);
 /** Remove a struct dhcp previously set to the netif using dhcp_set_struct() */
 #define dhcp_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, NULL)
-void dhcp_cleanup(NetIfc* netif);
-LwipStatus dhcp_start(NetIfc* netif);
-LwipStatus dhcp_renew(NetIfc* netif);
-LwipStatus dhcp_release(NetIfc* netif);
-void dhcp_stop(NetIfc* netif);
-void dhcp_release_and_stop(NetIfc* netif);
-void dhcp_inform(NetIfc* netif);
-void dhcp_network_changed(NetIfc* netif);
-void dhcp_arp_reply(NetIfc* netif, const Ip4Addr* addr);
-uint8_t dhcp_supplied_address(const NetIfc* netif);
+void dhcp_cleanup(NetworkInterface* netif);
+LwipStatus dhcp_start(NetworkInterface* netif);
+LwipStatus dhcp_renew(NetworkInterface* netif);
+LwipStatus dhcp_release(NetworkInterface* netif);
+void dhcp_stop(NetworkInterface* netif);
+void dhcp_release_and_stop(NetworkInterface* netif);
+void dhcp_inform(NetworkInterface* netif);
+void dhcp_network_changed(NetworkInterface* netif);
+void dhcp_arp_reply(NetworkInterface* netif, const Ip4Addr* addr);
+uint8_t dhcp_supplied_address(const NetworkInterface* netif);
 /* to be called every minute */
 void dhcp_coarse_tmr(void);
 /* to be called every half second */
@@ -198,7 +198,7 @@ void dhcp_fine_tmr(void);
  * See LWIP_DHCP_MAX_NTP_SERVERS */
 extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
 
-inline DhcpContext* netif_dhcp_data(const NetIfc* netif)
+inline DhcpContext* netif_dhcp_data(const NetworkInterface* netif)
 {
     return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
 }

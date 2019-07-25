@@ -7,9 +7,9 @@
  */
 
 
-NetIfc*;
+NetworkInterface*;
 
-LwipStatus pcapif_init    (NetIfc*netif);
-void  pcapif_shutdown(NetIfc*netif);
+LwipStatus pcapif_init    (NetworkInterface*netif);
+void  pcapif_shutdown(NetworkInterface*netif);
 
 

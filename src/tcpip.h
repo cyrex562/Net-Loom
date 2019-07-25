@@ -19,7 +19,7 @@ extern Mutex lock_tcpip_core;
 
 
 struct PacketBuffer;
-struct NetIfc;
+struct NetworkInterface;
 
 /** Function prototype for the init_done function passed to tcpip_init */
 using TcpipInitDoneFn = void (*)(void*);
@@ -31,8 +31,8 @@ struct tcpip_callback_msg;
 
 void   tcpip_init(TcpipInitDoneFn tcpip_init_done, uint8_t *arg);
 
-LwipStatus  tcpip_inpkt(struct PacketBuffer *p, NetIfc*inp, NetifInputFn input_fn);
-LwipStatus  tcpip_input(struct PacketBuffer *p, NetIfc*inp);
+LwipStatus  tcpip_inpkt(struct PacketBuffer *p, NetworkInterface*inp, NetifInputFn input_fn);
+LwipStatus  tcpip_input(struct PacketBuffer *p, NetworkInterface*inp);
 
 LwipStatus  tcpip_try_callback(TcpipCallbackFn function, uint8_t *ctx);
 LwipStatus  tcpip_callback(TcpipCallbackFn function, uint8_t *ctx);

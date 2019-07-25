@@ -58,15 +58,15 @@ void lowpan6_tmr(void);
 
 LwipStatus lowpan6_set_context(uint8_t idx, const Ip6Addr* context);
 LwipStatus lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low);
-LwipStatus lowpan4_output(NetIfc*netif, struct PacketBuffer *q, const Ip4Addr *ipaddr);
-LwipStatus lowpan6_output(NetIfc*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
-LwipStatus lowpan6_input(struct PacketBuffer * p, NetIfc*netif);
-LwipStatus lowpan6_if_init(NetIfc*netif);
+LwipStatus lowpan4_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip4Addr *ipaddr);
+LwipStatus lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6addr);
+LwipStatus lowpan6_input(struct PacketBuffer * p, NetworkInterface*netif);
+LwipStatus lowpan6_if_init(NetworkInterface*netif);
 
 /* pan_id in network byte order. */
 LwipStatus lowpan6_set_pan_id(uint16_t pan_id);
 uint16_t lowpan6_calc_crc(const uint8_t *buf, uint16_t len);
-LwipStatus tcpip_6lowpan_input(struct PacketBuffer *p, NetIfc*inp);
+LwipStatus tcpip_6lowpan_input(struct PacketBuffer *p, NetworkInterface*inp);
 
 
 #ifdef __cplusplus

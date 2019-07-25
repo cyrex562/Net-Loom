@@ -57,14 +57,15 @@
 #include <udp.h>
 
 #include <string.h>
+#include "lowpan6_opts.h"
 
 /* Determine compression mode for unicast address. */
 int8_t
-lowpan6_get_address_mode(const Ip6Addr *ip6addr, const struct lowpan6_link_addr *mac_addr)
+lowpan6_get_address_mode(const Ip6Addr *ip6addr, const Lowpan6LinkAddr *mac_addr)
 {
   if (mac_addr->addr_len == 2) {
     if ((ip6addr->addr[2] == (uint32_t)pp_htonl(0x000000ff)) &&
-        ((ip6addr->addr[3]  & pp_htonl(0xffff0000)) == PP_NTOHL(0xfe000000))) {
+        ((ip6addr->addr[3]  & pp_htonl(0xffff0000)) == pp_ntohl(0xfe000000))) {
       if ((ip6addr->addr[3]  & pp_htonl(0x0000ffff)) == lwip_ntohl((mac_addr->addr[0] << 8) | mac_addr->addr[1])) {
         return 3;
       }
@@ -77,7 +78,7 @@ lowpan6_get_address_mode(const Ip6Addr *ip6addr, const struct lowpan6_link_addr 
   }
 
   if ((ip6addr->addr[2] == pp_htonl(0x000000ffUL)) &&
-      ((ip6addr->addr[3]  & pp_htonl(0xffff0000)) == PP_NTOHL(0xfe000000UL))) {
+      ((ip6addr->addr[3]  & pp_htonl(0xffff0000)) == pp_ntohl(0xfe000000UL))) {
     return 2;
   }
 
@@ -125,9 +126,9 @@ lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
  * Compress IPv6 and/or UDP headers.
  * */
 LwipStatus
-lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
+lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size,
                          uint8_t *lowpan6_header_len_out, uint8_t *hidden_header_len_out, Ip6Addr *lowpan6_contexts,
-                         const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst)
+                         const Lowpan6LinkAddr *src, const Lowpan6LinkAddr *dst)
 {
   uint8_t *buffer, *inptr;
   uint8_t lowpan6_header_len;
@@ -157,10 +158,11 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
 
   /* Point to ip6 header and align copies of src/dest addresses. */
   ip6hdr = (Ip6Hdr *)inptr;
-  ip_addr_copy_from_ip6_packed(ip6dst, ip6hdr->dest);
-  ip6_addr_assign_zone(ip_2_ip6(&ip6dst), IP6_UNKNOWN, netif);
-  ip_addr_copy_from_ip6_packed(ip6src, ip6hdr->src);
-  ip6_addr_assign_zone(ip_2_ip6(&ip6src), IP6_UNKNOWN, netif);
+
+  ip_addr_copy_from_ip6_packed(&ip6dst, &ip6hdr->dest);
+  ip6_addr_assign_zone((&ip6dst.u_addr.ip6), IP6_UNKNOWN, netif);
+  ip_addr_copy_from_ip6_packed(&ip6src, &ip6hdr->src);
+  ip6_addr_assign_zone((&ip6src.u_addr.ip6), IP6_UNKNOWN, netif);
 
   /* Basic length of 6LowPAN header, set dispatch and clear fields. */
   lowpan6_header_len = 2;
@@ -172,14 +174,14 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
 
   buffer[2] = 0;
 
-  i = lowpan6_context_lookup(lowpan6_contexts, ip_2_ip6(&ip6src));
+  i = lowpan6_context_lookup(lowpan6_contexts, (&ip6src.u_addr.ip6));
   if (i >= 0) {
     /* Stateful source address compression. */
     buffer[1] |= 0x40;
     buffer[2] |= (i & 0x0f) << 4;
   }
 
-  i = lowpan6_context_lookup(lowpan6_contexts, ip_2_ip6(&ip6dst));
+  i = lowpan6_context_lookup(lowpan6_contexts, (&ip6dst.u_addr.ip6));
   if (i >= 0) {
     /* Stateful destination address compression. */
     buffer[1] |= 0x04;
@@ -245,9 +247,9 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
 
   /* Compress source address */
   if (((buffer[1] & 0x40) != 0) ||
-      (ip6_addr_islinklocal(ip_2_ip6(&ip6src)))) {
+      (ip6_addr_islinklocal((&ip6src.u_addr.ip6)))) {
     /* Context-based or link-local source address compression. */
-    i = lowpan6_get_address_mode(ip_2_ip6(&ip6src), src);
+    i = lowpan6_get_address_mode((&ip6src.u_addr.ip6), src);
     buffer[1] |= (i & 0x03) << 4;
     if (i == 1) {
       memcpy(buffer + lowpan6_header_len, inptr + 16, 8);
@@ -256,7 +258,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
       memcpy(buffer + lowpan6_header_len, inptr + 22, 2);
       lowpan6_header_len += 2;
     }
-  } else if (ip6_addr_isany(ip_2_ip6(&ip6src))) {
+  } else if (is_ip6_addr_any((&ip6src.u_addr.ip6))) {
     /* Special case: mark SAC and leave SAM=0 */
     buffer[1] |= 0x40;
   } else {
@@ -266,12 +268,12 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   }
 
   /* Compress destination address */
-  if (ip6_addr_ismulticast(ip_2_ip6(&ip6dst))) {
+  if (ip6_addr_ismulticast((&ip6dst.u_addr.ip6))) {
     /* @todo support stateful multicast address compression */
 
     buffer[1] |= 0x08;
 
-    i = lowpan6_get_address_mode_mc(ip_2_ip6(&ip6dst));
+    i = lowpan6_get_address_mode_mc((&ip6dst.u_addr.ip6));
     buffer[1] |= i & 0x03;
     if (i == 0) {
       memcpy(buffer + lowpan6_header_len, inptr + 24, 16);
@@ -288,9 +290,9 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
       buffer[lowpan6_header_len++] = (inptr)[39];
     }
   } else if (((buffer[1] & 0x04) != 0) ||
-              (ip6_addr_islinklocal(ip_2_ip6(&ip6dst)))) {
+              (ip6_addr_islinklocal((&ip6dst.u_addr.ip6)))) {
     /* Context-based or link-local destination address compression. */
-    i = lowpan6_get_address_mode(ip_2_ip6(&ip6dst), dst);
+    i = lowpan6_get_address_mode((&ip6dst.u_addr.ip6), dst);
     buffer[1] |= i & 0x03;
     if (i == 1) {
       memcpy(buffer + lowpan6_header_len, inptr + 32, 8);
@@ -313,7 +315,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
   if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
     /* @todo support optional checksum compression */
 
-    if (inbuf_size < IP6_HDR_LEN + UDP_HLEN) {
+    if (inbuf_size < IP6_HDR_LEN + UDP_HDR_LEN) {
       /* input buffer too short */
       return ERR_VAL;
     }
@@ -355,7 +357,7 @@ lowpan6_compress_headers(NetIfc*netif, uint8_t *inbuf, size_t inbuf_size, uint8_
     buffer[lowpan6_header_len++] = inptr[6];
     buffer[lowpan6_header_len++] = inptr[7];
 
-    hidden_header_len += UDP_HLEN;
+    hidden_header_len += UDP_HDR_LEN;
   }
 
 
@@ -386,7 +388,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
                        uint16_t *hdr_size_comp, uint16_t *hdr_size_decomp,
                        uint16_t datagram_size, uint16_t compressed_size,
                        Ip6Addr *lowpan6_contexts,
-                       struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest)
+                       Lowpan6LinkAddr *src, Lowpan6LinkAddr *dest)
 {
   uint16_t lowpan6_offset;
   Ip6Hdr *ip6hdr;
@@ -415,9 +417,9 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
       if ((j % 4) == 0) {
         Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, ("\n"));
       }
-      Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, ("%2X ", lowpan6_buffer[j]));
+      Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, "%2X ", lowpan6_buffer[j]);
     }
-    Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, ("\np->len: %d", lowpan6_bufsize));
+    Logf(LWIP_LOWPAN6_IP_COMPRESSED_DEBUG, "\np->len: %d", lowpan6_bufsize);
   }
   /* offset for inline IP headers (RFC 6282 ch3)*/
   lowpan6_offset = 2;
@@ -431,22 +433,22 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   if ((lowpan6_buffer[0] & 0x18) == 0x00) {
     header_temp = ((lowpan6_buffer[lowpan6_offset+1] & 0x0f) << 16) | \
       (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset+3];
-    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 00, ECN: 0x%2x, Flowlabel+DSCP: 0x%8X\n", \
-      lowpan6_buffer[lowpan6_offset],header_temp));
+    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "TF: 00, ECN: 0x%2x, Flowlabel+DSCP: 0x%8X\n", \
+      lowpan6_buffer[lowpan6_offset],header_temp);
     get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset], header_temp);
     /* increase offset, processed 4 bytes here:
      * TF=00:  ECN + DSCP + 4-bit Pad + Flow Label (4 bytes)*/
     lowpan6_offset += 4;
   } else if ((lowpan6_buffer[0] & 0x18) == 0x08) {
     header_temp = ((lowpan6_buffer[lowpan6_offset] & 0x0f) << 16) | (lowpan6_buffer[lowpan6_offset + 1] << 8) | lowpan6_buffer[lowpan6_offset+2];
-    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 01, ECN: 0x%2x, Flowlabel: 0x%2X, DSCP ignored\n", \
-      lowpan6_buffer[lowpan6_offset] & 0xc0,header_temp));
+    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "TF: 01, ECN: 0x%2x, Flowlabel: 0x%2X, DSCP ignored\n", \
+      lowpan6_buffer[lowpan6_offset] & 0xc0,header_temp);
     get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset] & 0xc0, header_temp);
     /* increase offset, processed 3 bytes here:
      * TF=01:  ECN + 2-bit Pad + Flow Label (3 bytes), DSCP is elided.*/
     lowpan6_offset += 3;
   } else if ((lowpan6_buffer[0] & 0x18) == 0x10) {
-    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("TF: 10, DCSP+ECN: 0x%2x, Flowlabel ignored\n", lowpan6_buffer[lowpan6_offset]));
+    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "TF: 10, DCSP+ECN: 0x%2x, Flowlabel ignored\n", lowpan6_buffer[lowpan6_offset]);
     get_ip6_hdr_vTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset],0);
     /* increase offset, processed 1 byte here:
      * ECN + DSCP (1 byte), Flow Label is elided.*/
@@ -460,7 +462,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   /* Set Next Header (NH) */
   if ((lowpan6_buffer[0] & 0x04) == 0x00) {
     /* 0: full next header byte carried inline (increase offset)*/
-    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("NH: 0x%2X\n", lowpan6_buffer[lowpan6_offset+1]));
+    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "NH: 0x%2X\n", lowpan6_buffer[lowpan6_offset+1]);
     IP6H_NEXTH_SET(ip6hdr, lowpan6_buffer[lowpan6_offset++]);
   } else {
     /* 1: NH compression, LOWPAN_NHC (RFC6282, ch 4.1) */
@@ -471,17 +473,17 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
   /* Set Hop Limit, either carried inline or 3 different hops (1,64,255) */
   if ((lowpan6_buffer[0] & 0x03) == 0x00) {
-    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Hops: full value: %d\n", lowpan6_buffer[lowpan6_offset+1]));
-    IP6H_HOPLIM_SET(ip6hdr, lowpan6_buffer[lowpan6_offset++]);
+    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "Hops: full value: %d\n", lowpan6_buffer[lowpan6_offset+1]);
+    set_ip6_hdr_hop_limit(ip6hdr, lowpan6_buffer[lowpan6_offset++]);
   } else if ((lowpan6_buffer[0] & 0x03) == 0x01) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Hops: compressed: 1\n"));
-    IP6H_HOPLIM_SET(ip6hdr, 1);
+    set_ip6_hdr_hop_limit(ip6hdr, 1);
   } else if ((lowpan6_buffer[0] & 0x03) == 0x02) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Hops: compressed: 64\n"));
-    IP6H_HOPLIM_SET(ip6hdr, 64);
+    set_ip6_hdr_hop_limit(ip6hdr, 64);
   } else if ((lowpan6_buffer[0] & 0x03) == 0x03) {
     Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Hops: compressed: 255\n"));
-    IP6H_HOPLIM_SET(ip6hdr, 255);
+    set_ip6_hdr_hop_limit(ip6hdr, 255);
   }
 
   /* Source address decoding. */
@@ -555,7 +557,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
       ip6hdr->src.addr[0] = lowpan6_contexts[i].addr[0];
       ip6hdr->src.addr[1] = lowpan6_contexts[i].addr[1];
-      Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("SAM == xx, context compression found @%d: %8X, %8X\n", (int)i, ip6hdr->src.addr[0], ip6hdr->src.addr[1]));
+      Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, "SAM == xx, context compression found @%d: %8X, %8X\n", (int)i, ip6hdr->src.addr[0], ip6hdr->src.addr[1]);
 
     }
 
@@ -695,13 +697,13 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
     if ((lowpan6_buffer[lowpan6_offset] & 0xf8) == 0xf0) {
       /* NHC: UDP */
-      struct udp_hdr *udphdr;
+      UdpHdr *udphdr;
       Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("NHC: UDP\n"));
 
       /* UDP compression */
       IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_UDP);
-      udphdr = (struct udp_hdr *)((uint8_t *)decomp_buffer + ip6_offset);
-      if (decomp_bufsize < IP6_HDR_LEN + UDP_HLEN) {
+      udphdr = (UdpHdr *)((uint8_t *)decomp_buffer + ip6_offset);
+      if (decomp_bufsize < IP6_HDR_LEN + UDP_HDR_LEN) {
         return ERR_MEM;
       }
 
@@ -734,7 +736,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
       udphdr->chksum = lwip_htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
       lowpan6_offset += 2;
-      ip6_offset += UDP_HLEN;
+      ip6_offset += UDP_HDR_LEN;
       if (datagram_size == 0) {
         datagram_size = compressed_size - lowpan6_offset + ip6_offset;
       }
@@ -752,7 +754,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
     datagram_size = compressed_size - lowpan6_offset + ip6_offset;
   }
   /* Infer IPv6 payload length for header */
-  IP6H_PLEN_SET(ip6hdr, datagram_size - IP6_HDR_LEN);
+  set_ip6_hdr_plen(ip6hdr, datagram_size - IP6_HDR_LEN);
 
   if (lowpan6_offset > lowpan6_bufsize) {
     /* input buffer overflow */
@@ -766,13 +768,13 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
 
 struct PacketBuffer *
 lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowpan6_contexts,
-                   struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest)
+                   Lowpan6LinkAddr *src, Lowpan6LinkAddr *dest)
 {
   struct PacketBuffer *q;
   uint16_t lowpan6_offset, ip6_offset;
   LwipStatus err;
 
-#define UDP_HLEN_ALLOC UDP_HLEN
+#define UDP_HLEN_ALLOC UDP_HDR_LEN
 
 
   /* Allocate a buffer for decompression. This buffer will be too big and will be

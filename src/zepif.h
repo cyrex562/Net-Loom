@@ -29,12 +29,12 @@ struct ZepifInit {
   /** The IP address to sed ZEP frames to (NULL = BROADCAST) */
   const IpAddr    *zep_dst_ip_addr;
   /** If != NULL, the udp pcb is bound to this netif */
-  const NetIfc*zep_netif;
+  const NetworkInterface*zep_netif;
   /** MAC address of the 6LowPAN device */
   uint8_t                addr[6];
 };
 
-LwipStatus zepif_init(NetIfc*netif);
+LwipStatus zepif_init(NetworkInterface*netif);
 
 #ifdef __cplusplus
 }

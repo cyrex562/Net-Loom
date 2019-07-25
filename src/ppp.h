@@ -41,9 +41,10 @@
 #include <ip4_addr.h>
 #include <fsm.h>
 #include <lcp.h>
-#include <ipcp.h>
+// #include <ipcp.h>
 #include <eap_state.h>
 #include <upap.h>
+#include <ipcp_defs.h>
 
 // Values for phase.
 enum PppPhase
@@ -95,6 +96,15 @@ enum PppErrorCode
     /* Loopback detected */
 };
 
+
+/*
+ * Lengths of configuration options.
+ */
+constexpr auto CILEN_VOID = 2;
+constexpr auto CILEN_COMPRESS = 4 /* min length for compression protocol opt. */;
+constexpr auto CILEN_VJ = 6 /* length for RFC1332 Van-Jacobson opt. */;
+constexpr auto CILEN_ADDR = 6 /* new-style single address option */;
+constexpr auto CILEN_ADDRS = 10 /* old-style dual address option */;
 
 /************************
 *** PUBLIC DATA TYPES ***
@@ -176,7 +186,6 @@ struct PppAddrs
     Ip6Addr his6_ipaddr;
 };
 
-
 /*
  * PPP interface control block.
  */
@@ -190,7 +199,7 @@ struct PppPcb
     void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx);
     /* Notify phase callback */
     void* ctx_cb; /* Callbacks optional pointer */
-    NetIfc* netif; /* PPP interface */
+    NetworkInterface* netif; /* PPP interface */
     uint8_t phase; /* where the link is at */
     uint8_t err_code; /* Code indicating why interface is down. */ /* flags */
     bool ask_for_local; /* request our address from peer */
@@ -240,10 +249,10 @@ struct PppPcb
     IpcpOptions ipcp_allowoptions; /* Options we allow peer to request */
     IpcpOptions ipcp_hisoptions; /* Options that we ack'd */
     Fsm ipv6cp_fsm; /* IPV6CP fsm structure */
-    ipv6cp_options ipv6cp_wantoptions; /* Options that we want to request */
-    ipv6cp_options ipv6cp_gotoptions; /* Options that peer ack'd */
-    ipv6cp_options ipv6cp_allowoptions; /* Options we allow peer to request */
-    ipv6cp_options ipv6cp_hisoptions; /* Options that we ack'd */
+    Ipv6CpOptions ipv6cp_wantoptions; /* Options that we want to request */
+    Ipv6CpOptions ipv6cp_gotoptions; /* Options that peer ack'd */
+    Ipv6CpOptions ipv6cp_allowoptions; /* Options we allow peer to request */
+    Ipv6CpOptions ipv6cp_hisoptions; /* Options that we ack'd */
 };
 
 /************************
@@ -524,3 +533,49 @@ LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg);
         netif_set_link_callback((ppp)->netif, link_cb);
 
 
+static void ppp_do_connect(void* arg);
+
+static LwipStatus ppp_netif_init_cb(NetworkInterface* netif);
+
+static LwipStatus ppp_netif_output_ip4(NetworkInterface* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+
+static LwipStatus ppp_netif_output_ip6(NetworkInterface* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+
+static LwipStatus ppp_netif_output(NetworkInterface* netif, struct PacketBuffer* pb, uint16_t protocol);
+
+int
+sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode);
+
+int
+sif6down(PppPcb* pcb);
+
+int
+sif6up(PppPcb* pcb);
+
+int
+sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64);
+
+int
+sifdown(PppPcb* pcb);
+
+int
+sifup(PppPcb* pcb);
+
+int
+sifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr, uint32_t netmask);
+
+uint32_t
+get_mask(uint32_t addr);
+
+int
+sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2);
+
+int
+sifvjcomp(PppPcb* pcb, int vjcomp, int cidcomp, int maxcid);
+
+int
+cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2);
+
+//
+//
+//

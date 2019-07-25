@@ -36,8 +36,8 @@ static LwipStatus pppol2tp_xmit(Pppol2tpPcb *l2tp, struct PacketBuffer *pb);
 static LwipStatus pppol2tp_udp_send(Pppol2tpPcb *l2tp, struct PacketBuffer *pb);
 
 /* Create a new L2TP session. */
-PppPcb* create_pppol2tp_session(NetIfc* pppif,
-                                NetIfc* netif,
+PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
+                                NetworkInterface* netif,
                                 const IpAddr* ipaddr,
                                 const uint16_t port,
                                 const uint8_t* secret,

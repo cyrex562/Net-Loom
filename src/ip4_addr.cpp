@@ -11,7 +11,7 @@
  * @return returns non-zero if the address is a broadcast address
  */
 uint8_t
-ip4_addr_isbroadcast_u32(const uint32_t addr, const NetIfc*netif)
+ip4_addr_isbroadcast_u32(const uint32_t addr, const NetworkInterface*netif)
 {
   Ip4Addr ipaddr{};
   set_ip4_addr_u32(&ipaddr, addr);
@@ -83,7 +83,7 @@ uint8_t ip4_addr_netmask_valid(const uint32_t netmask)
 uint32_t ipaddr_addr(const char* cp)
 {
     Ip4Addr val;
-    if (ip4addr_aton(cp, &val))
+    if (lwip_ip4addr_aton(cp, &val))
     {
         return get_ip4_addr(&val);
     }
@@ -102,7 +102,7 @@ uint32_t ipaddr_addr(const char* cp)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int ip4addr_aton(const char* cp, Ip4Addr* addr)
+int lwip_ip4addr_aton(const char* cp, Ip4Addr* addr)
 {
     uint32_t val;
     uint32_t parts[4];
@@ -233,10 +233,10 @@ int ip4addr_aton(const char* cp, Ip4Addr* addr)
  *         representation of addr
  */
 char *
-ip4addr_ntoa(const Ip4Addr *addr)
+lwip_ip4addr_ntoa(const Ip4Addr *addr)
 {
   static char str[IP4ADDR_STRLEN_MAX];
-  return ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);
+  return lwip_ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);
 }
 
 /**
@@ -248,7 +248,7 @@ ip4addr_ntoa(const Ip4Addr *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char* ip4addr_ntoa_r(const Ip4Addr* addr, char* buf, const int buflen)
+char* lwip_ip4addr_ntoa_r(const Ip4Addr* addr, char* buf, const int buflen)
 {
     uint32_t s_addr;
     char inv[3];

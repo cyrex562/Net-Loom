@@ -3,7 +3,7 @@
 #include <lwip_status.h>
 #include <ethernet.h>
 
-struct NetIfc;
+struct NetworkInterface;
 typedef uint64_t BridgeIfcPortMask;
 
 constexpr auto BRIDGE_FLOOD = BridgeIfcPortMask(-1);
@@ -17,7 +17,7 @@ struct BridgeIfcPrivate;
 struct BridgeIfcPort
 {
     struct BridgeIfcPrivate* bridge;
-    NetIfc* port_netif;
+    NetworkInterface* port_netif;
     uint8_t port_num;
 };
 
@@ -44,7 +44,7 @@ struct BridgeIfcFdb
 
 struct BridgeIfcPrivate
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
     struct EthAddr ethaddr;
     uint8_t max_ports;
     uint8_t num_ports;
@@ -88,10 +88,10 @@ struct BridgeIfcInitData {
  */
 //#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
-LwipStatus bridgeif_init(NetIfc*netif);
-LwipStatus bridgeif_add_port(NetIfc*bridgeif, NetIfc*portif);
-LwipStatus bridgeif_fdb_add(NetIfc*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
-LwipStatus remove_bridgeif_fdb(NetIfc*bridgeif, const struct EthAddr *addr);
+LwipStatus bridgeif_init(NetworkInterface*netif);
+LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
+LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
+LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct EthAddr *addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);
@@ -99,7 +99,7 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct EthAd
 
 BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 
-static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetIfc* netif);
+static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetworkInterface* netif);
 
 //
 // END OF FILE

@@ -60,7 +60,7 @@ PCAP_API uint8_t *pcap_ether_hostton(const char*);
 PCAP_API uint8_t *pcap_ether_aton(const char *);
 
 PCAP_API bpf_u_int32 **pcap_nametoaddr(const char *);
-PCAP_API struct addrinfo *pcap_nametoaddrinfo(const char *);
+PCAP_API struct LwipAddrInfo *pcap_nametoaddrinfo(const char *);
 PCAP_API bpf_u_int32 pcap_nametonetaddr(const char *);
 
 PCAP_API int	pcap_nametoport(const char *, int *, int *);

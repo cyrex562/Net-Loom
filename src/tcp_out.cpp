@@ -114,10 +114,10 @@
 
 
 /* Forward declarations.*/
-static LwipStatus tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetIfc*netif);
+static LwipStatus tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*netif);
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
-static NetIfc*
+static NetworkInterface*
 tcp_route(const struct TcpPcb *pcb, const IpAddr *src, const IpAddr *dst)
 {
   ; /* in case IPv4-only and source-based routing is disabled */
@@ -1186,7 +1186,7 @@ tcp_output(struct TcpPcb *pcb)
   struct TcpSeg *seg, *useg;
   uint32_t wnd, snd_nxt;
   LwipStatus err;
-  NetIfc*netif;
+  NetworkInterface*netif;
 
 
  
@@ -1388,7 +1388,7 @@ tcp_output_segment_busy(const struct TcpSeg *seg)
  * @param netif the netif used to send the segment
  */
 static LwipStatus
-tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetIfc*netif)
+tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*netif)
 {
   LwipStatus err;
   uint16_t len;
@@ -1842,7 +1842,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
                            const IpAddr *src, const IpAddr *dst)
 {
   LwipStatus err;
-  NetIfc*netif;
+  NetworkInterface*netif;
 
   lwip_assert("tcp_output_control_segment: invalid pbuf", p != nullptr);
 
@@ -1859,7 +1859,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
     }
 
     if (pcb != nullptr) {
-      NETIF_SET_HINTS(netif, LWIP_CONST_CAST(NetIfc*cHint*, &(pcb->netif_hints)));
+      NETIF_SET_HINTS(netif, LWIP_CONST_CAST(NetworkInterface*cHint*, &(pcb->netif_hints)));
       ttl = pcb->ttl;
       tos = pcb->tos;
     } else {

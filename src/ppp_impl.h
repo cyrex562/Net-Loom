@@ -159,7 +159,7 @@ int init_ppp_subsys(void);
  */
 
 /* Create a new PPP control block */
-PppPcb *init_ppp_pcb(NetIfc*pppif,
+PppPcb *init_ppp_pcb(NetworkInterface*pppif,
                      uint8_t *link_ctx_cb,
                      ppp_link_status_cb_fn link_status_cb,
                      uint8_t *ctx_cb);
@@ -267,7 +267,7 @@ inline void Timeout(SysTimeoutHandler timeout_fn, void* arg, const uint32_t time
 
 
 //#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-inline void Timeoutms(SysTimeoutHandler time_fn, void* arg, const uint32_t time)
+inline void timeout_ms(SysTimeoutHandler time_fn, void* arg, const uint32_t time)
 {
     sys_untimeout(time_fn, arg);
     sys_timeout(time * 1000, time_fn, arg);

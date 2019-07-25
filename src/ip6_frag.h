@@ -39,7 +39,6 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include <opt.h>
 #include <packet_buffer.h>
 #include <ip6_addr.h>
 #include <ip6.h>
@@ -73,8 +72,8 @@
 /** IPv6 reassembly helper struct.
  * This is exported because memp needs to know the size.
  */
-struct ip6_reassdata {
-  struct ip6_reassdata *next;
+struct Ip6ReassemblyData {
+  struct Ip6ReassemblyData *next;
   struct PacketBuffer *p;
   struct Ip6Hdr *iphdr; /* pointer to the first (original) IPv6 header */
 
@@ -104,7 +103,7 @@ struct PacketBuffer *ip6_reass(struct PacketBuffer *p);
 /** A custom PacketBuffer that holds a reference to another PacketBuffer, which is freed
  * when this custom PacketBuffer is freed. This is used to create a custom PBUF_REF
  * that points into the original PacketBuffer. */
-struct pbuf_custom_ref {
+struct PbufCustomRef {
   /** 'base class' */
   struct pbuf_custom pc;
   /** pointer to the original PacketBuffer that is referenced */
@@ -112,5 +111,5 @@ struct pbuf_custom_ref {
 };
 
 
-LwipStatus ip6_frag(struct PacketBuffer *p, NetIfc*netif, const Ip6Addr *dest);
+LwipStatus ip6_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip6Addr *dest);
 

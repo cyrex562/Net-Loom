@@ -78,7 +78,7 @@ inline bool match_pcb_ip_addr(RawPcb* pcb, IpAddr* ipaddr)
 static uint8_t
 raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
 {
-    NetIfc* current_input_netif = nullptr;
+    NetworkInterface* current_input_netif = nullptr;
     IpAddr* curr_dst_addr = nullptr;
 
     /* check if PCB is bound to specific netif */
@@ -145,12 +145,12 @@ raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
  *
  */
 raw_input_state_t
-raw_input(struct PacketBuffer* p, NetIfc* inp)
+raw_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     int16_t proto;
     auto ret = RAW_INPUT_NONE;
     IpAddr* curr_dst_addr = nullptr;
-    NetIfc* curr_ip_netif = nullptr;
+    NetworkInterface* curr_ip_netif = nullptr;
     IpAddr* curr_src_addr = nullptr;
     RawPcb* raw_pcbs;
     const uint8_t broadcast = ip_addr_isbroadcast(curr_dst_addr, curr_ip_netif);
@@ -259,7 +259,7 @@ raw_bind(struct RawPcb *pcb, const IpAddr *ipaddr)
  * @see raw_disconnect()
  */
 void
-raw_bind_netif(struct RawPcb *pcb, const NetIfc*netif)
+raw_bind_netif(struct RawPcb *pcb, const NetworkInterface*netif)
 {
  
   if (netif != nullptr) {
@@ -358,7 +358,7 @@ raw_recv(struct RawPcb *pcb, raw_recv_fn recv, void *recv_arg)
 LwipStatus
 raw_sendto(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
 {
-  NetIfc*netif;
+  NetworkInterface*netif;
   const IpAddr *src_ip;
 
   if ((pcb == nullptr) || (ipaddr == nullptr) || !match_ip_addr_pcb_version(pcb, ipaddr)) {
@@ -423,7 +423,7 @@ raw_sendto(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr)
  */
 LwipStatus
 raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                  NetIfc*netif, const IpAddr *src_ip)
+                  NetworkInterface*netif, const IpAddr *src_ip)
 {
   LwipStatus err;
   struct PacketBuffer *q; /* q will be sent down the stack */

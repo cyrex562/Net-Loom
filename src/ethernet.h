@@ -74,10 +74,10 @@ inline bool cmp_eth_addr(const EthAddr* addr1, const EthAddr* addr2)
 }
 
 ///
-LwipStatus ethernet_input(struct PacketBuffer* p, struct NetIfc* netif);
+LwipStatus ethernet_input(struct PacketBuffer* p, struct NetworkInterface* netif);
 
 ///
-LwipStatus ethernet_output(struct NetIfc* netif,
+LwipStatus ethernet_output(struct NetworkInterface* netif,
                       struct PacketBuffer* p,
                       const struct EthAddr* src,
                       const struct EthAddr* dst,

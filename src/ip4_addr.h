@@ -71,7 +71,7 @@ inline Ip4Addr ip4_addr_bcast()
 }
 
 /* Forward declaration to not include netif.h */
-struct NetIfc;
+struct NetworkInterface;
 
 /** 255.255.255.255 */
 inline Ip4Addr ip4_addr_none() {
@@ -230,10 +230,10 @@ inline bool ip4_addr_isany(const Ip4Addr* addr1)
     return addr1 == nullptr || addr1->addr == IP4_ADDR_ANY4;
 }
 
-uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetIfc *netif);
+uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetworkInterface *netif);
 
 
-inline bool ip4_addr_isbroadcast(const Ip4Addr *addr1, const NetIfc *netif) {
+inline bool ip4_addr_isbroadcast(const Ip4Addr *addr1, const NetworkInterface *netif) {
   return ip4_addr_isbroadcast_u32((addr1)->addr, netif);
 }
 
@@ -323,10 +323,9 @@ constexpr auto IP4ADDR_STRLEN_MAX = 16;
 /** For backwards compatibility */
 // inline const char* ip_ntoa(Ip4Addr* ipaddr){return  ipaddr_ntoa(ipaddr);}
 
-uint32_t ipaddr_addr(const char *cp);
-int ip4addr_aton(const char *cp, Ip4Addr* addr);
-/** returns ptr to static buffer; not reentrant! */
-char *ip4addr_ntoa(const Ip4Addr *addr);
-char *ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
+int32_t lwip_ipaddr_addr(const char *cp);
+char *lwip_ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
+int lwip_ip4addr_aton(const char* cp, Ip4Addr* addr);
+char * lwip_ip4addr_ntoa(const Ip4Addr *addr);
 
 // END OF FILE

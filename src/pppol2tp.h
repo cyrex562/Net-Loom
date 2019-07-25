@@ -191,7 +191,7 @@ struct Pppol2tpPcb
     PppPcb* ppp; /* PPP PCB */
     uint8_t phase; /* L2TP phase */
     struct UdpPcb* udp; /* UDP L2TP Socket */
-    NetIfc* netif; /* Output interface, used as a default route */
+    NetworkInterface* netif; /* Output interface, used as a default route */
     IpAddr remote_ip; /* LNS IP Address */
     uint16_t remote_port; /* LNS port */
     const uint8_t* secret; /* Secret string */
@@ -215,8 +215,8 @@ struct Pppol2tpPcb
 
 
 /* Create a new L2TP session. */
-PppPcb* CreatePppol2tpSession(NetIfc* pppif,
-                              NetIfc* netif,
+PppPcb* CreatePppol2tpSession(NetworkInterface* pppif,
+                              NetworkInterface* netif,
                               const IpAddr* ipaddr,
                               uint16_t port,
                               const uint8_t* secret,

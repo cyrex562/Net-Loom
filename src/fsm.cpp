@@ -50,17 +50,6 @@
 #include <fsm.h>
 #include <ppp_opts.h>
 #include <ppp_impl.h>
-#include <pppdebug.h>
-static void fsm_timeout (void*);
-static void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
-static void fsm_rconfack(Fsm *f, int id, uint8_t *inp, int len);
-static void fsm_rconfnakrej(Fsm *f, int code, int id, uint8_t *inp, int len);
-static void fsm_rtermreq(Fsm *f, int id, uint8_t *p, int len);
-static void fsm_rtermack(Fsm *f);
-static void fsm_rcoderej(Fsm *f, uint8_t *inp, int len);
-static void fsm_sconfreq(Fsm *f, int retransmit);
-
-#define PROTO_NAME(f)	((f)->callbacks->proto_name)
 
 /*
  * fsm_init - Initialize fsm.
@@ -188,7 +177,7 @@ bool fsm_open(Fsm* f)
  * Cancel any timeout running, notify upper layers we're done, and
  * send a terminate-request message as configured.
  */
-static void terminate_layer(Fsm *f, int nextstate) {
+void terminate_layer(Fsm *f, int nextstate) {
     PppPcb *pcb = f->pcb;
 
     if( f->state != PPP_FSM_OPENED )
@@ -254,7 +243,7 @@ void fsm_close(Fsm *f, const char *reason) {
 /*
  * fsm_timeout - Timeout expired.
  */
-static void fsm_timeout(void* arg) {
+void fsm_timeout(void* arg) {
     Fsm *f = (Fsm *) arg;
     PppPcb *pcb = f->pcb;
 
@@ -281,7 +270,7 @@ static void fsm_timeout(void* arg) {
     case PPP_FSM_ACKRCVD:
     case PPP_FSM_ACKSENT:
 	if (f->retransmits <= 0) {
-	    ppp_warn("%s: timeout sending Config-Requests", PROTO_NAME(f));
+	    ppp_warn("%s: timeout sending Config-Requests", ((f)->callbacks->proto_name));
 	    f->state = PPP_FSM_STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);
@@ -314,14 +303,14 @@ void fsm_input(Fsm *f, uint8_t *inpacket, int l) {
      * If packet too short, drop it.
      */
     inp = inpacket;
-    if (l < kHeaderlen) {
+    if (l < FSM_PKT_HDR_LEN) {
 	// FSMDEBUG(("fsm_input(%x): Rcvd short header.", f->protocol));
 	return;
     }
     GETCHAR(code, inp);
     GETCHAR(id, inp);
     GETSHORT(len, inp);
-    if (len < kHeaderlen) {
+    if (len < FSM_PKT_HDR_LEN) {
 	// FSMDEBUG(("fsm_input(%x): Rcvd illegal length.", f->protocol));
 	return;
     }
@@ -329,7 +318,7 @@ void fsm_input(Fsm *f, uint8_t *inpacket, int l) {
 	// FSMDEBUG(("fsm_input(%x): Rcvd short packet.", f->protocol));
 	return;
     }
-    len -= kHeaderlen;		/* subtract header length */
+    len -= FSM_PKT_HDR_LEN;		/* subtract header length */
 
     if( f->state == PPP_FSM_INITIAL || f->state == PPP_FSM_STARTING ){
 	// FSMDEBUG(("fsm_input(%x): Rcvd packet in state %d.",
@@ -369,7 +358,7 @@ void fsm_input(Fsm *f, uint8_t *inpacket, int l) {
     default:
 	if( !f->callbacks->extcode
 	   || !(*f->callbacks->extcode)(f, code, id, inp, len, f->pcb) )
-	    fsm_sdata(f, CODEREJ, ++f->id, inpacket, len + kHeaderlen);
+	    fsm_sdata(f, CODEREJ, ++f->id, inpacket, len + FSM_PKT_HDR_LEN);
 	break;
     }
 }
@@ -378,7 +367,7 @@ void fsm_input(Fsm *f, uint8_t *inpacket, int l) {
 /*
  * fsm_rconfreq - Receive Configure-Request.
  */
-static void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
+void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
     int code;
 
     switch( f->state ){
@@ -447,7 +436,7 @@ static void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
 /*
  * fsm_rconfack - Receive Configure-Ack.
  */
-static void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
+void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
     PppPcb *pcb = f->pcb;
 
     if (id != f->reqid || f->seen_ack)		/* Expected id? */
@@ -503,7 +492,7 @@ static void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
 /*
  * fsm_rconfnakrej - Receive Configure-Nak or Configure-Reject.
  */
-static void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) {
+void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) {
     int ret;
     int treat_as_reject;
 
@@ -568,7 +557,7 @@ static void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) 
 /*
  * fsm_rtermreq - Receive Terminate-Req.
  */
-static void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len) {
+void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len) {
     PppPcb *pcb = f->pcb;
 
     switch (f->state) {
@@ -579,9 +568,9 @@ static void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len) {
 
     case PPP_FSM_OPENED:
 	if (len > 0) {
-	    ppp_info("%s terminated by peer (%0.*v)", PROTO_NAME(f), len, p);
+	    ppp_info("%s terminated by peer (%0.*v)", ((f)->callbacks->proto_name), len, p);
 	} else
-	    ppp_info("%s terminated by peer", PROTO_NAME(f));
+	    ppp_info("%s terminated by peer", ((f)->callbacks->proto_name));
 	f->retransmits = 0;
 	f->state = PPP_FSM_STOPPING;
 	if (f->callbacks->down)
@@ -599,7 +588,7 @@ static void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len) {
 /*
  * fsm_rtermack - Receive Terminate-Ack.
  */
-static void fsm_rtermack(Fsm* f) {
+void fsm_rtermack(Fsm* f) {
     switch (f->state) {
     case PPP_FSM_CLOSING:
 	Untimeout(fsm_timeout, f);
@@ -633,16 +622,16 @@ static void fsm_rtermack(Fsm* f) {
 /*
  * fsm_rcoderej - Receive an Code-Reject.
  */
-static void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len) {
+void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len) {
     uint8_t code, id;
 
-    if (len < kHeaderlen) {
+    if (len < FSM_PKT_HDR_LEN) {
 	// FSMDEBUG(("fsm_rcoderej: Rcvd short Code-Reject packet!"));
 	return;
     }
     GETCHAR(code, inp);
     GETCHAR(id, inp);
-    ppp_warn("%s: Rcvd Code-Reject for code %d, id %d", PROTO_NAME(f), code, id);
+    ppp_warn("%s: Rcvd Code-Reject for code %d, id %d", ((f)->callbacks->proto_name), code, id);
 
     if( f->state == PPP_FSM_ACKRCVD )
 	f->state = PPP_FSM_REQSENT;
@@ -695,7 +684,7 @@ void fsm_protreject(Fsm* f) {
 /*
  * fsm_sconfreq - Send a Configure-Request.
  */
-static void fsm_sconfreq(Fsm* f, int retransmit) {
+void fsm_sconfreq(Fsm* f, int retransmit) {
     PppPcb *pcb = f->pcb;
     PacketBuffer *p;
     int cilen;
@@ -721,8 +710,8 @@ static void fsm_sconfreq(Fsm* f, int retransmit) {
      */
     if( f->callbacks->cilen && f->callbacks->addci ){
 	cilen = (*f->callbacks->cilen)(f->pcb);
-	if( cilen > pcb->peer_mru - kHeaderlen )
-	    cilen = pcb->peer_mru - kHeaderlen;
+	if( cilen > pcb->peer_mru - FSM_PKT_HDR_LEN )
+	    cilen = pcb->peer_mru - FSM_PKT_HDR_LEN;
     } else
 	cilen = 0;
 
@@ -737,13 +726,15 @@ static void fsm_sconfreq(Fsm* f, int retransmit) {
 
     /* send the request to our peer */
     uint8_t* outp = static_cast<uint8_t*>(p->payload);
-    MAKEHEADER(outp, f->protocol);
+    PUTCHAR(PPP_ALLSTATIONS, outp);
+    PUTCHAR(PPP_UI, outp);
+    PUTSHORT(f->protocol, outp); 
     PUTCHAR(CONFREQ, outp);
     PUTCHAR(f->reqid, outp);
-    PUTSHORT(cilen + kHeaderlen, outp);
+    PUTSHORT(cilen + FSM_PKT_HDR_LEN, outp);
     if (cilen != 0) {
 	(*f->callbacks->addci)(f, outp, &cilen, f->pcb);
-	lwip_assert("cilen == p->len - kHeaderlen - PPP_HDRLEN", cilen == p->len - kHeaderlen - PPP_HDRLEN);
+	lwip_assert("cilen == p->len - kHeaderlen - PPP_HDRLEN", cilen == p->len - FSM_PKT_HDR_LEN - PPP_HDRLEN);
     }
 
     ppp_write(pcb, p);
@@ -766,9 +757,9 @@ void fsm_sdata(Fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datale
     int outlen;
 
     /* Adjust length to be smaller than MTU */
-    if (datalen > pcb->peer_mru - kHeaderlen)
-	datalen = pcb->peer_mru - kHeaderlen;
-    outlen = datalen + kHeaderlen;
+    if (datalen > pcb->peer_mru - FSM_PKT_HDR_LEN)
+	datalen = pcb->peer_mru - FSM_PKT_HDR_LEN;
+    outlen = datalen + FSM_PKT_HDR_LEN;
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(outlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     p = new PacketBuffer;
@@ -781,7 +772,7 @@ void fsm_sdata(Fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datale
 
     outp = (uint8_t*)p->payload;
     if (datalen) /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
-	memcpy(outp + PPP_HDRLEN + kHeaderlen, data, datalen);
+	memcpy(outp + PPP_HDRLEN + FSM_PKT_HDR_LEN, data, datalen);
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);

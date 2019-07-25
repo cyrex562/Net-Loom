@@ -225,7 +225,7 @@ pcapif_compare_packets(struct pcapipf_pending_packet *pack, const uint8_t *packe
 }
 
 static int
-pcaipf_is_tx_packet(NetIfc*netif, const uint8_t *packet, int packet_len)
+pcaipf_is_tx_packet(NetworkInterface*netif, const uint8_t *packet, int packet_len)
 {
   struct pcapif_private *priv = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   struct pcapipf_pending_packet *iter, *last;
@@ -538,7 +538,7 @@ pcapif_init_adapter(int adapter_num, uint8_t *arg)
 static void
 pcapif_check_linkstate(uint8_t *netif_ptr)
 {
-  NetIfc*netif = (NetIfc**)netif_ptr;
+  NetworkInterface*netif = (NetworkInterface**)netif_ptr;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   enum pcapifh_link_event le;
 
@@ -569,7 +569,7 @@ pcapif_check_linkstate(uint8_t *netif_ptr)
  * @param netif netif to shutdown
  */
 void
-pcapif_shutdown(NetIfc*netif)
+pcapif_shutdown(NetworkInterface*netif)
 {
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   if (pa) {
@@ -595,7 +595,7 @@ pcapif_shutdown(NetIfc*netif)
 static void
 pcapif_input_thread(uint8_t *arg)
 {
-  NetIfc*netif = (NetIfc*)arg;
+  NetworkInterface*netif = (NetworkInterface*)arg;
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
   do
   {
@@ -611,7 +611,7 @@ pcapif_input_thread(uint8_t *arg)
 /** Low-level initialization: find the correct adapter and initialize it.
  */
 static void
-pcapif_low_level_init(NetIfc*netif)
+pcapif_low_level_init(NetworkInterface*netif)
 {
   uint8_t my_mac_addr[ETH_ADDR_LEN] = LWIP_MAC_ADDR_BASE;
   int adapter_num = PACKET_LIB_ADAPTER_NR;
@@ -637,7 +637,7 @@ pcapif_low_level_init(NetIfc*netif)
   memset(&guid, 0, sizeof(guid));
   PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
   if (get_adapter_index_from_addr((struct LwipInAddrStruct *)&netaddr, guid, GUID_LEN) < 0) {
-     printf("ERROR initializing network adapter, failed to get GUID for network address %s\n", ip4addr_ntoa(&netaddr));
+     printf("ERROR initializing network adapter, failed to get GUID for network address %s\n", lwip_ip4addr_ntoa(&netaddr));
      lwip_assert("ERROR initializing network adapter, failed to get GUID for network address!", 0);
      return;
   }
@@ -690,7 +690,7 @@ pcapif_low_level_init(NetIfc*netif)
  * the function. This PacketBuffer might be chained.
  */
 static LwipStatus
-pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
+pcapif_low_level_output(NetworkInterface*netif, struct PacketBuffer *p)
 {
   struct PacketBuffer *q;
   unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
@@ -766,7 +766,7 @@ pcapif_low_level_output(NetIfc*netif, struct PacketBuffer *p)
  * packet from the interface into the PacketBuffer.
  */
 static struct PacketBuffer *
-pcapif_low_level_input(NetIfc*netif, const uint8_t *packet, int packet_len)
+pcapif_low_level_input(NetworkInterface*netif, const uint8_t *packet, int packet_len)
 {
   struct PacketBuffer *p, *q;
   int start;
@@ -871,7 +871,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
 {
   struct pcapif_private *pa = (struct pcapif_private*)user;
   int packet_len = pkt_header->caplen;
-  NetIfc*netif = (NetIfc*)pa->input_fn_arg;
+  NetworkInterface*netif = (NetworkInterface*)pa->input_fn_arg;
   struct PacketBuffer *p;
 
   PCAPIF_RX_LOCK_LWIP();
@@ -896,7 +896,7 @@ pcapif_input(uint8_t *user, const struct pcap_pkthdr *pkt_header, const uint8_t 
  * pcapif_init(): initialization function, pass to netif_add().
  */
 LwipStatus
-pcapif_init(NetIfc*netif)
+pcapif_init(NetworkInterface*netif)
 {
   static int ethernetif_index;
   int local_index;
@@ -930,7 +930,7 @@ pcapif_init(NetIfc*netif)
 }
 
 void
-pcapif_poll(NetIfc*netif)
+pcapif_poll(NetworkInterface*netif)
 {
   struct pcapif_private *pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
 

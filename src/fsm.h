@@ -42,18 +42,14 @@
  * $Id: fsm.h,v 1.10 2004/11/13 02:28:15 paulus Exp $
  */
 #pragma once
-#include <protent.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cstdint>
 
 struct PppPcb;
 
 /*
  * Packet header = Code, id, length.
  */
-constexpr auto kHeaderlen = 4;
+constexpr auto FSM_PKT_HDR_LEN = 4;
 
 
 /*
@@ -100,7 +96,7 @@ struct Fsm
     uint8_t maxnakloops; /* Maximum number of nak loops tolerated
 				   (necessary because IPCP require a custom large max nak loops value) */
     uint8_t term_reason_len; /* Length of term_reason */
-    int unit;
+    PppPcb* unit;
 };
 
 
@@ -140,24 +136,45 @@ struct FsmCallbacks {
 /*
  * Link states.
  */
-#define PPP_FSM_INITIAL		0	/* Down, hasn't been opened */
-#define PPP_FSM_STARTING	1	/* Down, been opened */
-#define PPP_FSM_CLOSED		2	/* Up, hasn't been opened */
-#define PPP_FSM_STOPPED		3	/* Open, waiting for down event */
-#define PPP_FSM_CLOSING		4	/* Terminating the connection, not open */
-#define PPP_FSM_STOPPING	5	/* Terminating, but open */
-#define PPP_FSM_REQSENT		6	/* We've sent a Config Request */
-#define PPP_FSM_ACKRCVD		7	/* We've received a Config Ack */
-#define PPP_FSM_ACKSENT		8	/* We've sent a Config Ack */
-#define PPP_FSM_OPENED		9	/* Connection available */
+enum PppFsmLinkStates
+{
+    PPP_FSM_INITIAL = 0,
+    /* Down, hasn't been opened */
+    PPP_FSM_STARTING = 1,
+    /* Down, been opened */
+    PPP_FSM_CLOSED = 2,
+    /* Up, hasn't been opened */
+    PPP_FSM_STOPPED = 3,
+    /* Open, waiting for down event */
+    PPP_FSM_CLOSING = 4,
+    /* Terminating the connection, not open */
+    PPP_FSM_STOPPING = 5,
+    /* Terminating, but open */
+    PPP_FSM_REQSENT = 6,
+    /* We've sent a Config Request */
+    PPP_FSM_ACKRCVD = 7,
+    /* We've received a Config Ack */
+    PPP_FSM_ACKSENT = 8,
+    /* We've sent a Config Ack */
+    PPP_FSM_OPENED = 9,
+    /* Connection available */
+};
+
 
 
 /*
  * Flags - indicate options controlling FSM operation
  */
-#define OPT_PASSIVE	1	/* Don't die if we don't get a response */
-#define OPT_RESTART	2	/* Treat 2nd OPEN as DOWN, UP */
-#define OPT_SILENT	4	/* Wait for peer to speak first */
+enum FsmOpts
+{
+    OPT_PASSIVE = 1,
+    /* Don't die if we don't get a response */
+    OPT_RESTART = 2,
+    /* Treat 2nd OPEN as DOWN, UP */
+    OPT_SILENT = 4,
+    /* Wait for peer to speak first */
+};
+
 
 /*
  * Prototypes
@@ -170,7 +187,15 @@ void fsm_close(Fsm* f, const char* reason);
 void fsm_input(Fsm* f, uint8_t* inpacket, int l);
 void fsm_protreject(Fsm* f);
 void fsm_sdata(Fsm* f, uint8_t code, uint8_t id, const uint8_t* data, int datalen);
+void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len);
+void fsm_timeout (void*);
+void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
+void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len);
+void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len);
+void fsm_rtermack(Fsm *f);
+void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len);
+void fsm_sconfreq(Fsm *f, int retransmit);
 
-#ifdef __cplusplus
-}
-#endif
+//
+// END OF FILE
+//

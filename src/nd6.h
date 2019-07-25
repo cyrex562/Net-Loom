@@ -4,6 +4,8 @@
 
 #include <lwip_status.h>
 
+#include <netif.h>
+
 #include <opt.h>
 
 /** Neighbor solicitation message header. */
@@ -14,7 +16,7 @@ struct ns_header
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    Ip6Addr target_address;
+    Ip6AddrWireFmt target_address;
     /* Options follow. */
 };
 
@@ -28,7 +30,7 @@ struct NeighAdvHdr
     uint16_t chksum;
     uint8_t flags;
     uint8_t reserved[3];
-    Ip6Addr target_address;
+    Ip6AddrWireFmt target_address;
     /* Options follow. */
 };
 
@@ -50,14 +52,14 @@ struct RtrSolicitHdr
 
 
 /** Router advertisement message header. */
-#define ND6_RA_FLAG_MANAGED_ADDR_CONFIG (0x80)
-#define ND6_RA_FLAG_OTHER_CONFIG (0x40)
-#define ND6_RA_FLAG_HOME_AGENT (0x20)
-#define ND6_RA_PREFERENCE_MASK (0x18)
-#define ND6_RA_PREFERENCE_HIGH (0x08)
-#define ND6_RA_PREFERENCE_MEDIUM (0x00)
-#define ND6_RA_PREFERENCE_LOW (0x18)
-#define ND6_RA_PREFERENCE_DISABLED (0x10)
+constexpr auto ND6_RA_FLAG_MANAGED_ADDR_CONFIG = (0x80);
+constexpr auto ND6_RA_FLAG_OTHER_CONFIG = (0x40);
+constexpr auto ND6_RA_FLAG_HOME_AGENT = (0x20);
+constexpr auto ND6_RA_PREFERENCE_MASK = (0x18);
+constexpr auto ND6_RA_PREFERENCE_HIGH = (0x08);
+constexpr auto ND6_RA_PREFERENCE_MEDIUM = (0x00);
+constexpr auto ND6_RA_PREFERENCE_LOW = (0x18);
+constexpr auto ND6_RA_PREFERENCE_DISABLED = (0x10);
 
 struct ra_header
 {
@@ -80,8 +82,8 @@ struct RedirectMsgHdr
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    Ip6Addr target_address;
-    Ip6Addr destination_address; /* Options follow. */
+    Ip6AddrWireFmt target_address;
+    Ip6AddrWireFmt destination_address; /* Options follow. */
 };
 
 
@@ -116,7 +118,7 @@ struct PrefixOpt
     uint32_t preferred_lifetime;
     uint8_t reserved2[3];
     uint8_t site_prefix_length;
-    Ip6Addr prefix;
+    Ip6AddrWireFmt prefix;
 };
 
 
@@ -157,7 +159,7 @@ struct RouterOpt
     uint8_t prefix_length;
     uint8_t preference;
     uint32_t route_lifetime;
-    Ip6Addr prefix;
+    Ip6AddrWireFmt prefix;
 };
 
 
@@ -171,7 +173,7 @@ struct RdnssOpt
     uint8_t length;
     uint16_t reserved;
     uint32_t lifetime;
-    Ip6Addr rdnss_address[1];
+    Ip6AddrWireFmt rdnss_address[1];
 };
 
 
@@ -186,18 +188,18 @@ constexpr auto ND6_TMR_INTERVAL = 1000;
 constexpr auto ND6_RTR_SOLICITATION_INTERVAL = 4000;
 struct PacketBuffer;
 void nd6_tmr(void);
-void nd6_input(struct PacketBuffer* p, NetIfc* inp);
+void nd6_input(struct PacketBuffer* p, NetworkInterface* inp);
 void nd6_clear_destination_cache(void);
-NetIfc* nd6_find_route(const Ip6Addr* ip6addr);
-LwipStatus nd6_get_next_hop_addr_or_queue(NetIfc* netif,
+NetworkInterface* nd6_find_route(const Ip6Addr* ip6addr);
+LwipStatus nd6_get_next_hop_addr_or_queue(NetworkInterface* netif,
                                           struct PacketBuffer* q,
                                           const Ip6Addr* ip6addr,
                                           const uint8_t** hwaddrp);
-uint16_t nd6_get_destination_mtu(const Ip6Addr* ip6addr, NetIfc* netif);
+uint16_t nd6_get_destination_mtu(const Ip6Addr* ip6addr, NetworkInterface* netif);
 void nd6_reachability_hint(const Ip6Addr* ip6addr);
-void nd6_cleanup_netif(NetIfc* netif);
-void nd6_adjust_mld_membership(NetIfc* netif, int8_t addr_idx, uint8_t new_state);
-void nd6_restart_netif(NetIfc* netif);
+void nd6_cleanup_netif(NetworkInterface* netif);
+void nd6_adjust_mld_membership(NetworkInterface* netif, int8_t addr_idx, uint8_t new_state);
+void nd6_restart_netif(NetworkInterface* netif);
 
 //
 // END OF FILE

@@ -29,7 +29,7 @@ void lwip_init(void)
     auto a = 0;; /* Modules initialization */
     sys_init();
     pbuf_init();
-    netif_init();
+    // netif_init();
     ip_init();
     etharp_init();
     raw_init();

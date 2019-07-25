@@ -118,7 +118,7 @@ again: if (udp_port++ == UDP_LOCAL_PORT_RANGE_END)
  * @return 1 on match, 0 otherwise
  */
 static uint8_t udp_input_local_match(struct UdpPcb* pcb,
-                                     NetIfc** inp,
+                                     NetworkInterface** inp,
                                      const uint8_t broadcast)
 {
     lwip_assert("udp_input_local_match: invalid pcb", pcb != nullptr);
@@ -184,7 +184,7 @@ static uint8_t udp_input_local_match(struct UdpPcb* pcb,
  *
  */
 void
-udp_input(struct PacketBuffer *p, NetIfc*inp)
+udp_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
   struct UdpHdr *udphdr;
   struct UdpPcb *pcb, *prev;
@@ -205,7 +205,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
   UDP_STATS_INC(udp.recv);
 
   /* Check minimum length (UDP header) */
-  if (p->len < UDP_HLEN) {
+  if (p->len < UDP_HDR_LEN) {
     /* drop short packets */
 //    Logf(UDP_DEBUG,
 //                ("udp_input: short UDP datagram (%d bytes) discarded\n", p->tot_len));
@@ -326,7 +326,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
       if (ip_current_header_proto() == IP_PROTO_UDPLITE) {
         /* Do the UDP Lite checksum */
         uint16_t chklen = lwip_ntohs(udphdr->len);
-        if (chklen < sizeof(struct udp_hdr)) {
+        if (chklen < sizeof(UdpHdr)) {
           if (chklen == 0) {
             /* For UDP-Lite, checksum length of 0 means checksum
                over the complete packet (See RFC 3828 chap. 3.1) */
@@ -355,7 +355,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
       }
     }
 
-    if (pbuf_remove_header(p, UDP_HLEN)) {
+    if (pbuf_remove_header(p, UDP_HDR_LEN)) {
       /* Can we cope with this failing? Just assert for now */
       lwip_assert("pbuf_remove_header failed\n", 0);
       UDP_STATS_INC(udp.drop);
@@ -406,7 +406,7 @@ udp_input(struct PacketBuffer *p, NetIfc*inp)
          destination address was broadcast/multicast. */
       if (!broadcast && !ip_addr_ismulticast(ip_current_dest_addr())) {
         /* move payload pointer back to ip header */
-        pbuf_header_force(p, (int16_t)(ip_current_header_tot_len() + UDP_HLEN));
+        pbuf_header_force(p, (int16_t)(ip_current_header_tot_len() + UDP_HDR_LEN));
         icmp_port_unreach(ip_current_is_v6(), p);
       }
 
@@ -520,7 +520,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
                   uint16_t dst_port, uint8_t have_chksum, uint16_t chksum)
 {
 
-  NetIfc*netif;
+  NetworkInterface*netif;
 
   
   
@@ -609,7 +609,7 @@ udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
  */
 LwipStatus
 udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
-              const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif)
+              const IpAddr *dst_ip, uint16_t dst_port, NetworkInterface*netif)
 {
 
   return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0);
@@ -618,7 +618,7 @@ udp_sendto_if(struct UdpPcb *pcb, struct PacketBuffer *p,
 /** Same as udp_sendto_if(), but with checksum */
 LwipStatus
 udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                     uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
+                     uint16_t dst_port, NetworkInterface*netif, uint8_t have_chksum,
                      uint16_t chksum)
 {
 
@@ -636,7 +636,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
   /* PCB local address is IP_ANY_ADDR or multicast? */
 
   if (is_ip_addr_v6(dst_ip)) {
-    if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip)) ||
+    if (is_ip6_addr_any(ip_2_ip6(&pcb->local_ip)) ||
         ip6_addr_ismulticast(ip_2_ip6(&pcb->local_ip))) {
       src_ip = ip6_select_source_address(netif, ip_2_ip6(dst_ip));
       if (src_ip == nullptr) {
@@ -681,7 +681,7 @@ udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
  * Same as @ref udp_sendto_if, but with source address */
 LwipStatus
 udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
-                  const IpAddr *dst_ip, uint16_t dst_port, NetIfc*netif, const IpAddr *src_ip)
+                  const IpAddr *dst_ip, uint16_t dst_port, NetworkInterface*netif, const IpAddr *src_ip)
 {
 
   return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
@@ -690,7 +690,7 @@ udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
 /** Same as udp_sendto_if_src(), but with checksum */
 LwipStatus
 udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip,
-                         uint16_t dst_port, NetIfc*netif, uint8_t have_chksum,
+                         uint16_t dst_port, NetworkInterface*netif, uint8_t have_chksum,
                          uint16_t chksum, const IpAddr *src_ip)
 {
 
@@ -737,13 +737,13 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
   }
 
   /* packet too large to add a UDP header without causing an overflow? */
-  if ((uint16_t)(p->tot_len + UDP_HLEN) < p->tot_len) {
+  if ((uint16_t)(p->tot_len + UDP_HDR_LEN) < p->tot_len) {
     return ERR_MEM;
   }
   /* not enough space to add an UDP header to first PacketBuffer in given p chain? */
-  if (pbuf_add_header(p, UDP_HLEN)) {
+  if (pbuf_add_header(p, UDP_HDR_LEN)) {
     /* allocate header in a separate new PacketBuffer */
-    q = pbuf_alloc(PBUF_IP, UDP_HLEN);
+    q = pbuf_alloc(PBUF_IP, UDP_HDR_LEN);
     /* new header PacketBuffer could not be allocated? */
     if (q == nullptr) {
       Logf(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: could not allocate header\n"));
@@ -762,7 +762,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     q = p;
     Logf(UDP_DEBUG, ("udp_send: added header in given PacketBuffer %p\n", (uint8_t *)p));
   }
-  lwip_assert("check that first PacketBuffer can hold struct udp_hdr",
+  lwip_assert("check that first PacketBuffer can hold UdpHdr",
               (q->len >= sizeof(struct UdpHdr)));
   /* q now represents the packet to be sent */
   udphdr = (struct UdpHdr *)q->payload;
@@ -787,7 +787,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     Logf(UDP_DEBUG, ("udp_send: UDP LITE packet length %d\n", q->tot_len));
     /* set UDP message length in UDP header */
     chklen_hdr = chklen = pcb->chksum_len_tx;
-    if ((chklen < sizeof(struct udp_hdr)) || (chklen > q->tot_len)) {
+    if ((chklen < sizeof(UdpHdr)) || (chklen > q->tot_len)) {
       if (chklen != 0) {
         Logf(UDP_DEBUG, ("udp_send: UDP LITE pcb->chksum_len is illegal: %d\n", chklen));
       }
@@ -806,7 +806,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_UDP) {
 
       if (have_chksum) {
-        chklen = UDP_HLEN;
+        chklen = UDP_HDR_LEN;
       }
 
       udphdr->chksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDPLITE,
@@ -842,7 +842,7 @@ udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_
         if (have_chksum) {
           uint32_t acc;
           udpchksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDP,
-                                               q->tot_len, UDP_HLEN, src_ip, dst_ip);
+                                               q->tot_len, UDP_HDR_LEN, src_ip, dst_ip);
           acc = udpchksum + (uint16_t)~(chksum);
           udpchksum = fold_u32(acc);
         } else
@@ -1018,7 +1018,7 @@ udp_bind(struct UdpPcb *pcb, const IpAddr *ipaddr, uint16_t port)
  * @see udp_disconnect()
  */
 void
-udp_bind_netif(struct UdpPcb *pcb, const NetIfc*netif)
+udp_bind_netif(struct UdpPcb *pcb, const NetworkInterface*netif)
 {
  
 

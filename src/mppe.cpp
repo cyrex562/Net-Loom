@@ -134,8 +134,8 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 	else if (options & MPPE_OPT_40)
 		state->keylen = 8;
 	else {
-		PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
-			pcb->netif->num));
+		// PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
+		// 	pcb->netif->num));
 		lcp_close(pcb, "MPPE required but peer negotiation failed");
 		return;
 	}
@@ -151,17 +151,17 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 		char mkey[sizeof(state->master_key) * 2 + 1];
 		char skey[sizeof(state->session_key) * 2 + 1];
 
-		PPPDEBUG(LOG_DEBUG, ("%s[%d]: initialized with %d-bit %s mode\n",
-		       debugstr, pcb->netif->num, (state->keylen == 16) ? 128 : 40,
-		       (state->stateful) ? "stateful" : "stateless"));
+		// PPPDEBUG(LOG_DEBUG, ("%s[%d]: initialized with %d-bit %s mode\n",
+		//        debugstr, pcb->netif->num, (state->keylen == 16) ? 128 : 40,
+		//        (state->stateful) ? "stateful" : "stateless"));
 
 		for (i = 0; i < (int)sizeof(state->master_key); i++)
 			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
 		for (i = 0; i < (int)sizeof(state->session_key); i++)
 			sprintf(skey + i * 2, "%02x", state->session_key[i]);
-		PPPDEBUG(LOG_DEBUG,
-		       ("%s[%d]: keys: master: %s initial session: %s\n",
-		       debugstr, pcb->netif->num, mkey, skey));
+		// PPPDEBUG(LOG_DEBUG,
+		//        ("%s[%d]: keys: master: %s initial session: %s\n",
+		//        debugstr, pcb->netif->num, mkey, skey));
 	}
 
 
@@ -232,7 +232,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	pl = (uint8_t*)np->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
-	PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
+	// PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
 	/* FIXME: use PUT* macros */
 	pl[0] = state->ccount>>8;
 	pl[1] = state->ccount;
@@ -242,7 +242,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	    (state->bits & MPPE_BIT_FLUSHED)) {	/* CCP Reset-Request  */
 		/* We must rekey */
 		if (state->stateful) {
-			PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: rekeying\n", pcb->netif->num));
+			// PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: rekeying\n", pcb->netif->num));
 		}
 		mppe_rekey(state, 0);
 		state->bits |= MPPE_BIT_FLUSHED;
@@ -296,9 +296,9 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 
 	/* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
-		PPPDEBUG(LOG_DEBUG,
-		       ("mppe_decompress[%d]: short pkt (%d)\n",
-		       pcb->netif->num, n0->len));
+		// PPPDEBUG(LOG_DEBUG,
+		//        ("mppe_decompress[%d]: short pkt (%d)\n",
+		//        pcb->netif->num, n0->len));
 		state->sanity_errors += 100;
 		goto sanity_error;
 	}
@@ -306,26 +306,26 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 	pl = (uint8_t*)n0->payload;
 	flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
 	ccount = MPPE_CCOUNT(pl);
-	PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
-	       pcb->netif->num, ccount));
+	// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
+	//        pcb->netif->num, ccount));
 
 	/* sanity checks -- terminate with extreme prejudice */
 	if (!(MPPE_BITS(pl) & MPPE_BIT_ENCRYPTED)) {
-		PPPDEBUG(LOG_DEBUG,
-		       ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
-		       pcb->netif->num));
+		// PPPDEBUG(LOG_DEBUG,
+		//        ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
+		//        pcb->netif->num));
 		state->sanity_errors += 100;
 		goto sanity_error;
 	}
 	if (!state->stateful && !flushed) {
-		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
-		       "stateless mode!\n", pcb->netif->num));
+		// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
+		//        "stateless mode!\n", pcb->netif->num));
 		state->sanity_errors += 100;
 		goto sanity_error;
 	}
 	if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
-		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
-		       "flag packet!\n", pcb->netif->num));
+		// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
+		//        "flag packet!\n", pcb->netif->num));
 		state->sanity_errors += 100;
 		goto sanity_error;
 	}
@@ -358,7 +358,7 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 				 * Signal the peer to rekey (by sending a CCP Reset-Request).
 				 */
 				state->discard = 1;
-				ccp_resetrequest(&pcb->ccp_localstate, &pcb->ccp_fsm);
+				ccp_resetrequest(&pcb->ccp_localstate);
 				return ERR_BUF;
 			}
 		} else {

@@ -119,7 +119,7 @@ struct Icmp6EchoHdr
     uint16_t seqno;
 };
 
-void icmp6_input(struct PacketBuffer *p, NetIfc*inp);
+void icmp6_input(struct PacketBuffer *p, NetworkInterface*inp);
 void icmp6_dest_unreach(struct PacketBuffer *p, enum Icmp6DurCode c);
 void icmp6_packet_too_big(struct PacketBuffer *p, uint32_t mtu);
 void icmp6_time_exceeded(struct PacketBuffer *p, enum Icmp6TeCode c);

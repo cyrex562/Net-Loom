@@ -45,19 +45,19 @@ struct AutoipState
     uint8_t tried_llipaddr;
 };
 
-bool autoip_set_struct(NetIfc* netif, struct AutoipState *autoip);
+bool autoip_set_struct(NetworkInterface* netif, struct AutoipState *autoip);
 /** Remove a struct autoip previously set to the netif using autoip_set_struct() */
-LwipStatus autoip_start(NetIfc* netif);
-LwipStatus autoip_stop(NetIfc* netif);
-void autoip_arp_reply(NetIfc* netif, EtharpHdr* hdr);
+LwipStatus autoip_start(NetworkInterface* netif);
+LwipStatus autoip_stop(NetworkInterface* netif);
+void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr);
 void autoip_tmr(void);
-bool autoip_network_changed(NetIfc* netif);
-bool autoip_supplied_address(const NetIfc* netif);
+bool autoip_network_changed(NetworkInterface* netif);
+bool autoip_supplied_address(const NetworkInterface* netif);
 
 /* for lwIP internal use by ip4.c */
-bool autoip_accept_packet(NetIfc* netif, const Ip4Addr* addr);
+bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr);
 
-inline AutoipState* netif_autoip_data(const NetIfc* netif)
+inline AutoipState* netif_autoip_data(const NetworkInterface* netif)
 {
     return static_cast<AutoipState*>(netif->client_data[
         LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP]);

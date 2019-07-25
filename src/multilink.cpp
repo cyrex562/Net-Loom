@@ -69,7 +69,7 @@ static void remove_bundle_link (void);
 static void iterate_bundle_links (void (*func) (char *));
 
 static int get_default_epdisc (struct epdisc *);
-static int parse_num (char *str, const char *key, int *valp);
+// static int parse_num (char *str, const char *key, int *valp);
 // static int owns_unit (TDB_DATA pid, int unit);
 
 #define set_ip_epdisc(ep, addr) do {	\
@@ -118,8 +118,8 @@ void mp_check_options(LcpOptions* wo, LcpOptions* ao, bool* doing_multilink)
 bool mp_join_bundle(PppPcb* pcb,
                     const char* peer_authname,
                     const char* bundle_name,
-                    const bool doing_multilink = true,
-                    const bool demand = true)
+                    const bool doing_multilink,
+                    const bool demand)
 {
     int pppd_pid; // lcp_options *ho = &lcp_hisoptions[0];
     int mtu;
@@ -262,51 +262,54 @@ void mp_exit_bundle()
 	// unlock_db();
 }
 
-static void sendhup(char *str)
+static bool
+lwip_sendhup(char* str)
 {
 	int pid;
 
-	if (parse_num(str, "PPPD_PID=", &pid) && pid != lwip_getpid()) {
-		// if (debug)
-		// 	dbglog("sending SIGHUP to process %d", pid);
+	// if (parse_num(str, "PPPD_PID=", &pid) && pid != lwip_getpid()) {
+	// 	// if (debug)
+	// 	// 	dbglog("sending SIGHUP to process %d", pid);
+ //
+ //        #ifdef _MSC_VER
+ //        HANDLE explorer = nullptr;
+ //        explorer = OpenProcess(PROCESS_ALL_ACCESS,false,pid);
+ //        if (!TerminateProcess(explorer,1))
+ //        {
+ //            return false;
+ //        }
+ //        #else
+ //        kill(pid, SIGHUP);
+ //        #endif
+	// }
 
-        #ifdef _MSC_VER
-        HANDLE explorer = nullptr;
-        explorer = OpenProcess(PROCESS_ALL_ACCESS,false,pid);
-        if (!TerminateProcess(explorer,1)
-        {
-            return false;
-        }
-        #else
-        kill(pid, SIGHUP);
-        #endif
-	}
+    return true;
 }
 
 void mp_bundle_terminated()
 {
-	TDB_DATA key;
-
-	bundle_terminating = 1;
-	upper_layers_down(pcb);
-	notice("Connection terminated.");
-	if (!demand) {
-		remove_pidfiles();
-		script_unsetenv("IFNAME");
-	}
-
-	lock_db();
-	destroy_bundle();
-	iterate_bundle_links(sendhup);
-	key.dptr = blinks_id;
-	key.dsize = strlen(blinks_id);
-	tdb_delete(pppdb, key);
-	unlock_db();
-
-	new_phase(PPP_PHASE_DEAD);
-
-	doing_multilink = 0;
-	multilink_master = 0;
+	// TDB_DATA key;
+	//
+	// bundle_terminating = 1;
+	// upper_layers_down(pcb);
+	// notice("Connection terminated.");
+	// if (!demand) {
+	// 	remove_pidfiles();
+	// 	script_unsetenv("IFNAME");
+	// }
+	//
+	// lock_db();
+	// destroy_bundle();
+	// iterate_bundle_links(sendhup);
+	// key.dptr = blinks_id;
+	// key.dsize = strlen(blinks_id);
+	// tdb_delete(pppdb, key);
+	// unlock_db();
+	//
+	// new_phase(PPP_PHASE_DEAD);
+	//
+	// doing_multilink = 0;
+	// multilink_master = 0;
 }
 
 static bool make_bundle_links(int append)
@@ -354,143 +357,143 @@ static bool make_bundle_links(int append)
 
 static void remove_bundle_link()
 {
-	TDB_DATA key, rec;
-	char entry[32];
-	char *p, *q;
-	int l;
-
-	key.dptr = blinks_id;
-	key.dsize = strlen(blinks_id);
-	slprintf(entry, sizeof(entry), "%s;", db_key);
-
-	rec = tdb_fetch(pppdb, key);
-	if (rec.dptr == NULL || rec.dsize <= 0) {
-		if (rec.dptr != NULL)
-			free(rec.dptr);
-		return;
-	}
-	rec.dptr[rec.dsize-1] = 0;
-	p = strstr(rec.dptr, entry);
-	if (p != nullptr) {
-		q = p + strlen(entry);
-		l = strlen(q) + 1;
-		memmove(p, q, l);
-		rec.dsize = p - rec.dptr + l;
-		if (tdb_store(pppdb, key, rec, TDB_REPLACE))
-			error("couldn't update bundle link list (removal)");
-	}
-	free(rec.dptr);
+	// TDB_DATA key, rec;
+	// char entry[32];
+	// char *p, *q;
+	// int l;
+	//
+	// key.dptr = blinks_id;
+	// key.dsize = strlen(blinks_id);
+	// slprintf(entry, sizeof(entry), "%s;", db_key);
+	//
+	// rec = tdb_fetch(pppdb, key);
+	// if (rec.dptr == NULL || rec.dsize <= 0) {
+	// 	if (rec.dptr != NULL)
+	// 		free(rec.dptr);
+	// 	return;
+	// }
+	// rec.dptr[rec.dsize-1] = 0;
+	// p = strstr(rec.dptr, entry);
+	// if (p != nullptr) {
+	// 	q = p + strlen(entry);
+	// 	l = strlen(q) + 1;
+	// 	memmove(p, q, l);
+	// 	rec.dsize = p - rec.dptr + l;
+	// 	if (tdb_store(pppdb, key, rec, TDB_REPLACE))
+	// 		error("couldn't update bundle link list (removal)");
+	// }
+	// free(rec.dptr);
 }
 
 static void iterate_bundle_links(void (*func)(char *))
 {
-	TDB_DATA key, rec, pp;
-	char *p, *q;
-
-	key.dptr = blinks_id;
-	key.dsize = strlen(blinks_id);
-	rec = tdb_fetch(pppdb, key);
-	if (rec.dptr == NULL || rec.dsize <= 0) {
-		error("bundle link list not found (iterating list)");
-		if (rec.dptr != NULL)
-			free(rec.dptr);
-		return;
-	}
-	p = rec.dptr;
-	p[rec.dsize-1] = 0;
-	while ((q = strchr(p, ';')) != nullptr) {
-		*q = 0;
-		key.dptr = p;
-		key.dsize = q - p;
-		pp = tdb_fetch(pppdb, key);
-		if (pp.dptr != NULL && pp.dsize > 0) {
-			pp.dptr[pp.dsize-1] = 0;
-			func(pp.dptr);
-		}
-		if (pp.dptr != NULL)
-			free(pp.dptr);
-		p = q + 1;
-	}
-	free(rec.dptr);
+	// TDB_DATA key, rec, pp;
+	// char *p, *q;
+	//
+	// key.dptr = blinks_id;
+	// key.dsize = strlen(blinks_id);
+	// rec = tdb_fetch(pppdb, key);
+	// if (rec.dptr == NULL || rec.dsize <= 0) {
+	// 	error("bundle link list not found (iterating list)");
+	// 	if (rec.dptr != NULL)
+	// 		free(rec.dptr);
+	// 	return;
+	// }
+	// p = rec.dptr;
+	// p[rec.dsize-1] = 0;
+	// while ((q = strchr(p, ';')) != nullptr) {
+	// 	*q = 0;
+	// 	key.dptr = p;
+	// 	key.dsize = q - p;
+	// 	pp = tdb_fetch(pppdb, key);
+	// 	if (pp.dptr != NULL && pp.dsize > 0) {
+	// 		pp.dptr[pp.dsize-1] = 0;
+	// 		func(pp.dptr);
+	// 	}
+	// 	if (pp.dptr != NULL)
+	// 		free(pp.dptr);
+	// 	p = q + 1;
+	// }
+	// free(rec.dptr);
 }
 
-static int
-parse_num(str, key, valp)
-     char *str;
-     const char *key;
-     int *valp;
-{
-	char *p, *endp;
-	int i;
-
-	p = strstr(str, key);
-	if (p != nullptr) {
-		p += strlen(key);
-		i = strtol(p, &endp, 10);
-		if (endp != p && (*endp == 0 || *endp == ';')) {
-			*valp = i;
-			return 1;
-		}
-	}
-	return 0;
-}
+// static int
+// parse_num(str, key, valp)
+//      char *str;
+//      const char *key;
+//      int *valp;
+// {
+// 	char *p, *endp;
+// 	int i;
+//
+// 	p = strstr(str, key);
+// 	if (p != nullptr) {
+// 		p += strlen(key);
+// 		i = strtol(p, &endp, 10);
+// 		if (endp != p && (*endp == 0 || *endp == ';')) {
+// 			*valp = i;
+// 			return 1;
+// 		}
+// 	}
+// 	return 0;
+// }
 
 /*
  * Check whether the pppd identified by `key' still owns ppp unit `unit'.
  */
-static int
-owns_unit(key, unit)
-     TDB_DATA key;
-     int unit;
-{
-	char ifkey[32];
-	TDB_DATA kd, vd;
-	int ret = 0;
+// static int
+// owns_unit(key, unit)
+//      TDB_DATA key;
+//      int unit;
+// {
+// 	char ifkey[32];
+// 	TDB_DATA kd, vd;
+// 	int ret = 0;
+//
+// 	slprintf(ifkey, sizeof(ifkey), "IFNAME=ppp%d", unit);
+// 	kd.dptr = ifkey;
+// 	kd.dsize = strlen(ifkey);
+// 	vd = tdb_fetch(pppdb, kd);
+// 	if (vd.dptr != NULL) {
+// 		ret = vd.dsize == key.dsize
+// 			&& memcmp(vd.dptr, key.dptr, vd.dsize) == 0;
+// 		free(vd.dptr);
+// 	}
+// 	return ret;
+// }
 
-	slprintf(ifkey, sizeof(ifkey), "IFNAME=ppp%d", unit);
-	kd.dptr = ifkey;
-	kd.dsize = strlen(ifkey);
-	vd = tdb_fetch(pppdb, kd);
-	if (vd.dptr != NULL) {
-		ret = vd.dsize == key.dsize
-			&& memcmp(vd.dptr, key.dptr, vd.dsize) == 0;
-		free(vd.dptr);
-	}
-	return ret;
-}
-
-static int
-get_default_epdisc(ep)
-     struct epdisc *ep;
-{
-	char *p;
-	struct hostent *hp;
-	uint32_t addr;
-
-	/* First try for an ethernet MAC address */
-	p = get_first_ethernet();
-	if (p != nullptr && get_if_hwaddr(ep->value, p) >= 0) {
-		ep->class = EPD_MAC;
-		ep->length = 6;
-		return 1;
-	}
-
-	/* see if our hostname corresponds to a reasonable IP address */
-	hp = gethostbyname(hostname);
-	if (hp != nullptr) {
-		addr = *(uint32_t *)hp->h_addr;
-		if (!bad_ip_adrs(addr)) {
-			addr = lwip_ntohl(addr);
-			if (!LOCAL_IP_ADDR(addr)) {
-				ep->class = EPD_IP;
-				set_ip_epdisc(ep, addr);
-				return 1;
-			}
-		}
-	}
-
-	return 0;
-}
+// static int
+// get_default_epdisc(ep)
+//      struct epdisc *ep;
+// {
+// 	char *p;
+// 	struct hostent *hp;
+// 	uint32_t addr;
+//
+// 	/* First try for an ethernet MAC address */
+// 	p = get_first_ethernet();
+// 	if (p != nullptr && get_if_hwaddr(ep->value, p) >= 0) {
+// 		ep->class = EPD_MAC;
+// 		ep->length = 6;
+// 		return 1;
+// 	}
+//
+// 	/* see if our hostname corresponds to a reasonable IP address */
+// 	hp = gethostbyname(hostname);
+// 	if (hp != nullptr) {
+// 		addr = *(uint32_t *)hp->h_addr;
+// 		if (!bad_ip_adrs(addr)) {
+// 			addr = lwip_ntohl(addr);
+// 			if (!LOCAL_IP_ADDR(addr)) {
+// 				ep->class = EPD_IP;
+// 				set_ip_epdisc(ep, addr);
+// 				return 1;
+// 			}
+// 		}
+// 	}
+//
+// 	return 0;
+// }
 
 /*
  * epdisc_to_str - make a printable string from an endpoint discriminator.
@@ -500,47 +503,47 @@ static char *endp_class_names[] = {
     "null", "local", "IP", "MAC", "magic", "phone"
 };
 
-char *
-epdisc_to_str(ep)
-     struct epdisc *ep;
-{
-	static char str[MAX_ENDP_LEN*3+8];
-	uint8_t *p = ep->value;
-	int i, mask = 0;
-	char *q, c, c2;
-
-	if (ep->class == EPD_NULL && ep->length == 0)
-		return "null";
-	if (ep->class == EPD_IP && ep->length == 4) {
-		uint32_t addr;
-
-		GETLONG(addr, p);
-		slprintf(str, sizeof(str), "IP:%I", lwip_htonl(addr));
-		return str;
-	}
-
-	c = ':';
-	c2 = '.';
-	if (ep->class == EPD_MAC && ep->length == 6)
-		c2 = ':';
-	else if (ep->class == EPD_MAGIC && (ep->length % 4) == 0)
-		mask = 3;
-	q = str;
-	if (ep->class <= EPD_PHONENUM)
-		q += slprintf(q, sizeof(str)-1, "%s",
-			      endp_class_names[ep->class]);
-	else
-		q += slprintf(q, sizeof(str)-1, "%d", ep->class);
-	c = ':';
-	for (i = 0; i < ep->length && i < MAX_ENDP_LEN; ++i) {
-		if ((i & mask) == 0) {
-			*q++ = c;
-			c = c2;
-		}
-		q += slprintf(q, str + sizeof(str) - q, "%.2x", ep->value[i]);
-	}
-	return str;
-}
+// char *
+// epdisc_to_str(ep)
+//      struct epdisc *ep;
+// {
+// 	static char str[MAX_ENDP_LEN*3+8];
+// 	uint8_t *p = ep->value;
+// 	int i, mask = 0;
+// 	char *q, c, c2;
+//
+// 	if (ep->class == EPD_NULL && ep->length == 0)
+// 		return "null";
+// 	if (ep->class == EPD_IP && ep->length == 4) {
+// 		uint32_t addr;
+//
+// 		GETLONG(addr, p);
+// 		slprintf(str, sizeof(str), "IP:%I", lwip_htonl(addr));
+// 		return str;
+// 	}
+//
+// 	c = ':';
+// 	c2 = '.';
+// 	if (ep->class == EPD_MAC && ep->length == 6)
+// 		c2 = ':';
+// 	else if (ep->class == EPD_MAGIC && (ep->length % 4) == 0)
+// 		mask = 3;
+// 	q = str;
+// 	if (ep->class <= EPD_PHONENUM)
+// 		q += slprintf(q, sizeof(str)-1, "%s",
+// 			      endp_class_names[ep->class]);
+// 	else
+// 		q += slprintf(q, sizeof(str)-1, "%d", ep->class);
+// 	c = ':';
+// 	for (i = 0; i < ep->length && i < MAX_ENDP_LEN; ++i) {
+// 		if ((i & mask) == 0) {
+// 			*q++ = c;
+// 			c = c2;
+// 		}
+// 		q += slprintf(q, str + sizeof(str) - q, "%.2x", ep->value[i]);
+// 	}
+// 	return str;
+// }
 
 static int hexc_val(int c)
 {
@@ -551,69 +554,69 @@ static int hexc_val(int c)
 	return c - '0';
 }
 
-int
-str_to_epdisc(ep, str)
-     struct epdisc *ep;
-     char *str;
-{
-	int i, l;
-	char *p, *endp;
-
-	for (i = EPD_NULL; i <= EPD_PHONENUM; ++i) {
-		int sl = strlen(endp_class_names[i]);
-		if (strncasecmp(str, endp_class_names[i], sl) == 0) {
-			str += sl;
-			break;
-		}
-	}
-	if (i > EPD_PHONENUM) {
-		/* not a class name, try a decimal class number */
-		i = strtol(str, &endp, 10);
-		if (endp == str)
-			return 0;	/* can't parse class number */
-		str = endp;
-	}
-	ep->class = i;
-	if (*str == 0) {
-		ep->length = 0;
-		return 1;
-	}
-	if (*str != ':' && *str != '.')
-		return 0;
-	++str;
-
-	if (i == EPD_IP) {
-		uint32_t addr;
-		i = parse_dotted_ip(str, &addr);
-		if (i == 0 || str[i] != 0)
-			return 0;
-		set_ip_epdisc(ep, addr);
-		return 1;
-	}
-	if (i == EPD_MAC && get_if_hwaddr(ep->value, str) >= 0) {
-		ep->length = 6;
-		return 1;
-	}
-
-	p = str;
-	for (l = 0; l < MAX_ENDP_LEN; ++l) {
-		if (*str == 0)
-			break;
-		if (p <= str)
-			for (p = str; isxdigit(*p); ++p)
-				;
-		i = p - str;
-		if (i == 0)
-			return 0;
-		ep->value[l] = hexc_val(*str++);
-		if ((i & 1) == 0)
-			ep->value[l] = (ep->value[l] << 4) + hexc_val(*str++);
-		if (*str == ':' || *str == '.')
-			++str;
-	}
-	if (*str != 0 || (ep->class == EPD_MAC && l != 6))
-		return 0;
-	ep->length = l;
-	return 1;
-}
+// int
+// str_to_epdisc(ep, str)
+//      struct epdisc *ep;
+//      char *str;
+// {
+// 	int i, l;
+// 	char *p, *endp;
+//
+// 	for (i = EPD_NULL; i <= EPD_PHONENUM; ++i) {
+// 		int sl = strlen(endp_class_names[i]);
+// 		if (strncasecmp(str, endp_class_names[i], sl) == 0) {
+// 			str += sl;
+// 			break;
+// 		}
+// 	}
+// 	if (i > EPD_PHONENUM) {
+// 		/* not a class name, try a decimal class number */
+// 		i = strtol(str, &endp, 10);
+// 		if (endp == str)
+// 			return 0;	/* can't parse class number */
+// 		str = endp;
+// 	}
+// 	ep->class = i;
+// 	if (*str == 0) {
+// 		ep->length = 0;
+// 		return 1;
+// 	}
+// 	if (*str != ':' && *str != '.')
+// 		return 0;
+// 	++str;
+//
+// 	if (i == EPD_IP) {
+// 		uint32_t addr;
+// 		i = parse_dotted_ip(str, &addr);
+// 		if (i == 0 || str[i] != 0)
+// 			return 0;
+// 		set_ip_epdisc(ep, addr);
+// 		return 1;
+// 	}
+// 	if (i == EPD_MAC && get_if_hwaddr(ep->value, str) >= 0) {
+// 		ep->length = 6;
+// 		return 1;
+// 	}
+//
+// 	p = str;
+// 	for (l = 0; l < MAX_ENDP_LEN; ++l) {
+// 		if (*str == 0)
+// 			break;
+// 		if (p <= str)
+// 			for (p = str; isxdigit(*p); ++p)
+// 				;
+// 		i = p - str;
+// 		if (i == 0)
+// 			return 0;
+// 		ep->value[l] = hexc_val(*str++);
+// 		if ((i & 1) == 0)
+// 			ep->value[l] = (ep->value[l] << 4) + hexc_val(*str++);
+// 		if (*str == ':' || *str == '.')
+// 			++str;
+// 	}
+// 	if (*str != 0 || (ep->class == EPD_MAC && l != 6))
+// 		return 0;
+// 	ep->length = l;
+// 	return 1;
+// }
 

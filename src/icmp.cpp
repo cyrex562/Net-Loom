@@ -53,7 +53,7 @@ constexpr auto ICMP_DEST_UNREACH_DATA_SZ = 8; /**
  * @param p the icmp echo request packet, p->payload pointing to the icmp header
  * @param inp the netif on which this packet was received
  */
-void icmp_input(struct PacketBuffer* p, NetIfc* inp)
+void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     struct IcmpEchoHdr* iecho;
     const Ip4Addr* src;
@@ -61,7 +61,7 @@ void icmp_input(struct PacketBuffer* p, NetIfc* inp)
     const struct Ip4Hdr* iphdr_in = nullptr;
     IpAddr* curr_src_addr = nullptr;
     IpAddr* curr_dst_addr = nullptr;
-    NetIfc* curr_netif = nullptr;
+    NetworkInterface* curr_netif = nullptr;
     uint16_t hlen = get_ip4_hdr_hdr_len_bytes(iphdr_in);
     if (hlen < IP4_HDR_LEN)
     {
@@ -309,7 +309,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
             (uint8_t *)p->payload,
             IP4_HDR_LEN + ICMP_DEST_UNREACH_DATA_SZ);
     copy_ip4_addr(&iphdr_src, &iphdr->src);
-    NetIfc* netif = ip4_route(&iphdr_src);
+    NetworkInterface* netif = ip4_route(&iphdr_src);
     if (netif != nullptr)
     {
         /* calculate checksum */

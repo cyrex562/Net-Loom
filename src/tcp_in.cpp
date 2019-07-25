@@ -65,11 +65,11 @@ static void tcp_remove_sacks_gt(struct TcpProtoCtrlBlk *pcb, uint32_t seq);
  * @param p received TCP segment to process (p->payload pointing to the TCP header)
  * @param inp network interface on which this segment was received
  */
-void tcp_input(struct PacketBuffer* p, NetIfc* inp)
+void tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     IpAddr* curr_dst_addr = nullptr;
     IpAddr* curr_src_addr = nullptr;
-    NetIfc* curr_netif = nullptr;
+    NetworkInterface* curr_netif = nullptr;
     TcpPcb* pcb;
     TcpPcbListen* lpcb;
     TcpPcb* lpcb_prev = nullptr;
@@ -188,7 +188,7 @@ void tcp_input(struct PacketBuffer* p, NetIfc* inp)
         lwip_assert("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
 
         /* check if PCB is bound to specific netif */
-        NetIfc* curr_input_netif = nullptr;
+        NetworkInterface* curr_input_netif = nullptr;
         if ((pcb->netif_idx != NETIF_NO_INDEX) &&
             (pcb->netif_idx != netif_get_index(curr_input_netif))) {
             prev = pcb;
@@ -1310,7 +1310,7 @@ tcp_receive(struct TcpPcb *pcb)
       lwip_assert("inseg.p != NULL", inseg.p);
       lwip_assert("insane offset!", (off32 < 0xffff));
       uint16_t off = (uint16_t)off32;
-      lwip_assert("PacketBuffer too short!", (((s32_t)inseg.p->tot_len) >= off));
+      lwip_assert("PacketBuffer too short!", (((int32_t)inseg.p->tot_len) >= off));
       inseg.len -= off;
       uint16_t new_tot_len = (uint16_t)(inseg.p->tot_len - off);
       while (p->len < off) {

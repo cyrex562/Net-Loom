@@ -241,7 +241,7 @@ inline void pbuf_check_free_ooseq()
 /* Initializes the pbuf module. This call is empty for now, but may not be in future. */
 #define pbuf_init()
 
-struct PacketBuffer *pbuf_alloc(PbufLayer l, size_t length);
+struct PacketBuffer *pbuf_alloc(PbufLayer layer, size_t length);
 struct PacketBuffer *pbuf_alloc_reference(uint8_t* payload, const size_t length, PbufType type);
 
 struct PacketBuffer *pbuf_alloced_custom(PbufLayer l, uint16_t length, PbufType type,
@@ -299,8 +299,8 @@ uint16_t pbuf_copy_partial(const struct PacketBuffer* pbuf,
 uint8_t* pbuf_get_contiguous(const struct PacketBuffer* p,
                              uint8_t* buffer,
                              size_t bufsize,
-                             uint16_t len,
-                             uint16_t offset);
+                             size_t len,
+                             size_t offset);
 
 LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, size_t len);
 

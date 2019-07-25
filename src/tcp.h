@@ -266,7 +266,7 @@ constexpr auto TF_SACK = 0x1000U; /* Selective ACKs enabled */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
-        NetIfc* netif_hints; /** Protocol specific PCB members */
+        NetworkInterface* netif_hints; /** Protocol specific PCB members */
         TcpPcbListen* next; /* for the linked list */
         void* callback_arg;
         TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
@@ -289,7 +289,7 @@ constexpr auto TF_SACK = 0x1000U; /* Selective ACKs enabled */
         uint8_t so_options; /* Type Of Service */
         uint8_t tos; /* Time To Live */
         uint8_t ttl;
-        NetIfc* netif_hints; /** protocol specific PCB members */
+        NetworkInterface* netif_hints; /** protocol specific PCB members */
         TcpPcb* next; /* for the linked list */
         void* callback_arg;
         TcpPcbExtArgs ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
@@ -452,7 +452,7 @@ inline unsigned int RCV_WND_SCALE(TcpPcb* pcb, const unsigned int wnd)
 
     void tcp_recved(struct TcpPcb* pcb, uint16_t len);
     LwipStatus tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port);
-    void tcp_bind_netif(struct TcpPcb* pcb, const NetIfc** netif);
+    void tcp_bind_netif(struct TcpPcb* pcb, const NetworkInterface** netif);
     LwipStatus tcp_connect(struct TcpPcb* pcb,
                            const IpAddr* ipaddr,
                            uint16_t port,

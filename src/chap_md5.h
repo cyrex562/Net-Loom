@@ -3,7 +3,7 @@
 #include "chap_new.h"
 
 struct PppPcb;
-constexpr auto kMd5HashSize = 16;
+constexpr auto MD5_HASH_SIZE = 16;
 constexpr uint32_t kMd5MinChallenge = 17;
 constexpr auto kMd5MaxChallenge = 24;
 constexpr auto kMd5MinMaxPowerOfTwoChallenge = 3   /* 2^3-1 = 7, 17+7 = 24 */;

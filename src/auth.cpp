@@ -63,7 +63,7 @@ void link_terminated(PppPcb* pcb)
 /*
  * LCP has gone down; it will either die or try to re-establish.
  */
-void link_down(PppPcb* pcb, Protent** protocols)
+void link_down(PppPcb* pcb)
 {
     // notify(link_down_notifier, 0);
     if (!doing_multilink)
@@ -98,7 +98,7 @@ bool upper_layers_down(PppPcb* pcb)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-bool link_established(PppPcb* pcb, bool auth_required)
+bool link_established(PppPcb* pcb, bool auth_required=false)
 {
     auto wo = &pcb->lcp_wantoptions;
     auto go = &pcb->lcp_gotoptions;

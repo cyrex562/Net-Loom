@@ -64,7 +64,7 @@
 /*
  * Protocol entry points from main code.
  */
-void ecp_init (int unit);
+void ecp_init (PppPcb* unit);
 bool ecp_open(PppPcb* ppp_pcb, int unit);
 void ecp_close (int unit, char *);
 void ecp_lowerup (int unit);
@@ -101,13 +101,13 @@ EcpOptions ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
 /*
  * ecp_init - initialize ECP.
  */
-static void ecp_init(int unit)
+static void ecp_init(PppPcb* unit)
 {
-    auto f = &ecp_fsm[unit];
-    f->unit = unit;
-    f->protocol = PPP_ECP;
-    // f->callbacks = &ecp_callbacks;
-    fsm_init(f);
+    // auto f = &ecp_fsm[unit];
+    // f->unit = unit;
+    // f->protocol = PPP_ECP;
+    // // f->callbacks = &ecp_callbacks;
+    // fsm_init(f);
 }
 
 bool ecp_open(PppPcb* ppp_pcb, int unit)

@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+#include "fsm.h"
 
 /*
  * Options.
@@ -18,20 +20,15 @@ constexpr auto IPCP_VJMODE_RFC1332 = 3	/* "new-rfc"mode (option # = 0x002d, */;
 constexpr auto IPCP_VJ_COMP = 0x002d	/* current value for VJ compression option*/;
 constexpr auto IPCP_VJ_COMP_OLD = 0x0037	/* "old" (i.e, broken) value for VJ */;
 				/* compression option*/ 
-struct IpcpOptions
-{
-    unsigned int neg_addr :1; /* Negotiate IP Address? */
-    unsigned int old_addrs :1; /* Use old (IP-Addresses) option? */
-    unsigned int req_addr :1; /* Ask peer to send IP address? */
-    unsigned int neg_vj :1; /* Van Jacobson Compression? */
-    unsigned int old_vj :1; /* use old (short) form of VJ option? */
-    unsigned int cflag :1;
-    unsigned int accept_local :1; /* accept peer's value for ouraddr */
-    unsigned int accept_remote :1; /* accept peer's value for hisaddr */
-    unsigned int req_dns1 :1; /* Ask peer to send primary DNS address? */
-    unsigned int req_dns2 :1; /* Ask peer to send secondary DNS address? */
-    uint32_t ouraddr, hisaddr; /* Addresses in NETWORK BYTE ORDER */
-    uint32_t dnsaddr[2]; /* Primary and secondary MS DNS entries */
-    uint16_t vj_protocol; /* protocol value to use in VJ option */
-    uint8_t maxslotindex; /* values for RFC1332 VJ compression neg. */
-};
+
+
+static void ipcp_resetci(Fsm *f);	/* Reset our CI */
+static int  ipcp_cilen(Fsm *f);	        /* Return length of our CI */
+static void ipcp_addci(Fsm *f, uint8_t *ucp, int *lenp); /* Add our CI */
+static int  ipcp_ackci(Fsm *f, uint8_t *p, int len);	/* Peer ack'd our CI */
+static int  ipcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject);/* Peer nak'd our CI */
+static int  ipcp_rejci(Fsm *f, uint8_t *p, int len);	/* Peer rej'd our CI */
+static int  ipcp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree); /* Rcv CI */
+static void ipcp_up(Fsm *f);		/* We're UP */
+static void ipcp_down(Fsm *f);		/* We're DOWN */
+static void ipcp_finished(Fsm *f);	/* Don't need lower layer */

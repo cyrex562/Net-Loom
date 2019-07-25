@@ -7,7 +7,7 @@
 
 /// Global data for both IPv4 and IPv6 */
 /// todo: get rid of this garbage
-struct IpGlobals ip_data;
+// struct IpGlobals ip_data;
 
 // const IpAddr IP_ADDR_ANY_TYPE = kIpAddrAnyType();
 
@@ -28,7 +28,7 @@ char *ipaddr_ntoa(const IpAddr *addr)
   if (is_ip_addr_v6(addr)) {
     return ip6addr_ntoa(&addr->u_addr.ip6);
   } else {
-    return ip4addr_ntoa(convert_ip_addr_to_ip4_addr(addr));
+    return lwip_ip4addr_ntoa(convert_ip_addr_to_ip4_addr(addr));
   }
 }
 
@@ -50,7 +50,7 @@ char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
   if (is_ip_addr_v6(addr)) {
     return ip6addr_ntoa_r(&addr->u_addr.ip6, buf, buflen);
   } else {
-    return ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf, buflen);
+    return lwip_ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf, buflen);
   }
 }
 
@@ -84,7 +84,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
     if (addr) {
       set_ip_addr_type_val(*addr, IPADDR_TYPE_V4);
     }
-    return ip4addr_aton(cp, &addr->u_addr.ip4);
+    return lwip_ip4addr_aton(cp, &addr->u_addr.ip4);
   }
   return 0;
 }
@@ -95,7 +95,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
  * Don't call directly, pass to netif_add() and call netif->input().
  */
 LwipStatus
-ip_input(struct PacketBuffer *p, NetIfc*inp)
+ip_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
   if (p != nullptr) {
     if (get_ip_hdr_version(p->payload) == 6) {

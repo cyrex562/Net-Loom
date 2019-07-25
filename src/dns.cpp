@@ -201,7 +201,7 @@ static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_A
 
 
 /* forward declarations */
-static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetIfc*
+static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetworkInterface*
                      netif);
 static void dns_check_entries(void);
 static void dns_call_found(uint8_t idx, IpAddr *addr);
@@ -1046,7 +1046,7 @@ static void dns_recv(void* arg,
                      struct PacketBuffer* p,
                      const IpAddr* addr,
                      uint16_t port,
-                     NetIfc* netif)
+                     NetworkInterface* netif)
 {
     struct DnsHdr hdr;
     struct DnsAnswer ans;

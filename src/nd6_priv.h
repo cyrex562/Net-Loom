@@ -58,7 +58,7 @@ struct nd6_q_entry {
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
   Ip6Addr next_hop_address;
-  NetIfc*netif;
+  NetworkInterface*netif;
   uint8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*uint32_t pmtu;*/
 
@@ -84,7 +84,7 @@ struct nd6_destination_cache_entry {
 
 struct nd6_prefix_list_entry {
   Ip6Addr prefix;
-  NetIfc*netif;
+  NetworkInterface*netif;
   uint32_t invalidation_timer; /* in seconds */
 };
 

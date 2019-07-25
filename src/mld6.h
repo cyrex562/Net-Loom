@@ -40,6 +40,7 @@
  * <delamer@inicotech.com>
  */
 #pragma once
+#include <ip6_addr.h>
 #include <opt.h>
 
 
@@ -47,46 +48,48 @@
  /** Multicast listener report/query/done message header. */
 
 
-struct mld_header {
+struct MldHeader
+{
     uint8_t type;
     uint8_t code;
     uint16_t chksum;
     uint16_t max_resp_delay;
-   uint16_t reserved;
+    uint16_t reserved;
     Ip6Addr multicast_address;
     /* Options follow. */
-} ;
+};
 
 #include <packet_buffer.h>
 #include <netif.h>
 
 /** MLD group */
-struct mld_group {
-  /** next link */
-  struct mld_group *next;
-  /** multicast address */
-  Ip6Addr         group_address;
-  /** signifies we were the last person to report */
-  uint8_t               last_reporter_flag;
-  /** current state of the group */
-  uint8_t               group_state;
-  /** timer for reporting */
-  uint16_t              timer;
-  /** counter of simultaneous uses */
-  uint8_t               use;
+struct MldGroup
+{
+    /** next link */
+    struct MldGroup* next;
+    /** multicast address */
+    Ip6Addr group_address;
+    /** signifies we were the last person to report */
+    uint8_t last_reporter_flag;
+    /** current state of the group */
+    uint8_t group_state;
+    /** timer for reporting */
+    uint16_t timer;
+    /** counter of simultaneous uses */
+    uint8_t use;
 };
 
-#define MLD6_TMR_INTERVAL              100 /* Milliseconds */
+constexpr auto MLD6_TMR_INTERVAL = 100 /* Milliseconds */;
 
-LwipStatus  mld6_stop(NetIfc*netif);
-void   mld6_report_groups(NetIfc*netif);
+LwipStatus  mld6_stop(NetworkInterface*netif);
+void   mld6_report_groups(NetworkInterface*netif);
 void   mld6_tmr(void);
-struct mld_group *mld6_lookfor_group(NetIfc*ifp, const Ip6Addr *addr);
-void   mld6_input(struct PacketBuffer *pkt_buf, NetIfc*in_netif);
+struct MldGroup *mld6_lookfor_group(NetworkInterface*ifp, const Ip6Addr *addr);
+void   mld6_input(struct PacketBuffer *pkt_buf, NetworkInterface*in_netif);
 LwipStatus  mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
-LwipStatus  mld6_joingroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
+LwipStatus  mld6_joingroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr);
 LwipStatus  mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
-LwipStatus  mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
+LwipStatus  mld6_leavegroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr);
 
 /** @ingroup mld6
  * Get list head of MLD6 groups for netif.
@@ -94,5 +97,5 @@ LwipStatus  mld6_leavegroup_netif(NetIfc*netif, const Ip6Addr *groupaddr);
  * be received for correct IPv6 operation.
  * @see @ref netif_set_mld_mac_filter()
  */
-#define netif_mld6_data(netif) ((struct mld_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6))
+
 

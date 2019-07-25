@@ -2,7 +2,18 @@
 
 #pragma once
 
+#include <cstdint>
+#include "fsm.h"
+
 struct PppPcb;
+
+/*
+ * When the link comes up we want to be able to wait for a short while,
+ * or until seeing some input from the peer, before starting to send
+ * configure-requests.  We do this by delaying the fsm_lowerup call.
+ */
+/* steal a bit in fsm flags word */
+constexpr auto DELAYED_UP = 0x80;
 
 /*
  * Options.
@@ -86,11 +97,54 @@ struct LcpOptions
     struct Epdisc endpoint; /* endpoint discriminator */
 };
 
+/*
+ * Length of each type of configuration option (in octets)
+ */
+// #define CILEN_VOID	2
+#define CILEN_CHAR	3
+#define CILEN_SHORT	4	/* CILEN_VOID + 2 */
+
+#define CILEN_CHAP	5	/* CILEN_VOID + 2 + 1 */
+
+#define CILEN_LONG	6	/* CILEN_VOID + 4 */
+
+#define CILEN_LQR	8	/* CILEN_VOID + 2 + 4 */
+
+#define CILEN_CBCP	3
+
+#define CODENAME(x)	((x) == CONFACK ? "ACK" : \
+			 (x) == CONFNAK ? "NAK" : "REJ")
+
 void lcp_open(PppPcb *pcb);
 void lcp_close(PppPcb *pcb, const char *reason);
 void lcp_lowerup(PppPcb *pcb);
 void lcp_lowerdown(PppPcb *pcb);
 void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len);    /* send protocol reject */
+void lcp_delayed_up(void* arg);
+// int setendpoint (char **);
+void lcp_resetci(Fsm *f);	/* Reset our CI */
+int  lcp_cilen(Fsm *f);		/* Return length of our CI */
+void lcp_addci(Fsm *f, uint8_t *ucp, int *lenp); /* Add our CI to pkt */
+int  lcp_ackci(Fsm *f, uint8_t *p, int len); /* Peer ack'd our CI */
+int  lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject); /* Peer nak'd our CI */
+int  lcp_rejci(Fsm *f, uint8_t *p, int len); /* Peer rej'd our CI */
+int  lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree); /* Rcv peer CI */
+void lcp_up(Fsm *f);		/* We're UP */
+void lcp_down(Fsm *f);		/* We're DOWN */
+void lcp_starting (Fsm *);	/* We need lower layer up */
+void lcp_finished (Fsm *);	/* We need lower layer down */
+int  lcp_extcode(Fsm *f, int code, int id, uint8_t *inp, int len);
+void lcp_rprotrej(Fsm *f, uint8_t *inp, int len);
+void lcp_echo_lowerup(PppPcb *pcb);
+void lcp_echo_lower_down(PppPcb *pcb, Fsm* f);
+void lcp_echo_timeout(void* arg);
+void lcp_received_echo_reply(Fsm *f, int id, uint8_t *inp, int len);
+void lcp_send_echo_request(Fsm *f);
+void lcp_link_failure(Fsm *f);
+void lcp_echo_check(Fsm *f);
+void lcp_init(PppPcb *pcb);
+void lcp_input(PppPcb *pcb, uint8_t *p, int len);
+void lcp_protrej(PppPcb *pcb);
 
 extern const struct Protent kLcpProtent;
 

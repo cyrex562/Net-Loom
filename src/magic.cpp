@@ -188,7 +188,7 @@ uint32_t magic(void) {
   return new_rand;
 }
 
-#else /* PPP_MD5_RANDM */
+
 
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/

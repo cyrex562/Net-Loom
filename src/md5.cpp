@@ -39,8 +39,8 @@
  */
 
 #include <ppp_opts.h>
-#include <polarssl/md5.h>
-#include <string.h>
+#include <md5.h>
+#include <cstring>
 
 /*
  * 32-bit integer manipulation macros (little endian)

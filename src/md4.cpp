@@ -39,8 +39,10 @@
  *  http://www.ietf.org/rfc/rfc1320.txt
  */
 
+#include "md4.h"
 #include <ppp_opts.h>
-#include <string.h>
+#include <cstring>
+
 
 /*
  * 32-bit integer manipulation macros (little endian)

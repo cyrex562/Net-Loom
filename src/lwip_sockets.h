@@ -61,42 +61,42 @@ typedef uint16_t LwipInPort;
 constexpr auto SIN_ZERO_LEN = 8;
 
 /* members are in network byte order */
-struct LwipSockaddrSockaddrIn
-{
-    uint8_t sin_len;
-    LwipSaFamily sin_family;
-    LwipInPort sin_port;
-    LwipInAddrStruct sin_addr;
-    char sin_zero[SIN_ZERO_LEN];
-};
+// struct LwipSockaddrSockaddrIn
+// {
+//     uint8_t _sin_len;
+//     LwipSaFamily _sin_family;
+//     LwipInPort _sin_port;
+//     LwipInAddrStruct __sin_addr;
+//     char _sin_zero[SIN_ZERO_LEN];
+// };
 
 
-struct LwipSockaddrIn6
-{
-    uint8_t sin6_len; /* length of this structure    */
-    LwipSaFamily sin6_family; /* AF_INET6                    */
-    LwipInPort sin6_port; /* Transport layer port #      */
-    uint32_t sin6_flowinfo; /* IPv6 flow information       */
-    LwipIn6Addr sin6_addr; /* IPv6 address                */
-    uint32_t sin6_scope_id; /* Set of interfaces for scope */
-};
+// struct LwipSockaddrIn6
+// {
+//     uint8_t _sin6_len; /* length of this structure    */
+//     LwipSaFamily _sin6_family; /* AF_INET6                    */
+//     LwipInPort _sin6_port; /* Transport layer port #      */
+//     uint32_t _sin6_flowinfo; /* IPv6 flow information       */
+//     LwipIn6Addr _sin6_addr; /* IPv6 address                */
+//     uint32_t _sin6_scope_id; /* Set of interfaces for scope */
+// };
 
 
 struct LwipSockaddr
 {
-    uint8_t sa_len;
-    LwipSaFamily sa_family;
-    char sa_data[14];
+    uint8_t _sa_len;
+    LwipSaFamily _sa_family;
+    char _sa_data[14];
 };
 
-struct LwipSockaddrStorage
-{
-    uint8_t s2_len;
-    LwipSaFamily ss_family;
-    char s2_data1[2];
-    uint32_t s2_data2[3];
-    uint32_t s2_data3[3];
-};
+// struct LwipSockaddrStorage
+// {
+//     uint8_t _s2_len;
+//     LwipSaFamily _ss_family;
+//     char _s2_data1[2];
+//     uint32_t _s2_data2[3];
+//     uint32_t _s2_data3[3];
+// };
 
 /* If your port already typedef's LwipSocklen, define SOCKLEN_T_DEFINED
    to prevent this code from redefining it. */
@@ -302,18 +302,18 @@ struct LwipLinger
 #define LWIP_IP_ADD_MEMBERSHIP  3
 #define LWIP_IP_DROP_MEMBERSHIP 4
 
-struct LwipIpMreq
-{
-    struct LwipInAddrStruct imr_multiaddr; /* IP multicast address of group */
-    struct LwipInAddrStruct imr_interface; /* local IP address of interface */
-};
+// struct LwipIpMreq
+// {
+//     struct LwipInAddrStruct imr_multiaddr; /* IP multicast address of group */
+//     struct LwipInAddrStruct imr_interface; /* local IP address of interface */
+// };
 
 
-struct LwipInPktInfo
-{
-    unsigned int ipi_ifindex; /* Interface index */
-    struct LwipInAddrStruct ipi_addr; /* Destination (from header) address */
-};
+// struct LwipInPktInfo
+// {
+//     unsigned int ipi_ifindex; /* Interface index */
+//     struct LwipInAddrStruct ipi_addr; /* Destination (from header) address */
+// };
 
 
 /*
@@ -324,11 +324,11 @@ constexpr auto LWIP_IPV6_JOIN_GROUP = 12;
 constexpr auto LWIP_IPV6_LEAVE_GROUP = 13;
 #define LWIP_IPV6_DROP_MEMBERSHIP LWIP_IPV6_LEAVE_GROUP
 
-struct LwipIpv6Mreq
-{
-    struct LwipIn6Addr ipv6_mr_multiaddr; /*  IPv6 multicast addr */
-    unsigned int ipv6_mr_interface; /*  interface index, or 0 */
-};
+// struct LwipIpv6Mreq
+// {
+//     struct LwipIn6Addr ipv6_mr_multiaddr; /*  IPv6 multicast addr */
+//     unsigned int ipv6_mr_interface; /*  interface index, or 0 */
+// };
 
 
 /*

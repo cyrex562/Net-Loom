@@ -35,7 +35,7 @@ struct tcpip_msg
         struct
         {
             struct PacketBuffer* p;
-            NetIfc* netif;
+            NetworkInterface* netif;
             NetifInputFn input_fn;
         } inp;
 

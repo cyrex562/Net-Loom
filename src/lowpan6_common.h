@@ -41,16 +41,11 @@
 
 #pragma once
 
-#include <lowpan6_opts.h>
 #include <packet_buffer.h>
 #include <ip.h>
 #include <ip6_addr.h>
 #include <netif.h>
 #include <cstdint>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** Helper define for a link layer address, which can be encoded as 0, 2 or 8 bytes */
 struct Lowpan6LinkAddr {
@@ -62,7 +57,7 @@ struct Lowpan6LinkAddr {
 
 int8_t lowpan6_get_address_mode(const Ip6Addr* ip6addr,
                                 const struct Lowpan6LinkAddr* mac_addr);
-LwipStatus lowpan6_compress_headers(NetIfc** netif,
+LwipStatus lowpan6_compress_headers(NetworkInterface* netif,
                                uint8_t* inbuf,
                                size_t inbuf_size,
                                uint8_t* outbuf,
@@ -77,8 +72,3 @@ struct PacketBuffer* lowpan6_decompress(struct PacketBuffer* p,
                                 Ip6Addr* lowpan6_contexts,
                                 struct Lowpan6LinkAddr* src,
                                 struct Lowpan6LinkAddr* dest);
-
-
-#ifdef __cplusplus
-}
-#endif

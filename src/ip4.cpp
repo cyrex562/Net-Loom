@@ -18,7 +18,7 @@
  * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
  * Source-based routing for IPv4 - called from ip_route() (IPv4)
  * Signature:\code{.c}
- *   NetIfc*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
+ *   NetworkInterface*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
  * \endcode
  * Arguments:
  * - src: local/source IPv4 address
@@ -27,7 +27,7 @@
  * - the destination netif
  * - NULL if no destination netif is found. In that case, ip_route() continues as normal.
  */
-inline NetIfc* hook_ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
+inline NetworkInterface* hook_ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
 {
     return nullptr;
 }
@@ -54,12 +54,12 @@ inline bool ip_accept_link_layer_addressed_port(const uint16_t port)
 
 /** The IP header ID of the next outgoing IP packet */
 static uint16_t ip_id; /** The default netif used for multicast */
-static NetIfc* ip4_default_multicast_netif;
+static NetworkInterface* ip4_default_multicast_netif;
 
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
-void ip4_set_default_multicast_netif(NetIfc* default_multicast_netif)
+void ip4_set_default_multicast_netif(NetworkInterface* default_multicast_netif)
 {
     ip4_default_multicast_netif = default_multicast_netif;
 }
@@ -68,12 +68,12 @@ void ip4_set_default_multicast_netif(NetIfc* default_multicast_netif)
  * Source based IPv4 routing must be fully implemented in
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
-NetIfc* ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
+NetworkInterface* ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
 {
     if (src != nullptr)
     {
         /* when src==NULL, the hook is called from ip4_route(dest) */
-        NetIfc* netif = hook_ip4_route_src(src, dest);
+        NetworkInterface* netif = hook_ip4_route_src(src, dest);
         if (netif != nullptr)
         {
             return netif;
@@ -91,9 +91,9 @@ NetIfc* ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
  * @param dest the destination IP address for which to find the route
  * @return the netif on which to send to reach dest
  */
-NetIfc* ip4_route(const Ip4Addr* dest)
+NetworkInterface* ip4_route(const Ip4Addr* dest)
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
     
     /* Use administratively selected interface for multicast by default */
     if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif)
@@ -216,9 +216,9 @@ ip4_canforward(struct PacketBuffer *p)
  * @param inp the netif on which this packet was received
  */
 static void
-ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetIfc* inp)
+ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetworkInterface* inp)
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
     Ip4Addr* curr_dst_addr = nullptr;
     Ip4Addr* curr_src_addr = nullptr;
 
@@ -305,7 +305,7 @@ ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetIfc* inp)
 
 /** Return true if the current input packet should be accepted on this netif */
 static int
-ip4_input_accept(NetIfc* netif)
+ip4_input_accept(NetworkInterface* netif)
 {
     Ip4Addr* curr_dst_addr = nullptr;
     Ip4Addr* curr_src_addr = nullptr;
@@ -360,10 +360,10 @@ ip4_input_accept(NetIfc* netif)
  *         processed, but currently always returns ERR_OK)
  */
 LwipStatus
-ip4_input(struct PacketBuffer *p, NetIfc*inp)
+ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
   const struct Ip4Hdr *iphdr;
-  NetIfc*netif;
+  NetworkInterface*netif;
   uint16_t iphdr_hlen;
   uint16_t iphdr_len;
   int check_ip_src = 1;
@@ -482,7 +482,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
    * If you want to accept private broadcast communication while a netif is down,
    * define LWIP_IP_ACCEPT_UDP_PORT(dst_port), e.g.:
    *
-   * #define LWIP_IP_ACCEPT_UDP_PORT(dst_port) ((dst_port) == PP_NTOHS(12345))
+   * #define LWIP_IP_ACCEPT_UDP_PORT(dst_port) ((dst_port) == pp_ntohs(12345))
    */
   if (netif == nullptr) {
       /* remote port is DHCP server? */
@@ -668,7 +668,7 @@ ip4_input(struct PacketBuffer *p, NetIfc*inp)
 LwipStatus
 ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
               uint8_t ttl, uint8_t tos,
-              uint8_t proto, NetIfc*netif)
+              uint8_t proto, NetworkInterface*netif)
 {
   return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
 }
@@ -686,7 +686,7 @@ ip4_output_if_opt(struct PacketBuffer* p,
                   uint8_t ttl,
                   uint8_t tos,
                   uint8_t proto,
-                  NetIfc* netif,
+                  NetworkInterface* netif,
                   uint8_t* ip_options,
                   uint16_t optlen)
 {
@@ -720,7 +720,7 @@ ip4_output_if_opt(struct PacketBuffer* p,
                     uint8_t ttl,
                     uint8_t tos,
                     uint8_t proto,
-                    NetIfc*netif)
+                    NetworkInterface*netif)
   {
 
   return ip4_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, nullptr, 0);
@@ -732,7 +732,7 @@ ip4_output_if_opt(struct PacketBuffer* p,
  */
 LwipStatus
 ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-                      uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif, uint8_t *ip_options,
+                      uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif, uint8_t *ip_options,
                       uint16_t optlen)
 {
       struct Ip4Hdr *iphdr;
@@ -910,7 +910,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
              uint8_t tos,
              uint8_t proto)
   {
-      NetIfc*netif;
+      NetworkInterface*netif;
 
       // LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
@@ -953,7 +953,7 @@ ip4_output_hinted(struct PacketBuffer* p,
                   uint8_t proto,
                   NetIfcHint* netif_hint)
 {
-    NetIfc* netif;
+    NetworkInterface* netif;
 
     // LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 

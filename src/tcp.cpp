@@ -752,7 +752,7 @@ tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
  * @param netif the netif to bind to. Can be NULL.
  */
 void
-tcp_bind_netif(struct TcpPcb* pcb, const NetIfc* netif)
+tcp_bind_netif(struct TcpPcb* pcb, const NetworkInterface* netif)
 {
    
     if (netif != nullptr)
@@ -1068,7 +1068,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
                        const uint16_t port,
                        const tcp_connected_fn connected)
 {
-    NetIfc* netif = nullptr;
+    NetworkInterface* netif = nullptr;
     Logf(true, "tcp_connect to port %d\n", port);
     set_ip_addr(&pcb->remote_ip, ipaddr);
     pcb->remote_port = port;
@@ -2296,7 +2296,7 @@ tcp_next_iss(struct TcpPcb* pcb)
  * netif (if not NULL).
  */
 uint16_t
-tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc* outif, const IpAddr* dest)
+tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddr* dest)
 {
     uint16_t mtu;; /* in case IPv6 is disabled */
 

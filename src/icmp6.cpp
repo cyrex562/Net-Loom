@@ -34,7 +34,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
                                                      uint8_t type,
                                                      const Ip6Addr* src_addr,
                                                      const Ip6Addr* dest_addr,
-                                                     NetIfc* netif);
+                                                     NetworkInterface* netif);
 
 ///
 /// Process an input ICMPv6 message. Called by ip6_input.
@@ -45,7 +45,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
 /// p: the mld packet, p->payload pointing to the icmpv6 header
 /// inp: the netif on which this packet was received
 ///
-void icmp6_input(struct PacketBuffer* p, NetIfc* inp)
+void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     struct PacketBuffer* r;
     const Ip6Addr* reply_src; /* Check that ICMPv6 header fits in payload */
@@ -239,7 +239,7 @@ static void icmp6_send_response(struct PacketBuffer* p,
                                 uint32_t data,
                                 uint8_t type)
 {
-    NetIfc* netif = nullptr;
+    NetworkInterface* netif = nullptr;
     lwip_assert("icmpv6 packet not a direct response", netif != nullptr);
     const Ip6Addr* reply_dest = nullptr; /* Select an address to use as source. */
     Ip6Addr reply_src = ip6_select_source_address(netif, reply_dest)->u_addr.ip6;
@@ -285,7 +285,7 @@ static void icmp6_send_response_with_addrs(struct PacketBuffer* p,
     ip6_addr_zonecheck(dest_addr); /* Swap source and destination for the reply. */
     auto reply_dest = src_addr;
     auto reply_src = dest_addr;
-    NetIfc* netif = ip6_route(reply_src, reply_dest);
+    NetworkInterface* netif = ip6_route(reply_src, reply_dest);
     if (netif == nullptr)
     {
         return;
@@ -315,7 +315,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
                                                      uint8_t type,
                                                      const Ip6Addr* reply_src,
                                                      const Ip6Addr* reply_dest,
-                                                     NetIfc* netif)
+                                                     NetworkInterface* netif)
 {
     struct PacketBuffer* q;
     struct Icmp6Hdr* icmp6hdr; /* ICMPv6 header + IPv6 header + data */

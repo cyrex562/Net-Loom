@@ -37,6 +37,10 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
+#include "magic.h"
+#include "lwip_inet.h"
+
 
 /*
  * @todo:
@@ -48,44 +52,99 @@ union Eui64
     uint8_t e8[8];
     uint16_t e16[4];
     uint32_t e32[2];
-} ;
+};
 
-#define eui64_iszero(e)		(((e).e32[0] | (e).e32[1]) == 0)
-#define eui64_equals(e, o)	(((e).e32[0] == (o).e32[0]) && \
-				((e).e32[1] == (o).e32[1]))
-#define eui64_zero(e)		(e).e32[0] = (e).e32[1] = 0;
 
-#define eui64_copy(s, d)	memcpy(&(d), &(s), sizeof(Eui64T))
+inline bool
+eui64_iszero(Eui64 e)
+{
+    return (((e).e32[0] | (e).e32[1]) == 0);
+}
 
-#define eui64_magic(e)		do {			\
-				(e).e32[0] = magic();	\
-				(e).e32[1] = magic();	\
-				(e).e8[0] &= ~2;	\
-				} while (0)
-#define eui64_magic_nz(x)	do {				\
-				eui64_magic(x);			\
-				} while (eui64_iszero(x))
-#define eui64_magic_ne(x, y)	do {				\
-				eui64_magic(x);			\
-				} while (eui64_equals(x, y))
 
-#define eui64_get(ll, cp)	do {				\
-				eui64_copy((*cp), (ll));	\
-				(cp) += sizeof(eui64_t);	\
-				} while (0)
+inline bool
+eui64_equals(Eui64 e, Eui64 o)
+{
+    return (((e).e32[0] == (o).e32[0]) &&
+        ((e).e32[1] == (o).e32[1]));
+}
 
-#define eui64_put(ll, cp)	do {				\
-				eui64_copy((ll), (*cp));	\
-				(cp) += sizeof(eui64_t);	\
-				} while (0)
 
-#define eui64_set32(e, l)	do {			\
-				(e).e32[0] = 0;		\
-				(e).e32[1] = lwip_htonl(l);	\
-				} while (0)
-#define eui64_setlo32(e, l)	eui64_set32(e, l)
+inline void
+eui64_zero(Eui64& e)
+{
+    (e).e32[0] = (e).e32[1] = 0;
+}
 
-char *eui64_ntoa(Eui64);	/* Returns ascii representation of id */
+
+inline void
+eui64_copy(Eui64* s, Eui64* d)
+{
+    memcpy(d, s, sizeof(Eui64));
+}
+
+
+inline void
+eui64_magic(Eui64& e)
+{
+    (e).e32[0] = magic();
+    (e).e32[1] = magic();
+    (e).e8[0] &= ~2;
+}
+
+
+inline void
+eui64_magic_nz(Eui64& x)
+{
+    do {
+        eui64_magic(x);
+    }
+    while (eui64_iszero(x));
+}
+
+
+inline void
+eui64_magic_ne(Eui64& x, Eui64& y)
+{
+    do {
+        eui64_magic(x);
+    }
+    while (eui64_equals(x, y));
+}
+
+
+inline void
+eui64_get(Eui64* ll, Eui64* cp)
+{
+    eui64_copy((cp), (ll));
+    (cp) += sizeof(Eui64);
+}
+
+
+inline void
+eui64_put(Eui64* ll, Eui64* cp)
+{
+    eui64_copy((ll), (cp));
+    (cp) += sizeof(Eui64);
+}
+
+
+inline void
+eui64_set32(Eui64& e, uint32_t l)
+{
+    (e).e32[0] = 0;
+    (e).e32[1] = lwip_htonl(l);
+}
+
+
+inline void
+eui64_setlo32(Eui64& e, uint32_t l)
+{
+    eui64_set32(e, l);
+}
+
+
+char* eui64_ntoa(Eui64); /* Returns ascii representation of id */
 
 //
 // END OF FILE

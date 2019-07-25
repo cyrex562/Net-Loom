@@ -76,7 +76,7 @@ void             tcp_fasttmr ();
 void             tcp_txnow   ();
 
 /* Only used by IP to pass a TCP segment to TCP: */
-void             tcp_input   (struct PacketBuffer *p, NetIfc*inp);
+void             tcp_input   (struct PacketBuffer *p, NetworkInterface*inp);
 /* Used within the TCP code only: */
 struct TcpPcb * tcp_alloc   (uint8_t prio);
 void             tcp_free    (struct TcpPcb *pcb);
@@ -534,7 +534,7 @@ LwipStatus tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split);
 LwipStatus tcp_zero_window_probe(struct TcpPcb *pcb);
 void  tcp_trigger_input_pcb_close();
 
-uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetIfc*outif,
+uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface*outif,
                              const IpAddr *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)

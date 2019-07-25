@@ -134,17 +134,17 @@ inline bool ip_init()
     return true;
 }
 
-NetIfc*ip4_route(const Ip4Addr *dest);
+NetworkInterface*ip4_route(const Ip4Addr *dest);
 
-NetIfc*ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
+NetworkInterface*ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
 
-LwipStatus ip4_input(struct PacketBuffer *p, NetIfc*inp);
+LwipStatus ip4_input(struct PacketBuffer *p, NetworkInterface*inp);
 LwipStatus ip4_output(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto);
 LwipStatus ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif);
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif);
 LwipStatus ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetIfc*netif);
+       uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif);
 
 LwipStatus ip4_output_hinted(struct PacketBuffer *p,
                              const Ip4Addr *src,
@@ -161,7 +161,7 @@ LwipStatus ip4_output_if_opt(struct PacketBuffer* p,
                              uint8_t ttl,
                              uint8_t tos,
                              uint8_t proto,
-                             NetIfc* netif,
+                             NetworkInterface* netif,
                              uint8_t* ip_options,
                              uint16_t optlen);
 
@@ -171,11 +171,11 @@ LwipStatus ip4_output_if_opt_src(struct PacketBuffer* p,
                                  uint8_t ttl,
                                  uint8_t tos,
                                  uint8_t proto,
-                                 NetIfc* netif,
+                                 NetworkInterface* netif,
                                  uint8_t* ip_options,
                                  uint16_t optlen);
 
-void ip4_set_default_multicast_netif(NetIfc** default_multicast_netif);
+void ip4_set_default_multicast_netif(NetworkInterface** default_multicast_netif);
 
 
 

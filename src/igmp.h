@@ -65,15 +65,15 @@ constexpr auto IGMP_ADD_MAC_FILTER = NETIF_ADD_MAC_FILTER;
 
 /*  Prototypes */
 void   init_igmp_module(void);
-LwipStatus  igmp_start(NetIfc*netif);
-LwipStatus  igmp_stop(NetIfc*netif);
-void   igmp_report_groups(NetIfc*netif);
-// struct IgmpGroup *igmp_lookfor_group(NetIfc*ifp, const Ip4Addr *addr);
-void   igmp_input(struct PacketBuffer *p, NetIfc*inp, const Ip4Addr *dest);
+LwipStatus  igmp_start(NetworkInterface*netif);
+LwipStatus  igmp_stop(NetworkInterface*netif);
+void   igmp_report_groups(NetworkInterface*netif);
+// struct IgmpGroup *igmp_lookfor_group(NetworkInterface*ifp, const Ip4Addr *addr);
+void   igmp_input(struct PacketBuffer *p, NetworkInterface*inp, const Ip4Addr *dest);
 LwipStatus  igmp_joingroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipStatus  igmp_joingroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
+LwipStatus  igmp_joingroup_netif(NetworkInterface*netif, const Ip4Addr *groupaddr);
 LwipStatus  igmp_leavegroup(const Ip4Addr *ifaddr, const Ip4Addr *groupaddr);
-LwipStatus  igmp_leavegroup_netif(NetIfc*netif, const Ip4Addr *groupaddr);
+LwipStatus  igmp_leavegroup_netif(NetworkInterface*netif, const Ip4Addr *groupaddr);
 void   igmp_tmr(void);
 
 

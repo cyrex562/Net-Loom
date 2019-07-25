@@ -71,7 +71,7 @@
  * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
 LwipStatus
-ethip6_output(NetIfc* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
+ethip6_output(NetworkInterface* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
 {
     EthAddr dest{};
     const uint8_t* hwaddr;

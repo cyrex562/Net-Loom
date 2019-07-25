@@ -78,7 +78,7 @@ const struct EthAddr ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
  * @see LWIP_HOOK_VLAN_CHECK
  */
 LwipStatus
-ethernet_input(struct PacketBuffer* p, NetIfc* netif)
+ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
 {
     uint16_t next_hdr_offset = kSizeofEthHdr;
 
@@ -247,7 +247,7 @@ ethernet_input(struct PacketBuffer* p, NetIfc* netif)
  * @return ERR_OK if the packet was sent, any other LwipStatus on failure
  */
 LwipStatus
-ethernet_output(NetIfc* netif,
+ethernet_output(NetworkInterface* netif,
                 struct PacketBuffer* p,
                 EthAddr* src,
                 EthAddr* dst,
@@ -257,7 +257,7 @@ ethernet_output(NetIfc* netif,
     uint16_t eth_type_be = lwip_htons(eth_type);
 
 
-    // s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
+    // int32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
     // if (vlan_prio_vid >= 0)
     // {
     //     struct eth_vlan_hdr* vlanhdr;

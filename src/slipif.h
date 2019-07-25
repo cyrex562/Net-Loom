@@ -42,11 +42,11 @@
 #include <netif.h>
 
 
-LwipStatus slipif_init(NetIfc* netif);
-void slipif_poll(NetIfc*netif);
+LwipStatus slipif_init(NetworkInterface* netif);
+void slipif_poll(NetworkInterface*netif);
 
-void slipif_process_rxqueue(NetIfc*netif);
-void slipif_received_byte(NetIfc*netif, uint8_t data);
-void slipif_received_bytes(NetIfc*netif, uint8_t *data, uint8_t len);
+void slipif_process_rxqueue(NetworkInterface*netif);
+void slipif_received_byte(NetworkInterface*netif, uint8_t data);
+void slipif_received_bytes(NetworkInterface*netif, uint8_t *data, uint8_t len);
 
 
