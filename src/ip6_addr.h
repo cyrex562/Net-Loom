@@ -377,9 +377,9 @@ inline bool ip6_addr_nethostcmp(const Ip6Addr* addr1, const Ip6Addr* addr2)
  */
 
 /** Compare IPv6 address to packed address and zone */
-inline bool ip6_addr_cmp_packed(Ip6Addr* ip6_addr,
-                                Ip6AddrWireFmt* paddr,
-                                unsigned zone_idx)
+inline bool ip6_addr_cmp_packed(const Ip6Addr* ip6_addr,
+                                const Ip6AddrWireFmt* paddr,
+                                const unsigned zone_idx)
 {
     return (((ip6_addr)->addr[0] == (paddr)->addr[0]) && ((ip6_addr)->addr[1] == (paddr)->
         addr[1]) && ((ip6_addr)->addr[2] == (paddr)->addr[2]) && ((ip6_addr)->addr[3] == (
@@ -431,22 +431,22 @@ inline bool ip6_addr_ismulticast(const Ip6Addr* ip6_addr) {
   return (ip6_addr->addr[0] & pp_htonl(0xff000000UL)) == pp_htonl(0xff000000UL);
 }
 
-inline uint32_t ip6_addr_multicast_transient_flag(Ip6Addr* ip6addr)
+inline uint32_t ip6_addr_multicast_transient_flag(const Ip6Addr* ip6addr)
 {
     return ((ip6addr)->addr[0] & pp_htonl(0x00100000UL));
 }
 
-inline uint32_t ip6_addr_multicast_prefix_flag(Ip6Addr* ip6addr)
+inline uint32_t ip6_addr_multicast_prefix_flag(const Ip6Addr* ip6addr)
 {
     return ((ip6addr)->addr[0] & pp_htonl(0x00200000UL));
 }
 
-inline uint32_t ip6_addr_multicast_rendezvous_flag(Ip6Addr* ip6addr)
+inline uint32_t ip6_addr_multicast_rendezvous_flag(const Ip6Addr* ip6addr)
 {
     return ((ip6addr)->addr[0] & pp_htonl(0x00400000UL));
 }
 
-inline uint32_t ip6_addr_multicast_scope(Ip6Addr* ip6addr)
+inline uint32_t ip6_addr_multicast_scope(const Ip6Addr* ip6addr)
 {
     return ((lwip_htonl((ip6addr)->addr[0]) >> 16) & 0xf);
 }

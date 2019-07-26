@@ -98,8 +98,10 @@ struct pppos_pcb_s {
 };
 
 /* Create a new PPPoS session. */
-PppPcb *pppos_create(NetworkInterface*pppif, pppos_output_cb_fn output_cb,
-       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb);
+PppPcb *pppos_create(NetworkInterface*pppif,
+                     pppos_output_cb_fn output_cb,
+                     ppp_link_status_cb_fn link_status_cb,
+                     void* ctx_cb);
 
 
 

@@ -39,6 +39,9 @@
 #include <pppos.h>
 #include <lwip_status.h>
 
+#define API_VAR_DECLARE(x, y) x y
+#define API_VAR_REF(x) x
+
 #define PPPAPI_VAR_REF(name)               API_VAR_REF(name)
 #define PPPAPI_VAR_DECLARE(name)           API_VAR_DECLARE(struct pppapi_msg, name)
 #define PPPAPI_VAR_ALLOC(name)             API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, name, ERR_MEM)
@@ -63,17 +66,13 @@ pppapi_do_ppp_set_default(struct TcpipApiCallData *m)
  * Call ppp_set_default() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-LwipStatus
-pppapi_set_default(PppPcb *pcb)
+LwipStatus pppapi_set_default(PppPcb* pcb)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  err = tcpip_api_call(pppapi_do_ppp_set_default, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
+    struct pppapi_msg* msg = new pppapi_msg;
+    msg->msg.ppp = pcb;
+    const auto err = tcpip_api_call(pppapi_do_ppp_set_default, &msg->call);
+    delete msg;
+    return err;
 }
 
 /**
@@ -94,57 +93,53 @@ pppapi_do_ppp_set_notify_phase_callback(struct TcpipApiCallData *m)
  * Call ppp_set_notify_phase_callback() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-LwipStatus
-pppapi_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb)
+LwipStatus pppapi_set_notify_phase_callback(PppPcb* pcb,
+                                            ppp_notify_phase_cb_fn notify_phase_cb)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.setnotifyphasecb.notify_phase_cb = notify_phase_cb;
-  err = tcpip_api_call(pppapi_do_ppp_set_notify_phase_callback, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
+    struct pppapi_msg* msg = new pppapi_msg;
+    // API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, msg, ERR_MEM);
+    msg->msg.ppp = pcb;
+    msg->msg.msg.setnotifyphasecb.notify_phase_cb = notify_phase_cb;
+    LwipStatus err = tcpip_api_call(pppapi_do_ppp_set_notify_phase_callback, &msg->call);
+    delete msg;
+    return err;
 }
 
 
 /**
  * Call pppos_create() inside the tcpip_thread context.
  */
-static LwipStatus
-pppapi_do_pppos_create(struct TcpipApiCallData *m)
+static LwipStatus pppapi_do_pppos_create(struct TcpipApiCallData* m)
 {
-  /* cast through void* to silence alignment warnings. 
-   * We know it works because the structs have been instantiated as struct pppapi_msg */
-  struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
-
-  msg->msg.ppp = pppos_create(msg->msg.msg.serialcreate.pppif, msg->msg.msg.serialcreate.output_cb,
-    msg->msg.msg.serialcreate.link_status_cb, msg->msg.msg.serialcreate.ctx_cb);
-  return ERR_OK;
+    /* cast through void* to silence alignment warnings. 
+     * We know it works because the structs have been instantiated as struct pppapi_msg */
+    auto* msg = static_cast<struct pppapi_msg *>(static_cast<void*>(m));
+    msg->msg.ppp = pppos_create(msg->msg.msg.serialcreate.pppif,
+                                msg->msg.msg.serialcreate.output_cb,
+                                msg->msg.msg.serialcreate.link_status_cb,
+                                msg->msg.msg.serialcreate.ctx_cb);
+    return ERR_OK;
 }
 
 /**
  * Call pppos_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-PppPcb*
-pppapi_pppos_create(NetworkInterface*pppif, pppos_output_cb_fn output_cb,
-               ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
+PppPcb* pppapi_pppos_create(NetworkInterface* pppif,
+                            pppos_output_cb_fn output_cb,
+                            ppp_link_status_cb_fn link_status_cb,
+                            uint8_t* ctx_cb)
 {
-  PppPcb* result;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
-  PPPAPI_VAR_REF(msg).msg.msg.serialcreate.pppif = pppif;
-  PPPAPI_VAR_REF(msg).msg.msg.serialcreate.output_cb = output_cb;
-  PPPAPI_VAR_REF(msg).msg.msg.serialcreate.link_status_cb = link_status_cb;
-  PPPAPI_VAR_REF(msg).msg.msg.serialcreate.ctx_cb = ctx_cb;
-  tcpip_api_call(pppapi_do_pppos_create, &PPPAPI_VAR_REF(msg).call);
-  result = PPPAPI_VAR_REF(msg).msg.ppp;
-  PPPAPI_VAR_FREE(msg);
-  return result;
+    auto msg = new pppapi_msg; // PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
+    msg->msg.ppp = nullptr;
+    msg->msg.msg.serialcreate.pppif = pppif;
+    msg->msg.msg.serialcreate.output_cb = output_cb;
+    msg->msg.msg.serialcreate.link_status_cb = link_status_cb;
+    msg->msg.msg.serialcreate.ctx_cb = ctx_cb;
+    tcpip_api_call(pppapi_do_pppos_create, &msg->call);
+    const auto result = msg->msg.ppp;
+    delete msg;
+    return result;
 }
 
 
@@ -160,35 +155,39 @@ pppapi_do_pppoe_create(struct TcpipApiCallData *m)
   struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
 
   msg->msg.ppp = pppoe_create(msg->msg.msg.ethernetcreate.pppif, msg->msg.msg.ethernetcreate.ethif,
-    msg->msg.msg.ethernetcreate.service_name, msg->msg.msg.ethernetcreate.concentrator_name,
-    msg->msg.msg.ethernetcreate.link_status_cb, msg->msg.msg.ethernetcreate.ctx_cb);
+                              msg->msg.msg.ethernetcreate.service_name, msg->msg.msg.ethernetcreate.concentrator_name,
+                              msg->msg.msg.ethernetcreate.link_status_cb, msg->msg.msg.ethernetcreate.ctx_cb);
   return ERR_OK;
 }
+
+
 
 /**
  * Call pppoe_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-PppPcb*
-pppapi_pppoe_create(NetworkInterface*pppif, NetworkInterface*ethif, const char *service_name,
-                            const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
-                            uint8_t *ctx_cb)
+PppPcb* pppapi_pppoe_create(NetworkInterface* pppif,
+                            NetworkInterface* ethif,
+                            const char* service_name,
+                            const char* concentrator_name,
+                            ppp_link_status_cb_fn link_status_cb,
+                            uint8_t* ctx_cb)
 {
-  PppPcb* result;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.pppif = pppif;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.ethif = ethif;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.service_name = service_name;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.concentrator_name = concentrator_name;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.link_status_cb = link_status_cb;
-  PPPAPI_VAR_REF(msg).msg.msg.ethernetcreate.ctx_cb = ctx_cb;
-  tcpip_api_call(pppapi_do_pppoe_create, &PPPAPI_VAR_REF(msg).call);
-  result = PPPAPI_VAR_REF(msg).msg.ppp;
-  PPPAPI_VAR_FREE(msg);
-  return result;
+    PppPcb* result;
+    struct pppapi_msg* msg;
+    // API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, msg, NULL);
+    msg = new pppapi_msg;
+    msg->msg.ppp = nullptr;
+    msg->msg.msg.ethernetcreate.pppif = pppif;
+    msg->msg.msg.ethernetcreate.ethif = ethif;
+    msg->msg.msg.ethernetcreate.service_name = service_name;
+    msg->msg.msg.ethernetcreate.concentrator_name = concentrator_name;
+    msg->msg.msg.ethernetcreate.link_status_cb = link_status_cb;
+    msg->msg.msg.ethernetcreate.ctx_cb = ctx_cb;
+    tcpip_api_call(pppapi_do_pppoe_create, &msg->call);
+    result = msg->msg.ppp; // API_VAR_FREE_POOL(PPPAPI_MSG, msg);
+    delete msg;
+    return result;
 }
 
 
@@ -196,21 +195,20 @@ pppapi_pppoe_create(NetworkInterface*pppif, NetworkInterface*ethif, const char *
 /**
  * Call pppol2tp_create() inside the tcpip_thread context.
  */
-static LwipStatus
-pppapi_do_pppol2tp_create(struct TcpipApiCallData *m)
+static LwipStatus pppapi_do_pppol2tp_create(struct TcpipApiCallData* m)
 {
-  /* cast through void* to silence alignment warnings. 
-   * We know it works because the structs have been instantiated as struct pppapi_msg */
-  struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
-
-  msg->msg.ppp = CreatePppol2tpSession(msg->msg.msg.l2tpcreate.pppif,
-                                       msg->msg.msg.l2tpcreate.netif, msg->msg.msg.l2tpcreate.ipaddr, msg->msg.msg.l2tpcreate.port,
-
-                                       msg->msg.msg.l2tpcreate.secret,
-                                       msg->msg.msg.l2tpcreate.secret_len,
-
-                                       msg->msg.msg.l2tpcreate.link_status_cb, msg->msg.msg.l2tpcreate.ctx_cb);
-  return ERR_OK;
+    /* cast through void* to silence alignment warnings. 
+     * We know it works because the structs have been instantiated as struct pppapi_msg */
+    auto* msg = static_cast<struct pppapi_msg *>(static_cast<void*>(m));
+    msg->msg.ppp = CreatePppol2tpSession(msg->msg.msg.l2tpcreate.pppif,
+                                         msg->msg.msg.l2tpcreate.netif,
+                                         &msg->msg.msg.l2tpcreate.ipaddr,
+                                         msg->msg.msg.l2tpcreate.port,
+                                         msg->msg.msg.l2tpcreate.secret,
+                                         msg->msg.msg.l2tpcreate.secret_len,
+                                         msg->msg.msg.l2tpcreate.link_status_cb,
+                                         msg->msg.msg.l2tpcreate.ctx_cb);
+    return ERR_OK;
 }
 
 /**
@@ -223,24 +221,22 @@ pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddr *i
                         ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {
   PppPcb* result;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC_RETURN_NULL(msg);
+  struct pppapi_msg* msg = new pppapi_msg;
 
+  msg->msg.ppp = nullptr;
+  msg->msg.msg.l2tpcreate.pppif = pppif;
+  msg->msg.msg.l2tpcreate.netif = netif;
+  msg->msg.msg.l2tpcreate.ipaddr = *ipaddr;
+  msg->msg.msg.l2tpcreate.port = port;
 
-  PPPAPI_VAR_REF(msg).msg.ppp = nullptr;
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.pppif = pppif;
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.netif = netif;
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.ipaddr = PPPAPI_VAR_REF(ipaddr);
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.port = port;
+  msg->msg.msg.l2tpcreate.secret = secret;
+  msg->msg.msg.l2tpcreate.secret_len = secret_len;
 
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.secret = secret;
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.secret_len = secret_len;
-
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.link_status_cb = link_status_cb;
-  PPPAPI_VAR_REF(msg).msg.msg.l2tpcreate.ctx_cb = ctx_cb;
-  tcpip_api_call(pppapi_do_pppol2tp_create, &PPPAPI_VAR_REF(msg).call);
-  result = PPPAPI_VAR_REF(msg).msg.ppp;
-  PPPAPI_VAR_FREE(msg);
+  msg->msg.msg.l2tpcreate.link_status_cb = link_status_cb;
+  msg->msg.msg.l2tpcreate.ctx_cb = ctx_cb;
+  tcpip_api_call(pppapi_do_pppol2tp_create, &msg->call);
+  result = msg->msg.ppp;
+  delete msg;
   return result;
 }
 
@@ -263,18 +259,14 @@ pppapi_do_ppp_connect(struct TcpipApiCallData *m)
  * Call ppp_connect() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-LwipStatus
-pppapi_connect(PppPcb *pcb, uint16_t holdoff)
+LwipStatus pppapi_connect(PppPcb* pcb, uint16_t holdoff)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.connect.holdoff = holdoff;
-  err = tcpip_api_call(pppapi_do_ppp_connect, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
+    auto msg = new pppapi_msg;
+    msg->msg.ppp = pcb;
+    msg->msg.msg.connect.holdoff = holdoff;
+    LwipStatus err = tcpip_api_call(pppapi_do_ppp_connect, &msg->call);
+    delete msg;
+    return err;
 }
 
 

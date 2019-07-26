@@ -148,8 +148,10 @@ static const uint16_t fcstab[256] = {
  *
  * Return 0 on success, an error code on failure.
  */
-PppPcb *pppos_create(NetworkInterface*pppif, pppos_output_cb_fn output_cb,
-       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
+PppPcb *pppos_create(NetworkInterface*pppif,
+                     pppos_output_cb_fn output_cb,
+                     ppp_link_status_cb_fn link_status_cb,
+                     void* ctx_cb)
 {
   pppos_pcb *pppos;
   PppPcb *ppp;

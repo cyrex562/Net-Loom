@@ -38,3 +38,4 @@ VSWorkspaceState.json
 out/*
 *.ipch
 
+.vs/lwip_refactor/v16/Browse.VC.opendb

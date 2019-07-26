@@ -206,7 +206,8 @@ struct NetworkInterface
     IpAddr ip_addr;
     IpAddr netmask;
     IpAddr gw; /** Array of IPv6 addresses for this netif. */
-    std::array<IpAddr, LWIP_IPV6_NUM_ADDRESSES> ip6_addr;
+    // std::array<IpAddr, LWIP_IPV6_NUM_ADDRESSES> ip6_addr;
+    IpAddr ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
     /** The state of each IPv6 address (Tentative, Preferred, etc).
             * @see ip6_addr.h */
     Ip6AddrStates ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
@@ -468,14 +469,14 @@ LwipStatus netif_input(struct PacketBuffer *p, struct NetworkInterface *inp);
 
 
 /** @ingroup netif_ip6 */
-inline const IpAddr* netif_ip_addr6(NetworkInterface* netif, size_t i)
+inline const IpAddr* netif_ip_addr6(const NetworkInterface* netif, const size_t i)
 {
     return ((const IpAddr*)(&((netif)->ip6_addr[i])));
 }
 
 
 /** @ingroup netif_ip6 */
-inline Ip6Addr* netif_ip6_addr(NetworkInterface* netif, const size_t index)
+inline const Ip6Addr* netif_ip6_addr(const NetworkInterface* netif, const size_t index)
 {
     return &netif->ip6_addr[index].u_addr.ip6;
 }
@@ -484,13 +485,13 @@ inline Ip6Addr* netif_ip6_addr(NetworkInterface* netif, const size_t index)
 void netif_ip6_addr_set(struct NetworkInterface *netif, int8_t addr_idx, const Ip6Addr*addr6);
 void netif_ip6_addr_set_parts(struct NetworkInterface *netif, int8_t addr_idx, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3);
 
-inline Ip6AddrStates netif_ip6_addr_state(NetworkInterface* netif, size_t i)
+inline Ip6AddrStates netif_ip6_addr_state(const NetworkInterface* netif, const size_t i)
 {
     return ((netif)->ip6_addr_state[i]);
 }
 
 
-void netif_ip6_addr_set_state(struct NetworkInterface* netif, int8_t addr_idx, uint8_t state);
+void netif_ip6_addr_set_state(struct NetworkInterface* netif, int8_t addr_idx, Ip6AddrStates state);
 int8_t netif_get_ip6_addr_match(struct NetworkInterface *netif, const Ip6Addr*ip6addr);
 void netif_create_ip6_linklocal_address(struct NetworkInterface *netif, uint8_t from_mac_48bit);
 LwipStatus netif_add_ip6_address(struct NetworkInterface *netif, const Ip6Addr*ip6addr, int8_t *chosen_idx);

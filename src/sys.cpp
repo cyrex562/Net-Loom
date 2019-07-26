@@ -44,16 +44,7 @@ sys_msleep(const uint32_t ms)
 
 
 
-uint32_t
-sys_win_rand(void)
-{
-  uint32_t ret;
-  if (CryptGenRandom(hcrypt, sizeof(ret), (uint8_t*)&ret)) {
-    return ret;
-  }
-  lwip_assert("CryptGenRandom failed", 0);
-  return 0;
-}
+
 
 //
 //
@@ -142,7 +133,7 @@ sys_arch_protect_int(void)
 
 void sys_arch_unprotect(sys_prot_t pval)
 {
-    LeaveCriticalSection(&crit_sec);
+    // LeaveCriticalSection(&crit_sec);
 }
 
 // This checks that SYS_ARCH_PROTECT() hasn't been called by protecting and then checking the level
@@ -450,7 +441,7 @@ sys_thread_new(const char* name, LwipThreadFn function, void* arg, int stacksize
 void sys_lock_tcpip_core()
 {
     sys_mutex_lock(&lock_tcpip_core);
-    lwip_core_lock_holder_thread_id = GetCurrentThreadId();
+    // lwip_core_lock_holder_thread_id = GetCurrentThreadId();
 }
 
 //
@@ -458,7 +449,7 @@ void sys_lock_tcpip_core()
 //
 void sys_unlock_tcpip_core()
 {
-    lwip_core_lock_holder_thread_id = 0;
+    // lwip_core_lock_holder_thread_id = 0;
     sys_mutex_unlock(&lock_tcpip_core);
 }
 
@@ -481,7 +472,7 @@ sys_check_core_locking(uint32_t lwip_tcpip_thread_id)
     {
         uint32_t current_thread_id = GetCurrentThreadId();
 
-        lwip_assert("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);;
+        // lwip_assert("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);;
         /* for LWIP_NOASSERT */
         return current_thread_id;
     }

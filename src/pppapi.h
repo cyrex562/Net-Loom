@@ -22,7 +22,7 @@ struct PppApiMsgMsg
 
         struct
         {
-            NetworkInterface** pppif;
+            NetworkInterface* pppif;
             pppos_output_cb_fn output_cb;
             ppp_link_status_cb_fn link_status_cb;
             void* ctx_cb;
@@ -30,8 +30,8 @@ struct PppApiMsgMsg
 
         struct
         {
-            NetworkInterface** pppif;
-            NetworkInterface** ethif;
+            NetworkInterface* pppif;
+            NetworkInterface* ethif;
             const char* service_name;
             const char* concentrator_name;
             ppp_link_status_cb_fn link_status_cb;
@@ -40,8 +40,8 @@ struct PppApiMsgMsg
 
         struct
         {
-            NetworkInterface** pppif;
-            NetworkInterface** netif;
+            NetworkInterface* pppif;
+            NetworkInterface* netif;
             IpAddr ipaddr;
             uint16_t port;
             const uint8_t* secret;
