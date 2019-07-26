@@ -15,12 +15,12 @@
  * @endcode
  */
 
-#include <zepif.h>
-#include <lowpan6.h>
-#include <udp.h>
-#include <timeouts.h>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
+#include <lowpan6.h>
+#include <timeouts.h>
+#include <udp.h>
+#include <zepif.h>
 
 constexpr auto kZepMaxDataLen = 127;
 
@@ -61,8 +61,12 @@ zep_lowpan_timer(void* arg)
 
 /* Pass received pbufs into 6LowPAN netif */
 static void
-zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
-               const IpAddr* addr, uint16_t port)
+zepif_udp_recv(void* arg,
+               struct UdpPcb* pcb,
+               struct PacketBuffer* p,
+               const IpAddr* addr,
+               uint16_t port,
+               NetworkInterface* netif)
 {
     auto netif_lowpan6 = static_cast<NetworkInterface*>(arg);
 
@@ -79,7 +83,7 @@ zepif_udp_recv(void* arg, struct UdpPcb* pcb, struct PacketBuffer* p,
         /* need the ZepHdr in one piece */
         goto err_return;
     }
-    auto zep = static_cast<struct ZepHdr *>(p->payload);
+    auto zep = reinterpret_cast<struct ZepHdr *>(p->payload);
     if (zep->prot_id[0] != 'E')
     {
         goto err_return;
@@ -128,8 +132,6 @@ err_return:
 static LwipStatus
 zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
 {
-    struct PacketBuffer* q;
-
     lwip_assert("invalid netif", netif != nullptr);
     lwip_assert("invalid pbuf", p != nullptr);
 
@@ -142,11 +144,12 @@ zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
     lwip_assert("state->pcb != NULL", state->pcb != nullptr);
 
-  q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct ZepHdr) + p->tot_len);
+  struct PacketBuffer* q = pbuf_alloc(PBUF_TRANSPORT,
+                                      sizeof(struct ZepHdr) + p->tot_len);
   if (q == nullptr) {
     return ERR_MEM;
   }
-  zep = (struct ZepHdr *)q->payload;
+  auto zep = (struct ZepHdr *)q->payload;
   memset(zep, 0, sizeof(struct ZepHdr));
   zep->prot_id[0] = 'E';
   zep->prot_id[1] = 'X';
@@ -163,7 +166,7 @@ zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
     auto err = pbuf_take_at(q, p->payload, p->tot_len, sizeof(struct ZepHdr));
     if (err == ERR_OK)
     {
-        zepif_udp_recv(netif, state->pcb, pbuf_clone(PBUF_RAW, PBUF_RAM, q), nullptr, 0);
+        zepif_udp_recv(netif, state->pcb, pbuf_clone(PBUF_RAW, PBUF_RAM, q), nullptr, 0, netif);
         err = udp_sendto(state->pcb, q, state->init.zep_dst_ip_addr, state->init.zep_dst_udp_port);
     }
     free_pkt_buf(q);
@@ -181,7 +184,6 @@ int zepif_default_udp_port = 9999;
 LwipStatus
 zepif_init(NetworkInterface* netif)
 {
-    LwipStatus err;
     auto init_state = static_cast<struct ZepifInit*>(netif->state);
     auto state = new ZepifState;
 
@@ -208,13 +210,13 @@ zepif_init(NetworkInterface* netif)
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
-        state->init.zep_dst_ip_addr = IP4_ADDR_BCAST();
+        state->init.zep_dst_ip_addr->u_addr.ip4.addr = IP4_ADDR_BCAST;
     }
 
 
     netif->state = nullptr;
 
-  err = lowpan6_if_init(netif);
+  LwipStatus err = lowpan6_if_init(netif);
   lwip_assert("lowpan6_if_init set a state", netif->state == nullptr);
   if (err == ERR_OK) {
     netif->state = state;
@@ -222,8 +224,7 @@ zepif_init(NetworkInterface* netif)
     if (init_state != nullptr) {
       memcpy(netif->hwaddr, init_state->addr, 6);
     } else {
-      uint8_t i;
-      for (i = 0; i < 6; i++) {
+        for (uint8_t i = 0; i < 6; i++) {
         netif->hwaddr[i] = i;
       }
       netif->hwaddr[0] &= 0xfc;
@@ -238,7 +239,7 @@ zepif_init(NetworkInterface* netif)
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }
     lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == ERR_OK);
-    set_ip4_option(state->pcb, SOF_BROADCAST);
+    set_ip4_option(&state->pcb->so_options, SOF_BROADCAST);
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);
@@ -253,8 +254,7 @@ zepif_init(NetworkInterface* netif)
         }
         else
         {
-            uint8_t i;
-            for (i = 0; i < 6; i++)
+            for (uint8_t i = 0; i < 6; i++)
             {
                 netif->hwaddr[i] = i;
             }
@@ -265,17 +265,18 @@ zepif_init(NetworkInterface* netif)
         if (!zep_lowpan_timer_running)
         {
             sys_timeout(kLowpan6TmrInterval, zep_lowpan_timer, nullptr);
-            zep_lowpan_timer_running = 1;
+            zep_lowpan_timer_running = true;
         }
 
         return ERR_OK;
     }
+  }
 
 err_ret:
     if (state->pcb != nullptr)
     {
         udp_remove(state->pcb);
     }
-    mem_free(state);
+    delete state;
     return err;
 }

@@ -54,30 +54,57 @@ constexpr auto UPAP_HEADERLEN = 4;
 /*
  * UPAP codes.
  */
-#define UPAP_AUTHREQ	1	/* Authenticate-Request */
-#define UPAP_AUTHACK	2	/* Authenticate-Ack */
-#define UPAP_AUTHNAK	3	/* Authenticate-Nak */
+enum UpapCodes
+{
+    UPAP_AUTHREQ =1,
+    /* Authenticate-Request */
+    UPAP_AUTHACK =2,
+    /* Authenticate-Ack */
+    UPAP_AUTHNAK =3,
+    /* Authenticate-Nak */
+};
+
 
 
 /*
  * Client states.
  */
-#define UPAPCS_INITIAL	0	/* Connection down */
-#define UPAPCS_CLOSED	1	/* Connection up, haven't requested auth */
-#define UPAPCS_PENDING	2	/* Connection down, have requested auth */
-#define UPAPCS_AUTHREQ	3	/* We've sent an Authenticate-Request */
-#define UPAPCS_OPEN	4	/* We've received an Ack */
-#define UPAPCS_BADAUTH	5	/* We've received a Nak */
+enum UpapClientStates
+{
+    UPAPCS_INITIAL =0,
+    /* Connection down */
+    UPAPCS_CLOSED =1,
+    /* Connection up, haven't requested auth */
+    UPAPCS_PENDING =2,
+    /* Connection down, have requested auth */
+    UPAPCS_AUTHREQ =3,
+    /* We've sent an Authenticate-Request */
+    UPAPCS_OPEN =4,
+    /* We've received an Ack */
+    UPAPCS_BADAUTH =5,
+    /* We've received a Nak */
+};
+
 
 /*
  * Server states.
  */
-#define UPAPSS_INITIAL	0	/* Connection down */
-#define UPAPSS_CLOSED	1	/* Connection up, haven't requested auth */
-#define UPAPSS_PENDING	2	/* Connection down, have requested auth */
-#define UPAPSS_LISTEN	3	/* Listening for an Authenticate */
-#define UPAPSS_OPEN	4	/* We've sent an Ack */
-#define UPAPSS_BADAUTH	5	/* We've sent a Nak */
+enum UpapServerStates
+{
+    UPAPSS_INITIAL =0,
+    /* Connection down */
+    UPAPSS_CLOSED =1,
+    /* Connection up, haven't requested auth */
+    UPAPSS_PENDING =2,
+    /* Connection down, have requested auth */
+    UPAPSS_LISTEN =3,
+    /* Listening for an Authenticate */
+    UPAPSS_OPEN =4,
+    /* We've sent an Ack */
+    UPAPSS_BADAUTH =5,
+    /* We've sent a Nak */
+};
+
 
 
 /*
@@ -87,22 +114,19 @@ constexpr auto UPAP_HEADERLEN = 4;
 /*
  * Each interface is described by upap structure.
  */
-typedef struct upap_state {
-    const char *us_user;	/* User */
-    uint8_t us_userlen;		/* User length */
-    const char *us_passwd;	/* Password */
-    uint8_t us_passwdlen;		/* Password length */
-    uint8_t us_clientstate;	/* Client state */
-
-    uint8_t us_serverstate;	/* Server state */
-
-    uint8_t us_id;		        /* Current id */
-    uint8_t us_transmits;		/* Number of auth-reqs sent */
-} upap_state;
+struct upap_state
+{
+    std::string us_user; /* User */
+    std::string us_passwd; /* Password */
+    uint8_t us_clientstate; /* Client state */
+    uint8_t us_serverstate; /* Server state */
+    uint8_t us_id; /* Current id */
+    uint8_t us_transmits; /* Number of auth-reqs sent */
+};
 
 
 
-void upap_authwithpeer(PppPcb *pcb, const char *user, const char *password);
+void upap_authwithpeer(PppPcb *pcb, std::string& user, std::string& password);
 
 void upap_authpeer(PppPcb*pcb);
 

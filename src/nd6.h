@@ -4,7 +4,7 @@
 
 #include <lwip_status.h>
 
-#include <netif.h>
+#include <network_interface.h>
 
 #include <opt.h>
 

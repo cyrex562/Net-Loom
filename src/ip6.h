@@ -44,7 +44,7 @@
 #include <ip6_addr.h>
 #include <def.h>
 #include <packet_buffer.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <lwip_status.h>
 
 

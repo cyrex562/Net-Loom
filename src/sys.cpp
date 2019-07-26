@@ -5,13 +5,13 @@
 #include "sys.h"
 #include "tcpip.h"
 #define NOMINMAX
-#include <windows.h>
-#include <cstdio> 
+// #include <windows.h>
+#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <chrono>
 #include <cstdarg>
-
+#include <windows.h>
 
 static uint64_t freq;
 static uint64_t sys_start_time;
@@ -83,7 +83,7 @@ static void sys_win_rand_init()
                      sizeof(errbuf),
                      "CryptAcquireContext failed with error %d",
                      static_cast<int>(err));
-            lwip_assert(errbuf, 0);
+            lwip_assert(errbuf, false);
         }
     }
 }
@@ -186,7 +186,7 @@ sys_sem_new(Semaphore* sem, uint8_t count)
                 SYS_ARCH_PROTECT(lev);
                 sys_arch_unprotect(lev);
             }
-            while (0);
+            while (false);
         }
         else
         {
@@ -205,7 +205,7 @@ sys_sem_new(Semaphore* sem, uint8_t count)
             SYS_ARCH_PROTECT(lev);
             sys_arch_unprotect(lev);
         }
-        while (0);
+        while (false);
     }
     else
     {
@@ -229,7 +229,7 @@ sys_sem_free(Semaphore* sem)
         SYS_ARCH_PROTECT(lev);
         sys_arch_unprotect(lev);
     }
-    while (0);
+    while (false);
 
     sem->sem = nullptr;
 }
@@ -274,7 +274,6 @@ sys_sem_signal(Semaphore *sem)
   lwip_assert("sem->sem != INVALID_HANDLE_VALUE", sem->sem != INVALID_HANDLE_VALUE);
   BOOL ret = ReleaseSemaphore(sem->sem, 1, nullptr);
   lwip_assert("Error releasing semaphore", ret != 0);
-  ;
 }
 
 LwipStatus
@@ -294,7 +293,7 @@ sys_mutex_new(Mutex* mutex)
             SYS_ARCH_PROTECT(lev);
             sys_arch_unprotect(lev);
         }
-        while (0);
+        while (false);
 
 
         mutex->mut = new_mut;
@@ -308,7 +307,7 @@ sys_mutex_new(Mutex* mutex)
         SYS_ARCH_PROTECT(lev);
         sys_arch_unprotect(lev);
     }
-    while (0);
+    while (false);
     mutex->mut = nullptr;
     return ERR_MEM;
 }
@@ -328,7 +327,7 @@ sys_mutex_free(Mutex* mutex)
         SYS_ARCH_PROTECT(lev);
         sys_arch_unprotect(lev);
     }
-    while (0);
+    while (false);
 
 
     mutex->mut = nullptr;
@@ -341,7 +340,7 @@ void sys_mutex_lock(Mutex* mutex)
     lwip_assert("mutex->mut != INVALID_HANDLE_VALUE", mutex->mut != INVALID_HANDLE_VALUE);
     /* wait infinite */
     DWORD ret = WaitForSingleObject(mutex->mut, INFINITE);
-    lwip_assert("Error waiting for mutex", ret == WAIT_OBJECT_0);;
+    lwip_assert("Error waiting for mutex", ret == WAIT_OBJECT_0);
 }
 
 void
@@ -354,7 +353,7 @@ sys_mutex_unlock(Mutex* mutex)
     /* wait infinite */
     if (!ReleaseMutex(mutex->mut))
     {
-        lwip_assert("Error releasing mutex", 0);
+        lwip_assert("Error releasing mutex", false);
     }
 }
 
@@ -484,8 +483,7 @@ sys_check_core_locking(uint32_t lwip_tcpip_thread_id)
 LwipStatus
 sys_new_mailbox(Mailbox* mbox, size_t size)
 {
-    lwip_assert("mbox != NULL", mbox != nullptr);;
-
+    lwip_assert("mbox != NULL", mbox != nullptr);
     mbox->sem = CreateSemaphore(nullptr, 0, MAX_QUEUE_ENTRIES, nullptr);
     lwip_assert("Error creating semaphore", mbox->sem != nullptr);
     if (mbox->sem == nullptr)
@@ -687,7 +685,7 @@ void sys_arch_netconn_sem_alloc()
 {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
     LwipStatus err = sys_sem_new(sem, 0);
-    BOOL done = TlsSetValue(netconn_sem_tls_index, sem);;
+    BOOL done = TlsSetValue(netconn_sem_tls_index, sem);
 }
 
 void
@@ -697,7 +695,7 @@ sys_arch_netconn_sem_free(void)
     if (tls_data != nullptr)
     {
         free(tls_data);
-        BOOL done = TlsSetValue(netconn_sem_tls_index, nullptr);;
+        BOOL done = TlsSetValue(netconn_sem_tls_index, nullptr);
     }
 }
 

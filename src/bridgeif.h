@@ -1,8 +1,7 @@
 #pragma once
 
-#include <lwip_status.h>
 #include <ethernet.h>
-
+#include <lwip_status.h>
 struct NetworkInterface;
 typedef uint64_t BridgeIfcPortMask;
 

@@ -1,10 +1,9 @@
 #include <bridgeif.h>
+#include <cstring>
 #include <lwip_debug.h>
 #include <sys.h>
-#include <timeouts.h>
-#include <cstring>
 
-constexpr auto BRIDGE_IF_AGE_TIMER_MS = 1000; 
+// constexpr auto BRIDGE_IF_AGE_TIMER_MS = 1000;
 constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
 
 
@@ -14,7 +13,7 @@ constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
  * remembers known src mac addresses to know which port to send frames destined for that
  * mac address.
  *
- * ATTENTION: This is meant as an example only, in real-world use, you should 
+ * ATTENTION: This is meant as an example only, in real-world use, you should
  * provide a better implementation :-)
  */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx)
@@ -63,9 +62,9 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t po
     return false;
 }
 
-/** 
+/**
  * @ingroup bridgeif_fdb
- * Walk our list of auto-learnt fdb entries and return a port to forward or BR_FLOOD if unknown 
+ * Walk our list of auto-learnt fdb entries and return a port to forward or BR_FLOOD if unknown
  */
 BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthAddr* dst_addr)
 {
@@ -77,7 +76,7 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthAddr* dst_
         {
             if (!memcmp(&e->addr, dst_addr, sizeof(struct EthAddr)))
             {
-                const auto ret = BridgeIfcPortMask(1 << e->port);
+                const auto ret = BridgeIfcPortMask(uint64_t(1 << e->port));
                 return ret;
             }
         }

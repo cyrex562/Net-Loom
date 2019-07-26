@@ -28,6 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define NOMINMAX
 #include <demand.h>
 #include <ppp_opts.h>
 #include <fsm.h>
@@ -66,9 +67,9 @@ struct Packet *pend_qtail;
  */
 void demand_conf()
 {
-    int i;
-    const struct protent* protp; /*    framemax = lcp_allowoptions[0].mru;
-    if (framemax < PPP_MRU) */
+    // int i;
+    // const struct protent* protp; /*    framemax = lcp_allowoptions[0].mru;
+    // if (framemax < PPP_MRU) */
     framemax = PPP_MRU;
     framemax += PPP_HDRLEN + PPP_FCSLEN;
     frame = static_cast<char*>(malloc(framemax));
@@ -78,7 +79,7 @@ void demand_conf()
     escape_flag = 0;
     flush_flag = 0;
     fcs = PPP_INITFCS;
-    //    netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
+    //    netif_set_mtu(pcb, std::min(lcp_allowoptions[0].mru, PPP_MRU));
     //    if (ppp_send_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0
     // || ppp_recv_config(pcb, PPP_MRU, uint32_t(0), 0, 0) < 0)
     //     fatal("Couldn't set up demand-dialled PPP interface: %m");

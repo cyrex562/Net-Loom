@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ip6_addr.h>
-#include <ip4_addr.h>
 #include <cstring>
+#include <ip4_addr.h>
+#include <ip6_addr.h>
 
 //
 // IP address types for use in IpAddr.type member.
@@ -43,6 +43,11 @@ inline IpAddr kIpAddrAnyType()
 inline IpAddr init_ip_addr_ip4(const uint32_t u32_val)
 {
     return {{{{u32_val, 0UL, 0UL, 0UL}, IP6_NO_ZONE}}, IPADDR_TYPE_V4};
+}
+
+inline bool is_ip_addr_v4(const IpAddr* addr)
+{
+    return addr->type == IPADDR_TYPE_V4;
 }
 
 //
@@ -512,7 +517,7 @@ inline bool ip_addr_isbroadcast(const IpAddr* ipaddr, const NetworkInterface* ne
 }
 
 
-inline bool ip_addr_ismulticast(IpAddr* ipaddr)
+inline bool ip_addr_ismulticast(const IpAddr* ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
         return ip6_addr_ismulticast(&ipaddr->u_addr.ip6);
@@ -520,7 +525,7 @@ inline bool ip_addr_ismulticast(IpAddr* ipaddr)
 }
 
 
-inline bool ip_addr_isloopback(IpAddr* ipaddr)
+inline bool ip_addr_isloopback(const IpAddr* ipaddr)
 {
     if ((is_ip_addr_v6(ipaddr)))
         return ip6_addr_isloopback(&ipaddr->u_addr.ip6);
@@ -529,7 +534,7 @@ inline bool ip_addr_isloopback(IpAddr* ipaddr)
 
 
 
-inline bool ip_addr_islinklocal(IpAddr* ipaddr)
+inline bool ip_addr_islinklocal(const IpAddr* ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
         return ip6_addr_islinklocal(&ipaddr->u_addr.ip6);
@@ -589,6 +594,11 @@ inline IpAddr create_ip_addr_ip4_bcast()
     return addr;
 }
 
+inline Ip4Addr make_ip4_bcast_addr()
+{
+    return create_ip_addr_ip4_bcast().u_addr.ip4;
+}
+
 
 inline IpAddr create_ip_addr_ip4_any()
 {
@@ -629,7 +639,15 @@ inline void zero_ip_addr(IpAddr* ip)
     ip->u_addr.ip6.addr[3] = 0;
 }
 
+inline IpAddr make_ip_addr_ip6_any()
+{
+    return {0,0,0,0, IP6_NO_ZONE, IPADDR_TYPE_ANY};
+}
 
+inline IpAddr make_ip_addr_any()
+{
+    return make_ip_addr_ip6_any();
+}
 
 //
 // END OF FILE

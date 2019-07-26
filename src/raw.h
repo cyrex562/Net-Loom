@@ -82,7 +82,7 @@ struct RawPcb
     uint8_t tos;
     /* Time To Live */
     uint8_t ttl;
-    NetworkInterface* netif_hints;
+    NetIfcHint* netif_hints;
     struct RawPcb* next;
     uint8_t protocol;
     uint8_t flags;
@@ -102,7 +102,7 @@ struct RawPcb
 /* The following functions is the application layer interface to the
    RAW code. */
 struct RawPcb * raw_new        (uint8_t proto);
-struct RawPcb * raw_new_ip_type(uint8_t type, uint8_t proto);
+struct RawPcb * raw_new_ip_type(IpAddrType type, uint8_t proto);
 void             raw_remove     (struct RawPcb *pcb);
 LwipStatus            raw_bind       (struct RawPcb *pcb, const IpAddr *ipaddr);
 void             raw_bind_netif (struct RawPcb *pcb, const NetworkInterface*netif);

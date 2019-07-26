@@ -46,7 +46,7 @@
 #include <ieee.h>
 #include <ip6_addr.h>
 #include <nd6.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <packet_buffer.h>
 #include <cstring>
 

@@ -246,12 +246,12 @@ void ipv6cp_init(PppPcb *pcb) {
     fsm_init(f);
 
 
-    wo->accept_local = 1;
-    wo->neg_ifaceid = 1;
-    ao->neg_ifaceid = 1;
+    wo->accept_local = true;
+    wo->neg_ifaceid = true;
+    ao->neg_ifaceid = true;
 
-    wo->neg_vj = 1;
-    ao->neg_vj = 1;
+    wo->neg_vj = true;
+    ao->neg_vj = true;
     wo->vj_protocol = IPV6CP_COMP;
 
 
@@ -361,10 +361,8 @@ ipv6cp_addci(Fsm* f, uint8_t* ucp, int* lenp)
             eui64_put(&go->ourid, (Eui64*)ucp);
             len -= idlen;
         }
-        else go->neg_ifaceid = 0;
-    };
-
-
+        else go->neg_ifaceid = false;
+    }
     if (go->neg_vj) {
         int vjlen = CILEN_COMPRESS;
         if (len >= vjlen) {
@@ -373,10 +371,8 @@ ipv6cp_addci(Fsm* f, uint8_t* ucp, int* lenp)
             PUTSHORT(go->vj_protocol, ucp);
             len -= vjlen;
         }
-        else go->neg_vj = 0;
-    };
-
-
+        else go->neg_vj = false;
+    }
     *lenp -= len;
 }
 
@@ -414,9 +410,7 @@ ipv6cp_ackci(Fsm* f, uint8_t* p, int len)
         if (cilen != idlen || citype != 1) goto bad;
         eui64_get(&ifaceid, (Eui64*)p);
         if (! eui64_equals(go->ourid, ifaceid)) goto bad;
-    };
-
-
+    }
     if (go->neg_vj) {
         int vjlen = CILEN_COMPRESS;
         if ((len -= vjlen) < 0) goto bad;
@@ -425,10 +419,7 @@ ipv6cp_ackci(Fsm* f, uint8_t* p, int len)
         if (cilen != vjlen || citype != CI_COMPRESSTYPE) goto bad;
         GETSHORT(cishort, p);
         if (cishort != go->vj_protocol) goto bad;
-    };
-
-
-    /*
+    } /*
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
@@ -454,16 +445,14 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
 {
     PppPcb* pcb = f->pcb;
     Ipv6CpOptions* go = &pcb->ipv6cp_gotoptions;
-    uint8_t citype, cilen, *next;
+    uint8_t citype, cilen;
 
     u_short cishort;
 
     Eui64 ifaceid;
     Ipv6CpOptions no; /* options we've seen Naks for */
-    Ipv6CpOptions try_; /* options to request next time */
-
     BZERO(&no, sizeof(no));
-    try_ = *go;
+    Ipv6CpOptions try_ = *go;
 
     /*
      * Any Nak'd CIs must be in exactly the same order that we sent.
@@ -480,34 +469,29 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         len -= cilen;
         INCPTR(2, p);
         eui64_get(&ifaceid, (Eui64*)p);
-        no.neg_ifaceid = 1;
+        no.neg_ifaceid = true;
         if (treat_as_reject) {
-            try_.neg_ifaceid = 0;
+            try_.neg_ifaceid = false;
         }
         else if (go->accept_local) {
             while (eui64_iszero(ifaceid) || eui64_equals(ifaceid, go->hisid)) eui64_magic(ifaceid);
             try_.ourid = ifaceid;
         }
-    };
-
-
+    }
     if (go->neg_vj && ((cilen = p[1]) == CILEN_COMPRESS) && len >= cilen && p[0] == CI_COMPRESSTYPE) {
         len -= cilen;
         INCPTR(2, p);
         GETSHORT(cishort, p);
-        no.neg_vj = 1;
+        no.neg_vj = true;
         {
             if (cishort == 0x004f && !treat_as_reject) {
                 try_.vj_protocol = cishort;
             }
             else {
-                try_.neg_vj = 0;
+                try_.neg_vj = false;
             }
         }
-    };
-
-
-    /*
+    } /*
      * There may be remaining CIs, if the peer is requesting negotiation
      * on an option that we didn't include in our request packet.
      * If they want to negotiate about interface identifier, we comply.
@@ -518,7 +502,7 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         GETCHAR(cilen, p);
         if (cilen < CILEN_VOID || (len -= cilen) < 0)
             goto bad;
-        next = p + cilen - 2;
+        uint8_t* next = p + cilen - 2;
 
         switch (citype) {
 
@@ -526,13 +510,13 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             if (go->neg_vj || no.neg_vj ||
                 (cilen != CILEN_COMPRESS))
                 goto bad;
-            no.neg_vj = 1;
+            no.neg_vj = true;
             break;
 
         case CI_IFACEID:
             if (go->neg_ifaceid || no.neg_ifaceid || cilen != CILEN_IFACEID)
                 goto bad;
-            try_.neg_ifaceid = 1;
+            try_.neg_ifaceid = true;
             eui64_get(&ifaceid, (Eui64*)p);
             if (go->accept_local) {
                 while (eui64_iszero(ifaceid) ||
@@ -540,7 +524,7 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
                     eui64_magic(ifaceid);
                 try_.ourid = ifaceid;
             }
-            no.neg_ifaceid = 1;
+            no.neg_ifaceid = true;
             break;
         default:
             break;
@@ -579,9 +563,7 @@ ipv6cp_rejci(Fsm* f, uint8_t* p, int len)
     u_short cishort;
 
     Eui64 ifaceid;
-    Ipv6CpOptions try_; /* options to request next time */
-
-    try_ = *go;
+    Ipv6CpOptions try_ = *go;
     /*
      * Any Rejected CIs must be in exactly the same order that we sent.
      * Check packet length and CI length at each step.
@@ -594,19 +576,15 @@ ipv6cp_rejci(Fsm* f, uint8_t* p, int len)
         INCPTR(2, p);
         eui64_get(&ifaceid, (Eui64*)p);
         if (! eui64_equals(ifaceid, go->ourid)) goto bad;
-        try_.neg_ifaceid = 0;
-    };
-
+        try_.neg_ifaceid = false;
+    }
     if (go->neg_vj && p[1] == CILEN_COMPRESS && len >= p[1] && p[0] == CI_COMPRESSTYPE) {
         len -= p[1];
         INCPTR(2, p);
         GETSHORT(cishort, p);
         if (cishort != go->vj_protocol) goto bad;
-        try_.neg_vj = 0;
-    };
-
-
-    /*
+        try_.neg_vj = false;
+    } /*
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
@@ -641,14 +619,12 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
     Ipv6CpOptions *ho = &pcb->ipv6cp_hisoptions;
     Ipv6CpOptions *ao = &pcb->ipv6cp_allowoptions;
     Ipv6CpOptions *go = &pcb->ipv6cp_gotoptions;
-    uint8_t *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
 
     u_short cishort;		/* Parsed short value */
 
     Eui64 ifaceid;		/* Parsed interface identifier */
     int rc = CONFACK;		/* Final packet return code */
-    int orc;			/* Individual option return code */
     uint8_t *p;			/* Pointer to next char to parse */
     uint8_t *ucp = inp;		/* Pointer to current output char */
     int l = *len;		/* Length left */
@@ -661,10 +637,10 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
     /*
      * Process all his options.
      */
-    next = inp;
+    uint8_t* next = inp;
     while (l) {
-	orc = CONFACK;			/* Assume success */
-	cip = p = next;			/* Remember begining of CI */
+	int orc = CONFACK;			/* Assume success */
+	uint8_t* cip = p = next;			/* Remember begining of CI */
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */
@@ -723,7 +699,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
 		eui64_put(&ifaceid, (Eui64*)p);
 	    }
 
-	    ho->neg_ifaceid = 1;
+	    ho->neg_ifaceid = true;
 	    ho->hisid = ifaceid;
 	    break;
 
@@ -743,7 +719,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
 		break;
 	    }
 
-	    ho->neg_vj = 1;
+	    ho->neg_vj = true;
 	    ho->vj_protocol = cishort;
 	    break;
 
@@ -799,11 +775,11 @@ endswitch:
 	if (rc == CONFACK) {
 	    rc = CONFNAK;
 	    ucp = inp;				/* reset pointer */
-	    wo->req_ifaceid = 0;		/* don't ask again */
+	    wo->req_ifaceid = false;		/* don't ask again */
 	}
-	{ *(ucp)++ = (uint8_t) (1); };
-	{ *(ucp)++ = (uint8_t) (10); };
-	eui64_put(&wo->hisid, (Eui64*)ucp);
+	{ *(ucp)++ = (uint8_t) (1); }
+    { *(ucp)++ = (uint8_t) (10); }
+    eui64_put(&wo->hisid, (Eui64*)ucp);
     }
 
     *len = ucp - inp;			/* Compute output length */

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <lwip_status.h>
-#include <netif.h>
-#include "pcap/pcap.h"
+#include <network_interface.h>
+// #include "pcap/pcap.h"
 /* Define those to better describe your network interface.
    For now, we use 'e0', 'e1', 'e2' and so on */
 #define IFNAME0                       'e'
@@ -45,6 +45,7 @@ struct pcapipf_pending_packet {
   uint8_t data[ETH_MAX_FRAME_LEN];
 };
 
+struct pcap_t;
 
 /* Packet Adapter informations */
 struct pcapif_private {

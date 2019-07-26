@@ -189,14 +189,11 @@ static void md4_process( md4_context *ctx, const unsigned char data[64] )
  */
 void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 {
-    int fill;
-    unsigned long left;
-
     if( ilen <= 0 )
         return;
 
-    left = ctx->total[0] & 0x3F;
-    fill = 64 - left;
+    unsigned long left = ctx->total[0] & 0x3F;
+    int fill = 64 - left;
 
     ctx->total[0] += ilen;
     ctx->total[0] &= 0xFFFFFFFF;
@@ -241,19 +238,16 @@ static const unsigned char md4_padding[64] =
  */
 void md4_finish( md4_context *ctx, unsigned char output[16] )
 {
-    unsigned long last, padn;
-    unsigned long high, low;
     unsigned char msglen[8];
 
-    high = ( ctx->total[0] >> 29 )
-         | ( ctx->total[1] <<  3 );
-    low  = ( ctx->total[0] <<  3 );
+    unsigned long high = (ctx->total[0] >> 29) | (ctx->total[1] << 3);
+    unsigned long low = (ctx->total[0] << 3);
 
     PUT_ULONG_LE( low,  msglen, 0 );
     PUT_ULONG_LE( high, msglen, 4 );
 
-    last = ctx->total[0] & 0x3F;
-    padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
+    unsigned long last = ctx->total[0] & 0x3F;
+    unsigned long padn = (last < 56) ? (56 - last) : (120 - last);
 
     md4_update( ctx, md4_padding, padn );
     md4_update( ctx, msglen, 8 );

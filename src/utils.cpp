@@ -28,16 +28,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ppp_opts.h>
-
+#include <lcp.h>
 #include <ppp_impl.h>
 
-#include <fsm.h>
-#include <lcp.h>
-
-#if defined(SUNOS4)
-extern char *strerror();
-#endif
 
 static void ppp_logit(int level, const char *fmt, va_list args);
 static void ppp_log_write(int level, char *buf);
@@ -51,12 +44,12 @@ size_t ppp_strlcpy(char *dest, const char *src, size_t len) {
     size_t ret = strlen(src);
 
     if (len != 0) {
-	if (ret < len)
-	    strcpy(dest, src);
-	else {
-	    strncpy(dest, src, len - 1);
-	    dest[len-1] = 0;
-	}
+    if (ret < len)
+        strcpy(dest, src);
+    else {
+        strncpy(dest, src, len - 1);
+        dest[len-1] = 0;
+    }
     }
     return ret;
 }
@@ -82,10 +75,8 @@ size_t ppp_strlcat(char *dest, const char *src, size_t len) {
  */
 int ppp_slprintf(char *buf, int buflen, const char *fmt, ...) {
     va_list args;
-    int n;
-
     va_start(args, fmt);
-    n = ppp_vslprintf(buf, buflen, fmt, args);
+    int n = ppp_vslprintf(buf, buflen, fmt, args);
     va_end(args);
     return n;
 }
@@ -111,222 +102,222 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     buf0 = buf;
     --buflen;
     while (buflen > 0) {
-	for (f = fmt; *f != '%' && *f != 0; ++f)
-	    ;
-	if (f > fmt) {
-	    len = f - fmt;
-	    if (len > buflen)
-		len = buflen;
-	    memcpy(buf, fmt, len);
-	    buf += len;
-	    buflen -= len;
-	    fmt = f;
-	}
-	if (*fmt == 0)
-	    break;
-	c = *++fmt;
-	width = 0;
-	prec = -1;
-	fillch = ' ';
-	if (c == '0') {
-	    fillch = '0';
-	    c = *++fmt;
-	}
-	if (c == '*') {
-	    width = va_arg(args, int);
-	    c = *++fmt;
-	} else {
-	    while (lwip_isdigit(c)) {
-		width = width * 10 + c - '0';
-		c = *++fmt;
-	    }
-	}
-	if (c == '.') {
-	    c = *++fmt;
-	    if (c == '*') {
-		prec = va_arg(args, int);
-		c = *++fmt;
-	    } else {
-		prec = 0;
-		while (lwip_isdigit(c)) {
-		    prec = prec * 10 + c - '0';
-		    c = *++fmt;
-		}
-	    }
-	}
-	str = nullptr;
-	base = 0;
-	neg = 0;
-	++fmt;
-	switch (c) {
-	case 'l':
-	    c = *fmt++;
-	    switch (c) {
-	    case 'd':
-		val = va_arg(args, long);
-		if ((long)val < 0) {
-		    neg = 1;
-		    val = (unsigned long)-(long)val;
-		}
-		base = 10;
-		break;
-	    case 'u':
-		val = va_arg(args, unsigned long);
-		base = 10;
-		break;
-	    default:
-		OUTCHAR('%');
-		OUTCHAR('l');
-		--fmt;		/* so %lz outputs %lz etc. */
-		continue;
-	    }
-	    break;
-	case 'd':
-	    i = va_arg(args, int);
-	    if (i < 0) {
-		neg = 1;
-		val = -i;
-	    } else
-		val = i;
-	    base = 10;
-	    break;
-	case 'u':
-	    val = va_arg(args, unsigned int);
-	    base = 10;
-	    break;
-	case 'o':
-	    val = va_arg(args, unsigned int);
-	    base = 8;
-	    break;
-	case 'x':
-	case 'X':
-	    val = va_arg(args, unsigned int);
-	    base = 16;
-	    break;
+    for (f = fmt; *f != '%' && *f != 0; ++f)
+        ;
+    if (f > fmt) {
+        len = f - fmt;
+        if (len > buflen)
+        len = buflen;
+        memcpy(buf, fmt, len);
+        buf += len;
+        buflen -= len;
+        fmt = f;
+    }
+    if (*fmt == 0)
+        break;
+    c = *++fmt;
+    width = 0;
+    prec = -1;
+    fillch = ' ';
+    if (c == '0') {
+        fillch = '0';
+        c = *++fmt;
+    }
+    if (c == '*') {
+        width = va_arg(args, int);
+        c = *++fmt;
+    } else {
+        while (isdigit(c)) {
+        width = width * 10 + c - '0';
+        c = *++fmt;
+        }
+    }
+    if (c == '.') {
+        c = *++fmt;
+        if (c == '*') {
+        prec = va_arg(args, int);
+        c = *++fmt;
+        } else {
+        prec = 0;
+        while (isdigit(c)) {
+            prec = prec * 10 + c - '0';
+            c = *++fmt;
+        }
+        }
+    }
+    str = nullptr;
+    base = 0;
+    neg = 0;
+    ++fmt;
+    switch (c) {
+    case 'l':
+        c = *fmt++;
+        switch (c) {
+        case 'd':
+        val = va_arg(args, long);
+        if ((long)val < 0) {
+            neg = 1;
+            val = (unsigned long)-(long)val;
+        }
+        base = 10;
+        break;
+        case 'u':
+        val = va_arg(args, unsigned long);
+        base = 10;
+        break;
+        default:
+        OUTCHAR('%');
+        OUTCHAR('l');
+        --fmt;		/* so %lz outputs %lz etc. */
+        continue;
+        }
+        break;
+    case 'd':
+        i = va_arg(args, int);
+        if (i < 0) {
+        neg = 1;
+        val = -i;
+        } else
+        val = i;
+        base = 10;
+        break;
+    case 'u':
+        val = va_arg(args, unsigned int);
+        base = 10;
+        break;
+    case 'o':
+        val = va_arg(args, unsigned int);
+        base = 8;
+        break;
+    case 'x':
+    case 'X':
+        val = va_arg(args, unsigned int);
+        base = 16;
+        break;
 
-	case 's':
-	    str = va_arg(args, char *);
-	    break;
-	case 'c':
-	    num[0] = va_arg(args, int);
-	    num[1] = 0;
-	    str = num;
-	    break;
+    case 's':
+        str = va_arg(args, char *);
+        break;
+    case 'c':
+        num[0] = va_arg(args, int);
+        num[1] = 0;
+        str = num;
+        break;
 
-	case 'I':
-	    ip = va_arg(args, uint32_t);
-	    ip = lwip_ntohl(ip);
-	    ppp_slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
-		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
-	    str = num;
-	    break;
+    case 'I':
+        ip = va_arg(args, uint32_t);
+        ip = lwip_ntohl(ip);
+        ppp_slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
+             (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
+        str = num;
+        break;
 
-	case 'v':		/* "visible" string */
-	case 'q':		/* quoted string */
-	    quoted = c == 'q';
-	    p = va_arg(args, unsigned char *);
-	    if (p == nullptr)
-		p = (const unsigned char *)"<NULL>";
-	    if (fillch == '0' && prec >= 0) {
-		n = prec;
-	    } else {
-		n = strlen((const char *)p);
-		if (prec >= 0 && n > prec)
-		    n = prec;
-	    }
-	    while (n > 0 && buflen > 0) {
-		c = *p++;
-		--n;
-		if (!quoted && c >= 0x80) {
-		    OUTCHAR('M');
-		    OUTCHAR('-');
-		    c -= 0x80;
-		}
-		if (quoted && (c == '"' || c == '\\'))
-		    OUTCHAR('\\');
-		if (c < 0x20 || (0x7f <= c && c < 0xa0)) {
-		    if (quoted) {
-			OUTCHAR('\\');
-			switch (c) {
-			case '\t':	OUTCHAR('t');	break;
-			case '\n':	OUTCHAR('n');	break;
-			case '\b':	OUTCHAR('b');	break;
-			case '\f':	OUTCHAR('f');	break;
-			default:
-			    OUTCHAR('x');
-			    OUTCHAR(hexchars[c >> 4]);
-			    OUTCHAR(hexchars[c & 0xf]);
-			}
-		    } else {
-			if (c == '\t')
-			    OUTCHAR(c);
-			else {
-			    OUTCHAR('^');
-			    OUTCHAR(c ^ 0x40);
-			}
-		    }
-		} else
-		    OUTCHAR(c);
-	    }
-	    continue;
+    case 'v':		/* "visible" string */
+    case 'q':		/* quoted string */
+        quoted = c == 'q';
+        p = va_arg(args, unsigned char *);
+        if (p == nullptr)
+        p = (const unsigned char *)"<NULL>";
+        if (fillch == '0' && prec >= 0) {
+        n = prec;
+        } else {
+        n = strlen((const char *)p);
+        if (prec >= 0 && n > prec)
+            n = prec;
+        }
+        while (n > 0 && buflen > 0) {
+        c = *p++;
+        --n;
+        if (!quoted && c >= 0x80) {
+            OUTCHAR('M');
+            OUTCHAR('-');
+            c -= 0x80;
+        }
+        if (quoted && (c == '"' || c == '\\'))
+            OUTCHAR('\\');
+        if (c < 0x20 || (0x7f <= c && c < 0xa0)) {
+            if (quoted) {
+            OUTCHAR('\\');
+            switch (c) {
+            case '\t':	OUTCHAR('t');	break;
+            case '\n':	OUTCHAR('n');	break;
+            case '\b':	OUTCHAR('b');	break;
+            case '\f':	OUTCHAR('f');	break;
+            default:
+                OUTCHAR('x');
+                OUTCHAR(hexchars[c >> 4]);
+                OUTCHAR(hexchars[c & 0xf]);
+            }
+            } else {
+            if (c == '\t')
+                OUTCHAR(c);
+            else {
+                OUTCHAR('^');
+                OUTCHAR(c ^ 0x40);
+            }
+            }
+        } else
+            OUTCHAR(c);
+        }
+        continue;
 
-	case 'B':
-	    p = va_arg(args, unsigned char *);
-	    for (n = prec; n > 0; --n) {
-		c = *p++;
-		if (fillch == ' ')
-		    OUTCHAR(' ');
-		OUTCHAR(hexchars[(c >> 4) & 0xf]);
-		OUTCHAR(hexchars[c & 0xf]);
-	    }
-	    continue;
-	default:
-	    *buf++ = '%';
-	    if (c != '%')
-		--fmt;		/* so %z outputs %z etc. */
-	    --buflen;
-	    continue;
-	}
-	if (base != 0) {
-	    str = num + sizeof(num);
-	    *--str = 0;
-	    while (str > num + neg) {
-		*--str = hexchars[val % base];
-		val = val / base;
-		if (--prec <= 0 && val == 0)
-		    break;
-	    }
-	    switch (neg) {
-	    case 1:
-		*--str = '-';
-		break;
-	    case 2:
-		*--str = 'x';
-		*--str = '0';
-		break;
-	    default:
-		break;
-	    }
-	    len = num + sizeof(num) - 1 - str;
-	} else {
-	    len = strlen(str);
-	    if (prec >= 0 && len > prec)
-		len = prec;
-	}
-	if (width > 0) {
-	    if (width > buflen)
-		width = buflen;
-	    if ((n = width - len) > 0) {
-		buflen -= n;
-		for (; n > 0; --n)
-		    *buf++ = fillch;
-	    }
-	}
-	if (len > buflen)
-	    len = buflen;
-	memcpy(buf, str, len);
-	buf += len;
-	buflen -= len;
+    case 'B':
+        p = va_arg(args, unsigned char *);
+        for (n = prec; n > 0; --n) {
+        c = *p++;
+        if (fillch == ' ')
+            OUTCHAR(' ');
+        OUTCHAR(hexchars[(c >> 4) & 0xf]);
+        OUTCHAR(hexchars[c & 0xf]);
+        }
+        continue;
+    default:
+        *buf++ = '%';
+        if (c != '%')
+        --fmt;		/* so %z outputs %z etc. */
+        --buflen;
+        continue;
+    }
+    if (base != 0) {
+        str = num + sizeof(num);
+        *--str = 0;
+        while (str > num + neg) {
+        *--str = hexchars[val % base];
+        val = val / base;
+        if (--prec <= 0 && val == 0)
+            break;
+        }
+        switch (neg) {
+        case 1:
+        *--str = '-';
+        break;
+        case 2:
+        *--str = 'x';
+        *--str = '0';
+        break;
+        default:
+        break;
+        }
+        len = num + sizeof(num) - 1 - str;
+    } else {
+        len = strlen(str);
+        if (prec >= 0 && len > prec)
+        len = prec;
+    }
+    if (width > 0) {
+        if (width > buflen)
+        width = buflen;
+        if ((n = width - len) > 0) {
+        buflen -= n;
+        for (; n > 0; --n)
+            *buf++ = fillch;
+        }
+    }
+    if (len > buflen)
+        len = buflen;
+    memcpy(buf, str, len);
+    buf += len;
+    buflen -= len;
     }
     *buf = 0;
     return buf - buf0;
@@ -339,31 +330,29 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
  * printer.
  */
 void ppp_print_string(const uint8_t *p, int len, void (*printer) (uint8_t *, const char *, ...), uint8_t *arg) {
-    int c;
-
     printer(arg, "\"");
     for (; len > 0; --len) {
-	c = *p++;
-	if (' ' <= c && c <= '~') {
-	    if (c == '\\' || c == '"')
-		printer(arg, "\\");
-	    printer(arg, "%c", c);
-	} else {
-	    switch (c) {
-	    case '\n':
-		printer(arg, "\\n");
-		break;
-	    case '\r':
-		printer(arg, "\\r");
-		break;
-	    case '\t':
-		printer(arg, "\\t");
-		break;
-	    default:
-		printer(arg, "\\%.3o", (uint8_t)c);
-		/* no break */
-	    }
-	}
+    int c = *p++;
+    if (' ' <= c && c <= '~') {
+        if (c == '\\' || c == '"')
+        printer(arg, "\\");
+        printer(arg, "%c", c);
+    } else {
+        switch (c) {
+        case '\n':
+        printer(arg, "\\n");
+        break;
+        case '\r':
+        printer(arg, "\\r");
+        break;
+        case '\t':
+        printer(arg, "\\t");
+        break;
+        default:
+        printer(arg, "\\%.3o", (uint8_t)c);
+        /* no break */
+        }
+    }
     }
     printer(arg, "\"");
 }
@@ -379,9 +368,7 @@ static void ppp_logit(int level, const char *fmt, va_list args) {
 }
 
 static void ppp_log_write(int level, char *buf) {
-    ; /* necessary if PPPDEBUG is defined to an empty function */
-    ;
-    PPPDEBUG(level, ("%s\n", buf) );
+    // PPPDEBUG(level, ("%s\n", buf) );
 
 }
 
@@ -392,10 +379,10 @@ void ppp_fatal(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_ERR, fmt, pvar);
+    // ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
-    lwip_assert("ppp_fatal", 0);   /* as promised */
+    lwip_assert("ppp_fatal", false);   /* as promised */
 }
 
 /*
@@ -405,7 +392,7 @@ void ppp_error(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_ERR, fmt, pvar);
+    // ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
 }
@@ -417,7 +404,7 @@ void ppp_warn(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_WARNING, fmt, pvar);
+    // ppp_logit(LOG_WARNING, fmt, pvar);
     va_end(pvar);
 }
 
@@ -428,7 +415,7 @@ void ppp_notice(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_NOTICE, fmt, pvar);
+    // ppp_logit(LOG_NOTICE, fmt, pvar);
     va_end(pvar);
 }
 
@@ -439,7 +426,7 @@ void ppp_info(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_INFO, fmt, pvar);
+    // ppp_logit(LOG_INFO, fmt, pvar);
     va_end(pvar);
 }
 
@@ -450,7 +437,7 @@ void ppp_dbglog(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    ppp_logit(LOG_DEBUG, fmt, pvar);
+    // ppp_logit(LOG_DEBUG, fmt, pvar);
     va_end(pvar);
 }
 

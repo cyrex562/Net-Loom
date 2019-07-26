@@ -6,7 +6,7 @@
 #include <opt.h>
 #include <lwip_status.h>
 #include <timeouts.h>
-#include <netif.h>
+#include <network_interface.h>
 
 /** The global semaphore to lock the stack. */
 extern Mutex lock_tcpip_core;
@@ -29,13 +29,13 @@ using TcpipCallbackFn = void (*)(void*);
 /* Forward declarations */
 struct tcpip_callback_msg;
 
-void   tcpip_init(TcpipInitDoneFn tcpip_init_done, uint8_t *arg);
+void   tcpip_init(TcpipInitDoneFn tcpip_init_done, void* arg);
 
 LwipStatus  tcpip_inpkt(struct PacketBuffer *p, NetworkInterface*inp, NetifInputFn input_fn);
 LwipStatus  tcpip_input(struct PacketBuffer *p, NetworkInterface*inp);
 
-LwipStatus  tcpip_try_callback(TcpipCallbackFn function, uint8_t *ctx);
-LwipStatus  tcpip_callback(TcpipCallbackFn function, uint8_t *ctx);
+LwipStatus  tcpip_try_callback(TcpipCallbackFn function, void* ctx);
+LwipStatus  tcpip_callback(TcpipCallbackFn function, void* ctx);
 
 
 struct tcpip_callback_msg* tcpip_callbackmsg_new(TcpipCallbackFn function, uint8_t *ctx);
@@ -48,8 +48,8 @@ LwipStatus  pbuf_free_callback(struct PacketBuffer *p);
 LwipStatus  mem_free_callback(uint8_t *m);
 
 
-LwipStatus  tcpip_timeout(uint32_t msecs, SysTimeoutHandler h, uint8_t *arg);
-LwipStatus  tcpip_untimeout(SysTimeoutHandler h, uint8_t *arg);
+LwipStatus  tcpip_timeout(uint32_t msecs, SysTimeoutHandler h, void* arg);
+LwipStatus  tcpip_untimeout(SysTimeoutHandler h, void* arg);
 
 
 int tcpip_thread_poll_one(void);

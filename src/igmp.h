@@ -1,5 +1,5 @@
 #pragma once
-#include <netif.h>
+#include <network_interface.h>
 #include <packet_buffer.h>
 #include <ip4.h>
 

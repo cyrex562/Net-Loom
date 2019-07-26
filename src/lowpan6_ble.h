@@ -43,7 +43,7 @@
 #include <packet_buffer.h>
 #include <ip.h>
 #include <ip_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 
 LwipStatus rfc7668_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr *ip6addr);
 LwipStatus rfc7668_input(struct PacketBuffer * p, NetworkInterface*netif);

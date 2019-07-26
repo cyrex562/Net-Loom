@@ -25,7 +25,7 @@ set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 #add_dependencies(dist lwipdocs)
 
 # compile fmt
-add_subdirectory(fmt)
+#add_subdirectory(fmt)
 #add_subdirectory(fmt/build)
 
 file(GLOB SRC_FILES src/*.c src/*.cpp)
@@ -33,11 +33,11 @@ file(GLOB SRC_FILES src/*.c src/*.cpp)
 # add src
 add_library(lwip STATIC ${SRC_FILES})
 target_include_directories(lwip PUBLIC src)
-target_include_directories(lwip PUBLIC npcap/Include)
+#target_include_directories(lwip PUBLIC npcap/Include)
 #target_include_directories(lwip PUBLIC npcap/Include/pcap)
-target_link_libraries(lwip fmt)
-target_link_libraries(lwip npcap/Lib/x64/wpcap.lib)
-target_link_libraries(lwip npcap/Lib/x64/Packet.lib)
+#target_link_libraries(lwip fmt)
+#target_link_libraries(lwip npcap/Lib/x64/wpcap.lib)
+#target_link_libraries(lwip npcap/Lib/x64/Packet.lib)
 
 
 

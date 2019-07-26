@@ -35,6 +35,8 @@
  * $Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp $
  */
 
+#define NOMINMAX
+
 #include <eui64.h>
 
 #include <ppp_impl.h>

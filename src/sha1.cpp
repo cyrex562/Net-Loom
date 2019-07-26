@@ -244,14 +244,11 @@ static void sha1_process( Sha1Context *ctx, const unsigned char data[64] )
  */
 void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen )
 {
-    int fill;
-    unsigned long left;
-
     if( ilen <= 0 )
         return;
 
-    left = ctx->total[0] & 0x3F;
-    fill = 64 - left;
+    unsigned long left = ctx->total[0] & 0x3F;
+    int fill = 64 - left;
 
     ctx->total[0] += ilen;
     ctx->total[0] &= 0xFFFFFFFF;
@@ -296,19 +293,16 @@ static const unsigned char sha1_padding[64] =
  */
 void sha1_finish( Sha1Context *ctx, unsigned char output[20] )
 {
-    unsigned long last, padn;
-    unsigned long high, low;
     unsigned char msglen[8];
 
-    high = ( ctx->total[0] >> 29 )
-         | ( ctx->total[1] <<  3 );
-    low  = ( ctx->total[0] <<  3 );
+    unsigned long high = (ctx->total[0] >> 29) | (ctx->total[1] << 3);
+    unsigned long low = (ctx->total[0] << 3);
 
     PUT_ULONG_BE( high, msglen, 0 );
     PUT_ULONG_BE( low,  msglen, 4 );
 
-    last = ctx->total[0] & 0x3F;
-    padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
+    unsigned long last = ctx->total[0] & 0x3F;
+    unsigned long padn = (last < 56) ? (56 - last) : (120 - last);
 
     sha1_update( ctx, sha1_padding, padn );
     sha1_update( ctx, msglen, 8 );

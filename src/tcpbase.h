@@ -30,9 +30,13 @@ inline bool TcpStateIsClosing(const TcpState state) {
 constexpr auto TCP_WRITE_FLAG_COPY = 0x01;
 constexpr auto TCP_WRITE_FLAG_MORE = 0x02;
 
-constexpr auto TCP_PRIO_MIN = 1;
-constexpr auto TCP_PRIO_NORMAL = 64;
-constexpr auto TCP_PRIO_MAX = 127;
+enum TcpPriority
+{
+    TCP_PRIO_MIN = 1,
+    TCP_PRIO_NORMAL = 64,
+    TCP_PRIO_MAX = 127,
+};
+
 
 const char* tcp_debug_state_str(enum TcpState s);
 

@@ -449,7 +449,7 @@ inline const char* netif_get_hostname(NetworkInterface* netif)
         return netif->hostname;
     }
     return nullptr;
-} 
+}
 
 /** @ingroup netif */
 // #define netif_set_mld_mac_filter(netif, function) do { if((netif) != NULL) { (netif)->mld_mac_filter = function; }}while(0)
@@ -649,7 +649,7 @@ void netif_remove_ext_callback(netif_ext_callback_t* callback);
 void netif_invoke_ext_callback(struct NetworkInterface* netif, NetifNscReason reason, const netif_ext_callback_args_t* args);
 
 //
-// 
+//
 //
 inline bool ip6_addr_est_zone(const Ip6Addr* ip6addr, const NetworkInterface* netif)
 {
@@ -712,7 +712,7 @@ inline const IpAddr* ip6_netif_get_local_ip(const NetworkInterface* netif, const
 
 
 
-/** @ingroup igmp 
+/** @ingroup igmp
  * Get list head of IGMP groups for netif.
  * Note: The allsystems group IP is contained in the list as first entry.
  * @see @ref netif_set_igmp_mac_filter()
@@ -746,6 +746,14 @@ igmp_lookfor_group(NetworkInterface* ifp, const Ip4Addr* addr)
    */
     return nullptr;
 }
+
+#define IF_NAMESIZE NETIF_NAMESIZE
+
+char * lwip_if_indextoname(unsigned int ifindex, char *ifname);
+unsigned int lwip_if_nametoindex(const char *ifname);
+
+#define if_indextoname(ifindex, ifname)  lwip_if_indextoname(ifindex,ifname)
+#define if_nametoindex(ifname)           lwip_if_nametoindex(ifname)
 
 //
 // END OF FILE

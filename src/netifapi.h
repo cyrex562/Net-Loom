@@ -34,7 +34,7 @@
 #include <opt.h>
 
 #include <sys.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <dhcp.h>
 #include <autoip.h>
 #include <tcpip_priv.h>

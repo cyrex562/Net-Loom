@@ -45,23 +45,21 @@
  */
 void arc4_setup( Arc4Context *ctx, unsigned char *key, int keylen )
 {
-    int i, j, k, a;
-    unsigned char *m;
-
+    int i, k;
     ctx->x = 0;
     ctx->y = 0;
-    m = ctx->m;
+    unsigned char* m = ctx->m;
 
     for( i = 0; i < 256; i++ )
         m[i] = (unsigned char) i;
 
-    j = k = 0;
+    int j = k = 0;
 
     for( i = 0; i < 256; i++, k++ )
     {
         if( k >= keylen ) k = 0;
 
-        a = m[i];
+        int a = m[i];
         j = ( j + a + key[k] ) & 0xFF;
         m[i] = m[j];
         m[j] = (unsigned char) a;
@@ -73,17 +71,14 @@ void arc4_setup( Arc4Context *ctx, unsigned char *key, int keylen )
  */
 void arc4_crypt( Arc4Context *ctx, unsigned char *buf, int buflen )
 {
-    int i, x, y, a, b;
-    unsigned char *m;
+    int x = ctx->x;
+    int y = ctx->y;
+    unsigned char* m = ctx->m;
 
-    x = ctx->x;
-    y = ctx->y;
-    m = ctx->m;
-
-    for( i = 0; i < buflen; i++ )
+    for( int i = 0; i < buflen; i++ )
     {
-        x = ( x + 1 ) & 0xFF; a = m[x];
-        y = ( y + a ) & 0xFF; b = m[y];
+        x = ( x + 1 ) & 0xFF; int a = m[x];
+        y = ( y + a ) & 0xFF; int b = m[y];
 
         m[x] = (unsigned char) b;
         m[y] = (unsigned char) a;

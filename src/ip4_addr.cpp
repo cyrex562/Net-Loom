@@ -1,6 +1,6 @@
 #include <ip4_addr.h>
 #include <lwip_debug.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <cctype>
 
 /**
@@ -215,7 +215,7 @@ int lwip_ip4addr_aton(const char* cp, Ip4Addr* addr)
         }
         val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
         break;
-    default: lwip_assert("unhandled", 0);
+    default: lwip_assert("unhandled", false);
     }
     if (addr)
     {

@@ -1,7 +1,6 @@
 ///
 /// file: pcapif.cpp
-/// 
-
+///
 #include <pcapif.h>
 #include <opt.h>
 #include <def.h>
@@ -14,11 +13,10 @@
 #include <tcpip.h>
 #include <timeouts.h>
 #include <pcapif_helper.h>
-#include <../npcap/Include/pcap/pcap.h>
+// #include <../npcap/Include/pcap/pcap.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
 // // #ifdef _MSC_VER
 // // #pragma warning( push, 3 )
 // // #include <pcap.h>
@@ -41,7 +39,8 @@
 //
 //
 // #include <debug.h>
-static void pcapif_init_tx_packets(struct pcapif_private* priv)
+static void
+pcapif_init_tx_packets(struct pcapif_private* priv)
 {
     priv->tx_packets = nullptr;
     priv->free_packets = nullptr;
@@ -54,9 +53,8 @@ static void pcapif_init_tx_packets(struct pcapif_private* priv)
     }
 }
 
-static void pcapif_add_tx_packet(struct pcapif_private* priv,
-                                 unsigned char* buf,
-                                 uint16_t tot_len)
+static void
+pcapif_add_tx_packet(struct pcapif_private* priv, unsigned char* buf, uint16_t tot_len)
 {
     struct pcapipf_pending_packet* tx; /* get a free packet (locked) */
     struct pcapipf_pending_packet* pack = priv->free_packets;
@@ -83,9 +81,10 @@ static void pcapif_add_tx_packet(struct pcapif_private* priv,
     }
 }
 
-static int pcapif_compare_packets(struct pcapipf_pending_packet* pack,
-                                  const uint8_t* packet,
-                                  int packet_len)
+static int
+pcapif_compare_packets(struct pcapipf_pending_packet* pack,
+                       const uint8_t* packet,
+                       int packet_len)
 {
     if (pack->len == packet_len)
     {
@@ -97,9 +96,8 @@ static int pcapif_compare_packets(struct pcapipf_pending_packet* pack,
     return 0;
 }
 
-static int pcaipf_is_tx_packet(NetworkInterface* netif,
-                               const uint8_t* packet,
-                               int packet_len)
+static int
+pcaipf_is_tx_packet(NetworkInterface* netif, const uint8_t* packet, int packet_len)
 {
     struct pcapif_private* priv = nullptr;
     struct pcapipf_pending_packet* last = priv->tx_packets;
@@ -134,18 +132,16 @@ static int pcaipf_is_tx_packet(NetworkInterface* netif,
     }
     return 0;
 } /* Forward declarations. */
-static void pcapif_input(uint8_t* user,
-                         const struct pcap_pkthdr* pkt_header,
-                         const uint8_t* packet);
+static void
+pcapif_input(uint8_t* user, const struct pcap_pkthdr* pkt_header, const uint8_t* packet);
 
 /** Get the index of an adapter by its network address
 *
 * @param netaddr network address of the adapter (e.g. 192.168.1.0)
 * @return index of the adapter or negative on error
 */
-static int get_adapter_index_from_addr(struct LwipInAddrStruct* netaddr,
-                                       char* guid,
-                                       size_t guid_len)
+static int
+get_adapter_index_from_addr(struct LwipInAddrStruct* netaddr, char* guid, size_t guid_len)
 {
     // pcap_if_t *alldevs;
     // pcap_if_t *d;
@@ -197,52 +193,60 @@ static int get_adapter_index_from_addr(struct LwipInAddrStruct* netaddr,
     //
     // pcap_freealldevs(alldevs);
     // return -1;
-} /** Get the index of an adapter by its GUID
- *
- * @param adapter_guid GUID of the adapter
- * @return index of the adapter or negative on error
- */
-static int get_adapter_index(const char* adapter_guid)
+    return -1;
+} /// Get the index of an adapter by its GUID
+///
+/// @param adapter_guid GUID of the adapter
+/// @return index of the adapter or negative on error
+///
+
+struct pcap_if_t;
+#define PCAP_ERRBUF_SIZE 0xff
+
+static int
+get_adapter_index(const char* adapter_guid)
 {
-    pcap_if_t* alldevs;
-    pcap_if_t* d;
-    char errbuf[PCAP_ERRBUF_SIZE + 1];
-    int idx = 0; /* Retrieve the interfaces list */
-    if (pcap_findalldevs(&alldevs, errbuf) == -1)
-    {
-        printf("Error in pcap_findalldevs: %s\n", errbuf);
-        return -1;
-    } /* Scan the list and compare name vs. adapter_guid */
-    for (d = alldevs; d != nullptr; d = d->next, idx++)
-    {
-        if (strstr(d->name, adapter_guid))
-        {
-            pcap_freealldevs(alldevs);
-            return idx;
-        }
-    } /* not found, dump all adapters */
-    printf("%d available adapters:\n", idx);
-    for (d = alldevs, idx = 0; d != nullptr; d = d->next, idx++)
-    {
-        printf("- %d: %s\n", idx, d->name);
-    }
-    pcap_freealldevs(alldevs);
+    // pcap_if_t* alldevs;
+    // pcap_if_t* d;
+    // char errbuf[PCAP_ERRBUF_SIZE + 1];
+    // int idx = 0; /* Retrieve the interfaces list */
+    // if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    // {
+    //     printf("Error in pcap_findalldevs: %s\n", errbuf);
+    //     return -1;
+    // } /* Scan the list and compare name vs. adapter_guid */
+    // for (d = alldevs; d != nullptr; d = d->next, idx++)
+    // {
+    //     if (strstr(d->name, adapter_guid))
+    //     {
+    //         pcap_freealldevs(alldevs);
+    //         return idx;
+    //     }
+    // } /* not found, dump all adapters */
+    // printf("%d available adapters:\n", idx);
+    // for (d = alldevs, idx = 0; d != nullptr; d = d->next, idx++)
+    // {
+    //     printf("- %d: %s\n", idx, d->name);
+    // }
+    // pcap_freealldevs(alldevs);
     return -1;
 }
 
-static pcap_t* pcapif_open_adapter(const char* adapter_name, char* errbuf)
+static pcap_t*
+pcapif_open_adapter(const char* adapter_name, char* errbuf)
 {
-    pcap_t* adapter = pcap_open_live(adapter_name,
-                                     /* name of the device */
-                                     65536,
-                                     /* portion of the packet to capture */
-                                     /* 65536 guarantees that the whole packet will be captured on all the link layers */
-                                     PCAP_OPENFLAG_PROMISCUOUS,
-                                     /* promiscuous mode */
-                                     /*-*/
-                                     1,
-                                     /* don't wait at all for lower latency */
-                                     errbuf); /* error buffer */
+    pcap_t* adapter;
+    // pcap_t* adapter = pcap_open_live(adapter_name,
+    //                                  /* name of the device */
+    //                                  65536,
+    //                                  /* portion of the packet to capture */
+    //                                  /* 65536 guarantees that the whole packet will be captured on all the link layers */
+    //                                  PCAP_OPENFLAG_PROMISCUOUS,
+    //                                  /* promiscuous mode */
+    //                                  /*-*/
+    //                                  1,
+    //                                  /* don't wait at all for lower latency */
+    //                                  errbuf); /* error buffer */
     return adapter;
 } /**
  * Open a network adapter and set it up for packet input
@@ -251,16 +255,17 @@ static pcap_t* pcapif_open_adapter(const char* adapter_name, char* errbuf)
  * @param arg argument to pass to input
  * @return an adapter handle on success, NULL on failure
  */
-static struct pcapif_private* pcapif_init_adapter(int adapter_num, uint8_t* arg)
+static struct pcapif_private*
+pcapif_init_adapter(int adapter_num, uint8_t* arg)
 {
     int i;
     int number_of_adapters;
-    struct pcapif_private* pa;
     char errbuf[PCAP_ERRBUF_SIZE + 1];
     pcap_if_t* alldevs;
     pcap_if_t* d;
     pcap_if_t* used_adapter = nullptr;
-    pa = (struct pcapif_private *)malloc(sizeof(struct pcapif_private));
+    struct pcapif_private* pa = (struct pcapif_private *)malloc(
+        sizeof(struct pcapif_private));
     if (!pa)
     {
         printf("Unable to alloc the adapter!\n");
@@ -269,133 +274,134 @@ static struct pcapif_private* pcapif_init_adapter(int adapter_num, uint8_t* arg)
     memset(pa, 0, sizeof(struct pcapif_private));
     pcapif_init_tx_packets(pa);
     pa->input_fn_arg = arg; /* Retrieve the interfaces list */
-    if (pcap_findalldevs(&alldevs, errbuf) == -1)
-    {
-        free(pa);
-        return nullptr; /* no adapters found */
-    } /* get number of adapters and adapter pointer */
-    for (d = alldevs, number_of_adapters = 0; d != nullptr; d = d->next,
-         number_of_adapters++)
-    {
-        if (number_of_adapters == adapter_num)
-        {
-            char* desc = d->description;
-            size_t len;
-            len = strlen(d->name);
-            lwip_assert("len < ADAPTER_NAME_LEN", len < ADAPTER_NAME_LEN);
-            strcpy(pa->name, d->name);
-            used_adapter = d; /* format vendor description */
-            if (desc != nullptr)
-            {
-                len = strlen(desc);
-                if (strstr(desc, " ' on local host") != nullptr)
-                {
-                    len -= 16;
-                }
-                else if (strstr(desc, "' on local host") != nullptr)
-                {
-                    len -= 15;
-                }
-                if (strstr(desc, "Network adapter '") == desc)
-                {
-                    len -= 17;
-                    desc += 17;
-                }
-                len = LWIP_MIN(len, ADAPTER_DESC_LEN-1);
-                while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
-                {
-                    /* don't copy trailing whitespace */
-                    len--;
-                }
-                strncpy(pa->description, desc, len);
-                pa->description[len] = 0;
-            }
-            else
-            {
-                strcpy(pa->description, "<no_desc>");
-            }
-        }
-    } /* Scan the list printing every entry */
-    for (d = alldevs, i = 0; d != nullptr; d = d->next, i++)
-    {
-        char* desc = d->description;
-        char descBuf[128];
-        size_t len;
-        const char* devname = d->name;
-        if (d->name == nullptr)
-        {
-            devname = "<unnamed>";
-        }
-        else
-        {
-            if (strstr(devname, "\\Device\\") == devname)
-            {
-                /* windows: strip the first part */
-                devname += 8;
-            }
-        }
-        printf("%2i: %s\n", i, devname);
-        if (desc != nullptr)
-        {
-            /* format vendor description */
-            len = strlen(desc);
-            if (strstr(desc, " ' on local host") != nullptr)
-            {
-                len -= 16;
-            }
-            else if (strstr(desc, "' on local host") != nullptr)
-            {
-                len -= 15;
-            }
-            if (strstr(desc, "Network adapter '") == desc)
-            {
-                len -= 17;
-                desc += 17;
-            }
-            len = LWIP_MIN(len, 127);
-            while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
-            {
-                /* don't copy trailing whitespace */
-                len--;
-            }
-            strncpy(descBuf, desc, len);
-            descBuf[len] = 0;
-            printf("     Desc: \"%s\"\n", descBuf);
-        }
-    } /* invalid adapter index -> check this after printing the adapters */
-    if (adapter_num < 0)
-    {
-        printf("Invalid adapter_num: %d\n", adapter_num);
-        free(pa);
-        pcap_freealldevs(alldevs);
-        return nullptr;
-    } /* adapter index out of range */
-    if (adapter_num >= number_of_adapters)
-    {
-        printf("Invalid adapter_num: %d\n", adapter_num);
-        free(pa);
-        pcap_freealldevs(alldevs);
-        return nullptr;
-    } /* set up the selected adapter */
-    lwip_assert("used_adapter != NULL", used_adapter != nullptr); /* Open the device */
-    pa->adapter = pcapif_open_adapter(used_adapter->name, errbuf);
-    if (pa->adapter == nullptr)
-    {
-        printf("\nUnable to open the adapter. %s is not supported by pcap (\"%s\").\n",
-               used_adapter->name,
-               errbuf); /* Free the device list */
-        pcap_freealldevs(alldevs);
-        free(pa);
-        return nullptr;
-    }
-    printf("Using adapter: \"%s\"\n", pa->description);
-    pcap_freealldevs(alldevs);
-    pa->link_state = pcapifh_linkstate_init(pa->name);
-    pa->last_link_event = PCAPIF_LINKEVENT_UNKNOWN;
+    // if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    // {
+    //     free(pa);
+    //     return nullptr; /* no adapters found */
+    // } /* get number of adapters and adapter pointer */
+    // for (d = alldevs, number_of_adapters = 0; d != nullptr; d = d->next,
+    //      number_of_adapters++)
+    // {
+    //     if (number_of_adapters == adapter_num)
+    //     {
+    //         // char* desc = d->description;
+    //         // size_t len;
+    //         // len = strlen(d->name);
+    //         // lwip_assert("len < ADAPTER_NAME_LEN", len < ADAPTER_NAME_LEN);
+    //         // strcpy(pa->name, d->name);
+    //         // used_adapter = d; /* format vendor description */
+    //         // if (desc != nullptr)
+    //         // {
+    //         //     len = strlen(desc);
+    //         //     if (strstr(desc, " ' on local host") != nullptr)
+    //         //     {
+    //         //         len -= 16;
+    //         //     }
+    //         //     else if (strstr(desc, "' on local host") != nullptr)
+    //         //     {
+    //         //         len -= 15;
+    //         //     }
+    //         //     if (strstr(desc, "Network adapter '") == desc)
+    //         //     {
+    //         //         len -= 17;
+    //         //         desc += 17;
+    //         //     }
+    //         //     len = std::min(len, ADAPTER_DESC_LEN-1);
+    //         //     while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
+    //         //     {
+    //         //         /* don't copy trailing whitespace */
+    //         //         len--;
+    //         //     }
+    //         //     strncpy(pa->description, desc, len);
+    //         //     pa->description[len] = 0;
+    //         // }
+    //         // else
+    //         // {
+    //         //     strcpy(pa->description, "<no_desc>");
+    //         // }
+    //     }
+    // } /* Scan the list printing every entry */
+    // for (d = alldevs, i = 0; d != nullptr; d = d->next, i++)
+    // {
+    //     char* desc = d->description;
+    //     char descBuf[128];
+    //     size_t len;
+    //     const char* devname = d->name;
+    //     if (d->name == nullptr)
+    //     {
+    //         devname = "<unnamed>";
+    //     }
+    //     else
+    //     {
+    //         if (strstr(devname, "\\Device\\") == devname)
+    //         {
+    //             /* windows: strip the first part */
+    //             devname += 8;
+    //         }
+    //     }
+    //     printf("%2i: %s\n", i, devname);
+    //     if (desc != nullptr)
+    //     {
+    //         /* format vendor description */
+    //         len = strlen(desc);
+    //         if (strstr(desc, " ' on local host") != nullptr)
+    //         {
+    //             len -= 16;
+    //         }
+    //         else if (strstr(desc, "' on local host") != nullptr)
+    //         {
+    //             len -= 15;
+    //         }
+    //         if (strstr(desc, "Network adapter '") == desc)
+    //         {
+    //             len -= 17;
+    //             desc += 17;
+    //         }
+    //         len = std::min(len, 127);
+    //         while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
+    //         {
+    //             /* don't copy trailing whitespace */
+    //             len--;
+    //         }
+    //         strncpy(descBuf, desc, len);
+    //         descBuf[len] = 0;
+    //         printf("     Desc: \"%s\"\n", descBuf);
+    //     }
+    // } /* invalid adapter index -> check this after printing the adapters */
+    // if (adapter_num < 0)
+    // {
+    //     printf("Invalid adapter_num: %d\n", adapter_num);
+    //     free(pa);
+    //     pcap_freealldevs(alldevs);
+    //     return nullptr;
+    // } /* adapter index out of range */
+    // if (adapter_num >= number_of_adapters)
+    // {
+    //     printf("Invalid adapter_num: %d\n", adapter_num);
+    //     free(pa);
+    //     pcap_freealldevs(alldevs);
+    //     return nullptr;
+    // } /* set up the selected adapter */
+    // lwip_assert("used_adapter != NULL", used_adapter != nullptr); /* Open the device */
+    // pa->adapter = pcapif_open_adapter(used_adapter->name, errbuf);
+    // if (pa->adapter == nullptr)
+    // {
+    //     printf("\nUnable to open the adapter. %s is not supported by pcap (\"%s\").\n",
+    //            used_adapter->name,
+    //            errbuf); /* Free the device list */
+    //     pcap_freealldevs(alldevs);
+    //     free(pa);
+    //     return nullptr;
+    // }
+    // printf("Using adapter: \"%s\"\n", pa->description);
+    // pcap_freealldevs(alldevs);
+    // pa->link_state = pcapifh_linkstate_init(pa->name);
+    // pa->last_link_event = PCAPIF_LINKEVENT_UNKNOWN;
     return pa;
 }
 
-static void pcapif_check_linkstate(void* netif_ptr)
+static void
+pcapif_check_linkstate(void* netif_ptr)
 {
     auto netif = static_cast<NetworkInterface*>(netif_ptr);
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
@@ -407,95 +413,93 @@ static void pcapif_check_linkstate(void* netif_ptr)
         switch (le)
         {
         case PCAPIF_LINKEVENT_UP:
-        {
-            // PCAPIF_NOTIFY_LINKSTATE(netif, netif_set_link_up);
-            break;
-        }
+            {
+                // PCAPIF_NOTIFY_LINKSTATE(netif, netif_set_link_up);
+                break;
+            }
         case PCAPIF_LINKEVENT_DOWN:
-        {
-            // PCAPIF_NOTIFY_LINKSTATE(netif, netif_set_link_down);
-            break;
-        }
+            {
+                // PCAPIF_NOTIFY_LINKSTATE(netif, netif_set_link_down);
+                break;
+            }
         case PCAPIF_LINKEVENT_UNKNOWN: /* fall through */ default:
             break;
         }
     }
     sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
-} 
-
-
-
-/**
+} /**
  * Close the adapter (no more packets can be sent or received)
  *
  * @param netif netif to shutdown
  */
-void pcapif_shutdown(NetworkInterface* netif)
+void
+pcapif_shutdown(NetworkInterface* netif)
 {
     // auto pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
     pcapif_private* pa = nullptr;
-    if (pa)
-    {
-        pa->rx_run = 0;
-        if (pa->adapter)
-        {
-            pcap_breakloop(pa->adapter);
-            pcap_close(pa->adapter);
-        } /* wait for rxthread to end */
-        while (pa->rx_running);
-        pcapifh_linkstate_close(pa->link_state);
-        free(pa);
-    }
-} 
+    // if (pa)
+    // {
+    //     pa->rx_run = 0;
+    //     if (pa->adapter)
+    //     {
+    //         pcap_breakloop(pa->adapter);
+    //         pcap_close(pa->adapter);
+    //     } /* wait for rxthread to end */
+    //     while (pa->rx_running);
+    //     pcapifh_linkstate_close(pa->link_state);
+    //     free(pa);
+    // }
+}
 
 
 ///
 /// RX running in its own thread
-/// 
-static void pcapif_input_thread(uint8_t* arg)
+///
+static void
+pcapif_input_thread(uint8_t* arg)
 {
-    auto netif = reinterpret_cast<NetworkInterface*>(arg);
-    // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
-    struct pcapif_private* pa = nullptr;
-    do
-    {
-        struct pcap_pkthdr pkt_header;
-        const uint8_t* packet = pcap_next(pa->adapter, &pkt_header);
-        if (packet != nullptr)
-        {
-            pcapif_input((uint8_t*)pa, &pkt_header, packet);
-        }
-    }
-    while (pa->rx_run);
-    pa->rx_running = 0;
-} 
+    // auto netif = reinterpret_cast<NetworkInterface*>(arg);
+    // // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
+    // struct pcapif_private* pa = nullptr;
+    // do
+    // {
+    //     struct pcap_pkthdr pkt_header;
+    //     const uint8_t* packet = pcap_next(pa->adapter, &pkt_header);
+    //     if (packet != nullptr)
+    //     {
+    //         pcapif_input((uint8_t*)pa, &pkt_header, packet);
+    //     }
+    // }
+    // while (pa->rx_run);
+    // pa->rx_running = 0;
+}
+
 
 ///
 /// Low-level initialization: find the correct adapter and initialize it.
 ///
-static void pcapif_low_level_init(NetworkInterface* netif)
+static void
+pcapif_low_level_init(NetworkInterface* netif)
 {
-    uint8_t my_mac_addr[ETH_ADDR_LEN] ={0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    uint8_t my_mac_addr[ETH_ADDR_LEN] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
     // int adapter_num = PACKET_LIB_ADAPTER_NR;
     auto adapter_num = 0;
     Ip4Addr netaddr;
-
     char guid[GUID_LEN + 1];
     /* If 'state' is != NULL at this point, we assume it is an 'int' giving
-        the index of the adapter to use (+ 1 because 0==NULL is invalid).
-        This can be used to instantiate multiple PCAP drivers. */
+           the index of the adapter to use (+ 1 because 0==NULL is invalid).
+           This can be used to instantiate multiple PCAP drivers. */
     if (netif->state != nullptr)
     {
         adapter_num = int(netif->state) - 1;
         if (adapter_num < 0)
         {
             printf("ERROR: invalid adapter index \"%d\"!\n", adapter_num);
-            lwip_assert("ERROR initializing network adapter!\n", 0);
+            lwip_assert("ERROR initializing network adapter!\n", false);
             return;
         }
     }
-    memset(&guid, 0, sizeof(guid));
-    // PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
+    memset(&guid, 0, sizeof(guid)); // PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
     if (get_adapter_index_from_addr((struct LwipInAddrStruct *)&netaddr, guid, GUID_LEN) <
         0)
     {
@@ -504,21 +508,21 @@ static void pcapif_low_level_init(NetworkInterface* netif)
             lwip_ip4addr_ntoa(&netaddr));
         lwip_assert(
             "ERROR initializing network adapter, failed to get GUID for network address!",
-            0);
+            false);
         return;
     }
     adapter_num = get_adapter_index(guid);
     if (adapter_num < 0)
     {
         printf("ERROR finding network adapter with GUID \"%s\"!\n", guid);
-        lwip_assert("ERROR finding network adapter with expected GUID!", 0);
+        lwip_assert("ERROR finding network adapter with expected GUID!", false);
         return;
     } /* Do whatever else is needed to initialize interface. */
     struct pcapif_private* pa = pcapif_init_adapter(adapter_num, (uint8_t*)netif);
     if (pa == nullptr)
     {
         printf("ERROR initializing network adapter %d!\n", adapter_num);
-        lwip_assert("ERROR initializing network adapter!", 0);
+        lwip_assert("ERROR initializing network adapter!", false);
         return;
     }
     netif->state = pa; /* change the MAC address to a unique value
@@ -547,13 +551,11 @@ static void pcapif_low_level_init(NetworkInterface* netif)
  * Transmit a packet. The packet is contained in the PacketBuffer that is passed to
  * the function. This PacketBuffer might be chained.
  */
-static LwipStatus pcapif_low_level_output(NetworkInterface* netif, struct PacketBuffer* p)
+static LwipStatus
+pcapif_low_level_output(NetworkInterface* netif, struct PacketBuffer* p)
 {
-    struct PacketBuffer* q;
     unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
     unsigned char* buf = buffer;
-    unsigned char* ptr;
-    struct EthHdr* ethhdr;
     uint16_t tot_len = p->tot_len - ETH_PAD_SIZE;
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
     pcapif_private* pa = nullptr;
@@ -574,15 +576,18 @@ static LwipStatus pcapif_low_level_output(NetworkInterface* netif, struct Packet
             // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
             return ERR_BUF;
         }
-        ptr = buffer;
-        for (q = p; q != nullptr; q = q->next)
+        unsigned char* ptr = buffer;
+        for (struct PacketBuffer* q = p; q != nullptr; q = q->next)
         {
             /* Send the data from the PacketBuffer to the interface, one PacketBuffer at a
                time. The size of the data in each PacketBuffer is kept in the ->len
                variable. */ /* send data from(q->payload, q->len); */
             Logf(true,
-                 "netif: send ptr %p q->payload %p q->len %i q->next %p\n", ptr, q->
-                     payload, (int)q->len, (void*)q->next);
+                 "netif: send ptr %p q->payload %p q->len %i q->next %p\n",
+                 ptr,
+                 q->payload,
+                 (int)q->len,
+                 (void*)q->next);
             if (q == p)
             {
                 memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
@@ -601,15 +606,15 @@ static LwipStatus pcapif_low_level_output(NetworkInterface* netif, struct Packet
         memset(&buf[tot_len], 0, ETH_MIN_FRAME_LEN - tot_len);
         tot_len = ETH_MIN_FRAME_LEN;
     } /* signal that packet should be sent */
-    if (pcap_sendpacket(pa->adapter, buf, tot_len) < 0)
-    {
-        return ERR_BUF;
-    }
+    // if (pcap_sendpacket(pa->adapter, buf, tot_len) < 0)
+    // {
+    //     return ERR_BUF;
+    // }
     if (netif_is_link_up(netif))
     {
         pcapif_add_tx_packet(pa, buf, tot_len);
     }
-    ethhdr = (struct EthHdr *)p->payload;
+    struct EthHdr* ethhdr = (struct EthHdr *)p->payload;
     if ((ethhdr->dest.addr[0] & 1) != 0)
     {
         /* broadcast or multicast packet*/
@@ -622,15 +627,11 @@ static LwipStatus pcapif_low_level_output(NetworkInterface* netif, struct Packet
 } /** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
  * packet from the interface into the PacketBuffer.
  */
-static struct PacketBuffer* pcapif_low_level_input(NetworkInterface* netif,
-                                                   const uint8_t* packet,
-                                                   int packet_len)
+static struct PacketBuffer*
+pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packet_len)
 {
-    struct PacketBuffer *p, *q;
-    int start;
     int length = packet_len;
     const struct EthAddr* dest = (const struct EthAddr*)packet;
-    int unicast;
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};
@@ -639,24 +640,28 @@ static struct PacketBuffer* pcapif_low_level_input(NetworkInterface* netif,
         /* don't update counters here! */
         return nullptr;
     }
-    unicast = ((dest->addr[0] & 0x01) == 0);
+    int unicast = ((dest->addr[0] & 0x01) == 0);
     /* We allocate a PacketBuffer chain of pbufs from the pool. */
-    p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE);
+    struct PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE);
     Logf(true, "netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len);
     if (p != nullptr)
     {
         /* We iterate over the PacketBuffer chain until we have read the entire
            packet into the PacketBuffer. */
-        start = 0;
-        for (q = p; q != nullptr; q = q->next)
+        int start = 0;
+        for (struct PacketBuffer* q = p; q != nullptr; q = q->next)
         {
             uint16_t copy_len = q->len;
             /* Read enough bytes to fill this PacketBuffer in the chain. The
-                    available data in the PacketBuffer is given by the q->len
-                    variable. */ /* read data into(q->payload, q->len); */
+                               available data in the PacketBuffer is given by the q->len
+                               variable. */ /* read data into(q->payload, q->len); */
             Logf(true,
                  "netif: recv start %i length %i q->payload %p q->len %i q->next %p\n",
-                     start, length, q->payload, (int)q->len, (void*)q->next);
+                 start,
+                 length,
+                 q->payload,
+                 (int)q->len,
+                 (void*)q->next);
             if (q == p)
             {
                 memcpy(&((char*)q->payload)[ETH_PAD_SIZE],
@@ -688,50 +693,48 @@ static struct PacketBuffer* pcapif_low_level_input(NetworkInterface* netif,
     return p;
 }
 
-static void pcapif_rx_pbuf_free_custom(struct PacketBuffer* p)
+static void
+pcapif_rx_pbuf_free_custom(struct PacketBuffer* p)
 {
-    struct pcapif_pbuf_custom* ppc;
     lwip_assert("NULL pointer", p != nullptr);
-    ppc = (struct pcapif_pbuf_custom*)p;
+    struct pcapif_pbuf_custom* ppc = (struct pcapif_pbuf_custom*)p;
     lwip_assert("NULL pointer", ppc->p != nullptr);
     free_pkt_buf(ppc->p);
     ppc->p = nullptr;
     delete p;
 }
 
-static struct PacketBuffer* pcapif_rx_ref(struct PacketBuffer* p)
+static struct PacketBuffer*
+pcapif_rx_ref(struct PacketBuffer* p)
 {
-    struct pcapif_pbuf_custom* ppc;
-    struct PacketBuffer* q;
     lwip_assert("NULL pointer", p != nullptr);
     lwip_assert("chained PacketBuffer not supported here", p->next == nullptr);
     // ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
-    ppc = new pcapif_pbuf_custom;
+    struct pcapif_pbuf_custom* ppc = new pcapif_pbuf_custom;
     lwip_assert("out of memory for RX", ppc != nullptr);
     ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
     ppc->p = p;
-    q = pbuf_alloced_custom(PBUF_RAW,
-                            p->tot_len,
-                            PBUF_REF,
-                            &ppc->pc,
-                            p->payload,
-                            p->tot_len);
+    struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
+                                                 p->tot_len,
+                                                 PBUF_REF,
+                                                 &ppc->pc,
+                                                 p->payload,
+                                                 p->tot_len);
     lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
     return q;
 } /** pcapif_input: This function is called when a packet is ready to be read
  * from the interface. It uses the function low_level_input() that should
  * handle the actual reception of bytes from the network interface.
  */
-static void pcapif_input(uint8_t* user,
-                         const struct pcap_pkthdr* pkt_header,
-                         const uint8_t* packet)
+static void
+pcapif_input(uint8_t* user, const struct pcap_pkthdr* pkt_header, const uint8_t* packet)
 {
     struct pcapif_private* pa = (struct pcapif_private*)user;
-    int packet_len = pkt_header->caplen;
+    // int packet_len = pkt_header->caplen;
     NetworkInterface* netif = (NetworkInterface*)pa->input_fn_arg;
     struct PacketBuffer* p;
     PCAPIF_RX_LOCK_LWIP(); /* move received packet into a new PacketBuffer */
-    p = pcapif_low_level_input(netif, packet, packet_len);
+    // p = pcapif_low_level_input(netif, packet, packet_len);
     /* if no packet could be read, silently ignore this */
     if (p != nullptr)
     {
@@ -749,13 +752,13 @@ static void pcapif_input(uint8_t* user,
 } /**
  * pcapif_init(): initialization function, pass to netif_add().
  */
-LwipStatus pcapif_init(NetworkInterface* netif)
+LwipStatus
+pcapif_init(NetworkInterface* netif)
 {
     static int ethernetif_index;
-    int local_index;
     sys_prot_t lev;
     SYS_ARCH_PROTECT(lev);
-    local_index = ethernetif_index++;
+    int local_index = ethernetif_index++;
     sys_arch_unprotect(lev);
     lwip_assert("pcapif needs an input callback", netif->input != nullptr);
     netif->name[0] = IFNAME0;
@@ -776,7 +779,8 @@ LwipStatus pcapif_init(NetworkInterface* netif)
     return ERR_OK;
 }
 
-void pcapif_poll(NetworkInterface* netif)
+void
+pcapif_poll(NetworkInterface* netif)
 {
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
     pcapif_private* pa = nullptr;
@@ -785,7 +789,7 @@ void pcapif_poll(NetworkInterface* netif)
     {
         if (pa->adapter != nullptr)
         {
-            ret = pcap_dispatch(pa->adapter, -1, pcapif_input, (uint8_t*)pa);
+            // ret = pcap_dispatch(pa->adapter, -1, pcapif_input, (uint8_t*)pa);
         }
         else
         {
@@ -798,8 +802,6 @@ void pcapif_poll(NetworkInterface* netif)
         }
     }
     while (ret > 0);
-}
-
-//
+} //
 // END OF FILE
 //

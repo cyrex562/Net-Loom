@@ -76,9 +76,6 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
     uint8_t type = *static_cast<uint8_t *>(p->payload);
 
   uint8_t code = *((uint8_t *)p->payload + 1);
-  /* if debug is enabled but debug statement below is somehow disabled: */
-  ;
-
     switch (type)
     {
     case ICMP_ER: /* This is OK, echo reply might have been parsed by a raw PCB
@@ -128,7 +125,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
             }
             if (r->len < hlen + sizeof(struct IcmpEchoHdr))
             {
-                Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+                Logf(true,
                      "first PacketBuffer cannot hold the ICMP header");
                 free_pkt_buf(r);
                 goto icmperr;
@@ -137,13 +134,13 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
             /* switch r->payload back to icmp header (cannot fail) */
             if (pbuf_remove_header(r, hlen))
             {
-                lwip_assert("icmp_input: moving r->payload to icmp header failed\n", 0);
+                lwip_assert("icmp_input: moving r->payload to icmp header failed\n", false);
                 free_pkt_buf(r);
                 goto icmperr;
             } /* copy the rest of the packet without ip header */
             if (pbuf_copy(r, p) != ERR_OK)
             {
-                Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+                Logf(true,
                      "icmp_input: copying to new PacketBuffer failed");
                 free_pkt_buf(r);
                 goto icmperr;
@@ -158,7 +155,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
             if (pbuf_remove_header(p,
                                    hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
             {
-                lwip_assert("icmp_input: restoring original p->payload failed\n", 0);
+                lwip_assert("icmp_input: restoring original p->payload failed\n", false);
                 goto icmperr;
             }
         } /* At this point, all checks are OK. */
@@ -167,7 +164,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
         iecho = reinterpret_cast<struct IcmpEchoHdr *>(p->payload);
         if (pbuf_add_header(p, hlen))
         {
-            Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+            Logf(true,
                  "Can't move over header in packet");
         }
         else
@@ -245,8 +242,6 @@ lenerr: free_pkt_buf(p);
     return;
 
 icmperr: free_pkt_buf(p);
-    return;
-
 }
 
 

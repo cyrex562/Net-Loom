@@ -40,7 +40,7 @@
 
 #include <opt.h>
 #include <lwip_status.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <cstdint>
 
 constexpr auto DHCP6_CLIENT_PORT = 546;
@@ -98,30 +98,35 @@ struct Dhcp6Msg
 #define DHCP6_DUID_UUID             4 /* UUID (RFC 6355) */
 
 /* DHCPv6 options */
-#define DHCP6_OPTION_CLIENTID       1
-#define DHCP6_OPTION_SERVERID       2
-#define DHCP6_OPTION_IA_NA          3
-#define DHCP6_OPTION_IA_TA          4
-#define DHCP6_OPTION_IAADDR         5
-#define DHCP6_OPTION_ORO            6
-#define DHCP6_OPTION_PREFERENCE     7
-#define DHCP6_OPTION_ELAPSED_TIME   8
-#define DHCP6_OPTION_RELAY_MSG      9
-#define DHCP6_OPTION_AUTH           11
-#define DHCP6_OPTION_UNICAST        12
-#define DHCP6_OPTION_STATUS_CODE    13
-#define DHCP6_OPTION_RAPID_COMMIT   14
-#define DHCP6_OPTION_USER_CLASS     15
-#define DHCP6_OPTION_VENDOR_CLASS   16
-#define DHCP6_OPTION_VENDOR_OPTS    17
-#define DHCP6_OPTION_INTERFACE_ID   18
-#define DHCP6_OPTION_RECONF_MSG     19
-#define DHCP6_OPTION_RECONF_ACCEPT  20
-/* More options see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
-#define DHCP6_OPTION_DNS_SERVERS    23 /* RFC 3646 */
-#define DHCP6_OPTION_DOMAIN_LIST    24 /* RFC 3646 */
-#define DHCP6_OPTION_SNTP_SERVERS   31 /* RFC 4075 */
-
+enum Dhcp6Options
+{
+    DHCP6_OPTION_CLIENTID = 1,
+    DHCP6_OPTION_SERVERID = 2,
+    DHCP6_OPTION_IA_NA = 3,
+    DHCP6_OPTION_IA_TA = 4,
+    DHCP6_OPTION_IAADDR = 5,
+    DHCP6_OPTION_ORO = 6,
+    DHCP6_OPTION_PREFERENCE = 7,
+    DHCP6_OPTION_ELAPSED_TIME = 8,
+    DHCP6_OPTION_RELAY_MSG = 9,
+    DHCP6_OPTION_AUTH = 11,
+    DHCP6_OPTION_UNICAST = 12,
+    DHCP6_OPTION_STATUS_CODE = 13,
+    DHCP6_OPTION_RAPID_COMMIT = 14,
+    DHCP6_OPTION_USER_CLASS = 15,
+    DHCP6_OPTION_VENDOR_CLASS = 16,
+    DHCP6_OPTION_VENDOR_OPTS = 17,
+    DHCP6_OPTION_INTERFACE_ID = 18,
+    DHCP6_OPTION_RECONF_MSG = 19,
+    DHCP6_OPTION_RECONF_ACCEPT = 20,
+    /* More options see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
+    DHCP6_OPTION_DNS_SERVERS = 23,
+    /* RFC 3646 */
+    DHCP6_OPTION_DOMAIN_LIST = 24,
+    /* RFC 3646 */
+    DHCP6_OPTION_SNTP_SERVERS = 31,
+    /* RFC 4075 */
+};
 
 /** period (in milliseconds) of the application calling dhcp6_tmr() */
 constexpr auto DHCP6_TIMER_MSECS = 500;

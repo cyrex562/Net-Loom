@@ -1,10 +1,6 @@
 #pragma once
-
-#include <ppp_opts.h>
 #include <cstdarg>
-#include <cstring>
-#include <cstdlib>
-#include <netif.h>
+#include <network_interface.h>
 #include <timeouts.h>
 #include <ppp.h>
 #include <protent.h>
@@ -49,23 +45,31 @@ constexpr auto PPP_EAP = 0xc227	/* Extensible Authentication Protocol */;
  * The following struct gives the addresses of procedures to call
  * for a particular lower link level protocol.
  */
-struct LinkCallbacks {
-  /* Start a connection (e.g. Initiate discovery phase) */
-  void (*connect) (PppPcb *pcb, uint8_t *ctx);
-  /* Listen for an incoming connection (Passive mode) */
-  void (*listen) (PppPcb *pcb, uint8_t *ctx);
-  /* End a connection (i.e. initiate disconnect phase) */
-  void (*disconnect) (PppPcb *pcb, uint8_t *ctx);
-  /* Free lower protocol control block */
-  LwipStatus (*free) (PppPcb *pcb, uint8_t *ctx);
-  /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
-  LwipStatus (*write)(PppPcb *pcb, uint8_t *ctx, struct PacketBuffer *p);
-  /* Send a packet from lwIP core (IPv4 or IPv6) */
-  LwipStatus (*netif_output)(PppPcb *pcb, uint8_t *ctx, struct PacketBuffer *p, u_short protocol);
-  /* configure the transmit-side characteristics of the PPP interface */
-  void (*send_config)(PppPcb *pcb, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
-  /* confire the receive-side characteristics of the PPP interface */
-  void (*recv_config)(PppPcb *pcb, uint8_t *ctx, uint32_t accm, int pcomp, int accomp);
+struct LinkCallbacks
+{
+    /* Start a connection (e.g. Initiate discovery phase) */
+    void
+    (*connect)(PppPcb* pcb, void* ctx);
+    /* Listen for an incoming connection (Passive mode) */
+    void
+    (*listen)(PppPcb* pcb, void* ctx);
+    /* End a connection (i.e. initiate disconnect phase) */
+    void
+    (*disconnect)(PppPcb* pcb, void* ctx); /* Free lower protocol control block */
+    LwipStatus
+    (*free)(PppPcb* pcb, void* ctx);
+    /* Write a PacketBuffer to a ppp link, only used from PPP functions to send PPP packets. */
+    LwipStatus
+    (*write)(PppPcb* pcb, void* ctx, struct PacketBuffer* p);
+    /* Send a packet from lwIP core (IPv4 or IPv6) */
+    LwipStatus
+    (*netif_output)(PppPcb* pcb, void* ctx, struct PacketBuffer* p, u_short protocol);
+    /* configure the transmit-side characteristics of the PPP interface */
+    void
+    (*send_config)(PppPcb* pcb, void* ctx, uint32_t accm, int pcomp, int accomp);
+    /* confire the receive-side characteristics of the PPP interface */
+    void
+    (*recv_config)(PppPcb* pcb, void* ctx, uint32_t accm, int pcomp, int accomp);
 };
 
 /*
@@ -109,10 +113,10 @@ extern uint8_t	bundle_terminating;
 
 extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
 extern int       maxoctets_dir;      /* Direction :
-				      0 - in+out (default)
-				      1 - in
-				      2 - out
-				      3 - max(in,out) */
+                      0 - in+out (default)
+                      1 - in
+                      2 - out
+                      3 - max(in,out) */
 extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 constexpr auto PPP_OCTETS_DIRECTION_SUM = 0;
 constexpr auto PPP_OCTETS_DIRECTION_IN = 1;
@@ -160,9 +164,9 @@ int init_ppp_subsys(void);
 
 /* Create a new PPP control block */
 PppPcb *init_ppp_pcb(NetworkInterface*pppif,
-                     uint8_t *link_ctx_cb,
+                     void* link_ctx_cb,
                      ppp_link_status_cb_fn link_status_cb,
-                     uint8_t *ctx_cb);
+                     void* ctx_cb);
 
 /* Initiate LCP open request */
 void ppp_start(PppPcb *pcb);
@@ -225,30 +229,30 @@ const char * protocol_name(int proto);
  * cp MUST be uint8_t *.
  */
 #define GETCHAR(c, cp) { \
-	(c) = *(cp)++; \
+    (c) = *(cp)++; \
 }
 #define PUTCHAR(c, cp) { \
-	*(cp)++ = (uint8_t) (c); \
+    *(cp)++ = (uint8_t) (c); \
 }
 #define GETSHORT(s, cp) { \
-	(s) = *(cp)++ << 8; \
-	(s) |= *(cp)++; \
+    (s) = *(cp)++ << 8; \
+    (s) |= *(cp)++; \
 }
 #define PUTSHORT(s, cp) { \
-	*(cp)++ = (uint8_t) ((s) >> 8); \
-	*(cp)++ = (uint8_t) (s); \
+    *(cp)++ = (uint8_t) ((s) >> 8); \
+    *(cp)++ = (uint8_t) (s); \
 }
 #define GETLONG(l, cp) { \
-	(l) = *(cp)++ << 8; \
-	(l) |= *(cp)++; (l) <<= 8; \
-	(l) |= *(cp)++; (l) <<= 8; \
-	(l) |= *(cp)++; \
+    (l) = *(cp)++ << 8; \
+    (l) |= *(cp)++; (l) <<= 8; \
+    (l) |= *(cp)++; (l) <<= 8; \
+    (l) |= *(cp)++; \
 }
 #define PUTLONG(l, cp) { \
-	*(cp)++ = (uint8_t) ((l) >> 24); \
-	*(cp)++ = (uint8_t) ((l) >> 16); \
-	*(cp)++ = (uint8_t) ((l) >> 8); \
-	*(cp)++ = (uint8_t) (l); \
+    *(cp)++ = (uint8_t) ((l) >> 24); \
+    *(cp)++ = (uint8_t) ((l) >> 16); \
+    *(cp)++ = (uint8_t) ((l) >> 8); \
+    *(cp)++ = (uint8_t) (l); \
 }
 
 #define INCPTR(n, cp)	((cp) += (n))
@@ -299,25 +303,25 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 // void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
 //                     unknown>) noexcept;    /* start all the network control protos */
 // bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
-
-int auth_check_passwd(PppPcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen);
+bool
+auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg);
                                 /* check the user name and passwd against configuration */
 void auth_peer_fail(PppPcb *pcb, int protocol);
-				/* peer failed to authenticate itself */
+                /* peer failed to authenticate itself */
 void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *name, int namelen, Protent** protocols);
-				/* peer successfully authenticated itself */
+                /* peer successfully authenticated itself */
 
 void auth_withpeer_fail(PppPcb *pcb, int protocol);
-				/* we failed to authenticate ourselves */
+                /* we failed to authenticate ourselves */
 void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor, Protent** protocols);
-				/* we successfully authenticated ourselves */
+                /* we successfully authenticated ourselves */
 
 void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(PppPcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(PppPcb *pcb, int proto); /* a network protocol no longer needs link */
-
-int get_secret(PppPcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server);
-				/* get "secret" for chap */
+bool
+get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret);
+                /* get "secret" for chap */
 
 
 /* Procedures exported from ipcp.c */
@@ -343,8 +347,8 @@ void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /
 // Join link to an appropriate bundle
 //
 bool mp_join_bundle(PppPcb* pcb,
-                    const char* peer_authname,
-                    const char* bundle_name,
+                    std::string& peer_authname,
+                    std::string& bundle_name,
                     const bool doing_multilink = true,
                     const bool demand = true);  
 
@@ -446,12 +450,12 @@ void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
  *
  * IPv4 or IPv6 must be enabled, therefore we don't need to take care the authentication
  * and the CCP + ECP case, thus reducing overall complexity.
- * 1 + LWIP_MAX(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS + CCP_SUPPORT)
+ * 1 + std::max(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS + CCP_SUPPORT)
  *
  * We don't support PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS features
  * and adding those defines to ppp_opts.h just for having the value always
  * defined to 0 isn't worth it.
- * 1 + LWIP_MAX(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + CCP_SUPPORT)
+ * 1 + std::max(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + CCP_SUPPORT)
  *
  * Thus, the following is enough for now.
  * 1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT

@@ -2,7 +2,7 @@
 #include <etharp.h>
 #include <lwip_debug.h>
 #include <lwipopts.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <cstring>
 #include <ethip6.h>
 #include <lwip_status.h>
@@ -299,7 +299,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     lwip_assert("bridgeif needs an input callback", netif->input != nullptr);
     if (netif->input == tcpip_input)
     {
-        Logf(kBridgeIfcDebug | LWIP_DBG_ON,
+        Logf(true,
              "bridgeif does not need tcpip_input, use netif_input/ethernet_input instead"
              );
     }

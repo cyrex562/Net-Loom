@@ -39,7 +39,7 @@
  */
 #pragma once
 #include <opt.h>
-#include <netif.h>
+#include <network_interface.h>
 
 
 LwipStatus slipif_init(NetworkInterface* netif);

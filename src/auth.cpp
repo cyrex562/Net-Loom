@@ -1,23 +1,16 @@
 
+#define NOMINMAX
+
 #include <ppp_opts.h>
 #include <auth.h>
-
 #include <ccp.h>
-
 #include <chap_new.h>
-
 #include <eap.h>
-
 #include <ecp.h>
-
 #include <lcp.h>
-
 #include <ppp_impl.h>
-
 #include <upap.h>
-
 #include <ppp.h>
-
 #include <string>
 
 /* Hook for plugin to hear when an interface joins a multilink bundle */
@@ -139,7 +132,8 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
     auto auth = 0;
     if (go->neg_eap)
     {
-        eap_authpeer(pcb, PPP_OUR_NAME);
+        std::string our_name = PPP_OUR_NAME;
+        eap_authpeer(pcb,our_name);
         auth |= EAP_PEER;
     }
     else if (go->neg_chap)
@@ -199,9 +193,9 @@ bool start_networks(PppPcb* pcb, const bool multilink)
     {
         // TODO: figure out what bundle name should be used.
         std::string bundle_name = "bundle_name";
-        if (mp_join_bundle(pcb, pcb->settings.remote_name, bundle_name.c_str()))
+        if (mp_join_bundle(pcb, pcb->settings.remote_name, bundle_name))
         {
-            if (multilink_join_hook)
+            if (multilink_join_hook != nullptr)
                 (*multilink_join_hook)(); // if (updetach && !nodetach)
             //     detach();
             return false; // TODO: what should the return value be here?
@@ -256,40 +250,30 @@ bool continue_networks(PppPcb* pcb)
     return true;
 }
 
-/*
- * auth_check_passwd - Check the user name and passwd against configuration.
- *
- * returns:
- *      0: Authentication failed.
- *      1: Authentication succeeded.
- * In either case, msg points to an appropriate message and msglen to the message len.
- */
-int auth_check_passwd(PppPcb* pcb,
-                      char* auser,
-                      const int userlen,
-                      char* apasswd,
-                      const int passwdlen,
-                      const char** msg,
-                      int* msglen)
+///
+/// auth_check_passwd - Check the user name and passwd against configuration.
+///
+/// returns:
+///      0: Authentication failed.
+///      1: Authentication succeeded.
+/// In either case, msg points to an appropriate message and msglen to the message len.
+///
+bool
+auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg)
 {
-    if (pcb->settings.user && pcb->settings.passwd)
+    if (!pcb->settings.user.empty() && !pcb->settings.passwd.empty())
     {
-        const auto secretuserlen = int(strlen(pcb->settings.user));
-        const auto secretpasswdlen = int(strlen(pcb->settings.passwd));
-        if (secretuserlen == userlen && secretpasswdlen == passwdlen && !
-            memcmp(auser, pcb->settings.user, userlen) && !memcmp(
-                apasswd,
-                pcb->settings.passwd,
-                passwdlen))
+        const auto secretuserlen = pcb->settings.user.length();
+        const auto secretpasswdlen = pcb->settings.passwd.length();
+        if (secretuserlen == auser.length() && secretpasswdlen == apasswd.length() &&
+            auser == pcb->settings.user && apasswd == pcb->settings.passwd)
         {
-            *msg = "Login ok";
-            *msglen = sizeof("Login ok") - 1;
-            return 1;
+            msg = "Login ok";
+            return true;
         }
     }
-    *msg = "Login incorrect";
-    *msglen = sizeof("Login incorrect") - 1;
-    return 0;
+    msg = "Login incorrect";
+    return false;
 }
 
 /*
@@ -308,7 +292,7 @@ void auth_peer_fail(PppPcb *pcb, int protocol) {
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
-void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* name, size_t namelen)
+void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, std::string& name)
 {
     int bit;
 
@@ -342,14 +326,7 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, const char* n
         return;
     }
 
-    /*
-     * Save the authenticated name of the peer for later.
-     */
-    if (namelen > int(sizeof(pcb->peer_authname)) - 1)
-        namelen = int(sizeof(pcb->peer_authname)) - 1;
-    memcpy(pcb->peer_authname, name, namelen);
-    pcb->peer_authname[namelen] = 0;
-
+    pcb->peer_authname = name;
 
     /* Save the authentication method for later. */
     pcb->auth_done |= bit;
@@ -526,7 +503,7 @@ static void check_idle(void* arg) {
  //    if (!get_idle_time(pcb, &idle))
     // return;
 
-    // itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
+    // itime = std::min(idle.xmit_idle, idle.recv_idle);
     // tlim = pcb->settings.idle_time_limit - itime;
 
     if (tlim <= 0) {
@@ -537,7 +514,7 @@ static void check_idle(void* arg) {
     } else {
     Timeout(check_idle, static_cast<void*>(pcb), tlim);
     }
-} 
+}
 
 
 //
@@ -559,23 +536,30 @@ static void connect_time_expired(void* arg)
  * for authenticating the given client on the given server.
  * (We could be either client or server).
  */
-int get_secret(PppPcb* pcb, const char* client, const char* server, char* secret, int* secret_len, int am_server)
+bool
+get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret)
 {
-    if (!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user))
+    // if (!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user))
+    // {
+    //     return 0;
+    // }
+    if (client != pcb->settings.user)
     {
-        return 0;
+        return false;
     }
 
-    auto len = strlen(pcb->settings.passwd);
-    if (len > MAXSECRETLEN)
-    {
-        ppp_error("Secret for %s on %s is too long", client, server);
-        len = MAXSECRETLEN;
-    }
+    // auto len = strlen(pcb->settings.passwd);
+    // if (len > MAXSECRETLEN)
+    // {
+    //     ppp_error("Secret for %s on %s is too long", client, server);
+    //     len = MAXSECRETLEN;
+    // }
 
-    memcpy(secret, pcb->settings.passwd, len);
-    *secret_len = len;
-    return 1;
+    secret = pcb->settings.passwd;
+
+    // memcpy(secret, pcb->settings.passwd, len);
+    // *secret_len = len;
+    return true;
 }
 
 //

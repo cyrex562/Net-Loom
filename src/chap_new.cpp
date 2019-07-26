@@ -28,13 +28,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ppp_opts.h>
-#include <ppp_impl.h>
-#include <chap_new.h>
-#include <chap_md5.h>
-#include <magic.h>
+#define NOMINMAX
 #include <auth.h>
-
+#include <chap_md5.h>
+#include <chap_new.h>
+#include <magic.h>
+#include <ppp_impl.h>
+#include <ppp_opts.h>
 /*
  * Command-line options.
  */
@@ -146,13 +146,10 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
  * There isn't much to do until we receive a challenge.
  */
 void
-chap_auth_with_peer(PppPcb* pcb, const char* our_name, int digest_code)
+chap_auth_with_peer(PppPcb* pcb, std::string& our_name, int digest_code)
 {
     const struct ChapDigestType* dp;
     int i;
-
-    if (nullptr == our_name)
-        return;
 
     if (pcb->chap_client.flags & kAuthStarted)
     {
@@ -222,12 +219,12 @@ chap_generate_challenge(PppPcb* pcb)
 {
     auto p = pcb->chap_server.challenge;
     MAKEHEADER(p, PPP_CHAP);
-    p += kChapHdrlen;
+    p += CHAP_HDR_LEN;
     pcb->chap_server.digest->generate_challenge(pcb, p);
     const auto clen = *p;
-    const auto nlen = strlen(pcb->chap_server.name);
-    memcpy(p + 1 + clen, pcb->chap_server.name, nlen);
-    const int len = kChapHdrlen + 1 + clen + nlen;
+    const auto nlen = pcb->chap_server.name.length();
+    memcpy(p + 1 + clen, pcb->chap_server.name.c_str(), nlen);
+    const auto len = CHAP_HDR_LEN + 1 + clen + nlen;
     pcb->chap_server.challenge_pktlen = PPP_HDRLEN + len;
 
     p = pcb->chap_server.challenge + PPP_HDRLEN;
@@ -248,7 +245,8 @@ chap_handle_response(PppPcb* pcb,
                      Protent** protocols)
 {
     int response_len;
-    const char* name = nullptr; /* initialized to shut gcc up */
+    // const char* name = nullptr; /* initialized to shut gcc up */
+        std::string name;
 
     char rname[MAXNAMELEN + 1];
     char message[256];
@@ -280,14 +278,14 @@ chap_handle_response(PppPcb* pcb,
             // name = rname;
         }
         const auto ok = chap_verify_response(pcb,
-                                      name,
-                                      pcb->chap_server.name,
-                                      code,
-                                      pcb->chap_server.digest,
-                                      pcb->chap_server.challenge + PPP_HDRLEN + kChapHdrlen,
-                                      response,
-                                      message,
-                                      sizeof(message));
+                                             name,
+                                             pcb->chap_server.name,
+                                             code,
+                                             pcb->chap_server.digest,
+                                             pcb->chap_server.challenge + PPP_HDRLEN + CHAP_HDR_LEN,
+                                             response,
+                                             message,
+                                             sizeof(message));
 
         if (!ok)
         {
@@ -300,7 +298,7 @@ chap_handle_response(PppPcb* pcb,
 
     /* send the response */
     const auto mlen = strlen(message);
-    len = mlen + kChapHdrlen;
+    len = mlen + CHAP_HDR_LEN;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + len), PPP_CTRL_PBUF_TYPE);
     const auto p = new PacketBuffer;
     if (nullptr == p)
@@ -319,7 +317,7 @@ chap_handle_response(PppPcb* pcb,
     outp[2] = len >> 8;
     outp[3] = len;
     if (mlen > 0)
-        memcpy(outp + kChapHdrlen, message, mlen);
+        memcpy(outp + CHAP_HDR_LEN, message, mlen);
     ppp_write(pcb, p);
 
     if (pcb->chap_server.flags & kChallengeValid)
@@ -338,9 +336,7 @@ chap_handle_response(PppPcb* pcb,
                 auth_peer_success(pcb,
                                   PPP_CHAP,
                                   pcb->chap_server.digest->code,
-                                  name,
-                                  strlen(name)
-                );
+                                  name);
             if (pcb->settings.chap_rechallenge_time)
             {
                 pcb->chap_server.flags |= kTimeoutPending;
@@ -360,34 +356,33 @@ chap_handle_response(PppPcb* pcb,
  */
 int
 chap_verify_response(PppPcb* pcb,
-                     const char* name,
-                     const char* ourname,
+                     std::string& name,
+                     std::string& ourname,
                      const int id,
                      ChapDigestType* digest,
                      const unsigned char* challenge,
                      const unsigned char* response,
-                     char* message,
+                     std::string& message,
                      int message_space)
 {
-    unsigned char secret[MAXSECRETLEN];
+    std::string secret;
     int secret_len;
 
     /* Get the secret that the peer is supposed to know */
-    if (!get_secret(pcb, name, ourname, (char *)secret, &secret_len, 1))
+    if (!get_secret(pcb, name, ourname, secret))
     {
-        ppp_error("No CHAP secret found for authenticating %q", name);
+        ppp_error("No CHAP secret found for authenticating %q", name.c_str());
         return 0;
     }
     auto ok = digest->verify_response(pcb,
                                      id,
                                      name,
                                      secret,
-                                     secret_len,
                                      challenge,
                                      response,
                                      message,
                                      message_space);
-    memset(secret, 0, sizeof(secret));
+    // memset(secret, 0, sizeof(secret));
 
     return ok;
 }
@@ -401,29 +396,31 @@ chap_respond(PppPcb* pcb,
              unsigned char* pkt,
              int len)
 {
-    int secret_len;
-    char rname[MAXNAMELEN + 1];
-    char secret[MAXSECRETLEN + 1];
+    std::string rname;
+    std::string secret;
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(RESP_MAX_PKTLEN), PPP_CTRL_PBUF_TYPE);
     auto p = new PacketBuffer;
-    if (nullptr == p)
+    if (nullptr == p) {
         return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
         return;
     }
 
-    if ((pcb->chap_client.flags & (kLowerup | kAuthStarted)) != (kLowerup | kAuthStarted))
+    if ((pcb->chap_client.flags & (kLowerup | kAuthStarted)) != (kLowerup | kAuthStarted)) {
         return; /* not ready */
-    if (len < 2 || len < pkt[0] + 1)
+    }
+    if (len < 2 || len < pkt[0] + 1) {
         return; /* too short */
+    }
     int clen = pkt[0];
     auto nlen = len - (clen + 1);
 
     /* Null terminate and clean remote name. */
-    ppp_slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
+    // ppp_slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
 
     /* Microsoft doesn't send their name back in the PPP packet */
@@ -433,15 +430,14 @@ chap_respond(PppPcb* pcb,
 
 
     /* get secret for authenticating ourselves with the specified host */
-    if (!get_secret(pcb, pcb->chap_client.name, rname, secret, &secret_len, 0))
+    if (!get_secret(pcb, pcb->chap_client.name, rname, secret))
     {
-        secret_len = 0; /* assume null secret if can't find one */
         ppp_warn("No CHAP secret found for authenticating us to %q", rname);
     }
 
-    auto outp = static_cast<uint8_t*>(p->payload);
+    auto outp = p->payload;
     MAKEHEADER(outp, PPP_CHAP);
-    outp += kChapHdrlen;
+    outp += CHAP_HDR_LEN;
 
     pcb->chap_client.digest->make_response(pcb,
                                            outp,
@@ -449,16 +445,15 @@ chap_respond(PppPcb* pcb,
                                            pcb->chap_client.name,
                                            pkt,
                                            secret,
-                                           secret_len,
                                            pcb->chap_client.priv);
-    memset(secret, 0, secret_len);
+    // memset(secret, 0, secret_len);
 
     clen = *outp;
-    nlen = strlen(pcb->chap_client.name);
-    memcpy(outp + clen + 1, pcb->chap_client.name, nlen);
+    nlen = pcb->chap_client.name.length();
+    memcpy(outp + clen + 1, pcb->chap_client.name.c_str(), nlen);
 
-    outp = static_cast<uint8_t*>(p->payload) + PPP_HDRLEN;
-    len = kChapHdrlen + clen + 1 + nlen;
+    outp = p->payload + PPP_HDRLEN;
+    len = CHAP_HDR_LEN + clen + 1 + nlen;
     outp[0] = CHAP_RESPONSE;
     outp[1] = id;
     outp[2] = len >> 8;
@@ -525,14 +520,14 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
     unsigned char code, id;
     int len;
 
-    if (pktlen < kChapHdrlen)
+    if (pktlen < CHAP_HDR_LEN)
         return;
     GETCHAR(code, pkt);
     GETCHAR(id, pkt);
     GETSHORT(len, pkt);
-    if (len < kChapHdrlen || len > pktlen)
+    if (len < CHAP_HDR_LEN || len > pktlen)
         return;
-    len -= kChapHdrlen;
+    len -= CHAP_HDR_LEN;
 
     switch (code)
     {

@@ -37,12 +37,12 @@ struct IpPcb
 
 // struct IpPcb;
 //
-inline bool match_exact_ip_addr_pcb_vers(IpPcb* pcb, IpAddr* ipaddr)
+inline bool match_exact_ip_addr_pcb_vers(const IpPcb* pcb, const IpAddr* ipaddr)
 {
     return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
 }
 
-inline bool match_ip_addr_pcb_version(IpPcb* pcb, IpAddr* ipaddr)
+inline bool match_ip_addr_pcb_version(const IpPcb* pcb, const IpAddr* ipaddr)
 {
     return (is_ip_addr_any_type_val(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
@@ -202,7 +202,7 @@ ip_output(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, const u
  * Output IP packet to specified interface
  */
 inline LwipStatus
-ip_output_if(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
+ip_output_if(PacketBuffer* p, const IpAddr* src, const IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
 {
     if (is_ip_addr_v6(dest))
         return
@@ -231,7 +231,7 @@ ip_output_if(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, cons
 inline LwipStatus
 ip_output_if_src(PacketBuffer* p,
                  IpAddr* src,
-                 IpAddr* dest,
+                 const IpAddr* dest,
                  uint8_t ttl,
                  uint8_t tos,
                  uint8_t proto,
@@ -275,7 +275,7 @@ ip_output_if_src(PacketBuffer* p,
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
-inline NetworkInterface* ip_route(IpAddr* src, IpAddr* dest)
+inline NetworkInterface* ip_route(const IpAddr* src, const IpAddr* dest)
 {
     return (is_ip_addr_v6(dest)
                 ? ip6_route((&src->u_addr.ip6), (&dest->u_addr.ip6))

@@ -1,9 +1,10 @@
 
+#define NOMINMAX
 
 #include <ppp_opts.h>
 #include <protent.h>
-#include <lcp.h>	
-#include <mppe.h>	
+#include <lcp.h>
+#include <mppe.h>
 #include <ppp_impl.h>
 #include <fsm.h>
 #include <ccp.h>
@@ -26,7 +27,7 @@ static int ccp_anycompress(CcpOptions* opt)
  */
 static void ccp_init(PppPcb* ppp_pcb)
 {
-    ppp_pcb->ccp_fsm.protocol = PPP_CCP; 
+    ppp_pcb->ccp_fsm.protocol = PPP_CCP;
     fsm_init(&ppp_pcb->ccp_fsm);
     const auto wo = &ppp_pcb->ccp_wantoptions;
     const auto ao = &ppp_pcb->ccp_allowoptions;
@@ -662,7 +663,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
     if (f->state != PPP_FSM_OPENED)
         *go = try_;
     return 1;
-} 
+}
 
 //
 // ccp_rejci - reject some of our suggested compression methods.
@@ -1025,51 +1026,51 @@ static const char* method_name(CcpOptions* opt, CcpOptions* opt2)
         auto p = result;
         auto q = result + sizeof(result); /* 1 past result */
 
-	ppp_slprintf(p, q - p, "MPPE ");
-	p += 5;
-	if (opt->mppe & MPPE_OPT_128) {
-	    ppp_slprintf(p, q - p, "128-bit ");
-	    p += 8;
-	}
-	if (opt->mppe & MPPE_OPT_40) {
-	    ppp_slprintf(p, q - p, "40-bit ");
-	    p += 7;
-	}
-	if (opt->mppe & MPPE_OPT_STATEFUL)
-	    ppp_slprintf(p, q - p, "stateful");
-	else
-	    ppp_slprintf(p, q - p, "stateless");
+    ppp_slprintf(p, q - p, "MPPE ");
+    p += 5;
+    if (opt->mppe & MPPE_OPT_128) {
+        ppp_slprintf(p, q - p, "128-bit ");
+        p += 8;
+    }
+    if (opt->mppe & MPPE_OPT_40) {
+        ppp_slprintf(p, q - p, "40-bit ");
+        p += 7;
+    }
+    if (opt->mppe & MPPE_OPT_STATEFUL)
+        ppp_slprintf(p, q - p, "stateful");
+    else
+        ppp_slprintf(p, q - p, "stateless");
 
-	break;
+    break;
     }
 
 
     case CI_DEFLATE:
     case CI_DEFLATE_DRAFT:
-	if (opt2 != nullptr && opt2->deflate_size != opt->deflate_size)
-	    ppp_slprintf(result, sizeof(result), "Deflate%s (%d/%d)",
-		     (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
-		     opt->deflate_size, opt2->deflate_size);
-	else
-	    ppp_slprintf(result, sizeof(result), "Deflate%s (%d)",
-		     (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
-		     opt->deflate_size);
-	break;
+    if (opt2 != nullptr && opt2->deflate_size != opt->deflate_size)
+        ppp_slprintf(result, sizeof(result), "Deflate%s (%d/%d)",
+             (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
+             opt->deflate_size, opt2->deflate_size);
+    else
+        ppp_slprintf(result, sizeof(result), "Deflate%s (%d)",
+             (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
+             opt->deflate_size);
+    break;
 
     case CI_BSD_COMPRESS:
-	if (opt2 != nullptr && opt2->bsd_bits != opt->bsd_bits)
-	    ppp_slprintf(result, sizeof(result), "BSD-Compress (%d/%d)",
-		     opt->bsd_bits, opt2->bsd_bits);
-	else
-	    ppp_slprintf(result, sizeof(result), "BSD-Compress (%d)",
-		     opt->bsd_bits);
-	break;
+    if (opt2 != nullptr && opt2->bsd_bits != opt->bsd_bits)
+        ppp_slprintf(result, sizeof(result), "BSD-Compress (%d/%d)",
+             opt->bsd_bits, opt2->bsd_bits);
+    else
+        ppp_slprintf(result, sizeof(result), "BSD-Compress (%d)",
+             opt->bsd_bits);
+    break;
 
 
     case CI_PREDICTOR_1:
-	return "Predictor 1";
+    return "Predictor 1";
     case CI_PREDICTOR_2:
-	return "Predictor 2";
+    return "Predictor 2";
 
     default:
         ppp_slprintf(result, sizeof(result), "Method %d", opt->method);

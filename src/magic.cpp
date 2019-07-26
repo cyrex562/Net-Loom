@@ -72,6 +72,7 @@
 *   Extracted from avos.
 *****************************************************************************/
 
+#define NOMINMAX
 #include <ppp_opts.h>
 #include <cstdint>
 #include <sys.h>
@@ -79,8 +80,9 @@
 #include <ppp_impl.h>
 #include <magic.h>
 #include <pppcrypt.h>
+#include <algorithm>
 
-#define MD5_HASH_SIZE 16
+constexpr auto MD5_HASH_SIZE = 16;
 static char magic_randpool[MD5_HASH_SIZE];   /* Pool of randomness. */
 static long magic_randcount;      /* Pseudo-random incrementer */
 static uint32_t magic_randomseed;    /* Seed used for random number generation. */
@@ -157,11 +159,9 @@ void magic_randomize(void) {
  *  magic_randcount each time?  Probably there is a weakness but I wish that
  *  it was documented.
  */
-void magic_random_bytes(unsigned char *buf, uint32_t buf_len) {
+void magic_random_bytes(uint8_t* buf, size_t buf_len) {
   lwip_md5_context md5_ctx;
   uint8_t tmp[MD5_HASH_SIZE];
-  uint32_t n;
-
   while (buf_len > 0) {
     lwip_md5_init(&md5_ctx);
     lwip_md5_starts(&md5_ctx);
@@ -170,7 +170,7 @@ void magic_random_bytes(unsigned char *buf, uint32_t buf_len) {
     lwip_md5_finish(&md5_ctx, tmp);
     lwip_md5_free(&md5_ctx);
     magic_randcount++;
-    n = LWIP_MIN(buf_len, MD5_HASH_SIZE);
+    uint32_t n = std::min(buf_len, size_t(MD5_HASH_SIZE));
     memcpy(buf, tmp, n);
     buf += n;
     buf_len -= n;

@@ -21,20 +21,11 @@
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  * - Initial distribution.
  */
-
 #pragma once
-#include <ppp_opts.h>
 #include <ip.h>
 #include <tcp_priv.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define MAX_SLOTS 16 /* must be > 2 and < 256 */
-constexpr auto kMaxHdr = 128;
-
-/*
+constexpr auto MAX_SLOTS = 16 /* must be > 2 and < 256 */;
+constexpr auto MAX_HDR = 128; /*
  * Compressed packet format:
  *
  * The first octet contains the packet type (top 3 bits), TCP
@@ -57,9 +48,7 @@ constexpr auto kMaxHdr = 128;
  * range 1 - 255 and 3 octets (0, MSB, LSB) for numbers in the
  * range 256 - 65535 or 0.  (If the change in sequence number or
  * ack is more than 65535, an uncompressed packet is sent.)
- */
-
-/*
+ */ /*
  * Packet types (must not conflict with IP protocol version)
  *
  * The top nibble of the first octet is the packet type.  There are
@@ -75,85 +64,86 @@ constexpr auto kMaxHdr = 128;
  * and in the interest of conserving bits, numbers are chosen so the
  * IP protocol version number (4) which normally appears in this nibble
  * means "IP packet".
- */
+ */ /* packet types */
+enum VjPacketTypes
+{
+    TYPE_IP = 0x40,
+    TYPE_UNCOMPRESSED_TCP = 0x70,
+    TYPE_COMPRESSED_TCP = 0x80,
+    TYPE_ERROR = 0x00,
+};
+ /* Bits in first octet of compressed packet */
+/* flag bits for what changed in a packet */;
 
-/* packet types */
-constexpr auto kTypeIp = 0x40;
-constexpr auto kTypeUncompressedTcp = 0x70;
-constexpr auto kTypeCompressedTcp = 0x80;
-constexpr auto kTypeError = 0x00;
-
-/* Bits in first octet of compressed packet */
-constexpr auto kNewC = 0x40 /* flag bits for what changed in a packet */;
-constexpr auto kNewI = 0x20;
-constexpr auto kNewS = 0x08;
-constexpr auto kNewA = 0x04;
-constexpr auto kNewW = 0x02;
-constexpr auto kNewU = 0x01;
+enum VjFlagBits
+{
+    NEW_C = 0x40,
+    NEW_I = 0x20,
+    NEW_S = 0x08,
+    NEW_A = 0x04,
+    NEW_W = 0x02,
+    NEW_U = 0x01,
+};
 
 /* reserved, special-case values of above */
-#define SPECIAL_I (NEW_S|NEW_W|NEW_U) /* echoed interactive traffic */
-#define SPECIAL_D (NEW_S|NEW_A|NEW_W|NEW_U) /* unidirectional data */
-#define SPECIALS_MASK (NEW_S|NEW_A|NEW_W|NEW_U)
-
-constexpr auto kTcpPushBit = 0x10;
-
-
-/*
+constexpr auto SPECIAL_I = (NEW_S|NEW_W|NEW_U); /* echoed interactive traffic */
+constexpr auto SPECIAL_D = (NEW_S|NEW_A|NEW_W|NEW_U); /* unidirectional data */
+constexpr auto SPECIALS_MASK = (NEW_S|NEW_A|NEW_W|NEW_U);
+constexpr auto TCP_PUSH_BIT = 0x10; /*
  * "state" data for each active tcp conversation on the wire.  This is
  * basically a copy of the entire IP/TCP header from the last packet
  * we saw from the conversation together with a small identifier
  * the transmit & receive ends of the line use to locate saved header.
  */
-struct Cstate {
-  struct Cstate *cs_next; /* next most recently used state (xmit only) */
-  uint16_t cs_hlen;        /* size of hdr (receive only) */
-  uint8_t cs_id;           /* connection # associated with this state */
-  uint8_t cs_filler;
-  union {
-    char csu_hdr[kMaxHdr];
-    struct Ip4Hdr csu_ip;     /* ip/tcp hdr from most recent packet */
-  } vjcs_u;
-};
-#define CS_IP vjcs_u.csu_ip
-#define CS_HDR vjcs_u.csu_hdr
+struct Cstate
+{
+    struct Cstate* cs_next; /* next most recently used state (xmit only) */
+    uint16_t cs_hlen; /* size of hdr (receive only) */
+    uint8_t cs_id; /* connection # associated with this state */
+    uint8_t cs_filler;
 
-
-struct Vjstat {
-  uint32_t vjs_packets;        /* outbound packets */
-  uint32_t vjs_compressed;     /* outbound compressed packets */
-  uint32_t vjs_searches;       /* searches for connection state */
-  uint32_t vjs_misses;         /* times couldn't find conn. state */
-  uint32_t vjs_uncompressedin; /* inbound uncompressed packets */
-  uint32_t vjs_compressedin;   /* inbound compressed packets */
-  uint32_t vjs_errorin;        /* inbound unknown type packets */
-  uint32_t vjs_tossed;         /* inbound packets tossed because of error */
+    union
+    {
+        char csu_hdr[MAX_HDR];
+        struct Ip4Hdr csu_ip; /* ip/tcp hdr from most recent packet */
+    } vjcs_u;
 };
 
-/*
+// #define CS_IP vjcs_u.csu_ip
+// #define CS_HDR vjcs_u.csu_hdr
+
+struct Vjstat
+{
+    uint32_t vjs_packets; /* outbound packets */
+    uint32_t vjs_compressed; /* outbound compressed packets */
+    uint32_t vjs_searches; /* searches for connection state */
+    uint32_t vjs_misses; /* times couldn't find conn. state */
+    uint32_t vjs_uncompressedin; /* inbound uncompressed packets */
+    uint32_t vjs_compressedin; /* inbound compressed packets */
+    uint32_t vjs_errorin; /* inbound unknown type packets */
+    uint32_t vjs_tossed; /* inbound packets tossed because of error */
+}; /*
  * all the state data for one serial line (we need one of these per line).
  */
-struct vjcompress {
-  struct cstate *last_cs;          /* most recently used tstate */
-  uint8_t last_recv;                /* last rcvd conn. id */
-  uint8_t last_xmit;                /* last sent conn. id */
-  uint16_t flags;
-  uint8_t maxSlotIndex;
-  uint8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
-
-  struct Cstate tstate[MAX_SLOTS]; /* xmit connection states */
-  struct Cstate rstate[MAX_SLOTS]; /* receive connection states */
-};
-
-/* flag values */
-constexpr auto kVjfToss = 1U /* tossing rcvd frames because of input err */;
-
-extern void  vj_compress_init    (struct vjcompress *comp);
-extern uint8_t  vj_compress_tcp     (struct vjcompress *comp, struct PacketBuffer **pb);
-extern void  vj_uncompress_err   (struct vjcompress *comp);
-extern int   vj_uncompress_uncomp(struct PacketBuffer *nb, struct vjcompress *comp);
-extern int   vj_uncompress_tcp   (struct PacketBuffer **nb, struct vjcompress *comp);
-
-#ifdef __cplusplus
-}
-#endif
+struct VjCompress
+{
+    Cstate* last_cs; /* most recently used tstate */
+    uint8_t last_recv; /* last rcvd conn. id */
+    uint8_t last_xmit; /* last sent conn. id */
+    uint16_t flags;
+    uint8_t max_slot_index;
+    uint8_t compress_slot; /* Flag indicating OK to compress slot ID. */
+    Cstate tstate[MAX_SLOTS]; /* xmit connection states */
+    Cstate rstate[MAX_SLOTS]; /* receive connection states */
+}; /* flag values */
+constexpr auto VJF_TOSS = 1U /* tossing rcvd frames because of input err */;
+extern void
+vj_compress_init(struct VjCompress* comp);
+extern uint8_t
+vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb);
+extern void
+vj_uncompress_err(struct VjCompress* comp);
+extern int
+vj_uncompress_uncomp(struct PacketBuffer* nb, struct VjCompress* comp);
+extern int
+vj_uncompress_tcp(struct PacketBuffer** nb, struct VjCompress* comp);

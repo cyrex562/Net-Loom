@@ -7,7 +7,7 @@
 #include <inet_chksum.h>
 #include <ip.h>
 #include <ip4_frag.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <tcp_priv.h>
 #include <udp.h>
 #include <iana.h>
@@ -100,7 +100,6 @@ NetworkInterface* ip4_route(const Ip4Addr* dest)
     {
         return ip4_default_multicast_netif;
     } /* bug #54569: in case LWIP_SINGLE_NETIF=1 and Logf() disabled, the following loop is optimized away */
-    ; /* iterate through netifs */
     for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next)
     {
         /* is the netif up, does it have a link and a valid address? */
@@ -218,7 +217,6 @@ ip4_canforward(struct PacketBuffer *p)
 static void
 ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetworkInterface* inp)
 {
-    NetworkInterface* netif;
     Ip4Addr* curr_dst_addr = nullptr;
     Ip4Addr* curr_src_addr = nullptr;
 
@@ -235,7 +233,7 @@ ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetworkInterface* inp)
     }
 
     /* Find network interface where to forward this IP packet to. */
-    netif = ip4_route_src(curr_src_addr, curr_dst_addr);
+    NetworkInterface* netif = ip4_route_src(curr_src_addr, curr_dst_addr);
     if (netif == nullptr) {
         // Logf(true, ("ip4_forward: no forwarding route for %d.%d.%d.%d found\n",
         //                        ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
@@ -362,12 +360,8 @@ ip4_input_accept(NetworkInterface* netif)
 LwipStatus
 ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
-  const struct Ip4Hdr *iphdr;
-  NetworkInterface*netif;
-  uint16_t iphdr_hlen;
-  uint16_t iphdr_len;
-  int check_ip_src = 1;
-  raw_input_state_t raw_status;
+    NetworkInterface*netif;
+    int check_ip_src = 1;
     Ip4Addr* curr_dst_addr = nullptr;
     Ip4Addr* curr_src_addr = nullptr;
     Ip4Hdr* curr_dst_hdr = nullptr;
@@ -375,7 +369,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   
 
   /* identify the IP header */
-  iphdr = (struct Ip4Hdr *)p->payload;
+  const struct Ip4Hdr* iphdr = (struct Ip4Hdr *)p->payload;
   if (get_ip4_hdr_version(iphdr) != 4) {
 //    Logf(true | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %d\n", (uint16_t)IPH_V(iphdr)));
     free_pkt_buf(p);
@@ -384,9 +378,9 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   }
 
   /* obtain IP header length in bytes */
-  iphdr_hlen = get_ip4_hdr_hdr_len_bytes(iphdr);
+  uint16_t iphdr_hlen = get_ip4_hdr_hdr_len_bytes(iphdr);
   /* obtain ip length in bytes */
-  iphdr_len = lwip_ntohs(get_ip4_hdr_len(iphdr));
+  uint16_t iphdr_len = lwip_ntohs(get_ip4_hdr_len(iphdr));
 
   /* Trim PacketBuffer. This is especially required for packets < 60 bytes. */
   if (iphdr_len < p->tot_len) {
@@ -488,11 +482,11 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       /* remote port is DHCP server? */
       if (get_ip4_hdr_proto(iphdr) == IP_PROTO_UDP) {
           const auto udphdr = (UdpHdr *)(reinterpret_cast<const uint8_t *>(iphdr) + iphdr_hlen);
-          Logf(true | LWIP_DBG_TRACE,
+          Logf(true,
                "ip4_input: UDP packet to DHCP client port %d\n",
                    lwip_ntohs(udphdr->dest));
           if (ip_accept_link_layer_addressed_port(udphdr->dest)) {
-              Logf(true | LWIP_DBG_TRACE, ("ip4_input: DHCP packet accepted.\n"));
+              Logf(true, ("ip4_input: DHCP packet accepted.\n"));
               netif = inp;
               check_ip_src = 0;
           }
@@ -513,7 +507,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     if ((ip4_addr_isbroadcast(curr_src_addr, inp)) ||
         (ip4_addr_ismulticast(curr_src_addr))) {
       /* packet source is not valid */
-      Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("ip4_input: packet source is not valid.\n"));
+      Logf(true, ("ip4_input: packet source is not valid.\n"));
       /* free (drop) packet pbufs */
       free_pkt_buf(p);
       
@@ -524,7 +518,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   /* packet not for us? */
   if (netif == nullptr) {
     /* packet not for us, route or discard */
-    Logf(true | LWIP_DBG_TRACE, ("ip4_input: packet not for us.\n"));
+    Logf(true, ("ip4_input: packet not for us.\n"));
 
     /* non-broadcast packet? */
     if (!ip4_addr_isbroadcast(curr_dst_addr, inp)) {
@@ -557,7 +551,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
   if ((iphdr_hlen > get_ip4_hdr_hdr_len(iphdr)) &&  (get_ip4_hdr_proto(iphdr) != IP_PROTO_IGMP)) {
 
-    Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("IP packet dropped since there were IP options (while IP_OPTIONS_ALLOWED == 0).\n"));
+    Logf(true, ("IP packet dropped since there were IP options (while IP_OPTIONS_ALLOWED == 0).\n"));
     free_pkt_buf(p);
 
     /* unsupported protocol feature */
@@ -574,7 +568,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   // ip_data.current_ip_header_tot_len = IPH_HL_BYTES(iphdr);
 
   /* raw input did not eat the packet? */
-  raw_status = raw_input(p, inp);
+  raw_input_state_t raw_status = raw_input(p, inp);
   if (raw_status != RAW_INPUT_EATEN)
 
   {
@@ -670,7 +664,7 @@ ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
               uint8_t ttl, uint8_t tos,
               uint8_t proto, NetworkInterface*netif)
 {
-  return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
+  return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, nullptr, 0);
 }
 
 /**
@@ -746,12 +740,9 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
     uint16_t optlen = 0;
     if (optlen != 0) {
-
-      int i;
-
-      if (optlen > (IP4_HDR_LEN_MAX - IP4_HDR_LEN)) {
+        if (optlen > (IP4_HDR_LEN_MAX - IP4_HDR_LEN)) {
         /* optlen too long */
-        Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: optlen too long\n"));
+        Logf(true, ("ip4_output_if_opt: optlen too long\n"));
      
         
         return ERR_VAL;
@@ -761,7 +752,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       ip_hlen = (uint16_t)(ip_hlen + optlen_aligned);
       /* First write in the IP options */
       if (pbuf_add_header(p, optlen_aligned)) {
-        Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: not enough room for IP options in PacketBuffer\n"));
+        Logf(true, ("ip4_output_if_opt: not enough room for IP options in PacketBuffer\n"));
         
         return ERR_BUF;
       }
@@ -771,7 +762,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
         memset(((char *)p->payload) + optlen, 0, (size_t)(optlen_aligned - optlen));
       }
 
-      for (i = 0; i < optlen_aligned / 2; i++) {
+      for (int i = 0; i < optlen_aligned / 2; i++) {
         chk_sum += ((uint16_t *)p->payload)[i];
       }
 
@@ -780,7 +771,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           /* generate IP header */
           if (pbuf_add_header(p, IP4_HDR_LEN))
           {
-              Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: not enough room for IP header in PacketBuffer\n"));
+              Logf(true, ("ip4_output: not enough room for IP header in PacketBuffer\n"));
 
               
               return ERR_BUF;
@@ -821,7 +812,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
           if (src == nullptr)
           {
-              copy_ip4_addr(&iphdr->src, IP4_ADDR_ANY4);
+              copy_ip4_addr(&iphdr->src, nullptr);
           } else
           {
               /* src cannot be NULL here */
@@ -846,7 +837,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           /* IP header already included in p */
           if (p->len < IP4_HDR_LEN)
           {
-              Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n"));
+              Logf(true, ("ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n"));
               
               return ERR_BUF;
           }

@@ -38,24 +38,15 @@
  *
  */
 
-#include <opt.h>
+#define NOMINMAX
+
 #include <def.h>
-
 #include <etharp.h>
-
 #include <ethernet.h>
-
 #include <ieee.h>
-
 #include <ip.h>
-
 #include <lwip_debug.h>
-
-#include <ppp_opts.h>
-
 #include <pppoe.h>
-
-
 #include <cstring>
 
 
@@ -253,7 +244,6 @@ ethernet_output(NetworkInterface* netif,
                 EthAddr* dst,
                 uint16_t eth_type)
 {
-    struct EthHdr* ethhdr;
     uint16_t eth_type_be = lwip_htons(eth_type);
 
 
@@ -284,7 +274,7 @@ ethernet_output(NetworkInterface* netif,
     // }
 
 
-    ethhdr = (struct EthHdr *)p->payload;
+    struct EthHdr* ethhdr = (struct EthHdr *)p->payload;
     ethhdr->type = eth_type_be;
     memcpy(&ethhdr->dest, dst, ETH_ADDR_LEN);
     memcpy(&ethhdr->src, src, ETH_ADDR_LEN);

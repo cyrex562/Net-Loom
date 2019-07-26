@@ -67,8 +67,7 @@ int
 ipaddr_aton(const char *cp, IpAddr *addr)
 {
   if (cp != nullptr) {
-    const char *c;
-    for (c = cp; *c != 0; c++) {
+      for (const char* c = cp; *c != 0; c++) {
       if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {

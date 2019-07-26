@@ -32,11 +32,6 @@
  *
  */
 #pragma once
-
-#include <opt.h>
-
-#include <arch.h>
-#include <lwip_inet.h>
 #include <lwip_sockets.h>
 
 /* some rarely used options */
@@ -85,7 +80,7 @@ struct LwipAddrInfo {
 };
 
 
-#define NETDB_ELEM_SIZE           (sizeof(struct addrinfo) + sizeof(struct sockaddr_storage) + DNS_MAX_NAME_LENGTH + 1)
+#define NETDB_ELEM_SIZE           (sizeof(struct addrinfo) + sizeof(LwipSockAddrStorage) + DNS_MAX_NAME_LENGTH + 1)
 
 /* application accessible error code set by the DNS API functions */
 extern int h_errno;

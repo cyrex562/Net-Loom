@@ -112,24 +112,21 @@ constexpr auto PPPOE_CODE_PADS = 0x65    /* Active Discovery Session confirmatio
 constexpr auto PPPOE_CODE_PADT = 0xA7    /* Active Discovery Terminate */;
 constexpr auto PPPOE_MAX_AC_COOKIE_LEN = 64;
 
-
-struct pppoe_softc {
-  struct pppoe_softc *next;
-  NetworkInterface*sc_ethif;      /* ethernet interface we are using */
-  PppPcb *pcb;                /* PPP PCB */
-  struct EthAddr sc_dest;     /* hardware address of concentrator */
-  uint16_t sc_session;            /* PPPoE session id */
-  uint8_t sc_state;               /* discovery phase or session connected */
-
-
-  uint8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
-  uint8_t sc_ac_cookie_len;       /* length of cookie data */
-
-  uint8_t *sc_hunique;            /* content of host unique we must echo back */
-  uint8_t sc_hunique_len;         /* length of host unique */
-
-  uint8_t sc_padi_retried;        /* number of PADI retries already done */
-  uint8_t sc_padr_retried;        /* number of PADR retries already done */
+struct pppoe_softc
+{
+    struct pppoe_softc* next;
+    NetworkInterface* sc_ethif; /* ethernet interface we are using */
+    PppPcb* pcb; /* PPP PCB */
+    struct EthAddr sc_dest; /* hardware address of concentrator */
+    uint16_t sc_session; /* PPPoE session id */
+    uint8_t sc_state; /* discovery phase or session connected */
+    uint8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN];
+    /* content of AC cookie we must echo back */
+    uint8_t sc_ac_cookie_len; /* length of cookie data */
+    uint8_t* sc_hunique; /* content of host unique we must echo back */
+    uint8_t sc_hunique_len; /* length of host unique */
+    uint8_t sc_padi_retried; /* number of PADI retries already done */
+    uint8_t sc_padr_retried; /* number of PADR retries already done */
 };
 
 

@@ -148,23 +148,23 @@ ipcp_init(PppPcb* pcb)
     f->maxnakloops = 100;
 
 
-    wo->neg_addr = wo->old_addrs = 1;
+    wo->neg_addr = wo->old_addrs = true;
 
-    wo->neg_vj = 1;
+    wo->neg_vj = true;
     wo->vj_protocol = IPCP_VJ_COMP;
     wo->maxslotindex = MAX_STATES - 1; /* really max index */
-    wo->cflag = 1;
+    wo->cflag = true;
 
 
-    ao->neg_addr = ao->old_addrs = 1;
+    ao->neg_addr = ao->old_addrs = true;
 
     /* max slots and slot-id compression are currently hardwired in */
     /* ppp_if.c to 16 and 1, this needs to be changed (among other */
     /* things) gmc */
 
-    ao->neg_vj = 1;
+    ao->neg_vj = true;
     ao->maxslotindex = MAX_STATES - 1;
-    ao->cflag = 1;
+    ao->cflag = true;
 
 
     /*
@@ -184,7 +184,7 @@ ipcp_open(PppPcb* pcb)
 {
     Fsm* f = &pcb->ipcp_fsm;
     fsm_open(f);
-    pcb->ipcp_is_open = 1;
+    pcb->ipcp_is_open = true;
 }
 
 
@@ -260,9 +260,9 @@ ipcp_resetci(Fsm* f)
     wo->req_addr = (wo->neg_addr || wo->old_addrs) &&
         (ao->neg_addr || ao->old_addrs);
     if (wo->ouraddr == 0)
-        wo->accept_local = 1;
+        wo->accept_local = true;
     if (wo->hisaddr == 0)
-        wo->accept_remote = 1;
+        wo->accept_remote = true;
 
     wo->req_dns1 = wo->req_dns2 = pcb->settings.usepeerdns; /* Request DNS addresses from the peer */
 
@@ -302,15 +302,15 @@ ipcp_cilen(Fsm* f)
      * forms because we have received old forms from the peer.
      */
     if (go->neg_addr && go->old_addrs && !ho->neg_addr && ho->old_addrs)
-        go->neg_addr = 0;
+        go->neg_addr = false;
 
 
     if (wo->neg_vj && !go->neg_vj && !go->old_vj) {
         /* try an older style of VJ negotiation */
         /* use the old style only if the peer did */
         if (ho->neg_vj && ho->old_vj) {
-            go->neg_vj = 1;
-            go->old_vj = 1;
+            go->neg_vj = true;
+            go->old_vj = true;
             go->vj_protocol = ho->vj_protocol;
         }
     }
@@ -611,9 +611,9 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         ciaddr1 = lwip_htonl(l);
         GETLONG(l, p);
         ciaddr2 = lwip_htonl(l);
-        no.old_addrs = 1;
+        no.old_addrs = true;
         if (treat_as_reject) {
-            try_.old_addrs = 0;
+            try_.old_addrs = false;
         }
         else {
             if (go->accept_local && ciaddr1) {
@@ -623,9 +623,7 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
                 try_.hisaddr = ciaddr2;
             }
         }
-    };
-
-    /*
+    } /*
      * Accept the peer's value of maxslotindex provided that it
      * is less than what we asked for.  Turn off slot-ID compression
      * if the peer wants.  Send old-style compress-type option if
@@ -636,83 +634,76 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         len -= cilen;
         INCPTR(2, p);
         GETSHORT(cishort, p);
-        no.neg_vj = 1;
+        no.neg_vj = true;
         if (treat_as_reject) {
-            try_.neg_vj = 0;
+            try_.neg_vj = false;
         }
         else if (cilen == 6) {
             {
                 (cimaxslotindex) = *(p)++;
-            };
+            }
             {
                 (cicflag) = *(p)++;
-            };
+            }
             if (cishort == IPCP_VJ_COMP) {
-                try_.old_vj = 0;
+                try_.old_vj = false;
                 if (cimaxslotindex < go->maxslotindex) try_.maxslotindex = cimaxslotindex;
-                if (!cicflag) try_.cflag = 0;
+                if (!cicflag) try_.cflag = false;
             }
             else {
-                try_.neg_vj = 0;
+                try_.neg_vj = false;
             }
         }
         else {
             if (cishort == IPCP_VJ_COMP || cishort == IPCP_VJ_COMP_OLD) {
-                try_.old_vj = 1;
+                try_.old_vj = true;
                 try_.vj_protocol = cishort;
             }
             else {
-                try_.neg_vj = 0;
+                try_.neg_vj = false;
             }
         }
-    };
-
-
+    }
     if (go->neg_addr && (cilen = p[1]) == CILEN_ADDR && len >= cilen && p[0] == CI_ADDR) {
         len -= cilen;
         INCPTR(2, p);
         GETLONG(l, p);
         ciaddr1 = lwip_htonl(l);
-        no.neg_addr = 1;
+        no.neg_addr = true;
         if (treat_as_reject) {
-            try_.neg_addr = 0;
-            try_.old_addrs = 0;
+            try_.neg_addr = false;
+            try_.old_addrs = false;
         }
         else if (go->accept_local && ciaddr1) {
             try_.ouraddr = ciaddr1;
         }
-    };
-
+    }
     if (go->req_dns1 && ((cilen = p[1]) == CILEN_ADDR) && len >= cilen && p[0] == CI_MS_DNS1) {
         len -= cilen;
         INCPTR(2, p);
         GETLONG(l, p);
         cidnsaddr = lwip_htonl(l);
-        no.req_dns1 = 1;
+        no.req_dns1 = true;
         if (treat_as_reject) {
-            try_.req_dns1 = 0;
+            try_.req_dns1 = false;
         }
         else {
             try_.dnsaddr[0] = cidnsaddr;
         }
-    };
-
+    }
     if (go->req_dns2 && ((cilen = p[1]) == CILEN_ADDR) && len >= cilen && p[0] == CI_MS_DNS2) {
         len -= cilen;
         INCPTR(2, p);
         GETLONG(l, p);
         cidnsaddr = lwip_htonl(l);
-        no.req_dns2 = 1;
+        no.req_dns2 = true;
         if (treat_as_reject) {
-            try_.req_dns2 = 0;
+            try_.req_dns2 = false;
         }
         else {
             try_.dnsaddr[1] = cidnsaddr;
         }
-    };
-
-
-    /*
+    } /*
      * There may be remaining CIs, if the peer is requesting negotiation
      * on an option that we didn't include in our request packet.
      * If they want to negotiate about IP addresses, we comply.
@@ -723,10 +714,10 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
     while (len >= CILEN_VOID) {
         {
             (citype) = *(p)++;
-        };
+        }
         {
             (cilen) = *(p)++;
-        };
+        }
         if (cilen < CILEN_VOID || (len -= cilen) < 0)
             goto bad;
         next = p + cilen - 2;
@@ -737,14 +728,14 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             if (go->neg_vj || no.neg_vj ||
                 (cilen != CILEN_VJ && cilen != CILEN_COMPRESS))
                 goto bad;
-            no.neg_vj = 1;
+            no.neg_vj = true;
             break;
 
         case CI_ADDRS:
             if ((!go->neg_addr && go->old_addrs) || no.old_addrs
                 || cilen != CILEN_ADDRS)
                 goto bad;
-            try_.neg_addr = 0;
+            try_.neg_addr = false;
             GETLONG(l, p);
             ciaddr1 = lwip_htonl(l);
             if (ciaddr1 && go->accept_local)
@@ -753,19 +744,19 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             ciaddr2 = lwip_htonl(l);
             if (ciaddr2 && go->accept_remote)
                 try_.hisaddr = ciaddr2;
-            no.old_addrs = 1;
+            no.old_addrs = true;
             break;
         case CI_ADDR:
             if (go->neg_addr || no.neg_addr || cilen != CILEN_ADDR)
                 goto bad;
-            try_.old_addrs = 0;
+            try_.old_addrs = false;
             GETLONG(l, p);
             ciaddr1 = lwip_htonl(l);
             if (ciaddr1 && go->accept_local)
                 try_.ouraddr = ciaddr1;
             if (try_.ouraddr != 0)
-                try_.neg_addr = 1;
-            no.neg_addr = 1;
+                try_.neg_addr = true;
+            no.neg_addr = true;
             break;
 
         case CI_MS_DNS1:
@@ -773,16 +764,16 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
                 goto bad;
             GETLONG(l, p);
             try_.dnsaddr[0] = lwip_htonl(l);
-            try_.req_dns1 = 1;
-            no.req_dns1 = 1;
+            try_.req_dns1 = true;
+            no.req_dns1 = true;
             break;
         case CI_MS_DNS2:
             if (go->req_dns2 || no.req_dns2 || cilen != CILEN_ADDR)
                 goto bad;
             GETLONG(l, p);
             try_.dnsaddr[1] = lwip_htonl(l);
-            try_.req_dns2 = 1;
-            no.req_dns2 = 1;
+            try_.req_dns2 = true;
+            no.req_dns2 = true;
             break;
 
         default:
@@ -1001,10 +992,10 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
         }
         {
             (citype) = *(p)++;
-        }; /* Parse CI type */
+        }
         {
             (cilen) = *(p)++;
-        }; /* Parse CI length */
+        }
         l -= cilen; /* Adjust remaining length */
         next += cilen; /* Step to next CI */
 
@@ -1031,7 +1022,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 (tl) |= *(p)++;
                 (tl) <<= 8;
                 (tl) |= *(p)++;
-            }; /* Parse source address (his) */
+            }
             ciaddr1 = lwip_htonl(tl);
             if (ciaddr1 != wo->hisaddr
                 && (ciaddr1 == 0 || !wo->accept_remote)) {
@@ -1044,7 +1035,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                         *(p)++ = (uint8_t)((tl) >> 16);
                         *(p)++ = (uint8_t)((tl) >> 8);
                         *(p)++ = (uint8_t)(tl);
-                    };
+                    }
                 }
             }
             else if (ciaddr1 == 0 && wo->hisaddr == 0) {
@@ -1052,7 +1043,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                  * If neither we nor he knows his address, reject the option.
                  */
                 orc = CONFREJ;
-                wo->req_addr = 0; /* don't NAK with 0.0.0.0 later */
+                wo->req_addr = false; /* don't NAK with 0.0.0.0 later */
                 break;
             }
 
@@ -1067,7 +1058,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 (tl) |= *(p)++;
                 (tl) <<= 8;
                 (tl) |= *(p)++;
-            }; /* Parse desination address (ours) */
+            }
             ciaddr2 = lwip_htonl(tl);
             if (ciaddr2 != wo->ouraddr) {
                 if (ciaddr2 == 0 || !wo->accept_local) {
@@ -1080,7 +1071,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                             *(p)++ = (uint8_t)((tl) >> 16);
                             *(p)++ = (uint8_t)((tl) >> 8);
                             *(p)++ = (uint8_t)(tl);
-                        };
+                        }
                     }
                 }
                 else {
@@ -1088,7 +1079,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 }
             }
 
-            ho->old_addrs = 1;
+            ho->old_addrs = true;
             ho->hisaddr = ciaddr1;
             ho->ouraddr = ciaddr2;
             break;
@@ -1114,7 +1105,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 (tl) |= *(p)++;
                 (tl) <<= 8;
                 (tl) |= *(p)++;
-            }; /* Parse source address (his) */
+            }
             ciaddr1 = lwip_htonl(tl);
             if (ciaddr1 != wo->hisaddr
                 && (ciaddr1 == 0 || !wo->accept_remote)) {
@@ -1127,7 +1118,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                         *(p)++ = (uint8_t)((tl) >> 16);
                         *(p)++ = (uint8_t)((tl) >> 8);
                         *(p)++ = (uint8_t)(tl);
-                    };
+                    }
                 }
             }
             else if (ciaddr1 == 0 && wo->hisaddr == 0) {
@@ -1135,11 +1126,11 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                  * Don't ACK an address of 0.0.0.0 - reject it instead.
                  */
                 orc = CONFREJ;
-                wo->req_addr = 0; /* don't NAK with 0.0.0.0 later */
+                wo->req_addr = false; /* don't NAK with 0.0.0.0 later */
                 break;
             }
 
-            ho->neg_addr = 1;
+            ho->neg_addr = true;
             ho->hisaddr = ciaddr1;
             break;
 
@@ -1163,7 +1154,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 (tl) |= *(p)++;
                 (tl) <<= 8;
                 (tl) |= *(p)++;
-            };
+            }
             if (lwip_htonl(tl) != ao->dnsaddr[d]) {
                 ((p) -= (sizeof(uint32_t)));
                 tl = lwip_ntohl(ao->dnsaddr[d]);
@@ -1172,7 +1163,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                     *(p)++ = (uint8_t)((tl) >> 16);
                     *(p)++ = (uint8_t)((tl) >> 8);
                     *(p)++ = (uint8_t)(tl);
-                };
+                }
                 orc = CONFNAK;
             }
             break;
@@ -1187,27 +1178,26 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             {
                 (cishort) = *(p)++ << 8;
                 (cishort) |= *(p)++;
-            };
-
+            }
             if (!(cishort == IPCP_VJ_COMP ||
                 (cishort == IPCP_VJ_COMP_OLD && cilen == CILEN_COMPRESS))) {
                 orc = CONFREJ;
                 break;
             }
 
-            ho->neg_vj = 1;
+            ho->neg_vj = true;
             ho->vj_protocol = cishort;
             if (cilen == CILEN_VJ) {
                 {
                     (maxslotindex) = *(p)++;
-                };
+                }
                 if (maxslotindex > ao->maxslotindex) {
                     orc = CONFNAK;
                     if (!reject_if_disagree) {
                         ((p) -= (1));
                         {
                             *(p)++ = (uint8_t)(ao->maxslotindex);
-                        };
+                        }
                     }
                 }
                 GETCHAR(cflag, p);
@@ -1222,9 +1212,9 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 ho->cflag = cflag;
             }
             else {
-                ho->old_vj = 1;
+                ho->old_vj = true;
                 ho->maxslotindex = MAX_STATES - 1;
-                ho->cflag = 1;
+                ho->cflag = true;
             }
             break;
 
@@ -1280,7 +1270,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
         if (rc == CONFACK) {
             rc = CONFNAK;
             ucp = inp; /* reset pointer */
-            wo->req_addr = 0; /* don't ask again */
+            wo->req_addr = false; /* don't ask again */
         }
         PUTCHAR(CI_ADDR, ucp);
         PUTCHAR(CILEN_ADDR, ucp);
@@ -1310,12 +1300,12 @@ ip_demand_conf(int u)
     if (wo->hisaddr == 0 && !pcb->settings.noremoteip) {
         /* make up an arbitrary address for the peer */
         wo->hisaddr = lwip_htonl(0x0a707070 + ifunit);
-        wo->accept_remote = 1;
+        wo->accept_remote = true;
     }
     if (wo->ouraddr == 0) {
         /* make up an arbitrary address for us */
         wo->ouraddr = lwip_htonl(0x0a404040 + ifunit);
-        wo->accept_local = 1;
+        wo->accept_local = true;
         ask_for_local = false; /* don't tell the peer this address */
     }
     if (!sifaddr(pcb, wo->ouraddr, wo->hisaddr, get_mask(wo->ouraddr)))
@@ -1424,7 +1414,7 @@ ipcp_up(Fsm* f)
      * configured, so we put out any saved-up packets, then set the
      * interface to pass IP packets.
      */
-    if (1) {
+    if (true) {
         if (go->ouraddr != wo->ouraddr || ho->hisaddr != wo->hisaddr) {
             // ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr,
             //      wo->replace_default_route);
@@ -1512,7 +1502,7 @@ ipcp_up(Fsm* f)
 
 
     np_up(pcb, PPP_IP);
-    pcb->ipcp_is_up = 1;
+    pcb->ipcp_is_up = true;
 
 
     // notify(ip_up_notifier, 0);
@@ -1533,7 +1523,7 @@ ipcp_down(Fsm* f)
     IpcpOptions* go = &pcb->ipcp_gotoptions;
 
     if (pcb->ipcp_is_up) {
-        pcb->ipcp_is_up = 0;
+        pcb->ipcp_is_up = false;
         np_down(pcb, PPP_IP);
     }
 
@@ -1543,7 +1533,7 @@ ipcp_down(Fsm* f)
      * If we are doing dial-on-demand, set the interface
      * to queue up outgoing packets (for now).
      */
-    if (1) {
+    if (true) {
         sifnpmode(pcb, PPP_IP, NPMODE_QUEUE);
     }
     else {
@@ -1569,9 +1559,6 @@ ipcp_down(Fsm* f)
 static void
 ipcp_clear_addrs(PppPcb* pcb, uint32_t ouraddr, uint32_t hisaddr, uint8_t replacedefaultroute)
 {
-    ;
-
-
     // cifaddr(pcb, ouraddr, hisaddr);
 }
 
@@ -1584,7 +1571,7 @@ ipcp_finished(Fsm* f)
 {
     PppPcb* pcb = f->pcb;
     if (pcb->ipcp_is_open) {
-        pcb->ipcp_is_open = 0;
+        pcb->ipcp_is_open = false;
         np_finished(pcb, PPP_IP);
     }
 }
@@ -1619,9 +1606,6 @@ ipcp_finished(Fsm* f)
 static int
 ip_active_pkt(uint8_t* pkt, size_t len)
 {
-    uint8_t* tcp;
-    int hlen;
-
     len -= PPP_HDRLEN;
     pkt += PPP_HDRLEN;
     if (len < 20)
@@ -1630,10 +1614,10 @@ ip_active_pkt(uint8_t* pkt, size_t len)
         return 0;
     if ((((unsigned char *)(pkt))[9]) != IPPROTO_TCP)
         return 1;
-    hlen = (((unsigned char *)(pkt))[0] & 0xF) * 4;
+    int hlen = (((unsigned char *)(pkt))[0] & 0xF) * 4;
     if (len < hlen + TCP_HDRLEN)
         return 0;
-    tcp = pkt + hlen;
+    uint8_t* tcp = pkt + hlen;
     if (((((unsigned char *)(tcp))[13]) & TH_FIN) != 0 && len == hlen + get_tcpoff(tcp) * 4)
         return 0;
     return 1;

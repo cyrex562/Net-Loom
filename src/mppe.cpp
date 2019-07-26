@@ -109,8 +109,7 @@ static void mppe_rekey(PppMppeState * state, int initial_key)
  * don't have to keep multiple copies of keys.
  */
 void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key) {
-	;
-	memcpy(state->master_key, key, MPPE_MAX_KEY_LEN);
+    memcpy(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
 
 /*
@@ -191,8 +190,7 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
  */
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
 {
-	;
-	state->bits |= MPPE_BIT_FLUSHED;
+    state->bits |= MPPE_BIT_FLUSHED;
 }
 
 /*
@@ -203,16 +201,11 @@ void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
 LwipStatus
 mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16_t protocol)
 {
-	struct PacketBuffer *n, *np;
-	uint8_t *pl;
-	LwipStatus err;
-
-	;
-
-	/* TCP stack requires that we don't change the packet payload, therefore we copy
+    LwipStatus err; /* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.
 	 */
-	np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol) + (*pb)->tot_len);
+	struct PacketBuffer* np = pbuf_alloc(PBUF_RAW,
+                                         MPPE_OVHD + sizeof(protocol) + (*pb)->tot_len);
 	if (!np) {
 		return ERR_MEM;
 	}
@@ -229,7 +222,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	pbuf_add_header(np, MPPE_OVHD + sizeof(protocol));
 
 	*pb = np;
-	pl = (uint8_t*)np->payload;
+	uint8_t* pl = (uint8_t*)np->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
 	// PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
@@ -260,7 +253,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	pbuf_remove_header(np, MPPE_OVHD);
 
 	/* Encrypt packet */
-	for (n = np; n != nullptr; n = n->next) {
+	for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
 		lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;
@@ -278,9 +271,6 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
  */
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state)
 {
-	;
-	;
-	return;
 }
 
 /*
@@ -289,12 +279,7 @@ void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state)
 LwipStatus
 mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 {
-	struct PacketBuffer *n0 = *pb, *n;
-	uint8_t *pl;
-	uint16_t ccount;
-	uint8_t flushed;
-
-	/* MPPE Header */
+	struct PacketBuffer *n0 = *pb; /* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
 		// PPPDEBUG(LOG_DEBUG,
 		//        ("mppe_decompress[%d]: short pkt (%d)\n",
@@ -303,9 +288,9 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 		goto sanity_error;
 	}
 
-	pl = (uint8_t*)n0->payload;
-	flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
-	ccount = MPPE_CCOUNT(pl);
+	uint8_t* pl = (uint8_t*)n0->payload;
+	uint8_t flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
+	uint16_t ccount = MPPE_CCOUNT(pl);
 	// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
 	//        pcb->netif->num, ccount));
 
@@ -396,7 +381,7 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 	pbuf_remove_header(n0, MPPE_OVHD);
 
 	/* Decrypt the packet. */
-	for (n = n0; n != nullptr; n = n->next) {
+	for (struct PacketBuffer* n = n0; n != nullptr; n = n->next) {
 		lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;

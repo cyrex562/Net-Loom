@@ -31,7 +31,7 @@
 *   Original derived from BSD codes.
 *****************************************************************************/
 #pragma once
-#include <netif.h>
+#include <network_interface.h>
 #include <ccp.h>
 #include <ip6_addr.h>
 #include <mppe.h>
@@ -151,9 +151,12 @@ struct PppSettings
     // time to listen first (ms), waiting for peer to send LCP packet */
     uint64_t idle_time_limit; /* Disconnect if idle for this many seconds */
     uint64_t maxconnect; /* Maximum connect time (seconds) */ /* auth data */
-    char user[0xff]; /* Username for PAP */
-    char passwd[0xff]; /* Password for PAP, secret for CHAP */
-    char remote_name[0xff]; /* Peer's name for authentication */
+    // char user[0xff]; /* Username for PAP */
+    std::string user;
+    // char passwd[0xff]; /* Password for PAP, secret for CHAP */
+    std::string passwd;
+    // char remote_name[0xff]; /* Peer's name for authentication */
+    std::string remote_name;
     uint64_t pap_timeout_time; /* Timeout (seconds) for auth-req retrans. */
     uint32_t pap_max_transmits; /* Number of auth-reqs sent */
     uint64_t pap_req_timeout; /* Time to wait for auth-req from peer */
@@ -213,7 +216,7 @@ struct PppPcb
     bool vj_enabled; /* Flag indicating VJ compression enabled. */
     bool ccp_all_rejected; /* we rejected all peer's options */
     bool mppe_keys_set; /* Have the MPPE keys been set? */ /* auth data */
-    char peer_authname[0xff]; /* The name by which the peer authenticated itself to us. */
+    std::string peer_authname; /* The name by which the peer authenticated itself to us. */
     uint16_t auth_pending;
     /* Records which authentication operations haven't completed yet. */
     uint16_t auth_done; /* Records which authentication operations have been completed. */
@@ -231,7 +234,7 @@ struct PppPcb
     uint8_t lcp_echo_number; /* ID number of next echo frame */
     uint8_t num_np_open; /* Number of network protocols which we have opened. */
     uint8_t num_np_up; /* Number of network protocols which have come up. */
-    struct vjcompress vj_comp; /* Van Jacobson compression header. */
+    struct VjCompress vj_comp; /* Van Jacobson compression header. */
     Fsm ccp_fsm; /* CCP fsm structure */
     CcpOptions ccp_wantoptions; /* what to request the peer to use */
     CcpOptions ccp_gotoptions; /* what the peer agreed to do */
@@ -288,14 +291,18 @@ struct PppPcb
  *
  * Default is none auth type, unset (NULL) user and passwd.
  */
-constexpr auto PPPAUTHTYPE_NONE = 0x00;
-constexpr auto PPPAUTHTYPE_PAP = 0x01;
-constexpr auto PPPAUTHTYPE_CHAP = 0x02;
-constexpr auto PPPAUTHTYPE_MSCHAP = 0x04;
-constexpr auto PPPAUTHTYPE_MSCHAP_V2 = 0x08;
-constexpr auto PPPAUTHTYPE_EAP = 0x10;
-constexpr auto PPPAUTHTYPE_ANY = 0xff;
-void ppp_set_auth(PppPcb *pcb, uint8_t authtype, const char *user, const char *password);
+enum PppAuthTypes
+{
+    PPPAUTHTYPE_NONE = 0x00,
+    PPPAUTHTYPE_PAP = 0x01,
+    PPPAUTHTYPE_CHAP = 0x02,
+    PPPAUTHTYPE_MSCHAP = 0x04,
+    PPPAUTHTYPE_MSCHAP_V2 = 0x08,
+    PPPAUTHTYPE_EAP = 0x10,
+    PPPAUTHTYPE_ANY = 0xff,
+};
+
+void ppp_set_auth(PppPcb *pcb, const PppAuthTypes authtype, std::string& user, std::string& password);
 
 /*
  * If set, peer is required to authenticate. This is mostly necessary for PPP server support.

@@ -38,7 +38,7 @@
 #pragma once
 #include <arch.h>
 #include <packet_buffer.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <ip_addr.h>
 #include <udp.h>
 
@@ -88,11 +88,12 @@ struct UdpPcb
 {
     /** Common members of all PCB types */
     IpAddr local_ip; /* Bound netif index */
+    IpAddr remote_ip;
     uint8_t netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    NetworkInterface* netif_hints; /* Protocol specific PCB members */
+    NetIfcHint* netif_hints; /* Protocol specific PCB members */
     struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
     uint16_t local_port, remote_port;
@@ -113,22 +114,26 @@ extern struct UdpPcb *udp_pcbs;
 /* The following functions is the application layer interface to the
    UDP code. */
 struct UdpPcb * udp_new        (void);
-struct UdpPcb * udp_new_ip_type(uint8_t type);
+struct UdpPcb * udp_new_ip_type(IpAddrType type);
 void             udp_remove     (struct UdpPcb *pcb);
 LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
-void             udp_bind_netif (struct UdpPcb *pcb, const NetworkInterface** netif);
+void             udp_bind_netif (struct UdpPcb *pcb, const NetworkInterface* netif);
 LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
-void             udp_recv       (struct UdpPcb *pcb, UdpRecvFn recv,
-                                 uint8_t *recv_arg);
+void             udp_recv       (struct UdpPcb *pcb,
+                                 UdpRecvFn recv,
+                                 void* recv_arg);
 LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port,
                                  NetworkInterface*netif);
-LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port,
-                                 NetworkInterface*netif, const IpAddr *src_ip);
+LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb,
+                                        struct PacketBuffer *p,
+                                        const IpAddr *dst_ip,
+                                        uint16_t dst_port,
+                                        NetworkInterface*netif,
+                                        IpAddr* src_ip);
 LwipStatus            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddr *dst_ip, uint16_t dst_port);
 LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
@@ -142,9 +147,14 @@ LwipStatus            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
 LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port, NetworkInterface*netif,
-                                 uint8_t have_chksum, uint16_t chksum, const IpAddr *src_ip);
+LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb,
+                                               struct PacketBuffer *p,
+                                               const IpAddr *dst_ip,
+                                               uint16_t dst_port,
+                                               NetworkInterface*netif,
+                                               uint8_t have_chksum,
+                                               uint16_t chksum,
+                                               IpAddr* src_ip);
 
 inline void udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
 {

@@ -21,10 +21,9 @@
  */
 
 #pragma once
-
-#include <ppp_opts.h>
 #include <eap_state.h>
 #include <cstdint>
+#include <complex.h>
 #ifdef	__cplusplus
 struct PppPcb;
 
@@ -121,23 +120,25 @@ enum EapType
 #define	EAPSRP_ACK		3	/* Response 3 - final ack */
 #define	EAPSRP_LWRECHALLENGE	4	/* Req/resp 4 - Lightweight rechal */
 
-#define	SRPVAL_EBIT	0x00000001	/* Use shared key for ECP */
+constexpr auto SRPVAL_EBIT = 0x00000001	/* Use shared key for ECP */;
 
-#define	SRP_PSEUDO_ID	"pseudo_"
-#define	SRP_PSEUDO_LEN	7
+constexpr auto SRP_PSEUDO_ID = "pseudo_";
+constexpr auto SRP_PSEUDO_LEN = 7;
 
-#define MD5_SIGNATURE_SIZE	16
-#define EAP_MIN_CHALLENGE_LENGTH	17
-#define EAP_MAX_CHALLENGE_LENGTH	24
-#define EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH     3   /* 2^3-1 = 7, 17+7 = 24 */
+constexpr auto MD5_SIGNATURE_SIZE = 16;
+constexpr auto EAP_MIN_CHALLENGE_LENGTH = 17;
+// constexpr auto EAP_MAX_CHALLENGE_LENGTH = 24;
+constexpr auto EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH = 3   /* 2^3-1 = 7, 17+7 = 24 */;
 
-#define	EAP_STATES	\
-	"Initial", "Pending", "Closed", "Listen", "Identify", \
-	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
-
-#define	eap_server_active(pcb)	\
-	((pcb)->eap.es_server.ea_state >= eapIdentify && \
-	 (pcb)->eap.es_server.ea_state <= eapMD5Chall)
+// #define	EAP_STATES	\
+//    "Initial", "Pending", "Closed", "Listen", "Identify", \
+//    "SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
+inline bool
+eap_server_active(const EapState* eap)
+{
+    return eap->es_server.ea_state >= eapIdentify && eap->es_server.ea_state <=
+        eapMD5Chall;
+}
 
 
 struct Base64State
@@ -150,7 +151,7 @@ static char base64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 void eap_authwithpeer(PppPcb *pcb);
-void eap_authpeer(PppPcb *pcb, const char *localname);
+void eap_authpeer(PppPcb *pcb, std::string& localname);
 
 extern const struct Protent eap_protent;
 

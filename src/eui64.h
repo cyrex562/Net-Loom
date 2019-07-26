@@ -36,10 +36,10 @@
 */
 #pragma once
 
+#include "magic.h"
+#include "def.h"
 #include <cstdint>
 #include <cstring>
-#include "magic.h"
-#include "lwip_inet.h"
 
 
 /*
@@ -133,7 +133,7 @@ inline void
 eui64_set32(Eui64& e, uint32_t l)
 {
     (e).e32[0] = 0;
-    (e).e32[1] = lwip_htonl(l);
+    (e).e32[1] = pp_htonl(l);
 }
 
 

@@ -5,7 +5,7 @@
 #pragma once
 #include <opt.h>
 #include <packet_buffer.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <ethernet.h>
 #include <cstring>
 

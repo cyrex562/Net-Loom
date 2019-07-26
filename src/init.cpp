@@ -8,7 +8,7 @@
 #include <lwip_sockets.h>
 #include <mld6.h>
 #include <nd6.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <packet_buffer.h>
 #include <raw.h>
 #include <sys.h>
@@ -26,7 +26,7 @@
  */
 void lwip_init(void)
 {
-    auto a = 0;; /* Modules initialization */
+    auto a = 0;
     sys_init();
     pbuf_init();
     // netif_init();

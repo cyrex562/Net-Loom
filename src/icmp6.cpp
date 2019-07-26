@@ -7,7 +7,7 @@
 #include <ip6_addr.h>
 #include <inet_chksum.h>
 #include <packet_buffer.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <nd6.h>
 #include <ip.h>
 #include <cstring>
@@ -61,8 +61,6 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
     if (is_netif_checksum_enabled(inp, NETIF_CHECKSUM_CHECK_ICMP6))
     {
         // TODO: get current addresses
-        Ip6Addr* curr_src_addr = nullptr;
-        Ip6Addr* curr_dst_addr = nullptr;
         if (ip6_chksum_pseudo(p,
                               IP6_NEXTH_ICMP6,
                               p->tot_len,
@@ -317,9 +315,9 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
                                                      const Ip6Addr* reply_dest,
                                                      NetworkInterface* netif)
 {
-    struct PacketBuffer* q;
-    struct Icmp6Hdr* icmp6hdr; /* ICMPv6 header + IPv6 header + data */
-    q = pbuf_alloc(PBUF_IP, sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE);
+    struct PacketBuffer* q = pbuf_alloc(PBUF_IP,
+                                        sizeof(struct Icmp6Hdr) + IP6_HDR_LEN +
+                                        LWIP_ICMP6_DATASIZE);
     if (q == nullptr)
     {
         Logf(true,
@@ -330,7 +328,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
     lwip_assert("check that first PacketBuffer can hold icmp 6message",
                 (q->len >= (sizeof(struct Icmp6Hdr) + IP6_HDR_LEN + LWIP_ICMP6_DATASIZE)
                 ));
-    icmp6hdr = (struct Icmp6Hdr *)q->payload;
+    struct Icmp6Hdr* icmp6hdr = (struct Icmp6Hdr *)q->payload;
     icmp6hdr->type = type;
     icmp6hdr->code = code;
     icmp6hdr->data = lwip_htonl(data); /* copy fields from original packet */

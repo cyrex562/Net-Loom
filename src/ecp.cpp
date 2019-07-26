@@ -57,6 +57,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define NOMINMAX
 #include <ppp_impl.h>
 #include <fsm.h>
 #include <ecp.h>

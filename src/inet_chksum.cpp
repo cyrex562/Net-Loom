@@ -275,7 +275,7 @@ uint16_t inet_chksum_pseudo(struct PacketBuffer* p,
  */
 uint16_t ip6_chksum_pseudo(struct PacketBuffer* p,
                            uint8_t proto,
-                           uint16_t proto_len,
+                           size_t proto_len,
                            const Ip6Addr* src,
                            const Ip6Addr* dest)
 {

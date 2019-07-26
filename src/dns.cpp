@@ -309,7 +309,6 @@ void dns_tmr(void)
 
 static void dns_init_local(void)
 {
-    struct LocalHostListEntry* entry;
     /* Dynamic: copy entries from DNS_LOCAL_HOSTLIST_INIT to list */
     struct LocalHostListEntry local_hostlist_init[] = {{"abc", {{{{0x123}}}}}};
     for (auto& i : local_hostlist_init)
@@ -319,7 +318,7 @@ static void dns_init_local(void)
         size_t namelen = strlen(init_entry->name);
         lwip_assert("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN",
                     namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
-        entry = new LocalHostListEntry;
+        struct LocalHostListEntry* entry = new LocalHostListEntry;
         lwip_assert("mem-error in dns_init_local", entry != nullptr);
         if (entry != nullptr)
         {
@@ -346,10 +345,8 @@ static void dns_init_local(void)
 size_t
 dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg)
 {
-  size_t i;
-
-  struct LocalHostListEntry *entry = local_hostlist_dynamic;
-  i = 0;
+    struct LocalHostListEntry *entry = local_hostlist_dynamic;
+  size_t i = 0;
   while (entry != nullptr) {
     if (iterator_fn != nullptr) {
       iterator_fn(entry->name, &entry->addr, iterator_arg);
@@ -644,7 +641,6 @@ static LwipStatus dns_send(const uint8_t idx)
     DnsHdr hdr;
     DnsQuery qry;
     uint8_t n;
-    uint8_t pcb_idx;
     auto entry = &dns_table[idx];
     // Logf(true, ("dns_send: dns_servers[%d] \"%s\": request\n",
     //                         (uint16_t)(entry->server_idx), entry->name));
@@ -706,7 +702,7 @@ static LwipStatus dns_send(const uint8_t idx)
         }
         qry.cls = pp_htons(DNS_RRCLASS_IN);
         pbuf_take_at(pbuf, (uint8_t*)&qry, DNS_QUERY_LEN, query_idx);
-        pcb_idx = entry->pcb_idx; /* send dns packet */ // Logf(true,
+        uint8_t pcb_idx = entry->pcb_idx; /* send dns packet */ // Logf(true,
         //      ("sending DNS request ID %d for name \"%s\" to server %d\r\n", entry->txid,
         //          entry->name, entry->server_idx));
         if (entry->is_mdns)
@@ -822,12 +818,7 @@ dns_alloc_pcb(void)
 static void
 dns_call_found(uint8_t idx, IpAddr *addr)
 {
-
-  uint8_t i;
-
-
-
-  if (addr != nullptr) {
+    if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
     if (is_ip_addr_ip6_val(*addr)) {
       // lwip_assert("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
@@ -849,7 +840,7 @@ dns_call_found(uint8_t idx, IpAddr *addr)
   // }
 
   /* close the pcb used unless other request are using it */
-  for (i = 0; i < DNS_MAX_REQUESTS; i++) {
+  for (uint8_t i = 0; i < DNS_MAX_REQUESTS; i++) {
     if (i == idx) {
       continue; /* only check other requests */
     }
@@ -874,14 +865,11 @@ dns_call_found(uint8_t idx, IpAddr *addr)
 static uint16_t
 dns_create_txid(void)
 {
-  uint16_t txid;
-  uint8_t i;
-
 again:
-  txid = (uint16_t)lwip_rand();
+  uint16_t txid = (uint16_t)lwip_rand();
 
   /* check whether the ID is unique */
-  for (i = 0; i < DNS_TABLE_SIZE; i++) {
+  for (uint8_t i = 0; i < DNS_TABLE_SIZE; i++) {
     if ((dns_table[i].state == DNS_STATE_ASKING) &&
         (dns_table[i].txid == txid)) {
       /* ID already used by another pending query */
@@ -938,7 +926,7 @@ dns_check_entry(uint8_t i)
       /* send DNS packet for this entry */
       err = dns_send(i);
       if (err != ERR_OK) {
-        Logf(true | LWIP_DBG_LEVEL_WARNING,
+        Logf(true,
                     ("dns_send returned error: %s\n", status_to_string(err).c_str()));
       }
       break;
@@ -970,7 +958,7 @@ dns_check_entry(uint8_t i)
         /* send DNS packet for this entry */
         err = dns_send(i);
         if (err != ERR_OK) {
-          Logf(true | LWIP_DBG_LEVEL_WARNING,
+          Logf(true,
                       ("dns_send returned error: %s\n", status_to_string(err).c_str()));
         }
       }
@@ -987,7 +975,7 @@ dns_check_entry(uint8_t i)
       /* nothing to do */
       break;
     default:
-      lwip_assert("unknown dns_table entry state:", 0);
+      lwip_assert("unknown dns_table entry state:", false);
       break;
   }
 }
@@ -998,9 +986,7 @@ dns_check_entry(uint8_t i)
 static void
 dns_check_entries(void)
 {
-  uint8_t i;
-
-  for (i = 0; i < DNS_TABLE_SIZE; ++i) {
+    for (uint8_t i = 0; i < DNS_TABLE_SIZE; ++i) {
     dns_check_entry(i);
   }
 }
@@ -1241,7 +1227,6 @@ static void dns_recv(void* arg,
         }
     }
 ignore_packet: /* deallocate memory and return */ free_pkt_buf(p);
-    return;
 }
 
 /**
@@ -1262,7 +1247,6 @@ static LwipStatus dns_enqueue(const char* name,
 {
     uint8_t i;
     struct DnsTableEntry* entry = nullptr;
-    struct DnsRequestEntry* req;
     uint8_t r; /* check for duplicate entries */
     for (i = 0; i < DNS_TABLE_SIZE; i++)
     {
@@ -1326,7 +1310,7 @@ static LwipStatus dns_enqueue(const char* name,
             entry = &dns_table[i];
         }
     } /* find a free request entry */
-    req = nullptr;
+    struct DnsRequestEntry* req = nullptr;
     for (r = 0; r < DNS_MAX_REQUESTS; r++)
     {
         if (dns_requests[r].found == nullptr)
@@ -1349,7 +1333,8 @@ static LwipStatus dns_enqueue(const char* name,
     LWIP_DNS_SET_ADDRTYPE(req->reqaddrtype, dns_addrtype);
     req->found = found;
     req->arg = callback_arg;
-    size_t namelen = LWIP_MIN(hostnamelen, DNS_MAX_NAME_LENGTH - 1);
+    const size_t dns_name_len_sz = DNS_MAX_NAME_LENGTH - 1;
+    const size_t namelen = std::min(hostnamelen, dns_name_len_sz);
     memcpy(entry->name, name, namelen);
     entry->name[namelen] = 0;
     entry->pcb_idx = dns_alloc_pcb();

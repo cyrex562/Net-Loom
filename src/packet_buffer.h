@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <opt.h>
-#include <lwip_status.h>
-#include <lwip_debug.h>
 #include <cstdint>
+#include <lwip_debug.h>
+#include <lwip_status.h>
+#include <opt.h>
+
 
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
@@ -151,7 +152,7 @@ struct PacketBuffer {
     bool is_custom;
     /// indicates this pbuf is UDP multicast to be looped back
     bool multicast_loop;
-    /// 
+    ///
     bool push;
     /// indicates this pbuf was received as link-level broadcast
     bool ll_broadcast;
@@ -248,7 +249,7 @@ struct PacketBuffer *pbuf_alloced_custom(PbufLayer l, uint16_t length, PbufType 
                                  struct pbuf_custom *p, uint8_t *payload_mem,
                                  uint16_t payload_mem_len);
 
-void pbuf_realloc(struct PacketBuffer *p, uint16_t size);
+void pbuf_realloc(struct PacketBuffer *p, size_t size);
 
 inline uint8_t pbuf_get_allocsrc(PacketBuffer* p)
 {
@@ -306,8 +307,8 @@ LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, size_t le
 
 LwipStatus pbuf_take_at(struct PacketBuffer* buf,
                         const uint8_t* dataptr,
-                        uint16_t len,
-                        uint16_t offset);
+                        size_t len,
+                        size_t offset);
 
 struct PacketBuffer* pbuf_skip(struct PacketBuffer* in,
                                uint16_t in_offset,

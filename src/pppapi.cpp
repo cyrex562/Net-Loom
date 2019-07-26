@@ -173,10 +173,8 @@ PppPcb* pppapi_pppoe_create(NetworkInterface* pppif,
                             ppp_link_status_cb_fn link_status_cb,
                             uint8_t* ctx_cb)
 {
-    PppPcb* result;
-    struct pppapi_msg* msg;
     // API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, msg, NULL);
-    msg = new pppapi_msg;
+    struct pppapi_msg* msg = new pppapi_msg;
     msg->msg.ppp = nullptr;
     msg->msg.msg.ethernetcreate.pppif = pppif;
     msg->msg.msg.ethernetcreate.ethif = ethif;
@@ -185,7 +183,7 @@ PppPcb* pppapi_pppoe_create(NetworkInterface* pppif,
     msg->msg.msg.ethernetcreate.link_status_cb = link_status_cb;
     msg->msg.msg.ethernetcreate.ctx_cb = ctx_cb;
     tcpip_api_call(pppapi_do_pppoe_create, &msg->call);
-    result = msg->msg.ppp; // API_VAR_FREE_POOL(PPPAPI_MSG, msg);
+    PppPcb* result = msg->msg.ppp; // API_VAR_FREE_POOL(PPPAPI_MSG, msg);
     delete msg;
     return result;
 }
@@ -220,8 +218,7 @@ pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddr *i
                         const uint8_t *secret, uint8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
 {
-  PppPcb* result;
-  struct pppapi_msg* msg = new pppapi_msg;
+    struct pppapi_msg* msg = new pppapi_msg;
 
   msg->msg.ppp = nullptr;
   msg->msg.msg.l2tpcreate.pppif = pppif;
@@ -235,7 +232,7 @@ pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddr *i
   msg->msg.msg.l2tpcreate.link_status_cb = link_status_cb;
   msg->msg.msg.l2tpcreate.ctx_cb = ctx_cb;
   tcpip_api_call(pppapi_do_pppol2tp_create, &msg->call);
-  result = msg->msg.ppp;
+  PppPcb* result = msg->msg.ppp;
   delete msg;
   return result;
 }
@@ -345,12 +342,11 @@ pppapi_do_ppp_free(struct TcpipApiCallData *m)
 LwipStatus
 pppapi_free(PppPcb *pcb)
 {
-  LwipStatus err;
-  struct pppapi_msg* msg = new pppapi_msg;
+    struct pppapi_msg* msg = new pppapi_msg;
 
 
   msg->msg.ppp = pcb;
-  err = tcpip_api_call(pppapi_do_ppp_free, &msg->call);
+  LwipStatus err = tcpip_api_call(pppapi_do_ppp_free, &msg->call);
   delete msg;
   return err;
 }

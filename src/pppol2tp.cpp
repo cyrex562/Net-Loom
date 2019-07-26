@@ -5,7 +5,7 @@
 #include <pppol2tp.h>
 #include <ppp_opts.h>
 #include <lwip_status.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <udp.h>
 
 #include <ppp_impl.h>
@@ -22,9 +22,9 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx);    /* Be a LAC, connect
 static void pppol2tp_disconnect(PppPcb *ppp, uint8_t *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port);
+
 static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, struct PacketBuffer *p, uint16_t ns, uint16_t nr);
-static void pppol2tp_timeout(uint8_t *arg);
+static void pppol2tp_timeout(void* arg);
 static void pppol2tp_abort_connect(Pppol2tpPcb *l2tp);
 static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp);
 static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns);
@@ -61,7 +61,7 @@ PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
         return nullptr;
     }
     udp_recv(udp, pppol2tp_input, l2tp_pcb);
-    auto ppp = init_ppp_pcb(pppif, l2tp_pcb, link_status_cb, ctx_cb);
+    PppPcb* ppp = init_ppp_pcb(pppif, l2tp_pcb, link_status_cb, ctx_cb);
     if (ppp == nullptr)
     {
         udp_remove(udp);
@@ -84,84 +84,61 @@ PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
 static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
 {
     const auto l2tp_pcb = static_cast<Pppol2tpPcb *>(ctx);
-    struct PacketBuffer* ph; /* UDP + L2TP header */
-    LwipStatus ret;
-    ph = pbuf_alloc(PBUF_TRANSPORT,
-                    (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN));
+    struct PacketBuffer* ph = pbuf_alloc(PBUF_TRANSPORT,
+                                         (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN));
     if (!ph)
     {
-        LINK_STATS_INC(link.memerr);
-        LINK_STATS_INC(link.proterr);
-        MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
         free_pkt_buf(p);
         return ERR_MEM;
     }
     pbuf_remove_header(ph, PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
     pbuf_cat(ph, p);
-    tot_len = ph->tot_len;
-    ret = pppol2tp_xmit(l2tp_pcb, ph);
+    auto tot_len = ph->tot_len;
+    LwipStatus ret = pppol2tp_xmit(l2tp_pcb, ph);
     if (ret != ERR_OK)
     {
-        LINK_STATS_INC(link.err);
-        MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
         return ret;
     }
-    MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, (uint16_t)tot_len);
-    MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
-    LINK_STATS_INC(link.xmit);
+
     return ERR_OK;
 }
 
 /* Called by PPP core */
 static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
-  struct PacketBuffer *pb;
-  uint8_t *pl;
-  LwipStatus err;
-
-  uint16_t tot_len;
-
-#endif /* MIB2_STATS */
-
-  /* @todo: try to use pbuf_header() here! */
-  pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol));
+  LwipStatus err; /* @todo: try to use pbuf_header() here! */
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT,
+                                       PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol
+                                       ));
   if(!pb) {
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
+
     return ERR_MEM;
   }
 
   pbuf_remove_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN);
 
-  pl = (uint8_t*)pb->payload;
+  uint8_t* pl = (uint8_t*)pb->payload;
   PUTSHORT(protocol, pl);
 
   pbuf_chain(pb, p);
 
-  tot_len = pb->tot_len;
+  uint16_t tot_len = pb->tot_len;
 
 
   if( (err = pppol2tp_xmit(l2tp, pb)) != ERR_OK) {
-    LINK_STATS_INC(link.err);
-    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
+
     return err;
   }
 
-  MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, tot_len);
-  MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
-  LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
 
 /* Destroy a L2TP control block */
 static LwipStatus pppol2tp_destroy(PppPcb *ppp, uint8_t *ctx) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
-  ;
-
   sys_untimeout(pppol2tp_timeout, l2tp);
   udp_remove(l2tp->udp);
-  LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
+  delete l2tp;
   return ERR_OK;
 }
 
@@ -169,13 +146,6 @@ static LwipStatus pppol2tp_destroy(PppPcb *ppp, uint8_t *ctx) {
 static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   LwipStatus err;
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
-  LcpOptions *lcp_wo;
-  LcpOptions *lcp_ao;
-
-  IpcpOptions *ipcp_wo;
-  IpcpOptions *ipcp_ao;
-
-
   l2tp->tunnel_port = l2tp->remote_port;
   l2tp->our_ns = 0;
   l2tp->peer_nr = 0;
@@ -186,39 +156,40 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   l2tp->remote_session_id = 0;
   /* l2tp->*_retried are cleared when used */
 
-  lcp_wo = &ppp->lcp_wantoptions;
+  LcpOptions* lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = PPPOL2TP_DEFMRU;
-  lcp_wo->neg_asyncmap = 0;
-  lcp_wo->neg_pcompression = 0;
-  lcp_wo->neg_accompression = 0;
-  lcp_wo->passive = 0;
-  lcp_wo->silent = 0;
+  lcp_wo->neg_asyncmap = false;
+  lcp_wo->neg_pcompression = false;
+  lcp_wo->neg_accompression = false;
+  lcp_wo->passive = false;
+  lcp_wo->silent = false;
 
-  lcp_ao = &ppp->lcp_allowoptions;
+  LcpOptions* lcp_ao = &ppp->lcp_allowoptions;
   lcp_ao->mru = PPPOL2TP_DEFMRU;
-  lcp_ao->neg_asyncmap = 0;
-  lcp_ao->neg_pcompression = 0;
-  lcp_ao->neg_accompression = 0;
+  lcp_ao->neg_asyncmap = false;
+  lcp_ao->neg_pcompression = false;
+  lcp_ao->neg_accompression = false;
 
 
-  ipcp_wo = &ppp->ipcp_wantoptions;
-  ipcp_wo->neg_vj = 0;
-  ipcp_wo->old_vj = 0;
+  IpcpOptions* ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->neg_vj = false;
+  ipcp_wo->old_vj = false;
 
-  ipcp_ao = &ppp->ipcp_allowoptions;
-  ipcp_ao->neg_vj = 0;
-  ipcp_ao->old_vj = 0;
+  IpcpOptions* ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->neg_vj = false;
+  ipcp_ao->old_vj = false;
 
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
-
-  if (IP_IS_V6_VAL(l2tp->udp->local_ip)) {
-    udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
-  } else
-
-  udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
+  IpAddr any_addr = make_ip_addr_ip6_any();
+  if (is_ip_addr_v6(&l2tp->udp->local_ip))
+  {
+      udp_bind(l2tp->udp, &any_addr, 0);
+  }
+  else
+      udp_bind(l2tp->udp, &any_addr, 0);
 
 
   /* Generate random vector */
@@ -234,7 +205,7 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   l2tp->sccrq_retried = 0;
   l2tp->phase = PPPOL2TP_STATE_SCCRQ_SENT;
   if ((err = pppol2tp_send_sccrq(l2tp)) != 0) {
-    PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
+    // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
   }
   sys_timeout_debug((5*1000), pppol2tp_timeout, l2tp, "pppol2tp_timeout");
 }
@@ -253,16 +224,27 @@ static void pppol2tp_disconnect(PppPcb *ppp, uint8_t *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port) {
-  Pppol2tpPcb *l2tp = (Pppol2tpPcb*)arg;
-  uint16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
-  uint8_t *inp;
-  ;
-
-  /* we can't unbound a UDP pcb, thus we can still receive UDP frames after the link is closed */
-  if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
-    goto free_and_return;
-  }
+static void
+pppol2tp_input(void* arg,
+               struct UdpPcb* pcb,
+               struct PacketBuffer* p,
+               const IpAddr* addr,
+               uint16_t port,
+               NetworkInterface* netif)
+{
+    auto* l2tp = static_cast<Pppol2tpPcb*>(arg);
+    uint16_t hflags;
+    uint16_t len = 0;
+    uint16_t tunnel_id = 0;
+    uint16_t session_id = 0;
+    uint16_t ns = 0;
+    uint16_t nr = 0;
+    uint16_t offset
+        = 0; /* we can't unbound a UDP pcb, thus we can still receive UDP frames after the link is closed */
+    if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT)
+    {
+        goto free_and_return;
+    }
 
   if (!compare_ip_addr(&l2tp->remote_ip, addr)) {
     goto free_and_return;
@@ -280,30 +262,30 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
     goto packet_too_short;
   }
 
-  inp = (uint8_t*)p->payload;
+  uint8_t* inp = (uint8_t*)p->payload;
   GETSHORT(hflags, inp);
 
   if (hflags & PPPOL2TP_HEADERFLAG_CONTROL) {
     /* check mandatory flags for a control packet */
     if ( (hflags & PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY) != PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY ) {
-      PPPDEBUG(LOG_DEBUG, ("pppol2tp: mandatory header flags for control packet not set\n"));
+      // PPPDEBUG(LOG_DEBUG, ("pppol2tp: mandatory header flags for control packet not set\n"));
       goto free_and_return;
     }
     /* check forbidden flags for a control packet */
     if (hflags & PPPOL2TP_HEADERFLAG_CONTROL_FORBIDDEN) {
-      PPPDEBUG(LOG_DEBUG, ("pppol2tp: forbidden header flags for control packet found\n"));
+      // PPPDEBUG(LOG_DEBUG, ("pppol2tp: forbidden header flags for control packet found\n"));
       goto free_and_return;
     }
   } else {
     /* check mandatory flags for a data packet */
     if ( (hflags & PPPOL2TP_HEADERFLAG_DATA_MANDATORY) != PPPOL2TP_HEADERFLAG_DATA_MANDATORY) {
-      PPPDEBUG(LOG_DEBUG, ("pppol2tp: mandatory header flags for data packet not set\n"));
+      // PPPDEBUG(LOG_DEBUG, ("pppol2tp: mandatory header flags for data packet not set\n"));
       goto free_and_return;
     }
   }
 
   /* Expected header size  */
-  hlen = sizeof(hflags) + sizeof(tunnel_id) + sizeof(session_id);
+  uint16_t hlen = sizeof(hflags) + sizeof(tunnel_id) + sizeof(session_id);
   if (hflags & PPPOL2TP_HEADERFLAG_LENGTH) {
     hlen += sizeof(len);
   }
@@ -332,8 +314,9 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
   if (hflags & PPPOL2TP_HEADERFLAG_OFFSET) {
     GETSHORT(offset, inp)
     if (offset > 4096) { /* don't be fooled with large offset which might overflow hlen */
-      PPPDEBUG(LOG_DEBUG, ("pppol2tp: strange packet received, offset=%d\n", offset));
-      goto free_and_return;
+      // PPPDEBUG(LOG_DEBUG, ("pppol2tp: strange packet received, offset=%d\n", offset));
+
+        goto free_and_return;
     }
     hlen += offset;
     if (p->len < hlen) {
@@ -350,8 +333,8 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
   }
 
   /* printf("LEN=%d, TUNNEL_ID=%d, SESSION_ID=%d, NS=%d, NR=%d, OFFSET=%d\n", len, tunnel_id, session_id, ns, nr, offset); */
-  PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%d, tunnel=%d, session=%d, ns=%d, nr=%d\n",
-    len, tunnel_id, session_id, ns, nr));
+  // PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%d, tunnel=%d, session=%d, ns=%d, nr=%d\n",
+    // len, tunnel_id, session_id, ns, nr));
 
   /* Control packet */
   if (hflags & PPPOL2TP_HEADERFLAG_CONTROL) {
@@ -364,11 +347,11 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
     goto free_and_return;
   }
   if(tunnel_id != l2tp->remote_tunnel_id) {
-     PPPDEBUG(LOG_DEBUG, ("pppol2tp: tunnel ID mismatch, assigned=%d, received=%d\n", l2tp->remote_tunnel_id, tunnel_id));
+     // PPPDEBUG(LOG_DEBUG, ("pppol2tp: tunnel ID mismatch, assigned=%d, received=%d\n", l2tp->remote_tunnel_id, tunnel_id));
      goto free_and_return;
   }
   if(session_id != l2tp->remote_session_id) {
-     PPPDEBUG(LOG_DEBUG, ("pppol2tp: session ID mismatch, assigned=%d, received=%d\n", l2tp->remote_session_id, session_id));
+     // PPPDEBUG(LOG_DEBUG, ("pppol2tp: session ID mismatch, assigned=%d, received=%d\n", l2tp->remote_session_id, session_id));
      goto free_and_return;
   }
   /*
@@ -384,19 +367,19 @@ static void pppol2tp_input(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer
     }
   }
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(l2tp->ppp, p,);
+    Fsm* fsm = nullptr;
+  ppp_input(l2tp->ppp, p, fsm);
   return;
 
 packet_too_short:
-  PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
+  // PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
 free_and_return:
   free_pkt_buf(p);
 }
 
 /* L2TP Control packet entry point */
 static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, struct PacketBuffer *p, uint16_t ns, uint16_t nr) {
-  uint8_t *inp;
-  uint16_t avplen, avpflags, vendorid, attributetype, messagetype=0;
+    uint16_t avpflags, vendorid, attributetype, messagetype=0;
   LwipStatus err;
 
   lwip_md5_context md5_ctx;
@@ -408,7 +391,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
 
   /* Drop unexpected packet */
   if (ns != l2tp->peer_ns) {
-    PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns));
+    // PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns));
     /*
      * In order to ensure that all messages are acknowledged properly
      * (particularly in the case of a lost ZLB ACK message), receipt
@@ -441,17 +424,17 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
   l2tp->peer_ns = ns+1;
 
   p = pbuf_coalesce(p, PBUF_RAW);
-  inp = (uint8_t*)p->payload;
+  uint8_t* inp = (uint8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {
     if (p->len < sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype) ) {
-      goto packet_too_short;
+      return;
     }
     GETSHORT(avpflags, inp);
-    avplen = avpflags & PPPOL2TP_AVPHEADERFLAG_LENGTHMASK;
+    uint16_t avplen = avpflags & PPPOL2TP_AVPHEADERFLAG_LENGTHMASK;
     /* printf("AVPLEN = %d\n", avplen); */
     if (p->len < avplen || avplen < sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype)) {
-      goto packet_too_short;
+      return;
     }
     GETSHORT(vendorid, inp);
     GETSHORT(attributetype, inp);
@@ -460,7 +443,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
     /* Message type must be the first AVP */
     if (messagetype == 0) {
       if (attributetype != 0 || vendorid != 0 || avplen != sizeof(messagetype) ) {
-        PPPDEBUG(LOG_DEBUG, ("pppol2tp: message type must be the first AVP\n"));
+        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: message type must be the first AVP\n"));
         return;
       }
       GETSHORT(messagetype, inp);
@@ -510,20 +493,20 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
        switch (attributetype) {
           case PPPOL2TP_AVPTYPE_TUNNELID:
             if (avplen != sizeof(l2tp->source_tunnel_id) ) {
-               PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Assign tunnel ID length check failed\n"));
+               // PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Assign tunnel ID length check failed\n"));
                return;
             }
             GETSHORT(l2tp->source_tunnel_id, inp);
-            PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %d\n", l2tp->source_tunnel_id));
+            // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %d\n", l2tp->source_tunnel_id));
             goto nextavp;
 
           case PPPOL2TP_AVPTYPE_CHALLENGE:
             if (avplen == 0) {
-               PPPDEBUG(LOG_DEBUG, ("pppol2tp: Challenge length check failed\n"));
+               // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Challenge length check failed\n"));
                return;
             }
             if (l2tp->secret == nullptr) {
-              PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge from peer and no secret key available\n"));
+              // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge from peer and no secret key available\n"));
               pppol2tp_abort_connect(l2tp);
               return;
             }
@@ -540,7 +523,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
             goto skipavp;
           case PPPOL2TP_AVPTYPE_CHALLENGERESPONSE:
             if (avplen != PPPOL2TP_AVPTYPE_CHALLENGERESPONSE_SIZE) {
-               PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Challenge Response length check failed\n"));
+               // PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Challenge Response length check failed\n"));
                return;
             }
             /* Generate hash of ID, secret, challenge */
@@ -553,13 +536,11 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
             lwip_md5_finish(&md5_ctx, md5_hash);
             lwip_md5_free(&md5_ctx);
             if ( memcmp(inp, md5_hash, sizeof(md5_hash)) ) {
-              PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge response from peer and secret key do not match\n"));
+              // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge response from peer and secret key do not match\n"));
               pppol2tp_abort_connect(l2tp);
               return;
             }
-            goto skipavp;
-
-          default:
+        default:
             break;
         }
         break;
@@ -603,13 +584,9 @@ nextavp:
       l2tp->phase = PPPOL2TP_STATE_ICRQ_SENT;
       l2tp->our_ns++;
       if ((err = pppol2tp_send_scccn(l2tp, l2tp->our_ns)) != 0) {
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCCN, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       l2tp->our_ns++;
       if ((err = pppol2tp_send_icrq(l2tp, l2tp->our_ns)) != 0) {
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICRQ, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       sys_untimeout(pppol2tp_timeout, l2tp);
       sys_timeout_debug((5*1000), pppol2tp_timeout, l2tp, "pppol2tp_timeout");
@@ -620,8 +597,6 @@ nextavp:
       l2tp->phase = PPPOL2TP_STATE_ICCN_SENT;
       l2tp->our_ns++;
       if ((err = pppol2tp_send_iccn(l2tp, l2tp->our_ns)) != 0) {
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICCN, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       sys_untimeout(pppol2tp_timeout, l2tp);
       sys_timeout_debug((5*1000), pppol2tp_timeout, l2tp, "pppol2tp_timeout");
@@ -634,13 +609,10 @@ nextavp:
 
 send_zlb:
   pppol2tp_send_zlb(l2tp, l2tp->our_ns+1, l2tp->peer_ns);
-  return;
-packet_too_short:
-  // PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
 }
 
 /* L2TP Timeout handler */
-static void pppol2tp_timeout(uint8_t *arg) {
+static void pppol2tp_timeout(void* arg) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb*)arg;
   LwipStatus err;
   uint32_t retry_wait;
@@ -657,12 +629,10 @@ static void pppol2tp_timeout(uint8_t *arg) {
         pppol2tp_abort_connect(l2tp);
         return;
       }
-      retry_wait = LWIP_MIN(PPPOL2TP_CONTROL_TIMEOUT * l2tp->sccrq_retried, PPPOL2TP_SLOW_RETRY);
+      retry_wait = std::min(PPPOL2TP_CONTROL_TIMEOUT * l2tp->sccrq_retried, PPPOL2TP_SLOW_RETRY);
       // PPPDEBUG(LOG_DEBUG, ("pppol2tp: sccrq_retried=%d\n", l2tp->sccrq_retried));
       if ((err = pppol2tp_send_sccrq(l2tp)) != 0) {
         l2tp->sccrq_retried--;
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout_debug(retry_wait, pppol2tp_timeout, l2tp, "pppol2tp_timeout");
       break;
@@ -677,16 +647,12 @@ static void pppol2tp_timeout(uint8_t *arg) {
       if ((int16_t)(l2tp->peer_nr - l2tp->our_ns) < 0) { /* the SCCCN was not acknowledged */
         if ((err = pppol2tp_send_scccn(l2tp, l2tp->our_ns -1)) != 0) {
           l2tp->icrq_retried--;
-          // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCCN, error=%d\n", err));
-          ; /* if PPPDEBUG is disabled */
           sys_timeout_debug((5*1000), pppol2tp_timeout, l2tp, "pppol2tp_timeout");
           break;
         }
       }
       if ((err = pppol2tp_send_icrq(l2tp, l2tp->our_ns)) != 0) {
         l2tp->icrq_retried--;
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICRQ, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout_debug((5*1000), pppol2tp_timeout, l2tp, "pppol2tp_timeout");
       break;
@@ -700,8 +666,6 @@ static void pppol2tp_timeout(uint8_t *arg) {
       // PPPDEBUG(LOG_DEBUG, ("pppol2tp: iccn_retried=%d\n", l2tp->iccn_retried));
       if ((err = pppol2tp_send_iccn(l2tp, l2tp->our_ns)) != 0) {
         l2tp->iccn_retried--;
-        // PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICCN, error=%d\n", err));
-        ; /* if PPPDEBUG is disabled */
       }
       sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
       break;
@@ -811,12 +775,8 @@ static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp) {
 
 /* Complete tunnel establishment */
 static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
-  struct PacketBuffer *pb;
-  uint8_t *p;
-  uint16_t len;
-
-  /* calculate UDP packet length */
-  len = 12 +8;
+    /* calculate UDP packet length */
+  uint16_t len = 12 + 8;
 
   if (l2tp->send_challenge) {
     len += 6 + sizeof(l2tp->challenge_hash);
@@ -824,13 +784,13 @@ static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   /* fill in pkt */
   /* L2TP control header */
   PUTSHORT(PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY, p);
@@ -862,22 +822,17 @@ static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 /* Initiate a new session */
 static LwipStatus pppol2tp_send_icrq(Pppol2tpPcb *l2tp, uint16_t ns) {
-  struct PacketBuffer *pb;
-  uint8_t *p;
-  uint16_t len;
-  uint32_t serialnumber;
-
-  /* calculate UDP packet length */
-  len = 12 +8 +8 +10;
+    /* calculate UDP packet length */
+  uint16_t len = 12 + 8 + 8 + 10;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   /* fill in pkt */
   /* L2TP control header */
   PUTSHORT(PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY, p);
@@ -903,7 +858,7 @@ static LwipStatus pppol2tp_send_icrq(Pppol2tpPcb *l2tp, uint16_t ns) {
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 10, p); /* Mandatory flag + len field */
   PUTSHORT(0, p); /* Vendor ID */
   PUTSHORT(PPPOL2TP_AVPTYPE_CALLSERIALNUMBER, p); /* Attribute type: Serial number */
-  serialnumber = magic();
+  uint32_t serialnumber = magic();
   PUTLONG(serialnumber, p); /* Attribute value: Serial number */
 
   return pppol2tp_udp_send(l2tp, pb);
@@ -911,21 +866,17 @@ static LwipStatus pppol2tp_send_icrq(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 /* Complete tunnel establishment */
 static LwipStatus pppol2tp_send_iccn(Pppol2tpPcb *l2tp, uint16_t ns) {
-  struct PacketBuffer *pb;
-  uint8_t *p;
-  uint16_t len;
-
-  /* calculate UDP packet length */
-  len = 12 +8 +10 +10;
+    /* calculate UDP packet length */
+  uint16_t len = 12 + 8 + 10 + 10;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   /* fill in pkt */
   /* L2TP control header */
   PUTSHORT(PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY, p);
@@ -958,21 +909,17 @@ static LwipStatus pppol2tp_send_iccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 /* Send a ZLB ACK packet */
 static LwipStatus pppol2tp_send_zlb(Pppol2tpPcb *l2tp, uint16_t ns, uint16_t nr) {
-  struct PacketBuffer *pb;
-  uint8_t *p;
-  uint16_t len;
-
-  /* calculate UDP packet length */
-  len = 12;
+    /* calculate UDP packet length */
+  uint16_t len = 12;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   /* fill in pkt */
   /* L2TP control header */
   PUTSHORT(PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY, p);
@@ -987,21 +934,17 @@ static LwipStatus pppol2tp_send_zlb(Pppol2tpPcb *l2tp, uint16_t ns, uint16_t nr)
 
 /* Send a StopCCN packet */
 static LwipStatus pppol2tp_send_stopccn(Pppol2tpPcb *l2tp, uint16_t ns) {
-  struct PacketBuffer *pb;
-  uint8_t *p;
-  uint16_t len;
-
-  /* calculate UDP packet length */
-  len = 12 +8 +8 +8;
+    /* calculate UDP packet length */
+  uint16_t len = 12 + 8 + 8 + 8;
 
   /* allocate a buffer */
-  pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
   if (pb == nullptr) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   /* fill in pkt */
   /* L2TP control header */
   PUTSHORT(PPPOL2TP_HEADERFLAG_CONTROL_MANDATORY, p);
@@ -1033,18 +976,16 @@ static LwipStatus pppol2tp_send_stopccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 }
 
 static LwipStatus pppol2tp_xmit(Pppol2tpPcb *l2tp, struct PacketBuffer *pb) {
-  uint8_t *p;
-
-  /* make room for L2TP header - should not fail */
+    /* make room for L2TP header - should not fail */
   if (pbuf_add_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
     /* bail out */
-    PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
-    LINK_STATS_INC(link.lenerr);
+    // PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
+    // LINK_STATS_INC(link.lenerr);
     free_pkt_buf(pb);
     return ERR_BUF;
   }
 
-  p = (uint8_t*)pb->payload;
+  uint8_t* p = (uint8_t*)pb->payload;
   PUTSHORT(PPPOL2TP_HEADERFLAG_DATA_MANDATORY, p);
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */

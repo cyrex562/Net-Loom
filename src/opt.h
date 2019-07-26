@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#define NOMINMAX
 #include <algorithm>
 
 
@@ -105,13 +105,13 @@ constexpr auto LWIP_TCP_MAX_SACK_NUM = 4;
 constexpr auto TCP_SND_BUF = (2 * TCP_MSS);
 
 constexpr auto TCP_SND_QUEUELEN = ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS));
-constexpr auto TCP_SNDLOWAT = std::min(std::max(((TCP_SND_BUF) / 2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1);
-constexpr auto TCP_SNDQUEUELOWAT = std::max(((TCP_SND_QUEUELEN) / 2), 5);
+constexpr auto TCP_SNDLOWAT = (std::min)((std::max)(((TCP_SND_BUF) / 2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1);
+constexpr auto TCP_SNDQUEUELOWAT = (std::max)(((TCP_SND_QUEUELEN) / 2), 5);
 constexpr auto TCP_OOSEQ_MAX_BYTES = 0;
 
 constexpr auto TCP_DEFAULT_LISTEN_BACKLOG = 0xff;
 constexpr auto TCP_OVERSIZE = TCP_MSS;
-constexpr auto TCP_WND_UPDATE_THRESHOLD = std::min((TCP_WND / 4), (TCP_MSS * 4));
+constexpr auto TCP_WND_UPDATE_THRESHOLD = (std::min)((TCP_WND / 4), (TCP_MSS * 4));
 
 constexpr auto LWIP_TCP_PCB_NUM_EXT_ARGS = 1;
 constexpr auto PBUF_LINK_HLEN = (14 + ETH_PAD_SIZE);

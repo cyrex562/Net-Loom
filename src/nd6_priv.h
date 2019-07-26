@@ -44,7 +44,7 @@
 #include <opt.h>
 #include <packet_buffer.h>
 #include <ip6_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h

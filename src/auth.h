@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include <complex.h>
 struct Protent;
 struct PppPcb;
 void auth_withpeer_fail(PppPcb* pcb, int protocol);
@@ -17,29 +18,21 @@ bool continue_networks(PppPcb* pcb);
 bool link_established(PppPcb* pcb, bool auth_required);
 void link_terminated(PppPcb* pcb);
 void link_down(PppPcb* pcb);
-int auth_check_passwd(PppPcb* pcb,
-                      char* auser,
-                      int userlen,
-                      char* apasswd,
-                      int passwdlen,
-                      const char** msg,
-                      int* msglen);
+
+
+bool
+auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg);
 void auth_peer_fail(PppPcb* pcb, int protocol);
 void auth_peer_success(PppPcb* pcb,
                        int protocol,
                        int prot_flavor,
-                       const char* name,
-                       size_t namelen);
+                       std::string& name);
 
 void np_up(PppPcb* pcb, int proto);
 void np_down(PppPcb* pcb, int proto);
 void np_finished(PppPcb* pcb, int proto);
-int get_secret(PppPcb* pcb,
-               const char* client,
-               const char* server,
-               char* secret,
-               int* secret_len,
-               int am_server);
+bool
+get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret);
 void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor);
 //
 // END OF FILE

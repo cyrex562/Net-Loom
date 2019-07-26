@@ -3,7 +3,7 @@
 #include <arch.h>
 #include <ip4.h>
 #include <opt.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <udp.h>
 
 /* DHCP message item offsets and length */

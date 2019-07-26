@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include "fsm.h"
+#include "chap_new.h"
 
 struct PppPcb;
 
@@ -59,11 +60,12 @@ constexpr auto CBCP_OPT = 6	/* Use callback control protocol */;
 /* An endpoint discriminator, used with multilink. */
 constexpr auto MAX_ENDP_LEN = 20	/* maximum length of discriminator value */;
 
+struct Epdisc
+{
+    unsigned char class_; /* -- The word "class" is reserved in C++. */
+    unsigned char length;
 
-struct Epdisc {
-    unsigned char	class_; /* -- The word "class" is reserved in C++. */
-    unsigned char	length;
-    unsigned char	value[MAX_ENDP_LEN];
+    unsigned char value[MAX_ENDP_LEN];
 };
 
 /*
@@ -89,7 +91,7 @@ struct LcpOptions
     bool neg_endpoint; /* negotiate endpoint discriminator */
     uint16_t mru; /* Value of MRU */
     uint16_t mrru; /* Value of MRRU, and multilink enable */
-    uint8_t chap_mdtype; /* which MD types (hashing algorithm) */
+    ChapMdTypes chap_mdtype; /* which MD types (hashing algorithm) */
     uint32_t asyncmap; /* Value of async map */
     uint32_t magicnumber;
     uint8_t numloops; /* Number of loops during magic number neg. */
@@ -113,7 +115,7 @@ struct LcpOptions
 #define CILEN_CBCP	3
 
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
-			 (x) == CONFNAK ? "NAK" : "REJ")
+             (x) == CONFNAK ? "NAK" : "REJ")
 
 void lcp_open(PppPcb *pcb);
 void lcp_close(PppPcb *pcb, const char *reason);

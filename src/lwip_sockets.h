@@ -38,13 +38,12 @@
 
 #pragma once
 
-#include <lwip_status.h>
-#include <ip_addr.h>
-#include <lwip_inet.h>
-#include <netif.h>
+#include <sys.h>
 #include <opt.h>
-#include <cerrno>
-#include <cstring>
+
+
+#define SELECT_SEM_T        Semaphore*
+#define SELECT_SEM_PTR(sem) (sem)
 
 
 /* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
@@ -89,14 +88,14 @@ struct LwipSockaddr
     char _sa_data[14];
 };
 
-// struct LwipSockaddrStorage
-// {
-//     uint8_t _s2_len;
-//     LwipSaFamily _ss_family;
-//     char _s2_data1[2];
-//     uint32_t _s2_data2[3];
-//     uint32_t _s2_data3[3];
-// };
+struct LwipSockaddrStorage
+{
+    uint8_t s2_len;
+    LwipSaFamily ss_family;
+    char s2_data1[2];
+    uint32_t s2_data2[3];
+    uint32_t s2_data3[3];
+};
 
 /* If your port already typedef's LwipSocklen, define SOCKLEN_T_DEFINED
    to prevent this code from redefining it. */
@@ -165,7 +164,7 @@ will need to increase long long */
 #define LWIP_CMSG_SPACE(length) (LWIP_ALIGN_D(sizeof(struct LwipCmsgHdr)) + \
                             LWIP_ALIGN_H(length))
 
-#define CMSG_LEN(length) (LWIP_ALIGN_D(sizeof(struct LwipCmsgHdr)) + \
+#define LWIP_CMSG_LEN(length) (LWIP_ALIGN_D(sizeof(struct LwipCmsgHdr)) + \
                            length)
 
 /* Set socket options argument */
@@ -484,42 +483,112 @@ struct LwipTimeval
 };
 
 
+
+#define NUM_SOCKETS MEMP_NUM_NETCONN
+
+/** This is overridable for the rare case where more than 255 threads
+ * select on the same socket...
+ */
+#define SELWAIT_T uint8_t
+
+union lwip_sock_lastdata {
+  struct netbuf *netbuf;
+  struct PacketBuffer *pbuf;
+};
+
+/** Contains all internal pointers and states used for a socket */
+struct lwip_sock
+{
+    /** sockets currently are built on netconns, each socket has one NetconnDesc */
+    struct NetconnDesc* conn; /** data that was left from the previous read */
+    union lwip_sock_lastdata lastdata;
+    /** number of times data was received, set by event_callback(),
+         tested by the receive and select functions */
+    int16_t rcvevent;
+    /** number of times data was ACKed (free send buffer), set by event_callback(),
+         tested by select */
+    uint16_t sendevent;
+    /** error happened for this socket, set by event_callback(), tested by select */
+    uint16_t errevent;
+    /** counter of how many threads are waiting for this socket using select */
+    SELWAIT_T select_waiting;
+    /* counter of how many threads are using a struct lwip_sock (not the 'int') */
+    uint8_t fd_used; /* status of pending close/delete actions */
+    uint8_t fd_free_pending;
+#define LWIP_SOCK_FD_FREE_TCP  1
+#define LWIP_SOCK_FD_FREE_FREE 2
+};
+
+#define set_errno(err) do { if (err) { errno = (err); } } while(0)
+
+struct lwip_sock* lwip_socket_dbg_get_socket(int fd);
+
+
+
+
+/** Description for a task waiting in select */
+struct lwip_select_cb {
+  /** Pointer to the next waiting task */
+  struct lwip_select_cb *next;
+  /** Pointer to the previous waiting task */
+  struct lwip_select_cb *prev;
+
+  /** readset passed to select */
+  LwipFdSet *readset;
+  /** writeset passed to select */
+  LwipFdSet *writeset;
+  /** unimplemented: exceptset passed to select */
+
+  /** fds passed to poll; NULL if select */
+  struct LwipPolllfd *poll_fds;
+  /** nfds passed to poll; 0 if select */
+  LwipNfds poll_nfds;
+
+  /** don't signal the same semaphore twice: set to 1 when signalled */
+  int sem_signalled;
+  /** semaphore to wake up a task waiting for select */
+  SELECT_SEM_T sem;
+};
+
+
+
+
 #define lwip_socket_init() /* Compatibility define, no init needed. */
-void lwip_socket_thread_init(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: initialize thread-local semaphore */
-void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destroy thread-local semaphore */
+// void lwip_socket_thread_init(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: initialize thread-local semaphore */
+// void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destroy thread-local semaphore */
 
-int lwip_accept(int s, struct LwipSockaddr* addr, LwipSocklen* addrlen);
-int lwip_bind(int s, const struct LwipSockaddr* name, LwipSocklen namelen);
-int lwip_shutdown(int s, int how);
-int lwip_getpeername(int s, struct LwipSockaddr* name, LwipSocklen* namelen);
-int lwip_getsockname(int s, struct LwipSockaddr* name, LwipSocklen* namelen);
-int lwip_getsockopt(int s, int level, int optname, void* optval, LwipSocklen* optlen);
-int lwip_setsockopt(int s, int level, int optname, const void* optval, LwipSocklen optlen);
-int lwip_close(int s);
-int lwip_connect(int s, const struct LwipSockaddr* name, LwipSocklen namelen);
-int lwip_listen(int s, int backlog);
-ssize_t lwip_recv(int s, void* mem, size_t len, int flags);
-ssize_t lwip_read(int s, void* mem, size_t len);
-ssize_t lwip_readv(int s, const struct LwipIovec* iov, int iovcnt);
-ssize_t lwip_recvfrom(int s, void* mem, size_t len, int flags,
-                      struct LwipSockaddr* from, LwipSocklen* fromlen);
-ssize_t lwip_recvmsg(int s, struct LwipMsgHdr* message, int flags);
-ssize_t lwip_send(int s, const void* dataptr, size_t size, int flags);
-ssize_t lwip_sendmsg(int s, const struct LwipMsgHdr* message, int flags);
-ssize_t lwip_sendto(int s, const void* dataptr, size_t size, int flags,
-                    const struct LwipSockaddr* to, LwipSocklen tolen);
-int lwip_socket(int domain, int type, int protocol);
-ssize_t lwip_write(int s, const void* dataptr, size_t size);
-ssize_t lwip_writev(int s, const struct LwipIovec* iov, int iovcnt);
-
-int lwip_select(int maxfdp1, LwipFdSet* readset, LwipFdSet* writeset, LwipFdSet* exceptset,
-                struct timeval* timeout);
-
-#
-int lwip_poll(struct LwipPolllfd* fds, LwipNfds nfds, int timeout);
-
-int lwip_ioctl(int s, long cmd, void* argp);
-int lwip_fcntl(int s, int cmd, int val);
-const char* lwip_inet_ntop(int af, const void* src, char* dst, LwipSocklen size);
-int lwip_inet_pton(int af, const char* src, void* dst);
+// int lwip_accept(int s, struct LwipSockaddr* addr, LwipSocklen* addrlen);
+// int lwip_bind(int s, const struct LwipSockaddr* name, LwipSocklen namelen);
+// int lwip_shutdown(int s, int how);
+// int lwip_getpeername(int s, struct LwipSockaddr* name, LwipSocklen* namelen);
+// int lwip_getsockname(int s, struct LwipSockaddr* name, LwipSocklen* namelen);
+// int lwip_getsockopt(int s, int level, int optname, void* optval, LwipSocklen* optlen);
+// int lwip_setsockopt(int s, int level, int optname, const void* optval, LwipSocklen optlen);
+// int lwip_close(int s);
+// int lwip_connect(int s, const struct LwipSockaddr* name, LwipSocklen namelen);
+// int lwip_listen(int s, int backlog);
+// ssize_t lwip_recv(int s, void* mem, size_t len, int flags);
+// ssize_t lwip_read(int s, void* mem, size_t len);
+// ssize_t lwip_readv(int s, const struct LwipIovec* iov, int iovcnt);
+// ssize_t lwip_recvfrom(int s, void* mem, size_t len, int flags,
+//                       struct LwipSockaddr* from, LwipSocklen* fromlen);
+// ssize_t lwip_recvmsg(int s, struct LwipMsgHdr* message, int flags);
+// ssize_t lwip_send(int s, const void* dataptr, size_t size, int flags);
+// ssize_t lwip_sendmsg(int s, const struct LwipMsgHdr* message, int flags);
+// ssize_t lwip_sendto(int s, const void* dataptr, size_t size, int flags,
+//                     const struct LwipSockaddr* to, LwipSocklen tolen);
+// int lwip_socket(int domain, int type, int protocol);
+// ssize_t lwip_write(int s, const void* dataptr, size_t size);
+// ssize_t lwip_writev(int s, const struct LwipIovec* iov, int iovcnt);
+//
+// int lwip_select(int maxfdp1, LwipFdSet* readset, LwipFdSet* writeset, LwipFdSet* exceptset,
+//                 struct timeval* timeout);
+//
+// #
+// int lwip_poll(struct LwipPolllfd* fds, LwipNfds nfds, int timeout);
+//
+// int lwip_ioctl(int s, long cmd, void* argp);
+// int lwip_fcntl(int s, int cmd, int val);
+// const char* lwip_inet_ntop(int af, const void* src, char* dst, LwipSocklen size);
+// int lwip_inet_pton(int af, const char* src, void* dst);
 

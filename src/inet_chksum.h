@@ -35,11 +35,9 @@
  *
  */
 #pragma once
-
-#include <opt.h>
-
-#include <packet_buffer.h>
 #include <ip_addr.h>
+#include <packet_buffer.h>
+
 
 /** Swap the bytes in an uint16_t: much like lwip_htons() for little-endian */
 #define SWAP_BYTES_IN_WORD(w) (((w) & 0xff) << 8) | (((w) & 0xff00) >> 8)
@@ -73,8 +71,11 @@ uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t prot
 uint16_t inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
        uint16_t proto_len, uint16_t chksum_len, const Ip4Addr *src, const Ip4Addr *dest);
 
-uint16_t ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       const Ip6Addr *src, const Ip6Addr *dest);
+uint16_t ip6_chksum_pseudo(struct PacketBuffer *p,
+                           uint8_t proto,
+                           size_t proto_len,
+                           const Ip6Addr *src,
+                           const Ip6Addr *dest);
 uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
        uint16_t chksum_len, const Ip6Addr *src, const Ip6Addr *dest);
 
@@ -87,8 +88,11 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_
 
 
 uint16_t
-ip6_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-                  const Ip6Addr *src, const Ip6Addr *dest);
+ip6_chksum_pseudo(struct PacketBuffer *p,
+                  uint8_t proto,
+                  size_t proto_len,
+                  const Ip6Addr *src,
+                  const Ip6Addr *dest);
 
 uint16_t
 lwip_standard_chksum_1(const uint8_t *dataptr, int len);

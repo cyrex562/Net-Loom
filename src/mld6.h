@@ -60,7 +60,7 @@ struct MldHeader
 };
 
 #include <packet_buffer.h>
-#include <netif.h>
+#include <network_interface.h>
 
 /** MLD group */
 struct MldGroup

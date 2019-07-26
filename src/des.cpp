@@ -10,7 +10,7 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
- *  
+ *
  *    * Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimer.
  *    * Redistributions in binary form must reproduce the above copyright
@@ -19,7 +19,7 @@
  *    * Neither the names of PolarSSL or XySSL nor the names of its contributors
  *      may be used to endorse or promote products derived from this software
  *      without specific prior written permission.
- *  
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -295,8 +295,7 @@ static const unsigned long RHs[16] =
 
 static void des_setkey( unsigned long SK[32], unsigned char key[8] )
 {
-    int i;
-    unsigned long X, Y, T;
+    unsigned long X, Y;
 
     GET_ULONG_BE( X, key, 0 );
     GET_ULONG_BE( Y, key, 4 );
@@ -304,7 +303,7 @@ static void des_setkey( unsigned long SK[32], unsigned char key[8] )
     /*
      * Permuted Choice 1
      */
-    T =  ((Y >>  4) ^ X) & 0x0F0F0F0F;  X ^= T; Y ^= (T <<  4);
+    unsigned long T = ((Y >> 4) ^ X) & 0x0F0F0F0F;  X ^= T; Y ^= (T <<  4);
     T =  ((Y      ) ^ X) & 0x10101010;  X ^= T; Y ^= (T      );
 
     X =   (LHs[ (X      ) & 0xF] << 3) | (LHs[ (X >>  8) & 0xF ] << 2)
@@ -323,7 +322,7 @@ static void des_setkey( unsigned long SK[32], unsigned char key[8] )
     /*
      * calculate subkeys
      */
-    for( i = 0; i < 16; i++ )
+    for( int i = 0; i < 16; i++ )
     {
         if( i < 2 || i == 8 || i == 15 )
         {
@@ -375,11 +374,9 @@ void des_setkey_enc(des_context* ctx, unsigned char key[8])
  */
 void des_setkey_dec( des_context *ctx, unsigned char key[8] )
 {
-    int i;
-
     des_setkey( ctx->sk, key );
 
-    for( i = 0; i < 16; i += 2 )
+    for( int i = 0; i < 16; i += 2 )
     {
         SWAP( ctx->sk[i    ], ctx->sk[30 - i] );
         SWAP( ctx->sk[i + 1], ctx->sk[31 - i] );
@@ -393,17 +390,16 @@ void des_crypt_ecb( des_context *ctx,
                     const unsigned char input[8],
                     unsigned char output[8] )
 {
-    int i;
-    unsigned long X, Y, T, *SK;
+    unsigned long X, Y, T;
 
-    SK = ctx->sk;
+    unsigned long* SK = ctx->sk;
 
     GET_ULONG_BE( X, input, 0 );
     GET_ULONG_BE( Y, input, 4 );
 
     DES_IP( X, Y );
 
-    for( i = 0; i < 8; i++ )
+    for( int i = 0; i < 8; i++ )
     {
         DES_ROUND( Y, X );
         DES_ROUND( X, Y );

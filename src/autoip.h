@@ -1,8 +1,9 @@
 #pragma once
-#include <netif.h>
 #include <etharp.h>
+#include <network_interface.h>
 
- /* 169.254.0.0 */
+
+/* 169.254.0.0 */
 constexpr auto kAutoipNet = 0xA9FE0000;
 /* 169.254.1.0 */
 constexpr auto kAutoipRangeStart   =   (kAutoipNet | 0x0100);

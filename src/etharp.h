@@ -9,7 +9,7 @@
 #include <ethernet.h>
 
 #include <ip4_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <opt.h>
 
 #include <packet_buffer.h>

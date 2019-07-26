@@ -1,7 +1,7 @@
 #include <autoip.h>
 #include <opt.h>
 #include <ip_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <etharp.h>
 #include <cstring>
 #include <lwip_debug.h>

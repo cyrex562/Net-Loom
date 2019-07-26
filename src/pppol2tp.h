@@ -224,6 +224,15 @@ PppPcb* CreatePppol2tpSession(NetworkInterface* pppif,
                               ppp_link_status_cb_fn link_status_cb,
                               void* ctx_cb);
 
+
+static void
+pppol2tp_input(void* arg,
+               struct UdpPcb* pcb,
+               struct PacketBuffer* p,
+               const IpAddr* addr,
+               uint16_t port,
+               NetworkInterface* netif);
+
 //
 // END OF FILE
 //

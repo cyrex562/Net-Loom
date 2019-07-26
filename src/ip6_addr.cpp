@@ -64,15 +64,14 @@ inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' 
 int
 ip6addr_aton(const char *cp, Ip6Addr *addr)
 {
-  uint32_t addr_index, zero_blocks, current_block_index, current_block_value;
-  const char *s;
+    const char *s;
 
   int check_ipv4_mapped = 0;
 
 
   /* Count the number of colons, to count the number of blocks in a "::" sequence
      zero_blocks may be 1 even if there are no :: sequences */
-  zero_blocks = 8;
+  uint32_t zero_blocks = 8;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
       zero_blocks--;
@@ -94,9 +93,9 @@ ip6addr_aton(const char *cp, Ip6Addr *addr)
   }
 
   /* parse each block */
-  addr_index = 0;
-  current_block_index = 0;
-  current_block_value = 0;
+  uint32_t addr_index = 0;
+  uint32_t current_block_index = 0;
+  uint32_t current_block_value = 0;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
       if (addr) {
@@ -215,15 +214,12 @@ ip6addr_ntoa(const Ip6Addr *addr)
 char *
 ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
 {
-  uint32_t current_block_index, current_block_value, next_block_value;
-  int32_t i;
-  uint8_t zero_flag, empty_block_flag;
+    uint8_t zero_flag;
 
 
   if (ip6_addr_isipv4mappedipv6(addr)) {
     /* This is an IPv4 mapped address */
     Ip4Addr addr4;
-    char *ret;
 #define IP4MAPPED_HEADER "::FFFF:"
     char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;
     int buflen_ip4 = buflen - sizeof(IP4MAPPED_HEADER) + 1;
@@ -232,19 +228,19 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
     }
     memcpy(buf, IP4MAPPED_HEADER, sizeof(IP4MAPPED_HEADER));
     addr4.addr = addr->addr[3];
-    ret = lwip_ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
+    char* ret = lwip_ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
     if (ret != buf_ip4) {
       return nullptr;
     }
     return buf;
   }
 
-  i = 0;
-  empty_block_flag = 0; /* used to indicate a zero chain for "::' */
+  int32_t i = 0;
+  uint8_t empty_block_flag = 0; /* used to indicate a zero chain for "::' */
 
-  for (current_block_index = 0; current_block_index < 8; current_block_index++) {
+  for (uint32_t current_block_index = 0; current_block_index < 8; current_block_index++) {
     /* get the current 16-bit block */
-    current_block_value = lwip_htonl(addr->addr[current_block_index >> 1]);
+    uint32_t current_block_value = lwip_htonl(addr->addr[current_block_index >> 1]);
     if ((current_block_index & 0x1) == 0) {
       current_block_value = current_block_value >> 16;
     }
@@ -263,7 +259,7 @@ ip6addr_ntoa_r(const Ip6Addr *addr, char *buf, int buflen)
       if (empty_block_flag == 0) {
         /* generate empty block "::", but only if more than one contiguous zero block,
          * according to current formatting suggestions RFC 5952. */
-        next_block_value = lwip_htonl(addr->addr[(current_block_index + 1) >> 1]);
+        uint32_t next_block_value = lwip_htonl(addr->addr[(current_block_index + 1) >> 1]);
         if ((current_block_index & 0x1) == 0x01) {
             next_block_value = next_block_value >> 16;
         }

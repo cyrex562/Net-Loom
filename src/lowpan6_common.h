@@ -44,7 +44,7 @@
 #include <packet_buffer.h>
 #include <ip.h>
 #include <ip6_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 #include <cstdint>
 
 /** Helper define for a link layer address, which can be encoded as 0, 2 or 8 bytes */

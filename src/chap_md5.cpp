@@ -28,10 +28,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define NOMINMAX
 #include <chap_md5.h>
+#include <magic.h>
 #include <ppp.h>
 #include <ppp_impl.h>
-#include <magic.h>
 #include <pppcrypt.h>
 
 

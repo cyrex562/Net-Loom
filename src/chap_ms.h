@@ -31,8 +31,8 @@
  */
 #pragma once
 
-extern const struct ChapDigestType kChapmsDigest;
-extern const struct ChapDigestType kChapms2Digest;
+extern const struct ChapDigestType CHAP_MS_DIGEST;
+extern const struct ChapDigestType CHAP_MS_2_DIGEST;
 
 
 #define SHA1_SIGNATURE_SIZE	20
@@ -42,7 +42,7 @@ extern const struct ChapDigestType kChapms2Digest;
 #define MS_CHAP_RESPONSE_LEN	49	/* Response length for MS-CHAP */
 #define MS_CHAP2_RESPONSE_LEN	49	/* Response length for MS-CHAPv2 */
 #define MS_AUTH_RESPONSE_LENGTH	40	/* MS-CHAPv2 authenticator response, */
-					/* as ASCII */
+                    /* as ASCII */
 
 /* Error codes for MS-CHAP failure messages. */
 #define MS_CHAP_ERROR_RESTRICTED_LOGON_HOURS	646
@@ -78,32 +78,36 @@ extern const struct ChapDigestType kChapms2Digest;
 static void	ascii2unicode (const char[], int, uint8_t[]);
 static void	NTPasswordHash (uint8_t *, int, uint8_t[MD4_SIGNATURE_SIZE]);
 static void	challenge_response (const uint8_t *, const uint8_t *, uint8_t[24]);
-static void	challenge_hash (const uint8_t[16], const uint8_t *, const char *, uint8_t[8]);
-static void	ChapMS_NT (const uint8_t *, const char *, int, uint8_t[24]);
-static void	ChapMS2_NT (const uint8_t *, const uint8_t[16], const char *, const char *, int,
-				uint8_t[24]);
+static void	challenge_hash (const uint8_t[16], const uint8_t *, std::string&, uint8_t[8]);
+static void	ChapMS_NT (const uint8_t *, std::string&, uint8_t[24]);
+static void	ChapMS2_NT (const uint8_t *, const uint8_t[16], std::string&, std::string&, uint8_t[24]);
 static void	GenerateAuthenticatorResponsePlain
-			(const char*, int, uint8_t[24], const uint8_t[16], const uint8_t *,
-			     const char *, uint8_t[41]);
-static void	ChapMsLanMan (const uint8_t*, const char*, int, uint8_t*);
+            (std::string&,
+             uint8_t[24],
+             const uint8_t[16],
+             const uint8_t *,
+             std::string&,
+             uint8_t[41]);
+static void	ChapMsLanMan (const uint8_t*, std::string&, uint8_t*);
 
 
 static void GenerateAuthenticatorResponse(const uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE],
-			uint8_t NTResponse[24], const uint8_t PeerChallenge[16],
-			const uint8_t *rchallenge, const char *username,
-			uint8_t authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
+                                          uint8_t NTResponse[24],
+                                          const uint8_t PeerChallenge[16],
+                                          const uint8_t *rchallenge,
+                                          std::string& username,
+                                          uint8_t authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
 
 
-static void	Set_Start_Key (PppPcb *pcb, const uint8_t *, const char *, int);
-static void	SetMasterKeys (PppPcb *pcb, const char *, int, uint8_t[24], int);
+static void	Set_Start_Key (PppPcb *pcb, const uint8_t *, std::string&);
+static void	SetMasterKeys (PppPcb *pcb, std::string&, uint8_t[24], int);
 
 
-static void ChapMS (PppPcb *pcb, const uint8_t *, const char *, int, uint8_t *);
-static void ChapMS2 (PppPcb *pcb, const uint8_t *, const uint8_t *, const char *, const char *, int,
-		  uint8_t *, uint8_t[MS_AUTH_RESPONSE_LENGTH+1], int);
+static void ChapMS (PppPcb *pcb, const uint8_t *, std::string&, uint8_t *);
+static void ChapMS2 (PppPcb *pcb, const uint8_t *, const uint8_t *, std::string&, std::string&, uint8_t *, uint8_t[MS_AUTH_RESPONSE_LENGTH+1], int);
 
-bool	ms_lanman = 0;    	/* Use LanMan password instead of NT */
-			  	/* Has meaning only with MS-CHAP challenges */
+bool	ms_lanman = false;    	/* Use LanMan password instead of NT */
+                /* Has meaning only with MS-CHAP challenges */
 
 
 /* For MPPE debug */

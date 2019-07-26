@@ -42,7 +42,7 @@
 #include <packet_buffer.h>
 #include <ip6_addr.h>
 #include <ip6.h>
-#include <netif.h>
+#include <network_interface.h>
 
 /** The IPv6 reassembly timer interval in milliseconds. */
 #define IP6_REASS_TMR_INTERVAL 1000
@@ -103,12 +103,12 @@ struct PacketBuffer *ip6_reass(struct PacketBuffer *p);
 /** A custom PacketBuffer that holds a reference to another PacketBuffer, which is freed
  * when this custom PacketBuffer is freed. This is used to create a custom PBUF_REF
  * that points into the original PacketBuffer. */
-struct PbufCustomRef {
-  /** 'base class' */
-  struct pbuf_custom pc;
-  /** pointer to the original PacketBuffer that is referenced */
-  struct PacketBuffer *original;
-};
+// struct PbufCustomRef {
+//   /** 'base class' */
+//   struct pbuf_custom pc;
+//   /** pointer to the original PacketBuffer that is referenced */
+//   struct PacketBuffer *original;
+// };
 
 
 LwipStatus ip6_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip6Addr *dest);

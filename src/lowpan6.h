@@ -45,7 +45,7 @@
 #include <packet_buffer.h>
 #include <ip.h>
 #include <ip_addr.h>
-#include <netif.h>
+#include <network_interface.h>
 
 #ifdef __cplusplus
 extern "C" {

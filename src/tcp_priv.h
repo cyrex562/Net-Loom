@@ -215,12 +215,12 @@ enum TcpProcFlags
     else (ret) = ERR_OK;                                       \
   } while (0)
 
-#define TCP_EVENT_ERR(last_state,errf,arg,err)                 \
-  do {                                                         \
-    ;                               \
-    if((errf) != NULL)                                         \
-      (errf)((arg),(err));                                     \
-  } while (0)
+// inline TCP_EVENT_ERR(last_state,errf,arg,err)                 \
+//   do {                                                         \
+//     ;                               \
+//     if((errf) != NULL)                                         \
+//       (errf)((arg),(err));                                     \
+//   } while (0)
 
 ///
 ///
@@ -239,7 +239,7 @@ enum TcpSegOpts
     /* Include SACK Permitted option (only used in SYN segments) */
 };
 
-/// This structure represents a TCP segment on the unsent, unacked and ooseq queues 
+/// This structure represents a TCP segment on the unsent, unacked and ooseq queues
 struct TcpSeg
 {
     struct TcpSeg* next; /* used when putting segments on a queue */
@@ -259,7 +259,7 @@ inline size_t tcp_tcplen(TcpSeg* seg)
     if (((tcph_flags((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0))
         return ((seg)->len + 1U);
     return ((seg)->len + 0U);
-} 
+}
 
 
 ///
@@ -385,7 +385,7 @@ inline unsigned LWIP_TCP_OPT_LENGTH(const unsigned flags)
         return 0 + 0 + 0 + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
     }
     return 0 + 0 + 0 + 0;
-} 
+}
 
 
 /** This returns a TCP header option for MSS in an uint32_t */

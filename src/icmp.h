@@ -2,7 +2,7 @@
 #pragma once
 #include <packet_buffer.h>
 #include <icmp6.h>
-#include <netif.h>
+#include <network_interface.h>
 
 enum IcmpType
 {
