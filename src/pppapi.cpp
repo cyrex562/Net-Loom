@@ -39,14 +39,14 @@
 #include <pppos.h>
 #include <lwip_status.h>
 
-#define API_VAR_DECLARE(x, y) x y
-#define API_VAR_REF(x) x
-
-#define PPPAPI_VAR_REF(name)               API_VAR_REF(name)
-#define PPPAPI_VAR_DECLARE(name)           API_VAR_DECLARE(struct pppapi_msg, name)
-#define PPPAPI_VAR_ALLOC(name)             API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, name, ERR_MEM)
-#define PPPAPI_VAR_ALLOC_RETURN_NULL(name) API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, name, NULL)
-#define PPPAPI_VAR_FREE(name)              API_VAR_FREE_POOL(PPPAPI_MSG, name)
+// #define API_VAR_DECLARE(x, y) x y
+// #define API_VAR_REF(x) x
+//
+// #define PPPAPI_VAR_REF(name)               API_VAR_REF(name)
+// #define PPPAPI_VAR_DECLARE(name)           API_VAR_DECLARE(struct pppapi_msg, name)
+// #define PPPAPI_VAR_ALLOC(name)             API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, name, ERR_MEM)
+// #define PPPAPI_VAR_ALLOC_RETURN_NULL(name) API_VAR_ALLOC_POOL(struct pppapi_msg, PPPAPI_MSG, name, NULL)
+// #define PPPAPI_VAR_FREE(name)              API_VAR_FREE_POOL(PPPAPI_MSG, name)
 
 /**
  * Call ppp_set_default() inside the tcpip_thread context.
@@ -269,8 +269,6 @@ LwipStatus pppapi_connect(PppPcb* pcb, uint16_t holdoff)
     return err;
 }
 
-
-#if PPP_SERVER
 /**
  * Call ppp_listen() inside the tcpip_thread context.
  */
@@ -288,19 +286,15 @@ pppapi_do_ppp_listen(struct TcpipApiCallData *m)
  * Call ppp_listen() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-LwipStatus
-pppapi_listen(PppPcb *pcb)
+LwipStatus pppapi_listen(PppPcb* pcb)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  err = tcpip_api_call(pppapi_do_ppp_listen, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
+    struct pppapi_msg* msg = new pppapi_msg;
+    msg->msg.ppp = pcb;
+    const LwipStatus err = tcpip_api_call(pppapi_do_ppp_listen, &msg->call);
+    delete msg;
+    return err;
 }
-#endif /* PPP_SERVER */
+
 
 
 /**
@@ -320,18 +314,14 @@ pppapi_do_ppp_close(struct TcpipApiCallData *m)
  * Call ppp_close() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-LwipStatus
-pppapi_close(PppPcb *pcb, uint8_t nocarrier)
+LwipStatus pppapi_close(PppPcb* pcb, uint8_t nocarrier)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.close.nocarrier = nocarrier;
-  err = tcpip_api_call(pppapi_do_ppp_close, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
+    struct pppapi_msg* msg = new pppapi_msg;
+    msg->msg.ppp = pcb;
+    msg->msg.msg.close.nocarrier = nocarrier;
+    const auto err = tcpip_api_call(pppapi_do_ppp_close, &msg->call);
+    delete msg;
+    return err;
 }
 
 
@@ -356,12 +346,12 @@ LwipStatus
 pppapi_free(PppPcb *pcb)
 {
   LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
+  struct pppapi_msg* msg = new pppapi_msg;
 
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  err = tcpip_api_call(pppapi_do_ppp_free, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
+
+  msg->msg.ppp = pcb;
+  err = tcpip_api_call(pppapi_do_ppp_free, &msg->call);
+  delete msg;
   return err;
 }
 
@@ -376,7 +366,7 @@ pppapi_do_ppp_ioctl(struct TcpipApiCallData *m)
    * We know it works because the structs have been instantiated as struct pppapi_msg */
   struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
 
-  return ppp_ioctl(msg->msg.ppp, msg->msg.msg.ioctl.cmd, msg->msg.msg.ioctl.arg);
+  return ppp_ioctl(msg->msg.ppp, msg->msg.msg.ioctl.cmd, (uint8_t*)msg->msg.msg.ioctl.arg);
 }
 
 /**
@@ -386,15 +376,13 @@ pppapi_do_ppp_ioctl(struct TcpipApiCallData *m)
 LwipStatus
 pppapi_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg)
 {
-  LwipStatus err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.ioctl.cmd = cmd;
-  PPPAPI_VAR_REF(msg).msg.msg.ioctl.arg = arg;
-  err = tcpip_api_call(pppapi_do_ppp_ioctl, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
+    struct pppapi_msg* msg = new pppapi_msg;
+  
+  msg->msg.ppp = pcb;
+  msg->msg.msg.ioctl.cmd = cmd;
+  msg->msg.msg.ioctl.arg = arg;
+  LwipStatus err = tcpip_api_call(pppapi_do_ppp_ioctl, &msg->call);
+  delete msg;
   return err;
 }
 

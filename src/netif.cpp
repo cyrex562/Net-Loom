@@ -546,6 +546,8 @@ bool netif_set_addr(NetworkInterface* netif,
         {
         }
     }
+
+    return true;
 }
 
 

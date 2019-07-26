@@ -149,9 +149,11 @@ static const struct LinkCallbacks pppoe_callbacks = {
  * Return 0 on success, an error code on failure.
  */
 PppPcb *pppoe_create(NetworkInterface*pppif,
-       NetworkInterface*ethif,
-       const char *service_name, const char *concentrator_name,
-       ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb)
+                     NetworkInterface*ethif,
+                     const char *service_name,
+                     const char *concentrator_name,
+                     ppp_link_status_cb_fn link_status_cb,
+                     void* ctx_cb)
 {
     ;
   ;

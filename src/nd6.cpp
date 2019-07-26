@@ -1138,7 +1138,8 @@ nd6_tmr(void)
                 }
                 else if (netif_is_up(netif) && netif_is_link_up(netif)) {
                     /* tentative: set next state by increasing by one */
-                    netif_ip6_addr_set_state(netif, i, addr_state + 1);
+                    
+                    netif_ip6_addr_set_state(netif, i, Ip6AddrStates(addr_state + 1));
                     /* Send a NS for this address. Use the unspecified address as source
                      * address in all cases (RFC 4862 Sec. 5.4.2), not in the least
                      * because as it is, we only consider multicast replies for DAD. */
