@@ -131,5 +131,10 @@ void upap_authwithpeer(PppPcb *pcb, std::string& user, std::string& password);
 void upap_authpeer(PppPcb*pcb);
 
 
-extern const struct Protent pap_protent;
+// extern const struct Protent pap_protent;
 
+static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, std::string& msg);
+
+//
+//
+//

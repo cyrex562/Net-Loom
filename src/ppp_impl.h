@@ -24,21 +24,40 @@ constexpr auto kPppTrans = 0x20	/* Asynchronous transparency modifier */;
 /*
  * Protocol field values.
  */
-constexpr auto PPP_IP = 0x21	/* Internet Protocol */;
-constexpr auto PPP_VJC_COMP = 0x2d	/* VJ compressed TCP */;
-constexpr auto PPP_VJC_UNCOMP = 0x2f	/* VJ uncompressed TCP */;
-constexpr auto PPP_IPV6 = 0x57	/* Internet Protocol Version 6 */;
-constexpr auto PPP_COMP = 0xfd	/* compressed packet */;
-constexpr auto PPP_IPCP = 0x8021	/* IP Control Protocol */;
-constexpr auto PPP_IPV6CP = 0x8057	/* IPv6 Control Protocol */;
-constexpr auto PPP_CCP = 0x80fd	/* Compression Control Protocol */;
-constexpr auto PPP_ECP = 0x8053	/* Encryption Control Protocol */;
-constexpr auto PPP_LCP = 0xc021	/* Link Control Protocol */;
-constexpr auto PPP_PAP = 0xc023	/* Password Authentication Protocol */;
-constexpr auto PPP_LQR = 0xc025	/* Link Quality Report protocol */;
-constexpr auto PPP_CHAP = 0xc223	/* Cryptographic Handshake Auth. Protocol */;
-constexpr auto PPP_CBCP = 0xc029	/* Callback Control Protocol */;
-constexpr auto PPP_EAP = 0xc227	/* Extensible Authentication Protocol */;
+enum PppProtoFieldValues
+{
+    PPP_IP = 0x21,
+    /* Internet Protocol */
+    PPP_VJC_COMP = 0x2d,
+    /* VJ compressed TCP */
+    PPP_VJC_UNCOMP = 0x2f,
+    /* VJ uncompressed TCP */
+    PPP_IPV6 = 0x57,
+    /* Internet Protocol Version 6 */
+    PPP_COMP = 0xfd,
+    /* compressed packet */
+    PPP_IPCP = 0x8021,
+    /* IP Control Protocol */
+    PPP_IPV6CP = 0x8057,
+    /* IPv6 Control Protocol */
+    PPP_CCP = 0x80fd,
+    /* Compression Control Protocol */
+    PPP_ECP = 0x8053,
+    /* Encryption Control Protocol */
+    PPP_LCP = 0xc021,
+    /* Link Control Protocol */
+    PPP_PAP = 0xc023,
+    /* Password Authentication Protocol */
+    PPP_LQR = 0xc025,
+    /* Link Quality Report protocol */
+    PPP_CHAP = 0xc223,
+    /* Cryptographic Handshake Auth. Protocol */
+    PPP_CBCP = 0xc029,
+    /* Callback Control Protocol */
+    PPP_EAP = 0xc227,
+    /* Extensible Authentication Protocol */
+};
+
 
 
 /*
@@ -126,7 +145,7 @@ constexpr auto PPP_OCTETS_DIRECTION_MAXOVERAL = 3;
 constexpr auto PPP_OCTETS_DIRECTION_MAXSESSION = 4;
 
 // Table of pointers to supported protocols 
-extern const struct Protent* const kProtocols[];
+// extern const struct Protent* const kProtocols[];
 
 
 // Values for auth_pending, auth_done
@@ -156,7 +175,7 @@ constexpr auto CHAP_MS2_PEER = 0x800;
 //
 
 /* initialize the PPP subsystem */
-int init_ppp_subsys(void);
+int init_ppp_subsys();
 
 /*
  * Functions called from PPP link protocols.
@@ -308,12 +327,12 @@ auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::st
                                 /* check the user name and passwd against configuration */
 void auth_peer_fail(PppPcb *pcb, int protocol);
                 /* peer failed to authenticate itself */
-void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, const char *name, int namelen, Protent** protocols);
+void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, std::string& name);
                 /* peer successfully authenticated itself */
 
 void auth_withpeer_fail(PppPcb *pcb, int protocol);
                 /* we failed to authenticate ourselves */
-void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor, Protent** protocols);
+void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor);
                 /* we successfully authenticated ourselves */
 
 void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
