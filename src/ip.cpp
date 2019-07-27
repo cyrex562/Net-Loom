@@ -48,9 +48,9 @@ char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
     return nullptr;
   }
   if (is_ip_addr_v6(addr)) {
-    return ip6addr_ntoa_r(&addr->u_addr.ip6, buf, buflen);
+    return ip6addr_ntoa_r(&addr->u_addr.ip6, buf);
   } else {
-    return lwip_ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf, buflen);
+    return lwip_ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf);
   }
 }
 

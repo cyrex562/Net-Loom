@@ -24,7 +24,7 @@ struct BridgeIfcFdbStaticEntry
 {
     uint8_t used;
     BridgeIfcPortMask dst_ports;
-    struct EthAddr addr;
+    struct EthernetAddress addr;
 };
 
 struct BridgeIfDfDbEntry
@@ -32,7 +32,7 @@ struct BridgeIfDfDbEntry
     uint8_t used;
     uint8_t port;
     uint32_t ts;
-    struct EthAddr addr;
+    struct EthernetAddress addr;
 };
 
 struct BridgeIfcFdb
@@ -44,7 +44,7 @@ struct BridgeIfcFdb
 struct BridgeIfcPrivate
 {
     NetworkInterface* netif;
-    struct EthAddr ethaddr;
+    struct EthernetAddress ethaddr;
     uint8_t max_ports;
     uint8_t num_ports;
     BridgeIfcPort* ports;
@@ -65,7 +65,7 @@ struct BridgeIfcPrivate
  */
 struct BridgeIfcInitData {
   /** MAC address of the bridge (cannot use the netif's addresses) */
-  struct EthAddr ethaddr;
+  struct EthernetAddress ethaddr;
   /** Maximum number of ports in the bridge (ports are stored in an array, this
       influences memory allocated for netif->state of the bridge netif). */
   uint8_t            max_ports;
@@ -89,12 +89,12 @@ struct BridgeIfcInitData {
 
 LwipStatus bridgeif_init(NetworkInterface*netif);
 LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
-LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct EthAddr *addr, BridgeIfcPortMask ports);
-LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct EthAddr *addr);
+LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct EthernetAddress *addr, BridgeIfcPortMask ports);
+LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct EthernetAddress *addr);
 
 /* FDB interface, can be replaced by own implementation */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthAddr* src_addr, uint8_t port_idx);
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct EthAddr *dst_addr);
+bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, uint8_t port_idx);
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct EthernetAddress *dst_addr);
 
 BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 

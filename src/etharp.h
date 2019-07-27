@@ -5,13 +5,9 @@
 #pragma once
 
 #include <arch.h>
-
 #include <ethernet.h>
-
 #include <ip4_addr.h>
 #include <network_interface.h>
-#include <opt.h>
-
 #include <packet_buffer.h>
 
 
@@ -53,9 +49,9 @@ struct EtharpHdr
     uint8_t hwlen;
     uint8_t protolen;
     uint16_t opcode;
-    struct EthAddr shwaddr;
+    struct EthernetAddress shwaddr;
     struct Ip4AddrWordaligned sipaddr;
-    struct EthAddr dhwaddr;
+    struct EthernetAddress dhwaddr;
     struct Ip4AddrWordaligned dipaddr;
 };
 
@@ -85,8 +81,8 @@ typedef int64_t ssize_t;
 inline void etharp_init() {} /* Compatibility define, no init needed. */
 void etharp_tmr(void);
 ssize_t etharp_find_addr(struct NetworkInterface* netif, const Ip4Addr* ipaddr,
-    struct EthAddr** eth_ret, const Ip4Addr** ip_ret);
-int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthAddr** eth_ret);
+    struct EthernetAddress** eth_ret, const Ip4Addr** ip_ret);
+int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthernetAddress** eth_ret);
 LwipStatus etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr);
 LwipStatus etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q);
 LwipStatus etharp_request(struct NetworkInterface* netif, const Ip4Addr* ipaddr);
@@ -101,7 +97,7 @@ inline LwipStatus etharp_gratuitous(struct NetworkInterface* netif)
 
 void etharp_cleanup_netif(struct NetworkInterface* netif);
 
-LwipStatus etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthAddr* ethaddr);
+LwipStatus etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr);
 LwipStatus etharp_remove_static_entry(const Ip4Addr* ipaddr);
 
 void etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif);

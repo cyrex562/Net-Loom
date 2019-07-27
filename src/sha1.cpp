@@ -245,8 +245,9 @@ static void sha1_process( Sha1Context *ctx, const unsigned char data[64] )
 void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen )
 {
     if( ilen <= 0 )
+    {
         return;
-
+    }
     unsigned long left = ctx->total[0] & 0x3F;
     int fill = 64 - left;
 
@@ -254,8 +255,9 @@ void sha1_update( Sha1Context *ctx, const unsigned char *input, int ilen )
     ctx->total[0] &= 0xFFFFFFFF;
 
     if( ctx->total[0] < (unsigned long) ilen )
+    {
         ctx->total[1]++;
-
+    }
     if( left && ilen >= fill )
     {
         memcpy( (uint8_t *) (ctx->buffer + left),

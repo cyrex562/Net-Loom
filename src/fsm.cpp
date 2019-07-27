@@ -77,7 +77,9 @@ void fsm_lowerup(Fsm *f) {
 
     case PPP_FSM_STARTING:
     if( f->flags & OPT_SILENT )
+    {
         f->state = PPP_FSM_STOPPED;
+    }
     else {
         /* Send an initial configure-request */
         fsm_sconfreq(f, 0);
@@ -105,7 +107,9 @@ void fsm_lowerdown(Fsm *f) {
     case PPP_FSM_STOPPED:
     f->state = PPP_FSM_STARTING;
     if( f->callbacks->starting )
+    {
         (*f->callbacks->starting)(f);
+    }
     break;
 
     case PPP_FSM_CLOSING:
@@ -123,7 +127,9 @@ void fsm_lowerdown(Fsm *f) {
 
     case PPP_FSM_OPENED:
     if( f->callbacks->down )
+    {
         (*f->callbacks->down)(f, f, f->pcb);
+    }
     f->state = PPP_FSM_STARTING;
     break;
     // FSMDEBUG(("%s: Down event in state %d!", PROTO_NAME(f), f->state));
@@ -142,11 +148,15 @@ bool fsm_open(Fsm* f)
     case PPP_FSM_INITIAL:
         f->state = PPP_FSM_STARTING;
         if (f->callbacks->starting)
+        {
             (*f->callbacks->starting)(f);
+        }
         break;
     case PPP_FSM_CLOSED:
         if (f->flags & OPT_SILENT)
+        {
             f->state = PPP_FSM_STOPPED;
+        }
         else
         {
             /* Send an initial configure-request */
@@ -180,11 +190,13 @@ void terminate_layer(Fsm *f, int nextstate) {
     PppPcb *pcb = f->pcb;
 
     if( f->state != PPP_FSM_OPENED )
-    Untimeout(fsm_timeout, f);	/* Cancel timeout */
+    {
+        Untimeout(fsm_timeout, f);	/* Cancel timeout */
+    }
     else if( f->callbacks->down )
-    (*f->callbacks->down)(f, f, pcb);	/* Inform upper layers we're down */
-
-    /* Init restart counter and send Terminate-Request */
+    {
+        (*f->callbacks->down)(f, f, pcb);	/* Inform upper layers we're down */
+    } /* Init restart counter and send Terminate-Request */
     f->retransmits = pcb->settings.fsm_max_term_transmits;
     fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
           reinterpret_cast<const uint8_t *>(f->term_reason), f->term_reason_len);
@@ -197,7 +209,9 @@ void terminate_layer(Fsm *f, int nextstate) {
      */
     f->state = nextstate == PPP_FSM_CLOSING ? PPP_FSM_CLOSED : PPP_FSM_STOPPED;
     if( f->callbacks->finished )
+    {
         (*f->callbacks->finished)(f);
+    }
     return;
     }
 
@@ -255,7 +269,9 @@ void fsm_timeout(void* arg) {
          */
         f->state = (f->state == PPP_FSM_CLOSING)? PPP_FSM_CLOSED: PPP_FSM_STOPPED;
         if( f->callbacks->finished )
-        (*f->callbacks->finished)(f);
+        {
+            (*f->callbacks->finished)(f);
+        }
     } else {
         /* Send Terminate-Request */
         fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
@@ -272,8 +288,9 @@ void fsm_timeout(void* arg) {
         ppp_warn("%s: timeout sending Config-Requests", ((f)->callbacks->proto_name));
         f->state = PPP_FSM_STOPPED;
         if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
-        (*f->callbacks->finished)(f);
-
+        {
+            (*f->callbacks->finished)(f);
+        }
     } else {
         /* Retransmit the configure-request */
         if (f->callbacks->retransmit)
@@ -380,7 +397,9 @@ void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
     case PPP_FSM_OPENED:
     /* Go down and restart negotiation */
     if( f->callbacks->down )
+    {
         (*f->callbacks->down)(f, f, f->pcb);	/* Inform upper layers */
+    }
     fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
     f->state = PPP_FSM_REQSENT;
     break;
@@ -404,11 +423,13 @@ void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
     int reject_if_disagree = (f->nakloops >= f->maxnakloops);
     code = (*f->callbacks->reqci)(f, inp, &len, reject_if_disagree, f->pcb);
     } else if (len)
-    code = CONFREJ;			/* Reject all CI */
+    {
+        code = CONFREJ;			/* Reject all CI */
+    }
     else
-    code = CONFACK;
-
-    /* send the Ack, Nak or Rej to the peer */
+    {
+        code = CONFACK;
+    } /* send the Ack, Nak or Rej to the peer */
     fsm_sdata(f, code, id, inp, len);
 
     if (code == CONFACK) {
@@ -416,17 +437,25 @@ void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
         Untimeout(fsm_timeout, f);	/* Cancel timeout */
         f->state = PPP_FSM_OPENED;
         if (f->callbacks->up)
-        (*f->callbacks->up)(f, f->pcb);	/* Inform upper layers */
+        {
+            (*f->callbacks->up)(f, f->pcb);	/* Inform upper layers */
+        }
     } else
+    {
         f->state = PPP_FSM_ACKSENT;
+    }
     f->nakloops = 0;
 
     } else {
     /* we sent CONFACK or CONFREJ */
     if (f->state != PPP_FSM_ACKRCVD)
+    {
         f->state = PPP_FSM_REQSENT;
+    }
     if( code == CONFNAK )
+    {
         ++f->nakloops;
+    }
     }
 }
 
@@ -437,8 +466,11 @@ void fsm_rconfreq(Fsm* f, uint8_t id, uint8_t *inp, size_t len) {
 void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
     PppPcb *pcb = f->pcb;
 
-    if (id != f->reqid || f->seen_ack)		/* Expected id? */
+    if (id != f->reqid || f->seen_ack)
+    {
+        /* Expected id? */
     return;					/* Nope, toss... */
+    }
     if( !(f->callbacks->ackci? (*f->callbacks->ackci)(f, inp, len, f->pcb):
       (len == 0)) ){
     /* Ack is bad - ignore it */
@@ -471,7 +503,9 @@ void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
     f->state = PPP_FSM_OPENED;
     f->retransmits = pcb->settings.fsm_max_conf_req_transmits;
     if (f->callbacks->up)
+    {
         (*f->callbacks->up)(f, f->pcb);	/* Inform upper layers */
+    }
     break;
 
     case PPP_FSM_OPENED:
@@ -492,9 +526,11 @@ void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len) {
  */
 void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) {
     int ret;
-    if (id != f->reqid || f->seen_ack)	/* Expected id? */
+    if (id != f->reqid || f->seen_ack)
+    {
+        /* Expected id? */
     return;				/* Nope, toss... */
-
+    }
     if (code == CONFNAK) {
     ++f->rnakloops;
     int treat_as_reject = (f->rnakloops >= f->maxnakloops);
@@ -527,7 +563,9 @@ void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) {
     if (ret < 0)
         f->state = PPP_FSM_STOPPED;		/* kludge for stopping CCP */
     else
+    {
         fsm_sconfreq(f, 0);		/* Send Configure-Request */
+    }
     break;
 
     case PPP_FSM_ACKRCVD:
@@ -540,7 +578,9 @@ void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len) {
     case PPP_FSM_OPENED:
     /* Go down and restart negotiation */
     if (f->callbacks->down)
+    {
         (*f->callbacks->down)(f, f, f->pcb);	/* Inform upper layers */
+    }
     fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
     f->state = PPP_FSM_REQSENT;
     break;
@@ -566,11 +606,15 @@ void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len) {
     if (len > 0) {
         ppp_info("%s terminated by peer (%0.*v)", ((f)->callbacks->proto_name), len, p);
     } else
+    {
         ppp_info("%s terminated by peer", ((f)->callbacks->proto_name));
+    }
     f->retransmits = 0;
     f->state = PPP_FSM_STOPPING;
     if (f->callbacks->down)
+    {
         (*f->callbacks->down)(f,f, f->pcb);	/* Inform upper layers */
+    }
     Timeout(fsm_timeout, f, pcb->settings.fsm_timeout_time);
     break;
     default:
@@ -596,7 +640,9 @@ void fsm_rtermack(Fsm* f) {
     Untimeout(fsm_timeout, f);
     f->state = PPP_FSM_STOPPED;
     if( f->callbacks->finished )
+    {
         (*f->callbacks->finished)(f);
+    }
     break;
 
     case PPP_FSM_ACKRCVD:
@@ -605,7 +651,9 @@ void fsm_rtermack(Fsm* f) {
 
     case PPP_FSM_OPENED:
     if (f->callbacks->down)
+    {
         (*f->callbacks->down)(f,f,f->pcb);	/* Inform upper layers */
+    }
     fsm_sconfreq(f, 0);
     f->state = PPP_FSM_REQSENT;
     break;
@@ -630,7 +678,9 @@ void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len) {
     ppp_warn("%s: Rcvd Code-Reject for code %d, id %d", ((f)->callbacks->proto_name), code, id);
 
     if( f->state == PPP_FSM_ACKRCVD )
-    f->state = PPP_FSM_REQSENT;
+    {
+        f->state = PPP_FSM_REQSENT;
+    }
 }
 
 
@@ -648,7 +698,9 @@ void fsm_protreject(Fsm* f) {
     case PPP_FSM_CLOSED:
     f->state = PPP_FSM_CLOSED;
     if( f->callbacks->finished )
+    {
         (*f->callbacks->finished)(f);
+    }
     break;
 
     case PPP_FSM_STOPPING:
@@ -661,7 +713,9 @@ void fsm_protreject(Fsm* f) {
     case PPP_FSM_STOPPED:
     f->state = PPP_FSM_STOPPED;
     if( f->callbacks->finished )
+    {
         (*f->callbacks->finished)(f);
+    }
     break;
 
     case PPP_FSM_OPENED:
@@ -713,7 +767,9 @@ void fsm_sconfreq(Fsm* f, int retransmit) {
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(cilen + kHeaderlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     PacketBuffer* p = new PacketBuffer;
     if(nullptr == p)
+    {
         return;
+    }
     if(p->tot_len != p->len) {
         free_pkt_buf(p);
         return;
@@ -754,15 +810,20 @@ void fsm_sdata(Fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datale
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(outlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     PacketBuffer* p = new PacketBuffer;
     if(nullptr == p)
+    {
         return;
+    }
     if(p->tot_len != p->len) {
         free_pkt_buf(p);
         return;
     }
 
     uint8_t* outp = (uint8_t*)p->payload;
-    if (datalen) /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
+    if (datalen)
+    {
+        /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
     memcpy(outp + PPP_HDRLEN + FSM_PKT_HDR_LEN, data, datalen);
+    }
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);

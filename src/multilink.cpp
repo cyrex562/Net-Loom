@@ -169,12 +169,14 @@ bool mp_join_bundle(PppPcb* pcb,
     if (pcb->lcp_hisoptions.neg_endpoint || !bundle_name.empty())
         *p++ = '/';
     if (pcb->lcp_hisoptions.neg_endpoint)
+    {
         p += snprintf(p, bundle_id+bundle_id_len-p, "%s",
                   epdisc_to_str(&pcb->lcp_hisoptions.endpoint));
+    }
     if (!bundle_name.empty())
+    {
         p += snprintf(p, bundle_id+bundle_id_len-p, "/%v", bundle_name);
-
-    /* Make the key for the list of links belonging to the bundle */
+    } /* Make the key for the list of links belonging to the bundle */
     bundle_id_len = p - bundle_id;
     blinks_id = new char[bundle_id_len + 7];
     // if (blinks_id == NULL)
@@ -541,9 +543,13 @@ static char *endp_class_names[] = {
 static int hexc_val(int c)
 {
     if (c >= 'a')
+    {
         return c - 'a' + 10;
+    }
     if (c >= 'A')
+    {
         return c - 'A' + 10;
+    }
     return c - '0';
 }
 

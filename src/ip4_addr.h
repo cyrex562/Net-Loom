@@ -36,6 +36,8 @@
  */
 #pragma once
 #include <def.h>
+#include <xstring>
+
 
 /** This is the aligned version of Ip4Addr,
    used as local variable, on the stack, etc. */
@@ -139,64 +141,65 @@ inline void Ipv4AddrFromBytes(Ip4Addr* ipaddr, const uint8_t a, const uint8_t b,
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
 
 /** Safely copy one IP address to another (src may be NULL) */
-inline void ip4_addr_set(Ip4Addr* dest, const Ip4Addr* src)
+inline void ip4_addr_set(Ip4Addr& dest, const Ip4Addr& src)
 {
-    ((dest)->addr = ((src) == nullptr ? 0 : (src)->addr));
+    // ((dest).addr = ((src) == nullptr ? 0 : (src).addr));
+    dest.addr = src.addr;
 }
 
 
 
 /** Set complete address to zero */
-inline void ip4_addr_set_zero(Ip4Addr* ipaddr)
+inline void ip4_addr_set_zero(Ip4Addr& ipaddr)
 {
-    ((ipaddr)->addr = 0);
+    ipaddr.addr = 0;
 }
 /** Set address to IPADDR_ANY (no need for lwip_htonl()) */
-inline void ip4_addr_set_any(Ip4Addr* ipaddr)
+inline void ip4_addr_set_any(Ip4Addr& ipaddr)
 {
-    ((ipaddr)->addr = 0);
+    ipaddr.addr = 0;
 }
 
 
 
 /** Set address to loopback address */
-inline void ip4_addr_set_loopback(Ip4Addr* ipaddr)
+inline void ip4_addr_set_loopback(Ip4Addr& ipaddr)
 {
-    ((ipaddr)->addr = pp_htonl(ip4_addr_loopback().addr));
+    ((ipaddr).addr = pp_htonl(ip4_addr_loopback().addr));
 }
 
 
 /** Check if an address is in the loopback region */
-inline bool ip4_addr_isloopback(const Ip4Addr* ipaddr)
+inline bool ip4_addr_isloopback(const Ip4Addr& ipaddr)
 {
-    return (ipaddr->addr & pp_htonl(IP4_CLASS_A_NET)) == pp_htonl(
+    return (ipaddr.addr & pp_htonl(IP4_CLASS_A_NET)) == pp_htonl(
         uint32_t(IP_LOOPBACKNET) << 24);
 }
 
 
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
-inline void ip4_addr_set_hton(Ip4Addr* dest, Ip4Addr* src)
+inline void ip4_addr_set_hton(Ip4Addr& dest, Ip4Addr& src)
 {
-    ((dest)->addr = ((src) == nullptr ? 0 : lwip_htonl((src)->addr)));
+    dest.addr =  lwip_htonl(src.addr);
 }
 
 
 /** IPv4 only: set the IP address given as an uint32_t */
-inline void set_ip4_addr_u32(Ip4Addr* dest_ipaddr, uint32_t src_u32)
+inline void set_ip4_addr_u32(Ip4Addr& dest_ipaddr, uint32_t src_u32)
 {
-    ((dest_ipaddr)->addr = (src_u32));
+    ((dest_ipaddr).addr = (src_u32));
 }
 /** IPv4 only: get the IP address as an uint32_t */
-inline uint32_t get_ip4_addr(const Ip4Addr* src_ipaddr)
+inline uint32_t get_ip4_addr(const Ip4Addr& src_ipaddr)
 {
-    return ((src_ipaddr)->addr);
+    return ((src_ipaddr).addr);
 }
 
 /** Get the network address by combining host address with netmask */
-inline void ip4_addr_get_network(Ip4Addr* target, Ip4Addr* host, Ip4Addr* netmask)
+inline void ip4_addr_get_network(Ip4Addr& target, Ip4Addr& host, Ip4Addr& netmask)
 {
-    ((target)->addr = ((host)->addr) & ((netmask)->addr));
+    ((target).addr = ((host).addr) & ((netmask).addr));
 }
 /**
  * Determine if two address are on the same network.
@@ -206,14 +209,16 @@ inline void ip4_addr_get_network(Ip4Addr* target, Ip4Addr* host, Ip4Addr* netmas
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-inline bool ip4_addr_netcmp(const Ip4Addr* addr1, const Ip4Addr* addr2, const Ip4Addr* mask)
+inline bool ip4_addr_netcmp(const Ip4Addr& addr1,
+                            const Ip4Addr& addr2,
+                            const Ip4Addr& mask)
 {
-    return (((addr1)->addr & (mask)->addr) == ((addr2)->addr & (mask)->addr));
+    return (((addr1).addr & (mask).addr) == ((addr2).addr & (mask).addr));
 }
 
-inline bool ip4_addr_cmp(const Ip4Addr* addr1, const Ip4Addr* addr2)
+inline bool ip4_addr_cmp(const Ip4Addr& addr1, const Ip4Addr& addr2)
 {
-    return ((addr1)->addr == (addr2)->addr);
+    return addr1.addr == addr2.addr;
 }
 
 //
@@ -225,31 +230,33 @@ inline bool ip4_addr_isany_val(const Ip4Addr addr1)
 }
 
 
-inline bool ip4_addr_isany(const Ip4Addr* addr1)
+inline bool ip4_addr_isany(const Ip4Addr& addr1)
 {
-    return addr1 == nullptr || addr1->addr == IP4_ADDR_ANY4;
+    return addr1.addr == IP4_ADDR_ANY4;
 }
 
-uint8_t ip4_addr_isbroadcast_u32(uint32_t addr, const struct NetworkInterface *netif);
 
+bool ip4_addr_netmask_valid(uint32_t netmask);
 
-inline bool ip4_addr_isbroadcast(const Ip4Addr *addr1, const NetworkInterface *netif) {
-  return ip4_addr_isbroadcast_u32((addr1)->addr, netif);
-}
-
-uint8_t ip4_addr_netmask_valid(uint32_t netmask);
-
+///
+///
+///
 inline bool ip_addr_netmask_valid(Ip4Addr* netmask){return ip4_addr_netmask_valid((netmask)->addr);}
 
-
-inline bool ip4_addr_ismulticast(const Ip4Addr* addr1)
+///
+///
+///
+inline bool ip4_addr_ismulticast(const Ip4Addr& addr1)
 {
-    return (((addr1)->addr & pp_htonl(0xf0000000UL)) == pp_htonl(0xe0000000UL));
+    return (((addr1).addr & pp_htonl(0xf0000000UL)) == pp_htonl(0xe0000000UL));
 }
 
-inline bool ip4_addr_islinklocal(const Ip4Addr* addr1)
+///
+///
+///
+inline bool ip4_addr_islinklocal(const Ip4Addr& addr1)
 {
-    return (addr1->addr & pp_htonl(0xffff0000UL)) == pp_htonl(0xa9fe0000UL);
+    return (addr1.addr & pp_htonl(0xffff0000UL)) == pp_htonl(0xa9fe0000UL);
 }
 
 // #define ip4_addr_debug_print_parts(debug, a, b, c, d) \
@@ -324,8 +331,14 @@ constexpr auto IP4ADDR_STRLEN_MAX = 16;
 // inline const char* ip_ntoa(Ip4Addr* ipaddr){return  ipaddr_ntoa(ipaddr);}
 
 int32_t lwip_ipaddr_addr(const char *cp);
-char *lwip_ip4addr_ntoa_r(const Ip4Addr *addr, char *buf, int buflen);
-int lwip_ip4addr_aton(const char* cp, Ip4Addr* addr);
-char * lwip_ip4addr_ntoa(const Ip4Addr *addr);
+
+
+std::string lwip_ip4addr_ntoa_r(const Ip4Addr& addr, std::string& buf);
+
+
+bool lwip_ip4addr_aton(std::string& cp, Ip4Addr& addr);
+
+
+std::string lwip_ip4addr_ntoa(const Ip4Addr& addr);
 
 // END OF FILE

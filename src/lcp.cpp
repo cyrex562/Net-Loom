@@ -128,7 +128,9 @@ void lcp_open(PppPcb *pcb) {
     if (wo->passive)
     f->flags |= OPT_PASSIVE;
     if (wo->silent)
-    f->flags |= OPT_SILENT;
+    {
+        f->flags |= OPT_SILENT;
+    }
     fsm_open(f);
 }
 
@@ -143,8 +145,9 @@ void lcp_close(PppPcb *pcb, const char *reason) {
     && pcb->phase != PPP_PHASE_MASTER
 
     )
-    new_phase(pcb, PPP_PHASE_TERMINATE);
-
+    {
+        new_phase(pcb, PPP_PHASE_TERMINATE);
+    }
     if (f->flags & DELAYED_UP) {
     Untimeout(lcp_delayed_up, f);
     f->state = PPP_FSM_STOPPED;
@@ -180,7 +183,9 @@ void lcp_lowerup(PppPcb *pcb) {
     if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
     || ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
                wo->neg_pcompression, wo->neg_accompression) < 0)
+    {
         return;
+    }
     pcb->peer_mru = PPP_MRU;
 
     if (pcb->settings.listen_time != 0) {
@@ -317,8 +322,9 @@ void lcp_rprotrej(Fsm *f, uint8_t *inp, int len) {
     ppp_warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
          prot);
     else
-
-    ppp_warn("Protocol-Reject for unsupported protocol 0x%x", prot);
+    {
+        ppp_warn("Protocol-Reject for unsupported protocol 0x%x", prot);
+    }
 }
 
 
@@ -452,7 +458,9 @@ void lcp_resetci(Fsm *f) {
     }
 
     if (pcb->settings.noendpoint)
-    ao->neg_endpoint = false;
+    {
+        ao->neg_endpoint = false;
+    }
     pcb->peer_mru = PPP_MRU;
 
 }
@@ -923,17 +931,23 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     if (cishort == PPP_PAP && cilen == 4) {
         /* If we were asking for EAP, then we need to stop that. */
         if (go->neg_eap)
-        try_.neg_eap = false;
+        {
+            try_.neg_eap = false;
+        }
         else
         /* If we were asking for CHAP, then we need to stop that. */
         if (go->neg_chap)
-        try_.neg_chap = false;
+        {
+            try_.neg_chap = false;
+        }
         else
-        /*
-         * If we weren't asking for CHAP or EAP, then we were asking for
-         * PAP, in which case this Nak is bad.
-         */
+        {
+            /*
+             * If we weren't asking for CHAP or EAP, then we were asking for
+             * PAP, in which case this Nak is bad.
+             */
         goto bad;
+        }
     } else
     if (cishort == PPP_CHAP && cilen == 5) {
         { (cichar) = (ChapDigestCodes)*(p)++; };
@@ -942,7 +956,9 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
         try_.neg_eap = false;
         /* Try to set up to use their suggestion, if possible */
         if (chap_candigest(go->chap_mdtype, cichar))
+        {
             try_.chap_mdtype = chap_mdtype_d(cichar);
+        }
         } else
         if (go->neg_chap) {
         /*
@@ -956,8 +972,11 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
             } else {
             /* ... otherwise, try our next-preferred algorithm. */
             try_.chap_mdtype = (ChapMdTypes)(try_.chap_mdtype & ~(CHAP_MDTYPE(try_.chap_mdtype)));
-            if (try_.chap_mdtype == MDTYPE_NONE) /* out of algos */
+            if (try_.chap_mdtype == MDTYPE_NONE)
+            {
+                /* out of algos */
                 try_.neg_chap = false;
+            }
             }
         } else {
             /*
@@ -979,17 +998,21 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
          * well, that's just strange.  Nobody should do that.
          */
         if (cishort == PPP_EAP && cilen == CILEN_SHORT && go->neg_eap)
-        ppp_dbglog("Unexpected Conf-Nak for EAP");
-
-        /*
+        {
+            ppp_dbglog("Unexpected Conf-Nak for EAP");
+        } /*
          * We don't recognize what they're suggesting.
          * Stop asking for what we were asking for.
          */
         if (go->neg_eap)
-        try_.neg_eap = false;
+        {
+            try_.neg_eap = false;
+        }
         else
         if (go->neg_chap)
-        try_.neg_chap = false;
+        {
+            try_.neg_chap = false;
+        }
         else
         if(true)
         try_.neg_upap = false;
@@ -1074,7 +1097,9 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     case CI_MRU:
         if ((go->neg_mru && go->mru != PPP_DEFMRU)
         || no.neg_mru || cilen != CILEN_SHORT)
-        goto bad;
+        {
+            goto bad;
+        }
         GETSHORT(cishort, p);
         if (cishort < PPP_DEFMRU) {
         try_.neg_mru = true;
@@ -1106,12 +1131,16 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     case CI_PCOMPRESSION:
         if (go->neg_pcompression || no.neg_pcompression
         || cilen != CILEN_VOID)
-        goto bad;
+        {
+            goto bad;
+        }
         break;
     case CI_ACCOMPRESSION:
         if (go->neg_accompression || no.neg_accompression
         || cilen != CILEN_VOID)
-        goto bad;
+        {
+            goto bad;
+        }
         break;
 
     case CI_QUALITY:
@@ -1152,7 +1181,9 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
         lcp_close(f->pcb, "Loopback detected");
         }
     } else
+    {
         try_.numloops = 0;
+    }
     *go = try_;
     }
 
@@ -1328,8 +1359,9 @@ static int lcp_rejci(Fsm *f, uint8_t *p, int len) {
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
-    goto bad;
-    /*
+    {
+        goto bad;
+    } /*
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
@@ -1384,7 +1416,9 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
     // nakp = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE));
     nakp = new PacketBuffer;
     if(nullptr == nakp)
+    {
         return 0;
+    }
     if(nakp->tot_len != nakp->len) {
         free_pkt_buf(nakp);
         return 0;
@@ -1760,9 +1794,11 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
 
 endswitch:
     if (orc == CONFACK &&		/* Good CI */
-        rc != CONFACK)		/*  but prior CI wasnt? */
+        rc != CONFACK)
+    {
+        /*  but prior CI wasnt? */
         continue;			/* Don't send this one */
-
+    }
     if (orc == CONFNAK) {		/* Nak this CI? */
         if (reject_if_disagree	/* Getting fed up with sending NAKs? */
         && citype != CI_MAGICNUMBER) {
@@ -1775,8 +1811,11 @@ endswitch:
     }
     if (orc == CONFREJ) {		/* Reject this CI */
         rc = CONFREJ;
-        if (cip != rejp)		/* Need to move rejected CI? */
+        if (cip != rejp)
+        {
+            /* Need to move rejected CI? */
         memcpy(rejp, cip, cilen); /* Move it */
+        }
         INCPTR(cilen, rejp);	/* Update output pointer */
     }
     }
@@ -1822,11 +1861,13 @@ void lcp_up(Fsm *f) {
     LcpOptions *go = &pcb->lcp_gotoptions;
     LcpOptions *ao = &pcb->lcp_allowoptions;
     if (!go->neg_magicnumber)
-    go->magicnumber = 0;
+    {
+        go->magicnumber = 0;
+    }
     if (!ho->neg_magicnumber)
-    ho->magicnumber = 0;
-
-    /*
+    {
+        ho->magicnumber = 0;
+    } /*
      * Set our MTU to the smaller of the MTU we wanted and
      * the MRU our peer wanted.  If we negotiated an MRU,
      * set our MRU to the larger of value we wanted and
@@ -1839,8 +1880,9 @@ void lcp_up(Fsm *f) {
     int mru = go->neg_mru ? std::max(wo->mru, go->mru) : PPP_MRU;
 
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
-
-    netif_set_mtu(pcb, std::min(uint16_t(std::min(mtu, mru)), ao->mru));
+    {
+        netif_set_mtu(pcb, std::min(uint16_t(std::min(mtu, mru)), ao->mru));
+    }
     ppp_send_config(pcb, mtu,
             (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
             ho->neg_pcompression, ho->neg_accompression);
@@ -1919,13 +1961,15 @@ void lcp_echo_check(Fsm *f) {
 
     lcp_send_echo_request (f);
     if (f->state != PPP_FSM_OPENED)
-    return;
-
-    /*
+    {
+        return;
+    } /*
      * Start the timer for the next interval.
      */
     if (pcb->lcp_echo_timer_running)
-    ppp_warn("assertion lcp_echo_timer_running==0 failed");
+    {
+        ppp_warn("assertion lcp_echo_timer_running==0 failed");
+    }
     Timeout (lcp_echo_timeout, f, pcb->settings.lcp_echo_interval);
     pcb->lcp_echo_timer_running = true;
 }
@@ -2021,7 +2065,9 @@ void lcp_echo_lowerup(PppPcb *pcb) {
 
     /* If a timeout interval is specified then start the timer */
     if (pcb->settings.lcp_echo_interval != 0)
+    {
         lcp_echo_check (f);
+    }
 }
 
 /*

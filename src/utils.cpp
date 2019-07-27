@@ -45,7 +45,9 @@ size_t ppp_strlcpy(char *dest, const char *src, size_t len) {
 
     if (len != 0) {
     if (ret < len)
+    {
         strcpy(dest, src);
+    }
     else {
         strncpy(dest, src, len - 1);
         dest[len-1] = 0;
@@ -103,18 +105,24 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     --buflen;
     while (buflen > 0) {
     for (f = fmt; *f != '%' && *f != 0; ++f)
+    {
         ;
+    }
     if (f > fmt) {
         len = f - fmt;
         if (len > buflen)
-        len = buflen;
+        {
+            len = buflen;
+        }
         memcpy(buf, fmt, len);
         buf += len;
         buflen -= len;
         fmt = f;
     }
     if (*fmt == 0)
+    {
         break;
+    }
     c = *++fmt;
     width = 0;
     prec = -1;
@@ -178,7 +186,9 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
         neg = 1;
         val = -i;
         } else
-        val = i;
+        {
+            val = i;
+        }
         base = 10;
         break;
     case 'u':
@@ -234,7 +244,9 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
             c -= 0x80;
         }
         if (quoted && (c == '"' || c == '\\'))
+        {
             OUTCHAR('\\');
+        }
         if (c < 0x20 || (0x7f <= c && c < 0xa0)) {
             if (quoted) {
             OUTCHAR('\\');
@@ -250,14 +262,18 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
             }
             } else {
             if (c == '\t')
+            {
                 OUTCHAR(c);
+            }
             else {
                 OUTCHAR('^');
                 OUTCHAR(c ^ 0x40);
             }
             }
         } else
+        {
             OUTCHAR(c);
+        }
         }
         continue;
 
@@ -266,7 +282,9 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
         for (n = prec; n > 0; --n) {
         c = *p++;
         if (fillch == ' ')
+        {
             OUTCHAR(' ');
+        }
         OUTCHAR(hexchars[(c >> 4) & 0xf]);
         OUTCHAR(hexchars[c & 0xf]);
         }
@@ -274,7 +292,9 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     default:
         *buf++ = '%';
         if (c != '%')
-        --fmt;		/* so %z outputs %z etc. */
+        {
+            --fmt;		/* so %z outputs %z etc. */
+        }
         --buflen;
         continue;
     }
@@ -285,7 +305,9 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
         *--str = hexchars[val % base];
         val = val / base;
         if (--prec <= 0 && val == 0)
+        {
             break;
+        }
         }
         switch (neg) {
         case 1:
@@ -306,15 +328,21 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     }
     if (width > 0) {
         if (width > buflen)
-        width = buflen;
+        {
+            width = buflen;
+        }
         if ((n = width - len) > 0) {
         buflen -= n;
         for (; n > 0; --n)
+        {
             *buf++ = fillch;
+        }
         }
     }
     if (len > buflen)
+    {
         len = buflen;
+    }
     memcpy(buf, str, len);
     buf += len;
     buflen -= len;
@@ -335,7 +363,9 @@ void ppp_print_string(const uint8_t *p, int len, void (*printer) (uint8_t *, con
     int c = *p++;
     if (' ' <= c && c <= '~') {
         if (c == '\\' || c == '"')
-        printer(arg, "\\");
+        {
+            printer(arg, "\\");
+        }
         printer(arg, "%c", c);
     } else {
         switch (c) {

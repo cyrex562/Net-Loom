@@ -129,19 +129,23 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 	memcpy(state->session_key, state->master_key, sizeof(state->master_key));
 
 	if (options & MPPE_OPT_128)
-		state->keylen = 16;
-	else if (options & MPPE_OPT_40)
-		state->keylen = 8;
-	else {
+    {
+        state->keylen = 16;
+    }
+    else if (options & MPPE_OPT_40)
+    {
+        state->keylen = 8;
+    }
+    else {
 		// PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
 		// 	pcb->netif->num));
 		lcp_close(pcb, "MPPE required but peer negotiation failed");
 		return;
 	}
 	if (options & MPPE_OPT_STATEFUL)
-		state->stateful = 1;
-
-	/* Generate the initial session key. */
+    {
+        state->stateful = 1;
+    } /* Generate the initial session key. */
 	mppe_rekey(state, 1);
 
 
@@ -157,8 +161,9 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 		for (i = 0; i < (int)sizeof(state->master_key); i++)
 			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
 		for (i = 0; i < (int)sizeof(state->session_key); i++)
-			sprintf(skey + i * 2, "%02x", state->session_key[i]);
-		// PPPDEBUG(LOG_DEBUG,
+        {
+            sprintf(skey + i * 2, "%02x", state->session_key[i]);
+        } // PPPDEBUG(LOG_DEBUG,
 		//        ("%s[%d]: keys: master: %s initial session: %s\n",
 		//        debugstr, pcb->netif->num, mkey, skey));
 	}
@@ -374,8 +379,10 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 			}
 		}
 		if (flushed)
-			mppe_rekey(state, 0);
-	}
+        {
+            mppe_rekey(state, 0);
+        }
+    }
 
 	/* Hide MPPE header */
 	pbuf_remove_header(n0, MPPE_OVHD);

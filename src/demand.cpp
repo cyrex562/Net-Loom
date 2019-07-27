@@ -73,8 +73,11 @@ void demand_conf()
     framemax = PPP_MRU;
     framemax += PPP_HDRLEN + PPP_FCSLEN;
     frame = static_cast<char*>(malloc(framemax));
-    if (frame == nullptr) // novm("demand frame");
+    if (frame == nullptr)
+    {
+        // novm("demand frame");
         framelen = 0;
+    }
     pend_q = nullptr;
     escape_flag = 0;
     flush_flag = 0;

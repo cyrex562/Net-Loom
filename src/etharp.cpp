@@ -57,7 +57,7 @@ struct EtharpEntry
     struct EtharpEntry* next;
     Ip4Addr ipaddr;
     struct NetworkInterface* netif;
-    struct EthAddr ethaddr;
+    struct EthernetAddress ethaddr;
     uint16_t ctime;
     uint8_t state;
     PacketBuffer* p;
@@ -85,15 +85,15 @@ EtharpSetAddrhint(NetworkInterface* netif, const int addrhint)
 }
 
 
-static LwipStatus etharp_request_dst(struct NetworkInterface* netif, const Ip4Addr* ipaddr, const struct EthAddr* hw_dst_addr);
+static LwipStatus etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const EthernetAddress& hw_dst_addr);
 
-static LwipStatus etharp_raw(struct NetworkInterface* netif,
-                             const struct EthAddr* ethsrc_addr,
-                             const struct EthAddr* ethdst_addr,
-                             const struct EthAddr* hwsrc_addr,
-                             const Ip4Addr* ipsrc_addr,
-                             const struct EthAddr* hwdst_addr,
-                             const Ip4Addr* ipdst_addr,
+static LwipStatus etharp_raw(NetworkInterface& netif,
+                             const EthernetAddress& ethsrc_addr,
+                             const EthernetAddress& ethdst_addr,
+                             const EthernetAddress& hwsrc_addr,
+                             const Ip4Addr& ipsrc_addr,
+                             const EthernetAddress& hwdst_addr,
+                             const Ip4Addr& ipdst_addr,
                              const uint16_t opcode);
 
 
@@ -375,7 +375,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetworkInterface*
  * @see free_pkt_buf()
  */
 static LwipStatus
-etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct EthAddr* ethaddr, uint8_t flags)
+etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr, uint8_t flags)
 {
     lwip_assert("netif->hwaddr_len == ETH_HWADDR_LEN", netif->hwaddr_len == ETH_ADDR_LEN);
     //  Logf(true | LWIP_DBG_TRACE, ("etharp_update_arp_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
@@ -433,7 +433,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
         delete q;
 
         /* send the queued IP packet */
-        ethernet_output(netif, p, reinterpret_cast<struct EthAddr *>(netif->hwaddr), ethaddr, ETHTYPE_IP);
+        ethernet_output(netif, p, reinterpret_cast<struct EthernetAddress *>(netif->hwaddr), ethaddr, ETHTYPE_IP);
         /* free the queued IP packet */
         free_pkt_buf(p);
     }
@@ -450,7 +450,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
  * @return See return values of etharp_add_static_entry
  */
 LwipStatus
-etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthAddr* ethaddr)
+etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr)
 {
     // Logf(true | LWIP_DBG_TRACE,
     //      ("etharp_add_static_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F
@@ -530,7 +530,7 @@ etharp_cleanup_netif(struct NetworkInterface* netif)
 ssize_t
 etharp_find_addr(struct NetworkInterface* netif,
                  const Ip4Addr* ipaddr,
-                 struct EthAddr** eth_ret,
+                 struct EthernetAddress** eth_ret,
                  const Ip4Addr** ip_ret)
 {
     lwip_assert("eth_ret != NULL && ip_ret != NULL",
@@ -557,7 +557,7 @@ etharp_find_addr(struct NetworkInterface* netif,
  * @return 1 on valid index, 0 otherwise
  */
 int
-etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthAddr** eth_ret)
+etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthernetAddress** eth_ret)
 {
     lwip_assert("ipaddr != NULL", ipaddr != nullptr);
     lwip_assert("netif != NULL", netif != nullptr);
@@ -659,9 +659,9 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
         if (for_us) {
             /* send ARP response */
             etharp_raw(netif,
-                       (struct EthAddr *)netif->hwaddr,
+                       (struct EthernetAddress *)netif->hwaddr,
                        &hdr->shwaddr,
-                       (struct EthAddr *)netif->hwaddr,
+                       (struct EthernetAddress *)netif->hwaddr,
                        get_net_ifc_ip4_addr(netif),
                        &hdr->shwaddr,
                        &sipaddr,
@@ -729,7 +729,7 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
         }
     }
 
-    return ethernet_output(netif, q, (struct EthAddr *)(netif->hwaddr), &arp_table[arp_idx].ethaddr, ETHTYPE_IP);
+    return ethernet_output(netif, q, (struct EthernetAddress *)(netif->hwaddr), &arp_table[arp_idx].ethaddr, ETHTYPE_IP);
 }
 
 
@@ -754,8 +754,8 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
 LwipStatus
 etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr)
 {
-    const struct EthAddr* dest;
-    struct EthAddr mcastaddr{};
+    const struct EthernetAddress* dest;
+    struct EthernetAddress mcastaddr{};
     auto dst_addr = ipaddr;
 
 
@@ -769,7 +769,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     /* broadcast destination IP address? */
     if (ip4_addr_isbroadcast(ipaddr, netif)) {
         /* broadcast on Ethernet also */
-        dest = (const struct EthAddr *)&ETH_BCAST_ADDR;
+        dest = (const struct EthernetAddress *)&ETH_BCAST_ADDR;
         /* multicast destination IP address? */
     }
     else if (ip4_addr_ismulticast(ipaddr)) {
@@ -848,7 +848,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     /* continuation for multicast/broadcast destinations */
     /* obtain source Ethernet address of the given interface */
     /* send packet directly on the link */
-    return ethernet_output(netif, q, (struct EthAddr *)(netif->hwaddr), dest, ETHTYPE_IP);
+    return ethernet_output(netif, q, (struct EthernetAddress *)(netif->hwaddr), dest, ETHTYPE_IP);
 }
 
 
@@ -888,7 +888,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 LwipStatus
 etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q)
 {
-    struct EthAddr* srcaddr = (struct EthAddr *)netif->hwaddr;
+    struct EthernetAddress* srcaddr = (struct EthernetAddress *)netif->hwaddr;
     LwipStatus result = ERR_MEM;
     int is_new_entry = 0; /* non-unicast address? */
     if (ip4_addr_isbroadcast(ipaddr, netif) ||
@@ -1041,17 +1041,17 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
  *         any other LwipStatus on failure
  */
 static LwipStatus
-etharp_raw(struct NetworkInterface* netif,
-           const struct EthAddr* ethsrc_addr,
-           const struct EthAddr* ethdst_addr,
-           const struct EthAddr* hwsrc_addr,
-           const Ip4Addr* ipsrc_addr,
-           const struct EthAddr* hwdst_addr,
-           const Ip4Addr* ipdst_addr,
+etharp_raw(NetworkInterface& netif,
+           const EthernetAddress& ethsrc_addr,
+           const EthernetAddress& ethdst_addr,
+           const EthernetAddress& hwsrc_addr,
+           const Ip4Addr& ipsrc_addr,
+           const EthernetAddress& hwdst_addr,
+           const Ip4Addr& ipdst_addr,
            const uint16_t opcode)
 {
     LwipStatus result = ERR_OK;
-    lwip_assert("netif != NULL", netif != nullptr);
+    // lwip_assert("netif != NULL", netif != nullptr);
 
     /* allocate a PacketBuffer for the outgoing ARP request packet */
     struct PacketBuffer* p = pbuf_alloc(PBUF_LINK, kSizeofEtharpHdr);
@@ -1070,7 +1070,7 @@ etharp_raw(struct NetworkInterface* netif,
     hdr->opcode = lwip_htons(opcode);
 
     lwip_assert("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
-                (netif->hwaddr_len == ETH_ADDR_LEN));
+                (netif.hwaddr_len == ETH_ADDR_LEN));
 
     /* Write the ARP MAC-Addresses */
     memcpy(&hdr->shwaddr, hwsrc_addr, ETH_ADDR_LEN);
@@ -1121,12 +1121,12 @@ etharp_raw(struct NetworkInterface* netif,
  *         any other LwipStatus on failure
  */
 static LwipStatus
-etharp_request_dst(struct NetworkInterface* netif, const Ip4Addr* ipaddr, const struct EthAddr* hw_dst_addr)
+etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const EthernetAddress& hw_dst_addr)
 {
     return etharp_raw(netif,
-                      (struct EthAddr *)netif->hwaddr,
+                      netif.ethernet_addresses[0],
                       hw_dst_addr,
-                      (struct EthAddr *)netif->hwaddr,
+                      (struct EthernetAddress *)netif->hwaddr,
                       get_net_ifc_ip4_addr(netif),
                       &ETH_ZERO_ADDR,
                       ipaddr,
@@ -1144,7 +1144,7 @@ etharp_request_dst(struct NetworkInterface* netif, const Ip4Addr* ipaddr, const 
  *         any other LwipStatus on failure
  */
 LwipStatus
-etharp_request(struct NetworkInterface* netif, const Ip4Addr* ipaddr)
+etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr)
 {
     Logf(true, ("etharp_request: sending ARP request.\n"));
     return etharp_request_dst(netif, ipaddr, &ETH_BCAST_ADDR);

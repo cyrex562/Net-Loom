@@ -190,8 +190,10 @@ inline LwipStatus
 ip_output(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
 {
     if (is_ip_addr_v6(dest))
+    {
         return
             ip6_output(p, &src->u_addr.ip6, &dest->u_addr.ip6, ttl, tos, proto);
+    }
     return
         ip4_output(p, &src->u_addr.ip4, &dest->u_addr.ip4, ttl, tos, proto);
 }
@@ -205,6 +207,7 @@ inline LwipStatus
 ip_output_if(PacketBuffer* p, const IpAddr* src, const IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
 {
     if (is_ip_addr_v6(dest))
+    {
         return
             ip6_output_if(p,
                           &src->u_addr.ip6,
@@ -213,6 +216,7 @@ ip_output_if(PacketBuffer* p, const IpAddr* src, const IpAddr* dest, const uint8
                           tos,
                           proto,
                           netif);
+    }
     return
         ip4_output_if(p,
                       &src->u_addr.ip4,
@@ -288,7 +292,9 @@ inline NetworkInterface* ip_route(const IpAddr* src, const IpAddr* dest)
 inline const IpAddr* ip_netif_get_local_ip(const NetworkInterface* netif, const IpAddr* dest)
 {
     if (is_ip_addr_v6(dest))
+    {
         return ip6_netif_get_local_ip(netif, &dest->u_addr.ip6);
+    }
     return ip4_netif_get_local_ip(netif);
 }
 

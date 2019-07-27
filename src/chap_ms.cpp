@@ -95,7 +95,9 @@ chapms_verify_response(PppPcb* pcb,
                       &md[MS_CHAP_LANMANRESP],
                       MS_CHAP_LANMANRESP_LEN);
     else
+    {
         diff = memcmp(&response[MS_CHAP_NTRESP], &md[MS_CHAP_NTRESP], MS_CHAP_NTRESP_LEN);
+    }
     if (diff == 0)
     {
         // ppp_slprintf(message, message_space, "Access granted");
@@ -305,8 +307,13 @@ chapms_handle_failure(PppPcb* pcb, unsigned char* inp, int len)
      * chapms[2]_verify_response.
      */
     if (!strncmp(p, "E=", 2))
-        err = strtol(p + 2, nullptr, 10); /* Remember the error code. */ else
+    {
+        err = strtol(p + 2, nullptr, 10); /* Remember the error code. */
+    }
+    else
+    {
         goto print_msg; /* Message is badly formatted. */
+    }
     if (len && ((p = strstr(p, " M=")) != nullptr))
     {
         /* M=<message> field found. */
@@ -342,7 +349,9 @@ chapms_handle_failure(PppPcb* pcb, unsigned char* inp, int len)
         }
     }
 print_msg: if (p != nullptr)
+    {
         ppp_error("MS-CHAP authentication failed: %v", p);
+    }
 }
 
 static void
@@ -403,7 +412,9 @@ ascii2unicode(const char ascii[], int ascii_len, uint8_t unicode[])
 {
     BZERO(unicode, ascii_len * 2);
     for (int i = 0; i < ascii_len; i++)
+    {
         unicode[i * 2] = (uint8_t)ascii[i];
+    }
 }
 
 static void
@@ -454,7 +465,9 @@ ChapMsLanMan(const uint8_t* rchallenge, std::string& secret, uint8_t* response)
     uint8_t des_key[8]; /* LANMan password is case insensitive */
     BZERO(ucase_password, sizeof(ucase_password));
     for (auto i = 0; i < secret.length(); i++)
+    {
         ucase_password[i] = static_cast<uint8_t>(toupper(secret[i]));
+    }
     pppcrypt_56_to_64_bit_key(ucase_password + 0, des_key); // lwip_des_init(&des);
     des_setkey_enc(&des, des_key);
     des_crypt_ecb(&des, StdText, password_hash + 0); // lwip_des_free(&des);
@@ -491,7 +504,9 @@ GenerateAuthenticatorResponse(const uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE]
     lwip_sha1_finish(&sha1Context, Digest);
     lwip_sha1_free(&sha1Context); /* Convert to ASCII hex string. */
     for (int i = 0; i < std::max((MS_AUTH_RESPONSE_LENGTH / 2), (int)sizeof(Digest)); i++)
+    {
         sprintf((char *)&authResponse[i * 2], "%02X", Digest[i]);
+    }
 }
 
 static void
@@ -568,7 +583,9 @@ SetMasterKeys(PppPcb* pcb, std::string& secret, uint8_t NTResponse[24], int IsSe
     if (IsServer)
         s = Magic3;
     else
+    {
         s = Magic5;
+    }
     lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
@@ -581,9 +598,13 @@ SetMasterKeys(PppPcb* pcb, std::string& secret, uint8_t NTResponse[24], int IsSe
      * generate recv key
      */
     if (IsServer)
+    {
         s = Magic5;
+    }
     else
+    {
         s = Magic3;
+    }
     lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
@@ -632,10 +653,13 @@ ChapMS2(PppPcb* pcb,
     BZERO(response, MS_CHAP2_RESPONSE_LEN);
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
+    {
         magic_random_bytes(&response[MS_CHAP2_PEER_CHALLENGE], MS_CHAP2_PEER_CHAL_LEN);
+    }
     else
+    {
         memcpy(&response[MS_CHAP2_PEER_CHALLENGE], PeerChallenge, MS_CHAP2_PEER_CHAL_LEN);
-    /* Generate the NT-Response */
+    } /* Generate the NT-Response */
     ChapMS2_NT(rchallenge,
                &response[MS_CHAP2_PEER_CHALLENGE],
                user,

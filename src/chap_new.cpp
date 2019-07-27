@@ -96,7 +96,9 @@ chap_lowerup(PppPcb* pcb)
 
     pcb->chap_server.flags |= kLowerup;
     if (pcb->chap_server.flags & kAuthStarted)
+    {
         chap_timeout(pcb);
+    }
 }
 
 static void
@@ -104,7 +106,9 @@ chap_lowerdown(PppPcb* pcb)
 {
     pcb->chap_client.flags = 0;
     if (pcb->chap_server.flags & kTimeoutPending)
+    {
         Untimeout(chap_timeout, pcb);
+    }
     pcb->chap_server.flags = 0;
 }
 
@@ -128,16 +132,19 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
     //     if (dp->code == digest_code)
     //         break;
     if (dp == nullptr)
+    {
         ppp_fatal("CHAP digest 0x%x requested but not available",
                   digest_code);
-
+    }
     pcb->chap_server.digest = dp;
     pcb->chap_server.name = our_name;
     /* Start with a random ID value */
     pcb->chap_server.id = magic();
     pcb->chap_server.flags |= kAuthStarted;
     if (pcb->chap_server.flags & kLowerup)
+    {
         chap_timeout(pcb);
+    }
 }
 
 
@@ -161,9 +168,10 @@ chap_auth_with_peer(PppPcb* pcb, std::string& our_name, int digest_code)
     //         break;
 
     if (dp == nullptr)
+    {
         ppp_fatal("CHAP digest 0x%x requested but not available",
                   digest_code);
-
+    }
     pcb->chap_client.digest = dp;
     pcb->chap_client.name = our_name;
     pcb->chap_client.flags |= kAuthStarted;
@@ -197,7 +205,9 @@ chap_timeout(void* arg)
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(pcb->chap_server.challenge_pktlen), PPP_CTRL_PBUF_TYPE);
     auto p = new PacketBuffer;
     if (nullptr == p)
+    {
         return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
@@ -252,9 +262,13 @@ chap_handle_response(PppPcb* pcb,
     char message[256];
 
     if ((pcb->chap_server.flags & kLowerup) == 0)
+    {
         return;
+    }
     if (code != pcb->chap_server.challenge[PPP_HDRLEN + 1] || len < 2)
+    {
         return;
+    }
     if (pcb->chap_server.flags & kChallengeValid)
     {
         const unsigned char* response = pkt;
@@ -294,15 +308,17 @@ chap_handle_response(PppPcb* pcb,
         }
     }
     else if ((pcb->chap_server.flags & kAuthDone) == 0)
+    {
         return;
-
-    /* send the response */
+    } /* send the response */
     const auto mlen = strlen(message);
     len = mlen + CHAP_HDR_LEN;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + len), PPP_CTRL_PBUF_TYPE);
     const auto p = new PacketBuffer;
     if (nullptr == p)
+    {
         return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
@@ -333,10 +349,12 @@ chap_handle_response(PppPcb* pcb,
         else
         {
             if ((pcb->chap_server.flags & kAuthDone) == 0)
+            {
                 auth_peer_success(pcb,
                                   PPP_CHAP,
                                   pcb->chap_server.digest->code,
                                   name);
+            }
             if (pcb->settings.chap_rechallenge_time)
             {
                 pcb->chap_server.flags |= kTimeoutPending;
@@ -476,7 +494,9 @@ chap_handle_status(PppPcb* pcb,
 
     if ((pcb->chap_client.flags & (kAuthDone | kAuthStarted | kLowerup))
         != (kAuthStarted | kLowerup))
+    {
         return;
+    }
     pcb->chap_client.flags |= kAuthDone;
 
     if (code == CHAP_SUCCESS)
@@ -485,10 +505,14 @@ chap_handle_status(PppPcb* pcb,
         if (pcb->chap_client.digest->check_success != nullptr)
         {
             if (!(*pcb->chap_client.digest->check_success)(pcb, pkt, len, pcb->chap_client.priv))
+            {
                 code = CHAP_FAILURE;
+            }
         }
         else
+        {
             msg = "CHAP authentication succeeded";
+        }
     }
     else
     {
@@ -500,12 +524,18 @@ chap_handle_status(PppPcb* pcb,
     if (msg)
     {
         if (len > 0)
+        {
             ppp_info("%s: %.*v", msg, len, pkt);
+        }
         else
+        {
             ppp_info("%s", msg);
+        }
     }
     if (code == CHAP_SUCCESS)
+    {
         auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code);
+    }
     else
     {
         pcb->chap_client.flags |= kAuthFailed;
@@ -521,12 +551,16 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
     int len;
 
     if (pktlen < CHAP_HDR_LEN)
+    {
         return;
+    }
     GETCHAR(code, pkt);
     GETCHAR(id, pkt);
     GETSHORT(len, pkt);
     if (len < CHAP_HDR_LEN || len > pktlen)
+    {
         return;
+    }
     len -= CHAP_HDR_LEN;
 
     switch (code)

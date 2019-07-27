@@ -49,7 +49,7 @@ struct AutoipState
 bool autoip_set_struct(NetworkInterface* netif, struct AutoipState *autoip);
 /** Remove a struct autoip previously set to the netif using autoip_set_struct() */
 LwipStatus autoip_start(NetworkInterface* netif);
-LwipStatus autoip_stop(NetworkInterface* netif);
+LwipStatus autoip_stop(NetworkInterface& netif);
 void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr);
 void autoip_tmr(void);
 bool autoip_network_changed(NetworkInterface* netif);

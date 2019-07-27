@@ -631,7 +631,7 @@ static struct PacketBuffer*
 pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packet_len)
 {
     int length = packet_len;
-    const struct EthAddr* dest = (const struct EthAddr*)packet;
+    const struct EthernetAddress* dest = (const struct EthernetAddress*)packet;
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};

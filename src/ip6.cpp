@@ -76,7 +76,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
     NetworkInterface* netif;
     int8_t i;
     if ((netif_list != nullptr) && (netif_list->next == nullptr)) {
-        if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list) || (
+        if (!is_netif_up(netif_list) || !netif_is_link_up(netif_list) || (
             ip6_addr_has_zone(dest) && !ip6_addr_est_zone(dest, netif_list))) {
             return nullptr;
         }
@@ -91,7 +91,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
         /* Find a netif based on the zone. For custom mappings, one zone may map
                           * to multiple netifs, so find one that can actually send a packet. */
         for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-            if (ip6_addr_est_zone(dest, netif) && netif_is_up(netif) && netif_is_link_up(
+            if (ip6_addr_est_zone(dest, netif) && is_netif_up(netif) && netif_is_link_up(
                 netif)) {
                 return netif;
             }
@@ -117,7 +117,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
         if (ip6_addr_has_zone(src)) {
             /* Find a netif matching the source zone (relatively cheap). */
             for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-                if (netif_is_up(netif) && netif_is_link_up(netif) && ip6_addr_est_zone(
+                if (is_netif_up(netif) && netif_is_link_up(netif) && ip6_addr_est_zone(
                     src,
                     netif)) {
                     return netif;
@@ -127,7 +127,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
         else {
             /* Find a netif matching the source address (relatively expensive). */
             for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-                if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+                if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
                     continue;
                 }
                 for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -151,7 +151,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * still need to check for exact matches here. By (lwIP) policy, statically
    * configured addresses do always have an implied local /64 subnet. */
     for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-        if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+        if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
             continue;
         }
         for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -171,7 +171,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * for scoped source addresses, this applies to unscoped addresses only. */
     if (!is_ip6_addr_any(src)) {
         for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-            if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+            if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
                 continue;
             }
             for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -185,17 +185,17 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
     } /* loopif is disabled, loopback traffic is passed through any netif */
     if (ip6_addr_isloopback(dest)) {
         /* don't check for link on loopback traffic */
-        if (netif_default != nullptr && netif_is_up(netif_default)) {
+        if (netif_default != nullptr && is_netif_up(netif_default)) {
             return netif_default;
         } /* default netif is not up, just use any netif for loopback traffic */
         for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-            if (netif_is_up(netif)) {
+            if (is_netif_up(netif)) {
                 return netif;
             }
         }
         return nullptr;
     } /* no matching netif found, use default netif, if up */
-    if ((netif_default == nullptr) || !netif_is_up(netif_default) || !netif_is_link_up(
+    if ((netif_default == nullptr) || !is_netif_up(netif_default) || !netif_is_link_up(
         netif_default)) {
         return nullptr;
     }
@@ -290,7 +290,7 @@ static int
 ip6_input_accept(NetworkInterface* netif, Ip6Addr* src_addr, Ip6Addr* dest_addr)
 {
     /* interface is up? */
-    if (netif_is_up(netif)) {
+    if (is_netif_up(netif)) {
         /* unicast to this interface address? address configured? */
         /* If custom scopes are used, the destination zone will be tested as
                            * part of the local-address comparison, but we need to test the source
@@ -1234,9 +1234,9 @@ ip6_output_hinted(struct PacketBuffer* p,
                  IP6_ADDR_BLOCK8(dest));
         return ERR_RTE;
     }
-    NETIF_SET_HINTS(netif, netif_hint);
+    netif_set_hints(netif, netif_hint);
     LwipStatus err = ip6_output_if(p, src, dest, hl, tc, nexth, netif);
-    NETIF_RESET_HINTS(netif);
+    netif_reset_hints(netif);
     return err;
 } /**
  * Add a hop-by-hop options header with a router alert option and padding.

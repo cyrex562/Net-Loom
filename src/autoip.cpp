@@ -245,13 +245,14 @@ bool autoip_network_changed(NetworkInterface* netif)
 //
 // @param netif network interface on which stop the AutoIP client
 //
-LwipStatus autoip_stop(NetworkInterface* netif)
+LwipStatus autoip_stop(NetworkInterface& netif)
 {
     const auto autoip = netif_autoip_data(netif);
     if (autoip != nullptr)
     {
         autoip->state = AUTOIP_STATE_OFF;
-        if (ip4_addr_islinklocal(get_net_ifc_ip4_addr(netif)))
+        int i = 0;
+        if (ip4_addr_islinklocal(netif.ip4_addresses[i].u_addr.ip4))
         {
             auto any_addr = create_ip4_addr_any();
             netif_set_addr(netif,
@@ -356,7 +357,7 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
          * we have a conflict and must solve it
          */
         Ip4Addr dipaddr{};
-        EthAddr netifaddr{};
+        EthernetAddress netifaddr{};
         memcpy(netifaddr.addr,netif->hwaddr,ETH_ADDR_LEN);
         /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
                    * structure packing (not using structure copy which breaks strict-aliasing rules).

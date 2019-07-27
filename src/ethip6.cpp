@@ -73,13 +73,13 @@
 LwipStatus
 ethip6_output(NetworkInterface* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
 {
-    EthAddr dest{};
+    EthernetAddress dest{};
     const uint8_t* hwaddr;
 
    
 
     /* The destination IP address must be properly zoned from here on down. */
-    IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
+    // IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
 
     /* multicast destination IP address? */
     if (ip6_addr_ismulticast(ip6addr))
@@ -93,7 +93,7 @@ ethip6_output(NetworkInterface* netif, struct PacketBuffer* q, const Ip6Addr* ip
         dest.addr[5] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[3];
 
         /* Send out. */
-        return ethernet_output(netif, q, reinterpret_cast<const struct EthAddr*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
+        return ethernet_output(netif, q, reinterpret_cast<const struct EthernetAddress*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
     }
 
     /* We have a unicast destination IP address */
@@ -114,7 +114,7 @@ ethip6_output(NetworkInterface* netif, struct PacketBuffer* q, const Ip6Addr* ip
 
     /* Send out the packet using the returned hardware address. */
     memcpy(dest.addr, hwaddr, 6);
-    return ethernet_output(netif, q, reinterpret_cast<const struct EthAddr*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    return ethernet_output(netif, q, reinterpret_cast<const struct EthernetAddress*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
 }
 
 //

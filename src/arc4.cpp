@@ -51,14 +51,17 @@ void arc4_setup( Arc4Context *ctx, unsigned char *key, int keylen )
     unsigned char* m = ctx->m;
 
     for( i = 0; i < 256; i++ )
+    {
         m[i] = (unsigned char) i;
-
+    }
     int j = k = 0;
 
     for( i = 0; i < 256; i++, k++ )
     {
-        if( k >= keylen ) k = 0;
-
+        if( k >= keylen )
+        {
+            k = 0;
+        }
         int a = m[i];
         j = ( j + a + key[k] ) & 0xFF;
         m[i] = m[j];

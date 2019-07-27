@@ -361,7 +361,10 @@ ipv6cp_addci(Fsm* f, uint8_t* ucp, int* lenp)
             eui64_put(&go->ourid, (Eui64*)ucp);
             len -= idlen;
         }
-        else go->neg_ifaceid = false;
+        else
+        {
+            go->neg_ifaceid = false;
+        }
     }
     if (go->neg_vj) {
         int vjlen = CILEN_COMPRESS;
@@ -371,7 +374,10 @@ ipv6cp_addci(Fsm* f, uint8_t* ucp, int* lenp)
             PUTSHORT(go->vj_protocol, ucp);
             len -= vjlen;
         }
-        else go->neg_vj = false;
+        else
+        {
+            go->neg_vj = false;
+        }
     }
     *lenp -= len;
 }
@@ -404,26 +410,43 @@ ipv6cp_ackci(Fsm* f, uint8_t* p, int len)
 
     if (go->neg_ifaceid) {
         const int idlen = CILEN_IFACEID;
-        if ((len -= idlen) < 0) goto bad;
+        if ((len -= idlen) < 0)
+        {
+            goto bad;
+        }
         GETCHAR(citype, p);
         GETCHAR(cilen, p);
-        if (cilen != idlen || citype != 1) goto bad;
+        if (cilen != idlen || citype != 1)
+        {
+            goto bad;
+        }
         eui64_get(&ifaceid, (Eui64*)p);
-        if (! eui64_equals(go->ourid, ifaceid)) goto bad;
+        if (! eui64_equals(go->ourid, ifaceid))
+        {
+            goto bad;
+        }
     }
     if (go->neg_vj) {
         int vjlen = CILEN_COMPRESS;
-        if ((len -= vjlen) < 0) goto bad;
+        if ((len -= vjlen) < 0)
+        {
+            goto bad;
+        }
         GETCHAR(citype, p);
         GETCHAR(cilen, p);
         if (cilen != vjlen || citype != CI_COMPRESSTYPE) goto bad;
         GETSHORT(cishort, p);
-        if (cishort != go->vj_protocol) goto bad;
+        if (cishort != go->vj_protocol)
+        {
+            goto bad;
+        }
     } /*
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
+    {
         goto bad;
+    }
     return (1);
 
 bad:
@@ -474,7 +497,10 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             try_.neg_ifaceid = false;
         }
         else if (go->accept_local) {
-            while (eui64_iszero(ifaceid) || eui64_equals(ifaceid, go->hisid)) eui64_magic(ifaceid);
+            while (eui64_iszero(ifaceid) || eui64_equals(ifaceid, go->hisid))
+            {
+                eui64_magic(ifaceid);
+            }
             try_.ourid = ifaceid;
         }
     }
@@ -501,7 +527,9 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         GETCHAR(citype, p);
         GETCHAR(cilen, p);
         if (cilen < CILEN_VOID || (len -= cilen) < 0)
+        {
             goto bad;
+        }
         uint8_t* next = p + cilen - 2;
 
         switch (citype) {
@@ -509,19 +537,26 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
         case CI_COMPRESSTYPE:
             if (go->neg_vj || no.neg_vj ||
                 (cilen != CILEN_COMPRESS))
+            {
                 goto bad;
+            }
             no.neg_vj = true;
             break;
 
         case CI_IFACEID:
             if (go->neg_ifaceid || no.neg_ifaceid || cilen != CILEN_IFACEID)
+            {
                 goto bad;
+            }
             try_.neg_ifaceid = true;
             eui64_get(&ifaceid, (Eui64*)p);
             if (go->accept_local) {
                 while (eui64_iszero(ifaceid) ||
-                    eui64_equals(ifaceid, go->hisid)) /* bad luck */
+                    eui64_equals(ifaceid, go->hisid))
+                {
+                    /* bad luck */
                     eui64_magic(ifaceid);
+                }
                 try_.ourid = ifaceid;
             }
             no.neg_ifaceid = true;
@@ -534,9 +569,9 @@ ipv6cp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
 
     /* If there is still anything left, this packet is bad. */
     if (len != 0)
+    {
         goto bad;
-
-    /*
+    } /*
      * OK, the Nak is good.  Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
@@ -575,25 +610,34 @@ ipv6cp_rejci(Fsm* f, uint8_t* p, int len)
         len -= cilen;
         INCPTR(2, p);
         eui64_get(&ifaceid, (Eui64*)p);
-        if (! eui64_equals(ifaceid, go->ourid)) goto bad;
+        if (! eui64_equals(ifaceid, go->ourid))
+        {
+            goto bad;
+        }
         try_.neg_ifaceid = false;
     }
     if (go->neg_vj && p[1] == CILEN_COMPRESS && len >= p[1] && p[0] == CI_COMPRESSTYPE) {
         len -= p[1];
         INCPTR(2, p);
         GETSHORT(cishort, p);
-        if (cishort != go->vj_protocol) goto bad;
+        if (cishort != go->vj_protocol)
+        {
+            goto bad;
+        }
         try_.neg_vj = false;
     } /*
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
+    {
         goto bad;
-    /*
+    } /*
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
+    {
         *go = try_;
+    }
     return 1;
 
 bad:
@@ -689,12 +733,18 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
 	    } else
 	    if (eui64_iszero(ifaceid) || eui64_equals(ifaceid, go->ourid)) {
 		orc = CONFNAK;
-		if (eui64_iszero(go->hisid))	/* first time, try option */
+		if (eui64_iszero(go->hisid))
+        {
+            /* first time, try option */
 		    ifaceid = wo->hisid;
-		while (eui64_iszero(ifaceid) || 
-		       eui64_equals(ifaceid, go->ourid)) /* bad luck */
+        }
+        while (eui64_iszero(ifaceid) || 
+		       eui64_equals(ifaceid, go->ourid))
+        {
+            /* bad luck */
 		    eui64_magic(ifaceid);
-		go->hisid = ifaceid;
+        }
+        go->hisid = ifaceid;
 		DECPTR(sizeof(ifaceid), p);
 		eui64_put(&ifaceid, (Eui64*)p);
 	    }
@@ -733,16 +783,24 @@ endswitch:
 
 
 	if (orc == CONFACK &&		/* Good CI */
-	    rc != CONFACK)		/*  but prior CI wasnt? */
+	    rc != CONFACK)
+    {
+        /*  but prior CI wasnt? */
 	    continue;			/* Don't send this one */
-
-	if (orc == CONFNAK) {		/* Nak this CI? */
-	    if (reject_if_disagree)	/* Getting fed up with sending NAKs? */
+    }
+    if (orc == CONFNAK) {		/* Nak this CI? */
+	    if (reject_if_disagree)
+        {
+            /* Getting fed up with sending NAKs? */
 		orc = CONFREJ;		/* Get tough if so */
-	    else {
-		if (rc == CONFREJ)	/* Rejecting prior CI? */
+        }
+        else {
+		if (rc == CONFREJ)
+        {
+            /* Rejecting prior CI? */
 		    continue;		/* Don't send this one */
-		if (rc == CONFACK) {	/* Ack'd all prior CIs? */
+        }
+        if (rc == CONFACK) {	/* Ack'd all prior CIs? */
 		    rc = CONFNAK;	/* Not anymore... */
 		    ucp = inp;		/* Backup */
 		}
@@ -757,9 +815,9 @@ endswitch:
 
 	/* Need to move CI? */
 	if (ucp != cip)
-	    memcpy(ucp, cip, cilen);	/* Move it */
-
-	/* Update output pointer */
+    {
+        memcpy(ucp, cip, cilen);	/* Move it */
+    } /* Update output pointer */
 	INCPTR(cilen, ucp);
     }
 
@@ -798,14 +856,17 @@ ipv6_demand_conf(PppPcb* u) {
     Ipv6CpOptions *wo = nullptr;
     
     if (!sif6up(u))
-	return false;
-
+    {
+        return false;
+    }
     if (!sif6addr(u, wo->ourid, wo->hisid))
-	return false;
-
+    {
+        return false;
+    }
     if (!sifnpmode(u, PPP_IPV6, NPMODE_QUEUE))
-	return false;
-
+    {
+        return false;
+    }
     ppp_notice("ipv6_demand_conf");
     ppp_notice("local  LL address %s", llv6_ntoa(wo->ourid));
     ppp_notice("remote LL address %s", llv6_ntoa(wo->hisid));
@@ -831,10 +892,10 @@ void ipv6cp_up(Fsm *f) {
      * We must have a non-zero LL address for both ends of the link.
      */
     if (!ho->neg_ifaceid)
-	ho->hisid = wo->hisid;
-
-
-	if (eui64_iszero(ho->hisid)) {
+    {
+        ho->hisid = wo->hisid;
+    }
+    if (eui64_iszero(ho->hisid)) {
 	    ppp_error("Could not determine remote LL address");
 	    ipv6cp_close(f->pcb, "Could not determine remote LL address");
 	    return;
@@ -870,14 +931,16 @@ void ipv6cp_up(Fsm *f) {
 	if (! eui64_equals(go->ourid, wo->ourid) || 
 	    ! eui64_equals(ho->hisid, wo->hisid)) {
 	    if (! eui64_equals(go->ourid, wo->ourid))
-		// warn("Local LL address changed to %s", 
+        {
+            // warn("Local LL address changed to %s", 
 		//      llv6_ntoa(go->ourid));
 	    if (! eui64_equals(ho->hisid, wo->hisid))
-		// warn("Remote LL address changed to %s", 
+        {
+            // warn("Remote LL address changed to %s", 
 		//      llv6_ntoa(ho->hisid));
 	    ipv6cp_clear_addrs(f->pcb, go->ourid, ho->hisid);
-
-	    /* Set the interface to the new addresses */
+            }
+        } /* Set the interface to the new addresses */
 	    if (!sif6addr(f->pcb, go->ourid, ho->hisid)) {
 		// if (debug)
 		//     warn("sif6addr failed");
@@ -997,16 +1060,26 @@ int ipv6_active_pkt(uint8_t *pkt, int len) {
     len -= PPP_HDRLEN;
     pkt += PPP_HDRLEN;
     if (len < IP6_HDRLEN)
-	return 0;
+    {
+        return 0;
+    }
     if ((((unsigned char *)(pkt))[6]) == IP6_NHDR_FRAG)
-	return 0;
+    {
+        return 0;
+    }
     if ((((unsigned char *)(pkt))[6]) != IPPROTO_TCP)
-	return 1;
+    {
+        return 1;
+    }
     if (len < IP6_HDRLEN + TCP_HDRLEN)
-	return 0;
+    {
+        return 0;
+    }
     uint8_t* tcp = pkt + IP6_HDRLEN;
     if (((((unsigned char *)(tcp))[13]) & TH_FIN) != 0 && len == IP6_HDRLEN + (((unsigned char *)(tcp))[12] >> 4) * 4)
-	return 0;
+    {
+        return 0;
+    }
     return 1;
 }
 

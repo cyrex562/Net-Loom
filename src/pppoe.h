@@ -117,7 +117,7 @@ struct pppoe_softc
     struct pppoe_softc* next;
     NetworkInterface* sc_ethif; /* ethernet interface we are using */
     PppPcb* pcb; /* PPP PCB */
-    struct EthAddr sc_dest; /* hardware address of concentrator */
+    struct EthernetAddress sc_dest; /* hardware address of concentrator */
     uint16_t sc_session; /* PPPoE session id */
     uint8_t sc_state; /* discovery phase or session connected */
     uint8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN];

@@ -268,8 +268,9 @@ ipcp_resetci(Fsm* f)
 
     *go = *wo;
     if (!pcb->ask_for_local)
+    {
         go->ouraddr = 0;
-
+    }
     BZERO(&pcb->ipcp_hisoptions, sizeof(IpcpOptions));
 }
 
@@ -302,9 +303,9 @@ ipcp_cilen(Fsm* f)
      * forms because we have received old forms from the peer.
      */
     if (go->neg_addr && go->old_addrs && !ho->neg_addr && ho->old_addrs)
+    {
         go->neg_addr = false;
-
-
+    }
     if (wo->neg_vj && !go->neg_vj && !go->old_vj) {
         /* try an older style of VJ negotiation */
         /* use the old style only if the peer did */
@@ -554,7 +555,9 @@ ipcp_ackci(Fsm* f, uint8_t* p, int len)
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
+    {
         goto bad;
+    }
     return (1);
 
 bad:
@@ -719,7 +722,9 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             (cilen) = *(p)++;
         }
         if (cilen < CILEN_VOID || (len -= cilen) < 0)
+        {
             goto bad;
+        }
         next = p + cilen - 2;
 
         switch (citype) {
@@ -743,25 +748,35 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
             GETLONG(l, p);
             ciaddr2 = lwip_htonl(l);
             if (ciaddr2 && go->accept_remote)
+            {
                 try_.hisaddr = ciaddr2;
+            }
             no.old_addrs = true;
             break;
         case CI_ADDR:
             if (go->neg_addr || no.neg_addr || cilen != CILEN_ADDR)
+            {
                 goto bad;
+            }
             try_.old_addrs = false;
             GETLONG(l, p);
             ciaddr1 = lwip_htonl(l);
             if (ciaddr1 && go->accept_local)
+            {
                 try_.ouraddr = ciaddr1;
+            }
             if (try_.ouraddr != 0)
+            {
                 try_.neg_addr = true;
+            }
             no.neg_addr = true;
             break;
 
         case CI_MS_DNS1:
             if (go->req_dns1 || no.req_dns1 || cilen != CILEN_ADDR)
+            {
                 goto bad;
+            }
             GETLONG(l, p);
             try_.dnsaddr[0] = lwip_htonl(l);
             try_.req_dns1 = true;
@@ -787,8 +802,9 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
      * If there are any remaining options, we ignore them.
      */
     if (f->state != PPP_FSM_OPENED)
+    {
         *go = try_;
-
+    }
     return 1;
 
 bad:
@@ -920,12 +936,15 @@ ipcp_rejci(Fsm* f, uint8_t* p, int len)
      * If there are any remaining CIs, then this packet is bad.
      */
     if (len != 0)
+    {
         goto bad;
-    /*
+    } /*
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
+    {
         *go = try_;
+    }
     return 1;
 
 bad:
@@ -1230,11 +1249,17 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
 
         if (orc == CONFNAK) {
             /* Nak this CI? */
-            if (reject_if_disagree) /* Getting fed up with sending NAKs? */
+            if (reject_if_disagree)
+            {
+                /* Getting fed up with sending NAKs? */
                 orc = CONFREJ; /* Get tough if so */
+            }
             else {
-                if (rc == CONFREJ) /* Rejecting prior CI? */
+                if (rc == CONFREJ)
+                {
+                    /* Rejecting prior CI? */
                     continue; /* Don't send this one */
+                }
                 if (rc == CONFACK) {
                     /* Ack'd all prior CIs? */
                     rc = CONFNAK; /* Not anymore... */
@@ -1252,9 +1277,9 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
 
         /* Need to move CI? */
         if (ucp != cip)
+        {
             memcpy(ucp, cip, cilen); /* Move it */
-
-        /* Update output pointer */
+        } /* Update output pointer */
         INCPTR(cilen, ucp);
     }
 
@@ -1309,9 +1334,13 @@ ip_demand_conf(int u)
         ask_for_local = false; /* don't tell the peer this address */
     }
     if (!sifaddr(pcb, wo->ouraddr, wo->hisaddr, get_mask(wo->ouraddr)))
+    {
         return 0;
+    }
     if (!sifup(pcb))
+    {
         return 0;
+    }
     if (!sifnpmode(pcb, PPP_IP, NPMODE_QUEUE))
         return 0;
 #if 0 /* UNUSED */
@@ -1328,8 +1357,9 @@ ip_demand_conf(int u)
 
     ppp_notice("local  IP address %I", wo->ouraddr);
     if (wo->hisaddr)
+    {
         ppp_notice("remote IP address %I", wo->hisaddr);
-
+    }
     return 1;
 }
 
@@ -1373,10 +1403,13 @@ ipcp_up(Fsm* f)
     }
 
     if (!go->req_dns1)
+    {
         go->dnsaddr[0] = 0;
+    }
     if (!go->req_dns2)
+    {
         go->dnsaddr[1] = 0;
-
+    }
     if (pcb->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
         sdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
 
@@ -1491,13 +1524,17 @@ ipcp_up(Fsm* f)
 
         ppp_notice("local  IP address %I", go->ouraddr);
         if (ho->hisaddr != 0)
+        {
             ppp_notice("remote IP address %I", ho->hisaddr);
-
+        }
         if (go->dnsaddr[0])
+        {
             ppp_notice("primary   DNS address %I", go->dnsaddr[0]);
+        }
         if (go->dnsaddr[1])
+        {
             ppp_notice("secondary DNS address %I", go->dnsaddr[1]);
-
+        }
     }
 
 
@@ -1609,16 +1646,24 @@ ip_active_pkt(uint8_t* pkt, size_t len)
     len -= PPP_HDRLEN;
     pkt += PPP_HDRLEN;
     if (len < 20)
+    {
         return 0;
+    }
     if ((net_short((unsigned char *)(pkt) + 6) & 0x1fff) != 0)
+    {
         return 0;
+    }
     if ((((unsigned char *)(pkt))[9]) != IPPROTO_TCP)
+    {
         return 1;
+    }
     int hlen = (((unsigned char *)(pkt))[0] & 0xF) * 4;
     if (len < hlen + TCP_HDRLEN)
         return 0;
     uint8_t* tcp = pkt + hlen;
     if (((((unsigned char *)(tcp))[13]) & TH_FIN) != 0 && len == hlen + get_tcpoff(tcp) * 4)
+    {
         return 0;
+    }
     return 1;
 }

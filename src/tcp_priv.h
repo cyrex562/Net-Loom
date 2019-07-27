@@ -257,7 +257,9 @@ struct TcpSeg
 inline size_t tcp_tcplen(TcpSeg* seg)
 {
     if (((tcph_flags((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0))
+    {
         return ((seg)->len + 1U);
+    }
     return ((seg)->len + 0U);
 }
 
@@ -369,7 +371,9 @@ inline unsigned LWIP_TCP_OPT_LENGTH(const unsigned flags)
             return 0 + LWIP_TCP_OPT_LEN_TS_OUT + LWIP_TCP_OPT_LEN_WS_OUT + 0;
         }
         if ((flags & TF_SEG_OPTS_SACK_PERM) != 0U)
+        {
             return 0 + LWIP_TCP_OPT_LEN_TS_OUT + 0 + LWIP_TCP_OPT_LEN_SACK_PERM_OUT;
+        }
         return 0 + LWIP_TCP_OPT_LEN_TS_OUT + 0 + 0;
     }
     if ((flags & TF_SEG_OPTS_WND_SCALE) != 0U)

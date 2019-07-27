@@ -434,9 +434,10 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
         size_t space = mss_local - last_unsent->len;
         /* @todo: this could be sped up by keeping last_unsent in the pcb */
         for (last_unsent = pcb->unsent; last_unsent->next != nullptr; last_unsent =
-             last_unsent->next);
-
-        /* Usable space at the end of the last unsent segment */
+             last_unsent->next)
+        {
+            ;
+        } /* Usable space at the end of the last unsent segment */
         // uint16_t unsent_optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(last_unsent->flags, pcb);
         // lwip_assert("mss_local is too small",
         //             mss_local >= last_unsent->len + unsent_optlen);
@@ -509,7 +510,10 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
                 /* Data is not copied */
                 /* If the last unsent PacketBuffer is of type PBUF_ROM, try to extend it. */
                 struct PacketBuffer* p;
-                for (p = last_unsent->p; p->next != nullptr; p = p->next);
+                for (p = last_unsent->p; p->next != nullptr; p = p->next)
+                {
+                    ;
+                }
                 if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS |
                         0)) == 0) && (const uint8_t *)p->payload +
                     p->
@@ -941,8 +945,10 @@ tcp_send_fin(struct TcpPcb *pcb)
   if (pcb->unsent != nullptr) {
     struct TcpSeg *last_unsent;
     for (last_unsent = pcb->unsent; last_unsent->next != nullptr;
-         last_unsent = last_unsent->next);
-
+         last_unsent = last_unsent->next)
+    {
+        ;
+    }
     if ((tcph_flags(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | TCP_RST)) == 0) {
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
@@ -1033,7 +1039,10 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
     pcb->unsent = seg;
   } else {
     struct TcpSeg *useg;
-    for (useg = pcb->unsent; useg->next != nullptr; useg = useg->next);
+    for (useg = pcb->unsent; useg->next != nullptr; useg = useg->next)
+    {
+        ;
+    }
     useg->next = seg;
   }
 
@@ -1232,7 +1241,10 @@ tcp_output(struct TcpPcb *pcb)
   /* useg should point to last segment on unacked queue */
   struct TcpSeg* useg = pcb->unacked;
   if (useg != nullptr) {
-    for (; useg->next != nullptr; useg = useg->next);
+    for (; useg->next != nullptr; useg = useg->next)
+    {
+        ;
+    }
   }
   /* data available and window allows it to be sent? */
   while (seg != nullptr &&
@@ -1488,7 +1500,7 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
 
   // TCP_STATS_INC(tcp.xmit);
 
-  NETIF_SET_HINTS(netif, pcb->netif_hints);
+  netif_set_hints(netif, pcb->netif_hints);
     const LwipStatus err = ip_output_if(seg->p,
                                 &pcb->local_ip,
                                 &pcb->remote_ip,
@@ -1496,7 +1508,7 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
                                 pcb->tos,
                                 IP_PROTO_TCP,
                                 netif);
-  NETIF_RESET_HINTS(netif);
+  netif_reset_hints(netif);
 
 
   if (seg_chksum_was_swapped) {
@@ -1806,7 +1818,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
     }
 
     if (pcb != nullptr) {
-      NETIF_SET_HINTS(netif,  pcb->netif_hints);
+      netif_set_hints(netif,  pcb->netif_hints);
       ttl = pcb->ttl;
       tos = pcb->tos;
     } else {
@@ -1816,7 +1828,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
     }
     // TCP_STATS_INC(tcp.xmit);
     err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
-    NETIF_RESET_HINTS(netif);
+    netif_reset_hints(netif);
   }
   free_pkt_buf(p);
   return err;

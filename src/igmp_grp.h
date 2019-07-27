@@ -19,7 +19,7 @@
 struct IgmpGroup
 {
     /** next link */
-    struct IgmpGroup* next;
+    // struct IgmpGroup* next;
     /** multicast address */
     Ip4Addr group_address;
     /** signifies we were the last person to report */

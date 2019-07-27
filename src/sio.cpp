@@ -227,7 +227,10 @@ sio_recv(SioFd fd)
                                            &byte,
                                            1,
                                            &dwNbBytesReadden,
-                                           nullptr)) || (dwNbBytesReadden < 1)));
+                                           nullptr)) || (dwNbBytesReadden < 1)))
+    {
+        ;
+    }
     Logf(true, "sio_recv()=%lu\n", (DWORD)byte);
     return byte;
 } /**

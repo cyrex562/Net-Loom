@@ -324,8 +324,8 @@ ip6_reass(struct PacketBuffer *p)
      * risk sending a "time exceeded" ICMP response over the wrong link.
      * Ideally, netif destruction would clean up matching pending reassembly
      * structures, but custom zone mappings would make that non-trivial. */
-    ipr->src_zone = ip6_addr_zone(curr_src_addr);
-    ipr->dest_zone = ip6_addr_zone(curr_dst_addr);
+    ipr->src_zone = curr_src_addr->zone;
+    ipr->dest_zone = curr_dst_addr->zone;
 
     /* copy the fragmented packet id. */
     ipr->identification = frag_hdr->_identification;

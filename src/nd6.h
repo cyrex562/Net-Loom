@@ -199,7 +199,7 @@ uint16_t nd6_get_destination_mtu(const Ip6Addr* ip6addr, NetworkInterface* netif
 void nd6_reachability_hint(const Ip6Addr* ip6addr);
 void nd6_cleanup_netif(NetworkInterface* netif);
 void nd6_adjust_mld_membership(NetworkInterface* netif, int8_t addr_idx, uint8_t new_state);
-void nd6_restart_netif(NetworkInterface* netif);
+void nd6_restart_netif(NetworkInterface& netif);
 
 //
 // END OF FILE

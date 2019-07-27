@@ -206,8 +206,9 @@ static void md5_process( md5_context *ctx, const unsigned char data[64] )
 void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 {
     if( ilen <= 0 )
+    {
         return;
-
+    }
     unsigned long left = ctx->total[0] & 0x3F;
     int fill = 64 - left;
 
@@ -215,8 +216,9 @@ void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
     ctx->total[0] &= 0xFFFFFFFF;
 
     if( ctx->total[0] < (unsigned long) ilen )
+    {
         ctx->total[1]++;
-
+    }
     if( left && ilen >= fill )
     {
         memcpy( (uint8_t *) (ctx->buffer + left),

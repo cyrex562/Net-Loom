@@ -46,7 +46,7 @@ enum LwipStatus
 };
 
 
-inline std::map<int, std::string> status_strings = {
+const std::map<int, std::string> STATUS_STRINGS = {
     {0, "success"},
     {-1, "out of memory"},
     {-2, "buffer error"},
@@ -72,7 +72,7 @@ inline std::map<int, std::string> status_strings = {
 inline std::string
 status_to_string(const LwipStatus status)
 {
-    return status_strings[status];
+    return STATUS_STRINGS[int(status)];
 }
 
 

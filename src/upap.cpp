@@ -149,7 +149,9 @@ void upap_authpeer(PppPcb *pcb) {
 
     pcb->upap.us_serverstate = UPAPSS_LISTEN;
     if (pcb->settings.pap_req_timeout > 0)
-    Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
+    {
+        Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
+    }
 }
 
 
@@ -182,8 +184,9 @@ static void upap_reqtimeout(void* arg) {
     auto pcb = (PppPcb*)arg;
 
     if (pcb->upap.us_serverstate != UPAPSS_LISTEN)
-    return;			/* huh?? */
-
+    {
+        return;			/* huh?? */
+    }
     auth_peer_fail(pcb, PPP_PAP);
     pcb->upap.us_serverstate = UPAPSS_BADAUTH;
 }
@@ -198,7 +201,9 @@ static void upap_reqtimeout(void* arg) {
 static void upap_lowerup(PppPcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_INITIAL)
-    pcb->upap.us_clientstate = UPAPCS_CLOSED;
+    {
+        pcb->upap.us_clientstate = UPAPCS_CLOSED;
+    }
     else if (pcb->upap.us_clientstate == UPAPCS_PENDING) {
     upap_sauthreq(pcb);	/* send an auth-request */
     }
@@ -209,7 +214,9 @@ static void upap_lowerup(PppPcb *pcb) {
     else if (pcb->upap.us_serverstate == UPAPSS_PENDING) {
     pcb->upap.us_serverstate = UPAPSS_LISTEN;
     if (pcb->settings.pap_req_timeout > 0)
+    {
         Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
+    }
     }
 
 }
@@ -226,9 +233,9 @@ static void upap_lowerdown(PppPcb *pcb) {
     Untimeout(upap_timeout, pcb);		/* Cancel timeout */
 
     if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->settings.pap_req_timeout > 0)
-    Untimeout(upap_reqtimeout, pcb);
-
-
+    {
+        Untimeout(upap_reqtimeout, pcb);
+    }
     pcb->upap.us_clientstate = UPAPCS_INITIAL;
 
     pcb->upap.us_serverstate = UPAPSS_INITIAL;
@@ -320,9 +327,9 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
     int msglen;
 
     if (pcb->upap.us_serverstate < UPAPSS_LISTEN)
-    return;
-
-    /*
+    {
+        return;
+    } /*
      * If we receive a duplicate authenticate-request, we are
      * supposed to return the same status as for the first request.
      */
@@ -388,7 +395,9 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
     }
 
     if (pcb->settings.pap_req_timeout > 0)
-    Untimeout(upap_reqtimeout, pcb);
+    {
+        Untimeout(upap_reqtimeout, pcb);
+    }
 }
 
 
@@ -397,10 +406,11 @@ static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
  */
 static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len) {
     uint8_t msglen;
-    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
+    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
+    {
+        /* XXX */
     return;
-
-    /*
+    } /*
      * Parse message.
      */
     if (len < 1) {
@@ -429,10 +439,11 @@ static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len) {
  */
 static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len) {
     uint8_t msglen;
-    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
+    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
+    {
+        /* XXX */
     return;
-
-    /*
+    } /*
      * Parse message.
      */
     if (len < 1) {
@@ -465,7 +476,9 @@ static void upap_sauthreq(PppPcb *pcb) {
                                                                                     us_passwd.length();
     PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + outlen));
     if(nullptr == p)
+    {
         return;
+    }
     if(p->tot_len != p->len) {
         free_pkt_buf(p);
         return;
@@ -496,7 +509,9 @@ static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, std::string& msg) 
     int outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
     PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + outlen));
     if(nullptr == p)
+    {
         return;
+    }
     if(p->tot_len != p->len) {
         free_pkt_buf(p);
         return;

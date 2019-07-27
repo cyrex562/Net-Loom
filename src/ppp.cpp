@@ -586,7 +586,9 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
                 ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
             }
             else
+            {
                 ppp_warn("Unsupported protocol 0x%x received", protocol);
+            }
             if (pbuf_add_header(pb, sizeof(protocol)))
             {
                 // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));

@@ -35,7 +35,9 @@ void link_terminated(PppPcb* pcb)
     if (pcb->phase == PPP_PHASE_DEAD
         || pcb->phase == PPP_PHASE_MASTER
     )
+    {
         return;
+    }
     new_phase(pcb, PPP_PHASE_DISCONNECT);
 
     if (!doing_multilink)
@@ -170,8 +172,9 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
     pcb->auth_pending = auth;
     pcb->auth_done = 0;
     if (!auth)
+    {
         enter_network_phase(pcb);
-
+    }
     return true;
 }
 
@@ -336,7 +339,9 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, std::string& 
      * proceed to the network (or callback) phase.
      */
     if ((pcb->auth_pending &= ~bit) == 0)
+    {
         enter_network_phase(pcb);
+    }
 }
 
 /*
@@ -416,7 +421,9 @@ void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor)
      * proceed to the network (or callback) phase.
      */
     if ((pcb->auth_pending &= ~bit) == 0)
+    {
         enter_network_phase(pcb);
+    }
 }
 
 
@@ -432,21 +439,18 @@ void np_up(PppPcb* pcb, int proto)
          * At this point we consider that the link has come up successfully.
          */
         new_phase(pcb, PPP_PHASE_RUNNING);
-        const int tlim = pcb->settings.idle_time_limit;
+        const uint64_t tlim = pcb->settings.idle_time_limit;
     if (tlim > 0)
+    {
         Timeout(check_idle, static_cast<void*>(pcb), tlim);
-
-
-
-    /*
+        } /*
      * Set a timeout to close the connection once the maximum
      * connect time has expired.
      */
     if (pcb->settings.maxconnect > 0)
+    {
         Timeout(connect_time_expired, static_cast<void*>(pcb), pcb->settings.maxconnect);
-
-
-    // if (maxoctets > 0)
+        } // if (maxoctets > 0)
         // Timeout(check_maxoctets, NULL, maxoctets_timeout);
 
 
@@ -490,14 +494,12 @@ void np_finished(PppPcb* pcb, int proto)
 
 
 
-/*
- * check_idle - check whether the link has been idle for long
- * enough that we can shut it down.
- */
+///
+/// check_idle - check whether the link has been idle for long
+/// enough that we can shut it down.
+///
 static void check_idle(void* arg) {
     const auto pcb = static_cast<PppPcb*>(arg);
-    // struct ppp_idle idle;
-    time_t itime;
     auto tlim = 0;
 
  //    if (!get_idle_time(pcb, &idle))

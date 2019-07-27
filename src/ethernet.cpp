@@ -50,8 +50,8 @@
 #include <cstring>
 
 
-const struct EthAddr ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
-const struct EthAddr ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
+const struct EthernetAddress ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const struct EthernetAddress ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
 
 
 /**
@@ -240,8 +240,8 @@ ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
 LwipStatus
 ethernet_output(NetworkInterface* netif,
                 struct PacketBuffer* p,
-                EthAddr* src,
-                EthAddr* dst,
+                EthernetAddress* src,
+                EthernetAddress* dst,
                 uint16_t eth_type)
 {
     uint16_t eth_type_be = lwip_htons(eth_type);

@@ -128,9 +128,11 @@ static void eap_init(PppPcb* pcb, EapState* eap)
 static void eap_client_timeout(void* arg) {
     auto pcb = reinterpret_cast<PppPcb *>(arg);
 
-  if (!eap_client_active(pcb)) return;
-
-  ppp_error("EAP: timeout waiting for Request from peer");
+  if (!eap_client_active(pcb))
+  {
+      return;
+    }
+    ppp_error("EAP: timeout waiting for Request from peer");
   auth_withpeer_fail(pcb, PPP_EAP);
   pcb->eap.es_client.ea_state = eapBadAuth;
 }
@@ -204,7 +206,10 @@ static void eap_send_success(PppPcb* pcb)
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + EAP_HEADERLEN),
     //                PPP_CTRL_PBUF_TYPE);
     struct PacketBuffer* p = new PacketBuffer;
-    if (nullptr == p) return;
+    if (nullptr == p)
+    {
+        return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
@@ -387,7 +392,10 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
                 //     return;
                 // }
                 int id = *(unsigned char *)clear;
-                if (id + 1 <= plen && id + 9 > plen) break;
+                if (id + 1 <= plen && id + 9 > plen)
+                {
+                    break;
+                }
             }
             if (plen % 8 == 0 && i < 5)
             {
@@ -597,9 +605,13 @@ static void eap_send_request(PppPcb* pcb)
         pcb->eap.es_server.ea_requests >= pcb->settings.eap_max_transmits)
     {
         if (pcb->eap.es_server.ea_responses > 0)
+        {
             ppp_error("EAP: too many Requests sent");
+        }
         else
+        {
             ppp_error("EAP: no response to Requests");
+        }
         eap_send_failure(pcb);
         return;
     }
@@ -607,7 +619,10 @@ static void eap_send_request(PppPcb* pcb)
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(kPppCtrlPbufMaxSize),
     //                PPP_CTRL_PBUF_TYPE);
     struct PacketBuffer* p = new PacketBuffer;
-    if (nullptr == p) return;
+    if (nullptr == p)
+    {
+        return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
@@ -666,7 +681,9 @@ static void eap_send_request(PppPcb* pcb)
     pcb->eap.es_server.ea_requests++;
 
     if (pcb->settings.eap_timeout_time > 0)
+    {
         Timeout(eap_server_timeout, pcb, pcb->settings.eap_timeout_time);
+    }
 }
 
 /*
@@ -702,7 +719,9 @@ eap_server_timeout(void* arg)
 {
     auto* pcb = static_cast<PppPcb *>(arg);
     if (!eap_server_active(&pcb->eap))
+    {
         return; /* EAP ID number must not change on timeout. */
+    }
     eap_send_request(pcb);
 }
 
@@ -716,8 +735,9 @@ static void eap_rechallenge(void* arg) {
 
   if (pcb->eap.es_server.ea_state != eapOpen &&
       pcb->eap.es_server.ea_state != eapSRP4)
-    return;
-
+  {
+      return;
+  }
   pcb->eap.es_server.ea_requests = 0;
   pcb->eap.es_server.ea_state = eapIdentify;
   eap_figure_next_state(pcb, 0);
@@ -730,8 +750,9 @@ static void srp_lwrechallenge(void* arg) {
 
   if (pcb->eap.es_server.ea_state != eapOpen ||
       pcb->eap.es_server.ea_type != EAPT_SRP)
-    return;
-
+  {
+      return;
+  }
   pcb->eap.es_server.ea_requests = 0;
   pcb->eap.es_server.ea_state = eapSRP4;
   pcb->eap.es_server.ea_id++;
@@ -885,7 +906,10 @@ static void eap_send_nak(PppPcb* pcb, uint8_t id, uint8_t type)
     int msglen = EAP_HEADERLEN + 2 * sizeof(uint8_t);
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
     struct PacketBuffer* p = new PacketBuffer;
-    if (nullptr == p) return;
+    if (nullptr == p)
+    {
+        return;
+    }
     if (p->tot_len != p->len)
     {
         free_pkt_buf(p);
@@ -957,8 +981,10 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, size_t len)
         break;
 
     case EAPT_NOTIFICATION:
-        if (len > 0) ppp_info("EAP: Notification \"%.*q\"", len, inp);
-
+        if (len > 0)
+        {
+            ppp_info("EAP: Notification \"%.*q\"", len, inp);
+        }
         eap_send_response(pcb, id, typenum, empty_str);
         break;
 
@@ -1004,10 +1030,9 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, size_t len)
         /* In case the remote doesn't give us his name. */
         if (pcb->settings.explicit_remote ||
             (pcb->settings.remote_name[0] != '\0' && vallen == len))
+        {
             rhostname = pcb->settings.remote_name;
-
-
-        /*
+        } /*
          * Get the secret for authenticating ourselves with
          * the specified host.
          */
@@ -1222,7 +1247,9 @@ static void eap_response(PppPcb* pcb, const char* inp, int id, int len)
         eap_send_success(pcb);
         eap_figure_next_state(pcb, 0);
         if (pcb->eap.es_rechallenge != 0)
+        {
             Timeout(eap_rechallenge, pcb, pcb->eap.es_rechallenge);
+        }
         break;
 
 

@@ -95,11 +95,17 @@ inline ChapDigestCodes
 CHAP_DIGEST(const ChapMdTypes mdtype)
 {
     if (((mdtype) & MDTYPE_MD5))
+    {
         return CHAP_MD5;
+    }
     if (mdtype & MDTYPE_MICROSOFT_V2)
+    {
         return CHAP_MICROSOFT_V2;
+    }
     if (mdtype & MDTYPE_MICROSOFT)
+    {
         return CHAP_MICROSOFT;
+    }
     return CHAP_NONE;
 }
 

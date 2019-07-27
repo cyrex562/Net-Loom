@@ -341,7 +341,7 @@ mld6_joingroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
     ip6_addr_assign_zone(&ip6addr, IP6_MULTICAST, netif);
     groupaddr = &ip6addr;
   }
-  IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
+  // IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 
 
  
@@ -427,7 +427,7 @@ mld6_leavegroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
     ip6_addr_assign_zone(&ip6addr, IP6_MULTICAST, netif);
     groupaddr = &ip6addr;
   }
-  IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
+  // IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 
 
  

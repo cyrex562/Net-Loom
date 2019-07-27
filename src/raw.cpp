@@ -413,9 +413,9 @@ raw_sendto_if_src(struct RawPcb* pcb,
         {
             return ERR_VAL;
         } /* @todo multicast loop support, if at all desired for this scenario.. */
-        NETIF_SET_HINTS(netif, pcb->netif_hints);
+        netif_set_hints(netif, pcb->netif_hints);
         // err = ip_output_if_hdrincl(p, src_ip, dst_ip, netif);
-        NETIF_RESET_HINTS(netif);
+        netif_reset_hints(netif);
         return err;
     } /* packet too large to add an IP header without causing an overflow? */
     if ((uint16_t)(p->tot_len + header_size) < p->tot_len)
@@ -487,9 +487,9 @@ raw_sendto_if_src(struct RawPcb* pcb,
         memcpy(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
     } /* Determine TTL to use */
     uint8_t ttl = (ip_addr_ismulticast(dst_ip) ? raw_get_multicast_ttl(pcb) : pcb->ttl);
-    NETIF_SET_HINTS(netif, pcb->netif_hints);
+    netif_set_hints(netif, pcb->netif_hints);
     err = ip_output_if(q, src_ip, dst_ip, ttl, pcb->tos, pcb->protocol, netif);
-    NETIF_RESET_HINTS(netif); /* did we chain a header earlier? */
+    netif_reset_hints(netif); /* did we chain a header earlier? */
     if (q != p)
     {
         /* free the header */
