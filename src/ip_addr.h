@@ -222,7 +222,7 @@ inline void clear_ip_addr(IpAddr& ipaddr)
     ipaddr.u_addr.ip6.addr[1] = 0;
     ipaddr.u_addr.ip6.addr[2] = 0;
     ipaddr.u_addr.ip6.addr[3] = 0;
-    ip6_addr_clear_zone(ipaddr.u_addr.ip6);
+    clear_ip6_addr_zone(ipaddr.u_addr.ip6);
 }
 
 //
@@ -303,7 +303,7 @@ inline void set_ip_addr(IpAddr& dest, const IpAddr& src)
     set_ip_addr_type(dest, get_ip_addr_type(src));
     if (is_ip_addr_v6(src))
     {
-        ip6_addr_set(dest.u_addr.ip6, src.u_addr.ip6);
+        set_ip6_addr(dest.u_addr.ip6, src.u_addr.ip6);
     }
     else
     {
@@ -325,7 +325,7 @@ inline void set_ip_addr(IpAddr& dest, const IpAddr& src)
 //
 //
 //
-inline void zerp_ip_addr_ip4(IpAddr& ipaddr)
+inline void zero_ip_addr_ip4(IpAddr& ipaddr)
 {
     ip4_addr_set_zero(ipaddr.u_addr.ip4);
     set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
@@ -337,7 +337,7 @@ inline void zerp_ip_addr_ip4(IpAddr& ipaddr)
 //
 inline void zero_ip_addr_ip6(IpAddr& ipaddr)
 {
-    ip6_addr_set_zero(ipaddr.u_addr.ip6);
+    zero_ip6_addr(ipaddr.u_addr.ip6);
     set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
 }
 
@@ -350,7 +350,7 @@ inline void set_ip_addr_any(bool is_ipv6, IpAddr& ipaddr)
 {
     if (is_ipv6)
     {
-        ip6_addr_set_any(ipaddr.u_addr.ip6);
+        set_ip6_addr_any(ipaddr.u_addr.ip6);
         set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
     }
     else
@@ -368,7 +368,7 @@ inline IpAddr set_ip_addr_any_val(const bool is_ipv6, IpAddr& ipaddr)
 {
     if (is_ipv6)
     {
-        ip6_addr_set_any(ipaddr.u_addr.ip6);
+        set_ip6_addr_any(ipaddr.u_addr.ip6);
         set_ip_addr_type_val(ipaddr, IPADDR_TYPE_V6);
     }
     else
@@ -387,7 +387,7 @@ inline void set_ip_addr_loopback(const bool is_ipv6, IpAddr& ipaddr)
 {
     if (is_ipv6)
     {
-        ip6_addr_set_loopback(ipaddr.u_addr.ip6);
+        set_ip6_addr_loopback(ipaddr.u_addr.ip6);
         set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
     }
     else
@@ -415,11 +415,14 @@ inline void set_ip_addr_loopback(const bool is_ipv6, IpAddr& ipaddr)
 // }
 
 
+//
+//
+//
 inline void set_ip_addr_hton(IpAddr& dest, IpAddr& src)
 {
     if (is_ip_addr_v6(src))
     {
-        ip6_addr_set_hton(dest.u_addr.ip6, src.u_addr.ip6);
+        set_ip6_addr_hton(dest.u_addr.ip6, src.u_addr.ip6);
         set_ip_addr_type(dest, IPADDR_TYPE_V6);
     }
     else
@@ -431,7 +434,9 @@ inline void set_ip_addr_hton(IpAddr& dest, IpAddr& src)
 }
 
 
-
+//
+//
+//
 inline void get_ip_addr_net(IpAddr& target, IpAddr& host, IpAddr& netmask)
 {
     if (is_ip_addr_v6(host))
@@ -449,9 +454,12 @@ inline void get_ip_addr_net(IpAddr& target, IpAddr& host, IpAddr& netmask)
 }
 
 
-inline void ip_addr_copy_from_ip6_packed(IpAddr* daddr, const Ip6AddrWireFmt* saddr)
+//
+//
+//
+inline void ip_addr_copy_from_ip6_packed(IpAddr* daddr, const Ip6Addr* saddr)
 {
-    memcpy(&daddr->u_addr.ip6, saddr, sizeof(Ip6AddrWireFmt));
+    memcpy(&daddr->u_addr.ip6, saddr, sizeof(Ip6Addr));
 }
 
 
@@ -478,7 +486,7 @@ inline bool compare_ip_addr(const IpAddr& addr1, const IpAddr& addr2)
     }
     if (is_ip_addr_v6(addr1))
     {
-        return ip6_addr_cmp(addr1.u_addr.ip6, addr2.u_addr.ip6);
+        return cmp_ip6_addr(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
     return ip4_addr_cmp(addr1.u_addr.ip4, addr2.u_addr.ip4);
 }
@@ -492,7 +500,7 @@ inline bool compare_ip_addr_zoneless(const IpAddr& addr1, const IpAddr& addr2)
     }
     if (is_ip_addr_v6(addr1))
     {
-        return ip6_addr_cmp_zoneless(addr1.u_addr.ip6, addr2.u_addr.ip6);
+        return cmp_ip6_addr_zoneless(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
     return ip4_addr_cmp(addr1.u_addr.ip4, addr2.u_addr.ip4);
 }
@@ -507,6 +515,8 @@ inline bool is_ip_addr_any(const IpAddr& ipaddr)
     }
     return ip4_addr_isany(ipaddr.u_addr.ip4);
 }
+
+
 
 
 // inline bool ip_addr_isany_val(const IpAddr ipaddr)
@@ -526,7 +536,7 @@ inline bool ip_addr_ismulticast(const IpAddr& ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
     {
-        return ip6_addr_ismulticast(ipaddr.u_addr.ip6);
+        return is_ip6_addr_mcast(ipaddr.u_addr.ip6);
     }
     return ip4_addr_ismulticast(ipaddr.u_addr.ip4);
 }
@@ -536,7 +546,7 @@ inline bool ip_addr_isloopback(const IpAddr& ipaddr)
 {
     if ((is_ip_addr_v6(ipaddr)))
     {
-        return ip6_addr_isloopback(ipaddr.u_addr.ip6);
+        return is_ip6_addr_loopback(ipaddr.u_addr.ip6);
     }
     return ip4_addr_isloopback(ipaddr.u_addr.ip4);
 }
@@ -572,7 +582,7 @@ inline void ip4_2_ipv4_mapped_ipv6(Ip6Addr& ip6_addr, Ip4Addr& ip4addr)
     (ip6_addr).addr[2] = pp_htonl(0x0000FFFFUL);
     (ip6_addr).addr[1] = 0;
     (ip6_addr).addr[0] = 0;
-    ip6_addr_clear_zone(ip6_addr);
+    clear_ip6_addr_zone(ip6_addr);
 }
 
 /** @ingroup ipaddr */
@@ -582,7 +592,7 @@ inline void unmap_ipv4_mapped_ipv6(Ip4Addr* ip4addr, Ip6Addr* ip6addr)
 }
 
 // inline bool IP46_ADDR_ANY(IpAddrType type) {
-//   return (((type) == IPADDR_TYPE_V6) ? Ip6Addr : IP4_ADDR_ANY);
+//   return (((type) == IPADDR_TYPE_V6) ? Ip6Address : IP4_ADDR_ANY);
 // }
 
 inline void make_ip_addr_ip6(IpAddr& ipaddr, uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3)

@@ -57,7 +57,7 @@ struct EtharpEntry
     struct EtharpEntry* next;
     Ip4Addr ipaddr;
     struct NetworkInterface* netif;
-    struct EthernetAddress ethaddr;
+    struct MacAddress MacAddress;
     uint16_t ctime;
     uint8_t state;
     PacketBuffer* p;
@@ -85,14 +85,14 @@ EtharpSetAddrhint(NetworkInterface* netif, const int addrhint)
 }
 
 
-static LwipStatus etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const EthernetAddress& hw_dst_addr);
+static LwipStatus etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const MacAddress& hw_dst_addr);
 
 static LwipStatus etharp_raw(NetworkInterface& netif,
-                             const EthernetAddress& ethsrc_addr,
-                             const EthernetAddress& ethdst_addr,
-                             const EthernetAddress& hwsrc_addr,
+                             const MacAddress& ethsrc_addr,
+                             const MacAddress& ethdst_addr,
+                             const MacAddress& hwsrc_addr,
                              const Ip4Addr& ipsrc_addr,
-                             const EthernetAddress& hwdst_addr,
+                             const MacAddress& hwdst_addr,
                              const Ip4Addr& ipdst_addr,
                              const uint16_t opcode);
 
@@ -135,7 +135,7 @@ etharp_free_entry(const int index)
     arp_table[index].ctime = 0;
     arp_table[index].netif = nullptr;
     ip4_addr_set_zero(&arp_table[index].ipaddr);
-    arp_table[index].ethaddr = ETH_ZERO_ADDR;
+    arp_table[index].MacAddress = ETH_ZERO_ADDR;
 }
 
 
@@ -364,7 +364,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetworkInterface*
  *
  * @param netif netif related to this entry (used for NETIF_ADDRHINT)
  * @param ipaddr IP address of the inserted ARP entry.
- * @param ethaddr Ethernet address of the inserted ARP entry.
+ * @param MacAddress Ethernet address of the inserted ARP entry.
  * @param flags See @ref etharp_state
  *
  * @return
@@ -375,13 +375,13 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetworkInterface*
  * @see free_pkt_buf()
  */
 static LwipStatus
-etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr, uint8_t flags)
+etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct MacAddress* MacAddress, uint8_t flags)
 {
     lwip_assert("netif->hwaddr_len == ETH_HWADDR_LEN", netif->hwaddr_len == ETH_ADDR_LEN);
     //  Logf(true | LWIP_DBG_TRACE, ("etharp_update_arp_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
     //              ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
-    //              (uint16_t)ethaddr->addr[0], (uint16_t)ethaddr->addr[1], (uint16_t)ethaddr->addr[2],
-    //              (uint16_t)ethaddr->addr[3], (uint16_t)ethaddr->addr[4], (uint16_t)ethaddr->addr[5]));
+    //              (uint16_t)MacAddress->addr[0], (uint16_t)MacAddress->addr[1], (uint16_t)MacAddress->addr[2],
+    //              (uint16_t)MacAddress->addr[3], (uint16_t)MacAddress->addr[4], (uint16_t)MacAddress->addr[5]));
     /* non-unicast address? */
     if (ip4_addr_isany(ipaddr) ||
         ip4_addr_isbroadcast(ipaddr, netif) ||
@@ -416,7 +416,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
 
     //  Logf(true | LWIP_DBG_TRACE, ("etharp_update_arp_entry: updating stable entry %"S16_F"\n", i));
     /* update address */
-    memcpy(&arp_table[i].ethaddr, ethaddr, ETH_ADDR_LEN);
+    memcpy(&arp_table[i].MacAddress, MacAddress, ETH_ADDR_LEN);
     /* reset time stamp */
     arp_table[i].ctime = 0;
     /* this is where we will send out queued packets! */
@@ -433,7 +433,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
         delete q;
 
         /* send the queued IP packet */
-        ethernet_output(netif, p, reinterpret_cast<struct EthernetAddress *>(netif->hwaddr), ethaddr, ETHTYPE_IP);
+        ethernet_output(netif, p, reinterpret_cast<struct MacAddress *>(netif->hwaddr), MacAddress, ETHTYPE_IP);
         /* free the queued IP packet */
         free_pkt_buf(p);
     }
@@ -446,25 +446,25 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
  * If packets are queued for the specified IP address, they are sent out.
  *
  * @param ipaddr IP address for the new static entry
- * @param ethaddr ethernet address for the new static entry
+ * @param MacAddress ethernet address for the new static entry
  * @return See return values of etharp_add_static_entry
  */
 LwipStatus
-etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr)
+etharp_add_static_entry(const Ip4Addr* ipaddr, struct MacAddress* MacAddress)
 {
     // Logf(true | LWIP_DBG_TRACE,
     //      ("etharp_add_static_entry: %d.%d.%d.%d - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F
     //          ":%02"X16_F":%02"X16_F"\n",
     //          ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
-    //          (uint16_t)ethaddr->addr[0], (uint16_t)ethaddr->addr[1], (uint16_t)ethaddr->addr[2],
-    //          (uint16_t)ethaddr->addr[3], (uint16_t)ethaddr->addr[4], (uint16_t)ethaddr->addr[5]));
+    //          (uint16_t)MacAddress->addr[0], (uint16_t)MacAddress->addr[1], (uint16_t)MacAddress->addr[2],
+    //          (uint16_t)MacAddress->addr[3], (uint16_t)MacAddress->addr[4], (uint16_t)MacAddress->addr[5]));
 
     auto netif = ip4_route(ipaddr);
     if (netif == nullptr) {
         return ERR_RTE;
     }
 
-    return etharp_update_arp_entry(netif, ipaddr, ethaddr, kEtharpFlagTryHard | kEtharpFlagStaticEntry);
+    return etharp_update_arp_entry(netif, ipaddr, MacAddress, kEtharpFlagTryHard | kEtharpFlagStaticEntry);
 }
 
 
@@ -530,7 +530,7 @@ etharp_cleanup_netif(struct NetworkInterface* netif)
 ssize_t
 etharp_find_addr(struct NetworkInterface* netif,
                  const Ip4Addr* ipaddr,
-                 struct EthernetAddress** eth_ret,
+                 struct MacAddress** eth_ret,
                  const Ip4Addr** ip_ret)
 {
     lwip_assert("eth_ret != NULL && ip_ret != NULL",
@@ -539,7 +539,7 @@ etharp_find_addr(struct NetworkInterface* netif,
 
     int16_t i = etharp_find_entry(ipaddr, kEtharpFlagFindOnly, netif);
     if ((i >= 0) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
-        *eth_ret = &arp_table[i].ethaddr;
+        *eth_ret = &arp_table[i].MacAddress;
         *ip_ret = &arp_table[i].ipaddr;
         return i;
     }
@@ -557,7 +557,7 @@ etharp_find_addr(struct NetworkInterface* netif,
  * @return 1 on valid index, 0 otherwise
  */
 int
-etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthernetAddress** eth_ret)
+etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct MacAddress** eth_ret)
 {
     lwip_assert("ipaddr != NULL", ipaddr != nullptr);
     lwip_assert("netif != NULL", netif != nullptr);
@@ -566,7 +566,7 @@ etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, st
     if ((i < ARP_TABLE_SIZE) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
         *ipaddr = &arp_table[i].ipaddr;
         *netif = arp_table[i].netif;
-        *eth_ret = &arp_table[i].ethaddr;
+        *eth_ret = &arp_table[i].MacAddress;
         return 1;
     }
     else {
@@ -628,12 +628,12 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
     IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
 
     /* this interface is not configured? */
-    if (ip4_addr_isany_val(*get_net_ifc_ip4_addr(netif))) {
+    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
         for_us = 0;
     }
     else {
         /* ARP packet directed to us? */
-        for_us = uint8_t(ip4_addr_cmp(&dipaddr, get_net_ifc_ip4_addr(netif)));
+        for_us = uint8_t(ip4_addr_cmp(&dipaddr, get_netif_ip4_addr(netif,)));
     }
 
     /* ARP message directed to us?
@@ -659,16 +659,16 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
         if (for_us) {
             /* send ARP response */
             etharp_raw(netif,
-                       (struct EthernetAddress *)netif->hwaddr,
+                       (struct MacAddress *)netif->hwaddr,
                        &hdr->shwaddr,
-                       (struct EthernetAddress *)netif->hwaddr,
-                       get_net_ifc_ip4_addr(netif),
+                       (struct MacAddress *)netif->hwaddr,
+                       get_netif_ip4_addr(netif,),
                        &hdr->shwaddr,
                        &sipaddr,
                        ARP_REPLY);
             /* we are not configured? */
         }
-        else if (ip4_addr_isany_val(*get_net_ifc_ip4_addr(netif))) {
+        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
             /* { for_us == 0 and netif->ip_addr.addr == 0 } */
             Logf(true, ("etharp_input: we are unconfigured, ARP request ignored.\n"));
             /* request was not directed to us */
@@ -723,13 +723,13 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
         }
         else if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_UNICAST) {
             /* issue a unicast request (for 15 seconds) to prevent unnecessary broadcast */
-            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].ethaddr) == ERR_OK) {
+            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == ERR_OK) {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
     }
 
-    return ethernet_output(netif, q, (struct EthernetAddress *)(netif->hwaddr), &arp_table[arp_idx].ethaddr, ETHTYPE_IP);
+    return ethernet_output(netif, q, (struct MacAddress *)(netif->hwaddr), &arp_table[arp_idx].MacAddress, ETHTYPE_IP);
 }
 
 
@@ -754,8 +754,8 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
 LwipStatus
 etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr)
 {
-    const struct EthernetAddress* dest;
-    struct EthernetAddress mcastaddr{};
+    const struct MacAddress* dest;
+    struct MacAddress mcastaddr{};
     auto dst_addr = ipaddr;
 
 
@@ -769,7 +769,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     /* broadcast destination IP address? */
     if (ip4_addr_isbroadcast(ipaddr, netif)) {
         /* broadcast on Ethernet also */
-        dest = (const struct EthernetAddress *)&ETH_BCAST_ADDR;
+        dest = (const struct MacAddress *)&ETH_BCAST_ADDR;
         /* multicast destination IP address? */
     }
     else if (ip4_addr_ismulticast(ipaddr)) {
@@ -787,7 +787,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     else {
         /* outside local network? if so, this can neither be a global broadcast nor
            a subnet broadcast. */
-        if (!ip4_addr_netcmp(ipaddr, get_net_ifc_ip4_addr(netif), netif_ip4_netmask(netif)) &&
+        if (!ip4_addr_netcmp(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
             !ip4_addr_islinklocal(ipaddr)) {
             auto iphdr = reinterpret_cast<Ip4Hdr*>(q->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
@@ -797,9 +797,9 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
             if (!ip4_addr_islinklocal(&iphdr->src)) {
                 {
                     /* interface has default gateway? */
-                    if (!ip4_addr_isany_val(*netif_ip4_gw(netif))) {
+                    if (!ip4_addr_isany_val(*get_netif_ip4_gw(netif,))) {
                         /* send to hardware address of default gateway IP address */
-                        dst_addr = netif_ip4_gw(netif);
+                        dst_addr = get_netif_ip4_gw(netif,);
                         /* no default gateway available */
                     }
                     else {
@@ -848,7 +848,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     /* continuation for multicast/broadcast destinations */
     /* obtain source Ethernet address of the given interface */
     /* send packet directly on the link */
-    return ethernet_output(netif, q, (struct EthernetAddress *)(netif->hwaddr), dest, ETHTYPE_IP);
+    return ethernet_output(netif, q, (struct MacAddress *)(netif->hwaddr), dest, ETHTYPE_IP);
 }
 
 
@@ -888,7 +888,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 LwipStatus
 etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q)
 {
-    struct EthernetAddress* srcaddr = (struct EthernetAddress *)netif->hwaddr;
+    struct MacAddress* srcaddr = (struct MacAddress *)netif->hwaddr;
     LwipStatus result = ERR_MEM;
     int is_new_entry = 0; /* non-unicast address? */
     if (ip4_addr_isbroadcast(ipaddr, netif) ||
@@ -948,7 +948,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
         /* we have a valid IP->Ethernet address mapping */
         EtharpSetAddrhint(netif, i);
         /* send the packet */
-        result = ethernet_output(netif, q, srcaddr, &(arp_table[i].ethaddr), ETHTYPE_IP);
+        result = ethernet_output(netif, q, srcaddr, &(arp_table[i].MacAddress), ETHTYPE_IP);
         /* pending entry? (either just created or already pending */
     }
     else if (arp_table[i].state == ETHARP_STATE_PENDING) {
@@ -1042,11 +1042,11 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
  */
 static LwipStatus
 etharp_raw(NetworkInterface& netif,
-           const EthernetAddress& ethsrc_addr,
-           const EthernetAddress& ethdst_addr,
-           const EthernetAddress& hwsrc_addr,
+           const MacAddress& ethsrc_addr,
+           const MacAddress& ethdst_addr,
+           const MacAddress& hwsrc_addr,
            const Ip4Addr& ipsrc_addr,
-           const EthernetAddress& hwdst_addr,
+           const MacAddress& hwdst_addr,
            const Ip4Addr& ipdst_addr,
            const uint16_t opcode)
 {
@@ -1121,13 +1121,13 @@ etharp_raw(NetworkInterface& netif,
  *         any other LwipStatus on failure
  */
 static LwipStatus
-etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const EthernetAddress& hw_dst_addr)
+etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const MacAddress& hw_dst_addr)
 {
     return etharp_raw(netif,
                       netif.ethernet_addresses[0],
                       hw_dst_addr,
-                      (struct EthernetAddress *)netif->hwaddr,
-                      get_net_ifc_ip4_addr(netif),
+                      (struct MacAddress *)netif->hwaddr,
+                      get_netif_ip4_addr(netif,),
                       &ETH_ZERO_ADDR,
                       ipaddr,
                       ARP_REQUEST);

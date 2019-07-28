@@ -39,82 +39,79 @@
  * <delamer@inicotech.com>
  */
 
-#include <opt.h>
-#include <ethernet.h>
 #include <ethip6.h>
-#include <icmp6.h>
+#include <ethernet.h>
 #include <ieee.h>
 #include <ip6_addr.h>
 #include <nd6.h>
 #include <network_interface.h>
 #include <packet_buffer.h>
+#include <mac_address.h>
+
 #include <cstring>
 
 
-/**
- * Resolve and fill-in Ethernet address header for outgoing IPv6 packet.
- *
- * For IPv6 multicast, corresponding Ethernet addresses
- * are selected and the packet is transmitted on the link.
- *
- * For unicast addresses, ask the ND6 module what to do. It will either let us
- * send the the packet right away, or queue the packet for later itself, unless
- * an error occurs.
- *
- * @todo anycast addresses
- *
- * @param netif The lwIP network interface which the IP packet will be sent on.
- * @param q The PacketBuffer(s) containing the IP packet to be sent.
- * @param ip6addr The IP address of the packet destination.
- *
- * @return
- * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
- */
-LwipStatus
-ethip6_output(NetworkInterface* netif, struct PacketBuffer* q, const Ip6Addr* ip6addr)
+///
+/// Resolve and fill-in Ethernet address header for outgoing IPv6 packet.
+///
+/// For IPv6 multicast, corresponding Ethernet addresses
+/// are selected and the packet is transmitted on the link.
+///
+/// For unicast addresses, ask the ND6 module what to do. It will either let us
+/// send the the packet right away, or queue the packet for later itself, unless
+/// an error occurs.
+///
+/// @todo anycast addresses
+///
+/// @param net_ifc The lwIP network interface which the IP packet will be sent on.
+/// @param pkt_buf The PacketBuffer(s) containing the IP packet to be sent.
+/// @param ip6_addr The IP address of the packet destination.
+///
+/// @return
+/// - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
+///
+LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const Ip6Addr& ip6_addr)
 {
-    EthernetAddress dest{};
+    MacAddress dest{};
     const uint8_t* hwaddr;
-
-   
-
-    /* The destination IP address must be properly zoned from here on down. */
-    // IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
-
-    /* multicast destination IP address? */
-    if (ip6_addr_ismulticast(ip6addr))
+    // The destination IP address must be properly zoned from here on down.
+    // multicast destination IP address?
+    if (is_ip6_addr_mcast(ip6_addr))
     {
-        /* Hash IP multicast address to MAC address.*/
+        // Hash IP multicast address to MAC address
         dest.addr[0] = 0x33;
         dest.addr[1] = 0x33;
-        dest.addr[2] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[0];
-        dest.addr[3] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[1];
-        dest.addr[4] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[2];
-        dest.addr[5] = reinterpret_cast<const uint8_t *>(&(ip6addr->addr[3]))[3];
+        dest.addr[2] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[0];
+        dest.addr[3] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[1];
+        dest.addr[4] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[2];
+        dest.addr[5] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[3];
 
-        /* Send out. */
-        return ethernet_output(netif, q, reinterpret_cast<const struct EthernetAddress*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
-    }
 
-    /* We have a unicast destination IP address */
-    /* @todo anycast? */
+        const auto i = 0;
 
+        return ethernet_output(net_ifc,
+                               pkt_buf,
+                               net_ifc.mac_address,
+                               dest,
+                               ETHTYPE_IPV6);
+    } 
+    // We have a unicast destination IP address */ /* @todo anycast? */
     /* Ask ND6 what to do with the packet. */
-    const LwipStatus result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
+    const auto result = nd6_get_next_hop_addr_or_queue(net_ifc, pkt_buf, ip6_addr, &hwaddr);
     if (result != ERR_OK)
     {
         return result;
-    }
-
-    /* If no hardware address is returned, nd6 has queued the packet for later. */
+    } /* If no hardware address is returned, nd6 has queued the packet for later. */
     if (hwaddr == nullptr)
     {
         return ERR_OK;
-    }
-
-    /* Send out the packet using the returned hardware address. */
+    } /* Send out the packet using the returned hardware address. */
     memcpy(dest.addr, hwaddr, 6);
-    return ethernet_output(netif, q, reinterpret_cast<const struct EthernetAddress*>(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    return ethernet_output(net_ifc,
+                           pkt_buf,
+                           reinterpret_cast<const struct MacAddress*>(net_ifc->hwaddr),
+                           &dest,
+                           ETHTYPE_IPV6);
 }
 
 //

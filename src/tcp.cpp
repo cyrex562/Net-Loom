@@ -523,7 +523,7 @@ tcp_shutdown(struct TcpPcb* pcb, int shut_rx, int shut_tx)
     {
         return ERR_CONN;
     }
-    if (shut_rx)
+    if (shut_rx != 0)
     {
         /* shut down the receive side: set a flag not to receive any more data... */
         tcp_set_flags(pcb, TF_RXCLOSED);
@@ -759,7 +759,7 @@ tcp_bind_netif(struct TcpPcb* pcb, const NetworkInterface* netif)
 
     if (netif != nullptr)
     {
-        pcb->netif_idx = netif_get_index(netif);
+        pcb->netif_idx = get_and_inc_netif_num(netif);
     }
     else
     {
@@ -1070,7 +1070,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
 
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = netif_get_by_index(pcb->netif_idx);
+        netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -1099,7 +1099,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
     if (is_ip_addr_v6(&pcb->remote_ip) &&
         ip6_addr_lacks_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST))
     {
-        ip6_addr_assign_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST, netif);
+        assign_ip6_addr_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST, netif,);
     }
     const uint16_t old_local_port = pcb->local_port;
     if (pcb->local_port == 0)

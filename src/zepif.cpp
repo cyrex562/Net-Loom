@@ -116,7 +116,7 @@ zepif_udp_recv(void* arg,
     }
     /* TODO Check CRC? */
     /* remove CRC trailer */
-    pbuf_realloc(p, p->tot_len - 2);
+    pbuf_realloc(p);
 
     /* Call into 6LoWPAN code. */
     auto err = netif_lowpan6->input(p, netif_lowpan6);

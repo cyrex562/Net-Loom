@@ -16,7 +16,7 @@ constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
  * ATTENTION: This is meant as an example only, in real-world use, you should
  * provide a better implementation :-)
  */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, uint8_t port_idx)
+bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx)
 {
     int i;
     const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
@@ -25,7 +25,7 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, ui
         auto e = &fdb->fdb[i];
         if (e->used && e->ts)
         {
-            if (!memcmp(&e->addr, src_addr, sizeof(struct EthernetAddress)))
+            if (!memcmp(&e->addr, src_addr, sizeof(struct MacAddress)))
             {
                 // Logf(BRIDGEIF_FDB_DEBUG,
                 //             ("br: update src %02x:%02x:%02x:%02x:%02x:%02x (from %d) @ idx %d\n"
@@ -50,7 +50,7 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, ui
                 //                 , src_addr->addr[0], src_addr->addr[1], src_addr->addr[2],
                 //                 src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
                 //                 port_idx, i));
-                memcpy(&e->addr, src_addr, sizeof(struct EthernetAddress));
+                memcpy(&e->addr, src_addr, sizeof(struct MacAddress));
                 e->ts = BRIDGE_FDB_TIMEOUT_SEC;
                 e->port = port_idx;
                 e->used = 1;
@@ -66,7 +66,7 @@ bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, ui
  * @ingroup bridgeif_fdb
  * Walk our list of auto-learnt fdb entries and return a port to forward or BR_FLOOD if unknown
  */
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthernetAddress* dst_addr)
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct MacAddress* dst_addr)
 {
     const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
     for (auto i = 0; i < fdb->max_fdb_entries; i++)
@@ -74,7 +74,7 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct EthernetAddre
         auto e = &fdb->fdb[i];
         if (e->used && e->ts)
         {
-            if (!memcmp(&e->addr, dst_addr, sizeof(struct EthernetAddress)))
+            if (!memcmp(&e->addr, dst_addr, sizeof(struct MacAddress)))
             {
                 const auto ret = BridgeIfcPortMask(uint64_t(1 << e->port));
                 return ret;

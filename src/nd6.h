@@ -16,7 +16,7 @@ struct ns_header
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    Ip6AddrWireFmt target_address;
+    Ip6Addr target_address;
     /* Options follow. */
 };
 
@@ -30,7 +30,7 @@ struct NeighAdvHdr
     uint16_t chksum;
     uint8_t flags;
     uint8_t reserved[3];
-    Ip6AddrWireFmt target_address;
+    Ip6Addr target_address;
     /* Options follow. */
 };
 
@@ -82,8 +82,8 @@ struct RedirectMsgHdr
     uint8_t code;
     uint16_t chksum;
     uint32_t reserved;
-    Ip6AddrWireFmt target_address;
-    Ip6AddrWireFmt destination_address; /* Options follow. */
+    Ip6Addr target_address;
+    Ip6Addr destination_address; /* Options follow. */
 };
 
 
@@ -118,7 +118,7 @@ struct PrefixOpt
     uint32_t preferred_lifetime;
     uint8_t reserved2[3];
     uint8_t site_prefix_length;
-    Ip6AddrWireFmt prefix;
+    Ip6Addr prefix;
 };
 
 
@@ -159,7 +159,7 @@ struct RouterOpt
     uint8_t prefix_length;
     uint8_t preference;
     uint32_t route_lifetime;
-    Ip6AddrWireFmt prefix;
+    Ip6Addr prefix;
 };
 
 
@@ -173,7 +173,7 @@ struct RdnssOpt
     uint8_t length;
     uint16_t reserved;
     uint32_t lifetime;
-    Ip6AddrWireFmt rdnss_address[1];
+    Ip6Addr rdnss_address[1];
 };
 
 

@@ -432,7 +432,7 @@ static void
 dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out)
 {
   /* shrink the PacketBuffer to the actual content length */
-  pbuf_realloc(p_out, (uint16_t)(sizeof(struct Dhcp6Msg) + options_out_len));
+  pbuf_realloc(p_out);
 }
 
 
@@ -522,13 +522,13 @@ dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in
         memset(&dns_addr, 0, sizeof(dns_addr));
         const auto dns_addr6 = &dns_addr.u_addr.ip6;
         for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_PROVIDE_DNS_SERVERS);
-             n++, idx += sizeof(Ip6AddrWireFmt)) {
-            const auto copied = pbuf_copy_partial(p_msg_in, (uint8_t*)dns_addr6, sizeof(Ip6AddrWireFmt), idx);
-            if (copied != sizeof(Ip6AddrWireFmt)) {
+             n++, idx += sizeof(Ip6Addr)) {
+            const auto copied = pbuf_copy_partial(p_msg_in, (uint8_t*)dns_addr6, sizeof(Ip6Addr), idx);
+            if (copied != sizeof(Ip6Addr)) {
                 /* PacketBuffer length mismatch */
                 return;
             }
-            ip6_addr_assign_zone(dns_addr6, IP6_UNKNOWN, netif);
+            assign_ip6_addr_zone(dns_addr6, IP6_UNKNOWN, netif,);
             /* @todo: do we need a different offset than DHCP(v4)? */
             dns_setserver(n, &dns_addr);
         }
@@ -544,15 +544,15 @@ dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in
         uint8_t n;
 
         for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_MAX_NTP_SERVERS);
-             n++, idx += sizeof(Ip6AddrWireFmt)) {
+             n++, idx += sizeof(Ip6Addr)) {
             const auto ntp_addr6 = &ntp_server_addrs[n].u_addr.ip6;
             zero_ip_addr_ip6(&ntp_server_addrs[n]);
-            const auto copied = pbuf_copy_partial(p_msg_in, (uint8_t*)ntp_addr6, sizeof(Ip6AddrWireFmt), idx);
-            if (copied != sizeof(Ip6AddrWireFmt)) {
+            const auto copied = pbuf_copy_partial(p_msg_in, (uint8_t*)ntp_addr6, sizeof(Ip6Addr), idx);
+            if (copied != sizeof(Ip6Addr)) {
                 /* PacketBuffer length mismatch */
                 return;
             }
-            ip6_addr_assign_zone(ntp_addr6, IP6_UNKNOWN, netif);
+            assign_ip6_addr_zone(ntp_addr6, IP6_UNKNOWN, netif,);
         }
     }
 }
@@ -604,7 +604,7 @@ static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6* dhcp6)
             /* overflow */
             return ERR_BUF;
         } /* copy option + length, might be split accross pbufs */
-        auto* op_len = static_cast<uint8_t *>(pbuf_get_contiguous(p, op_len_buf, 4, 4, offset));
+        auto* op_len = static_cast<uint8_t *>(pbuf_get_contiguous(p, op_len_buf, 4, offset));
         if (op_len == nullptr)
         {
             /* failed to get option and length */

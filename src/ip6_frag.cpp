@@ -129,9 +129,9 @@ ip6_reass_free_complete_datagram(struct Ip6ReassemblyData *ipr)
         Ip6Addr src_addr{};
         Ip6Addr dest_addr{};
         ip6_addr_copy_from_packed(&src_addr, &((ipr)->src));
-      ip6_addr_set_zone(&src_addr, ipr->src_zone);
+      set_ip6_addr_zone(&src_addr, ipr->src_zone);
       ip6_addr_copy_from_packed(&dest_addr, &((ipr)->dest));
-      ip6_addr_set_zone(&dest_addr, ipr->dest_zone);
+      set_ip6_addr_zone(&dest_addr, ipr->dest_zone);
       /* Send the actual ICMP response. */
       icmp6_time_exceeded_with_addrs(p, ICMP6_TE_FRAG, &src_addr, &dest_addr);
     }
@@ -271,8 +271,8 @@ ip6_reass(struct PacketBuffer *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if ((frag_hdr->_identification == ipr->identification) &&
-        ip6_addr_cmp_packed(curr_src_addr, &(IPV6_FRAG_SRC(ipr)), ipr->src_zone) &&
-        ip6_addr_cmp_packed(curr_dst_addr, &(IPV6_FRAG_DEST(ipr)), ipr->dest_zone)) {
+        cmp_ip6_addr2(curr_src_addr, &(IPV6_FRAG_SRC(ipr)), ipr->src_zone) &&
+        cmp_ip6_addr2(curr_dst_addr, &(IPV6_FRAG_DEST(ipr)), ipr->dest_zone)) {
       break;
     }
     ipr_prev = ipr;

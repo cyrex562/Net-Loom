@@ -430,9 +430,9 @@ struct formatter<std::chrono::duration<Rep, Period>, Char> {
       if (const char *unit = get_units<Period>())
         format_to(buf, "{}{}", d.count(), unit);
       else if (Period::den == 1)
-        format_to(buf, "{}[{}]s", d.count(), Period::num);
+        format_to(buf, "{}[{}]s", d.count(), Period::if_num);
       else
-        format_to(buf, "{}[{}/{}]s", d.count(), Period::num, Period::den);
+        format_to(buf, "{}[{}/{}]s", d.count(), Period::if_num, Period::den);
       internal::handle_dynamic_spec<internal::width_checker>(
         spec.width_, width_ref, ctx);
     } else {

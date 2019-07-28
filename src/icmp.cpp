@@ -85,12 +85,12 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
         if (ip4_addr_ismulticast(&curr_dst_addr->u_addr.ip4))
         {
             /* For multicast, use address of receiving interface as source address */
-            src = get_net_ifc_ip4_addr(inp);
+            src = get_netif_ip4_addr(inp,);
         } /* broadcast destination address? */
         if (ip4_addr_isbroadcast(&curr_dst_addr->u_addr.ip4, curr_netif))
         {
             /* For broadcast, use address of receiving interface as source address */
-            src = get_net_ifc_ip4_addr(inp);
+            src = get_netif_ip4_addr(inp,);
         }
         Logf(true, "icmp_input: ping\n");
         if (p->tot_len < sizeof(struct IcmpEchoHdr))

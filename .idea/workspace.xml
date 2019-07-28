@@ -198,7 +198,7 @@
     <findStrings>
       <find>&lt;Windows</find>
       <find>&quot;snmp.h</find>
-      <find>Ip6Addr</find>
+      <find>Ip6Address</find>
       <find>IP6_ADDR_ZONECHECK</find>
       <find>nd6_get_next_hop_addr_or_queue</find>
       <find>lowpan6_link_addr</find>

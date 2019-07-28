@@ -140,7 +140,7 @@ mld6_lookfor_group(NetworkInterface*ifp, const Ip6Addr *addr)
   struct MldGroup *group = ((MldGroup *)netif_get_client_data(ifp, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6));
 
   while (group != nullptr) {
-    if (ip6_addr_cmp(&(group->group_address), addr)) {
+    if (cmp_ip6_addr(&(group->group_address), addr)) {
       return group;
     }
     group = group->next;
@@ -164,7 +164,7 @@ mld6_new_group(NetworkInterface*ifp, const Ip6Addr *addr)
     // group = (MldGroup *)memp_malloc(MEMP_MLD6_GROUP);
     struct MldGroup* group = new MldGroup;
   if (group != nullptr) {
-    ip6_addr_set(&(group->group_address), addr);
+    set_ip6_addr(&(group->group_address), addr);
     group->timer              = 0; /* Not running */
     group->group_state        = MLD6_GROUP_IDLE_MEMBER;
     group->last_reporter_flag = 0;
@@ -309,7 +309,7 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we join this interface ? */
     if (is_ip6_addr_any(srcaddr) ||
-        netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
+        get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
       err = mld6_joingroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         return err;
@@ -337,8 +337,8 @@ mld6_joingroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
   /* If the address has a particular scope but no zone set, use the netif to
    * set one now. Within the mld6 module, all addresses are properly zoned. */
   if (ip6_addr_lacks_zone(groupaddr, IP6_MULTICAST)) {
-    ip6_addr_set(&ip6addr, groupaddr);
-    ip6_addr_assign_zone(&ip6addr, IP6_MULTICAST, netif);
+    set_ip6_addr(&ip6addr, groupaddr);
+    assign_ip6_addr_zone(&ip6addr, IP6_MULTICAST, netif,);
     groupaddr = &ip6addr;
   }
   // IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
@@ -396,7 +396,7 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we leave this interface ? */
     if (is_ip6_addr_any(srcaddr) ||
-        netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
+        get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
       LwipStatus res = mld6_leavegroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         /* Store this result if we have not yet gotten a success */
@@ -423,8 +423,8 @@ mld6_leavegroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
     Ip6Addr ip6addr;
 
   if (ip6_addr_lacks_zone(groupaddr, IP6_MULTICAST)) {
-    ip6_addr_set(&ip6addr, groupaddr);
-    ip6_addr_assign_zone(&ip6addr, IP6_MULTICAST, netif);
+    set_ip6_addr(&ip6addr, groupaddr);
+    assign_ip6_addr_zone(&ip6addr, IP6_MULTICAST, netif,);
     groupaddr = &ip6addr;
   }
   // IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
@@ -563,13 +563,13 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
   }
 
   /* Select our source address. */
-  if (!ip6_addr_isvalid(netif_ip6_addr_state(netif, 0))) {
+  if (!is_ip6_addr_valid(get_netif_ip6_addr_state(netif, 0))) {
     /* This is a special case, when we are performing duplicate address detection.
      * We must join the multicast group, but we don't have a valid address yet. */
     src_addr = nullptr;
   } else {
     /* Use link-local address as source address. */
-    src_addr = netif_ip6_addr(netif, 0);
+    src_addr = get_netif_ip6_addr(netif, 0);
   }
 
   /* MLD message header pointer. */
@@ -581,7 +581,7 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
   mld_hdr->chksum = 0;
   mld_hdr->max_resp_delay = 0;
   mld_hdr->reserved = 0;
-  ip6_addr_copy_to_packed((Ip6AddrWireFmt*)&mld_hdr->multicast_address, &group->group_address);
+  ip6_addr_copy_to_packed((Ip6Addr*)&mld_hdr->multicast_address, &group->group_address);
 
   // IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
   //   mld_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len,

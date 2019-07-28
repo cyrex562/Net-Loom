@@ -484,9 +484,8 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
     return ERR_ARG;
   }
 
-  ip6_addr_zonecheck(context);
 
-  ip6_addr_set(&lowpan6_data.lowpan6_context[idx], context);
+  set_ip6_addr(&lowpan6_data.lowpan6_context[idx], context);
 
   return ERR_OK;
 
@@ -553,7 +552,7 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
   Ip6Addr ip6_src; /* Check if we can compress source address (use aligned copy) */
   struct Ip6Hdr* ip6_hdr = (struct Ip6Hdr *)q->payload;
   ip6_addr_copy_from_packed(&ip6_src, &ip6_hdr->src);
-  ip6_addr_assign_zone(&ip6_src, IP6_UNICAST, netif);
+  assign_ip6_addr_zone(&ip6_src, IP6_UNICAST, netif,);
   if (lowpan6_get_address_mode(&ip6_src, &short_mac_addr) == 3) {
     src.addr_len = 2;
     src.addr[0] = short_mac_addr.addr[0];
@@ -568,7 +567,7 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
   }
 
   /* multicast destination IP address? */
-  if (ip6_addr_ismulticast(ip6addr)) {
+  if (is_ip6_addr_mcast(ip6addr)) {
 
     /* We need to send to the broadcast address.*/
     return lowpan6_frag(netif, q, &src, &ieee_802154_broadcast);
@@ -583,7 +582,7 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
     dest.addr_len = 2;
     dest.addr[0] = ((uint8_t *)q->payload)[38];
     dest.addr[1] = ((uint8_t *)q->payload)[39];
-    if ((src.addr_len == 2) && (ip6_addr_netcmp_zoneless((Ip6Addr*)&ip6_hdr->src, (Ip6Addr*)&ip6_hdr->dest)) &&
+    if ((src.addr_len == 2) && (cmp_ip6_net_zoneless((Ip6Addr*)&ip6_hdr->src, (Ip6Addr*)&ip6_hdr->dest)) &&
         (lowpan6_get_address_mode(ip6addr, &dest) == 3)) {
       return lowpan6_frag(netif, q, &src, &dest);
     }

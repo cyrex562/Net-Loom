@@ -1,2 +1,2 @@
-C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\ar.exe qc libfmtd.a  CMakeFiles/fmt.dir/src/format.cc.obj CMakeFiles/fmt.dir/src/posix.cc.obj
-C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\ranlib.exe libfmtd.a
+C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\ar.exe qc libfmtd.a  CMakeFiles/fmt.dir/src/format.cc.obj CMakeFiles/fmt.dir/src/posix.cc.obj
+C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\ranlib.exe libfmtd.a

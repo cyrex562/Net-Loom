@@ -1,42 +1,6 @@
-/**
- * @file
- * Ethernet common functions
- *
- * @defgroup ethernet Ethernet
- * @ingroup callbackstyle_api
- */
-
-/*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * Copyright (c) 2003-2004 Leon Woestenberg <leon.woestenberg@axon.tv>
- * Copyright (c) 2003-2004 Axon Digital Design B.V., The Netherlands.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- */
+///
+/// file: ethernet.cpp
+/// 
 
 #define NOMINMAX
 
@@ -50,8 +14,8 @@
 #include <cstring>
 
 
-const struct EthernetAddress ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
-const struct EthernetAddress ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
+const struct MacAddress ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const struct MacAddress ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
 
 
 /**
@@ -61,43 +25,43 @@ const struct EthernetAddress ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
  * the ARP cache is protected from concurrent access.\n
  * Don't call directly, pass to netif_add() and call netif->input().
  *
- * @param p the received packet, p->payload pointing to the ethernet header
- * @param netif the network interface on which the packet was received
+ * @param pkt_buf the received packet, p->payload pointing to the ethernet header
+ * @param net_ifc the network interface on which the packet was received
  *
  * @see LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
  * @see ETHARP_SUPPORT_VLAN
  * @see LWIP_HOOK_VLAN_CHECK
  */
 LwipStatus
-ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
+ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
 {
     uint16_t next_hdr_offset = kSizeofEthHdr;
 
 
-    if (p->len <= kSizeofEthHdr) {
+    if (pkt_buf.len <= kSizeofEthHdr) {
         /* a packet with only an ethernet header (or less) is not valid for us */
         // TODO: remove or fix missing ifinerrors
         // MIB2_STATS_NETIF_INC(netif, ifinerrors);
-        free_pkt_buf(p);
+        free_pkt_buf(pkt_buf);
         return ERR_OK;
     }
 
-    if (p->if_idx == NETIF_NO_INDEX) {
-        p->if_idx = netif_get_index(netif);
+    if (pkt_buf.if_idx == NETIF_NO_INDEX) {
+        pkt_buf.if_idx = get_and_inc_netif_num(net_ifc);
     }
 
     /* points to packet payload, which starts with an Ethernet header */
-    auto ethhdr = reinterpret_cast<struct EthHdr *>(p->payload);
+    auto ethhdr = reinterpret_cast<struct EthHdr *>(pkt_buf.payload);
 
     auto type = ethhdr->type;
 
     if (type == pp_htons(ETHTYPE_VLAN)) {
         auto* vlan = (struct EthVlanHdr *)(((char *)ethhdr) + kSizeofEthHdr);
         next_hdr_offset = kSizeofEthHdr + VLAN_HDR_LEN;
-        if (p->len <= kSizeofEthHdr + VLAN_HDR_LEN) {
+        if (pkt_buf.len <= kSizeofEthHdr + VLAN_HDR_LEN) {
             /* a packet with only an ethernet/vlan header (or less) is not valid for us */
             // MIB2_STATS_NETIF_INC(netif, ifinerrors);
-            free_pkt_buf(p);
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
 
@@ -127,82 +91,82 @@ ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
             if ((ethhdr->dest.addr[1] == LNK_LYR_MCAST_ADDR_OUI[1]) &&
                 (ethhdr->dest.addr[2] == LNK_LYR_MCAST_ADDR_OUI[2])) {
                 /* mark the PacketBuffer as link-layer multicast */
-                p->ll_multicast = true;
+                pkt_buf.ll_multicast = true;
             }
         }
         else if ((ethhdr->dest.addr[0] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[0]) &&
             (ethhdr->dest.addr[1] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[1])) {
             /* mark the PacketBuffer as link-layer multicast */
-            p->ll_multicast = true;
+            pkt_buf.ll_multicast = true;
         }
 
         else if (cmp_eth_addr(&ethhdr->dest, &ETH_BCAST_ADDR)) {
             /* mark the pbuf as link-layer broadcast */
-            p->ll_broadcast = true;
+            pkt_buf.ll_broadcast = true;
         }
     }
 
     if (type == pp_htons(ETHTYPE_IP)) {
-        if (!(netif->flags & NETIF_FLAG_ETH_ARP)) {
-            free_pkt_buf(p);
+        if (!(net_ifc->flags & NETIF_FLAG_ETH_ARP)) {
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
         /* skip Ethernet header (min. size checked above) */
-        if (pbuf_remove_header(p, next_hdr_offset)) {
+        if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
             //        Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
             //                    ("ethernet_input: IPv4 packet dropped, too short (%d/%d)\n",
             //                     p->tot_len, next_hdr_offset));
             //        Logf(true | LWIP_DBG_TRACE, ("Can't move over header in packet"));
-            free_pkt_buf(p);
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
         else {
             /* pass to IP layer */
-            ip4_input(p, netif);
+            ip4_input(pkt_buf, net_ifc);
         }
 
     }
     else if (type == pp_htons(ETHTYPE_ARP)) {
-        if (!(netif->flags & NETIF_FLAG_ETH_ARP)) {
-            free_pkt_buf(p);
+        if (!(net_ifc->flags & NETIF_FLAG_ETH_ARP)) {
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
         /* skip Ethernet header (min. size checked above) */
-        if (pbuf_remove_header(p, next_hdr_offset)) {
+        if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
 
-            free_pkt_buf(p);
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
         else {
             /* pass p to ARP module */
-            etharp_input(p, netif);
+            etharp_input(pkt_buf, net_ifc);
         }
 
 
     }
     else if (type == pp_htons(ETHTYPE_PPPOEDISC)) {
 
-        pppoe_disc_input(netif, p);
+        pppoe_disc_input(net_ifc, pkt_buf);
 
 
     }
     else if (type == pp_htons(ETHTYPE_PPPOE)) {
 
-        pppoe_data_input(netif, p);
+        pppoe_data_input(net_ifc, pkt_buf);
 
     }
     else if (type == pp_htons(ETHTYPE_IPV6)) {
         /* skip Ethernet header */
-        if ((p->len < next_hdr_offset) || pbuf_remove_header(p, next_hdr_offset)) {
+        if ((pkt_buf.len < next_hdr_offset) || pbuf_remove_header(pkt_buf, next_hdr_offset)) {
             // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
             //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
             //          p->tot_len, next_hdr_offset));
-            free_pkt_buf(p);
+            free_pkt_buf(pkt_buf);
             return ERR_OK;
         }
         else {
             /* pass to IPv6 layer */
-            ip6_input(p, netif);
+            ip6_input(pkt_buf, net_ifc);
         }
     }
     else {
@@ -213,7 +177,7 @@ ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
         // ETHARP_STATS_INC(etharp.proterr);
         // ETHARP_STATS_INC(etharp.drop);
         // MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
-        free_pkt_buf(p);
+        free_pkt_buf(pkt_buf);
         return ERR_OK;
     }
 
@@ -240,8 +204,8 @@ ethernet_input(struct PacketBuffer* p, NetworkInterface* netif)
 LwipStatus
 ethernet_output(NetworkInterface* netif,
                 struct PacketBuffer* p,
-                EthernetAddress* src,
-                EthernetAddress* dst,
+                MacAddress* src,
+                MacAddress* dst,
                 uint16_t eth_type)
 {
     uint16_t eth_type_be = lwip_htons(eth_type);

@@ -8,7 +8,7 @@
 #include <lwip_debug.h>
 #include <lwip_status.h>
 #include <opt.h>
-
+#include <vector>
 
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
@@ -76,30 +76,30 @@ constexpr auto PBUF_TYPE_ALLOC_SRC_MASK_APP_MAX = PBUF_TYPE_ALLOC_SRC_MASK;
  * @ingroup pbuf
  * Enumeration of pbuf types
  */
-enum PbufType{
-  /** pbuf data is stored in RAM, used for TX mostly, PacketBuffer and its payload
-      are allocated in one piece of contiguous memory (so the first payload byte
-      can be calculated from PacketBuffer).
-      pbuf_alloc() allocates PBUF_RAM pbufs as unchained pbufs (although that might
-      change in future versions).
-      This should be used for all OUTGOING packets (TX).*/
-  PBUF_RAM = (PBUF_ALLOC_FLAG_DATA_CONTIGUOUS | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP),
-  /** pbuf data is stored in ROM, i.e. PacketBuffer and its payload are located in
-      totally different memory areas. Since it points to ROM, payload does not
-      have to be copied when queued for transmission. */
-  PBUF_ROM = PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF,
-  /** pbuf comes from the pbuf pool. Much like PBUF_ROM but payload might change
-      so it has to be duplicated when queued before transmitting, depending on
-      who has a 'ref' to it. */
-  PBUF_REF = (PBUF_TYPE_FLAG_DATA_VOLATILE | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF),
-  /** pbuf payload refers to RAM. This one comes from a pool and should be used
-      for RX. Payload can be chained (scatter-gather RX) but like PBUF_RAM, struct
-      pbuf and its payload are allocated in one piece of contiguous memory (so
-      the first payload byte can be calculated from PacketBuffer).
-      Don't use this for TX, if the pool becomes empty e.g. because of TCP queuing,
-      you are unable to receive TCP acks! */
-  PBUF_POOL = (PBUF_ALLOC_FLAG_RX | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF_POOL)
-} ;
+// enum PacketBufferType{
+//   /** pbuf data is stored in RAM, used for TX mostly, PacketBuffer and its payload
+//       are allocated in one piece of contiguous memory (so the first payload byte
+//       can be calculated from PacketBuffer).
+//       pbuf_alloc() allocates PBUF_RAM pbufs as unchained pbufs (although that might
+//       change in future versions).
+//       This should be used for all OUTGOING packets (TX).*/
+//   PBUF_RAM = (PBUF_ALLOC_FLAG_DATA_CONTIGUOUS | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP),
+//   /** pbuf data is stored in ROM, i.e. PacketBuffer and its payload are located in
+//       totally different memory areas. Since it points to ROM, payload does not
+//       have to be copied when queued for transmission. */
+//   PBUF_ROM = PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF,
+//   /** pbuf comes from the pbuf pool. Much like PBUF_ROM but payload might change
+//       so it has to be duplicated when queued before transmitting, depending on
+//       who has a 'ref' to it. */
+//   PBUF_REF = (PBUF_TYPE_FLAG_DATA_VOLATILE | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF),
+//   /** pbuf payload refers to RAM. This one comes from a pool and should be used
+//       for RX. Payload can be chained (scatter-gather RX) but like PBUF_RAM, struct
+//       pbuf and its payload are allocated in one piece of contiguous memory (so
+//       the first payload byte can be calculated from PacketBuffer).
+//       Don't use this for TX, if the pool becomes empty e.g. because of TCP queuing,
+//       you are unable to receive TCP acks! */
+//   PBUF_POOL = (PBUF_ALLOC_FLAG_RX | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF_POOL)
+// } ;
 
 
 /** indicates this packet's data should be immediately passed to the application */
@@ -120,56 +120,48 @@ enum PbufType{
 // };
 
 
+enum PacketHeaderLayer
+{
+    PHL_LINK,
+    PHL_TRANS,
+    PHL_APP,
+};
+
+
+struct PacketHeader
+{
+    std::vector<uint8_t> raw_header;
+
+};
+
+
 /** Main packet buffer struct */
-struct PacketBuffer {
-  /** next pbuf in singly linked pbuf chain */
-  struct PacketBuffer *next;
+struct PacketBuffer
+{
+    /** next pbuf in singly linked pbuf chain */
+    // struct PacketBuffer* next; /** pointer to the actual data in the buffer */
+    std::vector<uint8_t> payload;
+    std::vector<uint8_t> raw;
 
-  /** pointer to the actual data in the buffer */
-  uint8_t *payload;
+    bool is_custom; /// indicates this pbuf is UDP multicast to be looped back
+    bool multicast_loop; ///
+    bool push; /// indicates this pbuf was received as link-level broadcast
+    bool ll_broadcast; /// indicates this pbuf was received as link-level multicast
+    bool ll_multicast; ///  indicates this pbuf includes a TCP FIN flag
+    bool has_tcp_fin_flag; /// the reference count always equals the number of pointers
+   /// that refer to this pbuf. This can be pointers from an application,
+   /// the stack itself, or pbuf->next pointers from a chain.
+   ///
+    LWIP_PBUF_REF_T ref_count;
 
-  /**
-   * total length of this buffer and all next buffers in chain
-   * belonging to the same packet.
-   *
-   * For non-queue packet chains this is the invariant:
-   * p->tot_len == p->len + (p->next? p->next->tot_len: 0)
-   */
-  size_t tot_len;
+    /** For incoming packets, this contains the input netif's index */
+    uint32_t if_idx;
 
-  /** length of this buffer */
-  size_t len;
-
-  /** a bit field indicating pbuf type and allocation sources
-      (see PBUF_TYPE_FLAG_*, PBUF_ALLOC_FLAG_* and PBUF_TYPE_ALLOC_SRC_MASK)
-    */
-  PbufType type_internal;
-
-  /** misc flags */
-  // PbufFlags flags;
-    /// indicates this is a custom pbuf: free_pkt_buf calls pbuf_custom->custom_free_function()
-    /// when the last reference is released (plus custom PBUF_RAM cannot be trimmed)
-    bool is_custom;
-    /// indicates this pbuf is UDP multicast to be looped back
-    bool multicast_loop;
-    ///
-    bool push;
-    /// indicates this pbuf was received as link-level broadcast
-    bool ll_broadcast;
-    /// indicates this pbuf was received as link-level multicast
-    bool ll_multicast;
-    ///  indicates this pbuf includes a TCP FIN flag
-    bool has_tcp_fin_flag;
-
-  /**
-   * the reference count always equals the number of pointers
-   * that refer to this pbuf. This can be pointers from an application,
-   * the stack itself, or pbuf->next pointers from a chain.
-   */
-  LWIP_PBUF_REF_T ref;
-
-  /** For incoming packets, this contains the input netif's index */
-  int if_idx;
+    // todo: add phy layer / framing preamble
+    // todo: add link layer header
+    // todo: add transport layer header
+    // todo: add application layer header
+    // todo: add phy layer / framing end
 };
 
 
@@ -190,7 +182,7 @@ struct PacketBuffer {
  * for other purposes. For more background information on this, see tasks #6735
  * and #7896, and bugs #11400 and #49914. */
 inline bool PbufNeedsCopy(PacketBuffer *p) {
-  return p->type_internal & PBUF_TYPE_FLAG_DATA_VOLATILE;
+  // return p->type_internal & PBUF_TYPE_FLAG_DATA_VOLATILE;
 }
 
 
@@ -242,66 +234,78 @@ inline void pbuf_check_free_ooseq()
 /* Initializes the pbuf module. This call is empty for now, but may not be in future. */
 #define pbuf_init()
 
-struct PacketBuffer *pbuf_alloc(PbufLayer layer, size_t length);
-struct PacketBuffer *pbuf_alloc_reference(uint8_t* payload, const size_t length, PbufType type);
 
-struct PacketBuffer *pbuf_alloced_custom(PbufLayer l, uint16_t length, PbufType type,
-                                 struct pbuf_custom *p, uint8_t *payload_mem,
-                                 uint16_t payload_mem_len);
+PacketBuffer pbuf_alloc(PbufLayer layer, size_t length);
+struct PacketBuffer pbuf_alloc_reference(std::vector<uint8_t> payload);
 
-void pbuf_realloc(struct PacketBuffer *p, size_t size);
 
-inline uint8_t pbuf_get_allocsrc(PacketBuffer* p)
-{
-    return ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK);
-}
+// struct PacketBuffer* pbuf_alloced_custom(PbufLayer l,
+//                                          uint16_t length,
+//                                          struct pbuf_custom* p,
+//                                          uint8_t* payload_mem,
+//                                          uint16_t payload_mem_len);
 
-inline bool pbuf_match_allocsrc(PacketBuffer* p, const uint8_t type)
-{
-    return (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK));
-}
+void pbuf_realloc(PacketBuffer& p);
 
-inline bool pbuf_match_type(PacketBuffer* p, uint8_t type)
-{
-    return pbuf_match_allocsrc(p, type);
-}
+// inline uint8_t pbuf_get_allocsrc(PacketBuffer* p)
+// {
+//     return ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK);
+// }
 
-uint8_t pbuf_header(struct PacketBuffer* p, int16_t header_size);
+// inline bool pbuf_match_allocsrc(PacketBuffer* p, const uint8_t type)
+// {
+//     // return (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK));
+// }
 
-uint8_t pbuf_header_force(struct PacketBuffer* p, int16_t header_size);
+// inline bool pbuf_match_type(PacketBuffer* p, uint8_t type)
+// {
+//     return pbuf_match_allocsrc(p, type);
+// }
+bool pbuf_header(PacketBuffer& packet_buffer, ssize_t header_size);
 
-uint8_t pbuf_add_header(struct PacketBuffer* p, size_t header_size_increment);
 
-uint8_t pbuf_add_header_force(struct PacketBuffer* p, size_t header_size_increment);
+bool pbuf_header_force(PacketBuffer& p, ssize_t header_size);
 
-uint8_t pbuf_remove_header(struct PacketBuffer* p, size_t header_size);
 
-struct PacketBuffer* pbuf_free_header(struct PacketBuffer* q, uint16_t size);
+bool pbuf_add_header(PacketBuffer& packet_buffer, size_t header_size_increment);
+
+
+bool pbuf_add_header_force(PacketBuffer& packet_buffer, size_t header_size_increment);
+
+
+bool pbuf_remove_header(PacketBuffer& p, size_t header_size);
+
+
+bool pbuf_free_header(PacketBuffer& packet_buffer, size_t size);
 
 void pbuf_ref(struct PacketBuffer* p);
 
-uint8_t free_pkt_buf(struct PacketBuffer* p);
 
-uint16_t pbuf_clen(const struct PacketBuffer* p);
+bool free_pkt_buf(PacketBuffer& p);
 
-void pbuf_cat(struct PacketBuffer* head, struct PacketBuffer* tail);
 
-void pbuf_chain(struct PacketBuffer* head, struct PacketBuffer* tail);
+size_t pbuf_clen(const PacketBuffer& p);
 
-struct PacketBuffer* pbuf_dechain(struct PacketBuffer* p);
+void pbuf_cat(PacketBuffer& head, PacketBuffer& tail);
 
-LwipStatus pbuf_copy(struct PacketBuffer* p_to, const struct PacketBuffer* p_from);
+void pbuf_chain(PacketBuffer& head, PacketBuffer& tail);
 
-uint16_t pbuf_copy_partial(const struct PacketBuffer* pbuf,
-                           uint8_t* dataptr,
-                           size_t len,
-                           size_t offset);
 
-uint8_t* pbuf_get_contiguous(const struct PacketBuffer* p,
-                             uint8_t* buffer,
-                             size_t bufsize,
-                             size_t len,
-                             size_t offset);
+PacketBuffer pbuf_dechain(PacketBuffer& p);
+
+LwipStatus pbuf_copy(PacketBuffer& dst_pbuf, PacketBuffer& src_pbuf);
+
+
+bool pbuf_copy_partial(const PacketBuffer& pbuf,
+                       std::vector<uint8_t> data,
+                       size_t len,
+                       size_t offset);
+
+
+bool pbuf_get_contiguous(const PacketBuffer& p,
+                         std::vector<uint8_t> buffer,
+                         size_t len,
+                         size_t offset);
 
 LwipStatus pbuf_take(struct PacketBuffer* buf, const uint8_t* dataptr, size_t len);
 
@@ -316,7 +320,7 @@ struct PacketBuffer* pbuf_skip(struct PacketBuffer* in,
 
 struct PacketBuffer* pbuf_coalesce(struct PacketBuffer* p, PbufLayer layer);
 
-struct PacketBuffer* pbuf_clone(PbufLayer l, PbufType type, struct PacketBuffer* p);
+PacketBuffer pbuf_clone(PbufLayer layer, PacketBuffer& packet_buffer);
 
 LwipStatus pbuf_fill_chksum(PacketBuffer* p,
                             uint16_t start_offset,
@@ -334,11 +338,14 @@ uint16_t pbuf_memcmp(const struct PacketBuffer* p, uint16_t offset, const void* 
 uint16_t pbuf_memfind(const struct PacketBuffer* p, const void* mem, uint16_t mem_len, uint16_t start_offset);
 uint16_t pbuf_strstr(const struct PacketBuffer* p, const char* substr);
 
+void
+pbuf_init_alloced_pbuf(PacketBuffer& pbuf, std::vector<uint8_t> payload);
+
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
     gets altered as the packet is passed down the stack */
 inline void check_pbuf_ip_rec_cnt_for_tx(PacketBuffer* p)
 {
-    lwip_assert("p->ref == 1", (p)->ref == 1);
+    lwip_assert("p->ref == 1", (p)->ref_count == 1);
 }
 
 //

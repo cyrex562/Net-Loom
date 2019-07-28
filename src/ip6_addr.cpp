@@ -61,7 +61,7 @@ inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' 
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-bool ip6addr_aton(std::string& cp, Ip6Addr& addr)
+bool ip6_addr_aton(std::string& cp, Ip6Addr& addr)
 {
     const char *s;
 
@@ -194,7 +194,7 @@ bool ip6addr_aton(std::string& cp, Ip6Addr& addr)
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         representation of addr
  */
-std::string ip6addr_ntoa(const Ip6Addr& addr)
+std::string ip6_addr_ntoa(const Ip6Addr& addr)
 {
     std::string str;
     return ip6addr_ntoa_r(addr, str);
@@ -214,7 +214,7 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr, std::string& buf)
     uint8_t zero_flag;
 
 
-  if (ip6_addr_isipv4mappedipv6(addr)) {
+  if (is_ip6_addr_ip4_mapped_ip6(addr)) {
     /* This is an IPv4 mapped address */
     Ip4Addr addr4;
 #define IP4MAPPED_HEADER "::FFFF:"

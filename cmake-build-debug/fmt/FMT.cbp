@@ -5,16 +5,16 @@
 		<Option title="FMT"/>
 		<Option makefile_is_custom="1"/>
 		<Option compiler="gcc"/>
-		<Option virtualFolders="CMake Files\;CMake Files\fmt\;CMake Files\fmt\support\;CMake Files\fmt\support\cmake\;"/>
+		<Option virtualFolders="CMake Files\;CMake Files\fmt\;CMake Files\fmt\support\;CMake Files\fmt\support\cmake\;CMake Files\libzmq\;CMake Files\libzmq\builds\;CMake Files\libzmq\builds\cmake\;CMake Files\libzmq\builds\cmake\Modules\;CMake Files\libzmq\src\;CMake Files\libzmq\tests\;CMake Files\libzmq\unittests\;"/>
 		<Build>
 			<Target title="all">
 				<Option working_dir="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="fmt">
@@ -25,18 +25,18 @@
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++/i686-w64-mingw32"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/../../../../i686-w64-mingw32/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt"/>
-					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt"/>
+					<CompileFile command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="fmt/fast">
@@ -47,18 +47,18 @@
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/include"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
-					<Add directory="C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++/i686-w64-mingw32"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/bin/../lib/gcc/i686-w64-mingw32/8.1.0/../../../../i686-w64-mingw32/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt/fast"/>
-					<CompileFile command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="C:/PROGRA~1/MINGW-~1/X86_64~1.0-P/mingw64/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 fmt/fast"/>
+					<CompileFile command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/PROGRA~2/MINGW-~1/I686-8~1.0-P/mingw32/bin/mingw32-make.exe -f &quot;C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
@@ -115,6 +115,57 @@
 		</Unit>
 		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/fmt/support/cmake/cxx14.cmake">
 			<Option virtualFolder="CMake Files\fmt\support\cmake\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/AUTHORS">
+			<Option virtualFolder="CMake Files\libzmq\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libzmq\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/COPYING">
+			<Option virtualFolder="CMake Files\libzmq\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/COPYING.LESSER">
+			<Option virtualFolder="CMake Files\libzmq\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/NEWS">
+			<Option virtualFolder="CMake Files\libzmq\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/ZeroMQConfig.cmake.in">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/clang-format-check.sh.in">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/platform.hpp.in">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/Modules/ClangFormat.cmake">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\Modules\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/Modules/FindAsciiDoc.cmake">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\Modules\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/Modules/TestZMQVersion.cmake">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\Modules\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/Modules/ZMQSourceRunChecks.cmake">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\Modules\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/builds/cmake/Modules/ZMQSupportMacros.cmake">
+			<Option virtualFolder="CMake Files\libzmq\builds\cmake\Modules\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/src/libzmq.pc.in">
+			<Option virtualFolder="CMake Files\libzmq\src\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/src/version.rc.in">
+			<Option virtualFolder="CMake Files\libzmq\src\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/tests/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libzmq\tests\"/>
+		</Unit>
+		<Unit filename="C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/unittests/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libzmq\unittests\"/>
 		</Unit>
 	</Project>
 </CodeBlocks_project_file>

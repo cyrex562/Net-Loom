@@ -104,20 +104,20 @@ NetworkInterface* ip4_route(const Ip4Addr* dest)
     for (netif = netif_list; netif != nullptr; netif = netif->next)
     {
         /* is the netif up, does it have a link and a valid address? */
-        if (is_netif_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(
-            *get_net_ifc_ip4_addr(netif)))
+        if (is_netif_up(netif) && is_netif_link_up(netif) && !ip4_addr_isany_val(
+            *get_netif_ip4_addr(netif,)))
         {
             /* network mask matches? */
             if (ip4_addr_netcmp(dest,
-                                get_net_ifc_ip4_addr(netif),
-                                netif_ip4_netmask(netif)))
+                                get_netif_ip4_addr(netif,),
+                                get_netif_ip4_netmask(netif,)))
             {
                 /* return netif on which to forward IP packet */
                 return netif;
             } /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
             if ((netif->flags & NETIF_FLAG_BCAST) == 0 && ip4_addr_cmp(
                 dest,
-                netif_ip4_gw(netif)))
+                get_netif_ip4_gw(netif,)))
             {
                 /* return netif on which to forward IP packet */
                 return netif;
@@ -152,8 +152,8 @@ NetworkInterface* ip4_route(const Ip4Addr* dest)
   }
 
     if (netif_default == nullptr || !is_netif_up(netif_default) || !
-        netif_is_link_up(netif_default) || ip4_addr_isany_val(
-            *get_net_ifc_ip4_addr(netif_default)) || ip4_addr_isloopback(dest))
+        is_netif_link_up(netif_default) || ip4_addr_isany_val(
+            *get_netif_ip4_addr(netif_default,)) || ip4_addr_isloopback(dest))
     {
         /* No matching netif found and default netif is not usable.
            If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
@@ -316,9 +316,9 @@ ip4_input_accept(NetworkInterface& netif)
     //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
 
     /* interface is up and configured? */
-    if (is_netif_up(netif) && !ip4_addr_isany_val(*get_net_ifc_ip4_addr(netif))) {
+    if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
         /* unicast to this interface address? */
-        if (ip4_addr_cmp(&curr_dst_addr, get_net_ifc_ip4_addr(netif)) ||
+        if (ip4_addr_cmp(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
             /* or broadcast on this interface network address? */
             ip4_addr_isbroadcast(&curr_dst_addr, netif)
 
@@ -386,7 +386,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
   /* Trim PacketBuffer. This is especially required for packets < 60 bytes. */
   if (iphdr_len < p->tot_len) {
-    pbuf_realloc(p, iphdr_len);
+    pbuf_realloc(p);
   }
 
   /* header length exceeds first PacketBuffer length, or ip length exceeds total PacketBuffer length? */
@@ -429,7 +429,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip4_addr_ismulticast(curr_dst_addr)) {
 
-    if (inp->flags & NETIF_FLAG_IGMP && igmp_lookfor_group(inp, curr_dst_addr)) {
+    if (inp->flags & NETIF_FLAG_IGMP && find_igmp_grp(inp, curr_dst_addr)) {
       /* IGMP snooping switches need 0.0.0.0 to be allowed as source address (RFC 4541) */
       Ip4Addr allsystems;
       Ipv4AddrFromBytes(&allsystems, 224, 0, 0, 1);
@@ -689,7 +689,7 @@ ip4_output_if_opt(struct PacketBuffer* p,
     const Ip4Addr* src_used = src;
     if (dest != nullptr) {
         if (ip4_addr_isany(src)) {
-            src_used = get_net_ifc_ip4_addr(netif);
+            src_used = get_netif_ip4_addr(netif,);
         }
     }
 
@@ -863,7 +863,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
   // }
 
   if (p->multicast_loop != 0) {
-    netif_loop_output(netif, p, netif);
+    output_netif_loop(netif, p);
   }
 
 

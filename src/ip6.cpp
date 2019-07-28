@@ -76,8 +76,8 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
     NetworkInterface* netif;
     int8_t i;
     if ((netif_list != nullptr) && (netif_list->next == nullptr)) {
-        if (!is_netif_up(netif_list) || !netif_is_link_up(netif_list) || (
-            ip6_addr_has_zone(dest) && !ip6_addr_est_zone(dest, netif_list))) {
+        if (!is_netif_up(netif_list) || !is_netif_link_up(netif_list) || (
+            ip6_addr_has_zone(dest) && !est_ip6_addr_zone(dest, netif_list))) {
             return nullptr;
         }
         return netif_list;
@@ -87,11 +87,10 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * is technically no "wrong" netif to choose, and we leave routing to other
    * rules; in most cases this should be the scoped-source rule below. */
     if (ip6_addr_has_zone(dest)) {
-        ip6_addr_zonecheck(dest);
         /* Find a netif based on the zone. For custom mappings, one zone may map
                           * to multiple netifs, so find one that can actually send a packet. */
         for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-            if (ip6_addr_est_zone(dest, netif) && is_netif_up(netif) && netif_is_link_up(
+            if (est_ip6_addr_zone(dest, netif) && is_netif_up(netif) && is_netif_link_up(
                 netif)) {
                 return netif;
             }
@@ -113,11 +112,11 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * wants, regardless of whether the source address is scoped. Finally, some
    * of this story also applies if scoping is disabled altogether. */
     if (ip6_addr_has_scope(dest, IP6_UNKNOWN) || ip6_addr_has_scope(src, IP6_UNICAST) ||
-        ip6_addr_isloopback(src)) {
+        is_ip6_addr_loopback(src)) {
         if (ip6_addr_has_zone(src)) {
             /* Find a netif matching the source zone (relatively cheap). */
             for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-                if (is_netif_up(netif) && netif_is_link_up(netif) && ip6_addr_est_zone(
+                if (is_netif_up(netif) && is_netif_link_up(netif) && est_ip6_addr_zone(
                     src,
                     netif)) {
                     return netif;
@@ -127,12 +126,12 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
         else {
             /* Find a netif matching the source address (relatively expensive). */
             for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-                if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
+                if (!is_netif_up(netif) || !is_netif_link_up(netif)) {
                     continue;
                 }
                 for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-                    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
-                        ip6_addr_cmp_zoneless(src, netif_ip6_addr(netif, i))) {
+                    if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) &&
+                        cmp_ip6_addr_zoneless(src, get_netif_ip6_addr(netif, i))) {
                         return netif;
                     }
                 }
@@ -141,7 +140,6 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
      * zone boundary violations. */
         return nullptr;
     } /* We come here only if neither source nor destination is scoped. */
-    ip6_addr_zonecheck(src); // netif = LWIP_HOOK_IP6_ROUTE(src, dest);
     if (netif != nullptr) {
         return netif;
     } /* See if the destination subnet matches a configured address. In accordance
@@ -151,15 +149,15 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * still need to check for exact matches here. By (lwIP) policy, statically
    * configured addresses do always have an implied local /64 subnet. */
     for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-        if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
+        if (!is_netif_up(netif) || !is_netif_link_up(netif)) {
             continue;
         }
         for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-            if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
-                ip6_addr_netcmp(dest, netif_ip6_addr(netif, i)) && (
-                    netif_ip6_addr_isstatic(netif, i) || ip6_addr_nethostcmp(
+            if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) &&
+                ip6_addr_on_same_net(dest, get_netif_ip6_addr(netif, i)) && (
+                    is_netif_ip6_addr_static(netif, i) || ip6_addr_hosts_equal(
                         dest,
-                        netif_ip6_addr(netif, i)))) {
+                        get_netif_ip6_addr(netif, i)))) {
                 return netif;
             }
         }
@@ -171,19 +169,19 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
    * for scoped source addresses, this applies to unscoped addresses only. */
     if (!is_ip6_addr_any(src)) {
         for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
-            if (!is_netif_up(netif) || !netif_is_link_up(netif)) {
+            if (!is_netif_up(netif) || !is_netif_link_up(netif)) {
                 continue;
             }
             for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-                if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) && ip6_addr_cmp(
+                if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) && cmp_ip6_addr(
                     src,
-                    netif_ip6_addr(netif, i))) {
+                    get_netif_ip6_addr(netif, i))) {
                     return netif;
                 }
             }
         }
     } /* loopif is disabled, loopback traffic is passed through any netif */
-    if (ip6_addr_isloopback(dest)) {
+    if (is_ip6_addr_loopback(dest)) {
         /* don't check for link on loopback traffic */
         if (netif_default != nullptr && is_netif_up(netif_default)) {
             return netif_default;
@@ -195,7 +193,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
         }
         return nullptr;
     } /* no matching netif found, use default netif, if up */
-    if ((netif_default == nullptr) || !is_netif_up(netif_default) || !netif_is_link_up(
+    if ((netif_default == nullptr) || !is_netif_up(netif_default) || !is_netif_link_up(
         netif_default)) {
         return nullptr;
     }
@@ -241,12 +239,12 @@ ip6_forward(struct PacketBuffer* p,
             Ip6Addr* src_addr)
 {
     /* do not forward link-local or loopback addresses */
-    if (ip6_addr_islinklocal(dest_addr) || ip6_addr_isloopback(dest_addr)) {
+    if (ip6_addr_islinklocal(dest_addr) || is_ip6_addr_loopback(dest_addr)) {
         Logf(true, ("ip6_forward: not forwarding link-local address.\n"));
         return;
     } /* Find network interface where to forward this IP packet to. */
     Ip6Addr ip6_any_addr{};
-    ip6_addr_set_any(&ip6_any_addr);
+    set_ip6_addr_any(&ip6_any_addr);
     auto netif = ip6_route(&ip6_any_addr, dest_addr);
     if (netif == nullptr) {
         /* Don't send ICMP messages in response to ICMP messages */
@@ -258,8 +256,8 @@ ip6_forward(struct PacketBuffer* p,
    * outside of their zone. We determined the zone a bit earlier, so we know
    * that the address is properly zoned here, so we can safely use has_zone.
    * Also skip packets with a loopback source address (link-local implied). */
-    if ((ip6_addr_has_zone(src_addr) && ! ip6_addr_est_zone(src_addr, netif)) ||
-        ip6_addr_isloopback(src_addr)) { }
+    if ((ip6_addr_has_zone(src_addr) && ! est_ip6_addr_zone(src_addr, netif)) ||
+        is_ip6_addr_loopback(src_addr)) { }
     // Do not forward packets onto the same network interface on which they arrived.
     if (netif == inp) {
         Logf(true,
@@ -368,28 +366,28 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
     /* Trim PacketBuffer. This should have been done at the netif layer,
      * but we'll do it anyway just to be sure that its done. */
-    pbuf_realloc(p, (uint16_t)(IP6_HDR_LEN + IP6H_PLEN(ip6_hdr)));
+    pbuf_realloc(p);
 
-    /* copy IP addresses to aligned Ip6Addr */
+    /* copy IP addresses to aligned Ip6Address */
     // todo: get curr dst and src ip addr from somewhere
     IpAddr curr_dst_addr{};
     IpAddr curr_src_addr{};
-    memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6AddrWireFmt));
-    memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6AddrWireFmt));
+    memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6Addr));
+    memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6Addr));
 
     /* Don't accept virtual IPv4 mapped IPv6 addresses.
      * Don't accept multicast source addresses. */
-    if (ip6_addr_isipv4mappedipv6((&curr_dst_addr.u_addr.ip6)) ||
-        ip6_addr_isipv4mappedipv6((&curr_src_addr.u_addr.ip6)) ||
-        ip6_addr_ismulticast((&curr_src_addr.u_addr.ip6))) {
+    if (is_ip6_addr_ip4_mapped_ip6((&curr_dst_addr.u_addr.ip6)) ||
+        is_ip6_addr_ip4_mapped_ip6((&curr_src_addr.u_addr.ip6)) ||
+        is_ip6_addr_mcast((&curr_src_addr.u_addr.ip6))) {
         /* free (drop) packet pbufs */
         free_pkt_buf(p);
         return ERR_OK;
     }
 
     /* Set the appropriate zone identifier on the addresses. */
-    ip6_addr_assign_zone(&curr_dst_addr.u_addr.ip6, IP6_UNKNOWN, inp);
-    ip6_addr_assign_zone(&curr_src_addr.u_addr.ip6, IP6_UNICAST, inp);
+    assign_ip6_addr_zone(&curr_dst_addr.u_addr.ip6, IP6_UNKNOWN, inp,);
+    assign_ip6_addr_zone(&curr_src_addr.u_addr.ip6, IP6_UNICAST, inp,);
 
     /* current header pointer. */
     // todo: set current_ip6_hdr;
@@ -401,9 +399,9 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
     // todo: set current netif
 
     /* match packet against an interface, i.e. is this packet for us? */
-    if (ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+    if (is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
         /* Always joined to multicast if-local and link-local all-nodes group. */
-        if (ip6_addr_isallnodes_iflocal(&curr_dst_addr.u_addr.ip6) ||
+        if (is_ip6_addr_all_nodes_if_local(&curr_dst_addr.u_addr.ip6) ||
             ip6_addr_isallnodes_linklocal(&curr_dst_addr.u_addr.ip6)) {
             netif = inp;
         }
@@ -432,8 +430,8 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
               * not be accepted on other interfaces, either. These requirements
               * cannot be implemented in the case that loopback traffic is sent
               * across a non-loopback interface, however. */
-            if (ip6_addr_isloopback(&curr_dst_addr.u_addr.ip6) ||
-                ip6_addr_isloopback(&curr_src_addr.u_addr.ip6)) {
+            if (is_ip6_addr_loopback(&curr_dst_addr.u_addr.ip6) ||
+                is_ip6_addr_loopback(&curr_src_addr.u_addr.ip6)) {
                 goto netif_found;
             }
 
@@ -458,7 +456,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
     /* "::" packet source address? (used in duplicate address detection) */
     if (is_ip6_addr_any(&curr_src_addr.u_addr.ip6) &&
-        (!ip6_addr_issolicitednode(&curr_dst_addr.u_addr.ip6))) {
+        (!is_ip6_addr_solicited_node(&curr_dst_addr.u_addr.ip6))) {
         /* packet source is not valid */
         /* free (drop) packet pbufs */
         Logf(true, ("ip6_input: packet with src ANY_ADDRESS dropped\n"));
@@ -472,7 +470,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
         Logf(true, ("ip6_input: packet not for us.\n"));
 
         /* non-multicast packet? */
-        if (!ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+        if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
             /* try to forward IP packet on (other) interfaces */
             ip6_forward(p, ip6_hdr, inp, &curr_dst_addr.u_addr.ip6, & curr_src_addr.u_addr.ip6);
         }
@@ -545,16 +543,16 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                     return ERR_OK;
                 } /* Trim PacketBuffer. This should have been done at the netif layer,
    * but we'll do it anyway just to be sure that its done. */
-                pbuf_realloc(p, (uint16_t)(IP6_HDR_LEN + IP6H_PLEN(ip6_hdr)));
-                /* copy IP addresses to aligned Ip6Addr */
-                memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6AddrWireFmt));
-                memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6AddrWireFmt));
+                pbuf_realloc(p);
+                /* copy IP addresses to aligned Ip6Address */
+                memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6Addr));
+                memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6Addr));
             }
             /* Don't accept virtual IPv4 mapped IPv6 addresses.
               * Don't accept multicast source addresses. */
-            if (ip6_addr_isipv4mappedipv6(&curr_dst_addr.u_addr.ip6) ||
-                ip6_addr_isipv4mappedipv6(&curr_src_addr.u_addr.ip6) ||
-                ip6_addr_ismulticast(&curr_src_addr.u_addr.ip6)) {
+            if (is_ip6_addr_ip4_mapped_ip6(&curr_dst_addr.u_addr.ip6) ||
+                is_ip6_addr_ip4_mapped_ip6(&curr_src_addr.u_addr.ip6) ||
+                is_ip6_addr_mcast(&curr_src_addr.u_addr.ip6)) {
                 Logf(true, ("ip6_input: packet with Routing header\n"));
 
                 Ip6RouteHdr* rout_hdr = (struct Ip6RouteHdr *)p->payload;
@@ -574,8 +572,8 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                     free_pkt_buf(p);
                     return ERR_OK;
                 } /* Set the appropriate zone identifier on the addresses. */
-                ip6_addr_assign_zone(&curr_dst_addr.u_addr.ip6, IP6_UNKNOWN, inp);
-                ip6_addr_assign_zone(&curr_dst_addr.u_addr.ip6, IP6_UNICAST, inp);
+                assign_ip6_addr_zone(&curr_dst_addr.u_addr.ip6, IP6_UNKNOWN, inp,);
+                assign_ip6_addr_zone(&curr_dst_addr.u_addr.ip6, IP6_UNICAST, inp,);
                 /* current header pointer. */
                 // ip_data.current_ip6_header = ip6_hdr;
                 // todo: set current ip6 hdr
@@ -584,9 +582,9 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                 // todo: set current ip6 hdr
                 // ip_data.current_input_netif = inp;
                 /* match packet against an interface, i.e. is this packet for us? */
-                if (ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+                if (is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
                     /* Always joined to multicast if-local and link-local all-nodes group. */
-                    if (ip6_addr_isallnodes_iflocal(&curr_dst_addr.u_addr.ip6) ||
+                    if (is_ip6_addr_all_nodes_if_local(&curr_dst_addr.u_addr.ip6) ||
                         ip6_addr_isallnodes_linklocal(&curr_dst_addr.u_addr.ip6)) {
                         netif = inp;
                     }
@@ -622,7 +620,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                         /* packet not for us, route or discard */
                         Logf(true, ("ip6_input: packet not for us.\n"));
                         /* non-multicast packet? */
-                        if (!ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+                        if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
                             /* try to forward IP packet on (other) interfaces */
                             ip6_forward(p, ip6_hdr, inp, &curr_src_addr.u_addr.ip6, &curr_dst_addr.u_addr.ip6);
                         }
@@ -695,7 +693,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                             goto ip6_input_cleanup;
                                         case 3:
                                             /* Send ICMP Parameter Problem if destination address is not a multicast address */
-                                            if (!ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+                                            if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
                                                 icmp6_param_problem(p, ICMP6_PP_OPTION, (uint8_t*)opt_hdr);
                                             }
                                             Logf(true,
@@ -775,7 +773,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                             goto ip6_input_cleanup;
                                         case 3:
                                             /* Send ICMP Parameter Problem if destination address is not a multicast address */
-                                            if (!ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) {
+                                            if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
                                                 icmp6_param_problem(p, ICMP6_PP_OPTION, (uint8_t*)opt_hdr);
                                             }
                                             Logf(true,
@@ -956,7 +954,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                             /* p points to IPv6 header again for raw_input. */
                             pbuf_add_header_force(p, hlen_tot);
                             /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
-                            if ((!ip6_addr_ismulticast(&curr_dst_addr.u_addr.ip6)) && (
+                            if ((!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) && (
                                 IP6H_NEXTH(ip6_hdr) != IP6_NEXTH_ICMP6)) {
                                 icmp6_param_problem(p, ICMP6_PP_HEADER, nexth);
                             }
@@ -986,8 +984,8 @@ ip6_input_cleanup:
     // ip_data.current_input_netif = NULL;
     // ip_data.current_ip6_header = NULL;
     // ip_data.current_ip_header_tot_len = 0;
-    ip6_addr_set_zero(&curr_src_addr.u_addr.ip6);
-    ip6_addr_set_zero(&curr_dst_addr.u_addr.ip6);
+    zero_ip6_addr(&curr_src_addr.u_addr.ip6);
+    zero_ip6_addr(&curr_dst_addr.u_addr.ip6);
     return ERR_OK;
 }
 
@@ -1033,7 +1031,7 @@ ip6_output_if(struct PacketBuffer* p,
     if (dest) {
         if (src != nullptr && is_ip6_addr_any(src)) {
 
-            const IpAddr* sel_src_addr = ip6_select_source_address(netif, dest);
+            const IpAddr* sel_src_addr = select_ip6_src_addr(netif, dest);
             copy_ip6_addr(&src_used, &sel_src_addr->u_addr.ip6);
             if (is_ip6_addr_any(&src_used)) {
                 /* No appropriate source address was found for this packet. */
@@ -1075,7 +1073,7 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
          * so we must do this here. */
         if (ip6_addr_lacks_zone(dest, IP6_UNKNOWN)) {
             copy_ip6_addr(&dest_addr, dest);
-            ip6_addr_assign_zone(&dest_addr, IP6_UNKNOWN, netif);
+            assign_ip6_addr_zone(&dest_addr, IP6_UNKNOWN, netif,);
             dest = &dest_addr;
         } /* generate IPv6 header */
         if (pbuf_add_header(pbuf, IP6_HDR_LEN)) {
@@ -1092,7 +1090,7 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
         get_ip6_hdr_vTCFL_SET(ip6hdr, 6, tc, 0);
         set_ip6_hdr_plen(ip6hdr, uint16_t(pbuf->tot_len - IP6_HDR_LEN));
         if (src == nullptr) {
-            ip6_addr_set_any(src);
+            set_ip6_addr_any(src);
         } /* src cannot be NULL here */
         ip6_addr_copy_to_packed(&ip6hdr->src, src);
     }
@@ -1100,7 +1098,7 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
         /* IP header already included in p */
         ip6hdr = (struct Ip6Hdr *)pbuf->payload;
         ip6_addr_copy_from_packed(&dest_addr, &ip6hdr->dest);
-        ip6_addr_assign_zone(&dest_addr, IP6_UNKNOWN, netif);
+        assign_ip6_addr_zone(&dest_addr, IP6_UNKNOWN, netif,);
         dest = &dest_addr;
     }
 
@@ -1123,12 +1121,12 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
     /* src cannot be NULL here */
     ip6_addr_copy_to_packed(&ip6hdr->src, src);
     for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
-            ip6_addr_cmp(dest, netif_ip6_addr(netif, i))) {
+        if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) &&
+            cmp_ip6_addr(dest, get_netif_ip6_addr(netif, i))) {
             /* Packet to self, enqueue it for loopback */
             Logf(true, ("netif_loop_output()\n"));
             NetworkInterface* loop_netif = nullptr;
-            return netif_loop_output(netif, pbuf, loop_netif);
+            return output_netif_loop(netif, pbuf);
         }
     }
     Logf(true, ("netif->output_ip6()\n"));
@@ -1179,7 +1177,7 @@ ip6_output(struct PacketBuffer* p,
     }
     if (netif == nullptr) {
         Logf(true,
-             "ip6_output: no route for %x:%x:%x:%x:%x:%x:%x:%x\n", IP6_ADDR_BLOCK1(dest),
+             "ip6_output: no route for %x:%x:%x:%x:%x:%x:%x:%x\n", get_ip6_addr_u16_blk(dest),
                  IP6_ADDR_BLOCK2(dest), IP6_ADDR_BLOCK3(dest), IP6_ADDR_BLOCK4(dest),
                  IP6_ADDR_BLOCK5(dest), IP6_ADDR_BLOCK6(dest), IP6_ADDR_BLOCK7(dest),
                  IP6_ADDR_BLOCK8(dest));
@@ -1228,7 +1226,7 @@ ip6_output_hinted(struct PacketBuffer* p,
     }
     if (netif == nullptr) {
         Logf(true,
-             "ip6_output: no route for %x:%x:%x:%x:%x:%x:%x:%x\n", IP6_ADDR_BLOCK1(dest),
+             "ip6_output: no route for %x:%x:%x:%x:%x:%x:%x:%x\n", get_ip6_addr_u16_blk(dest),
                  IP6_ADDR_BLOCK2(dest), IP6_ADDR_BLOCK3(dest), IP6_ADDR_BLOCK4(dest),
                  IP6_ADDR_BLOCK5(dest), IP6_ADDR_BLOCK6(dest), IP6_ADDR_BLOCK7(dest),
                  IP6_ADDR_BLOCK8(dest));

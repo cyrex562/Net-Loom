@@ -413,7 +413,7 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                         {
                             pbuf_cat(pppos->in_head, pppos->in_tail);
                         }
-                        pbuf_realloc(pppos->in_head, pppos->in_head->tot_len - 2);
+                        pbuf_realloc(pppos->in_head);
                     } /* Dispatch the packet thereby consuming it. */
                     struct PacketBuffer* inp = pppos->in_head; /* Packet consumed, release our references. */
                     pppos->in_head = nullptr;

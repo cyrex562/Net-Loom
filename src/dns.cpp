@@ -1170,7 +1170,7 @@ static void dns_recv(void* arg,
                                 }
                             }
                             if ((ans.type == pp_htons(DNS_RRTYPE_AAAA)) && (ans.len ==
-                                pp_htons(sizeof(Ip6AddrWireFmt))))
+                                pp_htons(sizeof(Ip6Addr))))
                             {
                                 if (lwip_dns_addrtype_is_ipv6(entry->reqaddrtype))
                                 {

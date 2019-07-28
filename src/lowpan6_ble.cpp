@@ -279,7 +279,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
     return ERR_ARG;
   }
   /* copy IPv6 address to context storage */
-  ip6_addr_set(&rfc7668_context[idx], context);
+  set_ip6_addr(&rfc7668_context[idx], context);
   return ERR_OK;
 
 }

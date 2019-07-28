@@ -24,7 +24,7 @@ struct BridgeIfcFdbStaticEntry
 {
     uint8_t used;
     BridgeIfcPortMask dst_ports;
-    struct EthernetAddress addr;
+    struct MacAddress addr;
 };
 
 struct BridgeIfDfDbEntry
@@ -32,7 +32,7 @@ struct BridgeIfDfDbEntry
     uint8_t used;
     uint8_t port;
     uint32_t ts;
-    struct EthernetAddress addr;
+    struct MacAddress addr;
 };
 
 struct BridgeIfcFdb
@@ -44,7 +44,7 @@ struct BridgeIfcFdb
 struct BridgeIfcPrivate
 {
     NetworkInterface* netif;
-    struct EthernetAddress ethaddr;
+    struct MacAddress MacAddress;
     uint8_t max_ports;
     uint8_t num_ports;
     BridgeIfcPort* ports;
@@ -65,7 +65,7 @@ struct BridgeIfcPrivate
  */
 struct BridgeIfcInitData {
   /** MAC address of the bridge (cannot use the netif's addresses) */
-  struct EthernetAddress ethaddr;
+  struct MacAddress MacAddress;
   /** Maximum number of ports in the bridge (ports are stored in an array, this
       influences memory allocated for netif->state of the bridge netif). */
   uint8_t            max_ports;
@@ -78,23 +78,23 @@ struct BridgeIfcInitData {
 
 /** @ingroup bridgeif
  * Use this for constant initialization of a bridgeif_initdat_t
- * (ethaddr must be passed as make_eth_addr_from_bytes())
+ * (MacAddress must be passed as make_eth_addr_from_bytes())
  */
-//#define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, ethaddr) {ethaddr, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
+//#define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, MacAddress) {MacAddress, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 /** @ingroup bridgeif
  * Use this for constant initialization of a bridgeif_initdat_t
- * (each byte of ethaddr must be passed)
+ * (each byte of MacAddress must be passed)
  */
 //#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
 LwipStatus bridgeif_init(NetworkInterface*netif);
 LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
-LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct EthernetAddress *addr, BridgeIfcPortMask ports);
-LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct EthernetAddress *addr);
+LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct MacAddress *addr, BridgeIfcPortMask ports);
+LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct MacAddress *addr);
 
 /* FDB interface, can be replaced by own implementation */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct EthernetAddress* src_addr, uint8_t port_idx);
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct EthernetAddress *dst_addr);
+bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx);
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct MacAddress *dst_addr);
 
 BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 

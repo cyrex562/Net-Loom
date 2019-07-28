@@ -49,9 +49,9 @@ struct EtharpHdr
     uint8_t hwlen;
     uint8_t protolen;
     uint16_t opcode;
-    struct EthernetAddress shwaddr;
+    struct MacAddress shwaddr;
     struct Ip4AddrWordaligned sipaddr;
-    struct EthernetAddress dhwaddr;
+    struct MacAddress dhwaddr;
     struct Ip4AddrWordaligned dipaddr;
 };
 
@@ -81,23 +81,23 @@ typedef int64_t ssize_t;
 inline void etharp_init() {} /* Compatibility define, no init needed. */
 void etharp_tmr(void);
 ssize_t etharp_find_addr(struct NetworkInterface* netif, const Ip4Addr* ipaddr,
-    struct EthernetAddress** eth_ret, const Ip4Addr** ip_ret);
-int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct EthernetAddress** eth_ret);
+    struct MacAddress** eth_ret, const Ip4Addr** ip_ret);
+int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct MacAddress** eth_ret);
 LwipStatus etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr);
 LwipStatus etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q);
-LwipStatus etharp_request(struct NetworkInterface* netif, const Ip4Addr* ipaddr);
+LwipStatus etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr);
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
  *  this is an ARP packet sent by a node in order to spontaneously cause other
  *  nodes to update an entry in their ARP cache.
  *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6. */
-inline LwipStatus etharp_gratuitous(struct NetworkInterface* netif)
+inline LwipStatus etharp_gratuitous(NetworkInterface& netif)
 {
-    return etharp_request((netif), get_net_ifc_ip4_addr(netif));
+    return etharp_request((netif), get_netif_ip4_addr(netif,));
 }
 
 void etharp_cleanup_netif(struct NetworkInterface* netif);
 
-LwipStatus etharp_add_static_entry(const Ip4Addr* ipaddr, struct EthernetAddress* ethaddr);
+LwipStatus etharp_add_static_entry(const Ip4Addr* ipaddr, struct MacAddress* MacAddress);
 LwipStatus etharp_remove_static_entry(const Ip4Addr* ipaddr);
 
 void etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif);

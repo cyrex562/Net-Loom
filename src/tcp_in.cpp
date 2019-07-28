@@ -59,7 +59,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         Logf(true, "tcp_input: short packet (%d bytes) discarded\n", p->tot_len);
         goto dropped;
     } /// Don't even process incoming broadcasts/multicasts.
-    if (ip_addr_isbroadcast(curr_dst_addr, curr_netif) || ip_addr_ismulticast(
+    if (is_netif_ip4_addr_bcast(curr_dst_addr, curr_netif) || ip_addr_ismulticast(
         curr_dst_addr))
     {
         goto dropped;
@@ -149,7 +149,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         lwip_assert("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
         /* check if PCB is bound to specific netif */
         NetworkInterface* curr_input_netif = nullptr;
-        if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != netif_get_index(
+        if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
             curr_input_netif)))
         {
             prev = pcb;
@@ -185,7 +185,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
             lwip_assert("tcp_input: TIME-WAIT pcb->state == TIME-WAIT",
                         pcb->state == TIME_WAIT);
             /* check if PCB is bound to specific netif */
-            if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != netif_get_index(
+            if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
                 curr_netif)))
             {
                 continue;
@@ -215,7 +215,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         {
             /* check if PCB is bound to specific netif */
             if ((lpcb->netif_idx != NETIF_NO_INDEX) && (lpcb->netif_idx !=
-                netif_get_index(curr_netif)))
+                get_and_inc_netif_num(curr_netif)))
             {
                 prev = (struct TcpPcb *)lpcb;
                 continue;
@@ -980,7 +980,7 @@ tcp_oos_insert_segment(struct TcpSeg* cseg, struct TcpSeg* next)
         {
             /* We need to trim the incoming segment. */
             cseg->len = (uint16_t)(next->tcphdr->seqno - seqno);
-            pbuf_realloc(cseg->p, cseg->len);
+            pbuf_realloc(cseg->p);
         }
     }
     cseg->next = next;
@@ -1363,7 +1363,7 @@ tcp_receive(struct TcpPcb* pcb)
                     {
                         inseg.len -= 1;
                     }
-                    pbuf_realloc(inseg.p, inseg.len);
+                    pbuf_realloc(inseg.p);
                     tcplen = tcp_tcplen(&inseg);
                     lwip_assert("tcp_receive: segment not trimmed correctly to rcv_wnd\n",
                                 (seqno + tcplen) == (pcb->rcv_nxt + pcb->rcv_wnd));
@@ -1414,7 +1414,7 @@ tcp_receive(struct TcpPcb* pcb)
                             {
                                 inseg.len -= 1;
                             }
-                            pbuf_realloc(inseg.p, inseg.len);
+                            pbuf_realloc(inseg.p);
                             tcplen = tcp_tcplen(&inseg);
                             lwip_assert(
                                 "tcp_receive: segment not trimmed correctly to ooseq queue\n",
@@ -1630,7 +1630,7 @@ tcp_receive(struct TcpPcb* pcb)
                                             prev->len = (uint16_t)(seqno - prev
                                                                            ->tcphdr->seqno
                                             );
-                                            pbuf_realloc(prev->p, prev->len);
+                                            pbuf_realloc(prev->p);
                                         }
                                         prev->next = cseg;
                                         tcp_oos_insert_segment(cseg, next);
@@ -1672,7 +1672,7 @@ tcp_receive(struct TcpPcb* pcb)
                                         /* We need to trim the last segment. */
                                         next->len = (uint16_t)(seqno - next->tcphdr->seqno
                                         );
-                                        pbuf_realloc(next->p, next->len);
+                                        pbuf_realloc(next->p);
                                     } /* check if the remote side overruns our receive window */
                                     if (TCP_SEQ_GT((uint32_t)tcplen + seqno,
                                                    pcb->rcv_nxt + (uint32_t)pcb->rcv_wnd))
@@ -1692,7 +1692,7 @@ tcp_receive(struct TcpPcb* pcb)
                                         } /* Adjust length of segment to fit in the window. */
                                         next->next->len = (uint16_t)(pcb->rcv_nxt + pcb->
                                             rcv_wnd - seqno);
-                                        pbuf_realloc(next->next->p, next->next->len);
+                                        pbuf_realloc(next->next->p);
                                         tcplen = tcp_tcplen(next->next);
                                         lwip_assert(
                                             "tcp_receive: segment not trimmed correctly to rcv_wnd\n",

@@ -26,7 +26,7 @@ char *ipaddr_ntoa(const IpAddr *addr)
     return nullptr;
   }
   if (is_ip_addr_v6(addr)) {
-    return ip6addr_ntoa(&addr->u_addr.ip6);
+    return ip6_addr_ntoa(&addr->u_addr.ip6);
   } else {
     return lwip_ip4addr_ntoa(convert_ip_addr_to_ip4_addr(addr));
   }
@@ -73,7 +73,7 @@ ipaddr_aton(const char *cp, IpAddr *addr)
         if (addr) {
           set_ip_addr_type_val(*addr, IPADDR_TYPE_V6);
         }
-        return ip6addr_aton(cp, &addr->u_addr.ip6);
+        return ip6_addr_aton(cp, &addr->u_addr.ip6);
       } else if (*c == '.') {
         /* contains a dot: IPv4 address */
         break;

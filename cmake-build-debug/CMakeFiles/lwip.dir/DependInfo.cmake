@@ -4,18 +4,16 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/altcp.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp_alloc.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/altcp_alloc.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/altcp_tcp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/altcp_tcp.cpp.obj"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ND6.CPP" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/ND6.CPP.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/arc4.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/arc4.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/auth.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/auth.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/autoip.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/autoip.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/bridgeif.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/bridgeif.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/bridgeif_fdb.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/bridgeif_fdb.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ccp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/ccp.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-md5.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/chap-md5.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap-new.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/chap-new.cpp.obj"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap_md5.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/chap_md5.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap_ms.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/chap_ms.cpp.obj"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/chap_new.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/chap_new.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/def.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/def.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/demand.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/demand.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/des.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/des.cpp.obj"
@@ -32,7 +30,6 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/icmp.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/icmp6.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/icmp6.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/igmp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/igmp.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/inet6.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/inet6.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/inet_chksum.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/inet_chksum.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/init.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/init.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ip.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/ip.cpp.obj"
@@ -51,14 +48,11 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/magic.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/magic.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md4.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/md4.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/md5.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/md5.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mem.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/mem.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/memp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/memp.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mld6.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/mld6.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/mppe.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/mppe.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/multilink.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/multilink.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/nd6.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/nd6.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/netif.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/netif.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pbuf.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/pbuf.cpp.obj"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/network_interface.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/network_interface.cpp.obj"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/packet_buffer.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/packet_buffer.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/pcapif.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/pcapif_helper.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/pcapif_helper.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/ppp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/ppp.cpp.obj"
@@ -71,9 +65,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sha1.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/sha1.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sio.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/sio.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/slipif.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/slipif.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/stats.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/stats.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/sys.cpp.obj"
-  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/sys_arch.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/sys_arch.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/tcp.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp_in.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/tcp_in.cpp.obj"
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/src/tcp_out.cpp" "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CMakeFiles/lwip.dir/src/tcp_out.cpp.obj"
@@ -90,12 +82,16 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../src"
   "../npcap/Include"
+  "../npcap/Include/pcap"
   "../fmt/include"
+  "../libzmq/include"
+  "libzmq"
   )
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
   "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/fmt/CMakeFiles/fmt.dir/DependInfo.cmake"
+  "C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/libzmq/CMakeFiles/libzmq.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

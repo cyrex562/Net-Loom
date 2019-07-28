@@ -36,7 +36,7 @@
  */
 #pragma once
 #include <def.h>
-#include <xstring>
+#include <string>
 
 
 /** This is the aligned version of Ip4Addr,
@@ -45,6 +45,17 @@ struct Ip4Addr
 {
     uint32_t addr;
 };
+
+struct Ip4AddrInfo
+{
+    Ip4Addr address;
+    Ip4Addr netmask;
+    Ip4Addr broadcast_address;
+    Ip4Addr network;
+    Ip4Addr gateway; // todo: track separately in routing table
+};
+
+
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 inline Ip4Addr init_ip4_addr_bytes(const uint8_t a,

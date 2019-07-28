@@ -158,7 +158,7 @@ autoip_arp_announce(NetworkInterface* netif)
     Ip4Addr gw_addr{};
     Ipv4AddrFromBytes(&sn_mask, 255, 255, 0, 0);
     Ipv4AddrFromBytes(&gw_addr, 0, 0, 0, 0);
-    netif_set_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
+    set_netif_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
     // interface is used by routing now that an address is set
     return ERR_OK;
 }
@@ -178,7 +178,7 @@ LwipStatus autoip_start(NetworkInterface* netif)
          */
     auto any_addr = create_ip4_addr_any();
 
-    netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
+    set_netif_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
     {
         /* no AutoIP client attached yet? */
@@ -255,7 +255,7 @@ LwipStatus autoip_stop(NetworkInterface& netif)
         if (ip4_addr_islinklocal(netif.ip4_addresses[i].u_addr.ip4))
         {
             auto any_addr = create_ip4_addr_any();
-            netif_set_addr(netif,
+            set_netif_addr(netif,
                            &any_addr,
                            &any_addr,
                            &any_addr);
@@ -357,7 +357,7 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
          * we have a conflict and must solve it
          */
         Ip4Addr dipaddr{};
-        EthernetAddress netifaddr{};
+        MacAddress netifaddr{};
         memcpy(netifaddr.addr,netif->hwaddr,ETH_ADDR_LEN);
         /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
                    * structure packing (not using structure copy which breaks strict-aliasing rules).

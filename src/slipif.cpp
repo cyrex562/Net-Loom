@@ -178,7 +178,7 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
             {
                 /* Received whole packet. */
                 /* Trim the PacketBuffer to the size of the received packet. */
-                pbuf_realloc(priv->q, priv->recved); // LINK_STATS_INC(link.recv);
+                pbuf_realloc(priv->q); // LINK_STATS_INC(link.recv);
                 //            Logf(true, ("slipif: Got packet (%d bytes)\n", priv->recved));
                 struct PacketBuffer* t = priv->q;
                 priv->p = priv->q = nullptr;

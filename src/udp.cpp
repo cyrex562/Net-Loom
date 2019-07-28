@@ -79,7 +79,7 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface* inp, const uint8_t b
     lwip_assert("udp_input_local_match: invalid pcb", pcb != nullptr);
     lwip_assert("udp_input_local_match: invalid netif", inp != nullptr);
     // check if PCB is bound to specific netif
-    if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != netif_get_index(
+    if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
         curr_in_netif)))
     {
         return 0;
@@ -104,7 +104,7 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface* inp, const uint8_t b
                     curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST)) || ip4_addr_netcmp(
                     convert_ip_addr_to_ip4_addr(&pcb->local_ip),
                     &curr_dst_addr->u_addr.ip4,
-                    netif_ip4_netmask(inp)))
+                    get_netif_ip4_netmask(inp,)))
                 {
                     return 1;
                 }
@@ -153,7 +153,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         return; // goto end;
     }
     struct UdpHdr* udphdr = (struct UdpHdr *)p->payload; /* is broadcast packet ? */
-    uint8_t broadcast = ip_addr_isbroadcast(curr_dst_addr, curr_netif);
+    uint8_t broadcast = is_netif_ip4_addr_bcast(curr_dst_addr, curr_netif);
     Logf(true, "udp_input: received datagram of length %d\n", p->tot_len);
     /* convert src and dest ports to host byte order */
     uint16_t src = lwip_ntohs(udphdr->src);
@@ -186,12 +186,12 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                     /* global broadcast address (only valid for IPv4; match was checked before) */
                     if (!is_ip_addr_ip4_val(uncon_pcb->local_ip) || !ip4_addr_cmp(
                         convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip),
-                        get_net_ifc_ip4_addr(inp)))
+                        get_netif_ip4_addr(inp,)))
                     {
                         /* uncon_pcb does not match the input netif, check this pcb */
                         if (is_ip_addr_ip4_val(pcb->local_ip) && ip4_addr_cmp(
                             convert_ip_addr_to_ip4_addr(&pcb->local_ip),
-                            get_net_ifc_ip4_addr(inp)))
+                            get_netif_ip4_addr(inp,)))
                         {
                             /* better match */
                             uncon_pcb = pcb;
@@ -237,11 +237,11 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
     {
         if (curr_dst_addr->type == IPADDR_TYPE_V6)
         {
-            for_us = netif_get_ip6_addr_match(inp, &curr_dst_addr->u_addr.ip6) >= 0;
+            for_us = get_netif_ip6_addr_match_idx(inp, &curr_dst_addr->u_addr.ip6) >= 0;
         }
         if (curr_dst_addr->type == IPADDR_TYPE_V4)
         {
-            for_us = ip4_addr_cmp(get_net_ifc_ip4_addr(inp), &curr_dst_addr->u_addr.ip4);
+            for_us = ip4_addr_cmp(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
         }
     }
     if (for_us)
@@ -460,7 +460,7 @@ udp_sendto_chksum(UdpPcb* pcb,
     Logf(true | LWIP_DBG_TRACE, ("udp_send\n"));
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = netif_get_by_index(pcb->netif_idx);
+        netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -475,7 +475,7 @@ udp_sendto_chksum(UdpPcb* pcb,
              * gone stale, we fall through and do the regular route lookup after all. */
             if (pcb->mcast_ifindex != NETIF_NO_INDEX)
             {
-                netif = netif_get_by_index(pcb->mcast_ifindex);
+                netif = get_netif_by_index(pcb->mcast_ifindex);
             }
             else if (is_ip_addr_v4(dst_ip))
             {
@@ -553,17 +553,17 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     } /* PCB local address is IP_ANY_ADDR or multicast? */
     if (is_ip_addr_v6(dst_ip))
     {
-        if (is_ip6_addr_any((&pcb->local_ip.u_addr.ip6)) || ip6_addr_ismulticast(
+        if (is_ip6_addr_any((&pcb->local_ip.u_addr.ip6)) || is_ip6_addr_mcast(
             (&pcb->local_ip.u_addr.ip6)))
         {
-            const auto src_addr = ip6_select_source_address(netif, &dst_ip->u_addr.ip6);
+            const auto src_addr = select_ip6_src_addr(netif, &dst_ip->u_addr.ip6);
             src_ip.u_addr.ip6 = dst_ip->u_addr.ip6;
             src_ip.type = IPADDR_TYPE_V6;
         }
         else
         {
             /* use UDP PCB local IPv6 address as source address, if still valid. */
-            if (netif_get_ip6_addr_match(netif, (&pcb->local_ip.u_addr.ip6)) < 0)
+            if (get_netif_ip6_addr_match_idx(netif, (&pcb->local_ip.u_addr.ip6)) < 0)
             {
                 /* Address isn't valid anymore. */
                 return ERR_RTE;
@@ -576,7 +576,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         /* if the local_ip is any or multicast
          * use the outgoing network interface IP address as source address */
-        src_ip.u_addr.ip4 = netif_ip_addr4(netif)->u_addr.ip4;
+        src_ip.u_addr.ip4 = get_netif_ip4_addr(netif,)->u_addr.ip4;
         src_ip.type = IPADDR_TYPE_V4;
     }
     else
@@ -584,7 +584,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
         /* check if UDP PCB local IP address is correct
          * this could be an old address if netif->ip_addr has changed */
         if (!ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&(pcb->local_ip)),
-                          get_net_ifc_ip4_addr(netif)))
+                          get_netif_ip4_addr(netif,)))
         {
             /* local_ip doesn't match, drop the packet */
             return ERR_RTE;
@@ -629,7 +629,7 @@ udp_sendto_if_src_chksum(UdpPcb* pcb,
     {
         return ERR_VAL;
     } /* broadcast filter? */
-    if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_ip_addr_v4(dst_ip) && ip_addr_isbroadcast(
+    if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_ip_addr_v4(dst_ip) && is_netif_ip4_addr_bcast(
         dst_ip,
         netif))
     {
@@ -913,7 +913,7 @@ udp_bind_netif(struct UdpPcb* pcb, const NetworkInterface* netif)
 {
     if (netif != nullptr)
     {
-        pcb->netif_idx = netif_get_index(netif);
+        pcb->netif_idx = get_and_inc_netif_num(netif);
     }
     else
     {

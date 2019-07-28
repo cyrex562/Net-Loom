@@ -196,7 +196,7 @@ ppp_free(PppPcb* pcb)
     {
         return ERR_CONN;
     } // PPPDEBUG(LOG_DEBUG, ("ppp_free[%d]\n", pcb->netif->num));
-    netif_remove(pcb->netif);
+    remove_netif(pcb->netif);
     LwipStatus err = pcb->link_cb->free(pcb, (uint8_t*)pcb->link_ctx_cb);
     delete pcb; // LWIP_MEMPOOL_FREE(PppPcb, pcb);
     return err;
@@ -408,13 +408,11 @@ init_ppp_pcb(NetworkInterface* pppif,
     pcb->netif = pppif;
     Ip4Addr ip4_any = create_ip4_addr_any();
     Ip4Addr ip4_bcast = ip4_addr_bcast();
-    if (!netif_add(pcb->netif,
+    if (!add_netif(pcb->netif,
                    &ip4_any,
                    &ip4_bcast,
                    &ip4_any,
-                   reinterpret_cast<uint8_t *>(pcb),
-                   ppp_netif_init_cb,
-                   nullptr))
+                   reinterpret_cast<uint8_t *>(pcb)))
     {
         delete pcb;
         return nullptr;
@@ -674,7 +672,7 @@ sifaddr(PppPcb* pcb, const uint32_t our_adr, const uint32_t his_adr, const uint3
     set_ip4_addr_u32(&ip, our_adr);
     set_ip4_addr_u32(&nm, netmask);
     set_ip4_addr_u32(&gw, his_adr);
-    netif_set_addr(pcb->netif, &ip, &nm, &gw);
+    set_netif_addr(pcb->netif, &ip, &nm, &gw);
     return 1;
 }
 
@@ -692,7 +690,7 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
     auto bcast_addr = create_ip_addr_ip4_bcast();
     auto ip_addr = create_ip_addr_ip4_any();
     auto gw = create_ip_addr_ip4_any();
-    netif_set_addr(pcb->netif, &ip_addr.u_addr.ip4, &bcast_addr.u_addr.ip4, &gw.u_addr.ip4);
+    set_netif_addr(pcb->netif, &ip_addr.u_addr.ip4, &bcast_addr.u_addr.ip4, &gw.u_addr.ip4);
     return 1;
 } /*
  * sdns - Config the DNS servers
@@ -750,7 +748,7 @@ sifup(PppPcb* pcb)
 {
     pcb->if4_up = true;
     pcb->err_code = PPPERR_NONE;
-    netif_set_link_up(pcb->netif);
+    set_netif_link_up(pcb->netif);
     // PPPDEBUG(LOG_DEBUG, ("sifup[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return 1;
@@ -766,7 +764,7 @@ sifdown(PppPcb* pcb)
     if (true /* set the interface down if IPv6 is down as well */ && !pcb->if6_up)
     {
         /* make sure the netif link callback is called */
-        netif_set_link_down(pcb->netif);
+        set_netif_link_down(pcb->netif);
     } // PPPDEBUG(LOG_DEBUG, ("sifdown[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     return 1;
 } /********************************************************************
@@ -799,8 +797,8 @@ sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     Ip6Addr ip6{};
     IN6_LLADDR_FROM_EUI64(&ip6, &our_eui64);
-    netif_ip6_addr_set(pcb->netif, 0, &ip6);
-    netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
+    set_netif_ip6_addr(pcb->netif, 0, &ip6);
+    set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
     /* FIXME: should we add an IPv6 static neighbor using his_eui64 ? */
     return 1;
 } /********************************************************************
@@ -811,8 +809,8 @@ int
 cif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     auto any_addr = make_ip_addr_ip6_any();
-    netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_INVALID);
-    netif_ip6_addr_set(pcb->netif, 0, &any_addr.u_addr.ip6);
+    set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_INVALID);
+    set_netif_ip6_addr(pcb->netif, 0, &any_addr.u_addr.ip6);
     return 1;
 } /*
  * sif6up - Config the interface up and enable IPv6 packets to pass.
@@ -822,7 +820,7 @@ sif6up(PppPcb* pcb)
 {
     pcb->if6_up = true;
     pcb->err_code = PPPERR_NONE;
-    netif_set_link_up(pcb->netif);
+    set_netif_link_up(pcb->netif);
     // PPPDEBUG(LOG_DEBUG, ("sif6up[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return 1;
@@ -838,7 +836,7 @@ sif6down(PppPcb* pcb)
     if (true /* set the interface down if IPv4 is down as well */ && !pcb->if4_up)
     {
         /* make sure the netif link callback is called */
-        netif_set_link_down(pcb->netif);
+        set_netif_link_down(pcb->netif);
     } // PPPDEBUG(LOG_DEBUG, ("sif6down[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     return 1;
 } /*

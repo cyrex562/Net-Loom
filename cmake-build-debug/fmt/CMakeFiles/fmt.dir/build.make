@@ -33,10 +33,10 @@ cmake_force:
 SHELL = cmd.exe
 
 # The CMake executable.
-CMAKE_COMMAND = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe
+CMAKE_COMMAND = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe
 
 # The command to remove a file.
-RM = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe -E remove -f
+RM = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -60,29 +60,29 @@ fmt/CMakeFiles/fmt.dir/src/format.cc.obj: fmt/CMakeFiles/fmt.dir/flags.make
 fmt/CMakeFiles/fmt.dir/src/format.cc.obj: fmt/CMakeFiles/fmt.dir/includes_CXX.rsp
 fmt/CMakeFiles/fmt.dir/src/format.cc.obj: ../fmt/src/format.cc
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object fmt/CMakeFiles/fmt.dir/src/format.cc.obj"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\fmt.dir\src\format.cc.obj -c C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\fmt.dir\src\format.cc.obj -c C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc
 
 fmt/CMakeFiles/fmt.dir/src/format.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/fmt.dir/src/format.cc.i"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc > CMakeFiles\fmt.dir\src\format.cc.i
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc > CMakeFiles\fmt.dir\src\format.cc.i
 
 fmt/CMakeFiles/fmt.dir/src/format.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/fmt.dir/src/format.cc.s"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc -o CMakeFiles\fmt.dir\src\format.cc.s
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\format.cc -o CMakeFiles\fmt.dir\src\format.cc.s
 
 fmt/CMakeFiles/fmt.dir/src/posix.cc.obj: fmt/CMakeFiles/fmt.dir/flags.make
 fmt/CMakeFiles/fmt.dir/src/posix.cc.obj: fmt/CMakeFiles/fmt.dir/includes_CXX.rsp
 fmt/CMakeFiles/fmt.dir/src/posix.cc.obj: ../fmt/src/posix.cc
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object fmt/CMakeFiles/fmt.dir/src/posix.cc.obj"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\fmt.dir\src\posix.cc.obj -c C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\fmt.dir\src\posix.cc.obj -c C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc
 
 fmt/CMakeFiles/fmt.dir/src/posix.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/fmt.dir/src/posix.cc.i"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc > CMakeFiles\fmt.dir\src\posix.cc.i
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc > CMakeFiles\fmt.dir\src\posix.cc.i
 
 fmt/CMakeFiles/fmt.dir/src/posix.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/fmt.dir/src/posix.cc.s"
-	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc -o CMakeFiles\fmt.dir\src\posix.cc.s
+	cd /d C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-build-debug\fmt && C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\fmt\src\posix.cc -o CMakeFiles\fmt.dir\src\posix.cc.s
 
 # Object files for target fmt
 fmt_OBJECTS = \

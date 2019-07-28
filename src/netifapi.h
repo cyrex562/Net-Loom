@@ -50,7 +50,7 @@ enum NetifapiArpEntry {
 };
 
 ///
-// LwipStatus netifapi_arp_add(const Ip4Addr *ipaddr, struct EthAddr *ethaddr, enum NetifapiArpEntry type);
+// LwipStatus netifapi_arp_add(const Ip4Addr *ipaddr, struct MacAddress *MacAddress, enum NetifapiArpEntry type);
 
 ///
 // LwipStatus netifapi_arp_remove(const Ip4Addr *ipaddr, enum NetifapiArpEntry type);

@@ -48,7 +48,7 @@
 #include <lwip_status.h>
 
 
- /** This is the packed version of Ip6Addr,
+ /** This is the packed version of Ip6Address,
      used in network headers that are itself packed */
 
 
@@ -84,8 +84,8 @@ struct Ip6Hdr {
     /** hop limit */
     uint8_t _hoplim;
     /** source and destination IP addresses */
-    Ip6AddrWireFmt src;
-    Ip6AddrWireFmt dest;
+    Ip6Addr src;
+    Ip6Addr dest;
 } ;
 
 inline uint32_t get_ip6_hdr_v(Ip6Hdr* hdr)
@@ -324,7 +324,7 @@ inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
     const auto selected_netif = ip6_route((src), (dest));
     if (selected_netif != nullptr)
     {
-        ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif);
+        assign_ip6_addr_zone((dest), IP6_UNKNOWN, selected_netif,);
     }
 }
 

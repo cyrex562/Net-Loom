@@ -200,7 +200,7 @@ static void dhcp_handle_nak(NetworkInterface * netif)
         to ensure the callback can use dhcp_supplied_address() */
     dhcp_set_state(&dhcp, DHCP_STATE_BACKING_OFF);
     /* remove IP address from interface (must no longer be used, as per RFC2131) */
-    netif_set_addr(netif, nullptr, nullptr, nullptr);
+    set_netif_addr(netif, nullptr, nullptr, nullptr);
     /* We can immediately restart discovery */
     dhcp_discover(netif);
 }
@@ -253,7 +253,7 @@ static void dhcp_handle_offer(NetworkInterface * netif, DhcpMsg * msg_in, DhcpCo
          static_cast<void*>(netif),
          netif->name[0],
          netif->name[1],
-         uint16_t(netif->num)); /* obtain the server address */
+         uint16_t(netif->if_num)); /* obtain the server address */
     if (dhcp_option_given(dhcp_ctx->dhcp_options, DHCP_OPTION_IDX_SERVER_ID)) {
         dhcp->request_timeout = 0; /* stop timer */
         set_ip_addr_ip4_u32(&dhcp->server_ip_addr,
@@ -291,7 +291,7 @@ static LwipStatus dhcp_select(NetworkInterface * netif)
          netif,
          netif->name[0],
          netif->name[1],
-         uint16_t(netif->num));
+         uint16_t(netif->if_num));
     dhcp_set_state(dhcp, DHCP_STATE_REQUESTING);
     /* create and initialize the DHCP message header */
     struct PacketBuffer* p_out = dhcp_create_msg(netif,
@@ -672,7 +672,7 @@ LwipStatus
 dhcp_start(NetworkInterface * netif)
 {
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    Logf(true, "dhcp_start(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->num);
+    Logf(true, "dhcp_start(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->if_num);
 
     /* check MTU of the netif */
     if (netif->mtu < kDhcpMaxMsgLenMinRequired) {
@@ -713,7 +713,7 @@ dhcp_start(NetworkInterface * netif)
     }
     dhcp->pcb_allocated = 1;
 
-    if (!netif_is_link_up(netif)) {
+    if (!is_netif_link_up(netif)) {
         /* set state INIT and wait for dhcp_network_changed() to call dhcp_discover() */
         dhcp_set_state(dhcp, DHCP_STATE_INIT);
         return ERR_OK;
@@ -967,7 +967,7 @@ dhcp_bind(NetworkInterface * netif)
 
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
 
-    Logf(true, "dhcp_bind(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->num);
+    Logf(true, "dhcp_bind(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->if_num);
 
     /* reset time used of lease */
     dhcp->lease_used = 0;
@@ -1058,7 +1058,7 @@ dhcp_bind(NetworkInterface * netif)
        to ensure the callback can use dhcp_supplied_address() */
     dhcp_set_state(dhcp, DHCP_STATE_BOUND);
 
-    netif_set_addr(netif, &dhcp->offered_ip_addr, &sn_mask, &gw_addr);
+    set_netif_addr(netif, &dhcp->offered_ip_addr, &sn_mask, &gw_addr);
     /* interface is used by routing now that an address is set */
 }
 
@@ -1282,7 +1282,7 @@ dhcp_release_and_stop(NetworkInterface * netif)
 
     /* remove IP address from interface (prevents routing from selecting this interface) */
     Ip4Addr any_addr = create_ip4_addr_any();
-    netif_set_addr(netif, &any_addr, &any_addr, &any_addr);
+    set_netif_addr(netif, &any_addr, &any_addr, &any_addr);
 
     if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
         autoip_stop(netif);
@@ -1841,7 +1841,7 @@ dhcp_option_trailer(uint16_t options_out_len, uint8_t * options, struct PacketBu
         options[options_out_len++] = 0;
     }
     /* shrink the PacketBuffer to the actual content length */
-    pbuf_realloc(p_out, uint16_t(sizeof(DhcpMsg) - DHCP_OPTIONS_LEN + options_out_len));
+    pbuf_realloc(p_out);
 }
 
 /** check if DHCP supplied netif->ip_addr

@@ -127,7 +127,7 @@ static NetworkInterface*
 tcp_route(const struct TcpPcb *pcb, const IpAddr *src, const IpAddr *dst)
 {
     if ((pcb != nullptr) && (pcb->netif_idx != NETIF_NO_INDEX)) {
-    return netif_get_by_index(pcb->netif_idx);
+    return get_netif_by_index(pcb->netif_idx);
   } else {
     return ip_route(src, dst);
   }
@@ -237,7 +237,7 @@ tcp_pbuf_prealloc(PbufLayer layer,
             || pcb->unsent != nullptr || pcb->unacked != nullptr)))
         {
             alloc = std::min(max_length,
-                             LWIP_MEM_ALIGN_SIZE(TCP_OVERSIZE_CALC_LENGTH(length)));
+                             (TCP_OVERSIZE_CALC_LENGTH(length)));
         }
     }
     struct PacketBuffer* p = pbuf_alloc(layer, alloc);
@@ -872,7 +872,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
 
   /* Trim the original PacketBuffer into our split size.  At this point our remainder segment must be setup
   successfully because we are modifying the original segment */
-  pbuf_realloc(useg->p, useg->p->tot_len - remainder);
+  pbuf_realloc(useg->p);
   useg->len -= remainder;
   TCPH_SET_FLAG(useg->tcphdr, split_flags);
 
@@ -1345,7 +1345,7 @@ tcp_output_segment_busy(const struct TcpSeg *seg)
   /* We only need to check the first PacketBuffer here:
      If a PacketBuffer is queued for transmission, a driver calls pbuf_ref(),
      which only changes the ref count of the first PacketBuffer */
-  if (seg->p->ref != 1) {
+  if (seg->p->ref_count != 1) {
     /* other reference found */
     return 1;
   }

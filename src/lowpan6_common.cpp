@@ -112,7 +112,7 @@ static int8_t
 lowpan6_context_lookup(const Ip6Addr *lowpan6_contexts, const Ip6Addr *ip6addr)
 {
     for (int8_t i = 0; i < LWIP_6LOWPAN_NUM_CONTEXTS; i++) {
-    if (ip6_addr_netcmp(&lowpan6_contexts[i], ip6addr)) {
+    if (ip6_addr_on_same_net(&lowpan6_contexts[i], ip6addr)) {
       return i;
     }
   }
@@ -154,9 +154,9 @@ lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_si
   Ip6Hdr* ip6hdr = (Ip6Hdr *)inptr;
 
   ip_addr_copy_from_ip6_packed(&ip6dst, &ip6hdr->dest);
-  ip6_addr_assign_zone((&ip6dst.u_addr.ip6), IP6_UNKNOWN, netif);
+  assign_ip6_addr_zone((&ip6dst.u_addr.ip6), IP6_UNKNOWN, netif,);
   ip_addr_copy_from_ip6_packed(&ip6src, &ip6hdr->src);
-  ip6_addr_assign_zone((&ip6src.u_addr.ip6), IP6_UNKNOWN, netif);
+  assign_ip6_addr_zone((&ip6src.u_addr.ip6), IP6_UNKNOWN, netif,);
 
   /* Basic length of 6LowPAN header, set dispatch and clear fields. */
   uint8_t lowpan6_header_len = 2;
@@ -262,7 +262,7 @@ lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_si
   }
 
   /* Compress destination address */
-  if (ip6_addr_ismulticast((&ip6dst.u_addr.ip6))) {
+  if (is_ip6_addr_mcast((&ip6dst.u_addr.ip6))) {
     /* @todo support stateful multicast address compression */
 
     buffer[1] |= 0x08;
@@ -807,7 +807,7 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
   /* ... and reveal the headers again... */
   pbuf_add_header_force(q, ip6_offset);
   /* ... trim the PacketBuffer to its correct size... */
-  pbuf_realloc(q, ip6_offset + p->len);
+  pbuf_realloc(q);
   /* ... and cat possibly remaining (data-only) pbufs */
   if (p->next != nullptr) {
     pbuf_cat(q, p->next);

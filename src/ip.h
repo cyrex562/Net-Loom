@@ -118,14 +118,14 @@ constexpr auto  kSofInherited = (SOF_REUSEADDR | SOF_KEEPALIVE);
 // #define ip_current_is_v6() (ip6_current_header() != NULL)
 
 // Source IPv6 address of current_header
-// inline const Ip6Addr* ip6_current_src_addr()
+// inline const Ip6Address* ip6_current_src_addr()
 // {
 //     return (convert_ip_addr_to_ip6_addr(&ip_data.current_iphdr_src));
 // }
 
 
 // Destination IPv6 address of current_header
-// inline const Ip6Addr* ip6_current_dest_addr()
+// inline const Ip6Address* ip6_current_dest_addr()
 // {
 //     return (convert_ip_addr_to_ip6_addr(&ip_data.current_iphdr_dest));
 // }
@@ -295,7 +295,7 @@ inline const IpAddr* ip_netif_get_local_ip(const NetworkInterface* netif, const 
     {
         return ip6_netif_get_local_ip(netif, &dest->u_addr.ip6);
     }
-    return ip4_netif_get_local_ip(netif);
+    return get_netif_ip4_local_ip(netif,);
 }
 
 // #define ip_debug_print(is_ipv6, p) \

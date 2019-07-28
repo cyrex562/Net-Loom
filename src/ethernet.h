@@ -7,6 +7,7 @@
 #include <packet_buffer.h>
 #include <network_interface.h>
 #include <ethernet.h>
+#include <mac_address.h>
 #include <cstring>
 
 
@@ -14,29 +15,14 @@
 
 
 
-/// Initialize a struct EthAddr with its 6 bytes (takes care of correct braces)
-inline EthAddr make_eth_addr_from_bytes(const uint8_t b0,
-                                    const uint8_t b1,
-                                    const uint8_t b2,
-                                    const uint8_t b3,
-                                    const uint8_t b4,
-                                    const uint8_t b5)
-{
-    return {
-        b0,
-        b1,
-        b2,
-        b3,
-        b4,
-        b5
-    };
-} 
+
+
 
 /// Ethernet header
 struct EthHdr
 {
-    struct EthernetAddress dest;
-    struct EthernetAddress src;
+    struct MacAddress dest;
+    struct MacAddress src;
     uint16_t type;
 };
 
@@ -65,24 +51,24 @@ constexpr uint8_t LNK_LYR_MCAST_ADDR_OUI[] = {0x01, 0x00, 0x5e};
 constexpr uint8_t LNK_LYR_IP6_MCAST_ADDR_PREFIX[] = {0x33, 0x33};
 
 ///
-inline bool cmp_eth_addr(const EthernetAddress* addr1, const EthernetAddress* addr2)
+inline bool cmp_eth_addr(const MacAddress* addr1, const MacAddress* addr2)
 {
     return (memcmp((addr1)->addr, (addr2)->addr, ETH_ADDR_LEN) == 0);
 }
 
 ///
-LwipStatus ethernet_input(struct PacketBuffer* p, struct NetworkInterface* netif);
+LwipStatus ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc);
 
 ///
-LwipStatus ethernet_output(struct NetworkInterface* netif,
-                      struct PacketBuffer* p,
-                      const struct EthernetAddress* src,
-                      const struct EthernetAddress* dst,
-                      uint16_t eth_type);
+LwipStatus ethernet_output(NetworkInterface& netif,
+                           PacketBuffer& p,
+                           const MacAddress& src,
+                           const MacAddress& dst,
+                           uint16_t eth_type);
 
-extern const struct EthernetAddress ETH_BCAST_ADDR;
+extern const struct MacAddress ETH_BCAST_ADDR;
 
-extern const struct EthernetAddress ETH_ZERO_ADDR;
+extern const struct MacAddress ETH_ZERO_ADDR;
 
 //
 // end of file

@@ -27,7 +27,7 @@ uint8_t bridgeif_netif_client_id = 0xff;
  * 0: drop
  */
 LwipStatus bridgeif_fdb_add(NetworkInterface* bridgeif,
-                           const struct EthernetAddress* addr,
+                           const struct MacAddress* addr,
                            const BridgeIfcPortMask ports)
 {
     lwip_assert("invalid netif", bridgeif != nullptr);
@@ -41,7 +41,7 @@ LwipStatus bridgeif_fdb_add(NetworkInterface* bridgeif,
             {
                 br->fdbs[i].used = 1;
                 br->fdbs[i].dst_ports = ports;
-                memcpy(&br->fdbs[i].addr, addr, sizeof(struct EthernetAddress));
+                memcpy(&br->fdbs[i].addr, addr, sizeof(struct MacAddress));
                 return ERR_OK;
             }
         }
@@ -53,18 +53,18 @@ LwipStatus bridgeif_fdb_add(NetworkInterface* bridgeif,
 ///
 /// Remove a static entry from the forwarding database
 ///
-LwipStatus remove_bridgeif_fdb(NetworkInterface* bridgeif, const struct EthernetAddress* addr)
+LwipStatus remove_bridgeif_fdb(NetworkInterface* bridgeif, const struct MacAddress* addr)
 {
     lwip_assert("invalid netif", bridgeif != nullptr);
     const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
     lwip_assert("invalid state", br != nullptr);
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
-        if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr, addr, sizeof(struct EthernetAddress)))
+        if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr, addr, sizeof(struct MacAddress)))
         {
             if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr,
                                             addr,
-                                            sizeof(struct EthernetAddress)))
+                                            sizeof(struct MacAddress)))
             {
                 memset(&br->fdbs[i], 0, sizeof(BridgeIfcFdbStaticEntry));
                 return ERR_OK;
@@ -76,14 +76,14 @@ LwipStatus remove_bridgeif_fdb(NetworkInterface* bridgeif, const struct Ethernet
 
 /// Get the forwarding port(s) (as bit mask) for the specified destination mac address
 static BridgeIfcPortMask bridgeif_find_dst_ports(BridgeIfcPrivate* br,
-                                                 struct EthernetAddress* dst_addr)
+                                                 struct MacAddress* dst_addr)
 {
     /* first check for static entries */
     for (auto i = 0; i < br->max_fdbs_entries; i++)
     {
         if (br->fdbs[i].used)
         {
-            if (!memcmp(&br->fdbs[i].addr, dst_addr, sizeof(struct EthernetAddress)))
+            if (!memcmp(&br->fdbs[i].addr, dst_addr, sizeof(struct MacAddress)))
             {
                 const auto ret = br->fdbs[i].dst_ports;
                 return ret;
@@ -103,9 +103,9 @@ static BridgeIfcPortMask bridgeif_find_dst_ports(BridgeIfcPrivate* br,
 /// (bridge netif or one of the port netifs), in which case the frame
 /// is sent to the cpu only.
 ///
-static int bridgeif_is_local_mac(BridgeIfcPrivate* br, struct EthernetAddress* addr)
+static int bridgeif_is_local_mac(BridgeIfcPrivate* br, struct MacAddress* addr)
 {
-    if (!memcmp(br->netif->hwaddr, addr, sizeof(struct EthernetAddress)))
+    if (!memcmp(br->netif->hwaddr, addr, sizeof(struct MacAddress)))
     {
         return 1;
     }
@@ -114,7 +114,7 @@ static int bridgeif_is_local_mac(BridgeIfcPrivate* br, struct EthernetAddress* a
         auto portif = br->ports[i].port_netif;
         if (portif != nullptr)
         {
-            if (!memcmp(portif->hwaddr, addr, sizeof(struct EthernetAddress)))
+            if (!memcmp(portif->hwaddr, addr, sizeof(struct MacAddress)))
             {
                 return 1;
             }
@@ -137,15 +137,15 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
             if ((portif != nullptr) && (portif->linkoutput != nullptr))
             {
                 /* prevent sending out to rx port */
-                if (netif_get_index(portif) != p->if_idx)
+                if (get_and_inc_netif_num(portif) != p->if_idx)
                 {
-                    if (netif_is_link_up(portif))
+                    if (is_netif_link_up(portif))
                     {
                         Logf(kBridgeIfcFwDebug,
                              "br -> flood(%p:%d) -> %d\n",
                              reinterpret_cast<uint8_t *>(p),
                              p->if_idx,
-                             netif_get_index(portif));
+                             get_and_inc_netif_num(portif));
                         return portif->linkoutput(portif, p);
                     }
                 }
@@ -190,7 +190,7 @@ static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
 LwipStatus bridgeif_output(NetworkInterface* netif, struct PacketBuffer* p)
 {
     const auto br = static_cast<BridgeIfcPrivate *>(netif->state);
-    const auto dst = reinterpret_cast<EthernetAddress *>(p->payload);
+    const auto dst = reinterpret_cast<MacAddress *>(p->payload);
     const auto dstports = bridgeif_find_dst_ports(br, dst);
     const auto err = bridgeif_send_to_ports(br, p, dstports);
     if (p->payload[0] & 1)
@@ -223,11 +223,11 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
         return ERR_VAL;
     }
     auto* br = reinterpret_cast<BridgeIfcPrivate *>(port->bridge);
-    const auto rx_idx = netif_get_index(netif); /* store receive index in pbuf */
+    const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
     p->if_idx = rx_idx;
-    auto dst = reinterpret_cast<struct EthernetAddress *>(p->payload);
-    auto src = reinterpret_cast<struct EthernetAddress *>(static_cast<uint8_t *>(p->payload) +
-        sizeof(struct EthernetAddress));
+    auto dst = reinterpret_cast<struct MacAddress *>(p->payload);
+    auto src = reinterpret_cast<struct MacAddress *>(static_cast<uint8_t *>(p->payload) +
+        sizeof(struct MacAddress));
     if ((src->addr[0] & 1) == 0)
     {
         /* update src for all non-group addresses */
@@ -320,7 +320,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
         Logf(true, ("bridgeif_init: out of memory\n"));
         return ERR_MEM;
     }
-    memcpy(&br->ethaddr, &init_data->ethaddr, sizeof(br->ethaddr));
+    memcpy(&br->MacAddress, &init_data->MacAddress, sizeof(br->MacAddress));
     br->netif = netif;
     br->max_ports = init_data->max_ports;
     br->ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
@@ -340,7 +340,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
         Logf(true, ("bridgeif_init: out of memory\n"));
         return ERR_MEM;
     }
-    memcpy(&br->ethaddr, &init_data->ethaddr, sizeof(br->ethaddr));
+    memcpy(&br->MacAddress, &init_data->MacAddress, sizeof(br->MacAddress));
     br->netif = netif;
     br->max_ports = init_data->max_ports;
     br->ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
@@ -371,7 +371,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     netif->output_ip6 = ethip6_output;
     netif->linkoutput = bridgeif_output; /* set MAC hardware address length */
     netif->hwaddr_len = ETH_ADDR_LEN; /* set MAC hardware address */
-    memcpy(netif->hwaddr, &br->ethaddr, ETH_ADDR_LEN); /* maximum transfer unit */
+    memcpy(netif->hwaddr, &br->MacAddress, ETH_ADDR_LEN); /* maximum transfer unit */
     netif->mtu = 1500; /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH |
@@ -383,7 +383,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     if (netif->mld_mac_filter != nullptr)
     {
         Ip6Addr ip6_allnodes_ll{};
-        ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
+        set_ip6_addr_all_nodes_link_local(&ip6_allnodes_ll);
         netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
     }
     return ERR_OK;

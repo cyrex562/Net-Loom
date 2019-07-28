@@ -528,24 +528,24 @@ pcapif_low_level_init(NetworkInterface* netif)
     netif->state = pa; /* change the MAC address to a unique value
      so that multiple ethernetifs are supported */
     /* @todo: this does NOT support multiple processes using this adapter! */
-    my_mac_addr[ETH_ADDR_LEN - 1] += netif->num; /* Copy MAC addr */
+    my_mac_addr[ETH_ADDR_LEN - 1] += netif->if_num; /* Copy MAC addr */
     memcpy(&netif->hwaddr, my_mac_addr, ETH_ADDR_LEN);
     /* get the initial link state of the selected interface */
     pa->last_link_event = pcapifh_linkstate_get(pa->link_state);
     if (pa->last_link_event == PCAPIF_LINKEVENT_DOWN)
     {
-        netif_set_link_down(netif);
+        set_netif_link_down(netif);
     }
     else
     {
-        netif_set_link_up(netif);
+        set_netif_link_up(netif);
     }
     sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
     pa->rx_run = 1;
     pa->rx_running = 1;
     // sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0, );
     // Logf(true,
-    //      ("pcapif: EthAddr %02X%02X%02X%02X%02X%02X\n", netif->hwaddr[0], netif->hwaddr[1]
+    //      ("pcapif: MacAddress %02X%02X%02X%02X%02X%02X\n", netif->hwaddr[0], netif->hwaddr[1]
     //          , netif->hwaddr[2], netif->hwaddr[3], netif->hwaddr[4], netif->hwaddr[5]));
 } /** low_level_output():
  * Transmit a packet. The packet is contained in the PacketBuffer that is passed to
@@ -610,7 +610,7 @@ pcapif_low_level_output(NetworkInterface* netif, struct PacketBuffer* p)
     // {
     //     return ERR_BUF;
     // }
-    if (netif_is_link_up(netif))
+    if (is_netif_link_up(netif))
     {
         pcapif_add_tx_packet(pa, buf, tot_len);
     }
@@ -631,7 +631,7 @@ static struct PacketBuffer*
 pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packet_len)
 {
     int length = packet_len;
-    const struct EthernetAddress* dest = (const struct EthernetAddress*)packet;
+    const struct MacAddress* dest = (const struct MacAddress*)packet;
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};
@@ -767,7 +767,7 @@ pcapif_init(NetworkInterface* netif)
     netif->output = etharp_output;
     netif->output = nullptr; /* not used for PPPoE */
     netif->output_ip6 = ethip6_output; /* Initialize interface hostname */
-    netif_set_hostname(netif, "lwip");
+    set_netif_hostname(netif, "lwip");
     netif->mtu = 1500;
     netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH |
         NETIF_FLAG_IGMP;

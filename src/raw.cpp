@@ -65,7 +65,7 @@ raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
 {
     NetworkInterface* current_input_netif = nullptr;
     IpAddr* curr_dst_addr = nullptr; /* check if PCB is bound to specific netif */
-    if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != netif_get_index(
+    if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
         current_input_netif)))
     {
         return 0;
@@ -128,7 +128,7 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
     NetworkInterface* curr_ip_netif = nullptr;
     IpAddr* curr_src_addr = nullptr;
     RawPcb* raw_pcbs;
-    const uint8_t broadcast = ip_addr_isbroadcast(curr_dst_addr, curr_ip_netif);
+    const uint8_t broadcast = is_netif_ip4_addr_bcast(curr_dst_addr, curr_ip_netif);
     if (get_ip_hdr_version(p->payload) == 6)
     {
         auto* ip6_hdr = reinterpret_cast<struct Ip6Hdr *>(p->payload);
@@ -232,7 +232,7 @@ raw_bind_netif(struct RawPcb* pcb, const NetworkInterface* netif)
 {
     if (netif != nullptr)
     {
-        pcb->netif_idx = netif_get_index(netif);
+        pcb->netif_idx = get_and_inc_netif_num(netif);
     }
     else
     {
@@ -333,7 +333,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
     Logf(true, ("raw_sendto\n"));
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = netif_get_by_index(pcb->netif_idx);
+        netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -343,7 +343,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
             /* For multicast-destined packets, use the user-provided interface index to
              * determine the outgoing interface, if an interface index is set and a
              * matching netif can be found. Otherwise, fall back to regular routing. */
-            netif = netif_get_by_index(pcb->mcast_ifindex);
+            netif = get_netif_by_index(pcb->mcast_ifindex);
         }
         if (netif == nullptr)
 
@@ -455,7 +455,7 @@ raw_sendto_if_src(struct RawPcb* pcb,
     if (is_ip_addr_v4(dst_ip))
     {
         /* broadcast filter? */
-        if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && ip_addr_isbroadcast(
+        if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_netif_ip4_addr_bcast(
             dst_ip,
             netif))
         {

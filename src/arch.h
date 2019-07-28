@@ -196,15 +196,15 @@ inline uint8_t* LwipDeclareMemoryAligned(const size_t size)
 
 
 /** Calculate memory size for an aligned buffer - returns the next highest
- * multiple of 1 (e.g. LWIP_MEM_ALIGN_SIZE(3) and
- * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for 1 == 4).
+ * multiple of 1 (e.g. (3) and
+ * (4) will both yield 4 for 1 == 4).
  */
 
-// #define LWIP_MEM_ALIGN_SIZE(size) (((size) + 1 - 1U) & ~(1-1U))
-inline size_t LWIP_MEM_ALIGN_SIZE(const size_t size)
-{
-    return (size + 1 - 1U) & ~(1 - 1U);
-}
+// #define (size) (((size) + 1 - 1U) & ~(1-1U))
+//inline size_t(const size_t size)
+//{
+//    return (size + 1 - 1U) & ~(1 - 1U);
+//}
 
 
 /** Calculate safe memory size for an aligned buffer when using an unaligned

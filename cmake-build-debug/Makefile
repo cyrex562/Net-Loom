@@ -38,10 +38,10 @@ cmake_force:
 SHELL = cmd.exe
 
 # The CMake executable.
-CMAKE_COMMAND = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe
+CMAKE_COMMAND = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe
 
 # The command to remove a file.
-RM = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe -E remove -f
+RM = C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -58,7 +58,7 @@ CMAKE_BINARY_DIR = C:\Users\JoshMadden\Documents\GitHub\lwip_refactor\cmake-buil
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -69,7 +69,7 @@ rebuild_cache/fast: rebuild_cache
 # Special rule for the target package
 package: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool..."
-	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cpack.exe --config ./CPackConfig.cmake
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cpack.exe --config ./CPackConfig.cmake
 .PHONY : package
 
 # Special rule for the target package
@@ -77,10 +77,22 @@ package/fast: package
 
 .PHONY : package/fast
 
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
-	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cpack.exe --config ./CPackSourceConfig.cmake C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CPackSourceConfig.cmake
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cpack.exe --config ./CPackSourceConfig.cmake C:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/CPackSourceConfig.cmake
 .PHONY : package_source
 
 # Special rule for the target package_source
@@ -88,16 +100,50 @@ package_source/fast: package_source
 
 .PHONY : package_source/fast
 
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\191.7479.33\bin\cmake\win\bin\cmake.exe -E echo "No interactive CMake dialog available."
+	C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -E echo "No interactive CMake dialog available."
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+
+.PHONY : list_install_components/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -157,86 +203,1111 @@ fmt/fast:
 	$(MAKE) -f fmt\CMakeFiles\fmt.dir\build.make fmt/CMakeFiles/fmt.dir/build
 .PHONY : fmt/fast
 
-src/altcp.obj: src/altcp.cpp.obj
+#=============================================================================
+# Target rules for targets named libzmq
 
-.PHONY : src/altcp.obj
+# Build rule for target.
+libzmq: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 libzmq
+.PHONY : libzmq
+
+# fast build rule for target.
+libzmq/fast:
+	$(MAKE) -f libzmq\CMakeFiles\libzmq.dir\build.make libzmq/CMakeFiles/libzmq.dir/build
+.PHONY : libzmq/fast
+
+#=============================================================================
+# Target rules for targets named libzmq-static
+
+# Build rule for target.
+libzmq-static: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 libzmq-static
+.PHONY : libzmq-static
+
+# fast build rule for target.
+libzmq-static/fast:
+	$(MAKE) -f libzmq\CMakeFiles\libzmq-static.dir\build.make libzmq/CMakeFiles/libzmq-static.dir/build
+.PHONY : libzmq-static/fast
+
+#=============================================================================
+# Target rules for targets named clang-format-diff
+
+# Build rule for target.
+clang-format-diff: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 clang-format-diff
+.PHONY : clang-format-diff
+
+# fast build rule for target.
+clang-format-diff/fast:
+	$(MAKE) -f libzmq\CMakeFiles\clang-format-diff.dir\build.make libzmq/CMakeFiles/clang-format-diff.dir/build
+.PHONY : clang-format-diff/fast
+
+#=============================================================================
+# Target rules for targets named clang-format
+
+# Build rule for target.
+clang-format: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 clang-format
+.PHONY : clang-format
+
+# fast build rule for target.
+clang-format/fast:
+	$(MAKE) -f libzmq\CMakeFiles\clang-format.dir\build.make libzmq/CMakeFiles/clang-format.dir/build
+.PHONY : clang-format/fast
+
+#=============================================================================
+# Target rules for targets named clang-format-check
+
+# Build rule for target.
+clang-format-check: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 clang-format-check
+.PHONY : clang-format-check
+
+# fast build rule for target.
+clang-format-check/fast:
+	$(MAKE) -f libzmq\CMakeFiles\clang-format-check.dir\build.make libzmq/CMakeFiles/clang-format-check.dir/build
+.PHONY : clang-format-check/fast
+
+#=============================================================================
+# Target rules for targets named testutil-static
+
+# Build rule for target.
+testutil-static: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 testutil-static
+.PHONY : testutil-static
+
+# fast build rule for target.
+testutil-static/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\testutil-static.dir\build.make libzmq/tests/CMakeFiles/testutil-static.dir/build
+.PHONY : testutil-static/fast
+
+#=============================================================================
+# Target rules for targets named test_msg_ffn
+
+# Build rule for target.
+test_msg_ffn: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_msg_ffn
+.PHONY : test_msg_ffn
+
+# fast build rule for target.
+test_msg_ffn/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_msg_ffn.dir\build.make libzmq/tests/CMakeFiles/test_msg_ffn.dir/build
+.PHONY : test_msg_ffn/fast
+
+#=============================================================================
+# Target rules for targets named test_ctx_options
+
+# Build rule for target.
+test_ctx_options: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_ctx_options
+.PHONY : test_ctx_options
+
+# fast build rule for target.
+test_ctx_options/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_ctx_options.dir\build.make libzmq/tests/CMakeFiles/test_ctx_options.dir/build
+.PHONY : test_ctx_options/fast
+
+#=============================================================================
+# Target rules for targets named unity
+
+# Build rule for target.
+unity: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unity
+.PHONY : unity
+
+# fast build rule for target.
+unity/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\unity.dir\build.make libzmq/tests/CMakeFiles/unity.dir/build
+.PHONY : unity/fast
+
+#=============================================================================
+# Target rules for targets named test_reqrep_tcp
+
+# Build rule for target.
+test_reqrep_tcp: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_reqrep_tcp
+.PHONY : test_reqrep_tcp
+
+# fast build rule for target.
+test_reqrep_tcp/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_reqrep_tcp.dir\build.make libzmq/tests/CMakeFiles/test_reqrep_tcp.dir/build
+.PHONY : test_reqrep_tcp/fast
+
+#=============================================================================
+# Target rules for targets named test_reqrep_inproc
+
+# Build rule for target.
+test_reqrep_inproc: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_reqrep_inproc
+.PHONY : test_reqrep_inproc
+
+# fast build rule for target.
+test_reqrep_inproc/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_reqrep_inproc.dir\build.make libzmq/tests/CMakeFiles/test_reqrep_inproc.dir/build
+.PHONY : test_reqrep_inproc/fast
+
+#=============================================================================
+# Target rules for targets named test_stream_disconnect
+
+# Build rule for target.
+test_stream_disconnect: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_stream_disconnect
+.PHONY : test_stream_disconnect
+
+# fast build rule for target.
+test_stream_disconnect/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_stream_disconnect.dir\build.make libzmq/tests/CMakeFiles/test_stream_disconnect.dir/build
+.PHONY : test_stream_disconnect/fast
+
+#=============================================================================
+# Target rules for targets named testutil
+
+# Build rule for target.
+testutil: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 testutil
+.PHONY : testutil
+
+# fast build rule for target.
+testutil/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\testutil.dir\build.make libzmq/tests/CMakeFiles/testutil.dir/build
+.PHONY : testutil/fast
+
+#=============================================================================
+# Target rules for targets named test_ancillaries
+
+# Build rule for target.
+test_ancillaries: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_ancillaries
+.PHONY : test_ancillaries
+
+# fast build rule for target.
+test_ancillaries/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_ancillaries.dir\build.make libzmq/tests/CMakeFiles/test_ancillaries.dir/build
+.PHONY : test_ancillaries/fast
+
+#=============================================================================
+# Target rules for targets named test_system
+
+# Build rule for target.
+test_system: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_system
+.PHONY : test_system
+
+# fast build rule for target.
+test_system/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_system.dir\build.make libzmq/tests/CMakeFiles/test_system.dir/build
+.PHONY : test_system/fast
+
+#=============================================================================
+# Target rules for targets named test_pair_inproc
+
+# Build rule for target.
+test_pair_inproc: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_pair_inproc
+.PHONY : test_pair_inproc
+
+# fast build rule for target.
+test_pair_inproc/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_pair_inproc.dir\build.make libzmq/tests/CMakeFiles/test_pair_inproc.dir/build
+.PHONY : test_pair_inproc/fast
+
+#=============================================================================
+# Target rules for targets named test_timeo
+
+# Build rule for target.
+test_timeo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_timeo
+.PHONY : test_timeo
+
+# fast build rule for target.
+test_timeo/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_timeo.dir\build.make libzmq/tests/CMakeFiles/test_timeo.dir/build
+.PHONY : test_timeo/fast
+
+#=============================================================================
+# Target rules for targets named test_iov
+
+# Build rule for target.
+test_iov: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_iov
+.PHONY : test_iov
+
+# fast build rule for target.
+test_iov/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_iov.dir\build.make libzmq/tests/CMakeFiles/test_iov.dir/build
+.PHONY : test_iov/fast
+
+#=============================================================================
+# Target rules for targets named test_sub_forward
+
+# Build rule for target.
+test_sub_forward: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_sub_forward
+.PHONY : test_sub_forward
+
+# fast build rule for target.
+test_sub_forward/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_sub_forward.dir\build.make libzmq/tests/CMakeFiles/test_sub_forward.dir/build
+.PHONY : test_sub_forward/fast
+
+#=============================================================================
+# Target rules for targets named test_pair_tcp
+
+# Build rule for target.
+test_pair_tcp: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_pair_tcp
+.PHONY : test_pair_tcp
+
+# fast build rule for target.
+test_pair_tcp/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_pair_tcp.dir\build.make libzmq/tests/CMakeFiles/test_pair_tcp.dir/build
+.PHONY : test_pair_tcp/fast
+
+#=============================================================================
+# Target rules for targets named test_hwm
+
+# Build rule for target.
+test_hwm: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_hwm
+.PHONY : test_hwm
+
+# fast build rule for target.
+test_hwm/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_hwm.dir\build.make libzmq/tests/CMakeFiles/test_hwm.dir/build
+.PHONY : test_hwm/fast
+
+#=============================================================================
+# Target rules for targets named test_hwm_pubsub
+
+# Build rule for target.
+test_hwm_pubsub: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_hwm_pubsub
+.PHONY : test_hwm_pubsub
+
+# fast build rule for target.
+test_hwm_pubsub/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_hwm_pubsub.dir\build.make libzmq/tests/CMakeFiles/test_hwm_pubsub.dir/build
+.PHONY : test_hwm_pubsub/fast
+
+#=============================================================================
+# Target rules for targets named test_sockopt_hwm
+
+# Build rule for target.
+test_sockopt_hwm: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_sockopt_hwm
+.PHONY : test_sockopt_hwm
+
+# fast build rule for target.
+test_sockopt_hwm/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_sockopt_hwm.dir\build.make libzmq/tests/CMakeFiles/test_sockopt_hwm.dir/build
+.PHONY : test_sockopt_hwm/fast
+
+#=============================================================================
+# Target rules for targets named test_security_curve
+
+# Build rule for target.
+test_security_curve: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_security_curve
+.PHONY : test_security_curve
+
+# fast build rule for target.
+test_security_curve/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_security_curve.dir\build.make libzmq/tests/CMakeFiles/test_security_curve.dir/build
+.PHONY : test_security_curve/fast
+
+#=============================================================================
+# Target rules for targets named test_base85
+
+# Build rule for target.
+test_base85: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_base85
+.PHONY : test_base85
+
+# fast build rule for target.
+test_base85/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_base85.dir\build.make libzmq/tests/CMakeFiles/test_base85.dir/build
+.PHONY : test_base85/fast
+
+#=============================================================================
+# Target rules for targets named test_req_correlate
+
+# Build rule for target.
+test_req_correlate: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_req_correlate
+.PHONY : test_req_correlate
+
+# fast build rule for target.
+test_req_correlate/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_req_correlate.dir\build.make libzmq/tests/CMakeFiles/test_req_correlate.dir/build
+.PHONY : test_req_correlate/fast
+
+#=============================================================================
+# Target rules for targets named test_probe_router
+
+# Build rule for target.
+test_probe_router: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_probe_router
+.PHONY : test_probe_router
+
+# fast build rule for target.
+test_probe_router/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_probe_router.dir\build.make libzmq/tests/CMakeFiles/test_probe_router.dir/build
+.PHONY : test_probe_router/fast
+
+#=============================================================================
+# Target rules for targets named test_reqrep_device
+
+# Build rule for target.
+test_reqrep_device: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_reqrep_device
+.PHONY : test_reqrep_device
+
+# fast build rule for target.
+test_reqrep_device/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_reqrep_device.dir\build.make libzmq/tests/CMakeFiles/test_reqrep_device.dir/build
+.PHONY : test_reqrep_device/fast
+
+#=============================================================================
+# Target rules for targets named test_invalid_rep
+
+# Build rule for target.
+test_invalid_rep: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_invalid_rep
+.PHONY : test_invalid_rep
+
+# fast build rule for target.
+test_invalid_rep/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_invalid_rep.dir\build.make libzmq/tests/CMakeFiles/test_invalid_rep.dir/build
+.PHONY : test_invalid_rep/fast
+
+#=============================================================================
+# Target rules for targets named test_msg_flags
+
+# Build rule for target.
+test_msg_flags: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_msg_flags
+.PHONY : test_msg_flags
+
+# fast build rule for target.
+test_msg_flags/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_msg_flags.dir\build.make libzmq/tests/CMakeFiles/test_msg_flags.dir/build
+.PHONY : test_msg_flags/fast
+
+#=============================================================================
+# Target rules for targets named test_router_mandatory
+
+# Build rule for target.
+test_router_mandatory: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_router_mandatory
+.PHONY : test_router_mandatory
+
+# fast build rule for target.
+test_router_mandatory/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_router_mandatory.dir\build.make libzmq/tests/CMakeFiles/test_router_mandatory.dir/build
+.PHONY : test_router_mandatory/fast
+
+#=============================================================================
+# Target rules for targets named test_connect_resolve
+
+# Build rule for target.
+test_connect_resolve: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_connect_resolve
+.PHONY : test_connect_resolve
+
+# fast build rule for target.
+test_connect_resolve/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_connect_resolve.dir\build.make libzmq/tests/CMakeFiles/test_connect_resolve.dir/build
+.PHONY : test_connect_resolve/fast
+
+#=============================================================================
+# Target rules for targets named test_immediate
+
+# Build rule for target.
+test_immediate: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_immediate
+.PHONY : test_immediate
+
+# fast build rule for target.
+test_immediate/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_immediate.dir\build.make libzmq/tests/CMakeFiles/test_immediate.dir/build
+.PHONY : test_immediate/fast
+
+#=============================================================================
+# Target rules for targets named test_last_endpoint
+
+# Build rule for target.
+test_last_endpoint: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_last_endpoint
+.PHONY : test_last_endpoint
+
+# fast build rule for target.
+test_last_endpoint/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_last_endpoint.dir\build.make libzmq/tests/CMakeFiles/test_last_endpoint.dir/build
+.PHONY : test_last_endpoint/fast
+
+#=============================================================================
+# Target rules for targets named test_conflate
+
+# Build rule for target.
+test_conflate: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_conflate
+.PHONY : test_conflate
+
+# fast build rule for target.
+test_conflate/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_conflate.dir\build.make libzmq/tests/CMakeFiles/test_conflate.dir/build
+.PHONY : test_conflate/fast
+
+#=============================================================================
+# Target rules for targets named test_monitor
+
+# Build rule for target.
+test_monitor: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_monitor
+.PHONY : test_monitor
+
+# fast build rule for target.
+test_monitor/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_monitor.dir\build.make libzmq/tests/CMakeFiles/test_monitor.dir/build
+.PHONY : test_monitor/fast
+
+#=============================================================================
+# Target rules for targets named test_term_endpoint
+
+# Build rule for target.
+test_term_endpoint: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_term_endpoint
+.PHONY : test_term_endpoint
+
+# fast build rule for target.
+test_term_endpoint/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_term_endpoint.dir\build.make libzmq/tests/CMakeFiles/test_term_endpoint.dir/build
+.PHONY : test_term_endpoint/fast
+
+#=============================================================================
+# Target rules for targets named test_stream_empty
+
+# Build rule for target.
+test_stream_empty: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_stream_empty
+.PHONY : test_stream_empty
+
+# fast build rule for target.
+test_stream_empty/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_stream_empty.dir\build.make libzmq/tests/CMakeFiles/test_stream_empty.dir/build
+.PHONY : test_stream_empty/fast
+
+#=============================================================================
+# Target rules for targets named test_stream
+
+# Build rule for target.
+test_stream: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_stream
+.PHONY : test_stream
+
+# fast build rule for target.
+test_stream/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_stream.dir\build.make libzmq/tests/CMakeFiles/test_stream.dir/build
+.PHONY : test_stream/fast
+
+#=============================================================================
+# Target rules for targets named test_spec_req
+
+# Build rule for target.
+test_spec_req: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_spec_req
+.PHONY : test_spec_req
+
+# fast build rule for target.
+test_spec_req/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_spec_req.dir\build.make libzmq/tests/CMakeFiles/test_spec_req.dir/build
+.PHONY : test_spec_req/fast
+
+#=============================================================================
+# Target rules for targets named test_disconnect_inproc
+
+# Build rule for target.
+test_disconnect_inproc: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_disconnect_inproc
+.PHONY : test_disconnect_inproc
+
+# fast build rule for target.
+test_disconnect_inproc/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_disconnect_inproc.dir\build.make libzmq/tests/CMakeFiles/test_disconnect_inproc.dir/build
+.PHONY : test_disconnect_inproc/fast
+
+#=============================================================================
+# Target rules for targets named test_unbind_wildcard
+
+# Build rule for target.
+test_unbind_wildcard: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_unbind_wildcard
+.PHONY : test_unbind_wildcard
+
+# fast build rule for target.
+test_unbind_wildcard/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_unbind_wildcard.dir\build.make libzmq/tests/CMakeFiles/test_unbind_wildcard.dir/build
+.PHONY : test_unbind_wildcard/fast
+
+#=============================================================================
+# Target rules for targets named test_ctx_destroy
+
+# Build rule for target.
+test_ctx_destroy: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_ctx_destroy
+.PHONY : test_ctx_destroy
+
+# fast build rule for target.
+test_ctx_destroy/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_ctx_destroy.dir\build.make libzmq/tests/CMakeFiles/test_ctx_destroy.dir/build
+.PHONY : test_ctx_destroy/fast
+
+#=============================================================================
+# Target rules for targets named test_spec_rep
+
+# Build rule for target.
+test_spec_rep: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_spec_rep
+.PHONY : test_spec_rep
+
+# fast build rule for target.
+test_spec_rep/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_spec_rep.dir\build.make libzmq/tests/CMakeFiles/test_spec_rep.dir/build
+.PHONY : test_spec_rep/fast
+
+#=============================================================================
+# Target rules for targets named test_security_no_zap_handler
+
+# Build rule for target.
+test_security_no_zap_handler: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_security_no_zap_handler
+.PHONY : test_security_no_zap_handler
+
+# fast build rule for target.
+test_security_no_zap_handler/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_security_no_zap_handler.dir\build.make libzmq/tests/CMakeFiles/test_security_no_zap_handler.dir/build
+.PHONY : test_security_no_zap_handler/fast
+
+#=============================================================================
+# Target rules for targets named test_security_null
+
+# Build rule for target.
+test_security_null: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_security_null
+.PHONY : test_security_null
+
+# fast build rule for target.
+test_security_null/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_security_null.dir\build.make libzmq/tests/CMakeFiles/test_security_null.dir/build
+.PHONY : test_security_null/fast
+
+#=============================================================================
+# Target rules for targets named test_setsockopt
+
+# Build rule for target.
+test_setsockopt: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_setsockopt
+.PHONY : test_setsockopt
+
+# fast build rule for target.
+test_setsockopt/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_setsockopt.dir\build.make libzmq/tests/CMakeFiles/test_setsockopt.dir/build
+.PHONY : test_setsockopt/fast
+
+#=============================================================================
+# Target rules for targets named test_security_plain
+
+# Build rule for target.
+test_security_plain: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_security_plain
+.PHONY : test_security_plain
+
+# fast build rule for target.
+test_security_plain/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_security_plain.dir\build.make libzmq/tests/CMakeFiles/test_security_plain.dir/build
+.PHONY : test_security_plain/fast
+
+#=============================================================================
+# Target rules for targets named test_pub_invert_matching
+
+# Build rule for target.
+test_pub_invert_matching: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_pub_invert_matching
+.PHONY : test_pub_invert_matching
+
+# fast build rule for target.
+test_pub_invert_matching/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_pub_invert_matching.dir\build.make libzmq/tests/CMakeFiles/test_pub_invert_matching.dir/build
+.PHONY : test_pub_invert_matching/fast
+
+#=============================================================================
+# Target rules for targets named test_security_zap
+
+# Build rule for target.
+test_security_zap: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_security_zap
+.PHONY : test_security_zap
+
+# fast build rule for target.
+test_security_zap/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_security_zap.dir\build.make libzmq/tests/CMakeFiles/test_security_zap.dir/build
+.PHONY : test_security_zap/fast
+
+#=============================================================================
+# Target rules for targets named test_spec_dealer
+
+# Build rule for target.
+test_spec_dealer: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_spec_dealer
+.PHONY : test_spec_dealer
+
+# fast build rule for target.
+test_spec_dealer/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_spec_dealer.dir\build.make libzmq/tests/CMakeFiles/test_spec_dealer.dir/build
+.PHONY : test_spec_dealer/fast
+
+#=============================================================================
+# Target rules for targets named test_router_handover
+
+# Build rule for target.
+test_router_handover: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_router_handover
+.PHONY : test_router_handover
+
+# fast build rule for target.
+test_router_handover/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_router_handover.dir\build.make libzmq/tests/CMakeFiles/test_router_handover.dir/build
+.PHONY : test_router_handover/fast
+
+#=============================================================================
+# Target rules for targets named test_heartbeats
+
+# Build rule for target.
+test_heartbeats: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_heartbeats
+.PHONY : test_heartbeats
+
+# fast build rule for target.
+test_heartbeats/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_heartbeats.dir\build.make libzmq/tests/CMakeFiles/test_heartbeats.dir/build
+.PHONY : test_heartbeats/fast
+
+#=============================================================================
+# Target rules for targets named test_spec_router
+
+# Build rule for target.
+test_spec_router: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_spec_router
+.PHONY : test_spec_router
+
+# fast build rule for target.
+test_spec_router/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_spec_router.dir\build.make libzmq/tests/CMakeFiles/test_spec_router.dir/build
+.PHONY : test_spec_router/fast
+
+#=============================================================================
+# Target rules for targets named test_issue_566
+
+# Build rule for target.
+test_issue_566: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_issue_566
+.PHONY : test_issue_566
+
+# fast build rule for target.
+test_issue_566/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_issue_566.dir\build.make libzmq/tests/CMakeFiles/test_issue_566.dir/build
+.PHONY : test_issue_566/fast
+
+#=============================================================================
+# Target rules for targets named test_spec_pushpull
+
+# Build rule for target.
+test_spec_pushpull: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_spec_pushpull
+.PHONY : test_spec_pushpull
+
+# fast build rule for target.
+test_spec_pushpull/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_spec_pushpull.dir\build.make libzmq/tests/CMakeFiles/test_spec_pushpull.dir/build
+.PHONY : test_spec_pushpull/fast
+
+#=============================================================================
+# Target rules for targets named test_req_relaxed
+
+# Build rule for target.
+test_req_relaxed: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_req_relaxed
+.PHONY : test_req_relaxed
+
+# fast build rule for target.
+test_req_relaxed/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_req_relaxed.dir\build.make libzmq/tests/CMakeFiles/test_req_relaxed.dir/build
+.PHONY : test_req_relaxed/fast
+
+#=============================================================================
+# Target rules for targets named test_xpub_manual
+
+# Build rule for target.
+test_xpub_manual: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_xpub_manual
+.PHONY : test_xpub_manual
+
+# fast build rule for target.
+test_xpub_manual/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_xpub_manual.dir\build.make libzmq/tests/CMakeFiles/test_xpub_manual.dir/build
+.PHONY : test_xpub_manual/fast
+
+#=============================================================================
+# Target rules for targets named test_atomics
+
+# Build rule for target.
+test_atomics: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_atomics
+.PHONY : test_atomics
+
+# fast build rule for target.
+test_atomics/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_atomics.dir\build.make libzmq/tests/CMakeFiles/test_atomics.dir/build
+.PHONY : test_atomics/fast
+
+#=============================================================================
+# Target rules for targets named test_inproc_connect
+
+# Build rule for target.
+test_inproc_connect: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_inproc_connect
+.PHONY : test_inproc_connect
+
+# fast build rule for target.
+test_inproc_connect/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_inproc_connect.dir\build.make libzmq/tests/CMakeFiles/test_inproc_connect.dir/build
+.PHONY : test_inproc_connect/fast
+
+#=============================================================================
+# Target rules for targets named test_shutdown_stress
+
+# Build rule for target.
+test_shutdown_stress: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_shutdown_stress
+.PHONY : test_shutdown_stress
+
+# fast build rule for target.
+test_shutdown_stress/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_shutdown_stress.dir\build.make libzmq/tests/CMakeFiles/test_shutdown_stress.dir/build
+.PHONY : test_shutdown_stress/fast
+
+#=============================================================================
+# Target rules for targets named test_xpub_nodrop
+
+# Build rule for target.
+test_xpub_nodrop: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_xpub_nodrop
+.PHONY : test_xpub_nodrop
+
+# fast build rule for target.
+test_xpub_nodrop/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_xpub_nodrop.dir\build.make libzmq/tests/CMakeFiles/test_xpub_nodrop.dir/build
+.PHONY : test_xpub_nodrop/fast
+
+#=============================================================================
+# Target rules for targets named test_many_sockets
+
+# Build rule for target.
+test_many_sockets: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_many_sockets
+.PHONY : test_many_sockets
+
+# fast build rule for target.
+test_many_sockets/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_many_sockets.dir\build.make libzmq/tests/CMakeFiles/test_many_sockets.dir/build
+.PHONY : test_many_sockets/fast
+
+#=============================================================================
+# Target rules for targets named test_diffserv
+
+# Build rule for target.
+test_diffserv: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_diffserv
+.PHONY : test_diffserv
+
+# fast build rule for target.
+test_diffserv/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_diffserv.dir\build.make libzmq/tests/CMakeFiles/test_diffserv.dir/build
+.PHONY : test_diffserv/fast
+
+#=============================================================================
+# Target rules for targets named test_connect_rid
+
+# Build rule for target.
+test_connect_rid: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_connect_rid
+.PHONY : test_connect_rid
+
+# fast build rule for target.
+test_connect_rid/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_connect_rid.dir\build.make libzmq/tests/CMakeFiles/test_connect_rid.dir/build
+.PHONY : test_connect_rid/fast
+
+#=============================================================================
+# Target rules for targets named test_bind_src_address
+
+# Build rule for target.
+test_bind_src_address: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_bind_src_address
+.PHONY : test_bind_src_address
+
+# fast build rule for target.
+test_bind_src_address/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_bind_src_address.dir\build.make libzmq/tests/CMakeFiles/test_bind_src_address.dir/build
+.PHONY : test_bind_src_address/fast
+
+#=============================================================================
+# Target rules for targets named test_capabilities
+
+# Build rule for target.
+test_capabilities: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_capabilities
+.PHONY : test_capabilities
+
+# fast build rule for target.
+test_capabilities/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_capabilities.dir\build.make libzmq/tests/CMakeFiles/test_capabilities.dir/build
+.PHONY : test_capabilities/fast
+
+#=============================================================================
+# Target rules for targets named test_metadata
+
+# Build rule for target.
+test_metadata: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_metadata
+.PHONY : test_metadata
+
+# fast build rule for target.
+test_metadata/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_metadata.dir\build.make libzmq/tests/CMakeFiles/test_metadata.dir/build
+.PHONY : test_metadata/fast
+
+#=============================================================================
+# Target rules for targets named test_srcfd
+
+# Build rule for target.
+test_srcfd: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_srcfd
+.PHONY : test_srcfd
+
+# fast build rule for target.
+test_srcfd/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_srcfd.dir\build.make libzmq/tests/CMakeFiles/test_srcfd.dir/build
+.PHONY : test_srcfd/fast
+
+#=============================================================================
+# Target rules for targets named test_stream_timeout
+
+# Build rule for target.
+test_stream_timeout: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_stream_timeout
+.PHONY : test_stream_timeout
+
+# fast build rule for target.
+test_stream_timeout/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_stream_timeout.dir\build.make libzmq/tests/CMakeFiles/test_stream_timeout.dir/build
+.PHONY : test_stream_timeout/fast
+
+#=============================================================================
+# Target rules for targets named test_xpub_welcome_msg
+
+# Build rule for target.
+test_xpub_welcome_msg: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_xpub_welcome_msg
+.PHONY : test_xpub_welcome_msg
+
+# fast build rule for target.
+test_xpub_welcome_msg/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_xpub_welcome_msg.dir\build.make libzmq/tests/CMakeFiles/test_xpub_welcome_msg.dir/build
+.PHONY : test_xpub_welcome_msg/fast
+
+#=============================================================================
+# Target rules for targets named test_xpub_verbose
+
+# Build rule for target.
+test_xpub_verbose: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_xpub_verbose
+.PHONY : test_xpub_verbose
+
+# fast build rule for target.
+test_xpub_verbose/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_xpub_verbose.dir\build.make libzmq/tests/CMakeFiles/test_xpub_verbose.dir/build
+.PHONY : test_xpub_verbose/fast
+
+#=============================================================================
+# Target rules for targets named test_bind_after_connect_tcp
+
+# Build rule for target.
+test_bind_after_connect_tcp: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_bind_after_connect_tcp
+.PHONY : test_bind_after_connect_tcp
+
+# fast build rule for target.
+test_bind_after_connect_tcp/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_bind_after_connect_tcp.dir\build.make libzmq/tests/CMakeFiles/test_bind_after_connect_tcp.dir/build
+.PHONY : test_bind_after_connect_tcp/fast
+
+#=============================================================================
+# Target rules for targets named test_sodium
+
+# Build rule for target.
+test_sodium: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_sodium
+.PHONY : test_sodium
+
+# fast build rule for target.
+test_sodium/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_sodium.dir\build.make libzmq/tests/CMakeFiles/test_sodium.dir/build
+.PHONY : test_sodium/fast
+
+#=============================================================================
+# Target rules for targets named test_socket_null
+
+# Build rule for target.
+test_socket_null: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_socket_null
+.PHONY : test_socket_null
+
+# fast build rule for target.
+test_socket_null/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_socket_null.dir\build.make libzmq/tests/CMakeFiles/test_socket_null.dir/build
+.PHONY : test_socket_null/fast
+
+#=============================================================================
+# Target rules for targets named test_reconnect_ivl
+
+# Build rule for target.
+test_reconnect_ivl: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_reconnect_ivl
+.PHONY : test_reconnect_ivl
+
+# fast build rule for target.
+test_reconnect_ivl/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_reconnect_ivl.dir\build.make libzmq/tests/CMakeFiles/test_reconnect_ivl.dir/build
+.PHONY : test_reconnect_ivl/fast
+
+#=============================================================================
+# Target rules for targets named test_mock_pub_sub
+
+# Build rule for target.
+test_mock_pub_sub: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 test_mock_pub_sub
+.PHONY : test_mock_pub_sub
+
+# fast build rule for target.
+test_mock_pub_sub/fast:
+	$(MAKE) -f libzmq\tests\CMakeFiles\test_mock_pub_sub.dir\build.make libzmq/tests/CMakeFiles/test_mock_pub_sub.dir/build
+.PHONY : test_mock_pub_sub/fast
+
+#=============================================================================
+# Target rules for targets named unittest_ypipe
+
+# Build rule for target.
+unittest_ypipe: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_ypipe
+.PHONY : unittest_ypipe
+
+# fast build rule for target.
+unittest_ypipe/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_ypipe.dir\build.make libzmq/unittests/CMakeFiles/unittest_ypipe.dir/build
+.PHONY : unittest_ypipe/fast
+
+#=============================================================================
+# Target rules for targets named unittest_mtrie
+
+# Build rule for target.
+unittest_mtrie: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_mtrie
+.PHONY : unittest_mtrie
+
+# fast build rule for target.
+unittest_mtrie/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_mtrie.dir\build.make libzmq/unittests/CMakeFiles/unittest_mtrie.dir/build
+.PHONY : unittest_mtrie/fast
+
+#=============================================================================
+# Target rules for targets named unittest_poller
+
+# Build rule for target.
+unittest_poller: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_poller
+.PHONY : unittest_poller
+
+# fast build rule for target.
+unittest_poller/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_poller.dir\build.make libzmq/unittests/CMakeFiles/unittest_poller.dir/build
+.PHONY : unittest_poller/fast
+
+#=============================================================================
+# Target rules for targets named unittest_ip_resolver
+
+# Build rule for target.
+unittest_ip_resolver: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_ip_resolver
+.PHONY : unittest_ip_resolver
+
+# fast build rule for target.
+unittest_ip_resolver/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_ip_resolver.dir\build.make libzmq/unittests/CMakeFiles/unittest_ip_resolver.dir/build
+.PHONY : unittest_ip_resolver/fast
+
+#=============================================================================
+# Target rules for targets named unittest_udp_address
+
+# Build rule for target.
+unittest_udp_address: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_udp_address
+.PHONY : unittest_udp_address
+
+# fast build rule for target.
+unittest_udp_address/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_udp_address.dir\build.make libzmq/unittests/CMakeFiles/unittest_udp_address.dir/build
+.PHONY : unittest_udp_address/fast
+
+#=============================================================================
+# Target rules for targets named unittest_radix_tree
+
+# Build rule for target.
+unittest_radix_tree: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 unittest_radix_tree
+.PHONY : unittest_radix_tree
+
+# fast build rule for target.
+unittest_radix_tree/fast:
+	$(MAKE) -f libzmq\unittests\CMakeFiles\unittest_radix_tree.dir\build.make libzmq/unittests/CMakeFiles/unittest_radix_tree.dir/build
+.PHONY : unittest_radix_tree/fast
+
+src/ND6.obj: src/ND6.CPP.obj
+
+.PHONY : src/ND6.obj
 
 # target to build an object file
-src/altcp.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp.cpp.obj
-.PHONY : src/altcp.cpp.obj
+src/ND6.CPP.obj:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/ND6.CPP.obj
+.PHONY : src/ND6.CPP.obj
 
-src/altcp.i: src/altcp.cpp.i
+src/ND6.i: src/ND6.CPP.i
 
-.PHONY : src/altcp.i
-
-# target to preprocess a source file
-src/altcp.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp.cpp.i
-.PHONY : src/altcp.cpp.i
-
-src/altcp.s: src/altcp.cpp.s
-
-.PHONY : src/altcp.s
-
-# target to generate assembly for a file
-src/altcp.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp.cpp.s
-.PHONY : src/altcp.cpp.s
-
-src/altcp_alloc.obj: src/altcp_alloc.cpp.obj
-
-.PHONY : src/altcp_alloc.obj
-
-# target to build an object file
-src/altcp_alloc.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_alloc.cpp.obj
-.PHONY : src/altcp_alloc.cpp.obj
-
-src/altcp_alloc.i: src/altcp_alloc.cpp.i
-
-.PHONY : src/altcp_alloc.i
+.PHONY : src/ND6.i
 
 # target to preprocess a source file
-src/altcp_alloc.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_alloc.cpp.i
-.PHONY : src/altcp_alloc.cpp.i
+src/ND6.CPP.i:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/ND6.CPP.i
+.PHONY : src/ND6.CPP.i
 
-src/altcp_alloc.s: src/altcp_alloc.cpp.s
+src/ND6.s: src/ND6.CPP.s
 
-.PHONY : src/altcp_alloc.s
-
-# target to generate assembly for a file
-src/altcp_alloc.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_alloc.cpp.s
-.PHONY : src/altcp_alloc.cpp.s
-
-src/altcp_tcp.obj: src/altcp_tcp.cpp.obj
-
-.PHONY : src/altcp_tcp.obj
-
-# target to build an object file
-src/altcp_tcp.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_tcp.cpp.obj
-.PHONY : src/altcp_tcp.cpp.obj
-
-src/altcp_tcp.i: src/altcp_tcp.cpp.i
-
-.PHONY : src/altcp_tcp.i
-
-# target to preprocess a source file
-src/altcp_tcp.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_tcp.cpp.i
-.PHONY : src/altcp_tcp.cpp.i
-
-src/altcp_tcp.s: src/altcp_tcp.cpp.s
-
-.PHONY : src/altcp_tcp.s
+.PHONY : src/ND6.s
 
 # target to generate assembly for a file
-src/altcp_tcp.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/altcp_tcp.cpp.s
-.PHONY : src/altcp_tcp.cpp.s
+src/ND6.CPP.s:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/ND6.CPP.s
+.PHONY : src/ND6.CPP.s
 
 src/arc4.obj: src/arc4.cpp.obj
 
@@ -400,59 +1471,32 @@ src/ccp.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/ccp.cpp.s
 .PHONY : src/ccp.cpp.s
 
-src/chap-md5.obj: src/chap-md5.cpp.obj
+src/chap_md5.obj: src/chap_md5.cpp.obj
 
-.PHONY : src/chap-md5.obj
-
-# target to build an object file
-src/chap-md5.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-md5.cpp.obj
-.PHONY : src/chap-md5.cpp.obj
-
-src/chap-md5.i: src/chap-md5.cpp.i
-
-.PHONY : src/chap-md5.i
-
-# target to preprocess a source file
-src/chap-md5.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-md5.cpp.i
-.PHONY : src/chap-md5.cpp.i
-
-src/chap-md5.s: src/chap-md5.cpp.s
-
-.PHONY : src/chap-md5.s
-
-# target to generate assembly for a file
-src/chap-md5.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-md5.cpp.s
-.PHONY : src/chap-md5.cpp.s
-
-src/chap-new.obj: src/chap-new.cpp.obj
-
-.PHONY : src/chap-new.obj
+.PHONY : src/chap_md5.obj
 
 # target to build an object file
-src/chap-new.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-new.cpp.obj
-.PHONY : src/chap-new.cpp.obj
+src/chap_md5.cpp.obj:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_md5.cpp.obj
+.PHONY : src/chap_md5.cpp.obj
 
-src/chap-new.i: src/chap-new.cpp.i
+src/chap_md5.i: src/chap_md5.cpp.i
 
-.PHONY : src/chap-new.i
+.PHONY : src/chap_md5.i
 
 # target to preprocess a source file
-src/chap-new.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-new.cpp.i
-.PHONY : src/chap-new.cpp.i
+src/chap_md5.cpp.i:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_md5.cpp.i
+.PHONY : src/chap_md5.cpp.i
 
-src/chap-new.s: src/chap-new.cpp.s
+src/chap_md5.s: src/chap_md5.cpp.s
 
-.PHONY : src/chap-new.s
+.PHONY : src/chap_md5.s
 
 # target to generate assembly for a file
-src/chap-new.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap-new.cpp.s
-.PHONY : src/chap-new.cpp.s
+src/chap_md5.cpp.s:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_md5.cpp.s
+.PHONY : src/chap_md5.cpp.s
 
 src/chap_ms.obj: src/chap_ms.cpp.obj
 
@@ -480,6 +1524,33 @@ src/chap_ms.s: src/chap_ms.cpp.s
 src/chap_ms.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_ms.cpp.s
 .PHONY : src/chap_ms.cpp.s
+
+src/chap_new.obj: src/chap_new.cpp.obj
+
+.PHONY : src/chap_new.obj
+
+# target to build an object file
+src/chap_new.cpp.obj:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_new.cpp.obj
+.PHONY : src/chap_new.cpp.obj
+
+src/chap_new.i: src/chap_new.cpp.i
+
+.PHONY : src/chap_new.i
+
+# target to preprocess a source file
+src/chap_new.cpp.i:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_new.cpp.i
+.PHONY : src/chap_new.cpp.i
+
+src/chap_new.s: src/chap_new.cpp.s
+
+.PHONY : src/chap_new.s
+
+# target to generate assembly for a file
+src/chap_new.cpp.s:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/chap_new.cpp.s
+.PHONY : src/chap_new.cpp.s
 
 src/def.obj: src/def.cpp.obj
 
@@ -912,33 +1983,6 @@ src/igmp.s: src/igmp.cpp.s
 src/igmp.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/igmp.cpp.s
 .PHONY : src/igmp.cpp.s
-
-src/inet6.obj: src/inet6.cpp.obj
-
-.PHONY : src/inet6.obj
-
-# target to build an object file
-src/inet6.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/inet6.cpp.obj
-.PHONY : src/inet6.cpp.obj
-
-src/inet6.i: src/inet6.cpp.i
-
-.PHONY : src/inet6.i
-
-# target to preprocess a source file
-src/inet6.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/inet6.cpp.i
-.PHONY : src/inet6.cpp.i
-
-src/inet6.s: src/inet6.cpp.s
-
-.PHONY : src/inet6.s
-
-# target to generate assembly for a file
-src/inet6.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/inet6.cpp.s
-.PHONY : src/inet6.cpp.s
 
 src/inet_chksum.obj: src/inet_chksum.cpp.obj
 
@@ -1426,60 +2470,6 @@ src/md5.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/md5.cpp.s
 .PHONY : src/md5.cpp.s
 
-src/mem.obj: src/mem.cpp.obj
-
-.PHONY : src/mem.obj
-
-# target to build an object file
-src/mem.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/mem.cpp.obj
-.PHONY : src/mem.cpp.obj
-
-src/mem.i: src/mem.cpp.i
-
-.PHONY : src/mem.i
-
-# target to preprocess a source file
-src/mem.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/mem.cpp.i
-.PHONY : src/mem.cpp.i
-
-src/mem.s: src/mem.cpp.s
-
-.PHONY : src/mem.s
-
-# target to generate assembly for a file
-src/mem.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/mem.cpp.s
-.PHONY : src/mem.cpp.s
-
-src/memp.obj: src/memp.cpp.obj
-
-.PHONY : src/memp.obj
-
-# target to build an object file
-src/memp.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/memp.cpp.obj
-.PHONY : src/memp.cpp.obj
-
-src/memp.i: src/memp.cpp.i
-
-.PHONY : src/memp.i
-
-# target to preprocess a source file
-src/memp.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/memp.cpp.i
-.PHONY : src/memp.cpp.i
-
-src/memp.s: src/memp.cpp.s
-
-.PHONY : src/memp.s
-
-# target to generate assembly for a file
-src/memp.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/memp.cpp.s
-.PHONY : src/memp.cpp.s
-
 src/mld6.obj: src/mld6.cpp.obj
 
 .PHONY : src/mld6.obj
@@ -1561,86 +2551,59 @@ src/multilink.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/multilink.cpp.s
 .PHONY : src/multilink.cpp.s
 
-src/nd6.obj: src/nd6.cpp.obj
+src/network_interface.obj: src/network_interface.cpp.obj
 
-.PHONY : src/nd6.obj
-
-# target to build an object file
-src/nd6.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/nd6.cpp.obj
-.PHONY : src/nd6.cpp.obj
-
-src/nd6.i: src/nd6.cpp.i
-
-.PHONY : src/nd6.i
-
-# target to preprocess a source file
-src/nd6.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/nd6.cpp.i
-.PHONY : src/nd6.cpp.i
-
-src/nd6.s: src/nd6.cpp.s
-
-.PHONY : src/nd6.s
-
-# target to generate assembly for a file
-src/nd6.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/nd6.cpp.s
-.PHONY : src/nd6.cpp.s
-
-src/netif.obj: src/netif.cpp.obj
-
-.PHONY : src/netif.obj
+.PHONY : src/network_interface.obj
 
 # target to build an object file
-src/netif.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/netif.cpp.obj
-.PHONY : src/netif.cpp.obj
+src/network_interface.cpp.obj:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/network_interface.cpp.obj
+.PHONY : src/network_interface.cpp.obj
 
-src/netif.i: src/netif.cpp.i
+src/network_interface.i: src/network_interface.cpp.i
 
-.PHONY : src/netif.i
+.PHONY : src/network_interface.i
 
 # target to preprocess a source file
-src/netif.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/netif.cpp.i
-.PHONY : src/netif.cpp.i
+src/network_interface.cpp.i:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/network_interface.cpp.i
+.PHONY : src/network_interface.cpp.i
 
-src/netif.s: src/netif.cpp.s
+src/network_interface.s: src/network_interface.cpp.s
 
-.PHONY : src/netif.s
+.PHONY : src/network_interface.s
 
 # target to generate assembly for a file
-src/netif.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/netif.cpp.s
-.PHONY : src/netif.cpp.s
+src/network_interface.cpp.s:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/network_interface.cpp.s
+.PHONY : src/network_interface.cpp.s
 
-src/pbuf.obj: src/pbuf.cpp.obj
+src/packet_buffer.obj: src/packet_buffer.cpp.obj
 
-.PHONY : src/pbuf.obj
+.PHONY : src/packet_buffer.obj
 
 # target to build an object file
-src/pbuf.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/pbuf.cpp.obj
-.PHONY : src/pbuf.cpp.obj
+src/packet_buffer.cpp.obj:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/packet_buffer.cpp.obj
+.PHONY : src/packet_buffer.cpp.obj
 
-src/pbuf.i: src/pbuf.cpp.i
+src/packet_buffer.i: src/packet_buffer.cpp.i
 
-.PHONY : src/pbuf.i
+.PHONY : src/packet_buffer.i
 
 # target to preprocess a source file
-src/pbuf.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/pbuf.cpp.i
-.PHONY : src/pbuf.cpp.i
+src/packet_buffer.cpp.i:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/packet_buffer.cpp.i
+.PHONY : src/packet_buffer.cpp.i
 
-src/pbuf.s: src/pbuf.cpp.s
+src/packet_buffer.s: src/packet_buffer.cpp.s
 
-.PHONY : src/pbuf.s
+.PHONY : src/packet_buffer.s
 
 # target to generate assembly for a file
-src/pbuf.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/pbuf.cpp.s
-.PHONY : src/pbuf.cpp.s
+src/packet_buffer.cpp.s:
+	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/packet_buffer.cpp.s
+.PHONY : src/packet_buffer.cpp.s
 
 src/pcapif.obj: src/pcapif.cpp.obj
 
@@ -1966,33 +2929,6 @@ src/slipif.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/slipif.cpp.s
 .PHONY : src/slipif.cpp.s
 
-src/stats.obj: src/stats.cpp.obj
-
-.PHONY : src/stats.obj
-
-# target to build an object file
-src/stats.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/stats.cpp.obj
-.PHONY : src/stats.cpp.obj
-
-src/stats.i: src/stats.cpp.i
-
-.PHONY : src/stats.i
-
-# target to preprocess a source file
-src/stats.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/stats.cpp.i
-.PHONY : src/stats.cpp.i
-
-src/stats.s: src/stats.cpp.s
-
-.PHONY : src/stats.s
-
-# target to generate assembly for a file
-src/stats.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/stats.cpp.s
-.PHONY : src/stats.cpp.s
-
 src/sys.obj: src/sys.cpp.obj
 
 .PHONY : src/sys.obj
@@ -2019,33 +2955,6 @@ src/sys.s: src/sys.cpp.s
 src/sys.cpp.s:
 	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/sys.cpp.s
 .PHONY : src/sys.cpp.s
-
-src/sys_arch.obj: src/sys_arch.cpp.obj
-
-.PHONY : src/sys_arch.obj
-
-# target to build an object file
-src/sys_arch.cpp.obj:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/sys_arch.cpp.obj
-.PHONY : src/sys_arch.cpp.obj
-
-src/sys_arch.i: src/sys_arch.cpp.i
-
-.PHONY : src/sys_arch.i
-
-# target to preprocess a source file
-src/sys_arch.cpp.i:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/sys_arch.cpp.i
-.PHONY : src/sys_arch.cpp.i
-
-src/sys_arch.s: src/sys_arch.cpp.s
-
-.PHONY : src/sys_arch.s
-
-# target to generate assembly for a file
-src/sys_arch.cpp.s:
-	$(MAKE) -f CMakeFiles\lwip.dir\build.make CMakeFiles/lwip.dir/src/sys_arch.cpp.s
-.PHONY : src/sys_arch.cpp.s
 
 src/tcp.obj: src/tcp.cpp.obj
 
@@ -2299,18 +3208,99 @@ help:
 	@echo ... rebuild_cache
 	@echo ... lwip
 	@echo ... package
+	@echo ... install/strip
 	@echo ... package_source
+	@echo ... install
+	@echo ... install/local
 	@echo ... edit_cache
+	@echo ... list_install_components
 	@echo ... fmt
-	@echo ... src/altcp.obj
-	@echo ... src/altcp.i
-	@echo ... src/altcp.s
-	@echo ... src/altcp_alloc.obj
-	@echo ... src/altcp_alloc.i
-	@echo ... src/altcp_alloc.s
-	@echo ... src/altcp_tcp.obj
-	@echo ... src/altcp_tcp.i
-	@echo ... src/altcp_tcp.s
+	@echo ... libzmq
+	@echo ... libzmq-static
+	@echo ... clang-format-diff
+	@echo ... clang-format
+	@echo ... clang-format-check
+	@echo ... testutil-static
+	@echo ... test_msg_ffn
+	@echo ... test_ctx_options
+	@echo ... unity
+	@echo ... test_reqrep_tcp
+	@echo ... test_reqrep_inproc
+	@echo ... test_stream_disconnect
+	@echo ... testutil
+	@echo ... test_ancillaries
+	@echo ... test_system
+	@echo ... test_pair_inproc
+	@echo ... test_timeo
+	@echo ... test_iov
+	@echo ... test_sub_forward
+	@echo ... test_pair_tcp
+	@echo ... test_hwm
+	@echo ... test_hwm_pubsub
+	@echo ... test_sockopt_hwm
+	@echo ... test_security_curve
+	@echo ... test_base85
+	@echo ... test_req_correlate
+	@echo ... test_probe_router
+	@echo ... test_reqrep_device
+	@echo ... test_invalid_rep
+	@echo ... test_msg_flags
+	@echo ... test_router_mandatory
+	@echo ... test_connect_resolve
+	@echo ... test_immediate
+	@echo ... test_last_endpoint
+	@echo ... test_conflate
+	@echo ... test_monitor
+	@echo ... test_term_endpoint
+	@echo ... test_stream_empty
+	@echo ... test_stream
+	@echo ... test_spec_req
+	@echo ... test_disconnect_inproc
+	@echo ... test_unbind_wildcard
+	@echo ... test_ctx_destroy
+	@echo ... test_spec_rep
+	@echo ... test_security_no_zap_handler
+	@echo ... test_security_null
+	@echo ... test_setsockopt
+	@echo ... test_security_plain
+	@echo ... test_pub_invert_matching
+	@echo ... test_security_zap
+	@echo ... test_spec_dealer
+	@echo ... test_router_handover
+	@echo ... test_heartbeats
+	@echo ... test_spec_router
+	@echo ... test_issue_566
+	@echo ... test_spec_pushpull
+	@echo ... test_req_relaxed
+	@echo ... test_xpub_manual
+	@echo ... test_atomics
+	@echo ... test_inproc_connect
+	@echo ... test_shutdown_stress
+	@echo ... test_xpub_nodrop
+	@echo ... test_many_sockets
+	@echo ... test_diffserv
+	@echo ... test_connect_rid
+	@echo ... test_bind_src_address
+	@echo ... test_capabilities
+	@echo ... test_metadata
+	@echo ... test_srcfd
+	@echo ... test_stream_timeout
+	@echo ... test_xpub_welcome_msg
+	@echo ... test_xpub_verbose
+	@echo ... test_bind_after_connect_tcp
+	@echo ... test_sodium
+	@echo ... test_socket_null
+	@echo ... test_reconnect_ivl
+	@echo ... test_mock_pub_sub
+	@echo ... unittest_ypipe
+	@echo ... unittest_mtrie
+	@echo ... unittest_poller
+	@echo ... unittest_ip_resolver
+	@echo ... unittest_udp_address
+	@echo ... unittest_radix_tree
+	@echo ... src/ND6.obj
+	@echo ... src/ND6.i
+	@echo ... src/ND6.s
 	@echo ... src/arc4.obj
 	@echo ... src/arc4.i
 	@echo ... src/arc4.s
@@ -2329,15 +3319,15 @@ help:
 	@echo ... src/ccp.obj
 	@echo ... src/ccp.i
 	@echo ... src/ccp.s
-	@echo ... src/chap-md5.obj
-	@echo ... src/chap-md5.i
-	@echo ... src/chap-md5.s
-	@echo ... src/chap-new.obj
-	@echo ... src/chap-new.i
-	@echo ... src/chap-new.s
+	@echo ... src/chap_md5.obj
+	@echo ... src/chap_md5.i
+	@echo ... src/chap_md5.s
 	@echo ... src/chap_ms.obj
 	@echo ... src/chap_ms.i
 	@echo ... src/chap_ms.s
+	@echo ... src/chap_new.obj
+	@echo ... src/chap_new.i
+	@echo ... src/chap_new.s
 	@echo ... src/def.obj
 	@echo ... src/def.i
 	@echo ... src/def.s
@@ -2386,9 +3376,6 @@ help:
 	@echo ... src/igmp.obj
 	@echo ... src/igmp.i
 	@echo ... src/igmp.s
-	@echo ... src/inet6.obj
-	@echo ... src/inet6.i
-	@echo ... src/inet6.s
 	@echo ... src/inet_chksum.obj
 	@echo ... src/inet_chksum.i
 	@echo ... src/inet_chksum.s
@@ -2443,12 +3430,6 @@ help:
 	@echo ... src/md5.obj
 	@echo ... src/md5.i
 	@echo ... src/md5.s
-	@echo ... src/mem.obj
-	@echo ... src/mem.i
-	@echo ... src/mem.s
-	@echo ... src/memp.obj
-	@echo ... src/memp.i
-	@echo ... src/memp.s
 	@echo ... src/mld6.obj
 	@echo ... src/mld6.i
 	@echo ... src/mld6.s
@@ -2458,15 +3439,12 @@ help:
 	@echo ... src/multilink.obj
 	@echo ... src/multilink.i
 	@echo ... src/multilink.s
-	@echo ... src/nd6.obj
-	@echo ... src/nd6.i
-	@echo ... src/nd6.s
-	@echo ... src/netif.obj
-	@echo ... src/netif.i
-	@echo ... src/netif.s
-	@echo ... src/pbuf.obj
-	@echo ... src/pbuf.i
-	@echo ... src/pbuf.s
+	@echo ... src/network_interface.obj
+	@echo ... src/network_interface.i
+	@echo ... src/network_interface.s
+	@echo ... src/packet_buffer.obj
+	@echo ... src/packet_buffer.i
+	@echo ... src/packet_buffer.s
 	@echo ... src/pcapif.obj
 	@echo ... src/pcapif.i
 	@echo ... src/pcapif.s
@@ -2503,15 +3481,9 @@ help:
 	@echo ... src/slipif.obj
 	@echo ... src/slipif.i
 	@echo ... src/slipif.s
-	@echo ... src/stats.obj
-	@echo ... src/stats.i
-	@echo ... src/stats.s
 	@echo ... src/sys.obj
 	@echo ... src/sys.i
 	@echo ... src/sys.s
-	@echo ... src/sys_arch.obj
-	@echo ... src/sys_arch.i
-	@echo ... src/sys_arch.s
 	@echo ... src/tcp.obj
 	@echo ... src/tcp.i
 	@echo ... src/tcp.s

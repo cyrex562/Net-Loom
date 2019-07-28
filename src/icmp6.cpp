@@ -83,7 +83,7 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
     case ICMP6_TYPE_MLQ: case ICMP6_TYPE_MLR: case ICMP6_TYPE_MLD:
         mld6_input(p, inp);
         return;
-    case ICMP6_TYPE_EREQ: /* multicast destination address? */ if (ip6_addr_ismulticast(
+    case ICMP6_TYPE_EREQ: /* multicast destination address? */ if (is_ip6_addr_mcast(
             curr_dst_addr))
         {
             /* drop */
@@ -104,9 +104,9 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
             free_pkt_buf(r);
             return;
         } /* Determine reply source IPv6 address. */
-        if (ip6_addr_ismulticast(curr_dst_addr))
+        if (is_ip6_addr_mcast(curr_dst_addr))
         {
-            reply_src = &ip6_select_source_address(inp, curr_dst_addr)->u_addr.ip6;
+            reply_src = &select_ip6_src_addr(inp, curr_dst_addr)->u_addr.ip6;
             if (reply_src == nullptr)
             {
                 /* drop */
@@ -240,7 +240,7 @@ static void icmp6_send_response(struct PacketBuffer* p,
     NetworkInterface* netif = nullptr;
     lwip_assert("icmpv6 packet not a direct response", netif != nullptr);
     const Ip6Addr* reply_dest = nullptr; /* Select an address to use as source. */
-    Ip6Addr reply_src = ip6_select_source_address(netif, reply_dest)->u_addr.ip6;
+    Ip6Addr reply_src = select_ip6_src_addr(netif, reply_dest)->u_addr.ip6;
     icmp6_send_response_with_addrs_and_netif(p,
                                              code,
                                              data,
@@ -279,8 +279,6 @@ static void icmp6_send_response_with_addrs(struct PacketBuffer* p,
     lwip_assert("must provide both source and destination", dest_addr != nullptr);
     /* Special case, as ip6_current_xxx is either NULL, or points
            to a different packet than the one that expired. */
-    ip6_addr_zonecheck(src_addr);
-    ip6_addr_zonecheck(dest_addr); /* Swap source and destination for the reply. */
     auto reply_dest = src_addr;
     auto reply_src = dest_addr;
     NetworkInterface* netif = ip6_route(reply_src, reply_dest);
