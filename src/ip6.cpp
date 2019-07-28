@@ -335,7 +335,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
              "IPv6 packet dropped due to bad version number %d\n",
              get_ip6_hdr_v(ip6_hdr));
         free_pkt_buf(p);
-        return ERR_OK;
+        return STATUS_OK;
     }
 
 
@@ -361,7 +361,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
         }
         /* free (drop) packet pbufs */
         free_pkt_buf(p);
-        return ERR_OK;
+        return STATUS_OK;
     }
 
     /* Trim PacketBuffer. This should have been done at the netif layer,
@@ -382,7 +382,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
         is_ip6_addr_mcast((&curr_src_addr.u_addr.ip6))) {
         /* free (drop) packet pbufs */
         free_pkt_buf(p);
-        return ERR_OK;
+        return STATUS_OK;
     }
 
     /* Set the appropriate zone identifier on the addresses. */
@@ -519,7 +519,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                      p->len);
                 /* free (drop) packet pbufs */
                 free_pkt_buf(p);
-                return ERR_OK;
+                return STATUS_OK;
             }
             if (true) {
                 int32_t opt_offset;
@@ -540,7 +540,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                          p->len);
                     /* free (drop) packet pbufs */
                     free_pkt_buf(p);
-                    return ERR_OK;
+                    return STATUS_OK;
                 } /* Trim PacketBuffer. This should have been done at the netif layer,
    * but we'll do it anyway just to be sure that its done. */
                 pbuf_realloc(p);
@@ -570,7 +570,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                          p->len);
                     /* free (drop) packet pbufs */
                     free_pkt_buf(p);
-                    return ERR_OK;
+                    return STATUS_OK;
                 } /* Set the appropriate zone identifier on the addresses. */
                 assign_ip6_addr_zone(&curr_dst_addr.u_addr.ip6, IP6_UNKNOWN, inp,);
                 assign_ip6_addr_zone(&curr_dst_addr.u_addr.ip6, IP6_UNICAST, inp,);
@@ -986,7 +986,7 @@ ip6_input_cleanup:
     // ip_data.current_ip_header_tot_len = 0;
     zero_ip6_addr(&curr_src_addr.u_addr.ip6);
     zero_ip6_addr(&curr_dst_addr.u_addr.ip6);
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 
@@ -1037,7 +1037,7 @@ ip6_output_if(struct PacketBuffer* p,
                 /* No appropriate source address was found for this packet. */
                 Logf(true,
                      ("ip6_output: No suitable source address for packet.\n"));
-                return ERR_RTE;
+                return STATUS_E_ROUTING;
             }
         }
     }
@@ -1181,7 +1181,7 @@ ip6_output(struct PacketBuffer* p,
                  IP6_ADDR_BLOCK2(dest), IP6_ADDR_BLOCK3(dest), IP6_ADDR_BLOCK4(dest),
                  IP6_ADDR_BLOCK5(dest), IP6_ADDR_BLOCK6(dest), IP6_ADDR_BLOCK7(dest),
                  IP6_ADDR_BLOCK8(dest));
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
     return ip6_output_if(p, src, dest, hl, tc, nexth, netif);
 } /** Like ip6_output, but takes and addr_hint pointer that is passed on to netif->addr_hint
@@ -1230,7 +1230,7 @@ ip6_output_hinted(struct PacketBuffer* p,
                  IP6_ADDR_BLOCK2(dest), IP6_ADDR_BLOCK3(dest), IP6_ADDR_BLOCK4(dest),
                  IP6_ADDR_BLOCK5(dest), IP6_ADDR_BLOCK6(dest), IP6_ADDR_BLOCK7(dest),
                  IP6_ADDR_BLOCK8(dest));
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
     netif_set_hints(netif, netif_hint);
     LwipStatus err = ip6_output_if(p, src, dest, hl, tc, nexth, netif);
@@ -1273,7 +1273,7 @@ ip6_options_add_hbh_ra(struct PacketBuffer* p, uint8_t nexth, uint8_t value)
     opt_hdr = (struct Ip6OptionHdr *)((uint8_t *)hbh_hdr + offset);
     opt_hdr->_opt_type = IP6_PADN_OPTION;
     opt_hdr->_opt_dlen = 0;
-    return ERR_OK;
+    return STATUS_OK;
 }
 //
 // END OF FILE

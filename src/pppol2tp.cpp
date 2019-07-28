@@ -95,12 +95,12 @@ static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
     pbuf_cat(ph, p);
     auto tot_len = ph->tot_len;
     LwipStatus ret = pppol2tp_xmit(l2tp_pcb, ph);
-    if (ret != ERR_OK)
+    if (ret != STATUS_OK)
     {
         return ret;
     }
 
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /* Called by PPP core */
@@ -125,12 +125,12 @@ static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct Packet
   uint16_t tot_len = pb->tot_len;
 
 
-  if( (err = pppol2tp_xmit(l2tp, pb)) != ERR_OK) {
+  if( (err = pppol2tp_xmit(l2tp, pb)) != STATUS_OK) {
 
     return err;
   }
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /* Destroy a L2TP control block */
@@ -139,7 +139,7 @@ static LwipStatus pppol2tp_destroy(PppPcb *ppp, uint8_t *ctx) {
   sys_untimeout(pppol2tp_timeout, l2tp);
   udp_remove(l2tp->udp);
   delete l2tp;
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /* Be a LAC, connect to a LNS. */

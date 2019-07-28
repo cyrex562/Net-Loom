@@ -150,7 +150,7 @@ rfc7668_set_addr(struct Lowpan6LinkAddr *addr, const uint8_t *in_addr, size_t in
     addr->addr_len = 8;
     memcpy(addr->addr, in_addr, 8);
   }
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 
@@ -232,7 +232,7 @@ rfc7668_compress(NetworkInterface*netif, struct PacketBuffer *p)
                                             rfc7668_context,
                                             &rfc7668_local_addr,
                                             &rfc7668_peer_addr);
-  if (err != ERR_OK) {
+  if (err != STATUS_OK) {
 
     free_pkt_buf(p_frag);
     return err;
@@ -280,7 +280,7 @@ rfc7668_set_context(uint8_t idx, const Ip6Addr*context)
   }
   /* copy IPv6 address to context storage */
   set_ip6_addr(&rfc7668_context[idx], context);
-  return ERR_OK;
+  return STATUS_OK;
 
 }
 
@@ -329,13 +329,13 @@ rfc7668_input(struct PacketBuffer * p, NetworkInterface*netif)
     p = lowpan6_decompress(p, 0, rfc7668_context, &rfc7668_peer_addr, &rfc7668_local_addr);
     /* if no PacketBuffer is returned, handle as discarded packet */
     if (p == nullptr) {
-      return ERR_OK;
+      return STATUS_OK;
     }
   /* invalid header byte, discard */
   } else {
 //    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, discarding: 0x%2x \n", *puc));
     free_pkt_buf(p);
-    return ERR_OK;
+    return STATUS_OK;
   }
   /* @todo: distinguish unicast/multicast */
 
@@ -381,7 +381,7 @@ rfc7668_if_init(NetworkInterface*netif)
   netif->flags = 0;
 
   /* everything fine */
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**

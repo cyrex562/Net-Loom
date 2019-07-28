@@ -72,7 +72,7 @@ constexpr auto  kSofInherited = (SOF_REUSEADDR | SOF_KEEPALIVE);
 //       * invocation. */
 //     NetworkInterface* current_input_netif;
 //     /** Header of the input packet currently being processed. */
-//     const struct Ip4Hdr* current_ip4_header;
+//     const struct Ip4Hdr& current_ip4_header;
 //     /** Header of the input IPv6 packet currently being processed. */
 //     struct Ip6Hdr* current_ip6_header;
 //     /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP
@@ -283,7 +283,7 @@ inline NetworkInterface* ip_route(const IpAddr* src, const IpAddr* dest)
 {
     return (is_ip_addr_v6(dest)
                 ? ip6_route((&src->u_addr.ip6), (&dest->u_addr.ip6))
-                : ip4_route_src((&src->u_addr.ip4), (&dest->u_addr.ip4)));
+                : source_route_ip4_addr((&src->u_addr.ip4), (&dest->u_addr.ip4),,));
 }
 /**
  * @ingroup ip

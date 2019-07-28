@@ -489,7 +489,7 @@ udp_sendto_chksum(UdpPcb* pcb,
                     &pcb->mcast_ip4,
                     &ip4_bcast_addr))
                 {
-                    netif = ip4_route_src((&pcb->local_ip.u_addr.ip4), &pcb->mcast_ip4);
+                    netif = source_route_ip4_addr((&pcb->local_ip.u_addr.ip4), &pcb->mcast_ip4,,);
                 }
             }
         }
@@ -505,7 +505,7 @@ udp_sendto_chksum(UdpPcb* pcb,
         // ip_addr_debug_print(true | LWIP_DBG_LEVEL_SERIOUS, dst_ip);
         Logf(true, ("\n"));
         // UDP_STATS_INC(udp.rterr);
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
     return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, have_chksum, chksum);
 } /**
@@ -566,7 +566,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
             if (get_netif_ip6_addr_match_idx(netif, (&pcb->local_ip.u_addr.ip6)) < 0)
             {
                 /* Address isn't valid anymore. */
-                return ERR_RTE;
+                return STATUS_E_ROUTING;
             }
             src_ip = pcb->local_ip;
         }
@@ -587,7 +587,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
                           get_netif_ip4_addr(netif,)))
         {
             /* local_ip doesn't match, drop the packet */
-            return ERR_RTE;
+            return STATUS_E_ROUTING;
         } /* use UDP PCB local IP address as source address */
         src_ip = pcb->local_ip;
     }
@@ -641,7 +641,7 @@ udp_sendto_if_src_chksum(UdpPcb* pcb,
     {
         Logf(true | LWIP_DBG_TRACE, ("udp_send: not yet bound to a port, binding now\n"));
         err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-        if (err != ERR_OK)
+        if (err != STATUS_OK)
         {
             Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
                  ("udp_send: forced port bind failed\n"));
@@ -895,7 +895,7 @@ udp_bind(struct UdpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
     Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("udp_bind: bound to "));
     // ip_addr_debug_print_val(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, pcb->local_ip);
     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %d)\n", pcb->local_port));
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup udp_raw
  * Bind an UDP PCB to a specific netif.
@@ -942,7 +942,7 @@ udp_connect(struct UdpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
     if (pcb->local_port == 0)
     {
         LwipStatus err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-        if (err != ERR_OK)
+        if (err != STATUS_OK)
         {
             return err;
         }
@@ -967,12 +967,12 @@ udp_connect(struct UdpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
         if (pcb == ipcb)
         {
             /* already on the list, just return */
-            return ERR_OK;
+            return STATUS_OK;
         }
     } /* PCB not yet on the list, add PCB now */
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup udp_raw
  * Remove the remote end of the pcb. This function does not generate

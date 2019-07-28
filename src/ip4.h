@@ -1,9 +1,8 @@
 #pragma once
+#include <network_interface.h>
 #include <packet_buffer.h>
 #include <ip4_addr.h>
 #include <lwip_status.h>
-#include <network_interface.h>
-#include <ip_addr.h>
 
 /** This is the packed version of Ip4Addr,
      used in network headers that are itself packed */ // struct Ip4AddrPacked {
@@ -34,110 +33,118 @@ struct Ip4Hdr
 };
 
 /* Macros to get struct Ip4Hdr fields: */
-inline uint8_t get_ip4_hdr_version(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_version(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_v_hl >> 4);
+    return ((hdr)._v_hl >> 4);
 }
 
-inline uint8_t get_ip4_hdr_hdr_len(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_v_hl & 0x0f);
+    return ((hdr)._v_hl & 0x0f);
 }
 
-inline uint8_t get_ip4_hdr_hdr_len_bytes(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_hdr_len_bytes(const Ip4Hdr& hdr)
 {
     return uint8_t(get_ip4_hdr_hdr_len(hdr) * 4);
 }
 
-inline uint8_t get_ip4_hdr_tos(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_tos(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_tos);
+    return ((hdr)._tos);
 }
 
-inline uint16_t get_ip4_hdr_len(const Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_len(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_len);
+    return hdr._len;
 }
 
-inline uint16_t get_ip4_hdr_id(const Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_id(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_id);
+    return ((hdr)._id);
 }
 
-inline uint16_t get_ip4_hdr_offset(const Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_offset);
+    return ((hdr)._offset);
 }
 
-inline uint16_t get_ip4_hdr_offset_bytes(const Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_offset_bytes(const Ip4Hdr& hdr)
 {
     return uint16_t((lwip_ntohs(get_ip4_hdr_offset(hdr)) & IP4_OFF_MASK) * 8U);
 }
 
-inline uint8_t get_ip4_hdr_ttl(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_ttl(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_ttl);
+    return ((hdr)._ttl);
 }
 
-inline uint8_t get_ip4_hdr_proto(const Ip4Hdr* hdr)
+inline uint8_t get_ip4_hdr_proto(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_proto);
+    return ((hdr)._proto);
 }
 
-inline uint16_t get_ip4_hdr_checksum(const Ip4Hdr* hdr)
+inline uint16_t get_ip4_hdr_checksum(const Ip4Hdr& hdr)
 {
-    return ((hdr)->_chksum);
+    return ((hdr)._chksum);
 } /* Macros to set struct Ip4Hdr fields: */
 // ReSharper disable once CppInconsistentNaming
-inline void set_ip4_hdr_vhl(Ip4Hdr* hdr, const uint8_t v, const uint8_t hl)
+inline void set_ip4_hdr_vhl(Ip4Hdr& hdr, const uint8_t v, const uint8_t hl)
 {
-    hdr->_v_hl = uint8_t(v << 4 | hl);
+    hdr._v_hl = uint8_t(v << 4 | hl);
 }
 
-inline void set_ip4_hdr_tos(Ip4Hdr* hdr, const uint8_t tos)
+inline void set_ip4_hdr_tos(Ip4Hdr& hdr, const uint8_t tos)
 {
-    (hdr)->_tos = (tos);
+    (hdr)._tos = (tos);
 }
 
-inline void set_ip4_hdr_len(Ip4Hdr* hdr, const uint16_t len)
+inline void set_ip4_hdr_len(Ip4Hdr& hdr, const uint16_t len)
 {
-    (hdr)->_len = (len);
+    (hdr)._len = (len);
 }
 
-inline void set_ip4_hdr_id(Ip4Hdr* hdr, const uint16_t id)
+inline void set_ip4_hdr_id(Ip4Hdr& hdr, const uint16_t id)
 {
-    (hdr)->_id = (id);
+    (hdr)._id = (id);
 }
 
-inline void set_ip4_hdr_offset(Ip4Hdr* hdr, const uint16_t off)
+inline void set_ip4_hdr_offset(Ip4Hdr& hdr, const uint16_t off)
 {
-    (hdr)->_offset = (off);
+    (hdr)._offset = (off);
 }
 
-inline void set_ip4_hdr_ttl(Ip4Hdr* hdr, const uint8_t ttl)
+inline void set_ip4_hdr_ttl(Ip4Hdr& hdr, const uint8_t ttl)
 {
-    (hdr)->_ttl = uint8_t(ttl);
+    (hdr)._ttl = uint8_t(ttl);
 }
 
-inline void set_ip4_hdr_proto(Ip4Hdr* hdr, const uint8_t proto)
+inline void set_ip4_hdr_proto(Ip4Hdr& hdr, const uint8_t proto)
 {
-    (hdr)->_proto = uint8_t(proto);
+    (hdr)._proto = uint8_t(proto);
 }
 
-inline void set_ip4_hdr_checksum(Ip4Hdr* hdr, const uint16_t chksum)
+inline void set_ip4_hdr_checksum(Ip4Hdr& hdr, const uint16_t chksum)
 {
-    (hdr)->_chksum = (chksum);
+    (hdr)._chksum = (chksum);
 }
 
-constexpr auto kLwipIpv4SrcRouting = 1; /* Compatibility define, no init needed. */
-inline bool ip_init()
+inline bool init_ip4_module()
 {
     return true;
 }
 
-NetworkInterface*ip4_route(const Ip4Addr *dest);
 
-NetworkInterface*ip4_route_src(const Ip4Addr *src, const Ip4Addr *dest);
+LwipStatus
+get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
+                           const std::vector<NetworkInterface>& netifs_to_check,
+                           NetworkInterface& found_netif);
+
+
+LwipStatus
+source_route_ip4_addr(const Ip4Addr& src,
+                      const Ip4Addr& dest,
+                      NetworkInterface& out_netif,
+                      const std::vector<NetworkInterface>& netifs);
 
 LwipStatus ip4_input(struct PacketBuffer *p, NetworkInterface*inp);
 LwipStatus ip4_output(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
@@ -147,13 +154,13 @@ LwipStatus ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Ad
 LwipStatus ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
        uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif);
 
-LwipStatus ip4_output_hinted(struct PacketBuffer *p,
-                             const Ip4Addr *src,
-                             const Ip4Addr *dest,
-                             uint8_t ttl,
-                             uint8_t tos,
-                             uint8_t proto,
-                             NetIfcHint* netif_hint);
+// LwipStatus ip4_output_hinted(struct PacketBuffer *p,
+//                              const Ip4Addr *src,
+//                              const Ip4Addr *dest,
+//                              uint8_t ttl,
+//                              uint8_t tos,
+//                              uint8_t proto,
+//                              NetIfcHint* netif_hint);
 
 
 LwipStatus ip4_output_if_opt(struct PacketBuffer* p,
@@ -178,7 +185,8 @@ LwipStatus ip4_output_if_opt_src(struct PacketBuffer* p,
 
 void ip4_set_default_multicast_netif(NetworkInterface** default_multicast_netif);
 
-
+bool
+can_forward_ip4_pkt(PacketBuffer& pkt_buf);
 
 
 //

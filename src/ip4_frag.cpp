@@ -35,7 +35,7 @@ struct IpReassHelper {
 
 
 inline bool
-ip_addresses_and_id_match(Ip4Hdr* iphdr_a, Ip4Hdr* iphdr_b)
+ip_addresses_and_id_match(Ip4Hdr& iphdr_a, Ip4Hdr& iphdr_b)
 {
     return
         ip4_addr_cmp(&(iphdr_a)->src, &(iphdr_b)->src) && ip4_addr_cmp(&(iphdr_a)->dest, &(iphdr_b)->dest) &&
@@ -266,7 +266,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   int valid = 1;
 
   /* Extract length and fragment offset from current fragment */
-  struct Ip4Hdr* fraghdr = (struct Ip4Hdr *)new_p->payload;
+  struct Ip4Hdr& fraghdr = (struct Ip4Hdr *)new_p->payload;
   uint16_t len = lwip_ntohs(get_ip4_hdr_len(fraghdr));
   uint8_t hlen = get_ip4_hdr_hdr_len_bytes(fraghdr);
   if (hlen > len) {
@@ -418,7 +418,7 @@ struct PacketBuffer *
 ip4_reass(struct PacketBuffer *p)
 {
     struct ip_reassdata *ipr;
-    struct Ip4Hdr* fraghdr = (struct Ip4Hdr *)p->payload;
+    struct Ip4Hdr& fraghdr = (struct Ip4Hdr *)p->payload;
 
   if (get_ip4_hdr_hdr_len_bytes(fraghdr) != IP4_HDR_LEN) {
     Logf(true, ("ip4_reass: IP options currently not supported!\n"));
@@ -631,14 +631,14 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
  * Chop the datagram in MTU sized chunks and send them in order
  * by pointing PBUF_REFs into p.
  *
- * @param p ip packet to send
+ * @param pkt_buf ip packet to send
  * @param netif the netif on which to send
- * @param dest destination ip address to which to send
+ * @param dst_addr destination ip address to which to send
  *
  * @return ERR_OK if sent successfully, LwipStatus otherwise
  */
 LwipStatus
-ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
+ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr)
 {
   struct PacketBuffer *rambuf;
 #if !LWIP_NETIF_TX_SINGLE_PBUF
@@ -646,14 +646,14 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
 #endif
   const uint16_t nfb = (uint16_t)((netif->mtu - IP4_HDR_LEN) / 8);
   uint16_t poff = IP4_HDR_LEN;
-  struct Ip4Hdr* original_iphdr = (struct Ip4Hdr *)p->payload;
-  struct Ip4Hdr* iphdr = original_iphdr;
+  struct Ip4Hdr& original_iphdr = (struct Ip4Hdr *)pkt_buf->payload;
+  struct Ip4Hdr& iphdr = original_iphdr;
   if (get_ip4_hdr_hdr_len_bytes(iphdr) != IP4_HDR_LEN) {
     /* ip4_frag() does not support IP options */
     return ERR_VAL;
   }
   // 
-  if (p->len < IP4_HDR_LEN)
+  if (pkt_buf->len < IP4_HDR_LEN)
   {
       printf("pbuf too short\n");
       return ERR_VAL;
@@ -666,7 +666,7 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
   /* already fragmented? if so, the last fragment we create must have MF, too */
   int mf_set = tmp & IP4_MF_FLAG;
 
-  uint16_t left = (uint16_t)(p->tot_len - IP4_HDR_LEN);
+  uint16_t left = (uint16_t)(pkt_buf->tot_len - IP4_HDR_LEN);
 
   while (left) {
     /* Fill this fragment */
@@ -689,13 +689,13 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
 
     uint16_t left_to_copy = fragsize;
     while (left_to_copy) {
-        uint16_t plen = (uint16_t)(p->len - poff);
-      lwip_assert("p->len >= poff", p->len >= poff);
+        uint16_t plen = (uint16_t)(pkt_buf->len - poff);
+      lwip_assert("p->len >= poff", pkt_buf->len >= poff);
       newpbuflen = std::min(left_to_copy, plen);
       /* Is this PacketBuffer already empty? */
       if (!newpbuflen) {
         poff = 0;
-        p = p->next;
+        pkt_buf = pkt_buf->next;
         continue;
       }
       struct PbufCustomRef* pcr = ip_frag_alloc_pbuf_custom_ref();
@@ -709,15 +709,15 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
           newpbuflen,
           PBUF_REF,
           &pcr->pc,
-          (uint8_t *)p->payload + poff,
+          (uint8_t *)pkt_buf->payload + poff,
           newpbuflen);
       if (newpbuf == nullptr) {
         ip_frag_free_pbuf_custom_ref(pcr);
         free_pkt_buf(rambuf);
         goto memerr;
       }
-      pbuf_ref(p);
-      pcr->original = p;
+      pbuf_ref(pkt_buf);
+      pcr->original = pkt_buf;
       pcr->pc.custom_free_function = ipfrag_free_pbuf_custom;
 
       /* Add it to end of rambuf's chain, but using pbuf_cat, not pbuf_chain
@@ -727,7 +727,7 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
       left_to_copy = (uint16_t)(left_to_copy - newpbuflen);
       if (left_to_copy) {
         poff = 0;
-        p = p->next;
+        pkt_buf = pkt_buf->next;
       }
     }
     poff = (uint16_t)(poff + newpbuflen);
@@ -754,7 +754,7 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
     /* No need for separate header PacketBuffer - we allowed room for it in rambuf
      * when allocated.
      */
-    netif->output(netif, rambuf, dest);
+    netif->output(netif, rambuf, dst_addr);
 
     /* Unfortunately we can't reuse rambuf - the hardware may still be
      * using the buffer. Instead we free it (and the ensuing chain) and
@@ -768,7 +768,7 @@ ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest)
     ofo = (uint16_t)(ofo + nfb);
   }
   
-  return ERR_OK;
+  return STATUS_OK;
 memerr:
   
   return ERR_MEM;

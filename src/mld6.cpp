@@ -107,7 +107,7 @@ mld6_stop(NetworkInterface*netif)
     /* move to "next" */
     group = next;
   }
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -186,7 +186,7 @@ mld6_new_group(NetworkInterface*ifp, const Ip6Addr *addr)
 static LwipStatus
 mld6_remove_group(NetworkInterface*netif, struct MldGroup *group)
 {
-  LwipStatus err = ERR_OK;
+  LwipStatus err = STATUS_OK;
 
   /* Is it the first group? */
   if (((MldGroup *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6)) == group) {
@@ -311,7 +311,7 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
     if (is_ip6_addr_any(srcaddr) ||
         get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
       err = mld6_joingroup_netif(netif, groupaddr);
-      if (err != ERR_OK) {
+      if (err != STATUS_OK) {
         return err;
       }
     }
@@ -369,7 +369,7 @@ mld6_joingroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
 
   /* Increment group use */
   group->use++;
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -398,7 +398,7 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
     if (is_ip6_addr_any(srcaddr) ||
         get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
       LwipStatus res = mld6_leavegroup_netif(netif, groupaddr);
-      if (err != ERR_OK) {
+      if (err != STATUS_OK) {
         /* Store this result if we have not yet gotten a success */
         err = res;
       }
@@ -461,7 +461,7 @@ mld6_leavegroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
     }
 
     /* Left group */
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* Group not found */

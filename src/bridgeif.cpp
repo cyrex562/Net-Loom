@@ -42,7 +42,7 @@ LwipStatus bridgeif_fdb_add(NetworkInterface* bridgeif,
                 br->fdbs[i].used = 1;
                 br->fdbs[i].dst_ports = ports;
                 memcpy(&br->fdbs[i].addr, addr, sizeof(struct MacAddress));
-                return ERR_OK;
+                return STATUS_OK;
             }
         }
     }
@@ -67,7 +67,7 @@ LwipStatus remove_bridgeif_fdb(NetworkInterface* bridgeif, const struct MacAddre
                                             sizeof(struct MacAddress)))
             {
                 memset(&br->fdbs[i], 0, sizeof(BridgeIfcFdbStaticEntry));
-                return ERR_OK;
+                return STATUS_OK;
             }
         }
     }
@@ -156,7 +156,7 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
     {
         lwip_assert("invalid port index", dstport_idx == kBridgeIfcMaxPorts);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /** Helper function to pass a PacketBuffer to all ports marked in 'dstports'
@@ -165,7 +165,7 @@ static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
                                         struct PacketBuffer* p,
                                         BridgeIfcPortMask dstports)
 {
-    LwipStatus ret_err = ERR_OK;
+    LwipStatus ret_err = STATUS_OK;
     BridgeIfcPortMask mask = 1;
     for (uint8_t i = 0; i < kBridgeIfcMaxPorts; i++, mask = static_cast<BridgeIfcPortMask>
          (mask << 1))
@@ -173,7 +173,7 @@ static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
         if (dstports & mask)
         {
             const auto err = bridgeif_send_to_port(br, p, i);
-            if (err != ERR_OK)
+            if (err != STATUS_OK)
             {
                 ret_err = err;
             }
@@ -242,7 +242,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
         {
             /* we pass the reference to ->input or have to free it */
             Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", p);
-            if (br->netif->input(p, br->netif) != ERR_OK)
+            if (br->netif->input(p, br->netif) != STATUS_OK)
             {
                 free_pkt_buf(p);
             }
@@ -252,7 +252,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
             /* all references done */
             free_pkt_buf(p);
         } /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
-        return ERR_OK;
+        return STATUS_OK;
     }
     else
     {
@@ -269,7 +269,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
         /* by  this, we consumed the PacketBuffer */
         free_pkt_buf(p);
         /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
-        return ERR_OK;
+        return STATUS_OK;
     }
 }
 
@@ -386,7 +386,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
         set_ip6_addr_all_nodes_link_local(&ip6_allnodes_ll);
         netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -417,7 +417,7 @@ LwipStatus bridgeif_add_port(NetworkInterface* bridgeif, NetworkInterface* porti
     netif_set_client_data(portif, bridgeif_netif_client_id, port);
     /* remove ETHARP flag to prevent sending report events on netif-up */
     netif_clear_flags(portif, NETIF_FLAG_ETH_ARP);
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 //

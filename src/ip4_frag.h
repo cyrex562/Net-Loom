@@ -81,7 +81,7 @@ struct PbufCustomRef {
 };
 
 
-LwipStatus ip4_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip4Addr *dest);
+LwipStatus ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr);
 
 
 #ifdef __cplusplus

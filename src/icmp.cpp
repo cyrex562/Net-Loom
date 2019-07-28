@@ -58,7 +58,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
     struct IcmpEchoHdr* iecho;
     const Ip4Addr* src;
     // todo: get current header
-    const struct Ip4Hdr* iphdr_in = nullptr;
+    const struct Ip4Hdr& iphdr_in = nullptr;
     IpAddr* curr_src_addr = nullptr;
     IpAddr* curr_dst_addr = nullptr;
     NetworkInterface* curr_netif = nullptr;
@@ -138,7 +138,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 free_pkt_buf(r);
                 goto icmperr;
             } /* copy the rest of the packet without ip header */
-            if (pbuf_copy(r, p) != ERR_OK)
+            if (pbuf_copy(r, p) != STATUS_OK)
             {
                 Logf(true,
                      "icmp_input: copying to new PacketBuffer failed");
@@ -198,7 +198,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
             /* increase number of echo replies attempted to send */
             /* send an ICMP packet */
             const auto ret = ip4_output_if(p, src, nullptr, ICMP_TTL, 0, IP_PROTO_ICMP, inp);
-            if (ret != ERR_OK)
+            if (ret != STATUS_OK)
             {
                 // Logf(true,
                 //      ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)
@@ -250,23 +250,23 @@ icmperr: free_pkt_buf(p);
  * the transport layer protocol is unknown and from udp_input() if the local
  * port is not bound.
  *
- * @param p the input packet for which the 'unreachable' should be sent,
+ * @param pkt_buf the input packet for which the 'unreachable' should be sent,
  *          p->payload pointing to the IP header
- * @param t type of the 'unreachable' packet
+ * @param dur_type type of the 'unreachable' packet
  */
-void icmp_dest_unreach(struct PacketBuffer* p, enum icmp_dur_type t)
+void icmp_dest_unreach(PacketBuffer& pkt_buf, enum icmp_dur_type dur_type)
 {
-    icmp_send_response(p, ICMP_DUR, t);
+    icmp_send_response(pkt_buf, ICMP_DUR, dur_type);
 } /**
  * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
  *
- * @param p the input packet for which the 'time exceeded' should be sent,
+ * @param pkt_buf the input packet for which the 'time exceeded' should be sent,
  *          p->payload pointing to the IP header
- * @param t type of the 'time exceeded' packet
+ * @param te_type type of the 'time exceeded' packet
  */
-void icmp_time_exceeded(struct PacketBuffer* p, enum icmp_te_type t)
+void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type)
 {
-    icmp_send_response(p, ICMP_TE, t);
+    icmp_send_response(pkt_buf, ICMP_TE, te_type);
 } /**
  * Send an icmp packet in response to an incoming packet.
  *
@@ -290,7 +290,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
     lwip_assert("check that first PacketBuffer can hold icmp message",
                 q->len >= sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
                 ICMP_DEST_UNREACH_DATA_SZ);
-    struct Ip4Hdr* iphdr = (struct Ip4Hdr *)p->payload;
+    struct Ip4Hdr& iphdr = (struct Ip4Hdr *)p->payload;
     Logf(true, "icmp_time_exceeded from ");
 
     Logf(true, " to ");
@@ -304,7 +304,7 @@ static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t cod
             (uint8_t *)p->payload,
             IP4_HDR_LEN + ICMP_DEST_UNREACH_DATA_SZ);
     copy_ip4_addr(&iphdr_src, &iphdr->src);
-    NetworkInterface* netif = ip4_route(&iphdr_src);
+    NetworkInterface* netif = get_netif_for_dst_ip4_addr(&iphdr_src,,);
     if (netif != nullptr)
     {
         /* calculate checksum */

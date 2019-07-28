@@ -393,7 +393,7 @@ static LwipStatus dns_lookup_local(const char* hostname,
             {
                 copy_ip_addr(addr, &entry->addr);
             }
-            return ERR_OK;
+            return STATUS_OK;
         }
         entry = entry->next;
     }
@@ -469,7 +469,7 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddr* addr)
     copy_ip_addr(&entry->addr, addr);
     entry->next = local_hostlist_dynamic;
     local_hostlist_dynamic = entry;
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 
@@ -491,9 +491,9 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddr* addr)
 static LwipStatus dns_lookup(const char* name,
                             IpAddr* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
-    if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK)
+    if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_OK)
     {
-        return ERR_OK;
+        return STATUS_OK;
     }
     // if (DNS_LOOKUP_LOCAL_EXTERN(name, addr, LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(dns_addrtype))
     //     == ERR_OK)
@@ -516,7 +516,7 @@ static LwipStatus dns_lookup(const char* name,
             {
                 copy_ip_addr(addr, &i.ipaddr);
             }
-            return ERR_OK;
+            return STATUS_OK;
         }
     }
     return ERR_ARG;
@@ -651,7 +651,7 @@ static LwipStatus dns_send(const uint8_t idx)
         /* call specified callback function if provided */
         dns_call_found(idx, nullptr); /* flush this entry */
         entry->state = DNS_STATE_UNUSED;
-        return ERR_OK;
+        return STATUS_OK;
     } /* if here, we have either a new query or a retry on a previous query to process */
     auto pbuf = pbuf_alloc(PBUF_TRANSPORT,
                            static_cast<uint16_t>(DNS_HDR_LEN + strlen(entry->name) + 2 +
@@ -758,7 +758,7 @@ static UdpPcb* dns_alloc_random_port(void)
         }
     }
     while (err == ERR_USE);
-    if (err != ERR_OK)
+    if (err != STATUS_OK)
     {
         udp_remove(pcb);
         return nullptr;
@@ -925,7 +925,7 @@ dns_check_entry(uint8_t i)
 
       /* send DNS packet for this entry */
       err = dns_send(i);
-      if (err != ERR_OK) {
+      if (err != STATUS_OK) {
         Logf(true,
                     ("dns_send returned error: %s\n", status_to_string(err).c_str()));
       }
@@ -957,7 +957,7 @@ dns_check_entry(uint8_t i)
 
         /* send DNS packet for this entry */
         err = dns_send(i);
-        if (err != ERR_OK) {
+        if (err != STATUS_OK) {
           Logf(true,
                       ("dns_send returned error: %s\n", status_to_string(err).c_str()));
         }
@@ -1417,20 +1417,20 @@ LwipStatus dns_gethostbyname_addrtype(const char* hostname,
     if (strcmp(hostname, "localhost") == 0)
     {
         set_ip_addr_loopback(lwip_dns_addrtype_is_ipv6(dns_addrtype), addr);
-        return ERR_OK;
+        return STATUS_OK;
     } /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
         if ((is_ip_addr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
             is_ip_addr_ip4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
-            return ERR_OK;
+            return STATUS_OK;
         }
     }
     // already have this address cached?
-    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK)
+    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_OK)
     {
-        return ERR_OK;
+        return STATUS_OK;
     }
     if ((dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) || (dns_addrtype ==
         LWIP_DNS_ADDRTYPE_IPV6_IPV4))
@@ -1445,9 +1445,9 @@ LwipStatus dns_gethostbyname_addrtype(const char* hostname,
         {
             fallback = LWIP_DNS_ADDRTYPE_IPV4;
         }
-        if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == ERR_OK)
+        if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == STATUS_OK)
         {
-            return ERR_OK;
+            return STATUS_OK;
         }
     }
     bool is_mdns = false;

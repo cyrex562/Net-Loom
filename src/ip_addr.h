@@ -446,7 +446,7 @@ inline void get_ip_addr_net(IpAddr& target, IpAddr& host, IpAddr& netmask)
     }
     else
     {
-        ip4_addr_get_network(target.u_addr.ip4,
+        get_ip4_addr_net(target.u_addr.ip4,
                              host.u_addr.ip4,
                             netmask.u_addr.ip4);
         set_ip_addr_type(target, IPADDR_TYPE_V4);

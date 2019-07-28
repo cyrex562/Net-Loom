@@ -30,7 +30,7 @@ void lwip_init(void)
     sys_init();
     pbuf_init();
     // netif_init();
-    ip_init();
+    init_ip4_module();
     etharp_init();
     raw_init();
     udp_init();

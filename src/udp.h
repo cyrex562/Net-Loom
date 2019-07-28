@@ -41,6 +41,7 @@
 #include <network_interface.h>
 #include <ip_addr.h>
 #include <udp.h>
+#include "iana.h"
 
 constexpr auto UDP_HDR_LEN = 8;
 
@@ -190,3 +191,24 @@ void             udp_init       ();
 void udp_debug_print(UdpHdr *udphdr);
 
 void udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
+
+/** Set this to 0 in the rare case of wanting to call an extra function to
+ * generate the IP checksum (in contrast to calculating it on-the-fly). */
+
+/// Some defines for DHCP to let link-layer-addressed packets through while the
+/// netif is down.
+/// To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT(port)
+/// to return 1 if the port is accepted and 0 if the port is not accepted.
+///
+inline bool ip4_accept_udp_port(const uint16_t dst_port)
+{
+    return dst_port == pp_ntohs(12345);
+} 
+
+///
+/// accept DHCP client port and custom port
+/// 
+inline bool ip_accept_link_layer_addressed_port(const uint16_t port)
+{
+    return port == pp_ntohs(LWIP_IANA_PORT_DHCP_CLIENT) || ip4_accept_udp_port(port);
+} 

@@ -208,9 +208,10 @@ inline uint32_t get_ip4_addr(const Ip4Addr& src_ipaddr)
 }
 
 /** Get the network address by combining host address with netmask */
-inline void ip4_addr_get_network(Ip4Addr& target, Ip4Addr& host, Ip4Addr& netmask)
+inline Ip4Addr get_ip4_addr_net(const Ip4Addr& host, const Ip4Addr& netmask)
 {
-    ((target).addr = ((host).addr) & ((netmask).addr));
+    return {host.addr & netmask.addr};
+
 }
 /**
  * Determine if two address are on the same network.
@@ -351,5 +352,13 @@ bool lwip_ip4addr_aton(std::string& cp, Ip4Addr& addr);
 
 
 std::string lwip_ip4addr_ntoa(const Ip4Addr& addr);
+
+
+bool
+is_ip4_addr_experimental(Ip4Addr& dst_addr)
+{
+    // todo: check for membership in a IANA address space reserved for experimentation.
+    return false;
+}
 
 // END OF FILE

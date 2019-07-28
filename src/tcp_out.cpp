@@ -291,7 +291,7 @@ tcp_write_checks(struct TcpPcb* pcb, uint16_t len)
     }
     else if (len == 0)
     {
-        return ERR_OK;
+        return STATUS_OK;
     } /* fail on too much data */
     if (len > pcb->snd_buf)
     {
@@ -323,7 +323,7 @@ tcp_write_checks(struct TcpPcb* pcb, uint16_t len)
         lwip_assert("tcp_write: no pbufs on queue => both queues empty",
                     pcb->unacked == nullptr && pcb->unsent == nullptr);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -391,7 +391,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
          len,
          (uint16_t)apiflags);
     LwipStatus err = tcp_write_checks(pcb, len);
-    if (err != ERR_OK)
+    if (err != STATUS_OK)
     {
         return err;
     }
@@ -747,7 +747,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
     {
         TCPH_SET_FLAG(seg->tcphdr, TCP_PSH);
     }
-    return ERR_OK;
+    return STATUS_OK;
 memerr: tcp_set_flags(pcb, TF_NAGLEMEMERR);
     if (concat_p != nullptr)
     {
@@ -799,7 +799,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   }
 
   if (useg->len <= split) {
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   lwip_assert("split <= mss", split <= pcb->mss);
@@ -917,7 +917,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   }
 
 
-  return ERR_OK;
+  return STATUS_OK;
 memerr:
 
   lwip_assert("seg == NULL", seg == nullptr);
@@ -953,7 +953,7 @@ tcp_send_fin(struct TcpPcb *pcb)
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
       tcp_set_flags(pcb, TF_FIN);
-      return ERR_OK;
+      return STATUS_OK;
     }
   }
   /* no data, no length, flags, copy=1, no optdata */
@@ -1067,7 +1067,7 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
                 pcb->unacked != nullptr || pcb->unsent != nullptr);
   }
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /* Build a timestamp option (12 bytes long) at the specified options pointer)
@@ -1174,7 +1174,7 @@ tcp_output(struct TcpPcb *pcb)
      input processing code to call us when input processing is done
      with. */
   if (tcp_input_pcb == pcb) {
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   uint32_t wnd = std::min(pcb->snd_wnd, pcb->cwnd);
@@ -1204,14 +1204,14 @@ tcp_output(struct TcpPcb *pcb)
 
   NetworkInterface* netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == nullptr) {
-    return ERR_RTE;
+    return STATUS_E_ROUTING;
   }
 
   /* If we don't have a local IP address, we get one from netif */
   if (is_ip_addr_any(&pcb->local_ip)) {
     const IpAddr *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
     if (local_ip == nullptr) {
-      return ERR_RTE;
+      return STATUS_E_ROUTING;
     }
     copy_ip_addr(&pcb->local_ip, local_ip);
   }
@@ -1269,7 +1269,7 @@ tcp_output(struct TcpPcb *pcb)
     }
 
     LwipStatus err = tcp_output_segment(seg, pcb, netif);
-    if (err != ERR_OK) {
+    if (err != STATUS_OK) {
       /* segment could not be sent, for whatever reason */
       tcp_set_flags(pcb, TF_NAGLEMEMERR);
       return err;
@@ -1325,7 +1325,7 @@ tcp_output(struct TcpPcb *pcb)
 
 output_done:
   tcp_clear_flags(pcb, TF_NAGLEMEMERR);
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /** Check if a segment's pbufs are used by someone else than TCP.
@@ -1374,7 +1374,7 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
     /* This should not happen: rexmit functions should have checked this.
        However, since this function modifies p->len, we must not continue in this case. */
     Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("tcp_output_segment: segment busy\n"));
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* The TCP header has already been constructed, but the ackno and
@@ -1568,7 +1568,7 @@ tcp_rexmit_rto_prepare(struct TcpPcb *pcb)
   /* Don't take any RTT measurements after retransmitting. */
   pcb->rttest = 0;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -1604,7 +1604,7 @@ tcp_rexmit_rto(struct TcpPcb *pcb)
 {
   lwip_assert("tcp_rexmit_rto: invalid pcb", pcb != nullptr);
 
-  if (tcp_rexmit_rto_prepare(pcb) == ERR_OK) {
+  if (tcp_rexmit_rto_prepare(pcb) == STATUS_OK) {
     tcp_rexmit_rto_commit(pcb);
   }
 }
@@ -1663,7 +1663,7 @@ tcp_rexmit(struct TcpPcb *pcb)
 
   /* No need to call tcp_output: we are always called from tcp_input()
      and thus tcp_output directly returns. */
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 
@@ -1683,7 +1683,7 @@ tcp_rexmit_fast(struct TcpPcb *pcb)
          "tcp_receive: dupacks %d (%d), fast retransmit %d\n",
              (uint16_t)pcb->dupacks, pcb->lastack,
              lwip_ntohl(pcb->unacked->tcphdr->seqno));
-    if (tcp_rexmit(pcb) == ERR_OK) {
+    if (tcp_rexmit(pcb) == STATUS_OK) {
       /* Set ssthresh to half of the minimum of the current
        * cwnd and the advertised window */
       pcb->ssthresh = std::min(pcb->cwnd, pcb->snd_wnd) / 2;
@@ -1807,7 +1807,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
 
   NetworkInterface* netif = tcp_route(pcb, src, dst);
   if (netif == nullptr) {
-    err = ERR_RTE;
+    err = STATUS_E_ROUTING;
   } else {
     uint8_t ttl, tos;
 
@@ -1935,7 +1935,7 @@ tcp_send_empty_ack(struct TcpPcb *pcb)
   Logf(true,
        "tcp_output: sending ACK for %d\n", pcb->rcv_nxt);
   LwipStatus err = tcp_output_control_segment(pcb, p, &pcb->local_ip, &pcb->remote_ip);
-  if (err != ERR_OK) {
+  if (err != STATUS_OK) {
     /* let tcp_fasttmr retry sending this ACK */
     tcp_set_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
   } else {
@@ -2013,7 +2013,7 @@ tcp_zero_window_probe(struct TcpPcb* pcb)
     if (seg == nullptr)
     {
         /* Not expected, persist timer should be off when the send buffer is empty */
-        return ERR_OK;
+        return STATUS_OK;
     } /* increment probe count. NOTE: we record probe even if it fails
      to actually transmit due to an error. This ensures memory exhaustion/
      routing problem doesn't leave a zero-window pcb as an indefinite zombie.

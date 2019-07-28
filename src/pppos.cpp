@@ -178,7 +178,7 @@ pppos_write(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* p)
     nb->tot_len = p->len;
     /* If the link has been idle, we'll send a fresh flag character to
       * flush any noise. */
-    LwipStatus err = ERR_OK;
+    LwipStatus err = STATUS_OK;
     if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG)
     {
         err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
@@ -191,7 +191,7 @@ pppos_write(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* p)
         err = pppos_output_append(pppos, err, nb, *s++, 1, &fcs_out);
     }
     err = pppos_output_last(pppos, err, nb, &fcs_out);
-    if (err == ERR_OK)
+    if (err == STATUS_OK)
     {
         // PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, p->len));
     }
@@ -221,7 +221,7 @@ pppos_netif_output(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* pb, uint16_t 
     nb->tot_len = pb->tot_len;
     /* If the link has been idle, we'll send a fresh flag character to
       * flush any noise. */
-    LwipStatus err = ERR_OK;
+    LwipStatus err = STATUS_OK;
     if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG)
     {
         err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
@@ -248,7 +248,7 @@ pppos_netif_output(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* pb, uint16_t 
         }
     }
     err = pppos_output_last(pppos, err, nb, &fcs_out);
-    if (err == ERR_OK)
+    if (err == STATUS_OK)
     {
         // PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%x, len = %d\n", ppp->netif->num, protocol, pb->tot_len));
     }
@@ -321,7 +321,7 @@ pppos_destroy(PppPcb* ppp, uint8_t* ctx)
     pppos_pcb* pppos = (pppos_pcb *)ctx;
     pppos_input_free_current_packet(pppos);
     // LWIP_MEMPOOL_FREE(PPPOS_PCB, pppos);
-    return ERR_OK;
+    return STATUS_OK;
 } /** PPPoS input helper struct, must be packed since it is stored
  * to PacketBuffer->payload, which might be unaligned. */
 struct pppos_input_header
@@ -421,7 +421,7 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                     /* hide the room for Ethernet forwarding header */
                     pbuf_remove_header(inp,
                                        PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN);
-                    if (tcpip_try_callback(pppos_input_callback, inp) != ERR_OK)
+                    if (tcpip_try_callback(pppos_input_callback, inp) != STATUS_OK)
                     {
                         // PPPDEBUG(LOG_ERR,
                         //          ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n"
@@ -649,7 +649,7 @@ pppos_output_append(pppos_pcb* pppos,
                     uint8_t accm,
                     uint16_t* fcs)
 {
-    if (err != ERR_OK)
+    if (err != STATUS_OK)
     {
         return err;
     } /* Make sure there is room for the character and an escape code.
@@ -680,7 +680,7 @@ pppos_output_append(pppos_pcb* pppos,
     {
         *((uint8_t*)nb->payload + nb->len++) = c;
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 static LwipStatus
@@ -693,7 +693,7 @@ pppos_output_last(pppos_pcb* pppos,
     err = pppos_output_append(pppos, err, nb, ~(*fcs) & 0xFF, 1, nullptr);
     err = pppos_output_append(pppos, err, nb, (~(*fcs) >> 8) & 0xFF, 1, nullptr);
     err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
-    if (err != ERR_OK)
+    if (err != STATUS_OK)
     {
         goto failed;
     } /* Send remaining buffer if not empty */
@@ -711,7 +711,7 @@ pppos_output_last(pppos_pcb* pppos,
     // MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
     // LINK_STATS_INC(link.xmit);
     free_pkt_buf(nb);
-    return ERR_OK;
+    return STATUS_OK;
 failed: pppos->last_xmit = 0; /* prepend PPP_FLAG to next packet */
     // LINK_STATS_INC(link.err);
     // LINK_STATS_INC(link.drop);

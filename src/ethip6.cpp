@@ -98,13 +98,13 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     // We have a unicast destination IP address */ /* @todo anycast? */
     /* Ask ND6 what to do with the packet. */
     const auto result = nd6_get_next_hop_addr_or_queue(net_ifc, pkt_buf, ip6_addr, &hwaddr);
-    if (result != ERR_OK)
+    if (result != STATUS_OK)
     {
         return result;
     } /* If no hardware address is returned, nd6 has queued the packet for later. */
     if (hwaddr == nullptr)
     {
-        return ERR_OK;
+        return STATUS_OK;
     } /* Send out the packet using the returned hardware address. */
     memcpy(dest.addr, hwaddr, 6);
     return ethernet_output(net_ifc,

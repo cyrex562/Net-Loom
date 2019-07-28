@@ -218,7 +218,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	/* Hide MPPE header + protocol */
 	pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
 
-	if ((err = pbuf_copy(np, *pb)) != ERR_OK) {
+	if ((err = pbuf_copy(np, *pb)) != STATUS_OK) {
 		free_pkt_buf(np);
 		return err;
 	}
@@ -268,7 +268,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	/* Reveal MPPE header */
 	pbuf_add_header(np, MPPE_OVHD);
 
-	return ERR_OK;
+	return STATUS_OK;
 }
 
 /*
@@ -398,7 +398,7 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 	/* good packet credit */
 	state->sanity_errors >>= 1;
 
-	return ERR_OK;
+	return STATUS_OK;
 
 sanity_error:
 	if (state->sanity_errors >= SANITY_MAX) {

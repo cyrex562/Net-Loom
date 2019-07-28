@@ -214,7 +214,7 @@ raw_bind(struct RawPcb* pcb, const IpAddr* ipaddr)
     {
         ip6_addr_select_zone((&pcb->local_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6));
     }
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup raw_raw
  * Bind an RAW PCB to a specific netif.
@@ -269,7 +269,7 @@ raw_connect(struct RawPcb* pcb, const IpAddr* ipaddr)
         ip6_addr_select_zone((&pcb->remote_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6));
     }
     raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup raw_raw
  * Disconnect a RAW PCB.
@@ -355,7 +355,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
     {
         Logf(true, ("raw_sendto: No route to "));
         // ip_addr_debug_print(true | LWIP_DBG_LEVEL_WARNING, ipaddr);
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
     if (is_ip_addr_any(&pcb->local_ip) || ip_addr_ismulticast(&pcb->local_ip))
     {
@@ -363,7 +363,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
         src_ip = ip_netif_get_local_ip(netif, ipaddr);
         if (src_ip == nullptr)
         {
-            return ERR_RTE;
+            return STATUS_E_ROUTING;
         }
     }
     else

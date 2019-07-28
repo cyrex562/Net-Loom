@@ -160,7 +160,7 @@ autoip_arp_announce(NetworkInterface* netif)
     Ipv4AddrFromBytes(&gw_addr, 0, 0, 0, 0);
     set_netif_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
     // interface is used by routing now that an address is set
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -172,7 +172,7 @@ autoip_arp_announce(NetworkInterface* netif)
 LwipStatus autoip_start(NetworkInterface* netif)
 {
     auto autoip = netif_autoip_data(netif);
-    const LwipStatus result = ERR_OK;
+    const LwipStatus result = STATUS_OK;
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
@@ -261,7 +261,7 @@ LwipStatus autoip_stop(NetworkInterface& netif)
                            &any_addr);
         }
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 //

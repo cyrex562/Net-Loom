@@ -88,7 +88,7 @@ static LwipStatus init_loop_netif(NetworkInterface& netif)
     netif.output_ip6 = netif_loop_output_ipv6;
     netif.igmp = true; // netif_set_flags(netif, NETIF_FLAG_IGMP);
     // NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_DISABLE_ALL);
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 ///
@@ -247,7 +247,7 @@ NetworkInterface add_netif(NetworkInterface& netif,
     netif.loop_cnt_current = 0;
     set_netif_addr(netif, ipaddr, netmask, gw);
     /* call user specified initialization function for netif */
-    if (init(netif) != ERR_OK)
+    if (init(netif) != STATUS_OK)
     {
         return nullptr;
     } /* Initialize the MTU for IPv6 to the one set by the netif driver.
@@ -903,7 +903,7 @@ output_netif_loop(NetworkInterface& netif, PacketBuffer& pkt_buf)
 
 
   /* Copy the whole PacketBuffer queue p into the single PacketBuffer r */
-  if ((err = pbuf_copy(r, pkt_buf)) != ERR_OK) {
+  if ((err = pbuf_copy(r, pkt_buf)) != STATUS_OK) {
     free_pkt_buf(r);
     // LINK_STATS_INC(link.memerr);
     // LINK_STATS_INC(link.drop);
@@ -939,7 +939,7 @@ output_netif_loop(NetworkInterface& netif, PacketBuffer& pkt_buf)
   }
 
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 static LwipStatus
 netif_loop_output_ipv4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *addr)
@@ -1006,7 +1006,7 @@ poll_netif(NetworkInterface*netif)
     in->if_idx = get_and_inc_netif_num(netif);
 
     /* loopback packets are always IP packets! */
-    if (ip_input(in, netif) != ERR_OK) {
+    if (ip_input(in, netif) != STATUS_OK) {
       free_pkt_buf(in);
     }
 
@@ -1281,7 +1281,7 @@ add_netif_ip6_addr(NetworkInterface& netif, const Ip6Addr& ip6addr, size_t& out_
     if (out_index != nullptr) {
       *out_index = i;
     }
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* Find a free slot. The first one is reserved for link-local addresses. */
@@ -1293,7 +1293,7 @@ add_netif_ip6_addr(NetworkInterface& netif, const Ip6Addr& ip6addr, size_t& out_
       if (out_index != nullptr) {
         *out_index = i;
       }
-      return ERR_OK;
+      return STATUS_OK;
     }
   }
 

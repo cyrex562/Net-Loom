@@ -365,7 +365,7 @@ tcp_close_shutdown(struct TcpPcb* pcb, uint8_t rst_on_unacked_data)
             {
                 tcp_free(pcb);
             }
-            return ERR_OK;
+            return STATUS_OK;
         }
     }
 
@@ -400,7 +400,7 @@ tcp_close_shutdown(struct TcpPcb* pcb, uint8_t rst_on_unacked_data)
     default:
         return tcp_close_shutdown_fin(pcb);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 static LwipStatus
@@ -413,7 +413,7 @@ tcp_close_shutdown_fin(struct TcpPcb* pcb)
     {
     case SYN_RCVD:
         err = tcp_send_fin(pcb);
-        if (err == ERR_OK)
+        if (err == STATUS_OK)
         {
             tcp_backlog_accepted(pcb);
 
@@ -422,24 +422,24 @@ tcp_close_shutdown_fin(struct TcpPcb* pcb)
         break;
     case ESTABLISHED:
         err = tcp_send_fin(pcb);
-        if (err == ERR_OK)
+        if (err == STATUS_OK)
         {
             pcb->state = FIN_WAIT_1;
         }
         break;
     case CLOSE_WAIT:
         err = tcp_send_fin(pcb);
-        if (err == ERR_OK)
+        if (err == STATUS_OK)
         {
             pcb->state = LAST_ACK;
         }
         break;
     default:
         /* Has already been closed, do nothing. */
-        return ERR_OK;
+        return STATUS_OK;
     }
 
-    if (err == ERR_OK)
+    if (err == STATUS_OK)
     {
         /* To ensure all data has been sent when tcp_close returns, we have
            to make sure tcp_output doesn't fail.
@@ -457,7 +457,7 @@ tcp_close_shutdown_fin(struct TcpPcb* pcb)
            This is OK here since sending FIN does not guarantee a time frime for
            actually freeing the pcb, either (it is left in closure states for
            remote ACK or timeout) */
-        return ERR_OK;
+        return STATUS_OK;
     }
     return err;
 }
@@ -555,7 +555,7 @@ tcp_shutdown(struct TcpPcb* pcb, int shut_rx, int shut_tx)
             return ERR_CONN;
         }
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -740,7 +740,7 @@ tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
     pcb->local_port = port;
     reg_tcp_pcb(&tcp_bound_pcbs, pcb);
     Logf(true, "tcp_bind: bind to port %d\n", port);
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -903,7 +903,7 @@ tcp_listen_with_backlog_and_err(struct TcpPcb* pcb, uint8_t backlog, LwipStatus*
     tcp_backlog_set(reinterpret_cast<TcpPcb*>(lpcb), backlog);
 
     reg_tcp_pcb(&tcp_listen_pcbs.pcbs, reinterpret_cast<TcpPcb*>(lpcb));
-    res = ERR_OK;
+    res = STATUS_OK;
 done:
     if (err != nullptr)
     {
@@ -1080,7 +1080,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
     if (netif == nullptr)
     {
         /* Don't even try to send a SYN packet if we have no route since that will fail. */
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
 
     /* check if local IP has been assigned to pcb, if not, get one */
@@ -1089,7 +1089,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
         const IpAddr* local_ip = ip_netif_get_local_ip(netif, ipaddr);
         if (local_ip == nullptr)
         {
-            return ERR_RTE;
+            return STATUS_E_ROUTING;
         }
         copy_ip_addr(&pcb->local_ip, local_ip);
     }
@@ -1155,7 +1155,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
 
     /* Send a SYN together with the MSS option. */
     LwipStatus ret = tcp_enqueue_flags(pcb, TCP_SYN);
-    if (ret == ERR_OK)
+    if (ret == STATUS_OK)
     {
         /* SYN segment was enqueued, changed the pcbs state now */
         pcb->state = SYN_SENT;
@@ -1182,7 +1182,7 @@ void
 tcp_slowtmr(void)
 {
     uint8_t pcb_remove; /* flag if a PCB should be removed */
-    LwipStatus err = ERR_OK;
+    LwipStatus err = STATUS_OK;
 
     ++tcp_ticks;
     // ++tcp_timer_ctr;
@@ -1246,7 +1246,7 @@ tcp_slowtmr_start:
                         /* If snd_wnd is zero, send 1 byte probes */
                         if (pcb->snd_wnd == 0)
                         {
-                            if (tcp_zero_window_probe(pcb) != ERR_OK)
+                            if (tcp_zero_window_probe(pcb) != STATUS_OK)
                             {
                                 next_slot = 0; /* try probe again with current slot */
                             }
@@ -1254,9 +1254,9 @@ tcp_slowtmr_start:
                         }
                         else
                         {
-                            if (tcp_split_unsent_seg(pcb, (uint16_t)pcb->snd_wnd) == ERR_OK)
+                            if (tcp_split_unsent_seg(pcb, (uint16_t)pcb->snd_wnd) == STATUS_OK)
                             {
-                                if (tcp_output(pcb) == ERR_OK)
+                                if (tcp_output(pcb) == STATUS_OK)
                                 {
                                     /* sending will cancel persist timer, else retry with current slot */
                                     next_slot = 0;
@@ -1291,7 +1291,7 @@ tcp_slowtmr_start:
                     /* If prepare phase fails but we have unsent data but no unacked data,
                        still execute the backoff calculations below, as this means we somehow
                        failed to send segment. */
-                    if ((tcp_rexmit_rto_prepare(pcb) == ERR_OK) || ((pcb->unacked == nullptr) && (pcb->unsent != nullptr
+                    if ((tcp_rexmit_rto_prepare(pcb) == STATUS_OK) || ((pcb->unacked == nullptr) && (pcb->unsent != nullptr
                     )))
                     {
                         /* Double retransmission time-out unless we are trying to
@@ -1363,7 +1363,7 @@ tcp_slowtmr_start:
                 / TCP_SLOW_INTERVAL)
             {
                 err = tcp_keepalive(pcb);
-                if (err == ERR_OK)
+                if (err == STATUS_OK)
                 {
                     pcb->keep_cnt_sent++;
                 }
@@ -1459,7 +1459,7 @@ tcp_slowtmr_start:
                     goto tcp_slowtmr_start;
                 }
                 /* if err == ERR_ABRT, 'prev' is already deallocated */
-                if (err == ERR_OK)
+                if (err == STATUS_OK)
                 {
                     tcp_output(prev);
                 }
@@ -1602,7 +1602,7 @@ tcp_process_refused_data(struct TcpPcb* pcb)
         /* Notify again application with data previously received. */
         Logf(true, ("tcp_input: notify kept packet\n"));
         TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
-        if (err == ERR_OK)
+        if (err == STATUS_OK)
         {
             /* did refused_data include a FIN? */
             // if ((refused_flags & PBUF_FLAG_TCP_FIN)
@@ -1647,7 +1647,7 @@ tcp_process_refused_data(struct TcpPcb* pcb)
             return ERR_INPROGRESS;
         }
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -1740,11 +1740,11 @@ tcp_recv_null(void* arg, struct TcpPcb* pcb, struct PacketBuffer* p, LwipStatus 
         tcp_recved(pcb, p->tot_len);
         free_pkt_buf(p);
     }
-    else if (err == ERR_OK)
+    else if (err == STATUS_OK)
     {
         return tcp_close(pcb);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /* Kills the oldest active connection that has a lower priority than 'prio'.
@@ -2434,7 +2434,7 @@ tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb, int local, IpAddr* addr, uint16_t* 
                 *port = pcb->remote_port;
             }
         }
-        return ERR_OK;
+        return STATUS_OK;
     }
     return ERR_VAL;
 }
@@ -2591,14 +2591,14 @@ tcp_ext_arg_invoke_callbacks_passive_open(struct TcpPcbListen* lpcb, struct TcpP
             if (lpcb->ext_args[i].callbacks->passive_open != nullptr)
             {
                 LwipStatus err = lpcb->ext_args[i].callbacks->passive_open((uint8_t)i, lpcb, cpcb);
-                if (err != ERR_OK)
+                if (err != STATUS_OK)
                 {
                     return err;
                 }
             }
         }
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 /**
@@ -2646,7 +2646,7 @@ static void pbuf_free_ooseq_callback(void* arg)
 //
 inline void pbuf_pool_free_ooseq_queue_call(sys_prot_t old_level)
 {
-    if (tcpip_try_callback(pbuf_free_ooseq_callback, nullptr) != ERR_OK)
+    if (tcpip_try_callback(pbuf_free_ooseq_callback, nullptr) != STATUS_OK)
     {
         SYS_ARCH_PROTECT(old_level);
         pbuf_free_ooseq_pending = 0;

@@ -123,7 +123,7 @@ uint8_t
 vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
 {
     struct PacketBuffer* np = *pb;
-    struct Ip4Hdr* ip = (struct Ip4Hdr *)np->payload;
+    struct Ip4Hdr& ip = (struct Ip4Hdr *)np->payload;
     Cstate* cs = comp->last_cs->cs_next;
     uint16_t ilen = get_ip4_hdr_hdr_len(ip);
     TcpHdr* oth;
@@ -451,7 +451,7 @@ vj_uncompress_err(struct VjCompress* comp)
 int
 vj_uncompress_uncomp(struct PacketBuffer* nb, struct VjCompress* comp)
 {
-    struct Ip4Hdr* ip = (struct Ip4Hdr *)nb->payload;
+    struct Ip4Hdr& ip = (struct Ip4Hdr *)nb->payload;
     uint32_t hlen = get_ip4_hdr_hdr_len(ip) << 2;
     if (get_ip4_hdr_proto(ip) >= MAX_SLOTS || hlen + sizeof(struct TcpHdr) > nb->len || (
             hlen += get_tcp_hdr_len((struct TcpHdr *)&((char *)ip)[hlen], true)) > nb->len

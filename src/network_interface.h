@@ -7,7 +7,6 @@
 #include <lwip_status.h>
 #include <packet_buffer.h>
 #include <mac_address.h>
-#include <ip_addr.h>
 #include <ip4_addr.h>
 #include <ip6_addr.h>
 #include <igmp_grp.h>
@@ -604,7 +603,7 @@ constexpr auto LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x0200;
 //
 inline bool est_ip6_addr_zone(const Ip6AddrInfo& addr_info, const NetworkInterface& netif)
 {
-    return cmp_ip6_addr_zone(addr_info, (Ip6AddrZone)get_and_inc_netif_num(netif));
+    return cmp_ip6_addr_zone(addr_info, Ip6AddrZone(get_and_inc_netif_num(netif)));
 }
 
 // Verify that the given IPv6 address is properly zoned for the given netif.
@@ -640,15 +639,15 @@ inline void
 assign_ip6_addr_zone(Ip6AddrInfo& addr_info,
                      const Ip6AddrScopeType type,
                      const NetworkInterface& netif,
-                     size_t index = 0)
+                     size_t /*unused*/ = 0)
 {
     if (ip6_addr_has_scope(addr_info.addr, type))
     {
-        set_ip6_addr_zone(addr_info, (Ip6AddrZone)get_and_inc_netif_num(netif));
+        set_ip6_addr_zone(addr_info, Ip6AddrZone(get_and_inc_netif_num(netif)));
     }
     else
     {
-        set_ip6_addr_zone(addr_info, (Ip6AddrZone)0);
+        set_ip6_addr_zone(addr_info, Ip6AddrZone(0));
     }
 }
 
@@ -663,14 +662,13 @@ get_netif_ip4_local_ip(const NetworkInterface& netif, const size_t index)
     return get_netif_ip4_addr(netif, index);
 }
 
-inline const Ip6AddrInfo
+///
+///
+inline Ip6AddrInfo
 ip6_netif_get_local_ip(const NetworkInterface& netif, const Ip6AddrInfo& dest)
 {
     return select_ip6_src_addr(netif, dest);
 }
-
-
-
 
 
 ///

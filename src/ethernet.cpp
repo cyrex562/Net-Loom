@@ -43,7 +43,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
         // TODO: remove or fix missing ifinerrors
         // MIB2_STATS_NETIF_INC(netif, ifinerrors);
         free_pkt_buf(pkt_buf);
-        return ERR_OK;
+        return STATUS_OK;
     }
 
     if (pkt_buf.if_idx == NETIF_NO_INDEX) {
@@ -62,7 +62,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             /* a packet with only an ethernet/vlan header (or less) is not valid for us */
             // MIB2_STATS_NETIF_INC(netif, ifinerrors);
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
 
 
@@ -109,7 +109,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
     if (type == pp_htons(ETHTYPE_IP)) {
         if (!(net_ifc->flags & NETIF_FLAG_ETH_ARP)) {
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
         /* skip Ethernet header (min. size checked above) */
         if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
@@ -118,7 +118,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             //                     p->tot_len, next_hdr_offset));
             //        Logf(true | LWIP_DBG_TRACE, ("Can't move over header in packet"));
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
         else {
             /* pass to IP layer */
@@ -129,13 +129,13 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
     else if (type == pp_htons(ETHTYPE_ARP)) {
         if (!(net_ifc->flags & NETIF_FLAG_ETH_ARP)) {
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
         /* skip Ethernet header (min. size checked above) */
         if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
 
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
         else {
             /* pass p to ARP module */
@@ -162,7 +162,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
             //          p->tot_len, next_hdr_offset));
             free_pkt_buf(pkt_buf);
-            return ERR_OK;
+            return STATUS_OK;
         }
         else {
             /* pass to IPv6 layer */
@@ -178,12 +178,12 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
         // ETHARP_STATS_INC(etharp.drop);
         // MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
         free_pkt_buf(pkt_buf);
-        return ERR_OK;
+        return STATUS_OK;
     }
 
     /* This means the PacketBuffer is freed or consumed,
        so the caller doesn't have to free it again */
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 

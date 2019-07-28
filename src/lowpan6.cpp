@@ -242,7 +242,7 @@ lowpan6_parse_iee802154_header(struct PacketBuffer *p, struct Lowpan6LinkAddr *s
   if (pbuf_remove_header(p, datagram_offset)) {
     return ERR_VAL;
   }
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /** Calculate the 16-bit CRC as required by IEEE 802.15.4 */
@@ -357,7 +357,7 @@ lowpan6_frag(NetworkInterface*netif, struct PacketBuffer *p, const struct Lowpan
   err = lowpan6_compress_headers(netif, (uint8_t *)p->payload, p->len,
     &buffer[ieee_header_len], p_frag->len - ieee_header_len, &lowpan6_header_len,
     &hidden_header_len, LWIP_6LOWPAN_CONTEXTS(netif), src, dst);
-  if (err != ERR_OK) {
+  if (err != STATUS_OK) {
     // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     free_pkt_buf(p_frag);
     return err;
@@ -414,7 +414,7 @@ lowpan6_frag(NetworkInterface*netif, struct PacketBuffer *p, const struct Lowpan
     Logf(true, "lowpan6_send: sending packet %p\n", (uint8_t *)p);
     err = netif->linkoutput(netif, p_frag);
 
-    while ((remaining_len > 0) && (err == ERR_OK)) {
+    while ((remaining_len > 0) && (err == STATUS_OK)) {
       struct ieee_802154_hdr *hdr = (struct ieee_802154_hdr *)buffer;
       /* new frame, new seq num for ACK */
       hdr->sequence_number = lowpan6_data.tx_frame_seq_num++;
@@ -487,7 +487,7 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 
   set_ip6_addr(&lowpan6_data.lowpan6_context[idx], context);
 
-  return ERR_OK;
+  return STATUS_OK;
 
 }
 
@@ -501,7 +501,7 @@ lowpan6_set_short_addr(uint8_t addr_high, uint8_t addr_low)
   short_mac_addr.addr[0] = addr_high;
   short_mac_addr.addr[1] = addr_low;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /* Create IEEE 802.15.4 address from netif address */
@@ -527,7 +527,7 @@ lowpan6_hwaddr_to_addr(NetworkInterface*netif, struct Lowpan6LinkAddr *addr)
     /* Invalid address length, don't know how to convert this */
     return ERR_VAL;
   }
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -561,7 +561,7 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
 
   {
     result = lowpan6_hwaddr_to_addr(netif, &src);
-    if (result != ERR_OK) {
+    if (result != STATUS_OK) {
       return result;
     }
   }
@@ -591,13 +591,13 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
 
   /* Ask ND6 what to do with the packet. */
   result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
-  if (result != ERR_OK) {
+  if (result != STATUS_OK) {
     return result;
   }
 
   /* If no hardware address is returned, nd6 has queued the packet for later. */
   if (hwaddr == nullptr) {
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* Send out the packet using the returned hardware address. */
@@ -621,7 +621,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
   struct lowpan6_reass_helper *lrh, *lrh_prev = nullptr;
 
   if (p == nullptr) {
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   if (p->len != p->tot_len) {
@@ -629,7 +629,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
     goto lowpan6_input_discard;
   }
 
-  if (lowpan6_parse_iee802154_header(p, &src, &dest) != ERR_OK) {
+  if (lowpan6_parse_iee802154_header(p, &src, &dest) != STATUS_OK) {
     goto lowpan6_input_discard;
   }
 
@@ -699,7 +699,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
     lrh->timer = 2;
     lowpan6_data.reass_list = lrh;
 
-    return ERR_OK;
+    return STATUS_OK;
   } else if ((b & 0xf8) == 0xe0) {
     /* FRAGN dispatch, find packet being reassembled. */
     datagram_size = ((uint16_t)(puc[0] & 0x07) << 8) | (uint16_t)puc[1];
@@ -759,7 +759,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
           }
           /* duplicate, ignore */
           free_pkt_buf(p);
-          return ERR_OK;
+          return STATUS_OK;
         }
       }
       /* insert fragment */
@@ -778,7 +778,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
         uint16_t q_datagram_offset = ((uint8_t *)q->payload)[0] << 3;
         if (q_datagram_offset != offset) {
           /* not complete, wait for more fragments */
-          return ERR_OK;
+          return STATUS_OK;
         }
         offset += q->len - 1;
       }
@@ -805,7 +805,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
       }
     }
     /* PacketBuffer enqueued, waiting for more fragments */
-    return ERR_OK;
+    return STATUS_OK;
   } else {
     if (b == 0x41) {
       /* This is a complete IPv6 packet, just skip dispatch byte. */
@@ -814,7 +814,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
       /* IPv6 headers are compressed using IPHC. */
       p = lowpan6_decompress(p, datagram_size, LWIP_6LOWPAN_CONTEXTS(netif), &src, &dest);
       if (p == nullptr) {
-        return ERR_OK;
+        return STATUS_OK;
       }
     } else {
       goto lowpan6_input_discard;
@@ -827,7 +827,7 @@ lowpan6_input(struct PacketBuffer *p, NetworkInterface*netif)
 lowpan6_input_discard:
   free_pkt_buf(p);
   /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -846,7 +846,7 @@ lowpan6_if_init(NetworkInterface*netif)
   /* broadcast capability */
   netif->flags = NETIF_FLAG_BCAST /* | NETIF_FLAG_LOWPAN6 */;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -858,7 +858,7 @@ lowpan6_set_pan_id(uint16_t pan_id)
 {
   lowpan6_data.ieee_802154_pan_id = pan_id;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**

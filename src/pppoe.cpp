@@ -192,13 +192,13 @@ static LwipStatus pppoe_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p)
 
 
   LwipStatus ret = pppoe_xmit(sc, ph);
-  if (ret != ERR_OK) {
+  if (ret != STATUS_OK) {
 
     return ret;
   }
 
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /* Called by PPP core */
@@ -221,12 +221,12 @@ static LwipStatus pppoe_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuf
   auto tot_len = pb->tot_len;
 
 
-  if( (err = pppoe_xmit(sc, pb)) != ERR_OK) {
+  if( (err = pppoe_xmit(sc, pb)) != STATUS_OK) {
 
     return err;
   }
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 static LwipStatus
@@ -246,7 +246,7 @@ pppoe_destroy(PppPcb *ppp, uint8_t *ctx)
 
   delete sc;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /*

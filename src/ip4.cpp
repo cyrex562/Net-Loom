@@ -14,291 +14,175 @@
 #include <udp.h>
 #include <iana.h>
 #include "raw_priv.h"
+#include <vector>
 
-
-///
-/// LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
-/// Source-based routing for IPv4 - called from ip_route() (IPv4)
-/// Signature:\code{.c}
-///   NetworkInterface*my_hook(const Ip4Addr *src, const Ip4Addr *dest);
-/// \endcode
-/// Arguments:
-/// - src: local/source IPv4 address
-/// - dest: destination IPv4 address
-/// Returns values:
-/// - the destination netif
-/// - NULL if no destination netif is found. In that case, ip_route() continues as normal.
-///
-inline NetworkInterface* hook_ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
-{
-    return nullptr;
-}
-
-/** Set this to 0 in the rare case of wanting to call an extra function to
- * generate the IP checksum (in contrast to calculating it on-the-fly). */
-
-/// Some defines for DHCP to let link-layer-addressed packets through while the
-/// netif is down.
-/// To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT(port)
-/// to return 1 if the port is accepted and 0 if the port is not accepted.
-///
-inline bool ip4_accept_udp_port(const uint16_t dst_port)
-{
-    return dst_port == pp_ntohs(12345);
-} 
-
-/* accept DHCP client port and custom port */
-inline bool ip_accept_link_layer_addressed_port(const uint16_t port)
-{
-    return port == pp_ntohs(LWIP_IANA_PORT_DHCP_CLIENT) || ip4_accept_udp_port(port);
-} 
-
-/** The IP header ID of the next outgoing IP packet */
-static uint16_t ip_id; /** The default netif used for multicast */
-static NetworkInterface* ip4_default_multicast_netif;
-
-/**
- * @ingroup ip4
- * Set a default netif for IPv4 multicast. */
-void ip4_set_default_multicast_netif(NetworkInterface* default_multicast_netif)
-{
-    ip4_default_multicast_netif = default_multicast_netif;
-}
 
 /**
  * Source based IPv4 routing must be fully implemented in
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
-NetworkInterface* ip4_route_src(const Ip4Addr* src, const Ip4Addr* dest)
+LwipStatus
+source_route_ip4_addr(const Ip4Addr& src,
+                      const Ip4Addr& dest,
+                      NetworkInterface& out_netif,
+                      const std::vector<NetworkInterface>& netifs)
 {
-    if (src != nullptr)
-    {
-        /* when src==NULL, the hook is called from ip4_route(dest) */
-        NetworkInterface* netif = hook_ip4_route_src(src, dest);
-        if (netif != nullptr)
-        {
-            return netif;
-        }
-    }
-    return ip4_route(dest);
+    // todo: lookup source in ip rules for routing and then get the appropriate next hop, using that to find the appropriate netif.
+    return STATUS_E_NOT_IMPLEMENTED;
 }
 
-/**
- * Finds the appropriate network interface for a given IP address. It
- * searches the list of network interfaces linearly. A match is found
- * if the masked IP address of the network interface equals the masked
- * IP address given to the function.
- *
- * @param dest the destination IP address for which to find the route
- * @return the netif on which to send to reach dest
- */
-NetworkInterface* ip4_route(const Ip4Addr* dest)
+///
+/// Find network interface for destination IP.
+///
+LwipStatus
+get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
+                           const std::vector<NetworkInterface>& netifs_to_check,
+                           NetworkInterface& found_netif)
 {
-    NetworkInterface* netif;
-    
-    /* Use administratively selected interface for multicast by default */
-    if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif)
+
+    for (const auto& netif : netifs_to_check)
     {
-        return ip4_default_multicast_netif;
-    } /* bug #54569: in case LWIP_SINGLE_NETIF=1 and Logf() disabled, the following loop is optimized away */
-    for (netif = netif_list; netif != nullptr; netif = netif->next)
-    {
-        /* is the netif up, does it have a link and a valid address? */
-        if (is_netif_up(netif) && is_netif_link_up(netif) && !ip4_addr_isany_val(
-            *get_netif_ip4_addr(netif,)))
+        if (ip4_addr_ismulticast(dst_addr))
         {
-            /* network mask matches? */
-            if (ip4_addr_netcmp(dest,
-                                get_netif_ip4_addr(netif,),
-                                get_netif_ip4_netmask(netif,)))
+            for (auto grp: netif.igmp_groups)
             {
-                /* return netif on which to forward IP packet */
-                return netif;
-            } /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
-            if ((netif->flags & NETIF_FLAG_BCAST) == 0 && ip4_addr_cmp(
-                dest,
-                get_netif_ip4_gw(netif,)))
-            {
-                /* return netif on which to forward IP packet */
-                return netif;
+               if (grp.group_address.addr == dst_addr.addr)
+               {
+                   found_netif = netif;
+                   return STATUS_OK;
+               }
             }
         }
+
+        for (auto addr_info : netif.ip4_addresses)
+        {
+            auto net = get_ip4_addr_net(dst_addr, addr_info.netmask);
+            if (net.addr == addr_info.network.addr)
+            {
+                found_netif = netif;
+                return STATUS_OK;
+            }
+        }
+
     }
 
-  /* loopif is disabled, looopback traffic is passed through any netif */
-  if (ip4_addr_isloopback(dest)) {
-    /* don't check for link on loopback traffic */
-    if (netif_default != nullptr && is_netif_up(netif_default)) {
-      return netif_default;
-    }
-    /* default netif is not up, just use any netif for loopback traffic */
-    for (netif = netif_list; netif != nullptr; netif = netif->next) {
-      if (is_netif_up(netif)) {
-        return netif;
-      }
-    }
-    return nullptr;
-  }
+    return STATUS_NOT_FOUND;
+}
 
 
-  // netif = LWIP_HOOK_IP4_ROUTE_SRC(NULL, dest);
-  if (netif != nullptr) {
-    return netif;
-  }
-
-  // netif = LWIP_HOOK_IP4_ROUTE(dest);
-  if (netif != nullptr) {
-    return netif;
-  }
-
-    if (netif_default == nullptr || !is_netif_up(netif_default) || !
-        is_netif_link_up(netif_default) || ip4_addr_isany_val(
-            *get_netif_ip4_addr(netif_default,)) || ip4_addr_isloopback(dest))
+///
+/// Determine whether an IP address is in a reserved set of addresses
+/// that may not be forwarded, or whether datagrams to that destination
+/// may be forwarded.
+/// @param pkt_buf the packet to forward
+/// @return 1: can forward 0: discard
+///
+bool
+can_forward_ip4_pkt(PacketBuffer& pkt_buf)
+{
+    Ip4Addr dst_addr{};
+    // todo: get lowest (closest to wire) IP4 header from pkt_buf, then check if it is able to be forwarded.
+    // todo: get dest address in packet
+    // don't route link-layer broadcasts
+    if (pkt_buf.ll_broadcast)
     {
-        /* No matching netif found and default netif is not usable.
-           If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
-        //    Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("ip4_route: No route to %d.%d.%d.%d\n",
-        //                ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
-        return nullptr;
+        return false;
+    } /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
+    if (pkt_buf.ll_multicast || ip4_addr_ismulticast(dst_addr))
+    {
+        return false;
+    } // todo: make whether we care about experimental IP addresses an configurable option
+    if (is_ip4_addr_experimental(dst_addr))
+    {
+        return false;
     }
-    return netif_default;
-}
-
-
-/**
- * Determine whether an IP address is in a reserved set of addresses
- * that may not be forwarded, or whether datagrams to that destination
- * may be forwarded.
- * @param p the packet to forward
- * @return 1: can forward 0: discard
- */
-static int
-ip4_canforward(struct PacketBuffer *p)
-{
-    Ip4Addr* curr_dst_addr = nullptr;
-  uint32_t addr = lwip_htonl(get_ip4_addr(curr_dst_addr));
-
-  // int ret = LWIP_HOOK_IP4_CANFORWARD(p, addr);
-    int ret = 0;
-  if (ret >= 0) {
-    return ret;
-  }
-
-
-  if (p->ll_broadcast) {
-    /* don't route link-layer broadcasts */
-    return 0;
-  }
-  if (p->ll_multicast || IP_MULTICAST(addr)) {
-    /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
-    return 0;
-  }
-  if (IP_EXPERIMENTAL(addr)) {
-    return 0;
-  }
-  if (is_ip4_class_a(addr)) {
-    uint32_t net = addr & IP4_CLASS_A_NET;
-    if (net == 0 || net == uint32_t(IP_LOOPBACKNET) << IP4_CLASS_A_NSHIFT) {
-      /* don't route loopback packets */
-      return 0;
+    if (is_ip4_class_a(dst_addr.addr))
+    {
+        const uint32_t net = dst_addr.addr & IP4_CLASS_A_NET;
+        if (net == 0 || net == uint32_t(IP_LOOPBACKNET) << IP4_CLASS_A_NSHIFT)
+        {
+            /* don't route loopback packets */
+            return false;
+        }
     }
-  }
-  return 1;
-}
+    return true;
+} 
 
-/**
- * Forwards an IP packet. It finds an appropriate route for the
- * packet, decrements the TTL value of the packet, adjusts the
- * checksum and outputs the packet on the appropriate interface.
- *
- * @param p the packet to forward (p->payload points to IP header)
- * @param iphdr the IP header of the input packet
- * @param inp the netif on which this packet was received
- */
-static void
-ip4_forward(struct PacketBuffer* p, struct Ip4Hdr* iphdr, NetworkInterface* inp)
+
+///
+/// Forwards an IP packet. It finds an appropriate route for the
+/// packet, decrements the TTL value of the packet, adjusts the
+/// checksum and outputs the packet on the appropriate interface.
+///
+/// pkt_buf the packet to forward (p->payload points to IP header)
+/// netifs a collection of valid network interfaces that can be used to send the packet.
+///
+static LwipStatus
+forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& netifs)
 {
-    Ip4Addr* curr_dst_addr = nullptr;
-    Ip4Addr* curr_src_addr = nullptr;
 
-    if (!ip4_canforward(p)) {
-        return;
+    Ip4Addr dst_addr{};
+    Ip4Addr src_addr{};
+
+    if (!can_forward_ip4_pkt(pkt_buf)) {
+        return STATUS_E_ROUTING;
     }
 
     /* RFC3927 2.7: do not forward link-local addresses */
-    if (ip4_addr_islinklocal(curr_dst_addr)) {
-        // Logf(true, ("ip4_forward: not forwarding LLA %d.%d.%d.%d\n",
-        //                        ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
-        //                        ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
-        return;
+    if (ip4_addr_islinklocal(dst_addr)) {
+        return STATUS_E_ROUTING;
     }
 
     /* Find network interface where to forward this IP packet to. */
-    NetworkInterface* netif = ip4_route_src(curr_src_addr, curr_dst_addr);
-    if (netif == nullptr) {
-        // Logf(true, ("ip4_forward: no forwarding route for %d.%d.%d.%d found\n",
-        //                        ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
-        //                        ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
-        /* @todo: send ICMP_DUR_NET? */
-        return;
+    NetworkInterface out_netif{};
+    auto rc = source_route_ip4_addr(src_addr, dst_addr, out_netif, netifs);
+    if (rc != STATUS_OK)
+    {
+        return rc;
     }
-
-    /* Do not forward packets onto the same network interface on which
-     * they arrived. */
-    if (netif == inp) {
-        Logf(true, "ip4_forward: not bouncing packets back on incoming interface.\n");
-        return;
-    }
-
 
     /* decrement TTL */
-    set_ip4_hdr_ttl(iphdr, get_ip4_hdr_ttl(iphdr) - 1);
+    // todo: get ip4 hdr from packet
+    Ip4Hdr hdr{};
+    set_ip4_hdr_ttl(hdr, get_ip4_hdr_ttl(hdr) - 1);
     /* send ICMP if TTL == 0 */
-    if (get_ip4_hdr_ttl(iphdr) == 0) {
-
-
+    if (get_ip4_hdr_ttl(hdr) == 0)
+    {
         /* Don't send ICMP messages in response to ICMP messages */
-        if (get_ip4_hdr_proto(iphdr) != IP_PROTO_ICMP) {
-            icmp_time_exceeded(p, ICMP_TE_TTL);
+        if (get_ip4_hdr_proto(hdr) != IP_PROTO_ICMP)
+        {
+            icmp_time_exceeded(pkt_buf, ICMP_TE_TTL);
         }
-
-        return;
+        return STATUS_OK;
     }
 
     /* Incrementally update the IP checksum. */
-    if (get_ip4_hdr_checksum(iphdr) >= pp_htons(0xffffU - 0x100)) {
-        set_ip4_hdr_checksum(iphdr, (uint16_t)(get_ip4_hdr_checksum(iphdr) + pp_htons(0x100) + 1));
+    if (get_ip4_hdr_checksum(hdr) >= pp_htons(0xffffU - 0x100)) {
+        set_ip4_hdr_checksum(hdr, (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100) + 1));
     }
     else {
-        set_ip4_hdr_checksum(iphdr, (uint16_t)(get_ip4_hdr_checksum(iphdr) + pp_htons(0x100)));
+        set_ip4_hdr_checksum(hdr, (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100)));
     }
 
-    // Logf(true, ("ip4_forward: forwarding packet to %d.%d.%d.%d\n",
-    //                        ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
-    //                        ip4_addr3_16(ip4_current_dest_addr()), ip4_addr4_16(ip4_current_dest_addr())));
-
-    // IP_STATS_INC(ip.fw);
-    //
-    // IP_STATS_INC(ip.xmit);
-    //
-    // PERF_STOP("ip4_forward");
     /* don't fragment if interface has mtu set to 0 [loopif] */
-    if (netif->mtu && p->tot_len > netif->mtu) {
-        if ((get_ip4_hdr_offset(iphdr) & pp_ntohs(IP4_DF_FLAG)) == 0) {
+    if (out_netif.mtu && pkt_buf.raw.size() > out_netif.mtu) {
+        if ((get_ip4_hdr_offset(hdr) & pp_ntohs(IP4_DF_FLAG)) == 0) {
 
-            ip4_frag(p, netif, curr_dst_addr);
+            ip4_frag(pkt_buf, out_netif, dst_addr);
 
         }
         else {
 
             /* send ICMP Destination Unreachable code 4: "Fragmentation Needed and DF Set" */
-            icmp_dest_unreach(p, ICMP_DUR_FRAG);
+            icmp_dest_unreach(pkt_buf, ICMP_DUR_FRAG);
 
         }
-        return;
+        return STATUS_OK;
     }
     /* transmit PacketBuffer on chosen interface */
-    netif->output(netif, p, curr_dst_addr);
+    // netif->output(netif, pkt_buf, curr_dst_addr);
+    // todo: send packet on outbound interface
+    return STATUS_OK;
 }
 
 ///
@@ -366,17 +250,17 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     int check_ip_src = 1;
     Ip4Addr* curr_dst_addr = nullptr;
     Ip4Addr* curr_src_addr = nullptr;
-    Ip4Hdr* curr_dst_hdr = nullptr;
-    Ip4Hdr* curr_src_hdr = nullptr;
+    Ip4Hdr& curr_dst_hdr = nullptr;
+    Ip4Hdr& curr_src_hdr = nullptr;
   
 
   /* identify the IP header */
-  const struct Ip4Hdr* iphdr = (struct Ip4Hdr *)p->payload;
+  const struct Ip4Hdr& iphdr = (struct Ip4Hdr *)p->payload;
   if (get_ip4_hdr_version(iphdr) != 4) {
 //    Logf(true | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %d\n", (uint16_t)IPH_V(iphdr)));
     free_pkt_buf(p);
     
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* obtain IP header length in bytes */
@@ -408,7 +292,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     /* free (drop) packet pbufs */
     free_pkt_buf(p);
     
-    return ERR_OK;
+    return STATUS_OK;
   }
 
   /* verify checksum */
@@ -417,7 +301,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       free_pkt_buf(p);
 
       
-      return ERR_OK;
+      return STATUS_OK;
     }
   }
 
@@ -513,7 +397,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       /* free (drop) packet pbufs */
       free_pkt_buf(p);
       
-      return ERR_OK;
+      return STATUS_OK;
     }
   }
 
@@ -525,14 +409,14 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     /* non-broadcast packet? */
     if (!ip4_addr_isbroadcast(curr_dst_addr, inp)) {
       /* try to forward IP packet on (other) interfaces */
-      ip4_forward(p, (struct Ip4Hdr *)p->payload, inp);
+      forward_ip4_pkt(p, , inp);
     } else
 
     {
 
     }
     free_pkt_buf(p);
-    return ERR_OK;
+    return STATUS_OK;
   }
   /* packet consists of multiple fragments? */
   if ((get_ip4_hdr_offset(iphdr) & pp_htons(IP4_OFF_MASK | IP4_MF_FLAG)) != 0) {
@@ -543,7 +427,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     p = ip4_reass(p);
     /* packet not fully reassembled yet? */
     if (p == nullptr) {
-      return ERR_OK;
+      return STATUS_OK;
     }
     iphdr = (const struct Ip4Hdr *)p->payload;
 
@@ -558,7 +442,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
     /* unsupported protocol feature */
     
-    return ERR_OK;
+    return STATUS_OK;
   }
 
 
@@ -633,7 +517,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   ip4_addr_set_any(curr_src_addr);
   ip4_addr_set_any(curr_dst_addr);
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /**
@@ -907,12 +791,12 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
 
       // LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-      if ((netif = ip4_route_src(src, dest)) == nullptr)
+      if ((netif = source_route_ip4_addr(src, dest,,)) == nullptr)
       {
           //    Logf(true, ("ip4_output: No route to %d.%d.%d.%d\n",
           //                           ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
           // IP_STATS_INC(ip.rterr);
-          return ERR_RTE;
+          return STATUS_E_ROUTING;
       }
 
       return ip4_output_if(p, src, dest, ttl, tos, proto, netif);
@@ -950,12 +834,12 @@ ip4_output_hinted(struct PacketBuffer* pkt_buf,
 
     // LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-    if ((netif = ip4_route_src(src, dest)) == nullptr) {
+    if ((netif = source_route_ip4_addr(src, dest,,)) == nullptr) {
         // Logf(true,
         //      ("ip4_output: No route to %d.%d.%d.%d\n",
         //          ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
         // IP_STATS_INC(ip.rterr);
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
 
     netif_set_hints(netif, netif_hint);

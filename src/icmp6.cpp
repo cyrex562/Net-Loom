@@ -97,7 +97,7 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
             free_pkt_buf(p);
             return;
         } /* Copy echo request. */
-        if (pbuf_copy(r, p) != ERR_OK)
+        if (pbuf_copy(r, p) != STATUS_OK)
         {
             /* drop */
             free_pkt_buf(p);

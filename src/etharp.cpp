@@ -437,7 +437,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
         /* free the queued IP packet */
         free_pkt_buf(p);
     }
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 
@@ -459,9 +459,9 @@ etharp_add_static_entry(const Ip4Addr* ipaddr, struct MacAddress* MacAddress)
     //          (uint16_t)MacAddress->addr[0], (uint16_t)MacAddress->addr[1], (uint16_t)MacAddress->addr[2],
     //          (uint16_t)MacAddress->addr[3], (uint16_t)MacAddress->addr[4], (uint16_t)MacAddress->addr[5]));
 
-    auto netif = ip4_route(ipaddr);
+    auto netif = get_netif_for_dst_ip4_addr(ipaddr,,);
     if (netif == nullptr) {
-        return ERR_RTE;
+        return STATUS_E_ROUTING;
     }
 
     return etharp_update_arp_entry(netif, ipaddr, MacAddress, kEtharpFlagTryHard | kEtharpFlagStaticEntry);
@@ -495,7 +495,7 @@ etharp_remove_static_entry(const Ip4Addr* ipaddr)
     }
     /* entry found, free it */
     etharp_free_entry(i);
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 
@@ -717,13 +717,13 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
     if (arp_table[arp_idx].state == ETHARP_STATE_STABLE) {
         if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_BROADCAST) {
             /* issue a standard request using broadcast */
-            if (etharp_request(netif, &arp_table[arp_idx].ipaddr) == ERR_OK) {
+            if (etharp_request(netif, &arp_table[arp_idx].ipaddr) == STATUS_OK) {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
         else if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_UNICAST) {
             /* issue a unicast request (for 15 seconds) to prevent unnecessary broadcast */
-            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == ERR_OK) {
+            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == STATUS_OK) {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
@@ -789,7 +789,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
            a subnet broadcast. */
         if (!ip4_addr_netcmp(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
             !ip4_addr_islinklocal(ipaddr)) {
-            auto iphdr = reinterpret_cast<Ip4Hdr*>(q->payload);
+            auto iphdr = reinterpret_cast<Ip4Hdr&>(q->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
                a link-local source address must always be "directly to its destination
                on the same physical link. The host MUST NOT send the packet to any
@@ -804,7 +804,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
                     }
                     else {
                         /* no route to destination error (default gateway missing) */
-                        return ERR_RTE;
+                        return STATUS_E_ROUTING;
                     }
                 }
             }
@@ -930,7 +930,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
     if (is_new_entry || (q == nullptr)) {
         /* try to resolve it; send out ARP request */
         result = etharp_request(netif, ipaddr);
-        if (result != ERR_OK) {
+        if (result != STATUS_OK) {
             /* ARP request couldn't be sent */
             /* We don't re-send arp request in etharp_tmr, but we still queue packets,
                since this failure could be temporary, and the next packet calling
@@ -1006,7 +1006,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
                 }
 
                 // Logf(true | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %d\n", (void *)q, i));
-                result = ERR_OK;
+                result = STATUS_OK;
             }
             else {
                 /* the pool MEMP_ARP_QUEUE is empty */
@@ -1050,7 +1050,7 @@ etharp_raw(NetworkInterface& netif,
            const Ip4Addr& ipdst_addr,
            const uint16_t opcode)
 {
-    LwipStatus result = ERR_OK;
+    LwipStatus result = STATUS_OK;
     // lwip_assert("netif != NULL", netif != nullptr);
 
     /* allocate a PacketBuffer for the outgoing ARP request packet */

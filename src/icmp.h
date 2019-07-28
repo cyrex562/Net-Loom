@@ -95,8 +95,8 @@ enum icmp_te_type {
 };
 
 void icmp_input(struct PacketBuffer *p, NetworkInterface*inp);
-void icmp_dest_unreach(struct PacketBuffer *p, enum icmp_dur_type t);
-void icmp_time_exceeded(struct PacketBuffer *p, enum icmp_te_type t);
+void icmp_dest_unreach(PacketBuffer& pkt_buf, enum icmp_dur_type dur_type);
+void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type);
 void icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code);
 
 inline void icmp_port_unreach(const bool isipv6, PacketBuffer* pbuf)

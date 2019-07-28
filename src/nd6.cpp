@@ -592,7 +592,7 @@ nd6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
             /* ensure at least one solicitation is sent (see RFC 4861, ch. 6.3.7) */
             if ((inp->rtr_solicit_count < LWIP_ND6_MAX_MULTICAST_SOLICIT) ||
-                (nd6_send_rs(inp) == ERR_OK)) {
+                (nd6_send_rs(inp) == STATUS_OK)) {
                 inp->rtr_solicit_count = 0;
             }
             else {
@@ -1164,7 +1164,7 @@ nd6_tmr(void)
                 is_netif_link_up(netif) &&
                 !is_ip6_addr_state_invalid(get_netif_ip6_addr_state(netif, 0)) &&
                 !is_ip6_addr_duplicated(get_netif_ip6_addr_state(netif, 0))) {
-                if (nd6_send_rs(netif) == ERR_OK) {
+                if (nd6_send_rs(netif) == STATUS_OK) {
                     netif->rtr_solicit_count--;
                 }
             }
@@ -2027,7 +2027,7 @@ nd6_get_next_hop_entry(const Ip6Addr* ip6addr, NetworkInterface* netif)
                 if (i < 0) {
                     /* No router found. */
                     set_ip6_addr_any(&(destination_cache[nd6_cached_destination_index].destination_addr));
-                    return ERR_RTE;
+                    return STATUS_E_ROUTING;
                 }
                 destination_cache[nd6_cached_destination_index].pmtu = get_netif_mtu6(netif);
                 /* Start with netif mtu, correct through ICMPv6 if necessary */
@@ -2169,7 +2169,7 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer* q)
             }
             Logf(LWIP_DBG_TRACE,
                  "ipv6: queued packet %p on neighbor entry %d\n", (uint8_t *)p, (int16_t)neighbor_index);
-            result = ERR_OK;
+            result = STATUS_OK;
         }
         else {
             /* the pool MEMP_ND6_QUEUE is empty */
@@ -2294,7 +2294,7 @@ nd6_get_next_hop_addr_or_queue(NetworkInterface* netif,
 
         /* Tell the caller to send out the packet now. */
         *hwaddrp = neighbor_cache[i].lladdr;
-        return ERR_OK;
+        return STATUS_OK;
     }
 
     /* We should queue packet on this interface. */

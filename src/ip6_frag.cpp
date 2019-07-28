@@ -755,6 +755,6 @@ ip6_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip6Addr *dest)
     left = (uint16_t)(left - cop);
     fragment_offset = (uint16_t)(fragment_offset + cop);
   }
-  return ERR_OK;
+  return STATUS_OK;
 }
 

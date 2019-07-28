@@ -358,7 +358,7 @@ lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_si
   *lowpan6_header_len_out = lowpan6_header_len;
   *hidden_header_len_out = hidden_header_len;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 /** Decompress IPv6 and UDP headers compressed according to RFC 6282
@@ -752,7 +752,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   *hdr_size_comp = lowpan6_offset;
   *hdr_size_decomp = ip6_offset;
 
-  return ERR_OK;
+  return STATUS_OK;
 }
 
 struct PacketBuffer *
@@ -789,7 +789,7 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
                                           lowpan6_contexts,
                                           src,
                                           dest);
-  if (err != ERR_OK) {
+  if (err != STATUS_OK) {
     free_pkt_buf(p);
     free_pkt_buf(q);
     return nullptr;

@@ -556,7 +556,7 @@ LwipStatus
 pbuf_copy(PacketBuffer& dst_pbuf, PacketBuffer& src_pbuf)
 {
     dst_pbuf = src_pbuf;
-    return ERR_OK;
+    return STATUS_OK;
 }
 
 
@@ -725,7 +725,7 @@ pbuf_take(struct PacketBuffer* buf, const void* dataptr, size_t len)
     }
     lwip_assert("did not copy all data",
                 total_copy_len == 0 && copied_total == len);
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup PacketBuffer
  * Same as pbuf_take() but puts data at an offset
@@ -757,7 +757,7 @@ pbuf_take_at(struct PacketBuffer* buf,
         if (remaining_len > 0) {
             return pbuf_take(q->next, src_ptr, remaining_len);
         }
-        return ERR_OK;
+        return STATUS_OK;
     }
     return ERR_MEM;
 } /**
@@ -807,7 +807,7 @@ pbuf_clone(PbufLayer layer,
         return nullptr;
     }
     LwipStatus err = pbuf_copy(q, p);
-    lwip_assert("pbuf_copy failed", err == ERR_OK);
+    lwip_assert("pbuf_copy failed", err == STATUS_OK);
     return q;
 } /**
  * Copies data into a single PacketBuffer (*not* into a PacketBuffer queue!) and updates
@@ -843,7 +843,7 @@ pbuf_fill_chksum(struct PacketBuffer* p,
     uint32_t acc = *chksum;
     acc += copy_chksum;
     *chksum = fold_u32(acc);
-    return ERR_OK;
+    return STATUS_OK;
 } /**
  * @ingroup PacketBuffer
  * Get one byte from the specified position in a PacketBuffer
