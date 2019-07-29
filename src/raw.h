@@ -66,14 +66,14 @@ struct RawPcb;
  * if it's not used any more.
  */
 typedef uint8_t (*raw_recv_fn)(void *arg, struct RawPcb *pcb, struct PacketBuffer *p,
-    const IpAddr *addr);
+    const IpAddrInfo *addr);
 
 /** the RAW protocol control block */
 struct RawPcb
 {
     /* Common members of all PCB types */
-    IpAddr local_ip;
-    IpAddr remote_ip;
+    IpAddrInfo local_ip;
+    IpAddrInfo remote_ip;
     /* Bound netif index */
     uint8_t netif_idx;
     /* Socket options */
@@ -104,13 +104,14 @@ struct RawPcb
 struct RawPcb * raw_new        (uint8_t proto);
 struct RawPcb * raw_new_ip_type(IpAddrType type, uint8_t proto);
 void             raw_remove     (struct RawPcb *pcb);
-LwipStatus            raw_bind       (struct RawPcb *pcb, const IpAddr *ipaddr);
+LwipStatus            raw_bind       (struct RawPcb *pcb, const IpAddrInfo *ipaddr);
 void             raw_bind_netif (struct RawPcb *pcb, const NetworkInterface*netif);
-LwipStatus            raw_connect    (struct RawPcb *pcb, const IpAddr *ipaddr);
+LwipStatus            raw_connect    (struct RawPcb *pcb, const IpAddrInfo *ipaddr);
 void             raw_disconnect (struct RawPcb *pcb);
 
-LwipStatus            raw_sendto     (struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *ipaddr);
-LwipStatus            raw_sendto_if_src(struct RawPcb *pcb, struct PacketBuffer *p, const IpAddr *dst_ip, NetworkInterface*netif, const IpAddr *src_ip);
+LwipStatus            raw_sendto     (struct RawPcb *pcb, struct PacketBuffer *p, const IpAddrInfo *ipaddr);
+LwipStatus            raw_sendto_if_src(RawPcb& pcb, PacketBuffer& p, const IpAddrInfo& dst_ip, NetworkInterface& netif, const
+                                        IpAddrInfo& src_ip);
 LwipStatus            raw_send       (struct RawPcb *pcb, struct PacketBuffer *p);
 
 void             raw_recv       (struct RawPcb *pcb, raw_recv_fn recv, void *recv_arg);

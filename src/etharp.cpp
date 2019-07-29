@@ -134,7 +134,7 @@ etharp_free_entry(const int index)
     /* for debugging, clean out the complete entry */
     arp_table[index].ctime = 0;
     arp_table[index].netif = nullptr;
-    ip4_addr_set_zero(&arp_table[index].ipaddr);
+    zero_ip4_addr(&arp_table[index].ipaddr);
     arp_table[index].MacAddress = ETH_ZERO_ADDR;
 }
 
@@ -243,7 +243,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetworkInterface*
             lwip_assert("state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE",
                         state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE);
             /* if given, does IP address match IP address in ARP entry? */
-            if (ipaddr && ip4_addr_cmp(ipaddr, &arp_table[i].ipaddr)
+            if (ipaddr && cmp_ip4_addr(ipaddr, &arp_table[i].ipaddr)
                 && ((netif == nullptr) || (netif == arp_table[i].netif))
 
             ) {
@@ -385,7 +385,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
     /* non-unicast address? */
     if (ip4_addr_isany(ipaddr) ||
         ip4_addr_isbroadcast(ipaddr, netif) ||
-        ip4_addr_ismulticast(ipaddr)) {
+        is_ip4_addr_multicast(ipaddr)) {
         //    Logf(true | LWIP_DBG_TRACE, ("etharp_update_arp_entry: will not add non-unicast IP address to ARP cache\n"));
         return ERR_ARG;
     }
@@ -633,7 +633,7 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
     }
     else {
         /* ARP packet directed to us? */
-        for_us = uint8_t(ip4_addr_cmp(&dipaddr, get_netif_ip4_addr(netif,)));
+        for_us = uint8_t(cmp_ip4_addr(&dipaddr, get_netif_ip4_addr(netif,)));
     }
 
     /* ARP message directed to us?
@@ -772,7 +772,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
         dest = (const struct MacAddress *)&ETH_BCAST_ADDR;
         /* multicast destination IP address? */
     }
-    else if (ip4_addr_ismulticast(ipaddr)) {
+    else if (is_ip4_addr_multicast(ipaddr)) {
         /* Hash IP multicast address to MAC address.*/
         mcastaddr.addr[0] = LNK_LYR_MCAST_ADDR_OUI[0];
         mcastaddr.addr[1] = LNK_LYR_MCAST_ADDR_OUI[1];
@@ -787,14 +787,14 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     else {
         /* outside local network? if so, this can neither be a global broadcast nor
            a subnet broadcast. */
-        if (!ip4_addr_netcmp(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
-            !ip4_addr_islinklocal(ipaddr)) {
+        if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
+            !is_ip4_addr_link_local(ipaddr)) {
             auto iphdr = reinterpret_cast<Ip4Hdr&>(q->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
                a link-local source address must always be "directly to its destination
                on the same physical link. The host MUST NOT send the packet to any
                router for forwarding". */
-            if (!ip4_addr_islinklocal(&iphdr->src)) {
+            if (!is_ip4_addr_link_local(&iphdr->src)) {
                 {
                     /* interface has default gateway? */
                     if (!ip4_addr_isany_val(*get_netif_ip4_gw(netif,))) {
@@ -818,7 +818,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 
                     (arp_table[etharp_cached_entry].netif == netif) &&
 
-                    (ip4_addr_cmp(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
+                    (cmp_ip4_addr(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
                     /* the per-pcb-cached entry is stable and the right one! */
                     // ETHARP_STATS_INC(etharp.cachehit);
                     return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
@@ -834,7 +834,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 
                 (arp_table[i].netif == netif) &&
 
-                (ip4_addr_cmp(dst_addr, &arp_table[i].ipaddr))) {
+                (cmp_ip4_addr(dst_addr, &arp_table[i].ipaddr))) {
                 /* found an existing, stable entry */
                 EtharpSetAddrhint(netif, i);
                 return etharp_output_to_arp_index(netif, q, i);
@@ -892,7 +892,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
     LwipStatus result = ERR_MEM;
     int is_new_entry = 0; /* non-unicast address? */
     if (ip4_addr_isbroadcast(ipaddr, netif) ||
-        ip4_addr_ismulticast(ipaddr) ||
+        is_ip4_addr_multicast(ipaddr) ||
         ip4_addr_isany(ipaddr)) {
         Logf(true, ("etharp_query: will not add non-unicast IP address to ARP cache\n"));
         return ERR_ARG;
@@ -1091,7 +1091,7 @@ etharp_raw(NetworkInterface& netif,
     /* If we are using Link-Local, all ARP packets that contain a Link-Local
      * 'sender IP address' MUST be sent using link-layer broadcast instead of
      * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-    if (ip4_addr_islinklocal(ipsrc_addr)) {
+    if (is_ip4_addr_link_local(ipsrc_addr)) {
         ethernet_output(netif, p, ethsrc_addr, &ETH_BCAST_ADDR, ETHTYPE_ARP);
     }
     else {

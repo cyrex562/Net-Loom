@@ -36,7 +36,7 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4A
 /** memcpy-like copying of IP addresses where addresses are known to be
 * 16-bit-aligned if the port is correctly configured (so a port could define
 * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
-inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddr* dest, const Ip4AddrWordaligned* src)
+inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddrInfo* dest, const Ip4AddrWordaligned* src)
 {
     memcpy(dest,src,sizeof(Ip4Addr));
 }

@@ -192,7 +192,7 @@ struct Pppol2tpPcb
     uint8_t phase; /* L2TP phase */
     struct UdpPcb* udp; /* UDP L2TP Socket */
     NetworkInterface* netif; /* Output interface, used as a default route */
-    IpAddr remote_ip; /* LNS IP Address */
+    IpAddrInfo remote_ip; /* LNS IP Address */
     uint16_t remote_port; /* LNS port */
     const uint8_t* secret; /* Secret string */
     size_t secret_len; /* Secret string length */
@@ -217,7 +217,7 @@ struct Pppol2tpPcb
 /* Create a new L2TP session. */
 PppPcb* CreatePppol2tpSession(NetworkInterface* pppif,
                               NetworkInterface* netif,
-                              const IpAddr* ipaddr,
+                              const IpAddrInfo* ipaddr,
                               uint16_t port,
                               const uint8_t* secret,
                               size_t secret_len,
@@ -229,7 +229,7 @@ static void
 pppol2tp_input(void* arg,
                struct UdpPcb* pcb,
                struct PacketBuffer* p,
-               const IpAddr* addr,
+               const IpAddrInfo* addr,
                uint16_t port,
                NetworkInterface* netif);
 

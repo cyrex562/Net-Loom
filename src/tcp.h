@@ -259,8 +259,8 @@ struct TcpPcbListen; /** the TCP protocol control block for listening pcbs */
 struct TcpPcbListen
 {
     /** Common members of all PCB types */
-    IpAddr local_ip; /* Bound netif index */
-    IpAddr remote_ip;
+    IpAddrInfo local_ip; /* Bound netif index */
+    IpAddrInfo remote_ip;
     uint8_t netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
@@ -283,8 +283,8 @@ struct NetIfcHint;
 struct TcpPcb
 {
     /** common PCB members */
-    IpAddr local_ip; /* Bound netif index */
-    IpAddr remote_ip;
+    IpAddrInfo local_ip; /* Bound netif index */
+    IpAddrInfo remote_ip;
     int netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
@@ -463,12 +463,12 @@ tcp_backlog_accepted(struct TcpPcb* pcb);
 void
 tcp_recved(struct TcpPcb* pcb, uint16_t len);
 LwipStatus
-tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port);
+tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port);
 void
 tcp_bind_netif(struct TcpPcb* pcb, const NetworkInterface** netif);
 LwipStatus
 tcp_connect(struct TcpPcb* pcb,
-            const IpAddr* ipaddr,
+            const IpAddrInfo* ipaddr,
             uint16_t port,
             tcp_connected_fn connected);
 struct TcpPcb*
@@ -489,7 +489,7 @@ tcp_setprio(struct TcpPcb* pcb, uint8_t prio);
 LwipStatus
 tcp_output(struct TcpPcb* pcb);
 LwipStatus
-tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb, int local, IpAddr* addr, uint16_t* port);
+tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb, int local, IpAddrInfo* addr, uint16_t* port);
 #define tcp_dbg_get_tcp_state(pcb) ((pcb)->state)
 /* for compatibility with older implementation */
 #define tcp_new_ip6() tcp_new_ip_type(IPADDR_TYPE_V6)

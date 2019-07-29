@@ -26,8 +26,8 @@ inline uint8_t get_ip_hdr_version(void* ptr)
 struct IpPcb
 {
     /* Common members of all PCB types */
-    IpAddr local_ip;
-    IpAddr remote_ip; /* Bound netif index */
+    IpAddrInfo local_ip;
+    IpAddrInfo remote_ip; /* Bound netif index */
     uint8_t netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
@@ -37,14 +37,14 @@ struct IpPcb
 
 // struct IpPcb;
 //
-inline bool match_exact_ip_addr_pcb_vers(const IpPcb* pcb, const IpAddr* ipaddr)
+inline bool match_exact_ip_addr_pcb_vers(const IpPcb* pcb, const IpAddrInfo* ipaddr)
 {
     return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
 }
 
-inline bool match_ip_addr_pcb_version(const IpPcb* pcb, const IpAddr* ipaddr)
+inline bool match_ip_addr_pcb_version(const IpPcb* pcb, const IpAddrInfo* ipaddr)
 {
-    return (is_ip_addr_any_type_val(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
+    return (is_ip_addr_any_type(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
 
 /*
@@ -187,7 +187,7 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
  * Output IP packet, netif is selected by source address
  */
 inline LwipStatus
-ip_output(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
+ip_output(PacketBuffer* p, IpAddrInfo* src, IpAddrInfo* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
 {
     if (is_ip_addr_v6(dest))
     {
@@ -204,7 +204,7 @@ ip_output(PacketBuffer* p, IpAddr* src, IpAddr* dest, const uint8_t ttl, const u
  * Output IP packet to specified interface
  */
 inline LwipStatus
-ip_output_if(PacketBuffer* p, const IpAddr* src, const IpAddr* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
+ip_output_if(PacketBuffer* p, const IpAddrInfo* src, const IpAddrInfo* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
 {
     if (is_ip_addr_v6(dest))
     {
@@ -234,8 +234,8 @@ ip_output_if(PacketBuffer* p, const IpAddr* src, const IpAddr* dest, const uint8
 ///
 inline LwipStatus
 ip_output_if_src(PacketBuffer* p,
-                 IpAddr* src,
-                 const IpAddr* dest,
+                 IpAddrInfo* src,
+                 const IpAddrInfo* dest,
                  uint8_t ttl,
                  uint8_t tos,
                  uint8_t proto,
@@ -279,7 +279,7 @@ ip_output_if_src(PacketBuffer* p,
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
-inline NetworkInterface* ip_route(const IpAddr* src, const IpAddr* dest)
+inline NetworkInterface* ip_route(const IpAddrInfo* src, const IpAddrInfo* dest)
 {
     return (is_ip_addr_v6(dest)
                 ? ip6_route((&src->u_addr.ip6), (&dest->u_addr.ip6))
@@ -289,7 +289,7 @@ inline NetworkInterface* ip_route(const IpAddr* src, const IpAddr* dest)
  * @ingroup ip
  * Get netif for IP.
  */
-inline const IpAddr* ip_netif_get_local_ip(const NetworkInterface* netif, const IpAddr* dest)
+inline const IpAddrInfo* ip_netif_get_local_ip(const NetworkInterface* netif, const IpAddrInfo* dest)
 {
     if (is_ip_addr_v6(dest))
     {

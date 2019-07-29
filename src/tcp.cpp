@@ -666,10 +666,10 @@ tcp_abort(struct TcpPcb* pcb)
  *         ERR_OK if bound
  */
 LwipStatus
-tcp_bind(struct TcpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
+tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
 {
     auto max_pcb_list = NUM_TCP_PCB_LISTS;
-    IpAddr zoned_ipaddr{};
+    IpAddrInfo zoned_ipaddr{};
 
     /// Unless the REUSEADDR flag is set, we have to check the pcbs in TIME-WAIT state,
     /// also. We do not dump TIME_WAIT pcb's; they can still be matched by incoming
@@ -884,7 +884,7 @@ tcp_listen_with_backlog_and_err(struct TcpPcb* pcb, uint8_t backlog, LwipStatus*
     lpcb->ttl = pcb->ttl;
     lpcb->tos = pcb->tos;
 
-    set_ip_addr_type_val(lpcb->remote_ip, pcb->local_ip.type);
+    set_ip_addr_type(lpcb->remote_ip, pcb->local_ip.type);
 
     copy_ip_addr(&lpcb->local_ip, &pcb->local_ip);
     if (pcb->local_port != 0)
@@ -1059,7 +1059,7 @@ again:
  *         other LwipStatus values if connect request couldn't be sent
  */
 LwipStatus tcp_connect(struct TcpPcb* pcb,
-                       const IpAddr* ipaddr,
+                       const IpAddrInfo* ipaddr,
                        const uint16_t port,
                        const tcp_connected_fn connected)
 {
@@ -1086,7 +1086,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
     /* check if local IP has been assigned to pcb, if not, get one */
     if (is_ip_addr_any(&pcb->local_ip))
     {
-        const IpAddr* local_ip = ip_netif_get_local_ip(netif, ipaddr);
+        const IpAddrInfo* local_ip = ip_netif_get_local_ip(netif, ipaddr);
         if (local_ip == nullptr)
         {
             return STATUS_E_ROUTING;
@@ -2026,8 +2026,8 @@ struct TcpPcb* tcp_new_ip_type(IpAddrType type)
     auto pcb = tcp_alloc(TCP_PRIO_NORMAL);
     if (pcb != nullptr)
     {
-        set_ip_addr_type_val(pcb->local_ip, type);
-        set_ip_addr_type_val(pcb->remote_ip, type);
+        set_ip_addr_type(pcb->local_ip, type);
+        set_ip_addr_type(pcb->remote_ip, type);
     }
     return pcb;
 }
@@ -2288,7 +2288,7 @@ tcp_next_iss(struct TcpPcb* pcb)
  * netif (if not NULL).
  */
 uint16_t
-tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddr* dest)
+tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddrInfo* dest)
 {
     uint16_t mtu;
     lwip_assert("tcp_eff_send_mss_netif: invalid dst_ip", dest != nullptr);
@@ -2342,7 +2342,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddr* 
 
 /** Helper function for tcp_netif_ip_addr_changed() that iterates a pcb list */
 static void
-tcp_netif_ip_addr_changed_pcblist(const IpAddr* old_addr, struct TcpPcb* pcb_list)
+tcp_netif_ip_addr_changed_pcblist(const IpAddrInfo* old_addr, struct TcpPcb* pcb_list)
 {
     struct TcpPcb* pcb = pcb_list;
 
@@ -2354,7 +2354,7 @@ tcp_netif_ip_addr_changed_pcblist(const IpAddr* old_addr, struct TcpPcb* pcb_lis
         if (compare_ip_addr(&pcb->local_ip, old_addr)
 
             /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-            && (!is_ip_addr_ip4_val(pcb->local_ip) || !ip4_addr_islinklocal((&pcb->local_ip.u_addr.ip4)))
+            && (!is_ip_addr_v4(pcb->local_ip) || !is_ip4_addr_link_local((&pcb->local_ip.u_addr.ip4)))
 
         )
         {
@@ -2377,7 +2377,7 @@ tcp_netif_ip_addr_changed_pcblist(const IpAddr* old_addr, struct TcpPcb* pcb_lis
  * @param new_addr IP address of the netif after change or NULL if netif has been removed
  */
 void
-tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr)
+tcp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr)
 {
     if (!is_ip_addr_any(old_addr))
     {
@@ -2408,7 +2408,7 @@ tcp_debug_state_str(enum TcpState s)
 }
 
 LwipStatus
-tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb, int local, IpAddr* addr, uint16_t* port)
+tcp_tcp_get_tcp_addrinfo(struct TcpPcb* pcb, int local, IpAddrInfo* addr, uint16_t* port)
 {
     if (pcb)
     {

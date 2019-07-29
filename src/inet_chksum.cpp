@@ -245,16 +245,16 @@ static uint16_t inet_cksum_pseudo_base(struct PacketBuffer* p,
  * header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t inet_chksum_pseudo(struct PacketBuffer* p,
+uint16_t inet_chksum_pseudo(PacketBuffer& p,
                             uint8_t proto,
                             uint16_t proto_len,
-                            const Ip4Addr* src,
-                            const Ip4Addr* dest)
+                            const Ip4Addr& src,
+                            const Ip4Addr& dest)
 {
-    uint32_t addr = get_ip4_addr(src);
+    uint32_t addr = get_ip4_addr_u32(src);
     uint32_t acc = (addr & 0xffffUL);
     acc = static_cast<uint32_t>(acc + ((addr >> 16) & 0xffffUL));
-    addr = get_ip4_addr(dest);
+    addr = get_ip4_addr_u32(dest);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = fold_u32(acc);
@@ -273,11 +273,11 @@ uint16_t inet_chksum_pseudo(struct PacketBuffer* p,
  * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t ip6_chksum_pseudo(struct PacketBuffer* p,
+uint16_t ip6_chksum_pseudo(struct PacketBuffer& p,
                            uint8_t proto,
                            size_t proto_len,
-                           const Ip6Addr* src,
-                           const Ip6Addr* dest)
+                           const Ip6Addr& src,
+                           const Ip6Addr& dest)
 {
     uint32_t acc = 0;
     for (uint8_t addr_part = 0; addr_part < 4; addr_part++)
@@ -306,26 +306,26 @@ uint16_t ip6_chksum_pseudo(struct PacketBuffer* p,
  * header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t ip_chksum_pseudo(struct PacketBuffer* p,
+uint16_t ip_chksum_pseudo(PacketBuffer& p,
                           uint8_t proto,
                           uint16_t proto_len,
-                          const IpAddr* src,
-                          const IpAddr* dest)
+                          const IpAddrInfo& src,
+                          const IpAddrInfo& dest)
 {
   if (is_ip_addr_v6(dest)) {
       return ip6_chksum_pseudo(p,
                                proto,
                                proto_len,
-                               convert_ip_addr_to_ip6_addr(src),
-                               convert_ip_addr_to_ip6_addr(dest));
+                               src.u_addr.ip6.addr,
+                               dest.u_addr.ip6.addr);
   }
   else
     {
         return inet_chksum_pseudo(p,
                                   proto,
                                   proto_len,
-                                  convert_ip_addr_to_ip4_addr(src),
-                                  convert_ip_addr_to_ip4_addr(dest));
+                                  src.u_addr.ip4.address,
+                                  dest.u_addr.ip4.address);
     }
 
 } /** Parts of the pseudo checksum which are common to IPv4 and IPv6 */
@@ -386,17 +386,17 @@ static uint16_t inet_cksum_pseudo_partial_base(struct PacketBuffer* p,
  * header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t inet_chksum_pseudo_partial(struct PacketBuffer* p,
+uint16_t inet_chksum_pseudo_partial(PacketBuffer& p,
                                     uint8_t proto,
                                     uint16_t proto_len,
                                     uint16_t chksum_len,
-                                    const Ip4Addr* src,
-                                    const Ip4Addr* dest)
+                                    const Ip4Addr& src,
+                                    const Ip4Addr& dest)
 {
-    uint32_t addr = get_ip4_addr(src);
+    uint32_t addr = get_ip4_addr_u32(src);
     uint32_t acc = (addr & 0xffffUL);
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
-    addr = get_ip4_addr(dest);
+    addr = get_ip4_addr_u32(dest);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = fold_u32(acc);
@@ -419,9 +419,12 @@ uint16_t inet_chksum_pseudo_partial(struct PacketBuffer* p,
  * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
-                                   uint16_t proto_len, uint16_t chksum_len,
-                                   const Ip6Addr *src, const Ip6Addr *dest) {
+uint16_t ip6_chksum_pseudo_partial(PacketBuffer& p,
+                                   uint8_t proto,
+                                   size_t proto_len,
+                                   size_t chksum_len,
+                                   const Ip6Addr& src,
+                                   const Ip6Addr& dest) {
   uint32_t acc = 0;
   for (uint8_t addr_part = 0; addr_part < 4; addr_part++) {
     uint32_t addr = src->addr[addr_part];
@@ -452,12 +455,13 @@ uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
  * header)
  * @return checksum (as uint16_t) to be saved directly in the protocol header
  */
-uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
-                                  uint8_t proto,
-                                  uint16_t proto_len,
-                                  uint16_t chksum_len,
-                                  const IpAddr* src,
-                                  const IpAddr* dest)
+uint16_t
+ip_chksum_pseudo_partial(PacketBuffer& p,
+                         uint8_t proto,
+                         size_t proto_len,
+                         size_t chksum_len,
+                         const IpAddrInfo& src,
+                         const IpAddrInfo& dest)
 {
     if (is_ip_addr_v6(dest))
     {
@@ -465,15 +469,15 @@ uint16_t ip_chksum_pseudo_partial(struct PacketBuffer* p,
                                          proto,
                                          proto_len,
                                          chksum_len,
-                                         &src->u_addr.ip6,
-                                         &dest->u_addr.ip6);
+                                         src.u_addr.ip6.addr,
+                                         dest.u_addr.ip6.addr);
     }
     return inet_chksum_pseudo_partial(p,
                                       proto,
                                       proto_len,
                                       chksum_len,
-                                      convert_ip_addr_to_ip4_addr(src),
-                                      convert_ip_addr_to_ip4_addr(dest));
+                                      src.u_addr.ip4.address,
+                                      dest.u_addr.ip4.address);
 } 
 
 ///

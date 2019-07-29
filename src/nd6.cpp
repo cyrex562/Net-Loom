@@ -774,12 +774,12 @@ nd6_input(struct PacketBuffer* p, NetworkInterface* inp)
                         rdnss_opt = (struct RdnssOpt *)buffer;
                         num = (rdnss_opt->length - 1) / 2;
                         for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
-                            IpAddr rdnss_address;
+                            IpAddrInfo rdnss_address;
 
                             /* Copy directly from PacketBuffer to get an aligned, zoned copy of the prefix. */
                             if (pbuf_copy_partial(p, (uint8_t*)&rdnss_address, sizeof(Ip6Addr), copy_offset) == sizeof(
                                 Ip6Addr)) {
-                                set_ip_addr_type_val(rdnss_address, IPADDR_TYPE_V6);
+                                set_ip_addr_type(rdnss_address, IPADDR_TYPE_V6);
                                 assign_ip6_addr_zone((&rdnss_address.u_addr.ip6), IP6_UNKNOWN, inp,);
 
                                 if (pp_htonl(rdnss_opt->lifetime) > 0) {
@@ -790,7 +790,7 @@ nd6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                     /* TODO implement DNS removal in dns.c */
                                     uint8_t s;
                                     for (s = 0; s < DNS_MAX_SERVERS; s++) {
-                                        const IpAddr addr = dns_getserver(s);
+                                        const IpAddrInfo addr = dns_getserver(s);
                                         if (compare_ip_addr(&addr, &rdnss_address)) {
                                             dns_setserver(s, nullptr);
                                         }

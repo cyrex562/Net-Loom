@@ -324,13 +324,13 @@ inline void PppSetAuthRequired(PppPcb* ppp, const bool boolval)
  */
 inline void PppSetIpcpOuraddr(PppPcb* ppp, Ip4Addr* addr)
 {
-    (ppp)->ipcp_wantoptions.ouraddr = get_ip4_addr(addr);
+    (ppp)->ipcp_wantoptions.ouraddr = get_ip4_addr_u32(addr);
     (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0;
 }
 
 inline void PppSetIpcpHisaddr(PppPcb* ppp, Ip4Addr* addr)
 {
-    ((ppp)->ipcp_wantoptions.hisaddr = get_ip4_addr(addr));
+    ((ppp)->ipcp_wantoptions.hisaddr = get_ip4_addr_u32(addr));
 }
 
 /*
@@ -341,7 +341,7 @@ inline void PppSetIpcpHisaddr(PppPcb* ppp, Ip4Addr* addr)
  */
 inline void PppSetIpcpDnsaddr(PppPcb* ppp, uint32_t index, Ip4Addr* addr)
 {
-    ((ppp)->ipcp_allowoptions.dnsaddr[index] = get_ip4_addr(addr));
+    ((ppp)->ipcp_allowoptions.dnsaddr[index] = get_ip4_addr_u32(addr));
 }
 
 /*

@@ -20,16 +20,14 @@
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         representation of addr
  */
-char *ipaddr_ntoa(const IpAddr *addr)
+std::string
+ipaddr_ntoa(const IpAddrInfo& addr)
 {
-  if (addr == nullptr) {
-    return nullptr;
-  }
-  if (is_ip_addr_v6(addr)) {
-    return ip6_addr_ntoa(&addr->u_addr.ip6);
-  } else {
-    return lwip_ip4addr_ntoa(convert_ip_addr_to_ip4_addr(addr));
-  }
+    if (is_ip_addr_v6(addr))
+    {
+        return ip6_addr_ntoa(addr.u_addr.ip6.addr);
+    }
+    return ip4_addr_ntoa(addr.u_addr.ip4.address);
 }
 
 /**
@@ -42,15 +40,13 @@ char *ipaddr_ntoa(const IpAddr *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
+std::string
+ipaddr_ntoa_r(const IpAddrInfo& addr)
 {
-  if (addr == nullptr) {
-    return nullptr;
-  }
   if (is_ip_addr_v6(addr)) {
-    return ip6addr_ntoa_r(&addr->u_addr.ip6, buf);
+    return ip6addr_ntoa_r(addr.u_addr.ip6.addr);
   } else {
-    return lwip_ip4addr_ntoa_r(convert_ip_addr_to_ip4_addr(addr), buf);
+    return ip4_addr_ntoa_r(addr.u_addr.ip4.address);
   }
 }
 
@@ -64,14 +60,14 @@ char *ipaddr_ntoa_r(const IpAddr *addr, char *buf, int buflen)
  * @return 1 on success, 0 on error
  */
 int
-ipaddr_aton(const char *cp, IpAddr *addr)
+ipaddr_aton(const char *cp, IpAddrInfo *addr)
 {
   if (cp != nullptr) {
       for (const char* c = cp; *c != 0; c++) {
       if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {
-          set_ip_addr_type_val(*addr, IPADDR_TYPE_V6);
+          set_ip_addr_type(*addr, IPADDR_TYPE_V6);
         }
         return ip6_addr_aton(cp, &addr->u_addr.ip6);
       } else if (*c == '.') {
@@ -81,9 +77,9 @@ ipaddr_aton(const char *cp, IpAddr *addr)
     }
     /* call ip4addr_aton as fallback or if IPv4 was found */
     if (addr) {
-      set_ip_addr_type_val(*addr, IPADDR_TYPE_V4);
+      set_ip_addr_type(*addr, IPADDR_TYPE_V4);
     }
-    return lwip_ip4addr_aton(cp, &addr->u_addr.ip4);
+    return ip4_addr_aton(cp, &addr->u_addr.ip4);
   }
   return 0;
 }

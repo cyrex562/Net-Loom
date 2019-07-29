@@ -43,8 +43,8 @@ struct TcpPcb* tcp_input_pcb;
 void
 tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
-    IpAddr* curr_dst_addr = nullptr;
-    IpAddr* curr_src_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
     NetworkInterface* curr_netif = nullptr;
     TcpPcb* pcb;
     TcpPcbListen* lpcb;
@@ -222,7 +222,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
             }
             if (lpcb->local_port == tcphdr->dest)
             {
-                if (is_ip_addr_any_type_val(lpcb->local_ip))
+                if (is_ip_addr_any_type(lpcb->local_ip))
                 {
                     /* found an ANY TYPE (IPv4/IPv6) match */
                     lpcb_any = lpcb;
@@ -495,8 +495,8 @@ tcp_input_delayed_close(struct TcpPcb* pcb)
  void
 tcp_listen_input(struct TcpPcbListen* pcb)
 {
-     IpAddr* curr_dst_addr = nullptr;
-        IpAddr* curr_src_addr = nullptr;
+     IpAddrInfo* curr_dst_addr = nullptr;
+        IpAddrInfo* curr_src_addr = nullptr;
     if (flags & TCP_RST)
     {
         /* An incoming RST should be ignored. Return. */
@@ -593,8 +593,8 @@ tcp_listen_input(struct TcpPcbListen* pcb)
  void
 tcp_timewait_input(struct TcpPcb* pcb)
 {
-    IpAddr* curr_dst_addr = nullptr;
-    IpAddr* curr_src_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
     /* RFC 1337: in TIME_WAIT, ignore RST and ACK FINs + any 'acceptable' segments */
     /* RFC 793 3.9 Event Processing - Segment Arrives:
       * - first check sequence number - we skip that one in TIME_WAIT (always
@@ -649,8 +649,8 @@ tcp_timewait_input(struct TcpPcb* pcb)
  LwipStatus
 tcp_process(struct TcpPcb* pcb)
 {
-    IpAddr* curr_dst_addr = nullptr;
-    IpAddr* curr_src_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
     uint8_t acceptable = 0;
     LwipStatus err = STATUS_OK;
     lwip_assert("tcp_process: invalid pcb", pcb != nullptr);

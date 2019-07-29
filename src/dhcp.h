@@ -142,39 +142,6 @@ enum DhcpAutoipCoopStateEnumT
     DHCP_AUTOIP_COOP_STATE_ON = 1
 };
 
-struct DhcpContext
-{
-    /** transaction identifier of last sent request */
-    uint32_t xid;
-    /** track PCB allocation state */
-    uint8_t pcb_allocated;
-    /** current DHCP state machine state */
-    uint8_t state;
-    /** retries of current request */
-    uint8_t tries;
-    uint8_t autoip_coop_state;
-    uint8_t subnet_mask_given;
-
-    uint16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
-    uint16_t t1_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
-    uint16_t t2_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for rebind time */
-    uint16_t t1_renew_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next renew try */
-    uint16_t t2_rebind_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next rebind try */
-    uint16_t lease_used; /* #ticks with period DHCP_COARSE_TIMER_SECS since last received DHCP ack */
-    uint16_t t0_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for lease time */
-    IpAddr server_ip_addr; /* dhcp server address that offered this lease (IpAddr because passed to UDP) */
-    Ip4Addr offered_ip_addr;
-    Ip4Addr offered_sn_mask;
-    Ip4Addr offered_gw_addr;
-
-    uint32_t offered_t0_lease; /* lease period (in seconds) */
-    uint32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
-    uint32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
-    Ip4Addr offered_si_addr;
-    char boot_file_name[DHCP_BOOT_FILE_LEN];
-
-    uint8_t dhcp_options[0xff];
-};
 
 
 void dhcp_set_struct(struct NetworkInterface *netif, struct DhcpContext *dhcp);
@@ -201,8 +168,137 @@ void dhcp_fine_tmr();
 extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_server_addrs);
 
 
+
+
 inline DhcpContext* get_netif_dhcp_ctx(const NetworkInterface* netif)
 {
     // return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
 }
+
+
+
+constexpr auto MAX_TRIES = 255;
+constexpr auto MILLIS_PER_SEC = 1000;
+
+#define LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type, options_len_ptr)
+
+#define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, PacketBuffer, offset)
+
+
+/** DHCP_OPTION_MAX_MSG_SIZE is set to the MTU
+ * MTU is checked to be big enough in dhcp_start */
+#define DHCP_MAX_MSG_LEN(netif)        (netif->mtu)
+constexpr auto kDhcpMaxMsgLenMinRequired = 576;
+/** Minimum length for reply before packet is parsed */
+constexpr auto kDhcpMinReplyLen = 44;
+
+constexpr auto kRebootTries = 2;
+
+/** Option handling: options are parsed in dhcp_parse_reply
+ * and saved in an array where other functions can load them from.
+ * This might be moved into the struct dhcp (not necessarily since
+ * lwIP is single-threaded and the array is only used while in recv
+ * callback). */
+enum DhcpOptionIdx
+{
+    DHCP_OPTION_IDX_OVERLOAD = 0,
+    DHCP_OPTION_IDX_MSG_TYPE,
+    DHCP_OPTION_IDX_SERVER_ID,
+    DHCP_OPTION_IDX_LEASE_TIME,
+    DHCP_OPTION_IDX_T1,
+    DHCP_OPTION_IDX_T2,
+    DHCP_OPTION_IDX_SUBNET_MASK,
+    DHCP_OPTION_IDX_ROUTER,
+    DHCP_OPTION_IDX_DNS_SERVER,
+    DHCP_OPTION_IDX_DNS_SERVER_LAST = DHCP_OPTION_IDX_DNS_SERVER - 1,
+    DHCP_OPTION_IDX_NTP_SERVER,
+    DHCP_OPTION_IDX_NTP_SERVER_LAST = DHCP_OPTION_IDX_NTP_SERVER +
+    LWIP_DHCP_MAX_NTP_SERVERS - 1,
+    DHCP_OPTION_IDX_MAX
+};
+
+/** Holds the decoded option values, only valid while in dhcp_recv.
+    @todo: move this into struct dhcp? */
+//uint32_t dhcp_rx_options_val[DHCP_OPTION_IDX_MAX];
+
+
+/** Holds a flag which option was received and is contained in dhcp_rx_options_val,
+   only valid while in dhcp_recv.
+   @todo: move this into struct dhcp? */
+//uint8_t dhcp_rx_options_given[DHCP_OPTION_IDX_MAX];
+
+
+static uint8_t dhcp_discover_request_options[] = {
+    DHCP_OPTION_SUBNET_MASK,
+    DHCP_OPTION_ROUTER,
+    DHCP_OPTION_BROADCAST,
+    DHCP_OPTION_DNS_SERVER,
+    DHCP_OPTION_NTP
+};
+
+
+static uint32_t xid;
+static uint8_t xid_initialised;
+
+
+inline bool dhcp_option_given(uint8_t* dhcp_options, size_t idx)
+{
+    return         dhcp_options[idx] != 0;
+}
+
+inline bool dhcp_got_option(uint8_t* dhcp_options, size_t idx)
+{
+    return           dhcp_options[idx] == 1;
+}
+
+inline void dhcp_clear_option(uint8_t* dhcp_options, size_t idx)
+{
+    dhcp_options[idx] = 0;
+}
+
+inline void dhcp_clear_all_options(uint8_t* dhcp_options, size_t element_count)
+{
+    memset(dhcp_options, 0, element_count);
+}
+
+inline uint8_t dhcp_get_option_value(uint8_t* dhcp_options, size_t idx)
+{
+    return      dhcp_options[idx];
+}
+
+
+inline void dhcp_set_option_value(uint8_t* dhcp_options, size_t idx, uint8_t val){ dhcp_options[idx] = val;}
+
+static UdpPcb* dhcp_pcb;
+static uint8_t dhcp_pcb_refcount;
+
+/* DHCP client state machine functions */
+static LwipStatus dhcp_discover(NetworkInterface * netif);
+static LwipStatus dhcp_select(NetworkInterface * netif);
+static void dhcp_bind(NetworkInterface * netif);
+static LwipStatus dhcp_decline(NetworkInterface * netif);
+static LwipStatus dhcp_rebind(NetworkInterface * netif);
+static LwipStatus dhcp_reboot(NetworkInterface * netif);
+static void dhcp_set_state(DhcpContext * dhcp, uint8_t new_state);
+
+/* receive, unfold, parse and free incoming messages */
+static void dhcp_recv(void* arg, UdpPcb * pcb, struct PacketBuffer* p, const IpAddrInfo * addr, uint16_t port, NetworkInterface* netif);
+
+/* set the DHCP timers */
+static void dhcp_timeout(NetworkInterface * netif);
+static void dhcp_t1_timeout(NetworkInterface * netif);
+static void dhcp_t2_timeout(NetworkInterface * netif);
+
+/* build outgoing messages */
+/* create a DHCP message, fill in common headers */
+static struct PacketBuffer* dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len);
+/* add a DHCP option (type, then length in bytes) */
+static uint16_t dhcp_option(uint16_t options_out_len, uint8_t * options, uint8_t option_type, uint8_t option_len);
+/* add option values */
+static uint16_t dhcp_option_byte(uint16_t options_out_len, uint8_t * options, uint8_t value);
+static uint16_t dhcp_option_short(uint16_t options_out_len, uint8_t * options, uint16_t value);
+static uint16_t dhcp_option_long(uint16_t options_out_len, uint8_t * options, uint32_t value);
+static uint16_t dhcp_option_hostname(uint16_t options_out_len, uint8_t * options, NetworkInterface * netif);
+/* always add the DHCP options trailer to end and pad */
+static void dhcp_option_trailer(uint16_t options_out_len, uint8_t * options, struct PacketBuffer* p_out);
 

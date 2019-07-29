@@ -55,22 +55,22 @@
 #include <cstring>
 /** The list of RAW PCBs */ // static struct raw_pcb *raw_pcbs;
 inline bool
-match_pcb_ip_addr(RawPcb* pcb, IpAddr* ipaddr)
+match_pcb_ip_addr(RawPcb* pcb, IpAddrInfo* ipaddr)
 {
     return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
 }
 
 static uint8_t
-raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
+raw_input_local_match(RawPcb& pcb, bool broadcast)
 {
     NetworkInterface* current_input_netif = nullptr;
-    IpAddr* curr_dst_addr = nullptr; /* check if PCB is bound to specific netif */
+    IpAddrInfo* curr_dst_addr = nullptr; /* check if PCB is bound to specific netif */
     if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
         current_input_netif)))
     {
         return 0;
     } /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
-    if (is_ip_addr_any_type_val(pcb->local_ip))
+    if (is_ip_addr_any_type(pcb->local_ip))
     {
         if ((broadcast != 0) && !ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
         {
@@ -87,7 +87,7 @@ raw_input_local_match(struct RawPcb* pcb, uint8_t broadcast)
             if (ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
 
             {
-                if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip)))
+                if (ip4_addr_isany((pcb.local_ip.u_addr.ip4.address)))
                 {
                     return 1;
                 }
@@ -124,9 +124,9 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     int16_t proto;
     auto ret = RAW_INPUT_NONE;
-    IpAddr* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
     NetworkInterface* curr_ip_netif = nullptr;
-    IpAddr* curr_src_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
     RawPcb* raw_pcbs;
     const uint8_t broadcast = is_netif_ip4_addr_bcast(curr_dst_addr, curr_ip_netif);
     if (get_ip_hdr_version(p->payload) == 6)
@@ -198,7 +198,7 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
  * @see raw_disconnect()
  */
 LwipStatus
-raw_bind(struct RawPcb* pcb, const IpAddr* ipaddr)
+raw_bind(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
 {
     if ((pcb == nullptr) || (ipaddr == nullptr))
     {
@@ -253,7 +253,7 @@ raw_bind_netif(struct RawPcb* pcb, const NetworkInterface* netif)
  * @see raw_disconnect() and raw_sendto()
  */
 LwipStatus
-raw_connect(struct RawPcb* pcb, const IpAddr* ipaddr)
+raw_connect(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
 {
     if ((pcb == nullptr) || (ipaddr == nullptr))
     {
@@ -320,10 +320,10 @@ raw_recv(struct RawPcb* pcb, raw_recv_fn recv, void* recv_arg)
  *
  */
 LwipStatus
-raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
+raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
 {
     NetworkInterface* netif;
-    const IpAddr* src_ip;
+    const IpAddrInfo* src_ip;
     if ((pcb == nullptr) || (ipaddr == nullptr) || !match_ip_addr_pcb_version(
         (IpPcb*)pcb,
         ipaddr))
@@ -386,11 +386,11 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddr* ipaddr)
  * @param src_ip source IP address
  */
 LwipStatus
-raw_sendto_if_src(struct RawPcb* pcb,
-                  struct PacketBuffer* p,
-                  const IpAddr* dst_ip,
-                  NetworkInterface* netif,
-                  const IpAddr* src_ip)
+raw_sendto_if_src(RawPcb& pcb,
+                  PacketBuffer& p,
+                  const IpAddrInfo& dst_ip,
+                  NetworkInterface& netif,
+                  const IpAddrInfo& src_ip)
 {
     LwipStatus err = {};
     struct PacketBuffer* q; /* q will be sent down the stack */
@@ -584,8 +584,8 @@ raw_new_ip_type(IpAddrType type, uint8_t proto)
     struct RawPcb* pcb = raw_new(proto);
     if (pcb != nullptr)
     {
-        set_ip_addr_type_val(pcb->local_ip, type);
-        set_ip_addr_type_val(pcb->remote_ip, type);
+        set_ip_addr_type(pcb->local_ip, type);
+        set_ip_addr_type(pcb->remote_ip, type);
     }
     return pcb;
 } /** This function is called from netif.c when address is changed
@@ -594,7 +594,7 @@ raw_new_ip_type(IpAddrType type, uint8_t proto)
  * @param new_addr IP address of the netif after change
  */
 void
-raw_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr)
+raw_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr)
 {
     if (!is_ip_addr_any(old_addr) && !is_ip_addr_any(new_addr))
     {

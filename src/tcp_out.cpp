@@ -124,7 +124,7 @@ static LwipStatus tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, Net
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
 static NetworkInterface*
-tcp_route(const struct TcpPcb *pcb, const IpAddr *src, const IpAddr *dst)
+tcp_route(const struct TcpPcb *pcb, const IpAddrInfo *src, const IpAddrInfo *dst)
 {
     if ((pcb != nullptr) && (pcb->netif_idx != NETIF_NO_INDEX)) {
     return get_netif_by_index(pcb->netif_idx);
@@ -1209,7 +1209,7 @@ tcp_output(struct TcpPcb *pcb)
 
   /* If we don't have a local IP address, we get one from netif */
   if (is_ip_addr_any(&pcb->local_ip)) {
-    const IpAddr *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
+    const IpAddrInfo *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
     if (local_ip == nullptr) {
       return STATUS_E_ROUTING;
     }
@@ -1466,7 +1466,7 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
 
  if( is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_TCP)) {
         uint16_t chksum_slow = ip_chksum_pseudo(seg->p, IP_PROTO_TCP,
-                                         seg->p->tot_len, &pcb->local_ip, &pcb->remote_ip);
+                                                seg->p->tot_len, &pcb->local_ip, &pcb->remote_ip);
 
     if ((seg->flags & TF_SEG_DATA_CHECKSUMMED) == 0) {
       lwip_assert("data included but not checksummed",
@@ -1800,7 +1800,7 @@ tcp_output_fill_options(const struct TcpPcb *pcb, struct PacketBuffer *p, uint8_
  */
 static LwipStatus
 tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
-                           const IpAddr *src, const IpAddr *dst)
+                           const IpAddrInfo *src, const IpAddrInfo *dst)
 {
   LwipStatus err;
   lwip_assert("tcp_output_control_segment: invalid pbuf", p != nullptr);
@@ -1857,7 +1857,7 @@ tcp_output_control_segment(const struct TcpPcb *pcb, struct PacketBuffer *p,
  */
 void
 tcp_rst(const struct TcpPcb *pcb, uint32_t seqno, uint32_t ackno,
-        const IpAddr *local_ip, const IpAddr *remote_ip,
+        const IpAddrInfo *local_ip, const IpAddrInfo *remote_ip,
         uint16_t local_port, uint16_t remote_port)
 {
     lwip_assert("tcp_rst: invalid local_ip", local_ip != nullptr);

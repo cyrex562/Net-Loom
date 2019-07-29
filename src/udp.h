@@ -80,7 +80,7 @@ struct UdpPcb;
 using UdpRecvFn = void (*)(void*,
                            UdpPcb*,
                            PacketBuffer*,
-                           const IpAddr*,
+                           const IpAddrInfo*,
                            uint16_t,
                            NetworkInterface*);
 
@@ -88,8 +88,8 @@ using UdpRecvFn = void (*)(void*,
 struct UdpPcb
 {
     /** Common members of all PCB types */
-    IpAddr local_ip; /* Bound netif index */
-    IpAddr remote_ip;
+    IpAddrInfo local_ip; /* Bound netif index */
+    IpAddrInfo remote_ip;
     uint8_t netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
@@ -117,45 +117,48 @@ extern struct UdpPcb *udp_pcbs;
 struct UdpPcb * udp_new        (void);
 struct UdpPcb * udp_new_ip_type(IpAddrType type);
 void             udp_remove     (struct UdpPcb *pcb);
-LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddr *ipaddr,
+LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddrInfo *ipaddr,
                                  uint16_t port);
 void             udp_bind_netif (struct UdpPcb *pcb, const NetworkInterface* netif);
-LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddr *ipaddr,
+LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddrInfo *ipaddr,
                                  uint16_t port);
 void             udp_disconnect (struct UdpPcb *pcb);
 void             udp_recv       (struct UdpPcb *pcb,
                                  UdpRecvFn recv,
                                  void* recv_arg);
 LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port,
+                                 const IpAddrInfo *dst_ip, uint16_t dst_port,
                                  NetworkInterface*netif);
 LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb,
                                         struct PacketBuffer *p,
-                                        const IpAddr *dst_ip,
+                                        const IpAddrInfo *dst_ip,
                                         uint16_t dst_port,
                                         NetworkInterface*netif,
-                                        IpAddr* src_ip);
+                                        IpAddrInfo* src_ip);
 LwipStatus            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port);
+                                 const IpAddrInfo *dst_ip, uint16_t dst_port);
 LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
 
 LwipStatus            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port,
+                                 const IpAddrInfo *dst_ip, uint16_t dst_port,
                                  NetworkInterface*netif, uint8_t have_chksum,
                                  uint16_t chksum);
-LwipStatus            udp_sendto_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddr *dst_ip, uint16_t dst_port,
-                                 uint8_t have_chksum, uint16_t chksum);
+LwipStatus            udp_sendto_chksum(UdpPcb *pcb,
+                                        PacketBuffer& p,
+                                        const IpAddrInfo& dst_ip,
+                                        uint16_t dst_port,
+                                        uint8_t have_chksum,
+                                        uint16_t chksum);
 LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
-LwipStatus            udp_sendto_if_src_chksum(UdpPcb *pcb,
-                                               struct PacketBuffer *p,
-                                               const IpAddr *dst_ip,
+LwipStatus            udp_sendto_if_src_chksum(UdpPcb& pcb,
+                                               PacketBuffer& p,
+                                               const IpAddrInfo& dst_ip,
                                                uint16_t dst_port,
-                                               NetworkInterface*netif,
+                                               NetworkInterface& netif,
                                                uint8_t have_chksum,
                                                uint16_t chksum,
-                                               IpAddr* src_ip);
+                                               IpAddrInfo& src_ip);
 
 inline void udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
 {
@@ -190,7 +193,7 @@ void             udp_init       ();
 
 void udp_debug_print(UdpHdr *udphdr);
 
-void udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
+void udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr);
 
 /** Set this to 0 in the rare case of wanting to call an extra function to
  * generate the IP checksum (in contrast to calculating it on-the-fly). */

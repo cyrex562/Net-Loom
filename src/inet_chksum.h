@@ -66,25 +66,43 @@ uint16_t inet_chksum_pbuf(struct PacketBuffer *p);
 
 uint16_t lwip_standard_checksum_copy(uint8_t *dst, const uint8_t *src, uint16_t len);
 
-uint16_t inet_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       const Ip4Addr *src, const Ip4Addr *dest);
-uint16_t inet_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto,
-       uint16_t proto_len, uint16_t chksum_len, const Ip4Addr *src, const Ip4Addr *dest);
+uint16_t inet_chksum_pseudo(PacketBuffer& p,
+                            uint8_t proto,
+                            uint16_t proto_len,
+                            const Ip4Addr& src,
+                            const Ip4Addr& dest);
+uint16_t inet_chksum_pseudo_partial(PacketBuffer& p,
+                                    uint8_t proto,
+                                    uint16_t proto_len,
+                                    uint16_t chksum_len,
+                                    const Ip4Addr& src,
+                                    const Ip4Addr& dest);
 
 uint16_t ip6_chksum_pseudo(struct PacketBuffer *p,
                            uint8_t proto,
                            size_t proto_len,
                            const Ip6Addr *src,
                            const Ip6Addr *dest);
-uint16_t ip6_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       uint16_t chksum_len, const Ip6Addr *src, const Ip6Addr *dest);
+uint16_t ip6_chksum_pseudo_partial(PacketBuffer& p,
+                                   uint8_t proto,
+                                   size_t proto_len,
+                                   size_t chksum_len,
+                                   const Ip6Addr& src,
+                                   const Ip6Addr& dest);
 
 
 
-uint16_t ip_chksum_pseudo(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       const IpAddr *src, const IpAddr *dest);
-uint16_t ip_chksum_pseudo_partial(struct PacketBuffer *p, uint8_t proto, uint16_t proto_len,
-       uint16_t chksum_len, const IpAddr *src, const IpAddr *dest);
+uint16_t ip_chksum_pseudo(PacketBuffer& p,
+                          uint8_t proto,
+                          uint16_t proto_len,
+                          const IpAddrInfo& src,
+                          const IpAddrInfo& dest);
+uint16_t ip_chksum_pseudo_partial(PacketBuffer& p,
+                                  uint8_t proto,
+                                  size_t proto_len,
+                                  size_t chksum_len,
+                                  const IpAddrInfo& src,
+                                  const IpAddrInfo& dest);
 
 
 uint16_t

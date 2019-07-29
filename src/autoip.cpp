@@ -156,8 +156,8 @@ autoip_arp_announce(NetworkInterface* netif)
     auto autoip = netif_autoip_data(netif);
     Ip4Addr sn_mask{};
     Ip4Addr gw_addr{};
-    Ipv4AddrFromBytes(&sn_mask, 255, 255, 0, 0);
-    Ipv4AddrFromBytes(&gw_addr, 0, 0, 0, 0);
+    make_ip4_addr_host_from_bytes(&sn_mask, 255, 255, 0, 0);
+    make_ip4_addr_host_from_bytes(&gw_addr, 0, 0, 0, 0);
     set_netif_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
     // interface is used by routing now that an address is set
     return STATUS_OK;
@@ -176,7 +176,7 @@ LwipStatus autoip_start(NetworkInterface* netif)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    auto any_addr = create_ip4_addr_any();
+    auto any_addr = make_ip4_addr_any();
 
     set_netif_addr(netif, &any_addr, &any_addr, &any_addr);
     if (autoip == nullptr)
@@ -195,7 +195,7 @@ LwipStatus autoip_start(NetworkInterface* netif)
         autoip->state = AUTOIP_STATE_OFF;
         autoip->ttw = 0;
         autoip->sent_num = 0;
-        ip4_addr_set_zero(&autoip->llipaddr);
+        zero_ip4_addr(&autoip->llipaddr);
         autoip->lastconflict = 0;
     } // todo: check result
     autoip_create_addr(netif, &(autoip->llipaddr)); // todo: check result
@@ -252,9 +252,9 @@ LwipStatus autoip_stop(NetworkInterface& netif)
     {
         autoip->state = AUTOIP_STATE_OFF;
         int i = 0;
-        if (ip4_addr_islinklocal(netif.ip4_addresses[i].u_addr.ip4))
+        if (is_ip4_addr_link_local(netif.ip4_addresses[i].u_addr.ip4))
         {
-            auto any_addr = create_ip4_addr_any();
+            auto any_addr = make_ip4_addr_any();
             set_netif_addr(netif,
                            &any_addr,
                            &any_addr,
@@ -372,8 +372,8 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
              * ip.src == llipaddr OR
              * ip.dst == llipaddr && hw.src != own hwaddr
              */
-            if ((ip4_addr_cmp(&sipaddr, &autoip->llipaddr)) || (
-                ip4_addr_isany_val(sipaddr) && ip4_addr_cmp(&dipaddr, &autoip->llipaddr)
+            if ((cmp_ip4_addr(&sipaddr, &autoip->llipaddr)) || (
+                ip4_addr_isany_val(sipaddr) && cmp_ip4_addr(&dipaddr, &autoip->llipaddr)
                 && !cmp_eth_addr(&netifaddr, &hdr->shwaddr)))
             {
                 autoip_restart(netif);
@@ -385,7 +385,7 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
              * in any state we have a conflict if
              * ip.src == llipaddr && hw.src != own hwaddr
              */
-            if (ip4_addr_cmp(&sipaddr, &autoip->llipaddr) && !cmp_eth_addr(
+            if (cmp_ip4_addr(&sipaddr, &autoip->llipaddr) && !cmp_eth_addr(
                 &netifaddr,
                 &hdr->shwaddr))
             {
@@ -415,7 +415,7 @@ bool autoip_supplied_address(const NetworkInterface* netif)
 bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr)
 {
     const auto autoip = netif_autoip_data(netif);
-    return (autoip != nullptr) && ip4_addr_cmp(addr, &(autoip->llipaddr));
+    return (autoip != nullptr) && cmp_ip4_addr(addr, &(autoip->llipaddr));
 }
 
 //

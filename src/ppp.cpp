@@ -406,8 +406,8 @@ init_ppp_pcb(NetworkInterface* pppif,
     pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
     pcb->netif = pppif;
-    Ip4Addr ip4_any = create_ip4_addr_any();
-    Ip4Addr ip4_bcast = ip4_addr_bcast();
+    Ip4Addr ip4_any = make_ip4_addr_any();
+    Ip4Addr ip4_bcast = make_ip4_addr_bcast();
     if (!add_netif(pcb->netif,
                    &ip4_any,
                    &ip4_bcast,
@@ -698,7 +698,7 @@ cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
 int
 sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
-    IpAddr ns{};
+    IpAddrInfo ns{};
     set_ip_addr_ip4_u32_val(ns, ns1);
     dns_setserver(0, &ns);
     set_ip_addr_ip4_u32_val(ns, ns2);
@@ -711,8 +711,8 @@ sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 int
 cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
-    IpAddr nsa;
-    IpAddr nsb;
+    IpAddrInfo nsa;
+    IpAddrInfo nsb;
     auto any_addr = make_ip_addr_any();
     nsa = dns_getserver(0);
     set_ip_addr_ip4_u32_val(nsb, ns1);
@@ -779,7 +779,7 @@ sifdown(PppPcb* pcb)
 uint32_t
 get_mask(uint32_t addr)
 {
-    return IP4_ADDR_BCAST;
+    return IP4_ADDR_BCAST_U32;
 }
 
 inline void

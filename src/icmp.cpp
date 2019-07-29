@@ -59,8 +59,8 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
     const Ip4Addr* src;
     // todo: get current header
     const struct Ip4Hdr& iphdr_in = nullptr;
-    IpAddr* curr_src_addr = nullptr;
-    IpAddr* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
     NetworkInterface* curr_netif = nullptr;
     uint16_t hlen = get_ip4_hdr_hdr_len_bytes(iphdr_in);
     if (hlen < IP4_HDR_LEN)
@@ -82,7 +82,7 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
          (as obviously, an echo request has been sent, too). */ break;
     case ICMP_ECHO:
         src = &curr_dst_addr->u_addr.ip4; /* multicast destination address? */
-        if (ip4_addr_ismulticast(&curr_dst_addr->u_addr.ip4))
+        if (is_ip4_addr_multicast(&curr_dst_addr->u_addr.ip4))
         {
             /* For multicast, use address of receiving interface as source address */
             src = get_netif_ip4_addr(inp,);

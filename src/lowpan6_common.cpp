@@ -129,7 +129,7 @@ lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_si
                          const Lowpan6LinkAddr *src, const Lowpan6LinkAddr *dst)
 {
     uint8_t hidden_header_len = 0;
-    IpAddr ip6src, ip6dst;
+    IpAddrInfo ip6src, ip6dst;
 
   lwip_assert("netif != NULL", netif != nullptr);
   lwip_assert("inbuf != NULL", inbuf != nullptr);

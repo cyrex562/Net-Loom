@@ -38,7 +38,7 @@ static LwipStatus pppol2tp_udp_send(Pppol2tpPcb *l2tp, struct PacketBuffer *pb);
 /* Create a new L2TP session. */
 PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
                                 NetworkInterface* netif,
-                                const IpAddr* ipaddr,
+                                const IpAddrInfo* ipaddr,
                                 const uint16_t port,
                                 const uint8_t* secret,
                                 const size_t secret_len,
@@ -183,7 +183,7 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
-  IpAddr any_addr = make_ip_addr_ip6_any();
+  IpAddrInfo any_addr = make_ip_addr_ip6_any();
   if (is_ip_addr_v6(&l2tp->udp->local_ip))
   {
       udp_bind(l2tp->udp, &any_addr, 0);
@@ -228,7 +228,7 @@ static void
 pppol2tp_input(void* arg,
                struct UdpPcb* pcb,
                struct PacketBuffer* p,
-               const IpAddr* addr,
+               const IpAddrInfo* addr,
                uint16_t port,
                NetworkInterface* netif)
 {

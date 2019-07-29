@@ -47,8 +47,6 @@
 #include <ip4_addr.h> /* for ip6addr_aton to handle IPv4-mapped addresses */
 #include <cctype>
 
-/* used by IP6_ADDR_ANY(6) in ip6_addr.h */
-const IpAddr ip6_addr_any = init_ip_addr_ip6(0ul, 0ul, 0ul, 0ul);
 
 inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10));}
 
@@ -197,7 +195,7 @@ bool ip6_addr_aton(std::string& cp, Ip6Addr& addr)
 std::string ip6_addr_ntoa(const Ip6Addr& addr)
 {
     std::string str;
-    return ip6addr_ntoa_r(addr, str);
+    return ip6addr_ntoa_r(addr);
 }
 
 /**
@@ -209,7 +207,7 @@ std::string ip6_addr_ntoa(const Ip6Addr& addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-std::string ip6addr_ntoa_r(const Ip6Addr& addr, std::string& buf)
+std::string ip6addr_ntoa_r(const Ip6Addr& addr)
 {
     uint8_t zero_flag;
 

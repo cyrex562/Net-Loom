@@ -72,12 +72,10 @@ again: if (udp_port++ == UDP_LOCAL_PORT_RANGE_END)
  * @return 1 on match, 0 otherwise
  */
 static uint8_t
-udp_input_local_match(struct UdpPcb* pcb, NetworkInterface* inp, const uint8_t broadcast)
+udp_input_local_match(struct UdpPcb* pcb, NetworkInterface& inp, bool broadcast)
 {
     NetworkInterface* curr_in_netif = nullptr;
-    IpAddr* curr_dst_addr = nullptr;
-    lwip_assert("udp_input_local_match: invalid pcb", pcb != nullptr);
-    lwip_assert("udp_input_local_match: invalid netif", inp != nullptr);
+    IpAddrInfo* curr_dst_addr = nullptr;
     // check if PCB is bound to specific netif
     if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
         curr_in_netif)))
@@ -100,11 +98,11 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface* inp, const uint8_t b
         {
             if (ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
             {
-                if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip)) || ((
-                    curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST)) || ip4_addr_netcmp(
-                    convert_ip_addr_to_ip4_addr(&pcb->local_ip),
-                    &curr_dst_addr->u_addr.ip4,
-                    get_netif_ip4_netmask(inp,)))
+                if (ip4_addr_isany(pcb->local_ip.u_addr.ip4.address) || 
+                    curr_dst_addr->u_addr.ip4.address.addr == IP4_ADDR_BCAST_U32 || cmp_ip4_addr_net(
+                    (pcb->local_ip.u_addr.ip4.address),
+                    curr_dst_addr->u_addr.ip4.address,
+                    get_netif_ip4_netmask(inp)))
                 {
                     return 1;
                 }
@@ -135,8 +133,8 @@ void
 udp_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
     NetworkInterface* curr_netif = nullptr;
-    IpAddr* curr_dst_addr = nullptr;
-    IpAddr* curr_src_addr = nullptr;
+    IpAddrInfo* curr_dst_addr = nullptr;
+    IpAddrInfo* curr_src_addr = nullptr;
     uint8_t curr_proto = 0;
     size_t curr_ip_hdr_len = 0;
     uint8_t for_us = 0;
@@ -181,24 +179,24 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                     /* the first unconnected matching PCB */
                     uncon_pcb = pcb;
                 }
-                else if (broadcast && curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST)
+                else if (broadcast && curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST_U32)
                 {
                     /* global broadcast address (only valid for IPv4; match was checked before) */
-                    if (!is_ip_addr_ip4_val(uncon_pcb->local_ip) || !ip4_addr_cmp(
-                        convert_ip_addr_to_ip4_addr(&uncon_pcb->local_ip),
-                        get_netif_ip4_addr(inp,)))
+                    if (!is_ip_addr_v4(uncon_pcb->local_ip) || !cmp_ip4_addr(
+                        uncon_pcb->local_ip.u_addr.ip4.address,
+                        get_netif_ip4_addr(inp)))
                     {
                         /* uncon_pcb does not match the input netif, check this pcb */
-                        if (is_ip_addr_ip4_val(pcb->local_ip) && ip4_addr_cmp(
-                            convert_ip_addr_to_ip4_addr(&pcb->local_ip),
-                            get_netif_ip4_addr(inp,)))
+                        if (is_ip_addr_v4(pcb->local_ip) && cmp_ip4_addr(
+                            pcb->local_ip.u_addr.ip4.address,
+                            get_netif_ip4_addr(inp)))
                         {
                             /* better match */
                             uncon_pcb = pcb;
                         }
                     }
                 }
-                else if (!is_ip_addr_any(&pcb->local_ip))
+                else if (!is_ip_addr_any(pcb->local_ip))
                 {
                     /* prefer specific IPs over catch-all */
                     uncon_pcb = pcb;
@@ -241,7 +239,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         }
         if (curr_dst_addr->type == IPADDR_TYPE_V4)
         {
-            for_us = ip4_addr_cmp(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
+            for_us = cmp_ip4_addr(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
         }
     }
     if (for_us)
@@ -396,7 +394,7 @@ chkerr: Logf(true | LWIP_DBG_LEVEL_SERIOUS,
 LwipStatus
 udp_send(struct UdpPcb* pcb, struct PacketBuffer* p)
 {
-    if (is_ip_addr_any_type_val(pcb->remote_ip))
+    if (is_ip_addr_any_type(pcb->remote_ip))
     {
         return ERR_VAL;
     } /* send to the packet using remote ip and port stored in the pcb */
@@ -407,7 +405,7 @@ udp_send(struct UdpPcb* pcb, struct PacketBuffer* p)
 LwipStatus
 udp_send_chksum(UdpPcb* pcb, struct PacketBuffer* p, uint8_t have_chksum, uint16_t chksum)
 {
-    if (is_ip_addr_any_type_val(pcb->remote_ip))
+    if (is_ip_addr_any_type(pcb->remote_ip))
     {
         return ERR_VAL;
     } /* send to the packet using remote ip and port stored in the pcb */
@@ -438,7 +436,7 @@ udp_send_chksum(UdpPcb* pcb, struct PacketBuffer* p, uint8_t have_chksum, uint16
 LwipStatus
 udp_sendto(struct UdpPcb* pcb,
            struct PacketBuffer* p,
-           const IpAddr* dst_ip,
+           const IpAddrInfo* dst_ip,
            uint16_t dst_port)
 {
     return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
@@ -446,8 +444,8 @@ udp_sendto(struct UdpPcb* pcb,
  * Same as udp_sendto(), but with checksum */
 LwipStatus
 udp_sendto_chksum(UdpPcb* pcb,
-                  struct PacketBuffer* p,
-                  const IpAddr* dst_ip,
+                  PacketBuffer& p,
+                  const IpAddrInfo& dst_ip,
                   uint16_t dst_port,
                   uint8_t have_chksum,
                   uint16_t chksum)
@@ -485,7 +483,7 @@ udp_sendto_chksum(UdpPcb* pcb,
                    in pcb->mcast_ip4 that is used for routing. If this routing lookup
                    fails, we try regular routing as though no override was set. */
                 Ip4Addr ip4_bcast_addr = make_ip4_bcast_addr();
-                if (!ip4_addr_isany_val(pcb->mcast_ip4) && !ip4_addr_cmp(
+                if (!ip4_addr_isany_val(pcb->mcast_ip4) && !cmp_ip4_addr(
                     &pcb->mcast_ip4,
                     &ip4_bcast_addr))
                 {
@@ -531,7 +529,7 @@ udp_sendto_chksum(UdpPcb* pcb,
 LwipStatus
 udp_sendto_if(struct UdpPcb* pcb,
               struct PacketBuffer* p,
-              const IpAddr* dst_ip,
+              const IpAddrInfo* dst_ip,
               uint16_t dst_port,
               NetworkInterface* netif)
 {
@@ -540,13 +538,13 @@ udp_sendto_if(struct UdpPcb* pcb,
 LwipStatus
 udp_sendto_if_chksum(UdpPcb* pcb,
                      struct PacketBuffer* p,
-                     const IpAddr* dst_ip,
+                     const IpAddrInfo* dst_ip,
                      uint16_t dst_port,
                      NetworkInterface* netif,
                      uint8_t have_chksum,
                      uint16_t chksum)
 {
-    IpAddr src_ip{};
+    IpAddrInfo src_ip{};
     if (!match_ip_addr_pcb_version((IpPcb*)pcb, dst_ip))
     {
         return ERR_VAL;
@@ -571,8 +569,8 @@ udp_sendto_if_chksum(UdpPcb* pcb,
             src_ip = pcb->local_ip;
         }
     }
-    else if (ip4_addr_isany(convert_ip_addr_to_ip4_addr(&pcb->local_ip)) ||
-        ip4_addr_ismulticast(convert_ip_addr_to_ip4_addr(&pcb->local_ip)))
+    else if (ip4_addr_isany((pcb->local_ip.u_addr.ip4.address)) ||
+        is_ip4_addr_multicast((pcb->local_ip.u_addr.ip4.address)))
     {
         /* if the local_ip is any or multicast
          * use the outgoing network interface IP address as source address */
@@ -583,7 +581,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         /* check if UDP PCB local IP address is correct
          * this could be an old address if netif->ip_addr has changed */
-        if (!ip4_addr_cmp(convert_ip_addr_to_ip4_addr(&(pcb->local_ip)),
+        if (!cmp_ip4_addr(((pcb->local_ip.u_addr.ip4.address)),
                           get_netif_ip4_addr(netif,)))
         {
             /* local_ip doesn't match, drop the packet */
@@ -604,22 +602,22 @@ udp_sendto_if_chksum(UdpPcb* pcb,
 LwipStatus
 udp_sendto_if_src(struct UdpPcb* pcb,
                   struct PacketBuffer* p,
-                  const IpAddr* dst_ip,
+                  const IpAddrInfo* dst_ip,
                   uint16_t dst_port,
                   NetworkInterface* netif,
-                  IpAddr* src_ip)
+                  IpAddrInfo* src_ip)
 {
     return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
 } /** Same as udp_sendto_if_src(), but with checksum */
 LwipStatus
-udp_sendto_if_src_chksum(UdpPcb* pcb,
-                         struct PacketBuffer* p,
-                         const IpAddr* dst_ip,
+udp_sendto_if_src_chksum(UdpPcb& pcb,
+                         PacketBuffer& p,
+                         const IpAddrInfo& dst_ip,
                          uint16_t dst_port,
-                         NetworkInterface* netif,
+                         NetworkInterface& netif,
                          uint8_t have_chksum,
                          uint16_t chksum,
-                         IpAddr* src_ip)
+                         IpAddrInfo& src_ip)
 {
     LwipStatus err;
     struct PacketBuffer* q; /* q will be sent down the stack */
@@ -816,10 +814,10 @@ udp_sendto_if_src_chksum(UdpPcb* pcb,
  * @see udp_disconnect()
  */
 LwipStatus
-udp_bind(struct UdpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
+udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
 {
     struct UdpPcb* ipcb;
-    IpAddr zoned_ipaddr;
+    IpAddrInfo zoned_ipaddr;
     /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
 
     Logf(true | LWIP_DBG_TRACE, ("udp_bind(ipaddr = "));
@@ -937,7 +935,7 @@ udp_bind_netif(struct UdpPcb* pcb, const NetworkInterface* netif)
  * @see udp_disconnect()
  */
 LwipStatus
-udp_connect(struct UdpPcb* pcb, const IpAddr* ipaddr, uint16_t port)
+udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
 {
     if (pcb->local_port == 0)
     {
@@ -984,14 +982,14 @@ void
 udp_disconnect(struct UdpPcb* pcb)
 {
     /* reset remote address association */
-    if (is_ip_addr_any_type_val(pcb->local_ip))
+    if (is_ip_addr_any_type(pcb->local_ip))
     {
-        IpAddr any_addr = make_ip_addr_any();
+        IpAddrInfo any_addr = make_ip_addr_any();
         copy_ip_addr(&pcb->remote_ip, &any_addr);
     }
     else
     {
-        set_ip_addr_any(is_ip_addr_ip6_val(pcb->remote_ip), &pcb->remote_ip);
+        set_ip_addr_any(is_ip_addr_v6(pcb->remote_ip), &pcb->remote_ip);
     }
     pcb->remote_port = 0;
     pcb->netif_idx = NETIF_NO_INDEX; /* mark PCB as unconnected */
@@ -1089,8 +1087,8 @@ udp_new_ip_type(IpAddrType type)
     struct UdpPcb* pcb = udp_new();
     if (pcb != nullptr)
     {
-        set_ip_addr_type_val(pcb->local_ip, type);
-        set_ip_addr_type_val(pcb->remote_ip, type);
+        set_ip_addr_type(pcb->local_ip, type);
+        set_ip_addr_type(pcb->remote_ip, type);
     }
     return pcb;
 } /** This function is called from netif.c when address is changed
@@ -1099,7 +1097,7 @@ udp_new_ip_type(IpAddrType type)
  * @param new_addr IP address of the netif after change
  */
 void
-udp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr)
+udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr)
 {
     if (!is_ip_addr_any(old_addr) && !is_ip_addr_any(new_addr))
     {

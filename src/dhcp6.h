@@ -1,72 +1,40 @@
-/**
- * @file
- *
- * DHCPv6 client: IPv6 address autoconfiguration as per
- * RFC 3315 (stateful DHCPv6) and
- * RFC 3736 (stateless DHCPv6).
- */
-
-/*
- * Copyright (c) 2018 Simon Goldschmidt
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Simon Goldschmidt <goldsimon@gmx.de>
- */
+///
+/// file: dhcp6.h
+///
 #pragma once
-
-#include <opt.h>
 #include <lwip_status.h>
 #include <network_interface.h>
+#include <dhcp6_context.h>
 #include <cstdint>
 
 constexpr auto DHCP6_CLIENT_PORT = 546;
 constexpr auto DHCP6_SERVER_PORT = 547;
-
-
- /* DHCPv6 message item offsets and length */
 constexpr auto DHCP6_TRANSACTION_ID_LEN = 3;
 
-/** minimum set of fields of any DHCPv6 message */
-struct Dhcp6Msg
-{
-    uint8_t msgtype;
-    uint8_t transaction_id[DHCP6_TRANSACTION_ID_LEN]; /* options follow */
-};
 
 
-
-/* DHCP6 client states */
+///
  enum Dhcp6States{
     DHCP6_STATE_OFF = 0,
     DHCP6_STATE_STATELESS_IDLE = 1,
     DHCP6_STATE_REQUESTING_CONFIG = 2
 } ;
 
-/* DHCPv6 message types */
+/** Option handling: options are parsed in dhcp6_parse_reply
+ * and saved in an array where other functions can load them from.
+ * This might be moved into the Dhcp6 (not necessarily since
+ * lwIP is single-threaded and the array is only used while in recv
+ * callback). */
+enum Dhcp6OptionIdx {
+  DHCP6_OPTION_IDX_CLI_ID = 0,
+  DHCP6_OPTION_IDX_SERVER_ID,
+  DHCP6_OPTION_IDX_DNS_SERVER,
+  DHCP6_OPTION_IDX_DOMAIN_LIST,
+  DHCP6_OPTION_IDX_NTP_SERVER,
+  DHCP6_OPTION_IDX_MAX
+};
+
+/// DHCPv6 message types
 #define DHCP6_SOLICIT               1
 #define DHCP6_ADVERTISE             2
 #define DHCP6_REQUEST               3
@@ -131,42 +99,135 @@ enum Dhcp6Options
 /** period (in milliseconds) of the application calling dhcp6_tmr() */
 constexpr auto DHCP6_TIMER_MSECS = 500;
 
-struct Dhcp6
+///
+struct Dhcp6Msg
 {
-    /** transaction identifier of last sent request */
-    uint32_t xid; /** track PCB allocation state */
-    uint8_t pcb_allocated; /** current DHCPv6 state machine state */
-    uint8_t state; /** retries of current request */
-    uint8_t tries;
-    /** if request config is triggered while another action is active, this keeps track of it */
-    uint8_t request_config_pending;
-    /** #ticks with period DHCP6_TIMER_MSECS for request timeout */
-    uint16_t request_timeout;
-    /* @todo: add more members here to keep track of stateful DHCPv6 data, like lease times */
+    uint8_t msgtype;
+    uint8_t transaction_id[DHCP6_TRANSACTION_ID_LEN];
 };
 
-void dhcp6_set_struct(NetworkInterface*netif, struct Dhcp6 *dhcp6);
+
+
+struct Dhcp6OptionInfo {
+  uint8_t option_given;
+  uint16_t val_start;
+  uint16_t val_length;
+};
+
+void dhcp6_set_struct(NetworkInterface*netif, struct Dhcp6Context *dhcp6);
 /** Remove a Dhcp6 previously set to the netif using dhcp6_set_struct() */
 #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
+
+
+inline Dhcp6Context* netif_dhcp6_data(NetworkInterface* netif)
+{
+
+    return static_cast<struct Dhcp6Context *>(netif_get_client_data(
+        netif,
+        LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
+}
+
+inline void
+dhcp6_clear_all_options(Dhcp6Context* dhcp6)
+{
+    (memset(dhcp6_rx_options, 0, sizeof(dhcp6_rx_options)));
+}
+
+#define dhcp6_option_given(dhcp6, idx)           (dhcp6_rx_options[idx].option_given != 0)
+#define dhcp6_got_option(dhcp6, idx)             (dhcp6_rx_options[idx].option_given = 1)
+#define dhcp6_clear_option(dhcp6, idx)           (dhcp6_rx_options[idx].option_given = 0)
+
+#define dhcp6_get_option_start(dhcp6, idx)       (dhcp6_rx_options[idx].val_start)
+#define dhcp6_get_option_length(dhcp6, idx)      (dhcp6_rx_options[idx].val_length)
+#define dhcp6_set_option(dhcp6, idx, start, len) do { dhcp6_rx_options[idx].val_start = (start); dhcp6_rx_options[idx].val_length = (len); }while(0)
+
 void dhcp6_cleanup(NetworkInterface*netif);
 
 LwipStatus dhcp6_enable_stateful(NetworkInterface*netif);
 LwipStatus dhcp6_enable_stateless(NetworkInterface*netif);
 void dhcp6_disable(NetworkInterface*netif);
 
-void dhcp6_tmr(void);
+void dhcp6_tmr();
 
 void dhcp6_nd6_ra_trigger(NetworkInterface*netif, uint8_t managed_addr_config, uint8_t other_config);
 
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP6_MAX_NTP_SERVERS */
-extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddr* ntp_server_addrs);
+extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddrInfo* ntp_server_addrs);
 
 
-inline Dhcp6* netif_dhcp6_data(NetworkInterface* netif)
-{
-    return static_cast<struct Dhcp6 *>(netif_get_client_data(
-        netif,
-        LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
-}
+/* receive, unfold, parse and free incoming messages */
+static void dhcp6_recv(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddrInfo *addr, uint16_t port, NetworkInterface
+                       * netif);
+
+static LwipStatus dhcp6_inc_pcb_refcount();
+
+static void
+dhcp6_dec_pcb_refcount(void);
+
+
+
+static struct Dhcp6Context* dhcp6_get_struct(NetworkInterface* netif, const char* dbg_requester);
+
+static void
+dhcp6_set_state(struct Dhcp6Context *dhcp6, uint8_t new_state, const char *dbg_caller);
+
+static int
+dhcp6_stateless_enabled(struct Dhcp6Context *dhcp6);
+
+
+
+
+
+static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
+                                     struct Dhcp6Context* dhcp6,
+                                     uint8_t message_type,
+                                     uint16_t opt_len_alloc,
+                                     uint16_t* options_out_len);
+
+static uint16_t dhcp6_option_short(uint16_t options_out_len,
+                                   uint8_t* options,
+                                   uint16_t value);
+
+static uint16_t dhcp6_option_optionrequest(size_t options_out_len,
+                                           uint8_t* options,
+                                           const uint16_t* req_options,
+                                           uint32_t num_req_options,
+                                           size_t max_len);
+
+static void
+dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out);
+
+static void
+dhcp6_information_request(NetworkInterface* netif, Dhcp6Context* dhcp6);
+
+static LwipStatus
+dhcp6_request_config(NetworkInterface*netif, Dhcp6Context *dhcp6);
+
+static void
+dhcp6_abort_config_request(Dhcp6Context *dhcp6);
+
+static void
+dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in);
+
+static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6);
+
+static void dhcp6_recv(void* arg,
+                       struct UdpPcb* pcb,
+                       struct PacketBuffer* p,
+                       const IpAddrInfo* addr,
+                       uint16_t port,
+                       NetworkInterface* netif);
+
+
+static void
+dhcp6_timeout(NetworkInterface*netif, struct Dhcp6Context *dhcp6);
+
+
+void
+dhcp6_tmr(void);
+
+//
+// END OF FILE
+//

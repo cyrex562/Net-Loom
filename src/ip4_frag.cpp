@@ -38,7 +38,7 @@ inline bool
 ip_addresses_and_id_match(Ip4Hdr& iphdr_a, Ip4Hdr& iphdr_b)
 {
     return
-        ip4_addr_cmp(&(iphdr_a)->src, &(iphdr_b)->src) && ip4_addr_cmp(&(iphdr_a)->dest, &(iphdr_b)->dest) &&
+        cmp_ip4_addr(&(iphdr_a)->src, &(iphdr_b)->src) && cmp_ip4_addr(&(iphdr_a)->dest, &(iphdr_b)->dest) &&
         get_ip4_hdr_id(iphdr_a) == get_ip4_hdr_id(iphdr_b);
 }
 

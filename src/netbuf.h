@@ -54,10 +54,10 @@
 /** "Network buffer" - contains data and addressing info */
 struct netbuf {
   struct PacketBuffer *p, *ptr;
-  IpAddr addr;
+  IpAddrInfo addr;
   uint16_t port;  uint8_t flags;
   uint16_t toport_chksum;
-  IpAddr toaddr;
+  IpAddrInfo toaddr;
 
 };
 

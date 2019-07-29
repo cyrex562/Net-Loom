@@ -167,7 +167,7 @@ enum DnsStateEnumT
 struct DnsTableEntry
 {
     uint32_t ttl;
-    IpAddr ipaddr;
+    IpAddrInfo ipaddr;
     uint16_t txid;
     uint8_t state;
     uint8_t server_idx;
@@ -196,31 +196,31 @@ struct DnsRequestEntry
  *  external name resolution is performed */
 static struct LocalHostListEntry *local_hostlist_dynamic;
 static void dns_init_local(void);
-static LwipStatus dns_lookup_local(const char *hostname, IpAddr *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
+static LwipStatus dns_lookup_local(const char *hostname, IpAddrInfo *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
 
 
 
 /* forward declarations */
-static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddr *addr, uint16_t port, NetworkInterface*
+static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddrInfo *addr, uint16_t port, NetworkInterface*
                      netif);
 static void dns_check_entries(void);
-static void dns_call_found(uint8_t idx, IpAddr *addr);
+static void dns_call_found(uint8_t idx, IpAddrInfo *addr);
 
 /*-----------------------------------------------------------------------------
  * Globals
  *----------------------------------------------------------------------------*/
 
 /* DNS variables */
-static UdpPcb* dns_pcbs[DNS_MAX_SOURCE_PORTS];
-
-static uint8_t dns_last_pcb_idx;
-
-static uint8_t dns_seqno;
-static DnsTableEntry dns_table[DNS_TABLE_SIZE];
-static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
-static IpAddr dns_servers[DNS_MAX_SERVERS];
-const IpAddr dns_mquery_v4group = init_ip_addr_ip4_bytes(224, 0, 0, 251);
-const IpAddr dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
+// static UdpPcb* dns_pcbs[DNS_MAX_SOURCE_PORTS];
+//
+// static uint8_t dns_last_pcb_idx;
+//
+// static uint8_t dns_seqno;
+// static DnsTableEntry dns_table[DNS_TABLE_SIZE];
+// static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
+// static IpAddrInfo dns_servers[DNS_MAX_SERVERS];
+// const IpAddrInfo dns_mquery_v4group = init_ip_addr_ip4_bytes(224, 0, 0, 251);
+// const IpAddrInfo dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
 
 
 /**
@@ -230,7 +230,7 @@ const IpAddr dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
 void dns_init(void)
 {
     /* initialize default DNS server address */
-    IpAddr dnsserver{}; // DNS_SERVER_ADDRESS(&dnsserver);
+    IpAddrInfo dnsserver{}; // DNS_SERVER_ADDRESS(&dnsserver);
     dns_setserver(0, &dnsserver);
     lwip_assert("sanity check SIZEOF_DNS_QUERY",
                 sizeof(struct DnsQuery) == DNS_QUERY_LEN);
@@ -246,7 +246,7 @@ void dns_init(void)
             * global variable) */
         lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
                     DNS_STATE_UNUSED == 0); /* initialize DNS client */
-        IpAddr any_addr = kIpAddrAny();
+        IpAddrInfo any_addr = kIpAddrAny();
         udp_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
     }
     dns_init_local();
@@ -259,7 +259,7 @@ void dns_init(void)
  * @param numdns the index of the DNS server to set must be < DNS_MAX_SERVERS
  * @param dnsserver IP address of the DNS server to set
  */
-void dns_setserver(uint8_t numdns, const IpAddr* dnsserver)
+void dns_setserver(uint8_t numdns, const IpAddrInfo* dnsserver)
 {
     if (numdns < DNS_MAX_SERVERS)
     {
@@ -269,7 +269,7 @@ void dns_setserver(uint8_t numdns, const IpAddr* dnsserver)
         }
         else
         {
-            IpAddr any_addr = kIpAddrAny();
+            IpAddrInfo any_addr = kIpAddrAny();
             dns_servers[numdns] = any_addr;
         }
     }
@@ -284,7 +284,7 @@ void dns_setserver(uint8_t numdns, const IpAddr* dnsserver)
  *         server has not been configured.
  */
 // TODO: rewrite
-IpAddr dns_getserver(const uint8_t numdns)
+IpAddrInfo dns_getserver(const uint8_t numdns)
 {
     if (numdns < DNS_MAX_SERVERS)
     {
@@ -372,14 +372,14 @@ dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg)
  * @return ERR_OK if found, ERR_ARG if not found
  */
 LwipStatus
-dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype)
+dns_local_lookup(const char *hostname, IpAddrInfo *addr, uint8_t dns_addrtype)
 {
   return dns_lookup_local(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype));
 }
 
 /* Internal implementation for dns_local_lookup and dns_lookup */
 static LwipStatus dns_lookup_local(const char* hostname,
-                                  IpAddr* addr
+                                  IpAddrInfo* addr
                                   LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
     auto entry = local_hostlist_dynamic;
@@ -410,7 +410,7 @@ static LwipStatus dns_lookup_local(const char* hostname,
  * @param addr address for which entries shall be removed from the local host-list
  * @return the number of removed entries
  */
-int dns_local_removehost(const char* hostname, const IpAddr* addr)
+int dns_local_removehost(const char* hostname, const IpAddrInfo* addr)
 {
     int removed = 0;
     struct LocalHostListEntry* entry = local_hostlist_dynamic;
@@ -451,7 +451,7 @@ int dns_local_removehost(const char* hostname, const IpAddr* addr)
  * @param addr IP address of the new entry
  * @return ERR_OK if succeeded or ERR_MEM on memory error
  */
-LwipStatus dns_local_addhost(const char* hostname, const IpAddr* addr)
+LwipStatus dns_local_addhost(const char* hostname, const IpAddrInfo* addr)
 {
     lwip_assert("invalid host name (NULL)", hostname != nullptr);
     const auto namelen = strlen(hostname);
@@ -489,7 +489,7 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddr* addr)
  * @return ERR_OK if found, ERR_ARG if not found
  */
 static LwipStatus dns_lookup(const char* name,
-                            IpAddr* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
+                            IpAddrInfo* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
     if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_OK)
     {
@@ -658,7 +658,7 @@ static LwipStatus dns_send(const uint8_t idx)
                                DNS_QUERY_LEN));
     if (pbuf != nullptr)
     {
-        const IpAddr* dst;
+        const IpAddrInfo* dst;
         uint16_t dst_port; /* fill dns header */
         memset(&hdr, 0, DNS_HDR_LEN);
         hdr.id = lwip_htons(entry->txid);
@@ -748,7 +748,7 @@ static UdpPcb* dns_alloc_random_port(void)
         auto port = static_cast<uint16_t>(lwip_rand());
         if (DNS_PORT_ALLOWED(port))
         {
-            IpAddr any_addr = kIpAddrAny();
+            IpAddrInfo any_addr = kIpAddrAny();
             err = udp_bind(pcb, &any_addr, port);
         }
         else
@@ -816,11 +816,11 @@ dns_alloc_pcb(void)
  * @param addr IP address for the hostname (or NULL on error or memory shortage)
  */
 static void
-dns_call_found(uint8_t idx, IpAddr *addr)
+dns_call_found(uint8_t idx, IpAddrInfo *addr)
 {
     if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
-    if (is_ip_addr_ip6_val(*addr)) {
+    if (is_ip_addr_v6(*addr)) {
       // lwip_assert("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
     } else {
@@ -1030,7 +1030,7 @@ dns_correct_response(uint8_t idx, uint32_t ttl)
 static void dns_recv(void* arg,
                      UdpPcb* pcb,
                      struct PacketBuffer* p,
-                     const IpAddr* addr,
+                     const IpAddrInfo* addr,
                      uint16_t port,
                      NetworkInterface* netif)
 {
@@ -1374,7 +1374,7 @@ static LwipStatus dns_enqueue(const char* name,
  * @return a LwipStatus return code.
  */
 LwipStatus
-dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
+dns_gethostbyname(const char *hostname, IpAddrInfo *addr, dns_found_callback found,
                   uint8_t *callback_arg)
 {
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
@@ -1394,10 +1394,8 @@ dns_gethostbyname(const char *hostname, IpAddr *addr, dns_found_callback found,
  *                     - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only
  *                     - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only
  */
-LwipStatus dns_gethostbyname_addrtype(const char* hostname,
-                                      IpAddr* addr,
-                                      dns_found_callback found,
-                                      void* callback_arg,
+LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
+                                      IpAddrInfo& addr,
                                       uint8_t dns_addrtype)
 {
     if ((addr == nullptr) || (!hostname) || (!hostname[0]))
@@ -1422,7 +1420,7 @@ LwipStatus dns_gethostbyname_addrtype(const char* hostname,
     if (ipaddr_aton(hostname, addr))
     {
         if ((is_ip_addr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
-            is_ip_addr_ip4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
+            is_ip_addr_v4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
             return STATUS_OK;
         }

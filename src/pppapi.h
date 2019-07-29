@@ -42,7 +42,7 @@ struct PppApiMsgMsg
         {
             NetworkInterface* pppif;
             NetworkInterface* netif;
-            IpAddr ipaddr;
+            IpAddrInfo ipaddr;
             uint16_t port;
             const uint8_t* secret;
             uint8_t secret_len;
@@ -85,7 +85,7 @@ PppPcb *pppapi_pppoe_create(NetworkInterface*pppif, NetworkInterface*ethif, cons
                                 const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                                 uint8_t *ctx_cb);
 
-PppPcb *pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddr *ipaddr, uint16_t port,
+PppPcb *pppapi_pppol2tp_create(NetworkInterface*pppif, NetworkInterface*netif, IpAddrInfo *ipaddr, uint16_t port,
                             const uint8_t *secret, uint8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, uint8_t *ctx_cb);
 

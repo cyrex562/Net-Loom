@@ -528,7 +528,7 @@ LwipStatus tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags);
 void tcp_rexmit_seg(struct TcpPcb *pcb, struct TcpSeg *seg);
 
 void tcp_rst(const struct TcpPcb* pcb, uint32_t seqno, uint32_t ackno,
-       const IpAddr *local_ip, const IpAddr *remote_ip,
+       const IpAddrInfo *local_ip, const IpAddrInfo *remote_ip,
        uint16_t local_port, uint16_t remote_port);
 
 uint32_t tcp_next_iss(struct TcpPcb *pcb);
@@ -539,7 +539,7 @@ LwipStatus tcp_zero_window_probe(struct TcpPcb *pcb);
 void  tcp_trigger_input_pcb_close();
 
 uint16_t tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface*outif,
-                             const IpAddr *dest);
+                             const IpAddrInfo *dest);
 #define tcp_eff_send_mss(sendmss, src, dest) \
     tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 
@@ -554,7 +554,7 @@ LwipStatus tcp_recv_null(void *arg, struct TcpPcb *pcb, struct PacketBuffer *p, 
 
 
 
-void tcp_netif_ip_addr_changed(const IpAddr* old_addr, const IpAddr* new_addr);
+void tcp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr);
 
 void tcp_free_ooseq(struct TcpPcb *pcb);
 

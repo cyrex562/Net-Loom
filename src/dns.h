@@ -5,6 +5,8 @@
 #pragma once
 
 #include "ip_addr.h"
+#include "ip4_addr.h"
+#include "ip6_addr.h"
 #include "lwip_status.h"
 
 /** DNS server port address */
@@ -108,7 +110,7 @@ struct LocalHostListEntry
 {
     /** static hostname */
     const char* name; /** static host address in network byteorder */
-    IpAddr addr;
+    IpAddrInfo addr;
     struct LocalHostListEntry* next;
 };
 #define DNS_LOCAL_HOSTLIST_ELEM(name, addr_init) {name, addr_init, NULL}
@@ -116,9 +118,9 @@ struct LocalHostListEntry
 #define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct LocalHostListEntry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
 
 
-extern const IpAddr dns_mquery_v4group;
+extern const IpAddrInfo dns_mquery_v4group;
 
-extern const IpAddr dns_mquery_v6group;
+extern const IpAddrInfo dns_mquery_v6group;
 
 
 /** Callback which is invoked when a hostname is found.
@@ -128,32 +130,35 @@ extern const IpAddr dns_mquery_v6group;
  *        or NULL if the name could not be found (or on any other error).
  * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, const IpAddr *ipaddr, uint8_t *callback_arg);
+typedef void (*dns_found_callback)(const char *name, const IpAddrInfo *ipaddr, uint8_t *callback_arg);
 
 void             dns_init(void);
 void             dns_tmr(void);
-void             dns_setserver(uint8_t numdns, const IpAddr *dnsserver);
-IpAddr dns_getserver(uint8_t numdns);
-LwipStatus            dns_gethostbyname(const char *hostname, IpAddr *addr,
+void             dns_setserver(uint8_t numdns, const IpAddrInfo *dnsserver);
+IpAddrInfo dns_getserver(uint8_t numdns);
+LwipStatus            dns_gethostbyname(const char *hostname, IpAddrInfo *addr,
                                    dns_found_callback found, uint8_t *callback_arg);
-LwipStatus            dns_gethostbyname_addrtype(const char *hostname, IpAddr *addr,
+LwipStatus            dns_gethostbyname_addrtype(const char *hostname, IpAddrInfo *addr,
                                    dns_found_callback found, uint8_t *callback_arg,
                                    uint8_t dns_addrtype);
 
 size_t         dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg);
-LwipStatus          dns_local_lookup(const char *hostname, IpAddr *addr, uint8_t dns_addrtype);
+LwipStatus          dns_local_lookup(const char *hostname, IpAddrInfo *addr, uint8_t dns_addrtype);
 
-int            dns_local_removehost(const char *hostname, const IpAddr *addr);
-LwipStatus          dns_local_addhost(const char *hostname, const IpAddr *addr);
+int            dns_local_removehost(const char *hostname, const IpAddrInfo *addr);
+LwipStatus          dns_local_addhost(const char *hostname, const IpAddrInfo *addr);
 
 inline bool lwip_dns_addrtype_is_ipv6(uint8_t t)
 {
     return (((t) == LWIP_DNS_ADDRTYPE_IPV6_IPV4) || ((t) == LWIP_DNS_ADDRTYPE_IPV6));
 }
 
-inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddr* ip)
+inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddrInfo* ip)
 {
     return (is_ip_addr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }
 
 
+const Ip4Addr dns_mquery_group_v4 = {make_u32(224,0,0,251)};
+
+const Ip6Addr dns_mquery_group_v6 = make_ip6_addr_host(0xf020000UL, 0, 0, 0x000000fbUL);

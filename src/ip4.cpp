@@ -42,7 +42,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
 
     for (const auto& netif : netifs_to_check)
     {
-        if (ip4_addr_ismulticast(dst_addr))
+        if (is_ip4_addr_multicast(dst_addr))
         {
             for (auto grp: netif.igmp_groups)
             {
@@ -88,7 +88,7 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
     {
         return false;
     } /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
-    if (pkt_buf.ll_multicast || ip4_addr_ismulticast(dst_addr))
+    if (pkt_buf.ll_multicast || is_ip4_addr_multicast(dst_addr))
     {
         return false;
     } // todo: make whether we care about experimental IP addresses an configurable option
@@ -129,7 +129,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
     }
 
     /* RFC3927 2.7: do not forward link-local addresses */
-    if (ip4_addr_islinklocal(dst_addr)) {
+    if (is_ip4_addr_link_local(dst_addr)) {
         return STATUS_E_ROUTING;
     }
 
@@ -202,11 +202,11 @@ ip4_input_accept(NetworkInterface& netif)
     /* interface is up and configured? */
     if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
         /* unicast to this interface address? */
-        if (ip4_addr_cmp(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
+        if (cmp_ip4_addr(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
             /* or broadcast on this interface network address? */
             ip4_addr_isbroadcast(&curr_dst_addr, netif)
 
-            || get_ip4_addr(&curr_dst_addr) == pp_htonl(ip4_addr_loopback().addr)
+            || get_ip4_addr_u32(&curr_dst_addr) == pp_htonl(make_ip4_addr_loopback().addr)
 
         ) {
             Logf(true,
@@ -311,13 +311,13 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   // copy_ip4_addr_to_ip_addr(curr_src_hdr->src, iphdr->src);
 
   /* match packet against an interface, i.e. is this packet for us? */
-  if (ip4_addr_ismulticast(curr_dst_addr)) {
+  if (is_ip4_addr_multicast(curr_dst_addr)) {
 
     if (inp->flags & NETIF_FLAG_IGMP && find_igmp_grp(inp, curr_dst_addr)) {
       /* IGMP snooping switches need 0.0.0.0 to be allowed as source address (RFC 4541) */
       Ip4Addr allsystems;
-      Ipv4AddrFromBytes(&allsystems, 224, 0, 0, 1);
-      if (ip4_addr_cmp(curr_dst_addr, &allsystems) &&
+      make_ip4_addr_host_from_bytes(&allsystems, 224, 0, 0, 1);
+      if (cmp_ip4_addr(curr_dst_addr, &allsystems) &&
           ip4_addr_isany(curr_src_addr)) {
         check_ip_src = 0;
       }
@@ -337,7 +337,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       /* Packets sent to the loopback address must not be accepted on an
        * interface that does not have the loopback address assigned to it,
        * unless a non-loopback interface is used for loopback traffic. */
-      if (!ip4_addr_isloopback(curr_dst_addr))
+      if (!is_ip4_addr_loopback(curr_dst_addr))
       {
 
         for (netif = netif_list; netif != nullptr; netif = netif->next) {
@@ -391,7 +391,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
   {
     if (ip4_addr_isbroadcast(curr_src_addr, inp) ||
-        ip4_addr_ismulticast(curr_src_addr)) {
+        is_ip4_addr_multicast(curr_src_addr)) {
       /* packet source is not valid */
       Logf(true, "ip4_input: packet source is not valid.\n");
       /* free (drop) packet pbufs */
@@ -495,7 +495,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
           /* send ICMP destination protocol unreachable unless is was a broadcast */
           if (!ip4_addr_isbroadcast(curr_dst_addr, netif) &&
-              !ip4_addr_ismulticast(curr_dst_addr)) {
+              !is_ip4_addr_multicast(curr_dst_addr)) {
             pbuf_header_force(p, (int16_t)iphdr_hlen); /* Move to ip header, no check necessary. */
             icmp_dest_unreach(p, ICMP_DUR_PROTO);
           }
@@ -676,8 +676,8 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           /* dest cannot be NULL here */
           copy_ip4_addr(&iphdr->dest, dest);
 
-          chk_sum += get_ip4_addr(&iphdr->dest) & 0xFFFF;
-          chk_sum += get_ip4_addr(&iphdr->dest) >> 16;
+          chk_sum += get_ip4_addr_u32(&iphdr->dest) & 0xFFFF;
+          chk_sum += get_ip4_addr_u32(&iphdr->dest) >> 16;
 
 
           set_ip4_hdr_vhl(iphdr, 4, ip_hlen / 4);
@@ -705,8 +705,8 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
               copy_ip4_addr(&iphdr->src, src);
           }
 
-          chk_sum += get_ip4_addr(&iphdr->src) & 0xFFFF;
-          chk_sum += get_ip4_addr(&iphdr->src) >> 16;
+          chk_sum += get_ip4_addr_u32(&iphdr->src) & 0xFFFF;
+          chk_sum += get_ip4_addr_u32(&iphdr->src) >> 16;
           chk_sum = (chk_sum >> 16) + (chk_sum & 0xFFFF);
           chk_sum = (chk_sum >> 16) + chk_sum;
           chk_sum = ~chk_sum;

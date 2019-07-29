@@ -64,7 +64,7 @@ static void
 zepif_udp_recv(void* arg,
                struct UdpPcb* pcb,
                struct PacketBuffer* p,
-               const IpAddr* addr,
+               const IpAddrInfo* addr,
                uint16_t port,
                NetworkInterface* netif)
 {
@@ -210,7 +210,7 @@ zepif_init(NetworkInterface* netif)
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
-        state->init.zep_dst_ip_addr->u_addr.ip4.addr = IP4_ADDR_BCAST;
+        state->init.zep_dst_ip_addr->u_addr.ip4.addr = IP4_ADDR_BCAST_U32;
     }
 
 

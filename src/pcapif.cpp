@@ -505,7 +505,7 @@ pcapif_low_level_init(NetworkInterface* netif)
     {
         printf(
             "ERROR initializing network adapter, failed to get GUID for network address %s\n",
-            lwip_ip4addr_ntoa(&netaddr));
+            ip4_addr_ntoa(&netaddr));
         lwip_assert(
             "ERROR initializing network adapter, failed to get GUID for network address!",
             false);

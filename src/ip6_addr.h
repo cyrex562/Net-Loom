@@ -669,7 +669,7 @@ ip6_addr_aton(std::string& out_addr_str, Ip6Addr& in_addr);
 std::string ip6_addr_ntoa(const Ip6Addr& addr);
 
 
-std::string ip6addr_ntoa_r(const Ip6Addr& addr, std::string& buf);
+std::string ip6addr_ntoa_r(const Ip6Addr& addr);
 
 inline Ip6AddrInfo make_ip6_addr_any()
 {
@@ -689,6 +689,14 @@ inline void set_ip6_addr_any2(Ip6AddrInfo& info)
     info.addr.addr[2] = 0;
     info.addr.addr[3] = 0;
     info.zone = IP6_NO_ZONE;
+}
+
+
+inline Ip6Addr
+make_ip6_addr_host(const uint32_t a, const uint32_t b, const uint32_t c, const uint32_t d)
+{
+    Ip6Addr addr = {pp_htonl(a), pp_htonl(b), pp_htonl(c), pp_htonl(d)};
+    return addr;
 }
 
 //

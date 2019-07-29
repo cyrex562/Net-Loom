@@ -99,9 +99,9 @@ void init_netif_module()
     Ip4Addr loop_ipaddr{};
     Ip4Addr loop_netmask{};
     Ip4Addr loop_gw{};
-    Ipv4AddrFromBytes(&loop_gw, 127, 0, 0, 1);
-    Ipv4AddrFromBytes(&loop_ipaddr, 127, 0, 0, 1);
-    Ipv4AddrFromBytes(&loop_netmask, 255, 0, 0, 0);
+    make_ip4_addr_host_from_bytes(&loop_gw, 127, 0, 0, 1);
+    make_ip4_addr_host_from_bytes(&loop_ipaddr, 127, 0, 0, 1);
+    make_ip4_addr_host_from_bytes(&loop_netmask, 255, 0, 0, 0);
     add_netif(loop_netif,
               &loop_ipaddr,
               &loop_netmask,
@@ -313,7 +313,7 @@ NetworkInterface add_netif(NetworkInterface& netif,
 }
 
 static void
-netif_do_ip_addr_changed(const IpAddr& old_addr, const IpAddr& new_addr)
+netif_do_ip_addr_changed(const IpAddrInfo& old_addr, const IpAddrInfo& new_addr)
 {
 
   tcp_netif_ip_addr_changed(old_addr, new_addr);
@@ -324,16 +324,16 @@ netif_do_ip_addr_changed(const IpAddr& old_addr, const IpAddr& new_addr)
 
 }
 
-static bool netif_do_set_ipaddr(NetworkInterface& netif, const Ip4Addr& ipaddr, IpAddr& old_addr)
+static bool netif_do_set_ipaddr(NetworkInterface& netif, const Ip4Addr& ipaddr, IpAddrInfo& old_addr)
 {
   // lwip_assert("invalid pointer", ipaddr != nullptr);
   // lwip_assert("invalid pointer", old_addr != nullptr);
 
   /* address is actually being changed? */
-  if (ip4_addr_cmp(ipaddr, get_netif_ip4_addr(netif,)) == 0) {
-    IpAddr new_addr{};
+  if (cmp_ip4_addr(ipaddr, get_netif_ip4_addr(netif,)) == 0) {
+    IpAddrInfo new_addr{};
       copy_ip4_addr(new_addr.u_addr.ip4, ipaddr);
-    set_ip_addr_type_val(new_addr, IPADDR_TYPE_V4);
+    set_ip_addr_type(new_addr, IPADDR_TYPE_V4);
 
     copy_ip_addr(old_addr, get_netif_ip4_addr(netif,));
 
@@ -343,8 +343,8 @@ static bool netif_do_set_ipaddr(NetworkInterface& netif, const Ip4Addr& ipaddr, 
     // mib2_remove_ip4(netif);
     // mib2_remove_route_ip4(0, netif);
     /* set new IP address to netif */
-    ip4_addr_set(netif.ip_addr.u_addr.ip4, ipaddr);
-    set_ip_addr_type_val(netif.ip_addr, IPADDR_TYPE_V4);
+    copy_ip4_addr(netif.ip_addr.u_addr.ip4, ipaddr);
+    set_ip_addr_type(netif.ip_addr, IPADDR_TYPE_V4);
     // mib2_add_ip4(netif);
     // mib2_add_route_ip4(0, netif);
 
@@ -368,7 +368,7 @@ static bool netif_do_set_ipaddr(NetworkInterface& netif, const Ip4Addr& ipaddr, 
  */
 void set_net_if_addr2(NetworkInterface& netif, const Ip4Addr& addr)
 {
-    IpAddr old_addr; /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+    IpAddrInfo old_addr; /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
     if (addr == nullptr)
     {
         addr = nullptr;
@@ -382,17 +382,17 @@ void set_net_if_addr2(NetworkInterface& netif, const Ip4Addr& addr)
 }
 
 static int
-netif_do_set_netmask(NetworkInterface*netif, const Ip4Addr *netmask, IpAddr *old_nm)
+netif_do_set_netmask(NetworkInterface*netif, const Ip4Addr *netmask, IpAddrInfo *old_nm)
 {
   /* address is actually being changed? */
-  if (ip4_addr_cmp(netmask, get_netif_ip4_netmask(netif,)) == 0) {
+  if (cmp_ip4_addr(netmask, get_netif_ip4_netmask(netif,)) == 0) {
     lwip_assert("invalid pointer", old_nm != nullptr);
     copy_ip_addr(old_nm, netif_ip_netmask4(netif));
 
     // mib2_remove_route_ip4(0, netif);
     /* set new netmask to netif */
-    ip4_addr_set((&netif->ip4_netmask.u_addr.ip4), netmask);
-    set_ip_addr_type_val(netif->ip4_netmask, IPADDR_TYPE_V4);
+    copy_ip4_addr((&netif->ip4_netmask.u_addr.ip4), netmask);
+    set_ip_addr_type(netif->ip4_netmask, IPADDR_TYPE_V4);
     // mib2_add_route_ip4(0, netif);
 //    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
@@ -417,8 +417,8 @@ netif_do_set_netmask(NetworkInterface*netif, const Ip4Addr *netmask, IpAddr *old
  */
 void set_netif_netmask(NetworkInterface& netif, const Ip4Addr& netmask)
 {
-    IpAddr old_nm_val;
-    IpAddr* old_nm = &old_nm_val;
+    IpAddrInfo old_nm_val;
+    IpAddrInfo* old_nm = &old_nm_val;
     /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
     if (netmask == nullptr)
     {
@@ -432,17 +432,17 @@ void set_netif_netmask(NetworkInterface& netif, const Ip4Addr& netmask)
 }
 
 static int
-netif_do_set_gw(NetworkInterface*netif, const Ip4Addr *gw, IpAddr *old_gw)
+netif_do_set_gw(NetworkInterface*netif, const Ip4Addr *gw, IpAddrInfo *old_gw)
 {
   /* address is actually being changed? */
-  if (ip4_addr_cmp(gw, get_netif_ip4_gw(netif,)) == 0) {
+  if (cmp_ip4_addr(gw, get_netif_ip4_gw(netif,)) == 0) {
 
     lwip_assert("invalid pointer", old_gw != nullptr);
     copy_ip_addr(old_gw, netif_ip_gw4(netif));
 
 
-    ip4_addr_set(&netif->ip4_gw.u_addr.ip4, gw);
-    set_ip_addr_type_val(netif->ip4_gw, IPADDR_TYPE_V4);
+    copy_ip4_addr(&netif->ip4_gw.u_addr.ip4, gw);
+    set_ip_addr_type(netif->ip4_gw, IPADDR_TYPE_V4);
 //    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %d.%d.%d.%d\n",
 //                netif->name[0], netif->name[1],
 //                ip4_addr1_16(netif_ip4_gw(netif)),
@@ -467,8 +467,8 @@ void
 set_netif_gw(NetworkInterface& netif, const Ip4Addr& gw)
 {
 
-  IpAddr old_gw_val;
-  IpAddr *old_gw = &old_gw_val;
+  IpAddrInfo old_gw_val;
+  IpAddrInfo *old_gw = &old_gw_val;
 
 
 
@@ -503,9 +503,9 @@ bool netif_set_addr(NetworkInterface& netif,
                     const Ip4Addr& netmask,
                     const Ip4Addr& gw)
 {
-    IpAddr* old_nm = nullptr;
-    IpAddr* old_gw = nullptr;
-    IpAddr old_addr;
+    IpAddrInfo* old_nm = nullptr;
+    IpAddrInfo* old_gw = nullptr;
+    IpAddrInfo old_addr;
 
     /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
     // if (ipaddr == nullptr)
@@ -1063,14 +1063,14 @@ set_netif_ip6_addr(NetworkInterface& netif, size_t index, Ip6AddrInfo& addr_info
 void
 set_netif_ip6_addr_parts(NetworkInterface& netif, size_t index, uint32_t a, uint32_t b, uint32_t c, uint32_t d)
 {
-  IpAddr old_addr;
-  IpAddr new_ipaddr;
+  IpAddrInfo old_addr;
+  IpAddrInfo new_ipaddr;
 
   lwip_assert("netif != NULL", netif != nullptr);
   lwip_assert("invalid index", index < LWIP_IPV6_NUM_ADDRESSES);
 
   copy_ip6_addr((&old_addr.u_addr.ip6), get_netif_ip6_addr(netif, index));
-  set_ip_addr_type_val(old_addr, IPADDR_TYPE_V6);
+  set_ip_addr_type(old_addr, IPADDR_TYPE_V6);
 
   /* address is actually being changed? */
   if (((&old_addr.u_addr.ip6)->addr[0] != a) || ((&old_addr.u_addr.ip6)->addr[1] != b) ||
@@ -1539,7 +1539,7 @@ select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest)
         /* no match, consider scope global */
         dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
     }
-    const IpAddr* best_addr = nullptr;
+    const IpAddrInfo* best_addr = nullptr;
     for (uint8_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++)
     {
         /* Consider only valid (= preferred and deprecated) addresses. */

@@ -370,8 +370,8 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
     /* copy IP addresses to aligned Ip6Address */
     // todo: get curr dst and src ip addr from somewhere
-    IpAddr curr_dst_addr{};
-    IpAddr curr_src_addr{};
+    IpAddrInfo curr_dst_addr{};
+    IpAddrInfo curr_src_addr{};
     memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6Addr));
     memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6Addr));
 
@@ -1031,7 +1031,7 @@ ip6_output_if(struct PacketBuffer* p,
     if (dest) {
         if (src != nullptr && is_ip6_addr_any(src)) {
 
-            const IpAddr* sel_src_addr = select_ip6_src_addr(netif, dest);
+            const IpAddrInfo* sel_src_addr = select_ip6_src_addr(netif, dest);
             copy_ip6_addr(&src_used, &sel_src_addr->u_addr.ip6);
             if (is_ip6_addr_any(&src_used)) {
                 /* No appropriate source address was found for this packet. */
