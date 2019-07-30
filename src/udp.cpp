@@ -301,7 +301,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         if (pcb != nullptr)
         {
             if (ip_get_option((IpPcb*)pcb, SOF_REUSEADDR) && (broadcast ||
-                ip_addr_ismulticast(curr_dst_addr)))
+                is_ip_addr_mcast(curr_dst_addr)))
             {
                 for (UdpPcb* mpcb = udp_pcbs; mpcb != nullptr; mpcb = mpcb->next)
                 {
@@ -348,7 +348,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
             Logf(true | LWIP_DBG_TRACE, ("udp_input: not for us.\n"));
             /* No match was found, send ICMP destination port unreachable unless
                     destination address was broadcast/multicast. */
-            if (!broadcast && !ip_addr_ismulticast(curr_dst_addr))
+            if (!broadcast && !is_ip_addr_mcast(curr_dst_addr))
             {
                 /* move payload pointer back to ip header */
                 pbuf_header_force(p,
@@ -463,7 +463,7 @@ udp_sendto_chksum(UdpPcb* pcb,
     else
     {
         netif = nullptr;
-        if (ip_addr_ismulticast(dst_ip))
+        if (is_ip_addr_mcast(dst_ip))
         {
             /* For IPv6, the interface to use for packets with a multicast destination
              * is specified using an interface index. The same approach may be used for
@@ -482,8 +482,8 @@ udp_sendto_chksum(UdpPcb* pcb,
                    However, this can be overridden by setting an interface address
                    in pcb->mcast_ip4 that is used for routing. If this routing lookup
                    fails, we try regular routing as though no override was set. */
-                Ip4Addr ip4_bcast_addr = make_ip4_bcast_addr();
-                if (!ip4_addr_isany_val(pcb->mcast_ip4) && !cmp_ip4_addr(
+                Ip4Addr ip4_bcast_addr = make_ip4_addr_bcast();
+                if (!is_ip4_addr_any(pcb->mcast_ip4) && !cmp_ip4_addr(
                     &pcb->mcast_ip4,
                     &ip4_bcast_addr))
                 {
@@ -684,7 +684,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     udphdr->src = lwip_htons(pcb->local_port);
     udphdr->dest = lwip_htons(dst_port); /* in UDP, 0 checksum means 'no checksum' */
     udphdr->chksum = 0x0000; /* Multicast Loop? */
-    if (((pcb->flags & UDP_FLAGS_MULTICAST_LOOP) != 0) && ip_addr_ismulticast(dst_ip))
+    if (((pcb->flags & UDP_FLAGS_MULTICAST_LOOP) != 0) && is_ip_addr_mcast(dst_ip))
     {
         q->multicast_loop = true;
     }
@@ -777,7 +777,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
         }
         ip_proto = IP_PROTO_UDP;
     } /* Determine TTL to use */
-    uint8_t ttl = (ip_addr_ismulticast(dst_ip) ? udp_get_multicast_ttl(pcb) : pcb->ttl);
+    uint8_t ttl = (is_ip_addr_mcast(dst_ip) ? udp_get_multicast_ttl(pcb) : pcb->ttl);
     Logf(true, "udp_send: UDP checksum 0x%04x\n", udphdr->chksum);
     Logf(true, "udp_send: ip_output_if (,,,,0x%02x,)\n", (uint16_t)ip_proto);
     /* output to IP */
@@ -984,7 +984,7 @@ udp_disconnect(struct UdpPcb* pcb)
     /* reset remote address association */
     if (is_ip_addr_any_type(pcb->local_ip))
     {
-        IpAddrInfo any_addr = make_ip_addr_any();
+        IpAddrInfo any_addr = create_ip_addr_any();
         copy_ip_addr(&pcb->remote_ip, &any_addr);
     }
     else

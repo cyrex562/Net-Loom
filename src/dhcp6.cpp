@@ -94,7 +94,7 @@ static LwipStatus dhcp6_inc_pcb_refcount()
         }
         set_ip4_option(&dhcp6_pcb->so_options, SOF_BROADCAST);
         /* set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs */
-        auto addr_any = ip_addr_ip6_any();
+        auto addr_any = create_ip_addr_ip6_any();
         udp_bind(dhcp6_pcb, &addr_any, DHCP6_CLIENT_PORT);
         // udp_recv(dhcp6_pcb, dhcp6_recv, nullptr);
     }

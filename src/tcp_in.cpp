@@ -59,7 +59,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         Logf(true, "tcp_input: short packet (%d bytes) discarded\n", p->tot_len);
         goto dropped;
     } /// Don't even process incoming broadcasts/multicasts.
-    if (is_netif_ip4_addr_bcast(curr_dst_addr, curr_netif) || ip_addr_ismulticast(
+    if (is_netif_ip4_addr_bcast(curr_dst_addr, curr_netif) || is_ip_addr_mcast(
         curr_dst_addr))
     {
         goto dropped;

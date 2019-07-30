@@ -246,7 +246,7 @@ void dns_init(void)
             * global variable) */
         lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
                     DNS_STATE_UNUSED == 0); /* initialize DNS client */
-        IpAddrInfo any_addr = kIpAddrAny();
+        IpAddrInfo any_addr = create_ip_addr_any();
         udp_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
     }
     dns_init_local();
@@ -269,7 +269,7 @@ void dns_setserver(uint8_t numdns, const IpAddrInfo* dnsserver)
         }
         else
         {
-            IpAddrInfo any_addr = kIpAddrAny();
+            IpAddrInfo any_addr = create_ip_addr_any();
             dns_servers[numdns] = any_addr;
         }
     }
@@ -293,7 +293,7 @@ IpAddrInfo dns_getserver(const uint8_t numdns)
     else
     {
 
-        return kIpAddrAny();
+        return create_ip_addr_any();
     }
 }
 
@@ -748,7 +748,7 @@ static UdpPcb* dns_alloc_random_port(void)
         auto port = static_cast<uint16_t>(lwip_rand());
         if (DNS_PORT_ALLOWED(port))
         {
-            IpAddrInfo any_addr = kIpAddrAny();
+            IpAddrInfo any_addr = create_ip_addr_any();
             err = udp_bind(pcb, &any_addr, port);
         }
         else

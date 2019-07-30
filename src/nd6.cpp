@@ -279,7 +279,7 @@ nd6_process_autoconfig_prefix(NetworkInterface& netif,
     }
 
     /* Assign the new address to the interface. */
-    ip_addr_copy_from_ip6(netif.ip6_addresses[free_idx], &ip6_addr);
+    netif.ip6_addresses[free_idx].addr = ip6_addr;
     set_netif_ip6_addr_valid_life(netif, free_idx, valid_life);
     set_netif_ip6_addr_pref_life(netif, free_idx, pref_life);
     set_netif_ip6_addr_state(netif, free_idx, IP6_ADDR_TENTATIVE);

@@ -4,7 +4,6 @@
 
 #include <autoip.h>
 #include <cstdlib> /* atoi */
-#include <cstring> /* memset */
 #include <def.h>
 #include <dhcp6.h>
 #include <etharp.h>
@@ -25,133 +24,47 @@
 #include <tcpip.h>
 #include <udp.h>
 
-inline void NETIF_STATUS_CALLBACK(NetworkInterface* n)
+
+///
+/// Initialize a lwip network interface structure for a loopback interface
+///
+/// netif: the lwip network interface structure for this loopif
+/// if_name: the name of the interface, default is "lo"
+/// return: ERR_OK if the loopif is initialized
+///         ERR_MEM if private data couldn't be allocated
+///
+static LwipStatus
+init_loop_netif(NetworkInterface& netif, const std::string& if_name = "lo")
 {
-    if (n->status_callback != nullptr)
-    {
-        (n->status_callback)(n);
-    }
-}
-
-inline void NETIF_LINK_CALLBACK(NetworkInterface* n)
-{
-    if (n->link_callback)
-    {
-        (n->link_callback)(n);
-    }
-}
-
-static NetifExtCallback *ext_callback;
-
-NetworkInterface*netif_list;
-
-NetworkInterface*netif_default;
-//
-// #define netif_index_to_num(index)   ((index) - 1)
-static uint8_t netif_num;
-
-static uint8_t netif_client_id;
-
-
-constexpr auto NETIF_REPORT_TYPE_IPV4 = 0x01;
-constexpr auto NETIF_REPORT_TYPE_IPV6 = 0x02;
-static void netif_issue_reports(NetworkInterface& netif, uint8_t report_type);
-
-static LwipStatus netif_null_output_ip6(NetworkInterface*netif, struct PacketBuffer *p, const Ip6Addr*ipaddr);
-
-static LwipStatus netif_null_output_ip4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr);
-
-static LwipStatus netif_loop_output_ipv4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *addr);
-
-static LwipStatus netif_loop_output_ipv6(NetworkInterface*netif, struct PacketBuffer *p, const Ip6Addr*addr);
-
-
-
-// static NetworkInterface* loop_netif;
-
-/**
- * Initialize a lwip network interface structure for a loopback interface
- *
- * @param netif the lwip network interface structure for this loopif
- * @return ERR_OK if the loopif is initialized
- *         ERR_MEM if private data couldn't be allocated
- */
-static LwipStatus init_loop_netif(NetworkInterface& netif)
-{
-    // lwip_assert("netif_loopif_init: invalid netif", netif != nullptr);
-    /* initialize the snmp variables and counters inside the NetworkInterface*
-      * ifSpeed: no assumption can be made!
-      */ // MIB2_INIT_NETIF(netif, snmp_ifType_softwareLoopback, 0);
-    netif.name[0] = 'l';
-    netif.name[1] = 'o';
-    netif.output = netif_loop_output_ipv4;
-    netif.output_ip6 = netif_loop_output_ipv6;
-    netif.igmp = true; // netif_set_flags(netif, NETIF_FLAG_IGMP);
-    // NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_DISABLE_ALL);
+    // todo: when creating interface check if one with same name already exists.
+    netif.if_name = if_name;
+    netif.netif_type = NETIF_TYPE_LOOPBACK;
+    netif.igmp_allowed = true;
     return STATUS_OK;
 }
 
 ///
 ///
 ///
-void init_netif_module()
+std::vector<NetworkInterface>
+init_netif_module()
 {
-    Ip4Addr loop_ipaddr{};
-    Ip4Addr loop_netmask{};
-    Ip4Addr loop_gw{};
-    make_ip4_addr_host_from_bytes(&loop_gw, 127, 0, 0, 1);
-    make_ip4_addr_host_from_bytes(&loop_ipaddr, 127, 0, 0, 1);
-    make_ip4_addr_host_from_bytes(&loop_netmask, 255, 0, 0, 0);
-    add_netif(loop_netif,
-              &loop_ipaddr,
-              &loop_netmask,
-              &loop_gw,
-              nullptr);
-    ip_addr_ip6_host(&loop_netif->ip6_addr[0], 0, 0, 0, 0x00000001UL);
-    loop_netif->ip6_addr_state[0] = IP6_ADDR_VALID;
-    set_netif_link_up(loop_netif);
-    set_netif_up(loop_netif);
+    std::vector<NetworkInterface> network_interfaces;
+    return network_interfaces;
 }
 
-/**
- * @ingroup lwip_nosys
- * Forwards a received packet for input processing with
- * ethernet_input() or ip_input() depending on netif flags.
- * Don't call directly, pass to netif_add() and call
- * netif->input().
- * Only works if the netif driver correctly sets
- * NETIF_FLAG_ETHARP and/or NETIF_FLAG_ETHERNET flag!
- */
+///
+/// Check out the type of the network interface and read using required function.
+///
 LwipStatus
-input_netif(PacketBuffer& pkt_buf, NetworkInterface& netif)
+recv_netif_bytes(NetworkInterface& netif,
+                 std::vector<uint8_t>& recvd_bytes,
+                 const size_t max_recv_count)
 {
-
-
-  lwip_assert("netif_input: invalid pbuf", pkt_buf != nullptr);
-  lwip_assert("netif_input: invalid netif", netif != nullptr);
-
-  if (netif->flags & (NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH)) {
-    return ethernet_input(pkt_buf, netif);
-  } else
-
-    return ip_input(pkt_buf, netif);
+    // todo: based on the netif, read bytes from a source, e.g. for pcap netif: capture packets, for socket, read, for serial read, for ethernet/wifi, perform raw read, etc.
+    return STATUS_E_NOT_IMPLEMENTED;
 }
 
-/**
- * @ingroup netif
- * Add a network interface to the list of lwIP netifs.
- *
- * Same as @ref netif_add but without IPv4 addresses
- */
-NetworkInterface&
-add_netif_no_addr(NetworkInterface& netif, uint8_t& state)
-{
-  return add_netif(netif,
-
-                   nullptr, nullptr, nullptr,
-
-                   state);
-}
 
 ///
 /// @ingroup netif
@@ -1287,7 +1200,7 @@ add_netif_ip6_addr(NetworkInterface& netif, const Ip6Addr& ip6addr, size_t& out_
   /* Find a free slot. The first one is reserved for link-local addresses. */
   for (i = ip6_addr_islinklocal(ip6addr) ? 0 : 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (is_ip6_addr_state_invalid(get_netif_ip6_addr_state(netif, i))) {
-      ip_addr_copy_from_ip6(&netif->ip6_addr[i], ip6addr);
+        netif.ip6_addresses[i].addr = ip6addr;
       assign_ip6_addr_zone((&netif->ip6_addr[i].u_addr.ip6), IP6_UNICAST, netif,);
       set_netif_ip6_addr_state(netif, i, IP6_ADDR_TENTATIVE);
       if (out_index != nullptr) {

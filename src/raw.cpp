@@ -282,7 +282,7 @@ raw_disconnect(struct RawPcb* pcb)
     /* reset remote address association */
     if (is_ip_addr_any(&pcb->local_ip))
     {
-        auto any_addr = make_ip_addr_any();
+        auto any_addr = create_ip_addr_any();
         copy_ip_addr(&pcb->remote_ip, &any_addr);
     }
     else
@@ -338,7 +338,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
     else
     {
         netif = nullptr;
-        if (ip_addr_ismulticast(ipaddr))
+        if (is_ip_addr_mcast(ipaddr))
         {
             /* For multicast-destined packets, use the user-provided interface index to
              * determine the outgoing interface, if an interface index is set and a
@@ -357,7 +357,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
         // ip_addr_debug_print(true | LWIP_DBG_LEVEL_WARNING, ipaddr);
         return STATUS_E_ROUTING;
     }
-    if (is_ip_addr_any(&pcb->local_ip) || ip_addr_ismulticast(&pcb->local_ip))
+    if (is_ip_addr_any(&pcb->local_ip) || is_ip_addr_mcast(&pcb->local_ip))
     {
         /* use outgoing network interface IP address as source address */
         src_ip = ip_netif_get_local_ip(netif, ipaddr);
@@ -470,7 +470,7 @@ raw_sendto_if_src(RawPcb& pcb,
             return ERR_VAL;
         }
     } /* Multicast Loop? */
-    if (((pcb->flags & RAW_FLAGS_MULTICAST_LOOP) != 0) && ip_addr_ismulticast(dst_ip))
+    if (((pcb->flags & RAW_FLAGS_MULTICAST_LOOP) != 0) && is_ip_addr_mcast(dst_ip))
     {
         q->multicast_loop = true;
     } /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
@@ -486,7 +486,7 @@ raw_sendto_if_src(RawPcb& pcb,
                     p->len >= (pcb->chksum_offset + 2));
         memcpy(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
     } /* Determine TTL to use */
-    uint8_t ttl = (ip_addr_ismulticast(dst_ip) ? raw_get_multicast_ttl(pcb) : pcb->ttl);
+    uint8_t ttl = (is_ip_addr_mcast(dst_ip) ? raw_get_multicast_ttl(pcb) : pcb->ttl);
     netif_set_hints(netif, pcb->netif_hints);
     err = ip_output_if(q, src_ip, dst_ip, ttl, pcb->tos, pcb->protocol, netif);
     netif_reset_hints(netif); /* did we chain a header earlier? */

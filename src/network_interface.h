@@ -28,6 +28,19 @@ constexpr auto NETIF_CHECKSUM_ENABLE_ALL = 0xFFFF;
 constexpr auto NETIF_CHECKSUM_DISABLE_ALL = 0x0000;
 
 
+enum NetifType
+{
+    NETIF_TYPE_LOOPBACK,
+    NETIF_TYPE_SUBINTERFACE,
+    NETIF_TYPE_ETHER,
+    NETIF_TYPE_PCAP,
+    NETIF_TYPE_BOND,
+    NETIF_TYPE_SERIAL,
+    NETIF_TYPE_NULL,
+    NETIF_TYPE_FILE,
+    NETIF_TYPE_SOCKET,
+};
+
 
 constexpr auto NETIF_NO_INDEX = -1;
 
@@ -84,6 +97,8 @@ struct NetIfcHint
 ///  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
 struct NetworkInterface
 {
+    NetifType netif_type;
+
     std::vector<Ip4AddrInfo> ip4_addresses;
 
     std::vector<Ip6AddrInfo> ip6_addresses;
@@ -113,7 +128,7 @@ struct NetworkInterface
 
     bool ethernet;
 
-    bool igmp;
+    bool igmp_allowed;
 
     bool mld6;
 
@@ -498,8 +513,8 @@ ip6_netif_get_local_ip(const NetworkInterface& netif, const Ip6AddrInfo& dest)
 }
 
 
-
-void init_netif_module();
+std::vector<NetworkInterface>
+init_netif_module();
 
 
 NetworkInterface&
@@ -587,8 +602,20 @@ void poll_netif(NetworkInterface& netif);
 void poll_all_netifs();
 
 
-LwipStatus input_netif(PacketBuffer& pkt_buf, NetworkInterface& netif);
+LwipStatus recv_netif_bytes(NetworkInterface& netif, std::vector<uint8_t>& recvd_bytes, const size_t max_recv_count);
 
+
+constexpr auto NETIF_REPORT_TYPE_IPV4 = 0x01;
+constexpr auto NETIF_REPORT_TYPE_IPV6 = 0x02;
+static void netif_issue_reports(NetworkInterface& netif, uint8_t report_type);
+
+static LwipStatus netif_null_output_ip6(NetworkInterface*netif, struct PacketBuffer *p, const Ip6Addr*ipaddr);
+
+static LwipStatus netif_null_output_ip4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *ipaddr);
+
+static LwipStatus netif_loop_output_ipv4(NetworkInterface*netif, struct PacketBuffer *p, const Ip4Addr *addr);
+
+static LwipStatus netif_loop_output_ipv6(NetworkInterface*netif, struct PacketBuffer *p, const Ip6Addr*addr);
 
 
 //

@@ -18,6 +18,14 @@ constexpr uint32_t IP4_ADDR_ANY_U32 = uint32_t(0x00000000UL);
 constexpr uint32_t IP4_ADDR_BCAST_U32 = uint32_t(0xffffffffUL);
 
 
+constexpr auto IP4_ADDR_NONE_U32 = 0xffffffffUL;
+
+
+//constexpr uint32_t kIpaddrNone = ;
+/** 127.0.0.1 */
+constexpr auto IP4_ADDR_LOOPBACK_U32 = 0x7f000001UL;
+
+
 /// This is the aligned version of Ip4Addr, used as local variable, on the stack, etc.
 struct Ip4Addr
 {
@@ -51,9 +59,19 @@ make_ip4_addr_from_bytes(const uint8_t a,
 ///
 ///
 ///
+inline bool
+is_ip4_addr_any(Ip4Addr& addr)
+{ 
+    return addr.addr == IP4_ADDR_ANY_U32;
+}
+
+
+///
+///
+///
 inline void zero_ip4_addr(Ip4Addr& addr)
 {
-    addr.addr = 0;
+    addr.addr = IP4_ADDR_ANY_U32;
 }
 
 ///
@@ -61,8 +79,18 @@ inline void zero_ip4_addr(Ip4Addr& addr)
 ///
 inline Ip4Addr make_ip4_addr_any()
 {
-   return {0};
+   return {IP4_ADDR_ANY_U32};
 }
+
+
+///
+///
+///
+inline void set_ip4_addr_any(Ip4Addr& addr)
+{
+    addr.addr = IP4_ADDR_ANY_U32;
+}
+
 
 ///
 ///
@@ -72,7 +100,7 @@ inline Ip4Addr make_ip4_addr_bcast()
     return {make_u32(255,255,255,255)};
 }
 
-constexpr auto IP4_ADDR_NONE_U32 = 0xffffffffUL;
+
 
 /** 255.255.255.255 */
 inline Ip4Addr make_ip4_addr_none() {
@@ -80,9 +108,7 @@ inline Ip4Addr make_ip4_addr_none() {
 }
 
 
-//constexpr uint32_t kIpaddrNone = ;
-/** 127.0.0.1 */
-constexpr auto IP4_ADDR_LOOPBACK_U32 = 0x7f000001UL;
+
 
 
 inline Ip4Addr make_ip4_addr_loopback() {

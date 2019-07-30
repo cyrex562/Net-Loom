@@ -713,7 +713,7 @@ cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
     IpAddrInfo nsa;
     IpAddrInfo nsb;
-    auto any_addr = make_ip_addr_any();
+    auto any_addr = create_ip_addr_any();
     nsa = dns_getserver(0);
     set_ip_addr_ip4_u32_val(nsb, ns1);
     if (compare_ip_addr(&nsa, &nsb))
@@ -808,7 +808,7 @@ sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 int
 cif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
-    auto any_addr = make_ip_addr_ip6_any();
+    auto any_addr = create_ip_addr_ip6_any();
     set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_INVALID);
     set_netif_ip6_addr(pcb->netif, 0, &any_addr.u_addr.ip6);
     return 1;
