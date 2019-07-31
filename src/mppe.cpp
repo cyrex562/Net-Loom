@@ -209,22 +209,22 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
     LwipStatus err; /* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.
 	 */
-	struct PacketBuffer* np = pbuf_alloc(PBUF_RAW,
-                                         MPPE_OVHD + sizeof(protocol) + (*pb)->tot_len);
+	// struct PacketBuffer* np = pbuf_alloc();
+    PacketBuffer np{};
 	if (!np) {
 		return ERR_MEM;
 	}
 
 	/* Hide MPPE header + protocol */
-	pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
+	// pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
 
-	if ((err = pbuf_copy(np, *pb)) != STATUS_OK) {
+	if ((err = copy_pkt_buf(np, *pb)) != STATUS_OK) {
 		free_pkt_buf(np);
 		return err;
 	}
 
 	/* Reveal MPPE header + protocol */
-	pbuf_add_header(np, MPPE_OVHD + sizeof(protocol));
+	// pbuf_add_header(np, MPPE_OVHD + sizeof(protocol));
 
 	*pb = np;
 	uint8_t* pl = (uint8_t*)np->payload;
@@ -255,7 +255,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	pl[1] = protocol;
 
 	/* Hide MPPE header */
-	pbuf_remove_header(np, MPPE_OVHD);
+	// pbuf_remove_header(np, MPPE_OVHD);
 
 	/* Encrypt packet */
 	for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
@@ -266,7 +266,7 @@ mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16
 	}
 
 	/* Reveal MPPE header */
-	pbuf_add_header(np, MPPE_OVHD);
+	// pbuf_add_header(np, MPPE_OVHD);
 
 	return STATUS_OK;
 }
@@ -385,7 +385,7 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
     }
 
 	/* Hide MPPE header */
-	pbuf_remove_header(n0, MPPE_OVHD);
+	// pbuf_remove_header(n0, MPPE_OVHD);
 
 	/* Decrypt the packet. */
 	for (struct PacketBuffer* n = n0; n != nullptr; n = n->next) {

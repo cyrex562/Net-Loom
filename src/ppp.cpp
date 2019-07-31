@@ -196,7 +196,7 @@ ppp_free(PppPcb* pcb)
     {
         return ERR_CONN;
     } // PPPDEBUG(LOG_DEBUG, ("ppp_free[%d]\n", pcb->netif->num));
-    remove_netif(pcb->netif);
+    remove_netif(pcb->netif,);
     LwipStatus err = pcb->link_cb->free(pcb, (uint8_t*)pcb->link_ctx_cb);
     delete pcb; // LWIP_MEMPOOL_FREE(PppPcb, pcb);
     return err;
@@ -485,13 +485,13 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
     const auto pb_payload_1 = uint8_t(static_cast<uint8_t*>(pb->payload)[1]);
     uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
     const size_t proto_size = 2; // sizeof(protocol)
-    pbuf_remove_header(pb, proto_size);
+    // pbuf_remove_header(pb, proto_size);
     if (pb->len < 2)
     {
         free_pkt_buf(pb);
         return false;
     } // protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
-    pbuf_remove_header(pb, proto_size);
+    // pbuf_remove_header(pb, proto_size);
     if (protocol == PPP_COMP)
     {
         if (protocol != PPP_LCP && lcp_fsm->state != PPP_FSM_OPENED)
@@ -513,12 +513,12 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
         if (pl[0] & 0x01)
         {
             protocol = pl[0];
-            pbuf_remove_header(pb, 1);
+            // pbuf_remove_header(pb, 1);
         }
         else
         {
             protocol = (pl[0] << 8) | pl[1];
-            pbuf_remove_header(pb, 2);
+            // pbuf_remove_header(pb, 2);
         }
         if (protocol == PPP_COMP)
         {
@@ -548,12 +548,12 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
             if (pl[0] & 0x01)
             {
                 protocol = pl[0];
-                pbuf_remove_header(pb, 1);
+                // pbuf_remove_header(pb, 1);
             }
             else
             {
                 protocol = (pl[0] << 8) | pl[1];
-                pbuf_remove_header(pb, 2);
+                // pbuf_remove_header(pb, 2);
             }
         }
         if (protocol == PPP_IP)
@@ -584,12 +584,12 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
             {
                 ppp_warn("Unsupported protocol 0x%x received", protocol);
             }
-            if (pbuf_add_header(pb, sizeof(protocol)))
-            {
-                // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
-                free_pkt_buf(pb);
-                return false;
-            }
+            // if (pbuf_add_header(pb, sizeof(protocol)))
+            // {
+            //     // PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
+            //     free_pkt_buf(pb);
+            //     return false;
+            // }
             lcp_sprotrej(pcb, static_cast<uint8_t*>(pb->payload), pb->len);
         }
     }
@@ -745,7 +745,7 @@ sifup(PppPcb* pcb)
 {
     pcb->if4_up = true;
     pcb->err_code = PPPERR_NONE;
-    set_netif_link_up(pcb->netif);
+    set_netif_link_up(pcb->netif,);
     // PPPDEBUG(LOG_DEBUG, ("sifup[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return 1;
@@ -761,7 +761,7 @@ sifdown(PppPcb* pcb)
     if (true /* set the interface down if IPv6 is down as well */ && !pcb->if6_up)
     {
         /* make sure the netif link callback is called */
-        set_netif_link_down(pcb->netif);
+        set_netif_link_down(pcb->netif,);
     } // PPPDEBUG(LOG_DEBUG, ("sifdown[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     return 1;
 } /********************************************************************
@@ -794,7 +794,7 @@ sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     Ip6Addr ip6{};
     IN6_LLADDR_FROM_EUI64(&ip6, &our_eui64);
-    set_netif_ip6_addr(pcb->netif, 0, &ip6);
+    set_netif_ip6_addr_info(pcb->netif, 0, &ip6);
     set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
     /* FIXME: should we add an IPv6 static neighbor using his_eui64 ? */
     return 1;
@@ -807,7 +807,7 @@ cif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
     auto any_addr = create_ip_addr_ip6_any();
     set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_INVALID);
-    set_netif_ip6_addr(pcb->netif, 0, &any_addr.u_addr.ip6);
+    set_netif_ip6_addr_info(pcb->netif, 0, &any_addr.u_addr.ip6);
     return 1;
 } /*
  * sif6up - Config the interface up and enable IPv6 packets to pass.
@@ -817,7 +817,7 @@ sif6up(PppPcb* pcb)
 {
     pcb->if6_up = true;
     pcb->err_code = PPPERR_NONE;
-    set_netif_link_up(pcb->netif);
+    set_netif_link_up(pcb->netif,);
     // PPPDEBUG(LOG_DEBUG, ("sif6up[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return 1;
@@ -833,7 +833,7 @@ sif6down(PppPcb* pcb)
     if (true /* set the interface down if IPv4 is down as well */ && !pcb->if4_up)
     {
         /* make sure the netif link callback is called */
-        set_netif_link_down(pcb->netif);
+        set_netif_link_down(pcb->netif,);
     } // PPPDEBUG(LOG_DEBUG, ("sif6down[%d]: err_code=%d\n", pcb->netif->num, pcb->err_code));
     return 1;
 } /*

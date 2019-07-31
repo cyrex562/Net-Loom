@@ -534,11 +534,11 @@ pcapif_low_level_init(NetworkInterface* netif)
     pa->last_link_event = pcapifh_linkstate_get(pa->link_state);
     if (pa->last_link_event == PCAPIF_LINKEVENT_DOWN)
     {
-        set_netif_link_down(netif);
+        set_netif_link_down(netif,);
     }
     else
     {
-        set_netif_link_up(netif);
+        set_netif_link_up(netif,);
     }
     sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
     pa->rx_run = 1;
@@ -642,7 +642,8 @@ pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packe
     }
     int unicast = ((dest->addr[0] & 0x01) == 0);
     /* We allocate a PacketBuffer chain of pbufs from the pool. */
-    struct PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)length + ETH_PAD_SIZE);
+    // struct PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
     Logf(true, "netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len);
     if (p != nullptr)
     {
@@ -714,12 +715,12 @@ pcapif_rx_ref(struct PacketBuffer* p)
     lwip_assert("out of memory for RX", ppc != nullptr);
     ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
     ppc->p = p;
-    struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
-                                                 p->tot_len,
-                                                 PBUF_REF,
-                                                 &ppc->pc,
-                                                 p->payload,
-                                                 p->tot_len);
+    // struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
+    //                                              p->tot_len,
+    //                                              PBUF_REF,
+    //                                              &ppc->pc,
+    //                                              p->payload,
+    //                                              p->tot_len);
     lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
     return q;
 } /** pcapif_input: This function is called when a packet is ready to be read

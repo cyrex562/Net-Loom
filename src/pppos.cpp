@@ -165,7 +165,8 @@ pppos_write(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* p)
     uint16_t fcs_out; /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
         gets freed by 'pppos_output_last' before this function returns and thus
         cannot starve rx. */
-    struct PacketBuffer* nb = pbuf_alloc(PBUF_RAW, 0);
+    // struct PacketBuffer* nb = pbuf_alloc();
+    PacketBuffer pb{};
     if (nb == nullptr)
     {
         // PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
@@ -209,7 +210,8 @@ pppos_netif_output(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* pb, uint16_t 
     uint16_t fcs_out; /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the PacketBuffer
         gets freed by 'pppos_output_last' before this function returns and thus
         cannot starve rx. */
-    struct PacketBuffer* nb = pbuf_alloc(PBUF_RAW, 0);
+    // struct PacketBuffer* nb = pbuf_alloc();
+    PacketBuffer nb{};
     if (nb == nullptr)
     {
         // PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
@@ -403,7 +405,7 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                         pppos->in_tail->tot_len = pppos->in_tail->len;
                         if (pppos->in_tail != pppos->in_head)
                         {
-                            pbuf_cat(pppos->in_head, pppos->in_tail);
+                            // pbuf_cat(pppos->in_head, pppos->in_tail);
                         }
                     }
                     else
@@ -411,16 +413,16 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                         pppos->in_tail->tot_len = pppos->in_tail->len;
                         if (pppos->in_tail != pppos->in_head)
                         {
-                            pbuf_cat(pppos->in_head, pppos->in_tail);
+                            // pbuf_cat(pppos->in_head, pppos->in_tail);
                         }
-                        pbuf_realloc(pppos->in_head);
+                        // pbuf_realloc(pppos->in_head);
                     } /* Dispatch the packet thereby consuming it. */
                     struct PacketBuffer* inp = pppos->in_head; /* Packet consumed, release our references. */
                     pppos->in_head = nullptr;
                     pppos->in_tail = nullptr;
                     /* hide the room for Ethernet forwarding header */
-                    pbuf_remove_header(inp,
-                                       PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN);
+                    // pbuf_remove_header(inp,
+                    //                    PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN);
                     if (tcpip_try_callback(pppos_input_callback, inp) != STATUS_OK)
                     {
                         // PPPDEBUG(LOG_ERR,
@@ -502,7 +504,7 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                         pppos->in_tail->tot_len = pppos->in_tail->len;
                         if (pppos->in_tail != pppos->in_head)
                         {
-                            pbuf_cat(pppos->in_head, pppos->in_tail);
+                            // pbuf_cat(pppos->in_head, pppos->in_tail);
                             /* give up the in_tail reference now */
                             pppos->in_tail = nullptr;
                         }
@@ -516,7 +518,8 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                     {
                         pbuf_alloc_len = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
                     }
-                    struct PacketBuffer* next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len);
+                    // struct PacketBuffer* next_pbuf = pbuf_alloc();
+                    PacketBuffer next_pbuf{};
                     if (next_pbuf == nullptr)
                     {
                         /* No free buffers.  Drop the input packet and let the
@@ -558,11 +561,11 @@ pppos_input_callback(void* arg)
 {
     struct PacketBuffer* pb = (struct PacketBuffer*)arg;
     PppPcb* ppp = ((struct pppos_input_header*)pb->payload)->ppp;
-    if (pbuf_remove_header(pb, sizeof(struct pppos_input_header)))
-    {
-        lwip_assert("pbuf_remove_header failed\n", false);
-        goto drop;
-    } /* Dispatch the packet thereby consuming it. */
+    // if (pbuf_remove_header(pb, sizeof(struct pppos_input_header)))
+    // {
+    //     lwip_assert("pbuf_remove_header failed\n", false);
+    //     goto drop;
+    // } /* Dispatch the packet thereby consuming it. */
     Fsm* fsm = nullptr;
     ppp_input(ppp, pb, fsm);
     return;

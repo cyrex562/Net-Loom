@@ -47,7 +47,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
 ///
 void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
 {
-    struct PacketBuffer* r;
+    struct PacketBuffer r{};
     const Ip6Addr* reply_src; /* Check that ICMPv6 header fits in payload */
     Ip6Addr* curr_dst_addr = nullptr;
     Ip6Addr* curr_src_addr = nullptr;
@@ -90,14 +90,15 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
             free_pkt_buf(p);
             return;
         } /* Allocate reply. */
-        r = pbuf_alloc(PBUF_IP, p->tot_len);
+        // r = pbuf_alloc();
+
         if (r == nullptr)
         {
             /* drop */
             free_pkt_buf(p);
             return;
         } /* Copy echo request. */
-        if (pbuf_copy(r, p) != STATUS_OK)
+        if (copy_pkt_buf(r, p) != STATUS_OK)
         {
             /* drop */
             free_pkt_buf(p);
@@ -106,7 +107,7 @@ void icmp6_input(struct PacketBuffer* p, NetworkInterface* inp)
         } /* Determine reply source IPv6 address. */
         if (is_ip6_addr_mcast(curr_dst_addr))
         {
-            reply_src = &select_ip6_src_addr(inp, curr_dst_addr)->u_addr.ip6;
+            reply_src = &select_ip6_src_addr(inp, curr_dst_addr,)->u_addr.ip6;
             if (reply_src == nullptr)
             {
                 /* drop */
@@ -240,7 +241,7 @@ static void icmp6_send_response(struct PacketBuffer* p,
     NetworkInterface* netif = nullptr;
     lwip_assert("icmpv6 packet not a direct response", netif != nullptr);
     const Ip6Addr* reply_dest = nullptr; /* Select an address to use as source. */
-    Ip6Addr reply_src = select_ip6_src_addr(netif, reply_dest)->u_addr.ip6;
+    Ip6Addr reply_src = select_ip6_src_addr(netif, reply_dest,)->u_addr.ip6;
     icmp6_send_response_with_addrs_and_netif(p,
                                              code,
                                              data,
@@ -313,9 +314,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct PacketBuffer* p,
                                                      const Ip6Addr* reply_dest,
                                                      NetworkInterface* netif)
 {
-    struct PacketBuffer* q = pbuf_alloc(PBUF_IP,
-                                        sizeof(struct Icmp6Hdr) + IP6_HDR_LEN +
-                                        LWIP_ICMP6_DATASIZE);
+    struct PacketBuffer q{};
     if (q == nullptr)
     {
         Logf(true,

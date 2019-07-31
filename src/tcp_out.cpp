@@ -127,7 +127,7 @@ static NetworkInterface*
 tcp_route(const struct TcpPcb *pcb, const IpAddrInfo *src, const IpAddrInfo *dst)
 {
     if ((pcb != nullptr) && (pcb->netif_idx != NETIF_NO_INDEX)) {
-    return get_netif_by_index(pcb->netif_idx);
+    // return get_netif_by_index(pcb->netif_idx);
   } else {
     return ip_route(src, dst);
   }
@@ -175,13 +175,13 @@ tcp_create_segment(const struct TcpPcb* pcb,
     seg->chksum_swapped = 0; /* check optflags */
     lwip_assert("invalid optflags passed: TF_SEG_DATA_CHECKSUMMED",
                 (optflags & TF_SEG_DATA_CHECKSUMMED) == 0); /* build TCP header */
-    if (pbuf_add_header(p, TCP_HDR_LEN))
-    {
-        Logf(true | LWIP_DBG_LEVEL_SERIOUS,
-             ("tcp_create_segment: no room for TCP header in pbuf.\n"));
-        tcp_seg_free(seg);
-        return nullptr;
-    }
+    // if (pbuf_add_header(p, TCP_HDR_LEN))
+    // {
+    //     Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+    //          ("tcp_create_segment: no room for TCP header in pbuf.\n"));
+    //     tcp_seg_free(seg);
+    //     return nullptr;
+    // }
     seg->tcphdr = (struct TcpHdr *)seg->p->payload;
     seg->tcphdr->src = lwip_htons(pcb->local_port);
     seg->tcphdr->dest = lwip_htons(pcb->remote_port);
@@ -209,13 +209,13 @@ tcp_create_segment(const struct TcpPcb* pcb,
  * @param first_seg true when this PacketBuffer will be used in the first enqueued segment.
  */
 static struct PacketBuffer*
-tcp_pbuf_prealloc(PbufLayer layer,
-                  size_t length,
-                  size_t max_length,
-                  size_t* oversize,
-                  const struct TcpPcb* pcb,
-                  uint8_t apiflags,
-                  uint8_t first_seg)
+tcp_pbuf_prealloc(
+    size_t length,
+    size_t max_length,
+    size_t* oversize,
+    const struct TcpPcb* pcb,
+    uint8_t apiflags,
+    uint8_t first_seg)
 {
     size_t alloc = length;
     lwip_assert("tcp_pbuf_prealloc: invalid oversize", oversize != nullptr);
@@ -240,7 +240,8 @@ tcp_pbuf_prealloc(PbufLayer layer,
                              (TCP_OVERSIZE_CALC_LENGTH(length)));
         }
     }
-    struct PacketBuffer* p = pbuf_alloc(layer, alloc);
+    // struct PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
     if (p == nullptr)
     {
         return nullptr;
@@ -368,7 +369,7 @@ tcp_write_checks(struct TcpPcb* pcb, uint16_t len)
 LwipStatus
 tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
 {
-    struct PacketBuffer* concat_p = nullptr;
+    struct PacketBuffer concat_p;
     struct TcpSeg *last_unsent = nullptr, *seg = nullptr, *prev_seg = nullptr, *queue =
                       nullptr;
     uint16_t pos = 0; /* position in 'arg' data */
@@ -484,8 +485,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
             if (apiflags & TCP_WRITE_FLAG_COPY)
             {
                 /* Data is copied */
-                if ((concat_p = tcp_pbuf_prealloc(PBUF_RAW,
-                                                  seglen,
+                if ((concat_p = tcp_pbuf_prealloc(seglen,
                                                   space,
                                                   &oversize,
                                                   pcb,
@@ -503,7 +503,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
                                &concat_chksum,
                                &concat_chksum_swapped);
                 concat_chksummed += seglen;
-                queuelen += pbuf_clen(concat_p);
+                // queuelen += pbuf_clen(concat_p);
             }
             else
             {
@@ -514,26 +514,27 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
                 {
                     ;
                 }
-                if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS |
-                        0)) == 0) && (const uint8_t *)p->payload +
-                    p->
-                    len == (const uint8_t *)arg)
-                {
-                    lwip_assert("tcp_write: ROM pbufs cannot be oversized", pos == 0);
-                    extendlen = seglen;
-                }
-                else
-                {
-                    if ((concat_p = pbuf_alloc(PBUF_RAW, seglen)) == nullptr)
-                    {
-                        Logf(true | LWIP_DBG_LEVEL_SERIOUS,
-                             ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"
-                             ));
-                        goto memerr;
-                    } /* reference the non-volatile payload data */
-                    ((struct pbuf_rom *)concat_p)->payload = (const uint8_t *)arg + pos;
-                    queuelen += pbuf_clen(concat_p);
-                } /* calculate the checksum of nocopy-data */
+                // if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS |
+                //         0)) == 0) && (const uint8_t *)p->payload +
+                //     p->
+                //     len == (const uint8_t *)arg)
+                // {
+                //     lwip_assert("tcp_write: ROM pbufs cannot be oversized", pos == 0);
+                //     extendlen = seglen;
+                // }
+                // else
+                // {
+                //     concat_p = PacketBuffer();
+                //     // if ((concat_p = pbuf_alloc()) == nullptr)
+                //     // {
+                //     //     Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+                //     //          ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"
+                //     //          ));
+                //     //     goto memerr;
+                //     // } /* reference the non-volatile payload data */
+                //     // ((struct pbuf_rom *)concat_p)->payload = (const uint8_t *)arg + pos;
+                //     // queuelen += pbuf_clen(concat_p);
+                // } /* calculate the checksum of nocopy-data */
                 tcp_seg_add_chksum(~inet_chksum((const uint8_t *)arg + pos, seglen),
                                    seglen,
                                    &concat_chksum,
@@ -555,7 +556,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
    */
     while (pos < len)
     {
-        struct PacketBuffer* p;
+        struct PacketBuffer p{};
         uint16_t left = len - pos;
         uint16_t max_len = mss_local - optlen;
         uint16_t seglen = std::min(left, max_len);
@@ -565,8 +566,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
         {
             /* If copy is set, memory should be allocated and data copied
              * into PacketBuffer */
-            if ((p = tcp_pbuf_prealloc(PBUF_TRANSPORT,
-                                       seglen + optlen,
+            if ((p = tcp_pbuf_prealloc(seglen + optlen,
                                        mss_local,
                                        &oversize,
                                        pcb,
@@ -594,35 +594,37 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
              * sent out on the link (as it has to be ACKed by the remote
              * party) we can safely use PBUF_ROM instead of PBUF_REF here.
              */
-            struct PacketBuffer* p2;
+            // struct PacketBuffer* p2;
+            PacketBuffer p2{};
             lwip_assert("oversize == 0", oversize == 0);
-            if ((p2 = pbuf_alloc(PBUF_TRANSPORT, seglen)) == nullptr)
-            {
-                Logf(true | LWIP_DBG_LEVEL_SERIOUS,
-                     ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"
-                     ));
-                goto memerr;
-            } /* calculate the checksum of nocopy-data */
+            // if ((p2 = pbuf_alloc()) == nullptr)
+            // {
+            //     Logf(true | LWIP_DBG_LEVEL_SERIOUS,
+            //          ("tcp_write: could not allocate memory for zero-copy PacketBuffer\n"
+            //          ));
+            //     goto memerr;
+            // } /* calculate the checksum of nocopy-data */
             chksum = ~inet_chksum((const uint8_t *)arg + pos, seglen);
             if (seglen & 1)
             {
                 chksum_swapped = 1;
                 chksum = SWAP_BYTES_IN_WORD(chksum);
             } /* reference the non-volatile payload data */
-            ((struct pbuf_rom *)p2)->payload = (const uint8_t *)arg + pos;
+            // ((struct pbuf_rom *)p2)->payload = (const uint8_t *)arg + pos;
             /* Second, allocate a PacketBuffer for the headers. */
-            if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen)) == nullptr)
-            {
-                /* If allocation fails, we have to deallocate the data PacketBuffer as
-                 * well. */
-                free_pkt_buf(p2);
-                Logf(true,
-                     ("tcp_write: could not allocate memory for header PacketBuffer\n"));
-                goto memerr;
-            } /* Concatenate the headers and data pbufs together. */
-            pbuf_cat(p/*header*/, p2/*data*/);
+            p = PacketBuffer();
+            // if ((p = pbuf_alloc()) == nullptr)
+            // {
+            //     /* If allocation fails, we have to deallocate the data PacketBuffer as
+            //      * well. */
+            //     free_pkt_buf(p2);
+            //     Logf(true,
+            //          ("tcp_write: could not allocate memory for header PacketBuffer\n"));
+            //     goto memerr;
+            // } /* Concatenate the headers and data pbufs together. */
+            // pbuf_cat(p/*header*/, p2/*data*/);
         }
-        queuelen += pbuf_clen(p);
+        // queuelen += pbuf_clen(p);
         /* Now that there are more segments queued, we check again if the
             * length of the queue exceeds the configured maximum or
             * overflows. */
@@ -689,7 +691,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
     {
         lwip_assert("tcp_write: cannot concatenate when pcb->unsent is empty",
                     (last_unsent != nullptr));
-        pbuf_cat(last_unsent->p, concat_p);
+        // pbuf_cat(last_unsent->p, concat_p);
         last_unsent->len += concat_p->tot_len;
     }
     else if (extendlen > 0)
@@ -783,7 +785,7 @@ LwipStatus
 tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
 {
   struct TcpSeg *seg = nullptr, *useg = nullptr;
-  struct PacketBuffer *p = nullptr;
+  struct PacketBuffer p{};
   uint16_t chksum = 0;
   uint8_t chksum_swapped = 0;
   lwip_assert("tcp_split_unsent_seg: invalid pcb", pcb != nullptr);
@@ -819,7 +821,8 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   const uint16_t remainder = useg->len - split;
 
   /* Create new PacketBuffer for the remainder of the split */
-  p = pbuf_alloc(PBUF_TRANSPORT, remainder + optlen);
+  // p = pbuf_alloc();
+    p = PacketBuffer();
   if (p == nullptr) {
     Logf(true,
          "tcp_split_unsent_seg: could not allocate memory for PacketBuffer remainder %u\n", remainder);
@@ -868,11 +871,11 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   seg->flags |= TF_SEG_DATA_CHECKSUMMED;
 
   /* Remove this segment from the queue since trimming it may free pbufs */
-  pcb->snd_queuelen -= pbuf_clen(useg->p);
+  // pcb->snd_queuelen -= pbuf_clen(useg->p);
 
   /* Trim the original PacketBuffer into our split size.  At this point our remainder segment must be setup
   successfully because we are modifying the original segment */
-  pbuf_realloc(useg->p);
+  // pbuf_realloc(useg->p);
   useg->len -= remainder;
   TCPH_SET_FLAG(useg->tcphdr, split_flags);
 
@@ -880,7 +883,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   // useg->oversize_left = 0;
 
   /* Add back to the queue with new trimmed PacketBuffer */
-  pcb->snd_queuelen += pbuf_clen(useg->p);
+  // pcb->snd_queuelen += pbuf_clen(useg->p);
 
   /* The checksum on the split segment is now incorrect. We need to re-run it over the split */
   useg->chksum = 0;
@@ -904,7 +907,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   /* Update number of segments on the queues. Note that length now may
    * exceed TCP_SND_QUEUELEN! We don't have to touch pcb->snd_buf
    * because the total amount of data is constant when packet is split */
-  pcb->snd_queuelen += pbuf_clen(seg->p);
+  // pcb->snd_queuelen += pbuf_clen(seg->p);
 
   /* Finally insert remainder into queue after split (which stays head) */
   seg->next = useg->next;
@@ -972,7 +975,7 @@ tcp_send_fin(struct TcpPcb *pcb)
 LwipStatus
 tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
 {
-  struct PacketBuffer *p;
+  struct PacketBuffer p{};
   struct TcpSeg *seg;
   uint8_t optflags = 0;
   uint8_t optlen = 0;
@@ -1013,10 +1016,11 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
   // optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb);
 
   /* Allocate PacketBuffer with room for TCP header + options */
-  if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen)) == nullptr) {
-    tcp_set_flags(pcb, TF_NAGLEMEMERR);
-    return ERR_MEM;
-  }
+    p = PacketBuffer();
+  // if ((p = pbuf_alloc()) == nullptr) {
+  //   tcp_set_flags(pcb, TF_NAGLEMEMERR);
+  //   return ERR_MEM;
+  // }
   lwip_assert("tcp_enqueue_flags: check that first PacketBuffer can hold optlen",
               (p->len >= optlen));
 
@@ -1060,7 +1064,7 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
   }
 
   /* update number of segments on the queues */
-  pcb->snd_queuelen += pbuf_clen(seg->p);
+  // pcb->snd_queuelen += pbuf_clen(seg->p);
   Logf(true, "tcp_enqueue_flags: %d (after enqueued)\n", pcb->snd_queuelen);
   if (pcb->snd_queuelen != 0) {
     lwip_assert("tcp_enqueue_flags: invalid queue length",
@@ -1345,10 +1349,10 @@ tcp_output_segment_busy(const struct TcpSeg *seg)
   /* We only need to check the first PacketBuffer here:
      If a PacketBuffer is queued for transmission, a driver calls pbuf_ref(),
      which only changes the ref count of the first PacketBuffer */
-  if (seg->p->ref_count != 1) {
-    /* other reference found */
-    return 1;
-  }
+  // if (seg->p->ref_count != 1) {
+  //   /* other reference found */
+  //   return 1;
+  // }
   /* no other references found */
   return 0;
 }
@@ -1710,7 +1714,8 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
                         uint32_t seqno_be /* already in network byte order */,
                         uint16_t src_port, uint16_t dst_port, uint8_t flags, uint16_t wnd)
 {
-    struct PacketBuffer* p = pbuf_alloc(PBUF_IP, TCP_HDR_LEN + optlen + datalen);
+    // struct PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
   if (p != nullptr) {
     lwip_assert("check that first pbuf can hold TcpHdr",
                 (p->len >= TCP_HDR_LEN + optlen));

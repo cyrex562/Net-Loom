@@ -50,7 +50,7 @@ template <typename T, int N> class ypipe_t : public ypipe_base_t<T>
     inline ypipe_t ()
     {
         //  Insert terminator element into the queue.
-        _queue.push ();
+        // _queue.push ();
 
         //  Let all the pointers to point to the terminator.
         //  (unless pipe is dead, in which case c is set to NULL).
@@ -79,7 +79,7 @@ template <typename T, int N> class ypipe_t : public ypipe_base_t<T>
     {
         //  Place the value to the queue, add new terminator element.
         _queue.back () = value_;
-        _queue.push ();
+        // _queue.push ();
 
         //  Move the "flush up to here" poiter.
         if (!incomplete_)

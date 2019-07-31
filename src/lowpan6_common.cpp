@@ -764,7 +764,8 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
 
   /* Allocate a buffer for decompression. This buffer will be too big and will be
      trimmed once the final size is known. */
-  struct PacketBuffer* q = pbuf_alloc(PBUF_IP, p->len + IP6_HDR_LEN + UDP_HLEN_ALLOC);
+  // struct PacketBuffer* q = pbuf_alloc();
+    PacketBuffer q{};
   if (q == nullptr) {
     free_pkt_buf(p);
     return nullptr;
@@ -798,18 +799,18 @@ lowpan6_decompress(struct PacketBuffer *p, uint16_t datagram_size, Ip6Addr *lowp
      (and L4?) in a single PacketBuffer: */
 
   /* Hide the compressed headers in p */
-  pbuf_remove_header(p, lowpan6_offset);
+  // pbuf_remove_header(p, lowpan6_offset);
   /* Temporarily hide the headers in q... */
-  pbuf_remove_header(q, ip6_offset);
+  // pbuf_remove_header(q, ip6_offset);
   /* ... copy the rest of p into q... */
-  pbuf_copy(q, p);
+  copy_pkt_buf(q, p);
   /* ... and reveal the headers again... */
-  pbuf_add_header_force(q, ip6_offset);
+  // pbuf_add_header_force(q, ip6_offset);
   /* ... trim the PacketBuffer to its correct size... */
-  pbuf_realloc(q);
+  // pbuf_realloc(q);
   /* ... and cat possibly remaining (data-only) pbufs */
   if (p->next != nullptr) {
-    pbuf_cat(q, p->next);
+    // pbuf_cat(q, p->next);
   }
   /* the original (first) PacketBuffer can now be freed */
   p->next = nullptr;

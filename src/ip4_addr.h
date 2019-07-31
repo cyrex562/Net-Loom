@@ -275,7 +275,8 @@ inline bool cmp_ip4_addr_net(const Ip4Addr& addr1,
     return (((addr1).addr & (mask).addr) == ((addr2).addr & (mask).addr));
 }
 
-inline bool cmp_ip4_addr(const Ip4Addr& addr1, const Ip4Addr& addr2)
+
+inline bool is_ip4_addr_equal(const Ip4Addr& addr1, const Ip4Addr& addr2)
 {
     return addr1.addr == addr2.addr;
 }

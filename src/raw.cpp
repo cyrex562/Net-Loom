@@ -333,7 +333,8 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
     Logf(true, ("raw_sendto\n"));
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = get_netif_by_index(pcb->netif_idx);
+        // todo: get collection of netifs to send
+        // netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -343,7 +344,8 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
             /* For multicast-destined packets, use the user-provided interface index to
              * determine the outgoing interface, if an interface index is set and a
              * matching netif can be found. Otherwise, fall back to regular routing. */
-            netif = get_netif_by_index(pcb->mcast_ifindex);
+            // todo: get current netif
+            // netif = get_netif_by_index(pcb->mcast_ifindex);
         }
         if (netif == nullptr)
 
@@ -393,7 +395,7 @@ raw_sendto_if_src(RawPcb& pcb,
                   const IpAddrInfo& src_ip)
 {
     LwipStatus err = {};
-    struct PacketBuffer* q; /* q will be sent down the stack */
+    PacketBuffer q; /* q will be sent down the stack */
     if ((pcb == nullptr) || (dst_ip == nullptr) || (netif == nullptr) || (src_ip ==
             nullptr) || !match_ip_addr_pcb_version((IpPcb*)pcb, src_ip) || !
         match_ip_addr_pcb_version((IpPcb*)pcb, dst_ip))
@@ -422,36 +424,37 @@ raw_sendto_if_src(RawPcb& pcb,
     {
         return ERR_MEM;
     } /* not enough space to add an IP header to first PacketBuffer in given p chain? */
-    if (pbuf_add_header(p, header_size))
-    {
-        /* allocate header in new PacketBuffer */
-        q = pbuf_alloc(PBUF_IP, 0); /* new header PacketBuffer could not be allocated? */
-        if (q == nullptr)
-        {
-            Logf(true,
-                 ("raw_sendto: could not allocate header\n"));
-            return ERR_MEM;
-        }
-        if (p->tot_len != 0)
-        {
-            /* chain header q in front of given PacketBuffer p */
-            pbuf_chain(q, p);
-        } /* { first PacketBuffer q points to header PacketBuffer } */
-        Logf(true,
-             "raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n",
-             (uint8_t *)q,
-             (uint8_t *)p);
-    }
-    else
-    {
-        /* first PacketBuffer q equals given PacketBuffer */
-        q = p;
-        if (pbuf_remove_header(q, header_size))
-        {
-            lwip_assert("Can't restore header we just removed!", false);
-            return ERR_MEM;
-        }
-    }
+    // if (pbuf_add_header(p, header_size))
+    // {
+    //     /* allocate header in new PacketBuffer */
+    //     // q = pbuf_alloc(); /* new header PacketBuffer could not be allocated? */
+    //     q = PacketBuffer();
+    //     if (q == nullptr)
+    //     {
+    //         Logf(true,
+    //              ("raw_sendto: could not allocate header\n"));
+    //         return ERR_MEM;
+    //     }
+    //     if (p->tot_len != 0)
+    //     {
+    //         /* chain header q in front of given PacketBuffer p */
+    //         pbuf_chain(q, p);
+    //     } /* { first PacketBuffer q points to header PacketBuffer } */
+    //     Logf(true,
+    //          "raw_sendto: added header PacketBuffer %p before given PacketBuffer %p\n",
+    //          (uint8_t *)q,
+    //          (uint8_t *)p);
+    // }
+    // else
+    // {
+    //     /* first PacketBuffer q equals given PacketBuffer */
+    //     q = p;
+    //     if (pbuf_remove_header(q, header_size))
+    //     {
+    //         lwip_assert("Can't restore header we just removed!", false);
+    //         return ERR_MEM;
+    //     }
+    // }
     if (is_ip_addr_v4(dst_ip))
     {
         /* broadcast filter? */
@@ -472,7 +475,7 @@ raw_sendto_if_src(RawPcb& pcb,
     } /* Multicast Loop? */
     if (((pcb->flags & RAW_FLAGS_MULTICAST_LOOP) != 0) && is_ip_addr_mcast(dst_ip))
     {
-        q->multicast_loop = true;
+        // q->multicast_loop = true;
     } /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
     if (is_ip_addr_v6(dst_ip) && pcb->chksum_reqd)

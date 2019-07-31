@@ -70,7 +70,7 @@ struct pcapif_private {
 
 struct pcapif_pbuf_custom
 {
-   struct pbuf_custom pc;
+   // struct pbuf_custom pc;
    struct PacketBuffer* p;
 };
 

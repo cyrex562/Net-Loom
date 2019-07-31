@@ -178,17 +178,18 @@ PppPcb *pppoe_create(NetworkInterface*pppif,
 /* Called by PPP core */
 static LwipStatus pppoe_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx; /* skip address & flags */
-  pbuf_remove_header(p, 2);
+  // pbuf_remove_header(p, 2);
 
-  struct PacketBuffer* ph = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN));
+  // struct PacketBuffer* ph = pbuf_alloc();
+    PacketBuffer ph{};
   if(!ph) {
 
     free_pkt_buf(p);
     return ERR_MEM;
   }
 
-  pbuf_remove_header(ph, PPPOE_HEADERLEN); /* hide PPPoE header */
-  pbuf_cat(ph, p);
+  // pbuf_remove_header(ph, PPPOE_HEADERLEN); /* hide PPPoE header */
+  // pbuf_cat(ph, p);
 
 
   LwipStatus ret = pppoe_xmit(sc, ph);
@@ -205,18 +206,19 @@ static LwipStatus pppoe_write(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p)
 static LwipStatus pppoe_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   LwipStatus err; /* @todo: try to use pbuf_header() here! */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol));
+  // struct PacketBuffer* pb = pbuf_alloc(,);
+    PacketBuffer pb{};
   if(!pb) {
 
     return ERR_MEM;
   }
 
-  pbuf_remove_header(pb, PPPOE_HEADERLEN);
+  // pbuf_remove_header(pb, PPPOE_HEADERLEN);
 
   uint8_t* pl = (uint8_t*)pb->payload;
   PUTSHORT(protocol, pl);
 
-  pbuf_chain(pb, p);
+  // pbuf_chain(pb, p);
 
   auto tot_len = pb->tot_len;
 
@@ -315,7 +317,7 @@ pppoe_disc_input(NetworkInterface*netif, struct PacketBuffer *pb)
     return;
   }
 
-  pb = pbuf_coalesce(pb, PBUF_RAW);
+  // pb = pbuf_coalesce(pb, PBUF_RAW);
 
   struct EthHdr* ethhdr = (struct EthHdr *)pb->payload;
 
@@ -571,12 +573,12 @@ pppoe_data_input(NetworkInterface*netif, struct PacketBuffer *pb)
 
   memcpy(shost, ((struct EthHdr *)pb->payload)->src.addr, sizeof(shost));
 
-  if (pbuf_remove_header(pb, sizeof(struct EthHdr)) != 0) {
-    /* bail out */
-    // PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_remove_header failed\n"));
-    // LINK_STATS_INC(link.lenerr);
-    goto drop;
-  }
+  // if (pbuf_remove_header(pb, sizeof(struct EthHdr)) != 0) {
+  //   /* bail out */
+  //   // PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_remove_header failed\n"));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   goto drop;
+  // }
 
   if (pb->len < sizeof(*ph)) {
     // PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: could not get PPPoE header\n"));
@@ -604,12 +606,12 @@ pppoe_data_input(NetworkInterface*netif, struct PacketBuffer *pb)
 
   uint16_t plen = lwip_ntohs(ph->plen);
 
-  if (pbuf_remove_header(pb, PPPOE_HEADERLEN) != 0) {
-    /* bail out */
-    // PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_remove_header PPPOE_HEADERLEN failed\n"));
-    // LINK_STATS_INC(link.lenerr);
-    goto drop;
-  }
+  // if (pbuf_remove_header(pb, PPPOE_HEADERLEN) != 0) {
+  //   /* bail out */
+  //   // PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_remove_header PPPOE_HEADERLEN failed\n"));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   goto drop;
+  // }
 
   // PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: %c%c%d: pkthdr.len=%d, pppoe.len=%d\n",
   //       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num,
@@ -632,13 +634,13 @@ static LwipStatus
 pppoe_output(struct pppoe_softc *sc, struct PacketBuffer *pb)
 {
     /* make room for Ethernet header - should not fail */
-  if (pbuf_add_header(pb, sizeof(struct EthHdr)) != 0) {
-    /* bail out */
-    // PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_output: could not allocate room for Ethernet header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-    // LINK_STATS_INC(link.lenerr);
-    free_pkt_buf(pb);
-    return ERR_BUF;
-  }
+  // if (pbuf_add_header(pb, sizeof(struct EthHdr)) != 0) {
+  //   /* bail out */
+  //   // PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_output: could not allocate room for Ethernet header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   free_pkt_buf(pb);
+  //   return ERR_BUF;
+  // }
   struct EthHdr* ethhdr = (struct EthHdr *)pb->payload;
   uint16_t etype = sc->sc_state == PPPOE_STATE_SESSION ? ETHTYPE_PPPOE : ETHTYPE_PPPOEDISC;
   ethhdr->type = lwip_htons(etype);
@@ -671,7 +673,8 @@ pppoe_send_padi(struct pppoe_softc *sc)
               sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len));
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (!pb) {
     return ERR_MEM;
   }
@@ -849,7 +852,8 @@ pppoe_send_padr(struct pppoe_softc *sc)
   }
   lwip_assert("sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff",
               sizeof(struct EthHdr) + PPPOE_HEADERLEN + len <= 0xffff);
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len));
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (!pb) {
     return ERR_MEM;
   }
@@ -878,18 +882,19 @@ pppoe_send_padr(struct pppoe_softc *sc)
 static LwipStatus
 pppoe_send_padt(NetworkInterface*outgoing_if, u_int session, const uint8_t *dest)
 {
-    struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN));
+    // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (!pb) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  if (pbuf_add_header(pb, sizeof(struct EthHdr))) {
-    // PPPDEBUG(LOG_ERR, ("pppoe: pppoe_send_padt: could not allocate room for PPPoE header\n"));
-    // LINK_STATS_INC(link.lenerr);
-    free_pkt_buf(pb);
-    return ERR_BUF;
-  }
+  // if (pbuf_add_header(pb, sizeof(struct EthHdr))) {
+  //   // PPPDEBUG(LOG_ERR, ("pppoe: pppoe_send_padt: could not allocate room for PPPoE header\n"));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   free_pkt_buf(pb);
+  //   return ERR_BUF;
+  // }
   EthHdr* eth_hdr = (EthHdr *)pb->payload;
   eth_hdr->type = pp_htons(ETHTYPE_PPPOEDISC);
   memcpy(&eth_hdr->dest.addr, dest, sizeof(eth_hdr->dest.addr));
@@ -914,7 +919,8 @@ pppoe_send_pado(struct pppoe_softc *sc)
   len += 2 + 2 + sizeof(sc);
   /* include hunique */
   len += 2 + 2 + sc->sc_hunique_len;
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len));
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (!pb) {
     return ERR_MEM;
   }
@@ -945,8 +951,9 @@ pppoe_send_pads(struct pppoe_softc *sc)
   //   l1 = strlen(sc->sc_service_name);
   //   len += l1;
   // }
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_LINK, (uint16_t)(PPPOE_HEADERLEN + len));
-  if (!pb) {
+  // struct PacketBuffer* pb = pbuf_alloc();
+  PacketBuffer pb{};
+    if (!pb) {
     return ERR_MEM;
   }
   lwip_assert("pb->tot_len == pb->len", pb->tot_len == pb->len);
@@ -973,13 +980,13 @@ pppoe_xmit(struct pppoe_softc *sc, struct PacketBuffer *pb)
     size_t len = pb->tot_len;
 
   /* make room for PPPoE header - should not fail */
-  if (pbuf_add_header(pb, PPPOE_HEADERLEN) != 0) {
-    /* bail out */
-    // PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_xmit: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-    // LINK_STATS_INC(link.lenerr);
-    free_pkt_buf(pb);
-    return ERR_BUF;
-  }
+  // if (pbuf_add_header(pb, PPPOE_HEADERLEN) != 0) {
+  //   /* bail out */
+  //   // PPPDEBUG(LOG_ERR, ("pppoe: %c%c%d: pppoe_xmit: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   free_pkt_buf(pb);
+  //   return ERR_BUF;
+  // }
 
   uint8_t* p = (uint8_t*)pb->payload;
   PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);

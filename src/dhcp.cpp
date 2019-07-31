@@ -717,7 +717,7 @@ dhcp_arp_reply(NetworkInterface * netif, const Ip4Addr * addr)
              get_ip4_addr_u32(addr));
         /* did a host respond with the address we
            were offered by the DHCP server? */
-        if (cmp_ip4_addr(addr, &dhcp->offered_ip_addr)) {
+        if (is_ip4_addr_equal(addr, &dhcp->offered_ip_addr)) {
             /* we will not accept the offered address */
             Logf(true,
                 "dhcp_arp_reply(): arp reply matched with offered address, declining\n");
@@ -1650,7 +1650,8 @@ dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_ty
 
     static uint32_t xid;
 
-    struct PacketBuffer* p_out = pbuf_alloc(PBUF_TRANSPORT, sizeof(DhcpMsg));
+    // struct PacketBuffer* p_out = pbuf_alloc();
+    PacketBuffer pbuf{};
     if (p_out == nullptr) {
         Logf(true,
             "dhcp_create_msg(): could not allocate PacketBuffer\n");

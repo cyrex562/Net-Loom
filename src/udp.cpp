@@ -182,12 +182,12 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 else if (broadcast && curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST_U32)
                 {
                     /* global broadcast address (only valid for IPv4; match was checked before) */
-                    if (!is_ip_addr_v4(uncon_pcb->local_ip) || !cmp_ip4_addr(
+                    if (!is_ip_addr_v4(uncon_pcb->local_ip) || !is_ip4_addr_equal(
                         uncon_pcb->local_ip.u_addr.ip4.address,
                         get_netif_ip4_addr(inp)))
                     {
                         /* uncon_pcb does not match the input netif, check this pcb */
-                        if (is_ip_addr_v4(pcb->local_ip) && cmp_ip4_addr(
+                        if (is_ip_addr_v4(pcb->local_ip) && is_ip4_addr_equal(
                             pcb->local_ip.u_addr.ip4.address,
                             get_netif_ip4_addr(inp)))
                         {
@@ -235,11 +235,11 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
     {
         if (curr_dst_addr->type == IPADDR_TYPE_V6)
         {
-            for_us = get_netif_ip6_addr_match_idx(inp, &curr_dst_addr->u_addr.ip6) >= 0;
+            for_us = get_netif_ip6_addr_idx(inp, &curr_dst_addr->u_addr.ip6) >= 0;
         }
         if (curr_dst_addr->type == IPADDR_TYPE_V4)
         {
-            for_us = cmp_ip4_addr(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
+            for_us = is_ip4_addr_equal(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
         }
     }
     if (for_us)
@@ -291,13 +291,13 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 }
             }
         }
-        if (pbuf_remove_header(p, UDP_HDR_LEN))
-        {
-            /* Can we cope with this failing? Just assert for now */
-            lwip_assert("pbuf_remove_header failed\n", false); // UDP_STATS_INC(udp.drop);
-            free_pkt_buf(p);
-            goto end;
-        }
+        // if (pbuf_remove_header(p, UDP_HDR_LEN))
+        // {
+        //     /* Can we cope with this failing? Just assert for now */
+        //     lwip_assert("pbuf_remove_header failed\n", false); // UDP_STATS_INC(udp.drop);
+        //     free_pkt_buf(p);
+        //     goto end;
+        // }
         if (pcb != nullptr)
         {
             if (ip_get_option((IpPcb*)pcb, SOF_REUSEADDR) && (broadcast ||
@@ -317,7 +317,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                             if (mpcb->recv != nullptr)
                             {
                                 struct PacketBuffer* q;
-                                q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
+                                q = pbuf_clone(p);
                                 if (q != nullptr)
                                 {
                                     mpcb->recv(mpcb->recv_arg,
@@ -351,8 +351,8 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
             if (!broadcast && !is_ip_addr_mcast(curr_dst_addr))
             {
                 /* move payload pointer back to ip header */
-                pbuf_header_force(p,
-                                  (int16_t)(curr_ip_hdr_len + UDP_HDR_LEN));
+                // pbuf_header_force(p,
+                //                   (int16_t)(curr_ip_hdr_len + UDP_HDR_LEN));
                 icmp_port_unreach(curr_dst_addr->type == IPADDR_TYPE_V6, p);
             }
             free_pkt_buf(p);
@@ -455,10 +455,10 @@ udp_sendto_chksum(UdpPcb* pcb,
     {
         return ERR_VAL;
     }
-    Logf(true | LWIP_DBG_TRACE, ("udp_send\n"));
+    Logf(true, ("udp_send\n"));
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = get_netif_by_index(pcb->netif_idx);
+        // netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -473,7 +473,7 @@ udp_sendto_chksum(UdpPcb* pcb,
              * gone stale, we fall through and do the regular route lookup after all. */
             if (pcb->mcast_ifindex != NETIF_NO_INDEX)
             {
-                netif = get_netif_by_index(pcb->mcast_ifindex);
+                // netif = get_netif_by_index(pcb->mcast_ifindex);
             }
             else if (is_ip_addr_v4(dst_ip))
             {
@@ -483,7 +483,7 @@ udp_sendto_chksum(UdpPcb* pcb,
                    in pcb->mcast_ip4 that is used for routing. If this routing lookup
                    fails, we try regular routing as though no override was set. */
                 Ip4Addr ip4_bcast_addr = make_ip4_addr_bcast();
-                if (!is_ip4_addr_any(pcb->mcast_ip4) && !cmp_ip4_addr(
+                if (!is_ip4_addr_any(pcb->mcast_ip4) && !is_ip4_addr_equal(
                     &pcb->mcast_ip4,
                     &ip4_bcast_addr))
                 {
@@ -554,14 +554,14 @@ udp_sendto_if_chksum(UdpPcb* pcb,
         if (is_ip6_addr_any((&pcb->local_ip.u_addr.ip6)) || is_ip6_addr_mcast(
             (&pcb->local_ip.u_addr.ip6)))
         {
-            const auto src_addr = select_ip6_src_addr(netif, &dst_ip->u_addr.ip6);
+            const auto src_addr = select_ip6_src_addr(netif, &dst_ip->u_addr.ip6,);
             src_ip.u_addr.ip6 = dst_ip->u_addr.ip6;
             src_ip.type = IPADDR_TYPE_V6;
         }
         else
         {
             /* use UDP PCB local IPv6 address as source address, if still valid. */
-            if (get_netif_ip6_addr_match_idx(netif, (&pcb->local_ip.u_addr.ip6)) < 0)
+            if (get_netif_ip6_addr_idx(netif, (&pcb->local_ip.u_addr.ip6)) < 0)
             {
                 /* Address isn't valid anymore. */
                 return STATUS_E_ROUTING;
@@ -581,7 +581,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         /* check if UDP PCB local IP address is correct
          * this could be an old address if netif->ip_addr has changed */
-        if (!cmp_ip4_addr(((pcb->local_ip.u_addr.ip4.address)),
+        if (!is_ip4_addr_equal(((pcb->local_ip.u_addr.ip4.address)),
                           get_netif_ip4_addr(netif,)))
         {
             /* local_ip doesn't match, drop the packet */
@@ -620,7 +620,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
                          IpAddrInfo& src_ip)
 {
     LwipStatus err;
-    struct PacketBuffer* q; /* q will be sent down the stack */
+    struct PacketBuffer q{}; /* q will be sent down the stack */
     uint8_t ip_proto;
     if (!match_ip_addr_pcb_version((IpPcb*)pcb, src_ip) || !match_ip_addr_pcb_version((IpPcb*)pcb, dst_ip)
     )
@@ -650,33 +650,34 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     {
         return ERR_MEM;
     } /* not enough space to add an UDP header to first PacketBuffer in given p chain? */
-    if (pbuf_add_header(p, UDP_HDR_LEN))
-    {
-        /* allocate header in a separate new PacketBuffer */
-        q = pbuf_alloc(PBUF_IP, UDP_HDR_LEN);
-        /* new header PacketBuffer could not be allocated? */
-        if (q == nullptr)
-        {
-            Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-                 ("udp_send: could not allocate header\n"));
-            return ERR_MEM;
-        }
-        if (p->tot_len != 0)
-        {
-            /* chain header q in front of given PacketBuffer p (only if p contains data) */
-            pbuf_chain(q, p);
-        } /* first PacketBuffer q points to header PacketBuffer */
-        Logf(true,
-             "udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (
-                 uint8_t *)q, (uint8_t *)p);
-    }
-    else
-    {
-        /* adding space for header within p succeeded */
-        /* first PacketBuffer q equals given PacketBuffer */
-        q = p;
-        Logf(true, "udp_send: added header in given PacketBuffer %p\n", (uint8_t *)p);
-    }
+    // if (pbuf_add_header(p, UDP_HDR_LEN))
+    // {
+    //     /* allocate header in a separate new PacketBuffer */
+    //     // q = pbuf_alloc();
+    //     /* new header PacketBuffer could not be allocated? */
+    //     q = PacketBuffer();
+    //     if (q == nullptr)
+    //     {
+    //         Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
+    //              ("udp_send: could not allocate header\n"));
+    //         return ERR_MEM;
+    //     }
+    //     if (p->tot_len != 0)
+    //     {
+    //         /* chain header q in front of given PacketBuffer p (only if p contains data) */
+    //         pbuf_chain(q, p);
+    //     } /* first PacketBuffer q points to header PacketBuffer */
+    //     Logf(true,
+    //          "udp_send: added header PacketBuffer %p before given PacketBuffer %p\n", (
+    //              uint8_t *)q, (uint8_t *)p);
+    // }
+    // else
+    // {
+    //     /* adding space for header within p succeeded */
+    //     /* first PacketBuffer q equals given PacketBuffer */
+    //     q = p;
+    //     Logf(true, "udp_send: added header in given PacketBuffer %p\n", (uint8_t *)p);
+    // }
     lwip_assert("check that first PacketBuffer can hold UdpHdr",
                 (q->len >= sizeof(struct UdpHdr)));
     /* q now represents the packet to be sent */
@@ -686,7 +687,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     udphdr->chksum = 0x0000; /* Multicast Loop? */
     if (((pcb->flags & UDP_FLAGS_MULTICAST_LOOP) != 0) && is_ip_addr_mcast(dst_ip))
     {
-        q->multicast_loop = true;
+        // q->multicast_loop = true;
     }
     Logf(true, "udp_send: sending datagram of length %d\n", q->tot_len);
     /* UDP Lite protocol? */

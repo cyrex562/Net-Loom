@@ -173,7 +173,7 @@ ip6_route(const Ip6Addr* src, const Ip6Addr* dest)
                 continue;
             }
             for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-                if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) && cmp_ip6_addr(
+                if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) && is_ip6_addr_equal(
                     src,
                     get_netif_ip6_addr(netif, i))) {
                     return netif;
@@ -366,7 +366,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
     /* Trim PacketBuffer. This should have been done at the netif layer,
      * but we'll do it anyway just to be sure that its done. */
-    pbuf_realloc(p);
+    // pbuf_realloc(p);
 
     /* copy IP addresses to aligned Ip6Address */
     // todo: get curr dst and src ip addr from somewhere
@@ -491,7 +491,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
     uint16_t hlen = hlen_tot = IP6_HDR_LEN;
 
     /* Move to payload. */
-    pbuf_remove_header(p, IP6_HDR_LEN);
+    // pbuf_remove_header(p, IP6_HDR_LEN);
 
     /* Process known option extension headers, if present. */
     while (*nexth != IP6_NEXTH_NONE) {
@@ -543,7 +543,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                     return STATUS_OK;
                 } /* Trim PacketBuffer. This should have been done at the netif layer,
    * but we'll do it anyway just to be sure that its done. */
-                pbuf_realloc(p);
+                // pbuf_realloc(p);
                 /* copy IP addresses to aligned Ip6Address */
                 memcpy(&curr_dst_addr.u_addr.ip6.addr, &ip6_hdr->dest, sizeof(Ip6Addr));
                 memcpy(&curr_src_addr.u_addr.ip6.addr, &ip6_hdr->src, sizeof(Ip6Addr));
@@ -631,7 +631,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                     // todo: set current netif
                     *nexth = IP6H_NEXTH(ip6_hdr); /* Init header length. */
                     uint16_t hlen = hlen_tot = IP6_HDR_LEN; /* Move to payload. */
-                    pbuf_remove_header(p, IP6_HDR_LEN);
+                    // pbuf_remove_header(p, IP6_HDR_LEN);
                     /* Process known option extension headers, if present. */
                     while (*nexth != IP6_NEXTH_NONE) {
                         switch (*nexth) {
@@ -709,7 +709,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                     } /* Adjust the offset to move to the next extended option header */
                                     opt_offset = opt_offset + IP6_OPT_HLEN + opt_dlen;
                                 }
-                                pbuf_remove_header(p, hlen);
+                                // pbuf_remove_header(p, hlen);
                                 break;
                             }
                         case IP6_NEXTH_DESTOPTS:
@@ -790,7 +790,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                     } /* Adjust the offset to move to the next extended option header */
                                     opt_offset = opt_offset + IP6_OPT_HLEN + opt_dlen;
                                 }
-                                pbuf_remove_header(p, hlen);
+                                // pbuf_remove_header(p, hlen);
                                 break;
                             }
                         case IP6_NEXTH_ROUTING:
@@ -837,7 +837,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                         goto ip6_input_cleanup;
                                     }
                                 }
-                                pbuf_remove_header(p, hlen);
+                                // pbuf_remove_header(p, hlen);
                                 break;
                             }
                         case IP6_NEXTH_FRAGMENT:
@@ -871,7 +871,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                 if ((frag_hdr->_fragment_offset & pp_htons(
                                     IP6_FRAG_OFFSET_MASK | IP6_FRAG_MORE_FLAG)) == 0) {
                                     /* This is a 1-fragment packet. Skip this header and continue. */
-                                    pbuf_remove_header(p, hlen);
+                                    // pbuf_remove_header(p, hlen);
                                 }
                                 else {
                                     /* reassemble the packet */
@@ -885,7 +885,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                                     ip6_hdr = (struct Ip6Hdr *)p->payload;
                                     *nexth = IP6H_NEXTH(ip6_hdr);
                                     hlen = hlen_tot = IP6_HDR_LEN;
-                                    pbuf_remove_header(p, IP6_HDR_LEN);
+                                    // pbuf_remove_header(p, IP6_HDR_LEN);
                                 }
                                 break;
                             }
@@ -916,12 +916,12 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
 
 
                 /* p points to IPv6 header again for raw_input. */
-                pbuf_add_header_force(p, hlen_tot);
+                // pbuf_add_header_force(p, hlen_tot);
                 /* raw input did not eat the packet? */
                 raw_input_state_t raw_status = raw_input(p, inp);
                 if (raw_status != RAW_INPUT_EATEN) {
                     /* Point to payload. */
-                    pbuf_remove_header(p, hlen_tot);
+                    // pbuf_remove_header(p, hlen_tot);
 
                     switch (*nexth) {
                     case IP6_NEXTH_NONE:
@@ -952,7 +952,7 @@ ip6_input(struct PacketBuffer* p, NetworkInterface* inp)
                         }
                         else {
                             /* p points to IPv6 header again for raw_input. */
-                            pbuf_add_header_force(p, hlen_tot);
+                            // pbuf_add_header_force(p, hlen_tot);
                             /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
                             if ((!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) && (
                                 IP6H_NEXTH(ip6_hdr) != IP6_NEXTH_ICMP6)) {
@@ -1031,7 +1031,7 @@ ip6_output_if(struct PacketBuffer* p,
     if (dest) {
         if (src != nullptr && is_ip6_addr_any(src)) {
 
-            const IpAddrInfo* sel_src_addr = select_ip6_src_addr(netif, dest);
+            const IpAddrInfo* sel_src_addr = select_ip6_src_addr(netif, dest,);
             copy_ip6_addr(&src_used, &sel_src_addr->u_addr.ip6);
             if (is_ip6_addr_any(&src_used)) {
                 /* No appropriate source address was found for this packet. */
@@ -1076,11 +1076,11 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
             assign_ip6_addr_zone(&dest_addr, IP6_UNKNOWN, netif,);
             dest = &dest_addr;
         } /* generate IPv6 header */
-        if (pbuf_add_header(pbuf, IP6_HDR_LEN)) {
-            Logf(true,
-                 ("ip6_output: not enough room for IPv6 header in PacketBuffer\n"));
-            return ERR_BUF;
-        }
+        // if (pbuf_add_header(pbuf, IP6_HDR_LEN)) {
+        //     Logf(true,
+        //          ("ip6_output: not enough room for IPv6 header in PacketBuffer\n"));
+        //     return ERR_BUF;
+        // }
         ip6hdr = (struct Ip6Hdr *)pbuf->payload;
         lwip_assert("check that first PacketBuffer can hold Ip6Hdr",
                     (pbuf->len >= sizeof(struct Ip6Hdr)));
@@ -1122,11 +1122,11 @@ ip6_output_if_src(struct PacketBuffer* pbuf,
     ip6_addr_copy_to_packed(&ip6hdr->src, src);
     for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (is_ip6_addr_valid(get_netif_ip6_addr_state(netif, i)) &&
-            cmp_ip6_addr(dest, get_netif_ip6_addr(netif, i))) {
+            is_ip6_addr_equal(dest, get_netif_ip6_addr(netif, i))) {
             /* Packet to self, enqueue it for loopback */
             Logf(true, ("netif_loop_output()\n"));
             NetworkInterface* loop_netif = nullptr;
-            return output_netif_loop(netif, pbuf);
+            return send_pkt_to_netif_loop(netif, pbuf);
         }
     }
     Logf(true, ("netif->output_ip6()\n"));
@@ -1252,10 +1252,10 @@ ip6_options_add_hbh_ra(struct PacketBuffer* p, uint8_t nexth, uint8_t value)
     uint32_t offset = 0; /* fixed 4 bytes for router alert option and 2 bytes padding */
     const uint8_t hlen = (sizeof(struct Ip6OptionHdr) * 2) + IP6_ROUTER_ALERT_DLEN;
     /* Move pointer to make room for hop-by-hop options header. */
-    if (pbuf_add_header(p, sizeof(struct Ip6HopByHopHdr) + hlen)) {
-        Logf(true, ("ip6_options: no space for options header\n"));
-        return ERR_BUF;
-    } /* Set fields of Hop-by-Hop header */
+    // if (pbuf_add_header(p, sizeof(struct Ip6HopByHopHdr) + hlen)) {
+    //     Logf(true, ("ip6_options: no space for options header\n"));
+    //     return ERR_BUF;
+    // } /* Set fields of Hop-by-Hop header */
     Ip6HopByHopHdr* hbh_hdr = (struct Ip6HopByHopHdr *)p->payload;
     hbh_hdr->_nexth = nexth;
     hbh_hdr->_hlen = 0;

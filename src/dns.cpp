@@ -545,7 +545,7 @@ dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offse
   uint16_t response_offset = start_offset;
 
   do {
-    n = pbuf_try_get_at(p, response_offset);
+    n = get_pbuf_byte_at(p, response_offset);
     if ((n < 0) || (response_offset == 0xFFFF)) {
       /* error or overflow */
       return 0xFFFF;
@@ -558,7 +558,7 @@ dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offse
     } else {
       /* Not compressed name */
       while (n > 0) {
-          auto c = pbuf_try_get_at(p, response_offset);
+          auto c = get_pbuf_byte_at(p, response_offset);
         if (c < 0) {
           return 0xFFFF;
         }
@@ -575,7 +575,7 @@ dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offse
       }
       ++query;
     }
-    n = pbuf_try_get_at(p, response_offset);
+    n = get_pbuf_byte_at(p, response_offset);
     if (n < 0) {
       return 0xFFFF;
     }
@@ -602,7 +602,7 @@ dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
   uint16_t offset = query_idx;
 
   do {
-    n = pbuf_try_get_at(p, offset++);
+    n = get_pbuf_byte_at(p, offset++);
     if ((n < 0) || (offset == 0)) {
       return 0xFFFF;
     }
@@ -617,7 +617,7 @@ dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
       }
       offset = (uint16_t)(offset + n);
     }
-    n = pbuf_try_get_at(p, offset);
+    n = get_pbuf_byte_at(p, offset);
     if (n < 0) {
       return 0xFFFF;
     }
@@ -653,9 +653,8 @@ static LwipStatus dns_send(const uint8_t idx)
         entry->state = DNS_STATE_UNUSED;
         return STATUS_OK;
     } /* if here, we have either a new query or a retry on a previous query to process */
-    auto pbuf = pbuf_alloc(PBUF_TRANSPORT,
-                           static_cast<uint16_t>(DNS_HDR_LEN + strlen(entry->name) + 2 +
-                               DNS_QUERY_LEN));
+    // auto pbuf = pbuf_alloc();
+    PacketBuffer pbuf{};
     if (pbuf != nullptr)
     {
         const IpAddrInfo* dst;
@@ -685,7 +684,6 @@ static LwipStatus dns_send(const uint8_t idx)
             pbuf_put_at(pbuf, query_idx, n);
             pbuf_take_at(pbuf,
                          (uint8_t*)hostname_part,
-                         copy_len,
                          static_cast<uint16_t>(query_idx + 1));
             query_idx = static_cast<uint16_t>(query_idx + n + 1);
         }
@@ -701,7 +699,7 @@ static LwipStatus dns_send(const uint8_t idx)
             qry.type = pp_htons(DNS_RRTYPE_A);
         }
         qry.cls = pp_htons(DNS_RRCLASS_IN);
-        pbuf_take_at(pbuf, (uint8_t*)&qry, DNS_QUERY_LEN, query_idx);
+        pbuf_take_at(pbuf, (uint8_t*)&qry, query_idx);
         uint8_t pcb_idx = entry->pcb_idx; /* send dns packet */ // Logf(true,
         //      ("sending DNS request ID %d for name \"%s\" to server %d\r\n", entry->txid,
         //          entry->name, entry->server_idx));

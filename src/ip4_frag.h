@@ -75,7 +75,7 @@ struct PacketBuffer * ip4_reass(struct PacketBuffer *p);
  * that points into the original pbuf. */
 struct PbufCustomRef {
   /** 'base class' */
-  struct pbuf_custom pc;
+  // struct pbuf_custom pc;
   /** pointer to the original PacketBuffer that is referenced */
   struct PacketBuffer *original;
 };

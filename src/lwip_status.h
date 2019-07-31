@@ -46,6 +46,7 @@ enum LwipStatus
 
     STATUS_NOT_FOUND,
     STATUS_E_NOT_IMPLEMENTED,
+    STATUS_E_INVALID_PARAM,
 };
 
 

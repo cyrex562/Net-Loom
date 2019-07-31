@@ -84,15 +84,15 @@ PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
 static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
 {
     const auto l2tp_pcb = static_cast<Pppol2tpPcb *>(ctx);
-    struct PacketBuffer* ph = pbuf_alloc(PBUF_TRANSPORT,
-                                         (uint16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN));
+    // struct PacketBuffer* ph = pbuf_alloc();
+    PacketBuffer ph{};
     if (!ph)
     {
         free_pkt_buf(p);
         return ERR_MEM;
     }
-    pbuf_remove_header(ph, PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
-    pbuf_cat(ph, p);
+    // pbuf_remove_header(ph, PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
+    // pbuf_cat(ph, p);
     auto tot_len = ph->tot_len;
     LwipStatus ret = pppol2tp_xmit(l2tp_pcb, ph);
     if (ret != STATUS_OK)
@@ -107,20 +107,19 @@ static LwipStatus pppol2tp_write(PppPcb* ppp, void* ctx, struct PacketBuffer* p)
 static LwipStatus pppol2tp_netif_output(PppPcb *ppp, uint8_t *ctx, struct PacketBuffer *p, u_short protocol) {
   Pppol2tpPcb *l2tp = (Pppol2tpPcb *)ctx;
   LwipStatus err; /* @todo: try to use pbuf_header() here! */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT,
-                                       PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol
-                                       ));
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if(!pb) {
 
     return ERR_MEM;
   }
 
-  pbuf_remove_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN);
+  // pbuf_remove_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN);
 
   uint8_t* pl = (uint8_t*)pb->payload;
   PUTSHORT(protocol, pl);
 
-  pbuf_chain(pb, p);
+  // pbuf_chain(pb, p);
 
   uint16_t tot_len = pb->tot_len;
 
@@ -328,9 +327,9 @@ pppol2tp_input(void* arg,
   /* printf("HLEN = %d\n", hlen); */
 
   /* skip L2TP header */
-  if (pbuf_remove_header(p, hlen) != 0) {
-    goto free_and_return;
-  }
+  // if (pbuf_remove_header(p, hlen) != 0) {
+  //   goto free_and_return;
+  // }
 
   /* printf("LEN=%d, TUNNEL_ID=%d, SESSION_ID=%d, NS=%d, NR=%d, OFFSET=%d\n", len, tunnel_id, session_id, ns, nr, offset); */
   // PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%d, tunnel=%d, session=%d, ns=%d, nr=%d\n",
@@ -363,7 +362,7 @@ pppol2tp_input(void* arg,
   if (p->len >= 2) {
     GETSHORT(hflags, inp);
     if (hflags == 0xff03) {
-      pbuf_remove_header(p, 2);
+      // pbuf_remove_header(p, 2);
     }
   }
   /* Dispatch the packet thereby consuming it. */
@@ -423,7 +422,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
   /* A ZLB packet does not consume a NS slot thus we don't record the NS value for ZLB packets */
   l2tp->peer_ns = ns+1;
 
-  p = pbuf_coalesce(p, PBUF_RAW);
+  // p = pbuf_coalesce(p, PBUF_RAW);
   uint8_t* inp = (uint8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {
@@ -568,9 +567,9 @@ skipavp:
 nextavp:
     /* printf("AVP Found, vendor=%d, attribute=%d, len=%d\n", vendorid, attributetype, avplen); */
     /* next AVP */
-    if (pbuf_remove_header(p, avplen + sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype)) != 0) {
-      return;
-    }
+    // if (pbuf_remove_header(p, avplen + sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype)) != 0) {
+    //   return;
+    // }
   }
 
   switch(messagetype) {
@@ -693,7 +692,8 @@ static LwipStatus pppol2tp_send_sccrq(Pppol2tpPcb *l2tp) {
 
 
   /* allocate a buffer */
-    auto pb = pbuf_alloc(PBUF_TRANSPORT, len);
+    // auto pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -784,7 +784,8 @@ static LwipStatus pppol2tp_send_scccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -826,7 +827,8 @@ static LwipStatus pppol2tp_send_icrq(Pppol2tpPcb *l2tp, uint16_t ns) {
   uint16_t len = 12 + 8 + 8 + 10;
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -870,7 +872,8 @@ static LwipStatus pppol2tp_send_iccn(Pppol2tpPcb *l2tp, uint16_t ns) {
   uint16_t len = 12 + 8 + 10 + 10;
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -913,7 +916,8 @@ static LwipStatus pppol2tp_send_zlb(Pppol2tpPcb *l2tp, uint16_t ns, uint16_t nr)
   uint16_t len = 12;
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -938,7 +942,8 @@ static LwipStatus pppol2tp_send_stopccn(Pppol2tpPcb *l2tp, uint16_t ns) {
   uint16_t len = 12 + 8 + 8 + 8;
 
   /* allocate a buffer */
-  struct PacketBuffer* pb = pbuf_alloc(PBUF_TRANSPORT, len);
+  // struct PacketBuffer* pb = pbuf_alloc();
+    PacketBuffer pb{};
   if (pb == nullptr) {
     return ERR_MEM;
   }
@@ -977,13 +982,13 @@ static LwipStatus pppol2tp_send_stopccn(Pppol2tpPcb *l2tp, uint16_t ns) {
 
 static LwipStatus pppol2tp_xmit(Pppol2tpPcb *l2tp, struct PacketBuffer *pb) {
     /* make room for L2TP header - should not fail */
-  if (pbuf_add_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
-    /* bail out */
-    // PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
-    // LINK_STATS_INC(link.lenerr);
-    free_pkt_buf(pb);
-    return ERR_BUF;
-  }
+  // if (pbuf_add_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
+  //   /* bail out */
+  //   // PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
+  //   // LINK_STATS_INC(link.lenerr);
+  //   free_pkt_buf(pb);
+  //   return ERR_BUF;
+  // }
 
   uint8_t* p = (uint8_t*)pb->payload;
   PUTSHORT(PPPOL2TP_HEADERFLAG_DATA_MANDATORY, p);

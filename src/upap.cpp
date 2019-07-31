@@ -474,7 +474,8 @@ static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len) {
 static void upap_sauthreq(PppPcb *pcb) {
     int outlen = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + pcb->upap.us_user.length() + pcb->upap.
                                                                                     us_passwd.length();
-    PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + outlen));
+    // PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
     if(nullptr == p)
     {
         return;
@@ -507,7 +508,8 @@ static void upap_sauthreq(PppPcb *pcb) {
  */
 static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, std::string& msg) {
     int outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
-    PacketBuffer* p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + outlen));
+    // PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
     if(nullptr == p)
     {
         return;

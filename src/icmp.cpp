@@ -108,103 +108,104 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 return;
             }
         }
-        if (pbuf_add_header(p, hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
-        {
-            uint16_t alloc_len = (uint16_t)(p->tot_len + hlen);
-            if (alloc_len < p->tot_len)
-            {
-                Logf(true,
-                     "icmp_input: allocating new PacketBuffer failed (tot_len overflow)\n");
-                goto icmperr;
-            } /* allocate new packet buffer with space for link headers */
-            struct PacketBuffer* r = pbuf_alloc(PBUF_LINK, alloc_len);
-            if (r == nullptr)
-            {
-                Logf(true, "icmp_input: allocating new PacketBuffer failed\n");
-                goto icmperr;
-            }
-            if (r->len < hlen + sizeof(struct IcmpEchoHdr))
-            {
-                Logf(true,
-                     "first PacketBuffer cannot hold the ICMP header");
-                free_pkt_buf(r);
-                goto icmperr;
-            } /* copy the ip header */
-            memcpy(r->payload, iphdr_in, hlen);
-            /* switch r->payload back to icmp header (cannot fail) */
-            if (pbuf_remove_header(r, hlen))
-            {
-                lwip_assert("icmp_input: moving r->payload to icmp header failed\n", false);
-                free_pkt_buf(r);
-                goto icmperr;
-            } /* copy the rest of the packet without ip header */
-            if (pbuf_copy(r, p) != STATUS_OK)
-            {
-                Logf(true,
-                     "icmp_input: copying to new PacketBuffer failed");
-                free_pkt_buf(r);
-                goto icmperr;
-            } /* free the original p */
-            free_pkt_buf(p);
-            /* we now have an identical copy of p that has room for link headers */
-            p = r;
-        }
-        else
-        {
-            /* restore p->payload to point to icmp header (cannot fail) */
-            if (pbuf_remove_header(p,
-                                   hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
-            {
-                lwip_assert("icmp_input: restoring original p->payload failed\n", false);
-                goto icmperr;
-            }
-        } /* At this point, all checks are OK. */
+        // if (pbuf_add_header(p, hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
+        // {
+        //     uint16_t alloc_len = (uint16_t)(p->tot_len + hlen);
+        //     if (alloc_len < p->tot_len)
+        //     {
+        //         Logf(true,
+        //              "icmp_input: allocating new PacketBuffer failed (tot_len overflow)\n");
+        //         goto icmperr;
+        //     } /* allocate new packet buffer with space for link headers */
+        //     // struct PacketBuffer* r = pbuf_alloc();
+        //     PacketBuffer r{};
+        //     if (r == nullptr)
+        //     {
+        //         Logf(true, "icmp_input: allocating new PacketBuffer failed\n");
+        //         goto icmperr;
+        //     }
+        //     if (r->len < hlen + sizeof(struct IcmpEchoHdr))
+        //     {
+        //         Logf(true,
+        //              "first PacketBuffer cannot hold the ICMP header");
+        //         free_pkt_buf(r);
+        //         goto icmperr;
+        //     } /* copy the ip header */
+        //     memcpy(r->payload, iphdr_in, hlen);
+        //     /* switch r->payload back to icmp header (cannot fail) */
+        //     if (pbuf_remove_header(r, hlen))
+        //     {
+        //         lwip_assert("icmp_input: moving r->payload to icmp header failed\n", false);
+        //         free_pkt_buf(r);
+        //         goto icmperr;
+        //     } /* copy the rest of the packet without ip header */
+        //     if (pbuf_copy(r, p) != STATUS_OK)
+        //     {
+        //         Logf(true,
+        //              "icmp_input: copying to new PacketBuffer failed");
+        //         free_pkt_buf(r);
+        //         goto icmperr;
+        //     } /* free the original p */
+        //     free_pkt_buf(p);
+        //     /* we now have an identical copy of p that has room for link headers */
+        //     p = r;
+        // }
+        // else
+        // {
+        //     /* restore p->payload to point to icmp header (cannot fail) */
+        //     if (pbuf_remove_header(p,
+        //                            hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))
+        //     {
+        //         lwip_assert("icmp_input: restoring original p->payload failed\n", false);
+        //         goto icmperr;
+        //     }
+        // } /* At this point, all checks are OK. */
         /* We generate an answer by switching the dest and src ip addresses,
               * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
         iecho = reinterpret_cast<struct IcmpEchoHdr *>(p->payload);
-        if (pbuf_add_header(p, hlen))
-        {
-            Logf(true,
-                 "Can't move over header in packet");
-        }
-        else
-        {
-            auto iphdr = reinterpret_cast<struct Ip4Hdr *>(p->payload);
-            copy_ip4_addr(&iphdr->src, src);
-            copy_ip4_addr(&iphdr->dest, &curr_src_addr->u_addr.ip4);
-            IcmphTypeSet(iecho, ICMP_ER);
-            if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP))
-            {
-                /* adjust the checksum */
-                if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
-                {
-                    iecho->chksum = uint16_t(iecho->chksum + pp_htons(uint16_t(ICMP_ECHO << 8)) + 1);
-                }
-                else
-                {
-                    iecho->chksum = uint16_t(iecho->chksum + pp_htons(ICMP_ECHO << 8));
-                }
-            }
-            else
-            {
-                iecho->chksum = 0;
-            } /* Set the correct TTL and recalculate the header checksum. */
-            set_ip4_hdr_ttl(iphdr, ICMP_TTL);
-            set_ip4_hdr_checksum(iphdr, 0);
-            if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP))
-            {
-                set_ip4_hdr_checksum(iphdr, inet_chksum(reinterpret_cast<uint8_t*>(iphdr), hlen));
-            } /* increase number of messages attempted to send */
-            /* increase number of echo replies attempted to send */
-            /* send an ICMP packet */
-            const auto ret = ip4_output_if(p, src, nullptr, ICMP_TTL, 0, IP_PROTO_ICMP, inp);
-            if (ret != STATUS_OK)
-            {
-                // Logf(true,
-                //      ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)
-                //      ));
-            }
-        }
+        // if (pbuf_add_header(p, hlen))
+        // {
+        //     Logf(true,
+        //          "Can't move over header in packet");
+        // }
+        // else
+        // {
+        //     auto iphdr = reinterpret_cast<struct Ip4Hdr *>(p->payload);
+        //     copy_ip4_addr(&iphdr->src, src);
+        //     copy_ip4_addr(&iphdr->dest, &curr_src_addr->u_addr.ip4);
+        //     IcmphTypeSet(iecho, ICMP_ER);
+        //     if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_ICMP))
+        //     {
+        //         /* adjust the checksum */
+        //         if (iecho->chksum > pp_htons(0xffffU - (ICMP_ECHO << 8)))
+        //         {
+        //             iecho->chksum = uint16_t(iecho->chksum + pp_htons(uint16_t(ICMP_ECHO << 8)) + 1);
+        //         }
+        //         else
+        //         {
+        //             iecho->chksum = uint16_t(iecho->chksum + pp_htons(ICMP_ECHO << 8));
+        //         }
+        //     }
+        //     else
+        //     {
+        //         iecho->chksum = 0;
+        //     } /* Set the correct TTL and recalculate the header checksum. */
+        //     set_ip4_hdr_ttl(iphdr, ICMP_TTL);
+        //     set_ip4_hdr_checksum(iphdr, 0);
+        //     if(is_netif_checksum_enabled(inp, NETIF_CHECKSUM_GEN_IP))
+        //     {
+        //         set_ip4_hdr_checksum(iphdr, inet_chksum(reinterpret_cast<uint8_t*>(iphdr), hlen));
+        //     } /* increase number of messages attempted to send */
+        //     /* increase number of echo replies attempted to send */
+        //     /* send an ICMP packet */
+        //     const auto ret = ip4_output_if(p, src, nullptr, ICMP_TTL, 0, IP_PROTO_ICMP, inp);
+        //     if (ret != STATUS_OK)
+        //     {
+        //         // Logf(true,
+        //         //      ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)
+        //         //      ));
+        //     }
+        // }
         break;
     default:
         if (type == ICMP_DUR)
@@ -278,9 +279,8 @@ void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type)
 static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t code)
 {
     Ip4Addr iphdr_src; /* ICMP header + IP header + 8 bytes of data */
-    struct PacketBuffer* q = pbuf_alloc(PBUF_IP,
-                                        sizeof(struct IcmpEchoHdr) + IP4_HDR_LEN +
-                                        ICMP_DEST_UNREACH_DATA_SZ);
+    // struct PacketBuffer* q = pbuf_alloc();
+    PacketBuffer q{};
     if (q == nullptr)
     {
         Logf(true,

@@ -259,7 +259,7 @@ sys_check_timeouts(void)
   do {
       void *arg;
 
-    pbuf_check_free_ooseq();
+    // pbuf_check_free_ooseq();
 
     struct SysTimeoutContext* tmptimeout = next_timeout;
     if (tmptimeout == nullptr) {

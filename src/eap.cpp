@@ -675,7 +675,7 @@ static void eap_send_request(PppPcb* pcb)
     int outlen = (outp - (unsigned char *)p->payload) - PPP_HDRLEN;
     PUTSHORT(outlen, lenloc);
 
-    pbuf_realloc(p);
+    // pbuf_realloc(p);
     ppp_write(pcb, p);
 
     pcb->eap.es_server.ea_requests++;

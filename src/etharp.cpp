@@ -243,7 +243,7 @@ etharp_find_entry(const Ip4Addr* ipaddr, uint8_t flags, struct NetworkInterface*
             lwip_assert("state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE",
                         state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE);
             /* if given, does IP address match IP address in ARP entry? */
-            if (ipaddr && cmp_ip4_addr(ipaddr, &arp_table[i].ipaddr)
+            if (ipaddr && is_ip4_addr_equal(ipaddr, &arp_table[i].ipaddr)
                 && ((netif == nullptr) || (netif == arp_table[i].netif))
 
             ) {
@@ -633,7 +633,7 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
     }
     else {
         /* ARP packet directed to us? */
-        for_us = uint8_t(cmp_ip4_addr(&dipaddr, get_netif_ip4_addr(netif,)));
+        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif,)));
     }
 
     /* ARP message directed to us?
@@ -818,7 +818,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 
                     (arp_table[etharp_cached_entry].netif == netif) &&
 
-                    (cmp_ip4_addr(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
+                    (is_ip4_addr_equal(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
                     /* the per-pcb-cached entry is stable and the right one! */
                     // ETHARP_STATS_INC(etharp.cachehit);
                     return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
@@ -834,7 +834,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 
                 (arp_table[i].netif == netif) &&
 
-                (cmp_ip4_addr(dst_addr, &arp_table[i].ipaddr))) {
+                (is_ip4_addr_equal(dst_addr, &arp_table[i].ipaddr))) {
                 /* found an existing, stable entry */
                 EtharpSetAddrhint(netif, i);
                 return etharp_output_to_arp_index(netif, q, i);
@@ -958,20 +958,20 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
         struct PacketBuffer* p = q;
         while (p) {
             lwip_assert("no packet queues allowed!", (p->len != p->tot_len) || (p->next == nullptr));
-            if (PbufNeedsCopy(p)) {
-                copy_needed = 1;
-                break;
-            }
+            // if (PbufNeedsCopy(p)) {
+            //     copy_needed = 1;
+            //     break;
+            // }
             p = p->next;
         }
         if (copy_needed) {
             /* copy the whole packet into new pbufs */
-            p = pbuf_clone(PBUF_LINK, PBUF_RAM, q);
+            p = pbuf_clone(q);
         }
         else {
             /* referencing the old PacketBuffer is enough */
             p = q;
-            pbuf_ref(p);
+            // pbuf_ref(p);
         }
         /* packet could be taken over? */
         if (p != nullptr) {
@@ -1054,7 +1054,8 @@ etharp_raw(NetworkInterface& netif,
     // lwip_assert("netif != NULL", netif != nullptr);
 
     /* allocate a PacketBuffer for the outgoing ARP request packet */
-    struct PacketBuffer* p = pbuf_alloc(PBUF_LINK, kSizeofEtharpHdr);
+    // struct PacketBuffer* p = pbuf_alloc();
+    PacketBuffer p{};
     /* could allocate a PacketBuffer for an ARP request? */
     if (p == nullptr) {
         Logf(true,

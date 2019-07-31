@@ -140,7 +140,7 @@ mld6_lookfor_group(NetworkInterface*ifp, const Ip6Addr *addr)
   struct MldGroup *group = ((MldGroup *)netif_get_client_data(ifp, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6));
 
   while (group != nullptr) {
-    if (cmp_ip6_addr(&(group->group_address), addr)) {
+    if (is_ip6_addr_equal(&(group->group_address), addr)) {
       return group;
     }
     group = group->next;
@@ -309,7 +309,7 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we join this interface ? */
     if (is_ip6_addr_any(srcaddr) ||
-        get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
+        get_netif_ip6_addr_idx(netif, srcaddr) >= 0) {
       err = mld6_joingroup_netif(netif, groupaddr);
       if (err != STATUS_OK) {
         return err;
@@ -396,7 +396,7 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we leave this interface ? */
     if (is_ip6_addr_any(srcaddr) ||
-        get_netif_ip6_addr_match_idx(netif, srcaddr) >= 0) {
+        get_netif_ip6_addr_idx(netif, srcaddr) >= 0) {
       LwipStatus res = mld6_leavegroup_netif(netif, groupaddr);
       if (err != STATUS_OK) {
         /* Store this result if we have not yet gotten a success */
@@ -548,19 +548,20 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
     const Ip6Addr *src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
-  struct PacketBuffer* p =
-      pbuf_alloc(PBUF_IP, sizeof(struct MldHeader) + MLD6_HBH_HLEN);
+  // struct PacketBuffer* p =
+  //     pbuf_alloc();
+    PacketBuffer p{};
   if (p == nullptr) {
     // MLD6_STATS_INC(mld6.memerr);
     return;
   }
 
   /* Move to make room for Hop-by-hop options header. */
-  if (pbuf_remove_header(p, MLD6_HBH_HLEN)) {
-    free_pkt_buf(p);
-    // MLD6_STATS_INC(mld6.lenerr);
-    return;
-  }
+  // if (pbuf_remove_header(p, MLD6_HBH_HLEN)) {
+  //   free_pkt_buf(p);
+  //   // MLD6_STATS_INC(mld6.lenerr);
+  //   return;
+  // }
 
   /* Select our source address. */
   if (!is_ip6_addr_valid(get_netif_ip6_addr_state(netif, 0))) {

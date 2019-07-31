@@ -137,14 +137,14 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
             if ((portif != nullptr) && (portif->linkoutput != nullptr))
             {
                 /* prevent sending out to rx port */
-                if (get_and_inc_netif_num(portif) != p->if_idx)
+                if (get_and_inc_netif_num(portif) != p->input_netif_idx)
                 {
                     if (is_netif_link_up(portif))
                     {
                         Logf(kBridgeIfcFwDebug,
                              "br -> flood(%p:%d) -> %d\n",
                              reinterpret_cast<uint8_t *>(p),
-                             p->if_idx,
+                             p->input_netif_idx,
                              get_and_inc_netif_num(portif));
                         return portif->linkoutput(portif, p);
                     }
@@ -224,7 +224,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
     }
     auto* br = reinterpret_cast<BridgeIfcPrivate *>(port->bridge);
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
-    p->if_idx = rx_idx;
+    p->input_netif_idx = rx_idx;
     auto dst = reinterpret_cast<struct MacAddress *>(p->payload);
     auto src = reinterpret_cast<struct MacAddress *>(static_cast<uint8_t *>(p->payload) +
         sizeof(struct MacAddress));
@@ -305,7 +305,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     }
     if (bridgeif_netif_client_id == 0xFF)
     {
-        bridgeif_netif_client_id = netif_alloc_client_data_id();
+        
     }
     auto init_data = static_cast<BridgeIfcInitData *>(netif->state);
     lwip_assert("init_data != NULL", (init_data != nullptr));

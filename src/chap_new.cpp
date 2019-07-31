@@ -477,7 +477,7 @@ chap_respond(PppPcb* pcb,
     outp[2] = len >> 8;
     outp[3] = len;
 
-    pbuf_realloc(p);
+    // pbuf_realloc(p);
     ppp_write(pcb, p);
 }
 

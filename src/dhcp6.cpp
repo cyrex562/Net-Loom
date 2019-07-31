@@ -331,8 +331,8 @@ static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
     {
         return nullptr;
     }
-    struct PacketBuffer* p_out = pbuf_alloc(PBUF_TRANSPORT,
-                                            sizeof(struct Dhcp6Msg) + opt_len_alloc);
+    // struct PacketBuffer* p_out = pbuf_alloc();
+    PacketBuffer p_out{};
     if (p_out == nullptr)
     {
         Logf(true,
@@ -564,7 +564,7 @@ static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context*
             /* overflow */
             return ERR_BUF;
         } /* copy option + length, might be split accross pbufs */
-        auto* op_len = static_cast<uint8_t *>(pbuf_get_contiguous(p, op_len_buf, 4, offset));
+        // auto* op_len = static_cast<uint8_t *>(pbuf_get_contiguous(p, op_len_buf, 4, offset));
         if (op_len == nullptr)
         {
             /* failed to get option and length */

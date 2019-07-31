@@ -92,7 +92,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
     {
         /* all options are in the first PacketBuffer */
         tcphdr_opt1_len = tcphdr_optlen;
-        pbuf_remove_header(p, hdrlen_bytes); /* cannot fail */
+        // pbuf_remove_header(p, hdrlen_bytes); /* cannot fail */
     }
     else
     {
@@ -100,13 +100,13 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         /* there must be a next pbuf, due to hdrlen_bytes sanity check above */
         lwip_assert("p->next != NULL", p->next != nullptr);
         /* advance over the TCP header (cannot fail) */
-        pbuf_remove_header(p, TCP_HDR_LEN);
+        // pbuf_remove_header(p, TCP_HDR_LEN);
         /* determine how long the first and second parts of the options are */
         tcphdr_opt1_len = p->len;
         uint16_t opt2len = (uint16_t)(tcphdr_optlen - tcphdr_opt1_len);
         /* options continue in the next PacketBuffer: set p to zero length and hide the
                    options in the next PacketBuffer (adjusting p->tot_len) */
-        pbuf_remove_header(p, tcphdr_opt1_len);
+        // pbuf_remove_header(p, tcphdr_opt1_len);
         /* check that the options fit in the second PacketBuffer */
         if (opt2len > p->next->len)
         {
@@ -119,7 +119,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         tcphdr_opt2 = static_cast<uint8_t *>(p->next->payload);
         /* advance p->next to point after the options, and manually
                    adjust p->tot_len to keep it consistent with the changed p->next */
-        pbuf_remove_header(p->next, opt2len);
+        // pbuf_remove_header(p->next, opt2len);
         p->tot_len = uint16_t(p->tot_len - opt2len);
         lwip_assert("p->len == 0", p->len == 0);
         lwip_assert("p->tot_len == p->next->tot_len", p->tot_len == p->next->tot_len);
@@ -293,7 +293,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         recv_acked = 0;
         if (flags & TCP_PSH)
         {
-            p->push = true;
+            // p->push = true;
         } /* If there is data which was previously "refused" by upper layer */
         if (pcb->refused_data != nullptr)
         {
@@ -356,7 +356,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 while (recv_data != nullptr)
                 {
                     struct PacketBuffer* rest = nullptr;
-                    pbuf_split_64k(recv_data, &rest);
+                    // pbuf_split_64k(recv_data, &rest);
                     lwip_assert("pcb->refused_data == NULL",
                                 pcb->refused_data == nullptr);
                     if (pcb->flags & TF_RXCLOSED)
@@ -384,7 +384,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                     {
                         if (rest != nullptr)
                         {
-                            pbuf_cat(recv_data, rest);
+                            // pbuf_cat(recv_data, rest);
                         }
                         pcb->refused_data = recv_data;
                         Logf(true,
@@ -404,7 +404,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                     if (pcb->refused_data != nullptr)
                     {
                         /* Delay this if we have refused data. */
-                        pcb->refused_data->has_tcp_fin_flag = true;
+                        // pcb->refused_data->has_tcp_fin_flag = true;
                     }
                     else
                     {
@@ -980,7 +980,7 @@ tcp_oos_insert_segment(struct TcpSeg* cseg, struct TcpSeg* next)
         {
             /* We need to trim the incoming segment. */
             cseg->len = (uint16_t)(next->tcphdr->seqno - seqno);
-            pbuf_realloc(cseg->p);
+            // pbuf_realloc(cseg->p);
         }
     }
     cseg->next = next;
@@ -1001,7 +1001,7 @@ tcp_free_acked_segments(struct TcpPcb* pcb,
                  + tcp_tcplen(seg_list), dbg_list_name));
         struct TcpSeg* next = seg_list;
         seg_list = seg_list->next;
-        uint16_t clen = pbuf_clen(next->p);
+        // uint16_t clen = pbuf_clen(next->p);
         Logf(true,
              "tcp_receive: queuelen %d ... ", pcb->snd_queuelen);
         lwip_assert("pcb->snd_queuelen >= pbuf_clen(next->p)",
@@ -1321,7 +1321,7 @@ tcp_receive(struct TcpPcb* pcb)
                 p->len = 0;
                 p = p->next;
             } /* cannot fail... */
-            pbuf_remove_header(p, off);
+            // pbuf_remove_header(p, off);
             inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
         }
         else
@@ -1363,7 +1363,7 @@ tcp_receive(struct TcpPcb* pcb)
                     {
                         inseg.len -= 1;
                     }
-                    pbuf_realloc(inseg.p);
+                    // pbuf_realloc(inseg.p);
                     tcplen = tcp_tcplen(&inseg);
                     lwip_assert("tcp_receive: segment not trimmed correctly to rcv_wnd\n",
                                 (seqno + tcplen) == (pcb->rcv_nxt + pcb->rcv_wnd));
@@ -1414,7 +1414,7 @@ tcp_receive(struct TcpPcb* pcb)
                             {
                                 inseg.len -= 1;
                             }
-                            pbuf_realloc(inseg.p);
+                            // pbuf_realloc(inseg.p);
                             tcplen = tcp_tcplen(&inseg);
                             lwip_assert(
                                 "tcp_receive: segment not trimmed correctly to ooseq queue\n",
@@ -1468,7 +1468,7 @@ tcp_receive(struct TcpPcb* pcb)
                                       recv_data to the application. */
                         if (recv_data)
                         {
-                            pbuf_cat(recv_data, cseg->p);
+                            // pbuf_cat(recv_data, cseg->p);
                         }
                         else
                         {
@@ -1630,7 +1630,7 @@ tcp_receive(struct TcpPcb* pcb)
                                             prev->len = (uint16_t)(seqno - prev
                                                                            ->tcphdr->seqno
                                             );
-                                            pbuf_realloc(prev->p);
+                                            // pbuf_realloc(prev->p);
                                         }
                                         prev->next = cseg;
                                         tcp_oos_insert_segment(cseg, next);
@@ -1672,7 +1672,7 @@ tcp_receive(struct TcpPcb* pcb)
                                         /* We need to trim the last segment. */
                                         next->len = (uint16_t)(seqno - next->tcphdr->seqno
                                         );
-                                        pbuf_realloc(next->p);
+                                        // pbuf_realloc(next->p);
                                     } /* check if the remote side overruns our receive window */
                                     if (TCP_SEQ_GT((uint32_t)tcplen + seqno,
                                                    pcb->rcv_nxt + (uint32_t)pcb->rcv_wnd))
@@ -1692,7 +1692,7 @@ tcp_receive(struct TcpPcb* pcb)
                                         } /* Adjust length of segment to fit in the window. */
                                         next->next->len = (uint16_t)(pcb->rcv_nxt + pcb->
                                             rcv_wnd - seqno);
-                                        pbuf_realloc(next->next->p);
+                                        // pbuf_realloc(next->next->p);
                                         tcplen = tcp_tcplen(next->next);
                                         lwip_assert(
                                             "tcp_receive: segment not trimmed correctly to rcv_wnd\n",
@@ -1756,7 +1756,7 @@ tcp_receive(struct TcpPcb* pcb)
                         // {
                         //     stop_here = 1;
                         // }
-                        ooseq_qlen += pbuf_clen(p);
+                        // ooseq_qlen += pbuf_clen(p);
                         // if (ooseq_qlen > ooseq_max_qlen)
                         // {
                         //     stop_here = 1;

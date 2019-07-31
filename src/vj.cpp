@@ -158,7 +158,7 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
         return (TYPE_IP);
     } /* TCP stack requires that we don't change the packet payload, therefore we copy
    * the whole packet before compression. */
-    np = pbuf_clone(PBUF_RAW, PBUF_RAM, *pb);
+    np = pbuf_clone(*pb);
     if (!np)
     {
         return (TYPE_IP);
@@ -171,8 +171,8 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
    * most recently used connection since it's most likely to be used
    * again & we don't have to do any reordering if it's used.
    */ // vjs_packets +=1;
-    if (!cmp_ip4_addr(&ip->src, &cs->vjcs_u.csu_ip.src) || !
-        cmp_ip4_addr(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th).v
+    if (!is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) || !
+        is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th).v
         != (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
             &cs->vjcs_u.csu_ip)]).v)
     {
@@ -181,8 +181,8 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
         {
             Cstate* lcs = cs;
             cs = cs->cs_next; // INCR(vjs_searches);
-            if (cmp_ip4_addr(&ip->src, &cs->vjcs_u.csu_ip.src) &&
-                cmp_ip4_addr(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct vj_uint32_t*
+            if (is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) &&
+                is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct vj_uint32_t*
                 )th).v == (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
                     &cs->vjcs_u.csu_ip)]).v)
             {
@@ -218,7 +218,7 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
             return (TYPE_IP);
         } /* TCP stack requires that we don't change the packet payload, therefore we copy
      * the whole packet before compression. */
-        np = pbuf_clone(PBUF_RAW, PBUF_RAM, *pb);
+        np = pbuf_clone( *pb);
         if (!np)
         {
             return (TYPE_IP);
@@ -231,8 +231,8 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
      * most recently used connection since it's most likely to be used
      * again & we don't have to do any reordering if it's used.
      */ // INCR(vjs_packets);
-        if (!cmp_ip4_addr(&ip->src, &cs->vjcs_u.csu_ip.src) || !
-            cmp_ip4_addr(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th)
+        if (!is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) || !
+            is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th)
             .v != (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
                 &cs->vjcs_u.csu_ip)]).v)
         {
@@ -254,8 +254,8 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
             {
                 lcs = cs;
                 cs = cs->cs_next; // INCR(vjs_searches);
-                if (cmp_ip4_addr(&ip->src, &cs->vjcs_u.csu_ip.src) &&
-                    cmp_ip4_addr(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct
+                if (is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) &&
+                    is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct
                         vj_uint32_t*)th).v == (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[
                         get_ip4_hdr_hdr_len(&cs->vjcs_u.csu_ip)]).v)
                 {
@@ -418,11 +418,11 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
         {
             comp->last_xmit = cs->cs_id;
             hlen -= deltaS + 4;
-            if (pbuf_remove_header(np, hlen))
-            {
-                /* Can we cope with this failing?  Just assert for now */
-                lwip_assert("pbuf_remove_header failed\n", false);
-            }
+            // if (pbuf_remove_header(np, hlen))
+            // {
+            //     /* Can we cope with this failing?  Just assert for now */
+            //     lwip_assert("pbuf_remove_header failed\n", false);
+            // }
             cp = (uint8_t*)np->payload; // *cp++ = (uint8_t)(changes | NEW_C);
             *cp++ = cs->cs_id;
         }
@@ -631,12 +631,12 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct VjCompress* comp)
         tmp = (tmp & 0xffff) + (tmp >> 16);
         set_ip4_hdr_checksum(&cs->vjcs_u.csu_ip, (uint16_t)(~tmp));
         /* Remove the compressed header and prepend the uncompressed header. */
-        if (pbuf_remove_header(n0, vjlen))
-        {
-            /* Can we cope with this failing?  Just assert for now */
-            lwip_assert("pbuf_remove_header failed\n", false);
-            goto bad;
-        } //     if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
+        // if (pbuf_remove_header(n0, vjlen))
+        // {
+        //     /* Can we cope with this failing?  Just assert for now */
+        //     lwip_assert("pbuf_remove_header failed\n", false);
+        //     goto bad;
+        // } //     if (LWIP_MEM_ALIGN(n0->payload) != n0->payload)
         //     {
         //         PacketBuffer* np;
         //
@@ -672,20 +672,20 @@ vj_uncompress_tcp(struct PacketBuffer** nb, struct VjCompress* comp)
         //         free_pkt_buf(n0);
         //         n0 = np;
         //     }
-        if (pbuf_add_header(n0, cs->cs_hlen))
-        {
-            lwip_assert("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE",
-                        cs->cs_hlen <= PBUF_POOL_BUFSIZE);
-            // np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
-            struct PacketBuffer* np = new PacketBuffer;
-            if (!np)
-            {
-                // PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: prepend failed\n"));
-                goto bad;
-            }
-            pbuf_cat(np, n0);
-            n0 = np;
-        }
+        // if (pbuf_add_header(n0, cs->cs_hlen))
+        // {
+        //     lwip_assert("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE",
+        //                 cs->cs_hlen <= PBUF_POOL_BUFSIZE);
+        //     // np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
+        //     struct PacketBuffer* np = new PacketBuffer;
+        //     if (!np)
+        //     {
+        //         // PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: prepend failed\n"));
+        //         goto bad;
+        //     }
+        //     pbuf_cat(np, n0);
+        //     n0 = np;
+        // }
         lwip_assert("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
         memcpy(n0->payload, &cs->vjcs_u.csu_ip, cs->cs_hlen);
         *nb = n0;

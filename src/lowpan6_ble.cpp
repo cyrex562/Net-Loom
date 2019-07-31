@@ -213,7 +213,8 @@ rfc7668_compress(NetworkInterface*netif, struct PacketBuffer *p)
   /* We'll use a dedicated PacketBuffer for building BLE fragments.
    * We'll over-allocate it by the bytes saved for header compression.
    */
-  struct PacketBuffer* p_frag = pbuf_alloc(PBUF_RAW, p->tot_len);
+  // struct PacketBuffer* p_frag = pbuf_alloc();
+    PacketBuffer p_frag{};
   if (p_frag == nullptr) {
     return ERR_MEM;
   }
@@ -237,7 +238,7 @@ rfc7668_compress(NetworkInterface*netif, struct PacketBuffer *p)
     free_pkt_buf(p_frag);
     return err;
   }
-  pbuf_remove_header(p, hidden_header_len);
+  // pbuf_remove_header(p, hidden_header_len);
 
   /* Calculate remaining packet length */
   uint16_t remaining_len = p->tot_len;
@@ -321,7 +322,7 @@ rfc7668_input(struct PacketBuffer * p, NetworkInterface*netif)
   if (*puc == 0x41) {
 //    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, removing dispatch: 0x%2x \n", *puc));
     /* This is a complete IPv6 packet, just skip header byte. */
-    pbuf_remove_header(p, 1);
+    // pbuf_remove_header(p, 1);
   /* IPHC header compression */
   } else if ((*puc & 0xe0 )== 0x60) {
 //    Logf(LWIP_LOWPAN6_DECOMPRESSION_DEBUG, ("Completed packet, decompress dispatch: 0x%2x \n", *puc));

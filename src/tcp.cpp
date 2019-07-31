@@ -1070,7 +1070,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
 
     if (pcb->netif_idx != NETIF_NO_INDEX)
     {
-        netif = get_netif_by_index(pcb->netif_idx);
+        // netif = get_netif_by_index(pcb->netif_idx);
     }
     else
     {
@@ -1596,7 +1596,7 @@ tcp_process_refused_data(struct TcpPcb* pcb)
            closes the pcb */
         struct PacketBuffer* refused_data = pcb->refused_data;
 
-        pbuf_split_64k(refused_data, &rest);
+        // pbuf_split_64k(refused_data, &rest);
         pcb->refused_data = rest;
 
         /* Notify again application with data previously received. */
@@ -1640,7 +1640,7 @@ tcp_process_refused_data(struct TcpPcb* pcb)
 
             if (rest != nullptr)
             {
-                pbuf_cat(refused_data, rest);
+                // pbuf_cat(refused_data, rest);
             }
 
             pcb->refused_data = refused_data;
@@ -1723,7 +1723,7 @@ tcp_seg_copy(struct TcpSeg* seg)
         return nullptr;
     }
     memcpy((uint8_t *)cseg, (const uint8_t *)seg, sizeof(struct TcpSeg));
-    pbuf_ref(cseg->p);
+    // pbuf_ref(cseg->p);
     return cseg;
 }
 

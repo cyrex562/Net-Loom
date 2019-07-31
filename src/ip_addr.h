@@ -273,9 +273,9 @@ compare_ip_addr(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
     }
     if (is_ip_addr_v6(addr1))
     {
-        return cmp_ip6_addr(addr1.u_addr.ip6, addr2.u_addr.ip6);
+        return is_ip6_addr_equal(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
-    return cmp_ip4_addr(addr1.u_addr.ip4.address, addr2.u_addr.ip4.address);
+    return is_ip4_addr_equal(addr1.u_addr.ip4.address, addr2.u_addr.ip4.address);
 }
 
 

@@ -38,7 +38,7 @@ inline bool
 ip_addresses_and_id_match(Ip4Hdr& iphdr_a, Ip4Hdr& iphdr_b)
 {
     return
-        cmp_ip4_addr(&(iphdr_a)->src, &(iphdr_b)->src) && cmp_ip4_addr(&(iphdr_a)->dest, &(iphdr_b)->dest) &&
+        is_ip4_addr_equal(&(iphdr_a)->src, &(iphdr_b)->src) && is_ip4_addr_equal(&(iphdr_a)->dest, &(iphdr_b)->dest) &&
         get_ip4_hdr_id(iphdr_a) == get_ip4_hdr_id(iphdr_b);
 }
 
@@ -110,7 +110,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     /* Then, copy the original header into it. */
     memcpy(p->payload, &ipr->iphdr, IP4_HDR_LEN);
     icmp_time_exceeded(p, ICMP_TE_FRAG);
-    clen = pbuf_clen(p);
+    // clen = pbuf_clen(p);
     lwip_assert("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
     pbufs_freed = (uint16_t)(pbufs_freed + clen);
     free_pkt_buf(p);
@@ -125,7 +125,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     struct PacketBuffer* pcur = p;
     /* get the next pointer before freeing */
     p = iprh->next_pbuf;
-    clen = pbuf_clen(pcur);
+    // clen = pbuf_clen(pcur);
     lwip_assert("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
     pbufs_freed = (uint16_t)(pbufs_freed + clen);
     free_pkt_buf(pcur);
@@ -435,7 +435,7 @@ ip4_reass(struct PacketBuffer *p)
   len = (uint16_t)(len - hlen);
 
   /* Check if we are allowed to enqueue more datagrams. */
-  uint16_t clen = pbuf_clen(p);
+  // uint16_t clen = pbuf_clen(p);
   if ((ip_reass_pbufcount + clen) > IP_REASS_MAX_PBUFS) {
 
     if (!ip_reass_remove_oldest_datagram(fraghdr, clen) ||
@@ -546,8 +546,8 @@ ip4_reass(struct PacketBuffer *p)
       struct IpReassHelper* iprh = (struct IpReassHelper *)r->payload;
 
       /* hide the ip header for every succeeding fragment */
-      pbuf_remove_header(r, IP4_HDR_LEN);
-      pbuf_cat(p, r);
+      // pbuf_remove_header(r, IP4_HDR_LEN);
+      // pbuf_cat(p, r);
       r = iprh->next_pbuf;
     }
 
@@ -566,7 +566,7 @@ ip4_reass(struct PacketBuffer *p)
     ip_reass_dequeue_datagram(ipr, ipr_prev);
 
     /* and adjust the number of pbufs currently queued for reassembly. */
-    clen = pbuf_clen(p);
+    // clen = pbuf_clen(p);
     lwip_assert("ip_reass_pbufcount >= clen", ip_reass_pbufcount >= clen);
     ip_reass_pbufcount = (uint16_t)(ip_reass_pbufcount - clen);
 
@@ -640,7 +640,7 @@ ipfrag_free_pbuf_custom(struct PacketBuffer *p)
 LwipStatus
 ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr)
 {
-  struct PacketBuffer *rambuf;
+  struct PacketBuffer rambuf{};
 #if !LWIP_NETIF_TX_SINGLE_PBUF
   uint16_t newpbuflen = 0;
 #endif
@@ -678,7 +678,7 @@ ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr
      * The rest will be PBUF_REFs mirroring the PacketBuffer chain to be fragged,
      * but limited to the size of an mtu.
      */
-    rambuf = pbuf_alloc(PBUF_LINK, IP4_HDR_LEN);
+    // rambuf = pbuf_alloc();
     if (rambuf == nullptr) {
       goto memerr;
     }
@@ -704,26 +704,26 @@ ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr
         goto memerr;
       }
       /* Mirror this PacketBuffer, although we might not need all of it. */
-      struct PacketBuffer* newpbuf = pbuf_alloced_custom(
-          PBUF_RAW,
-          newpbuflen,
-          PBUF_REF,
-          &pcr->pc,
-          (uint8_t *)pkt_buf->payload + poff,
-          newpbuflen);
+      // struct PacketBuffer* newpbuf = pbuf_alloced_custom(
+      //     PBUF_RAW,
+      //     newpbuflen,
+      //     PBUF_REF,
+      //     &pcr->pc,
+      //     (uint8_t *)pkt_buf->payload + poff,
+      //     newpbuflen);
       if (newpbuf == nullptr) {
         ip_frag_free_pbuf_custom_ref(pcr);
         free_pkt_buf(rambuf);
         goto memerr;
       }
-      pbuf_ref(pkt_buf);
+      // pbuf_ref(pkt_buf);
       pcr->original = pkt_buf;
       pcr->pc.custom_free_function = ipfrag_free_pbuf_custom;
 
       /* Add it to end of rambuf's chain, but using pbuf_cat, not pbuf_chain
        * so that it is removed when pbuf_dechain is later called on rambuf.
        */
-      pbuf_cat(rambuf, newpbuf);
+      // pbuf_cat(rambuf, newpbuf);
       left_to_copy = (uint16_t)(left_to_copy - newpbuflen);
       if (left_to_copy) {
         poff = 0;

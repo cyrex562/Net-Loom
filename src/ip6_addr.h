@@ -89,7 +89,7 @@ enum Ip6AddrScopeType {
 ///
 ///
 ///
-enum Ip6MulticastScopes: uint8_t
+enum Ip6MulticastScope: uint8_t
 {
     IP6_MULTICAST_SCOPE_RESERVED =0x0,
     IP6_MULTICAST_SCOPE_RESERVED0 =0x0,
@@ -287,11 +287,15 @@ cmp_ip6_addr_zoneless(const Ip6Addr& addr1, const Ip6Addr& addr2)
 ///
 ///
 inline bool
-cmp_ip6_addr(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info2)
+is_ip6_addr_equal(const Ip6Addr& addr1, const Ip6Addr& addr2)
 {
-    return cmp_ip6_addr_zoneless(addr_info1.addr, addr_info2.addr) && cmp_ip6_addr_zone2(
-        addr_info1,
-        addr_info2);
+     return addr1.addr[0] == addr2.addr[0] && addr1.addr[1] == addr2.addr[1] && addr1.addr[
+        2] == addr2.addr[2] && addr1.addr[3] == addr2.addr[3];
+}
+
+inline bool is_ip6_zone_equal(const Ip6AddrInfo& info1, const Ip6AddrInfo& info2)
+{
+    return info1.zone == info2.zone;
 }
 
 
@@ -595,10 +599,10 @@ get_ip6_addr_mcast_rendezvous_flag(const Ip6Addr& addr)
 ///
 ///
 ///
-inline uint32_t
+inline Ip6MulticastScope
 get_ip6_addr_mcast_scope(const Ip6Addr& addr)
 {
-    return lwip_htonl(addr.addr[0]) >> 16 & 0xf;
+    return Ip6MulticastScope(lwip_htonl(addr.addr[0]) >> 16 & 0xf);
 }
 
 

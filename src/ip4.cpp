@@ -84,14 +84,14 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
     // todo: get lowest (closest to wire) IP4 header from pkt_buf, then check if it is able to be forwarded.
     // todo: get dest address in packet
     // don't route link-layer broadcasts
-    if (pkt_buf.ll_broadcast)
-    {
-        return false;
-    } /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
-    if (pkt_buf.ll_multicast || is_ip4_addr_multicast(dst_addr))
-    {
-        return false;
-    } // todo: make whether we care about experimental IP addresses an configurable option
+    // if (pkt_buf.ll_broadcast)
+    // {
+    //     return false;
+    // } /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
+    // if (pkt_buf.ll_multicast || is_ip4_addr_multicast(dst_addr))
+    // {
+    //     return false;
+    // } // todo: make whether we care about experimental IP addresses an configurable option
     if (is_ip4_addr_experimental(dst_addr))
     {
         return false;
@@ -202,7 +202,7 @@ ip4_input_accept(NetworkInterface& netif)
     /* interface is up and configured? */
     if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
         /* unicast to this interface address? */
-        if (cmp_ip4_addr(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
+        if (is_ip4_addr_equal(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
             /* or broadcast on this interface network address? */
             ip4_addr_isbroadcast(&curr_dst_addr, netif)
 
@@ -270,7 +270,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
   /* Trim PacketBuffer. This is especially required for packets < 60 bytes. */
   if (iphdr_len < p->tot_len) {
-    pbuf_realloc(p);
+    // pbuf_realloc(p);
   }
 
   /* header length exceeds first PacketBuffer length, or ip length exceeds total PacketBuffer length? */
@@ -317,7 +317,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       /* IGMP snooping switches need 0.0.0.0 to be allowed as source address (RFC 4541) */
       Ip4Addr allsystems;
       make_ip4_addr_host_from_bytes(&allsystems, 224, 0, 0, 1);
-      if (cmp_ip4_addr(curr_dst_addr, &allsystems) &&
+      if (is_ip4_addr_equal(curr_dst_addr, &allsystems) &&
           ip4_addr_isany(curr_src_addr)) {
         check_ip_src = 0;
       }
@@ -458,7 +458,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   if (raw_status != RAW_INPUT_EATEN)
 
   {
-    pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
+    // pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (get_ip4_hdr_proto(iphdr)) {
 
@@ -496,7 +496,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
           /* send ICMP destination protocol unreachable unless is was a broadcast */
           if (!ip4_addr_isbroadcast(curr_dst_addr, netif) &&
               !is_ip4_addr_multicast(curr_dst_addr)) {
-            pbuf_header_force(p, (int16_t)iphdr_hlen); /* Move to ip header, no check necessary. */
+            // pbuf_header_force(p, (int16_t)iphdr_hlen); /* Move to ip header, no check necessary. */
             icmp_dest_unreach(p, ICMP_DUR_PROTO);
           }
 
@@ -637,11 +637,11 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       auto optlen_aligned = (uint16_t)(optlen + 3 & ~3);
       ip_hlen = (uint16_t)(ip_hlen + optlen_aligned);
       /* First write in the IP options */
-      if (pbuf_add_header(p, optlen_aligned)) {
-        Logf(true, "ip4_output_if_opt: not enough room for IP options in PacketBuffer\n");
-        
-        return ERR_BUF;
-      }
+      // if (pbuf_add_header(p, optlen_aligned)) {
+      //   Logf(true, "ip4_output_if_opt: not enough room for IP options in PacketBuffer\n");
+      //   
+      //   return ERR_BUF;
+      // }
       memcpy(p->payload, ip_options, optlen);
       if (optlen < optlen_aligned) {
         /* zero the remaining bytes */
@@ -655,13 +655,13 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
     }
 
           /* generate IP header */
-          if (pbuf_add_header(p, IP4_HDR_LEN))
-          {
-              Logf(true, "ip4_output: not enough room for IP header in PacketBuffer\n");
-
-              
-              return ERR_BUF;
-          }
+          // if (pbuf_add_header(p, IP4_HDR_LEN))
+          // {
+          //     Logf(true, "ip4_output: not enough room for IP header in PacketBuffer\n");
+          //
+          //     
+          //     return ERR_BUF;
+          // }
 
           iphdr = (struct Ip4Hdr *)p->payload;
           lwip_assert("check that first PacketBuffer can hold struct Ip4Hdr",
@@ -746,9 +746,9 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
   //   return netif_loop_output(netif, p,);
   // }
 
-  if (p->multicast_loop != 0) {
-    output_netif_loop(netif, p);
-  }
+  // if (p->multicast_loop != 0) {
+  //   send_pkt_to_netif_loop(netif, p);
+  // }
 
 
       /* don't fragment if interface has mtu set to 0 [loopif] */

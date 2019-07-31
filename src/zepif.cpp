@@ -110,13 +110,13 @@ zepif_udp_recv(void* arg,
         goto err_return;
     }
     /* everything seems to be OK, hide the ZEP header */
-    if (pbuf_remove_header(p, sizeof(struct ZepHdr)))
-    {
-        goto err_return;
-    }
+    // if (pbuf_remove_header(p, sizeof(struct ZepHdr)))
+    // {
+    //     goto err_return;
+    // }
     /* TODO Check CRC? */
     /* remove CRC trailer */
-    pbuf_realloc(p);
+    // pbuf_realloc(p);
 
     /* Call into 6LoWPAN code. */
     auto err = netif_lowpan6->input(p, netif_lowpan6);
@@ -144,9 +144,9 @@ zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
     struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
     lwip_assert("state->pcb != NULL", state->pcb != nullptr);
 
-  struct PacketBuffer* q = pbuf_alloc(PBUF_TRANSPORT,
-                                      sizeof(struct ZepHdr) + p->tot_len);
-  if (q == nullptr) {
+  // struct PacketBuffer* q = pbuf_alloc();
+  PacketBuffer q{};
+    if (q == nullptr) {
     return ERR_MEM;
   }
   auto zep = (struct ZepHdr *)q->payload;
@@ -163,10 +163,10 @@ zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
   state->seqno++;
   zep->len = (uint8_t)p->tot_len;
 
-    auto err = pbuf_take_at(q, p->payload, p->tot_len, sizeof(struct ZepHdr));
+    auto err = pbuf_take_at(q, p->payload, sizeof(struct ZepHdr));
     if (err == STATUS_OK)
     {
-        zepif_udp_recv(netif, state->pcb, pbuf_clone(PBUF_RAW, PBUF_RAM, q), nullptr, 0, netif);
+        zepif_udp_recv(netif, state->pcb, pbuf_clone(q), nullptr, 0, netif);
         err = udp_sendto(state->pcb, q, state->init.zep_dst_ip_addr, state->init.zep_dst_udp_port);
     }
     free_pkt_buf(q);

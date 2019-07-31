@@ -46,8 +46,8 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
         return STATUS_OK;
     }
 
-    if (pkt_buf.if_idx == NETIF_NO_INDEX) {
-        pkt_buf.if_idx = get_and_inc_netif_num(net_ifc);
+    if (pkt_buf.input_netif_idx == NETIF_NO_INDEX) {
+        pkt_buf.input_netif_idx = get_and_inc_netif_num(net_ifc);
     }
 
     /* points to packet payload, which starts with an Ethernet header */
@@ -91,18 +91,18 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             if ((ethhdr->dest.addr[1] == LNK_LYR_MCAST_ADDR_OUI[1]) &&
                 (ethhdr->dest.addr[2] == LNK_LYR_MCAST_ADDR_OUI[2])) {
                 /* mark the PacketBuffer as link-layer multicast */
-                pkt_buf.ll_multicast = true;
+                // pkt_buf.ll_multicast = true;
             }
         }
         else if ((ethhdr->dest.addr[0] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[0]) &&
             (ethhdr->dest.addr[1] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[1])) {
             /* mark the PacketBuffer as link-layer multicast */
-            pkt_buf.ll_multicast = true;
+            // pkt_buf.ll_multicast = true;
         }
 
         else if (cmp_eth_addr(&ethhdr->dest, &ETH_BCAST_ADDR)) {
             /* mark the pbuf as link-layer broadcast */
-            pkt_buf.ll_broadcast = true;
+            // pkt_buf.ll_broadcast = true;
         }
     }
 
@@ -112,18 +112,18 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             return STATUS_OK;
         }
         /* skip Ethernet header (min. size checked above) */
-        if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
-            //        Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //                    ("ethernet_input: IPv4 packet dropped, too short (%d/%d)\n",
-            //                     p->tot_len, next_hdr_offset));
-            //        Logf(true | LWIP_DBG_TRACE, ("Can't move over header in packet"));
-            free_pkt_buf(pkt_buf);
-            return STATUS_OK;
-        }
-        else {
-            /* pass to IP layer */
-            ip4_input(pkt_buf, net_ifc);
-        }
+        // if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
+        //     //        Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        //     //                    ("ethernet_input: IPv4 packet dropped, too short (%d/%d)\n",
+        //     //                     p->tot_len, next_hdr_offset));
+        //     //        Logf(true | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+        //     free_pkt_buf(pkt_buf);
+        //     return STATUS_OK;
+        // }
+        // else {
+        //     /* pass to IP layer */
+        //     ip4_input(pkt_buf, net_ifc);
+        // }
 
     }
     else if (type == pp_htons(ETHTYPE_ARP)) {
@@ -132,15 +132,15 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             return STATUS_OK;
         }
         /* skip Ethernet header (min. size checked above) */
-        if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
-
-            free_pkt_buf(pkt_buf);
-            return STATUS_OK;
-        }
-        else {
-            /* pass p to ARP module */
-            etharp_input(pkt_buf, net_ifc);
-        }
+        // if (pbuf_remove_header(pkt_buf, next_hdr_offset)) {
+        //
+        //     free_pkt_buf(pkt_buf);
+        //     return STATUS_OK;
+        // }
+        // else {
+        //     /* pass p to ARP module */
+        //     etharp_input(pkt_buf, net_ifc);
+        // }
 
 
     }
@@ -157,17 +157,17 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
     }
     else if (type == pp_htons(ETHTYPE_IPV6)) {
         /* skip Ethernet header */
-        if ((pkt_buf.len < next_hdr_offset) || pbuf_remove_header(pkt_buf, next_hdr_offset)) {
-            // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-            //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
-            //          p->tot_len, next_hdr_offset));
-            free_pkt_buf(pkt_buf);
-            return STATUS_OK;
-        }
-        else {
-            /* pass to IPv6 layer */
-            ip6_input(pkt_buf, net_ifc);
-        }
+        // if ((pkt_buf.len < next_hdr_offset) || pbuf_remove_header(pkt_buf, next_hdr_offset)) {
+        //     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        //     //      ("ethernet_input: IPv6 packet dropped, too short (%d/%d)\n",
+        //     //          p->tot_len, next_hdr_offset));
+        //     free_pkt_buf(pkt_buf);
+        //     return STATUS_OK;
+        // }
+        // else {
+        //     /* pass to IPv6 layer */
+        //     ip6_input(pkt_buf, net_ifc);
+        // }
     }
     else {
         // if (LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(p, netif) == ERR_OK)

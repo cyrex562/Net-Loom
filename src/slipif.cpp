@@ -78,10 +78,10 @@ struct SlipifPriv
 {
     SioFd sd;
     /* q is the whole PacketBuffer chain for a packet, p is the current PacketBuffer in the chain */
-    struct PacketBuffer *p, *q;
+    // struct PacketBuffer *p, *q;
     uint8_t state;
     uint16_t i, recved;
-    struct PacketBuffer* rxpackets;
+    // struct PacketBuffer* rxpackets;
 }; /**
  * Send a PacketBuffer doing the necessary SLIP encapsulation
  *
@@ -178,7 +178,7 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
             {
                 /* Received whole packet. */
                 /* Trim the PacketBuffer to the size of the received packet. */
-                pbuf_realloc(priv->q); // LINK_STATS_INC(link.recv);
+                // pbuf_realloc(priv->q); // LINK_STATS_INC(link.recv);
                 //            Logf(true, ("slipif: Got packet (%d bytes)\n", priv->recved));
                 struct PacketBuffer* t = priv->q;
                 priv->p = priv->q = nullptr;
@@ -215,9 +215,7 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
     {
         /* allocate a new PacketBuffer */
         Logf(true, ("slipif_input: alloc\n"));
-        priv->p = pbuf_alloc(PBUF_LINK,
-                             (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN -
-                                 PBUF_LINK_ENCAPSULATION_HLEN));
+        // priv->p = pbuf_alloc();
         if (priv->p == nullptr)
         {
             Logf(true, ("slipif_input: no new PacketBuffer! (DROP)\n"));
@@ -227,7 +225,7 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
         if (priv->q != nullptr)
         {
             /* 'chain' the PacketBuffer to the existing chain */
-            pbuf_cat(priv->q, priv->p);
+            // pbuf_cat(priv->q, priv->p);
         }
         else
         {
