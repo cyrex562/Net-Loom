@@ -521,11 +521,7 @@ NetworkInterface&
 add_netif_no_addr(NetworkInterface& netif, uint8_t& state);
 
 
-NetworkInterface add_netif(NetworkInterface& netif,
-                           const Ip4Addr& ipaddr,
-                           const Ip4Addr& netmask,
-                           const Ip4Addr& gw,
-                           uint8_t *state);
+NetworkInterface add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces);
 
 bool set_netif_addr(NetworkInterface& netif,
                     const Ip4Addr& ipaddr,

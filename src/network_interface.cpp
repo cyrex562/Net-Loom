@@ -1,6 +1,7 @@
-//
-// file: netif.cpp
-//
+/**
+ * @file netif.cpp
+ */
+
 
 #include <autoip.h>
 #include <cstdlib> /* atoi */
@@ -24,15 +25,13 @@
 #include <tcpip.h>
 #include <udp.h>
 
-
-///
-/// Initialize a lwip network interface structure for a loopback interface
-///
-/// netif: the lwip network interface structure for this loopif
-/// if_name: the name of the interface, default is "lo"
-/// return: ERR_OK if the loopif is initialized
-///         ERR_MEM if private data couldn't be allocated
-///
+/**
+ * Initialize a lwip network interface structure for a loopback interface
+ *  @param netif the lwip network interface structure for this loopif 
+ *  @param if_name the name of the interface, default is "lo"
+ *  @return ERR_OK if the loopif is initialized 
+ *      ERR_MEM if private data couldn't be allocated
+ */
 static LwipStatus
 init_loop_netif(NetworkInterface& netif, const std::string& if_name = "lo")
 {
@@ -43,9 +42,9 @@ init_loop_netif(NetworkInterface& netif, const std::string& if_name = "lo")
     return STATUS_OK;
 }
 
-///
-///
-///
+/**
+ *
+ */
 std::vector<NetworkInterface>
 init_netif_module()
 {
@@ -53,9 +52,9 @@ init_netif_module()
     return network_interfaces;
 }
 
-///
-/// Check out the type of the network interface and read using required function.
-///
+/**
+ * Check out the type of the network interface and read using required function.
+ */
 LwipStatus
 recv_netif_bytes(NetworkInterface& netif,
                  std::vector<uint8_t>& recvd_bytes,
@@ -66,38 +65,19 @@ recv_netif_bytes(NetworkInterface& netif,
 }
 
 
-///
-/// @ingroup netif
-/// Add a network interface to the list of lwIP netifs.
-///
-/// @param netif a pre-allocated netif structure
-/// @param ipaddr IP address for the new netif
-/// @param netmask network mask for the new netif
-///@param gw default gateway IP address for the new netif
-///@param state opaque data passed to the new netif
-///@param init callback function that initializes the interface
-///@param input callback function that is called to pass
-/// ingress packets up in the protocol layer stack.\n
-/// It is recommended to use a function that passes the input directly
-/// to the stack (netif_input(), NO_SYS=1 mode) or via sending a
-/// message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n
-/// These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
-/// to decide whether to forward to ethernet_input() or ip_input().
-/// In other words, the functions only work when the netif
-/// driver is implemented correctly!\n
-/// Most members of NetworkInterface* should be be initialized by the
-/// netif init function = netif driver (init parameter of this function).\n
-/// IPv6: Don't forget to call netif_create_ip6_linklocal_address() after
-/// setting the MAC address in NetworkInterface*.hwaddr
-/// (IPv6 requires a link-local address).
-///
-/// @return netif, or NULL if failed.
-///
-NetworkInterface add_netif(NetworkInterface& netif,
-                           const Ip4Addr& ipaddr,
-                           const Ip4Addr& netmask,
-                           const Ip4Addr& gw,
-                           uint8_t* state)
+/**
+ * Add a network interface to the list of lwIP netifs.
+ * @param netif a pre-allocated netif structure
+ * @param ipaddr IP address for the new netif
+ * @param netmask network mask for the new netif
+ * @param gw default gateway IP address for the new netif
+ * @param state opaque data passed to the new netif
+ * @param init callback function that initializes the interface
+ * @param input callback function that is called to pass ingress packets up in the protocol layer stack.
+ * \n It is recommended to use a function that passes the input directly to the stack (netif_input(), NO_SYS=1 mode) or via sending a message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET to decide whether to forward to ethernet_input() or ip_input(). In other words, the functions only work when the netif driver is implemented correctly!\n Most members of NetworkInterface* should be be initialized by the netif init function = netif driver (init parameter of this function).\n IPv6: Don't forget to call netif_create_ip6_linklocal_address() after setting the MAC address in NetworkInterface*.hwaddr(IPv6 requires a link-local address).
+ * @return netif, or NULL if failed.
+ */
+NetworkInterface add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces)
 {
 
     // if (netif_default != nullptr)
@@ -131,7 +111,7 @@ NetworkInterface add_netif(NetworkInterface& netif,
     zero_ip_addr_ip4(netif.ip4_addresses[i]);
     zero_ip_addr_ip4(netif.ip4_netmask);
     zero_ip_addr_ip4(netif.ip4_gw);
-    netif.output = netif_null_output_ip4;
+    // netif.output = netif_null_output_ip4;
     for (int8_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++)
     {
         zero_ip_addr_ip6(netif.ip6_addresses[i]);
@@ -139,7 +119,7 @@ NetworkInterface add_netif(NetworkInterface& netif,
         netif.ip6_addr_valid_life[i] = (0);
         netif.ip6_addr_pref_life[i] = (0);
     }
-    netif.output_ip6 = netif_null_output_ip6;
+    // netif.output_ip6 = netif_null_output_ip6;
     // NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
     netif.mtu = 0;
     // netif.flags = 0;

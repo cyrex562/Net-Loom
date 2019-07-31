@@ -408,11 +408,8 @@ init_ppp_pcb(NetworkInterface* pppif,
     pcb->netif = pppif;
     Ip4Addr ip4_any = make_ip4_addr_any();
     Ip4Addr ip4_bcast = make_ip4_addr_bcast();
-    if (!add_netif(pcb->netif,
-                   &ip4_any,
-                   &ip4_bcast,
-                   &ip4_any,
-                   reinterpret_cast<uint8_t *>(pcb)))
+    if (!add_netif(pcb->netif, ,
+                   &ip4_bcast))
     {
         delete pcb;
         return nullptr;
