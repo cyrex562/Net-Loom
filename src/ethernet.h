@@ -11,13 +11,6 @@
 #include <cstring>
 
 
-
-
-
-
-
-
-
 /// Ethernet header
 struct EthHdr
 {

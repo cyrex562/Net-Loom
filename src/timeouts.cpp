@@ -27,24 +27,26 @@
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
-const struct CyclicTimer lwip_cyclic_timers[] = {
+// const struct CyclicTimer lwip_cyclic_timers[] = {
+//
+//     /* The TCP timer is a special case: it does not have to run always and
+//        is triggered to start from TCP using tcp_timer_needed() */
+//     {TCP_TMR_INTERVAL, tcp_tmr, "tcp_tmr"},
+//     {IP_TMR_INTERVAL, ip_reass_tmr, "ip_reass_tmr"},
+//     {kArpTmrInterval, etharp_tmr, "etharp_tmr"},
+//     {DHCP_COARSE_TIMER_MSECS, dhcp_coarse_tmr, "dhcp_coarse_tmr"},
+//     {DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, "dhcp_fine_tmr"},
+//     {kAutoipTmrInterval, autoip_tmr, "autoip_tmr"},
+//     {IGMP_TMR_INTERVAL, igmp_tmr, "igmp_tmr"},
+//     {DNS_TMR_INTERVAL, dns_tmr, "dns_tmr"},
+//     {ND6_TMR_INTERVAL, nd6_tmr, "nd6_tmr"},
+//     {IP6_REASS_TMR_INTERVAL, ip6_reass_tmr, "ip6_reass_tmr"},
+//     {MLD6_TMR_INTERVAL, mld6_tmr, "mld6_tmr"},
+//     {DHCP6_TIMER_MSECS, dhcp6_tmr, "dhcp6_tmr"},
+//
+// };
 
-    /* The TCP timer is a special case: it does not have to run always and
-       is triggered to start from TCP using tcp_timer_needed() */
-    {TCP_TMR_INTERVAL, tcp_tmr, "tcp_tmr"},
-    {IP_TMR_INTERVAL, ip_reass_tmr, "ip_reass_tmr"},
-    {kArpTmrInterval, etharp_tmr, "etharp_tmr"},
-    {DHCP_COARSE_TIMER_MSECS, dhcp_coarse_tmr, "dhcp_coarse_tmr"},
-    {DHCP_FINE_TIMER_MSECS, dhcp_fine_tmr, "dhcp_fine_tmr"},
-    {kAutoipTmrInterval, autoip_tmr, "autoip_tmr"},
-    {IGMP_TMR_INTERVAL, igmp_tmr, "igmp_tmr"},
-    {DNS_TMR_INTERVAL, dns_tmr, "dns_tmr"},
-    {ND6_TMR_INTERVAL, nd6_tmr, "nd6_tmr"},
-    {IP6_REASS_TMR_INTERVAL, ip6_reass_tmr, "ip6_reass_tmr"},
-    {MLD6_TMR_INTERVAL, mld6_tmr, "mld6_tmr"},
-    {DHCP6_TIMER_MSECS, dhcp6_tmr, "dhcp6_tmr"},
 
-};
 const int NUM_CYCLIC_TIMERS = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 /** The one and only timeout list */

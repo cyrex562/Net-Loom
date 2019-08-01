@@ -34,36 +34,57 @@ enum Dhcp6OptionIdx {
   DHCP6_OPTION_IDX_MAX
 };
 
-/// DHCPv6 message types
-#define DHCP6_SOLICIT               1
-#define DHCP6_ADVERTISE             2
-#define DHCP6_REQUEST               3
-#define DHCP6_CONFIRM               4
-#define DHCP6_RENEW                 5
-#define DHCP6_REBIND                6
-#define DHCP6_REPLY                 7
-#define DHCP6_RELEASE               8
-#define DHCP6_DECLINE               9
-#define DHCP6_RECONFIGURE           10
-#define DHCP6_INFOREQUEST           11
-#define DHCP6_RELAYFORW             12
-#define DHCP6_RELAYREPL             13
+/** DHCPv6 message types */
+enum Dhcp6MessageType
+{
+    DHCP6_SOLICIT = 1,
+    DHCP6_ADVERTISE = 2,
+    DHCP6_REQUEST = 3,
+    DHCP6_CONFIRM = 4,
+    DHCP6_RENEW = 5,
+    DHCP6_REBIND = 6,
+    DHCP6_REPLY = 7,
+    DHCP6_RELEASE = 8,
+    DHCP6_DECLINE = 9,
+    DHCP6_RECONFIGURE = 10,
+    DHCP6_INFOREQUEST = 11,
+    DHCP6_RELAYFORW = 12,
+    DHCP6_RELAYREPL = 13,
+};
+
 /* More message types see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
 
 /** DHCPv6 status codes */
-#define DHCP6_STATUS_SUCCESS        0 /* Success. */
-#define DHCP6_STATUS_UNSPECFAIL     1 /* Failure, reason unspecified; this status code is sent by either a client or a server to indicate a failure not explicitly specified in this document. */
-#define DHCP6_STATUS_NOADDRSAVAIL   2 /* Server has no addresses available to assign to the IA(s). */
-#define DHCP6_STATUS_NOBINDING      3 /* Client record (binding) unavailable. */
-#define DHCP6_STATUS_NOTONLINK      4 /* The prefix for the address is not appropriate for the link to which the client is attached. */
-#define DHCP6_STATUS_USEMULTICAST   5 /* Sent by a server to a client to force the client to send messages to the server using the All_DHCP_Relay_Agents_and_Servers address. */
-/* More status codes see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
+enum Dhcp6StatusCode
+{
+    DHCP6_STATUS_SUCCESS = 0,
+    /* Success. */
+    DHCP6_STATUS_UNSPECFAIL = 1,
+    /* Failure, reason unspecified; this status code is sent by either a client or a server to indicate a failure not explicitly specified in this document. */
+    DHCP6_STATUS_NOADDRSAVAIL = 2,
+    /* Server has no addresses available to assign to the IA(s). */
+    DHCP6_STATUS_NOBINDING = 3,
+    /* Client record (binding) unavailable. */
+    DHCP6_STATUS_NOTONLINK = 4,
+    /* The prefix for the address is not appropriate for the link to which the client is attached. */
+    DHCP6_STATUS_USEMULTICAST = 5,
+    /* Sent by a server to a client to force the client to send messages to the server using the All_DHCP_Relay_Agents_and_Servers address. */
+    /* More status codes see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
+};
 
 /** DHCPv6 DUID types */
-#define DHCP6_DUID_LLT              1 /* LLT: Link-layer Address Plus Time */
-#define DHCP6_DUID_EN               2 /* EN: Enterprise number */
-#define DHCP6_DUID_LL               3 /* LL: Link-layer Address */
-#define DHCP6_DUID_UUID             4 /* UUID (RFC 6355) */
+enum Dhcp6DuidType
+{
+    DHCP6_DUID_LLT = 1,
+    /* LLT: Link-layer Address Plus Time */
+    DHCP6_DUID_EN = 2,
+    /* EN: Enterprise number */
+    DHCP6_DUID_LL = 3,
+    /* LL: Link-layer Address */
+    DHCP6_DUID_UUID = 4,
+    /* UUID (RFC 6355) */
+};
+
 
 /* DHCPv6 options */
 enum Dhcp6Options
@@ -108,38 +129,84 @@ struct Dhcp6Msg
 
 
 
-struct Dhcp6OptionInfo {
-  uint8_t option_given;
-  uint16_t val_start;
-  uint16_t val_length;
-};
+
 
 void dhcp6_set_struct(NetworkInterface*netif, struct Dhcp6Context *dhcp6);
 /** Remove a Dhcp6 previously set to the netif using dhcp6_set_struct() */
-#define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
+
+// #define dhcp6_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6, NULL)
 
 
-inline Dhcp6Context* netif_dhcp6_data(NetworkInterface* netif)
+/**
+ *
+ */
+inline Dhcp6Context
+get_netif_dhcp6_ctx(NetworkInterface& netif)
 {
-
-    return static_cast<struct Dhcp6Context *>(netif_get_client_data(
-        netif,
-        LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6));
+    return netif.dhcp6_ctx;
 }
 
+
+/**
+ *
+ */
+inline bool
+dhcp6_option_given(Dhcp6Context& dhcp6, const size_t idx)
+{
+    return dhcp6.dhcp6_rx_options[idx].option_given != 0;
+}
+
+
+/**
+ *
+ */
+inline bool
+dhcp6_got_option(Dhcp6Context& dhcp6, const size_t idx)
+{
+    return (dhcp6.dhcp6_rx_options[idx].option_given = 1);
+}
+
+
+/**
+ *
+ */
+inline bool
+dhcp6_clear_option(Dhcp6Context& dhcp6, const size_t idx)
+{
+    return (dhcp6.dhcp6_rx_options[idx].option_given = 0);
+}
+
+
+/**
+ *
+ */
+inline size_t
+dhcp6_get_option_start(Dhcp6Context& dhcp6, size_t idx)
+{
+    return (dhcp6.dhcp6_rx_options[idx].val_start);
+}
+
+
+/**
+ *
+ */
+inline size_t
+dhcp6_get_option_length(Dhcp6Context& dhcp6, size_t idx)
+{
+    return (dhcp6.dhcp6_rx_options[idx].val_length);
+}
+
+
+/**
+ *
+ */
 inline void
-dhcp6_clear_all_options(Dhcp6Context* dhcp6)
+dhcp6_set_option(Dhcp6Context& dhcp, const size_t idx, const size_t start, const size_t len)
 {
-    (memset(dhcp6_rx_options, 0, sizeof(dhcp6_rx_options)));
+    dhcp.dhcp6_rx_options[idx].val_start = (start);
+    dhcp.dhcp6_rx_options[idx].val_length = (len);
 }
 
-#define dhcp6_option_given(dhcp6, idx)           (dhcp6_rx_options[idx].option_given != 0)
-#define dhcp6_got_option(dhcp6, idx)             (dhcp6_rx_options[idx].option_given = 1)
-#define dhcp6_clear_option(dhcp6, idx)           (dhcp6_rx_options[idx].option_given = 0)
-
-#define dhcp6_get_option_start(dhcp6, idx)       (dhcp6_rx_options[idx].val_start)
-#define dhcp6_get_option_length(dhcp6, idx)      (dhcp6_rx_options[idx].val_length)
-#define dhcp6_set_option(dhcp6, idx, start, len) do { dhcp6_rx_options[idx].val_start = (start); dhcp6_rx_options[idx].val_length = (len); }while(0)
 
 void dhcp6_cleanup(NetworkInterface*netif);
 
@@ -154,17 +221,22 @@ void dhcp6_nd6_ra_trigger(NetworkInterface*netif, uint8_t managed_addr_config, u
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP6_MAX_NTP_SERVERS */
-extern void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddrInfo* ntp_server_addrs);
+void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddrInfo* ntp_server_addrs);
 
 
 /* receive, unfold, parse and free incoming messages */
-static void dhcp6_recv(uint8_t *arg, struct UdpPcb *pcb, struct PacketBuffer *p, const IpAddrInfo *addr, uint16_t port, NetworkInterface
-                       * netif);
+void
+dhcp6_recv(uint8_t* arg,
+           struct UdpPcb* pcb,
+           struct PacketBuffer* p,
+           const IpAddrInfo* addr,
+           uint16_t port,
+           NetworkInterface* netif);
 
 static LwipStatus dhcp6_inc_pcb_refcount();
 
 static void
-dhcp6_dec_pcb_refcount(void);
+dhcp6_dec_pcb_refcount();
 
 
 
@@ -226,7 +298,7 @@ dhcp6_timeout(NetworkInterface*netif, struct Dhcp6Context *dhcp6);
 
 
 void
-dhcp6_tmr(void);
+dhcp6_tmr();
 
 //
 // END OF FILE

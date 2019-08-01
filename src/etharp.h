@@ -86,13 +86,20 @@ int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif
 LwipStatus etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr);
 LwipStatus etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q);
 LwipStatus etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr);
+
+
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
  *  this is an ARP packet sent by a node in order to spontaneously cause other
  *  nodes to update an entry in their ARP cache.
- *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6. */
-inline LwipStatus etharp_gratuitous(NetworkInterface& netif)
+ *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
+ *  
+ *  @param netif the NetworkInterface to send the message from.
+ *  @param address_index the index of the IPv4 address to use as the source address.
+ *  @return STATUS_OK on success; an error message otherwise.
+ */
+inline LwipStatus etharp_gratuitous(NetworkInterface& netif, const size_t address_index)
 {
-    return etharp_request((netif), get_netif_ip4_addr(netif,));
+    return etharp_request(netif, get_netif_ip4_addr(netif, address_index));
 }
 
 void etharp_cleanup_netif(struct NetworkInterface* netif);

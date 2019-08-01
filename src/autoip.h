@@ -34,17 +34,7 @@ enum AutoIpStateEnum{
 constexpr auto kAutoipTmrInterval = 100;
 constexpr auto  kAutoipTicksPerSecond = (1000 / kAutoipTmrInterval);
 
-/** AutoIP state information per netif */
-struct AutoipState
-{
-    /** the currently selected, probed, announced or used LL IP-Address */
-    Ip4Addr llipaddr; /** current AutoIP state machine state */
-    uint8_t state; /** sent number of probes or announces, dependent on state */
-    uint8_t sent_num; /** ticks to wait, tick is AUTOIP_TMR_INTERVAL long */
-    uint16_t ttw; /** ticks until a conflict can be solved by defending */
-    uint8_t lastconflict; /** total number of probed/used Link Local IP-Addresses */
-    uint8_t tried_llipaddr;
-};
+
 
 bool autoip_set_struct(NetworkInterface* netif, struct AutoipState *autoip);
 /** Remove a struct autoip previously set to the netif using autoip_set_struct() */
@@ -58,10 +48,11 @@ bool autoip_supplied_address(const NetworkInterface* netif);
 /* for lwIP internal use by ip4.c */
 bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr);
 
-inline AutoipState* netif_autoip_data(const NetworkInterface* netif)
+inline AutoipState
+netif_autoip_data(const NetworkInterface& netif)
 {
-    return static_cast<AutoipState*>(netif->client_data[
-        LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP]);
+
+    return netif.auto_ip_state;
 }
 
 //

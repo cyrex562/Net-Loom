@@ -13,6 +13,7 @@
 #include <dhcp_context.h>
 #include <dhcp6_context.h>
 #include <vector>
+#include "auto_ip_state.h"
 
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
@@ -113,6 +114,7 @@ struct NetworkInterface
     void* state; // TODO: replace with different struct
     DhcpContext dhcp_ctx;
     Dhcp6Context dhcp6_ctx;
+    AutoipState auto_ip_state;
     std::vector<IgmpGroup> igmp_groups;
     std::string hostname;
     uint16_t checksum_flags;

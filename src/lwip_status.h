@@ -7,7 +7,7 @@
 
 
 /** Definitions for error constants. */
-enum LwipStatus
+enum LwipStatus : uint32_t
 {
     /** No error, everything OK. */
     STATUS_OK = 0,
@@ -76,7 +76,7 @@ const std::map<LwipStatus, std::string> STATUS_STRINGS = {
 //
 //
 inline std::string
-status_to_string(const LwipStatus status)
+status_to_string(LwipStatus status)
 {
     return STATUS_STRINGS[status];
 }

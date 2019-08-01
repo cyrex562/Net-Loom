@@ -3,7 +3,6 @@
 ///
 
 #pragma once
-#include "ethernet.h"
 
 constexpr auto ETH_ADDR_LEN = 6;
 
