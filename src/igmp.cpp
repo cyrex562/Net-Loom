@@ -49,7 +49,7 @@ LwipStatus igmp_start(NetworkInterface& netif)
             // Logf(true, (") on if %p\n", (uint8_t *)netif));
             netif->igmp_mac_filter(netif, &allsystems, NETIF_ADD_MAC_FILTER);
         }
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     return ERR_MEM;
 }
@@ -78,7 +78,7 @@ LwipStatus igmp_stop(NetworkInterface& netif)
         delete group; /* move to "next" */
         group = next;
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -166,7 +166,7 @@ static struct IgmpGroup* igmp_lookup_group(NetworkInterface* ifp, const Ip4Addr*
  */
 static LwipStatus igmp_remove_group(NetworkInterface* netif, struct IgmpGroup* group)
 {
-    LwipStatus err = STATUS_OK;
+    LwipStatus err = STATUS_SUCCESS;
     struct IgmpGroup* tmp_group;
     /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
     for (tmp_group = get_netif_igmp_group(netif,); tmp_group != nullptr; tmp_group = tmp_group->
@@ -322,9 +322,9 @@ igmp_joingroup(const Ip4Addr& ifc_addr, const Ip4Addr& grp_addr)
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we join this interface ? */
-    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifc_addr) || is_ip4_addr_equal(get_netif_ip4_addr(netif,), ifc_addr)))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifc_addr) || is_ip4_addr_equal(get_netif_ip4_addr(netif,,), ifc_addr)))) {
       err = igmp_joingroup_netif(netif, grp_addr);
-      if (err != STATUS_OK) {
+      if (err != STATUS_SUCCESS) {
         /* Return an error even if some network interfaces are joined */
         /** @todo undo any other netif already joined */
         return err;
@@ -384,7 +384,7 @@ igmp_joingroup_netif(NetworkInterface& netif, const Ip4Addr& groupaddr)
     /* Increment group use */
     group->use++;
     /* Join on this interface */
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   } else {
     Logf(true, ("igmp_joingroup_netif: Not enough memory to join to group\n"));
     return ERR_MEM;
@@ -414,9 +414,9 @@ igmp_leavegroup(const Ip4Addr& ifaddr, const Ip4Addr& groupaddr)
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we leave this interface ? */
-    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || is_ip4_addr_equal(get_netif_ip4_addr(netif,), ifaddr)))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || is_ip4_addr_equal(get_netif_ip4_addr(netif,,), ifaddr)))) {
       LwipStatus res = igmp_leavegroup_netif(netif, groupaddr);
-      if (err != STATUS_OK) {
+      if (err != STATUS_SUCCESS) {
         /* Store this result if we have not yet gotten a success */
         err = res;
       }
@@ -478,7 +478,7 @@ igmp_leavegroup_netif(NetworkInterface& netif, const Ip4Addr& groupaddr)
       /* Decrement group use */
       group->use--;
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   } else {
     Logf(true, ("igmp_leavegroup_netif: not member of group\n"));
     return ERR_VAL;
@@ -619,7 +619,7 @@ igmp_send(NetworkInterface*netif, struct IgmpGroup *group, uint8_t type)
     igmp = reinterpret_cast<struct IgmpMsg *>(p->payload);
     lwip_assert("igmp_send: check that first PacketBuffer can hold struct igmp_msg",
                 (p->len >= sizeof(struct IgmpMsg)));
-    copy_ip4_addr(&src, get_netif_ip4_addr(netif,));
+    copy_ip4_addr(&src, get_netif_ip4_addr(netif,,));
 
     if (type == IGMP_V2_MEMB_REPORT) {
       dest = &(group->group_address);

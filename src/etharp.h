@@ -99,7 +99,7 @@ LwipStatus etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr);
  */
 inline LwipStatus etharp_gratuitous(NetworkInterface& netif, const size_t address_index)
 {
-    return etharp_request(netif, get_netif_ip4_addr(netif, address_index));
+    return etharp_request(netif, get_netif_ip4_addr(netif, address_index,));
 }
 
 void etharp_cleanup_netif(struct NetworkInterface* netif);

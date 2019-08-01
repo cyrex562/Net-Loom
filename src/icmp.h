@@ -52,26 +52,44 @@ struct IcmpEchoHdr {
 
 
 /* Compatibility defines, old versions used to combine type and code to an uint16_t */
-inline uint8_t IcmphType(IcmpEchoHdr* hdr)
+inline uint8_t
+get_icmp_hdr_type(IcmpEchoHdr& hdr)
 {
-    return ((hdr)->type);
+    return ((hdr).type);
 }
 
-inline uint8_t IcmphCode(IcmpEchoHdr* hdr)
+
+/**
+ *
+ */
+inline uint8_t
+get_icmp_hdr_code(IcmpEchoHdr& hdr)
 {
-    return ((hdr)->code);
+    return ((hdr).code);
 }
 
-inline void IcmphTypeSet(IcmpEchoHdr* hdr, const IcmpType t)
+
+/**
+ *
+ */
+inline void set_icmp_hdr_type(IcmpEchoHdr& hdr, const IcmpType icmp_type)
 {
-    ((hdr)->type = (t));
+    ((hdr).type = (icmp_type));
 }
 
-inline void ICMPH_CODE_SET(IcmpEchoHdr* hdr, const uint8_t c){ ((hdr)->code = (c));}
+
+/**
+ *
+ */
+inline void
+set_icmp_hdr_code(IcmpEchoHdr& hdr, const uint8_t code)
+{
+    ((hdr).code = (code));
+}
 
 
 /** ICMP destination unreachable codes */
-enum icmp_dur_type {
+enum IcmpDestUnreachCode {
   /** net unreachable */
   ICMP_DUR_NET   = 0,
   /** host unreachable */
@@ -87,22 +105,22 @@ enum icmp_dur_type {
 };
 
 /// ICMP time exceeded codes */
-enum icmp_te_type {
+enum IcmpTimeExceededCode {
   /** time to live exceeded in transit */
   ICMP_TE_TTL  = 0,
   /** fragment reassembly time exceeded */
   ICMP_TE_FRAG = 1
 };
 
-void icmp_input(struct PacketBuffer *p, NetworkInterface*inp);
-void icmp_dest_unreach(PacketBuffer& pkt_buf, enum icmp_dur_type dur_type);
-void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type);
-void icmp_send_response(struct PacketBuffer *p, uint8_t type, uint8_t code);
+void icmp_input(PacketBuffer& p, NetworkInterface& inp);
+void icmp_dest_unreach(PacketBuffer& pkt_buf, enum IcmpDestUnreachCode dur_type);
+void icmp_time_exceeded(PacketBuffer& pkt_buf, enum IcmpTimeExceededCode te_type);
+void send_icmp_response(PacketBuffer& p, uint8_t type, uint8_t code);
 
-inline void icmp_port_unreach(const bool isipv6, PacketBuffer* pbuf)
+inline void icmp_port_unreach(const bool is_ipv6, PacketBuffer& pkt_buf)
 {
-    isipv6
-        ? icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT)
-        : icmp_dest_unreach(pbuf, ICMP_DUR_PORT);
+    is_ipv6
+        ? icmp6_dest_unreach(pkt_buf, ICMP6_DUR_PORT)
+        : icmp_dest_unreach(pkt_buf, ICMP_DUR_PORT);
 }
 

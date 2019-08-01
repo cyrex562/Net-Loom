@@ -132,7 +132,7 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
     if (get_ip_hdr_version(p->payload) == 6)
     {
         auto* ip6_hdr = reinterpret_cast<struct Ip6Hdr *>(p->payload);
-        proto = IP6H_NEXTH(ip6_hdr);
+        proto = get_ip6_hdr_next_hop(ip6_hdr);
     }
     else
     {
@@ -212,9 +212,9 @@ raw_bind(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
         (&pcb->local_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
-        ip6_addr_select_zone((&pcb->local_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6));
+        select_ip6_addr_zone((&pcb->local_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6),);
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * @ingroup raw_raw
  * Bind an RAW PCB to a specific netif.
@@ -266,10 +266,10 @@ raw_connect(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
         (&pcb->remote_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
-        ip6_addr_select_zone((&pcb->remote_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6));
+        select_ip6_addr_zone((&pcb->remote_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6),);
     }
     raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * @ingroup raw_raw
  * Disconnect a RAW PCB.
@@ -350,7 +350,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
         if (netif == nullptr)
 
         {
-            netif = ip_route(&pcb->local_ip, ipaddr);
+            netif = ip_route(&pcb->local_ip, ipaddr,);
         }
     }
     if (netif == nullptr)
@@ -362,7 +362,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
     if (is_ip_addr_any(&pcb->local_ip) || is_ip_addr_mcast(&pcb->local_ip))
     {
         /* use outgoing network interface IP address as source address */
-        src_ip = ip_netif_get_local_ip(netif, ipaddr);
+        src_ip = ip_netif_get_local_ip(netif, ipaddr,);
         if (src_ip == nullptr)
         {
             return STATUS_E_ROUTING;

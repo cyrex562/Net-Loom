@@ -179,7 +179,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
                     /* the first unconnected matching PCB */
                     uncon_pcb = pcb;
                 }
-                else if (broadcast && curr_dst_addr->u_addr.ip4.addr == IP4_ADDR_BCAST_U32)
+                else if (broadcast && curr_dst_addr->u_addr.ip4.word == IP4_ADDR_BCAST_U32)
                 {
                     /* global broadcast address (only valid for IPv4; match was checked before) */
                     if (!is_ip_addr_v4(uncon_pcb->local_ip) || !is_ip4_addr_equal(
@@ -239,7 +239,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         }
         if (curr_dst_addr->type == IPADDR_TYPE_V4)
         {
-            for_us = is_ip4_addr_equal(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
+            for_us = is_ip4_addr_equal(get_netif_ip4_addr(inp,,), &curr_dst_addr->u_addr.ip4);
         }
     }
     if (for_us)
@@ -494,7 +494,7 @@ udp_sendto_chksum(UdpPcb* pcb,
         if (netif == nullptr)
         {
             /* find the outgoing network interface for this packet */
-            netif = ip_route(&pcb->local_ip, dst_ip);
+            netif = ip_route(&pcb->local_ip, dst_ip,);
         }
     } /* no outgoing network interface could be found? */
     if (netif == nullptr)
@@ -551,7 +551,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     } /* PCB local address is IP_ANY_ADDR or multicast? */
     if (is_ip_addr_v6(dst_ip))
     {
-        if (is_ip6_addr_any((&pcb->local_ip.u_addr.ip6)) || is_ip6_addr_mcast(
+        if (ip6_addr_is_any((&pcb->local_ip.u_addr.ip6)) || is_ip6_addr_mcast(
             (&pcb->local_ip.u_addr.ip6)))
         {
             const auto src_addr = select_ip6_src_addr(netif, &dst_ip->u_addr.ip6,);
@@ -574,7 +574,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         /* if the local_ip is any or multicast
          * use the outgoing network interface IP address as source address */
-        src_ip.u_addr.ip4 = get_netif_ip4_addr(netif,)->u_addr.ip4;
+        src_ip.u_addr.ip4 = get_netif_ip4_addr(netif,,)->u_addr.ip4;
         src_ip.type = IPADDR_TYPE_V4;
     }
     else
@@ -582,7 +582,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
         /* check if UDP PCB local IP address is correct
          * this could be an old address if netif->ip_addr has changed */
         if (!is_ip4_addr_equal(((pcb->local_ip.u_addr.ip4.address)),
-                          get_netif_ip4_addr(netif,)))
+                          get_netif_ip4_addr(netif,,)))
         {
             /* local_ip doesn't match, drop the packet */
             return STATUS_E_ROUTING;
@@ -639,7 +639,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     {
         Logf(true | LWIP_DBG_TRACE, ("udp_send: not yet bound to a port, binding now\n"));
         err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-        if (err != STATUS_OK)
+        if (err != STATUS_SUCCESS)
         {
             Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
                  ("udp_send: forced port bind failed\n"));
@@ -840,7 +840,7 @@ udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
     if (is_ip_addr_v6(ipaddr) && ip6_addr_lacks_zone((&ipaddr->u_addr.ip6), IP6_UNKNOWN))
     {
         copy_ip_addr(&zoned_ipaddr, ipaddr);
-        ip6_addr_select_zone((&zoned_ipaddr.u_addr.ip6), (&zoned_ipaddr.u_addr.ip6));
+        select_ip6_addr_zone((&zoned_ipaddr.u_addr.ip6), (&zoned_ipaddr.u_addr.ip6),);
         ipaddr = &zoned_ipaddr;
     } /* no port specified? */
     if (port == 0)
@@ -894,7 +894,7 @@ udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
     Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("udp_bind: bound to "));
     // ip_addr_debug_print_val(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, pcb->local_ip);
     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %d)\n", pcb->local_port));
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * @ingroup udp_raw
  * Bind an UDP PCB to a specific netif.
@@ -941,7 +941,7 @@ udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
     if (pcb->local_port == 0)
     {
         LwipStatus err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-        if (err != STATUS_OK)
+        if (err != STATUS_SUCCESS)
         {
             return err;
         }
@@ -953,7 +953,7 @@ udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
         (&pcb->remote_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
-        ip6_addr_select_zone((&pcb->remote_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6));
+        select_ip6_addr_zone((&pcb->remote_ip.u_addr.ip6), (&pcb->local_ip.u_addr.ip6),);
     }
     pcb->remote_port = port;
     pcb->flags |= UDP_FLAGS_CONNECTED;
@@ -966,12 +966,12 @@ udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
         if (pcb == ipcb)
         {
             /* already on the list, just return */
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
     } /* PCB not yet on the list, add PCB now */
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * @ingroup udp_raw
  * Remove the remote end of the pcb. This function does not generate

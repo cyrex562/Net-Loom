@@ -141,18 +141,32 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
 
 
 LwipStatus
-source_route_ip4_addr(const Ip4Addr& src,
-                      const Ip4Addr& dest,
+source_route_ip4_addr(const Ip4AddrInfo& src,
+                      const Ip4AddrInfo& dest,
                       NetworkInterface& out_netif,
                       const std::vector<NetworkInterface>& netifs);
 
 LwipStatus ip4_input(struct PacketBuffer *p, NetworkInterface*inp);
-LwipStatus ip4_output(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto);
-LwipStatus ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif);
-LwipStatus ip4_output_if_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-       uint8_t ttl, uint8_t tos, uint8_t proto, NetworkInterface*netif);
+LwipStatus ip4_output(PacketBuffer& p,
+                      const Ip4AddrInfo& src,
+                      const Ip4AddrInfo& dest,
+                      uint8_t ttl,
+                      uint8_t tos,
+                      uint8_t proto);
+LwipStatus ip4_output_if(PacketBuffer& p,
+                         const Ip4AddrInfo& src,
+                         const Ip4AddrInfo& dest,
+                         uint8_t ttl,
+                         uint8_t tos,
+                         uint8_t proto,
+                         NetworkInterface& netif);
+LwipStatus ip4_output_if_src(PacketBuffer& p,
+                             const Ip4AddrInfo& src,
+                             const Ip4AddrInfo& dest,
+                             uint8_t ttl,
+                             uint8_t tos,
+                             uint8_t proto,
+                             NetworkInterface& netif);
 
 // LwipStatus ip4_output_hinted(struct PacketBuffer *p,
 //                              const Ip4Addr *src,

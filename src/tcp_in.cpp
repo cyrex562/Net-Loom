@@ -329,7 +329,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
             }
             else
             {
-                err = STATUS_OK; /* If the application has registered a "sent" function to be
+                err = STATUS_SUCCESS; /* If the application has registered a "sent" function to be
                    called when new send buffer space is available, we call it
                    now. */
                 if (recv_acked > 0)
@@ -380,7 +380,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                         }
                         goto aborted;
                     } /* If the upper layer can't receive this data, store it */
-                    if (err != STATUS_OK)
+                    if (err != STATUS_SUCCESS)
                     {
                         if (rest != nullptr)
                         {
@@ -568,13 +568,13 @@ tcp_listen_input(struct TcpPcbListen* pcb)
         npcb->snd_wnd = tcphdr->wnd;
         npcb->snd_wnd_max = npcb->snd_wnd;
         npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip, &npcb->remote_ip);
-        if (tcp_ext_arg_invoke_callbacks_passive_open(pcb, npcb) != STATUS_OK)
+        if (tcp_ext_arg_invoke_callbacks_passive_open(pcb, npcb) != STATUS_SUCCESS)
         {
             tcp_abandon(npcb, 0);
             return;
         } /* Send a SYN|ACK together with the MSS option. */
         LwipStatus rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);
-        if (rc != STATUS_OK)
+        if (rc != STATUS_SUCCESS)
         {
             tcp_abandon(npcb, 0);
             return;
@@ -652,7 +652,7 @@ tcp_process(struct TcpPcb* pcb)
     IpAddrInfo* curr_dst_addr = nullptr;
     IpAddrInfo* curr_src_addr = nullptr;
     uint8_t acceptable = 0;
-    LwipStatus err = STATUS_OK;
+    LwipStatus err = STATUS_SUCCESS;
     lwip_assert("tcp_process: invalid pcb", pcb != nullptr);
     /* Process incoming RST segments. */
     if (flags & TCP_RST)
@@ -700,14 +700,14 @@ tcp_process(struct TcpPcb* pcb)
             Logf(true,
                  "tcp_process: unacceptable reset seqno %d rcv_nxt %d\n", seqno, pcb->
                      rcv_nxt);
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
     }
     if ((flags & TCP_SYN) && (pcb->state != SYN_SENT && pcb->state != SYN_RCVD))
     {
         /* Cope with new connection attempt after remote end crashed */
         tcp_ack_now(pcb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     if ((pcb->flags & TF_RXCLOSED) == 0)
     {
@@ -769,7 +769,7 @@ tcp_process(struct TcpPcb* pcb)
                 pcb->nrtx = 0;
             } /* Call the user specified function to call when successfully
          * connected. */
-            TCP_EVENT_CONNECTED(pcb, STATUS_OK, err);
+            TCP_EVENT_CONNECTED(pcb, STATUS_SUCCESS, err);
             if (err == ERR_ABRT)
             {
                 return ERR_ABRT;
@@ -818,9 +818,9 @@ tcp_process(struct TcpPcb* pcb)
                     lwip_assert("pcb->listener->accept != NULL",
                                 pcb->listener->accept_fn != nullptr);
                     tcp_backlog_accepted(pcb); /* Call the accept function. */
-                    TCP_EVENT_ACCEPT(pcb->listener, pcb, pcb->callback_arg, STATUS_OK, err);
+                    TCP_EVENT_ACCEPT(pcb->listener, pcb, pcb->callback_arg, STATUS_SUCCESS, err);
                 }
-                if (err != STATUS_OK)
+                if (err != STATUS_SUCCESS)
                 {
                     /* If the accept function returns with an error, we abort
                      * the connection. */ /* Already aborted? */
@@ -944,7 +944,7 @@ tcp_process(struct TcpPcb* pcb)
     default:
         break;
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * Insert segment into the list (segments covered with new one will be deleted)
  *

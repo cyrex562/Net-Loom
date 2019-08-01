@@ -10,7 +10,7 @@
 enum LwipStatus : uint32_t
 {
     /** No error, everything OK. */
-    STATUS_OK = 0,
+    STATUS_SUCCESS = 0,
     /** Out of memory error.     */
     ERR_MEM,
     /** Buffer error.            */
@@ -47,11 +47,12 @@ enum LwipStatus : uint32_t
     STATUS_NOT_FOUND,
     STATUS_E_NOT_IMPLEMENTED,
     STATUS_E_INVALID_PARAM,
+    STATUS_ERROR,
 };
 
 
 const std::map<LwipStatus, std::string> STATUS_STRINGS = {
-        {STATUS_OK, "success"},
+        {STATUS_SUCCESS, "success"},
         {ERR_MEM, "out of memory"},
         {ERR_BUF, "buffer error"},
         {ERR_TIMEOUT, "timeout"},

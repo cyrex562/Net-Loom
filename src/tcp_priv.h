@@ -288,7 +288,7 @@ inline bool tcp_do_output_nagle(TcpPcb* tpcb)
 ///
 inline LwipStatus tcp_output_nagle(TcpPcb* tpcb)
 {
-    return (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : STATUS_OK);
+    return (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : STATUS_SUCCESS);
 }
 
 ///

@@ -240,17 +240,39 @@ get_netif_ip4_gw(const NetworkInterface& netif, const size_t index)
 /**
  *
  */
-inline Ip4Addr
-get_netif_ip4_addr(const NetworkInterface& netif, const size_t index)
+inline LwipStatus
+get_netif_ip4_addr(const NetworkInterface& netif,
+                   const Ip4AddrInfo& dest_addr_info,
+                   Ip4AddrInfo& out_addr_info)
 {
-    return netif.ip4_addresses[index].address;
+    for (auto& it : netif.ip4_addresses) {
+        if (it.address.addr == dest_addr_info.address.addr) {
+            out_addr_info = it;
+            return STATUS_SUCCESS;
+        }
+    }
+    return STATUS_NOT_FOUND;
+}
+
+
+inline LwipStatus
+get_default_netif(const std::vector<NetworkInterface>& interfaces,
+                  NetworkInterface& out_netif)
+{
+    for (auto& ifc : interfaces) {
+        if (ifc.default_interface) {
+            out_netif = ifc;
+            return STATUS_SUCCESS;
+        }
+    }
+    return STATUS_NOT_FOUND;
 }
 
 
 /**
  *
  */
-inline bool is_netif_up(NetworkInterface& netif)
+inline bool is_netif_up(const NetworkInterface& netif)
 {
     return netif.up;
 }
@@ -259,7 +281,7 @@ inline bool is_netif_up(NetworkInterface& netif)
 /**
  *
  */
-inline bool is_netif_link_up(NetworkInterface& netif)
+inline bool is_netif_link_up(const NetworkInterface& netif)
 {
 
     return netif.link_up;
@@ -269,7 +291,7 @@ inline bool is_netif_link_up(NetworkInterface& netif)
 /**
  *
  */
-inline void set_netif_hostname(NetworkInterface& netif, std::string& hostname)
+inline void set_netif_hostname(NetworkInterface& netif, const std::string& hostname)
 {
    netif.hostname = hostname;
 }
@@ -297,10 +319,10 @@ inline Ip6AddrState get_netif_ip6_addr_state(const NetworkInterface& netif, cons
 /**
  *
  */
-inline bool is_netif_ip6_addr_life_valid(NetworkInterface& netif, size_t index)
-{
-    return netif.ip6_addresses[index].valid_life > 0;
-}
+// inline bool is_netif_ip6_addr_life_valid(NetworkInterface& netif, size_t index)
+// {
+//     return netif.ip6_addresses[index].valid_life > 0;
+// }
 
 
 /**
@@ -333,10 +355,10 @@ inline void set_netif_ip6_addr_pref_life(NetworkInterface& netif, size_t i, uint
 /**
  *
  */
-inline bool is_netif_ip6_addr_static(NetworkInterface& netif, size_t i)
-{
-    return is_netif_ip6_addr_life_valid(netif, i);
-}
+// inline bool is_netif_ip6_addr_static(NetworkInterface& netif, size_t i)
+// {
+//     return is_netif_ip6_addr_life_valid(netif, i);
+// }
 
 
 /**
@@ -360,7 +382,7 @@ inline uint8_t get_and_inc_netif_num(const NetworkInterface& netif)
 /**
  *
  */
-inline bool est_ip6_addr_zone(const Ip6AddrInfo& addr_info, const NetworkInterface& netif)
+inline bool rest_ip6_addr_zone(const Ip6AddrInfo& addr_info, const NetworkInterface& netif)
 {
     return cmp_ip6_addr_zone(addr_info, Ip6AddrZone(get_and_inc_netif_num(netif)));
 }
@@ -387,29 +409,32 @@ assign_ip6_addr_zone(Ip6AddrInfo& addr_info,
                      const Ip6AddrScopeType type,
                      const NetworkInterface& netif)
 {
-    if (ip6_addr_has_scope(addr_info.addr, type))
-    {
+    if (ip6_addr_has_scope(addr_info, type)) {
         set_ip6_addr_zone(addr_info, Ip6AddrZone(get_and_inc_netif_num(netif)));
     }
-    else
-    {
+    else {
         set_ip6_addr_zone(addr_info, Ip6AddrZone(0));
     }
 }
 
 
-inline Ip4Addr
-get_netif_ip4_local_ip(const NetworkInterface& netif, const size_t index)
+/**
+ * 
+ */
+inline LwipStatus
+get_netif_ip4_local_ip(const NetworkInterface& netif,
+                       const Ip4AddrInfo& dest_addr_info,
+                       Ip4AddrInfo& out_addr_info)
 {
-    return get_netif_ip4_addr(netif, index);
+    return get_netif_ip4_addr(netif, dest_addr_info, out_addr_info);
 }
 
 
-///
-/// Get list head of IGMP groups for netif.
-/// Note: The allsystems group IP is contained in the list as first entry.
-/// @see @ref netif_set_igmp_mac_filter()
-///
+/**
+ * Get list head of IGMP groups for netif.
+ * Note: The allsystems group IP is contained in the list as first entry.
+ * 
+*/
 inline IgmpGroup get_netif_igmp_group(NetworkInterface& netif, size_t index)
 {
     return netif.igmp_groups[index];
@@ -430,19 +455,24 @@ inline bool is_netif_ip4_addr_bcast(const Ip4Addr& addr, const NetworkInterface&
 }
 
 
-bool
-select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr, Ip6AddrInfo& out_src_addr);
+LwipStatus
+select_ip6_src_addr(const NetworkInterface& netif,
+                    const Ip6AddrInfo& dest_addr,
+                    Ip6AddrInfo& out_src_addr);
 
 
 /**
  *
  */
-inline Ip6AddrInfo
-ip6_netif_get_local_ip(const NetworkInterface& netif, const Ip6AddrInfo& dest)
+inline LwipStatus
+get_netif_ip6_local_ip(const NetworkInterface& netif,
+                       const Ip6AddrInfo& dest,
+                       Ip6AddrInfo& out_addr)
 {
     Ip6AddrInfo out_src_addr{};
-    select_ip6_src_addr(netif, dest, out_src_addr);
-    return out_src_addr;
+    const auto status = select_ip6_src_addr(netif, dest, out_src_addr);
+    out_addr = out_src_addr;
+    return status;
 }
 
 
@@ -464,7 +494,7 @@ bool set_netif_down(NetworkInterface& netif, std::vector<NetworkInterface> inter
 int netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& interfaces);
 
 
-int get_netif_ip6_addr_idx(NetworkInterface& netif, const Ip6Addr& addr);
+int get_netif_ip6_addr_idx(NetworkInterface& netif, const Ip6AddrInfo& addr_info);
 
 
 bool set_netif_ip6_addr_info(NetworkInterface& netif, Ip6AddrInfo& old_addr_info, Ip6AddrInfo& new_addr_info);

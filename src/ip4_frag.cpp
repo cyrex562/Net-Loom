@@ -768,7 +768,7 @@ ip4_frag(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& dst_addr
     ofo = (uint16_t)(ofo + nfb);
   }
   
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 memerr:
   
   return ERR_MEM;

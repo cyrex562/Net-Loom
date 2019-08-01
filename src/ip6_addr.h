@@ -118,7 +118,7 @@ enum Ip6MulticastScope: uint8_t
 
 struct Ip6Addr
 {
-    uint32_t addr[4];  // NOLINT
+    uint32_t word[4];  // NOLINT
 };
 
 
@@ -132,6 +132,11 @@ struct Ip6AddrInfo
     Ip6AddrState address_state;
 };
 
+
+bool ip6_addr_is_static(Ip6AddrInfo& addr_info)
+{
+    return addr_info.valid_life > 0;
+}
 
 ///
 ///
@@ -207,9 +212,9 @@ cmp_ip6_addr_zone2(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info2)
 ///
 ///
 inline bool
-ip6_addr_islinklocal(const Ip6Addr& addr)
+ip6_addr_is_linklocal(const Ip6AddrInfo& addr_info)
 {
-    return (addr.addr[0] & pp_htonl(IP6_LINK_LOCAL_MASK_1)) == pp_htonl(
+    return (addr_info.addr.word[0] & pp_htonl(IP6_LINK_LOCAL_MASK_1)) == pp_htonl(
         IP6_LINK_LOCAL_MASK_2);
 }
 
@@ -220,7 +225,7 @@ ip6_addr_islinklocal(const Ip6Addr& addr)
 inline bool
 ip6_addr_ismulticast_iflocal(const Ip6Addr& ip6addr)
 {
-    return (ip6addr.addr[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(IP6_MCAST_MASK_2);
+    return (ip6addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(IP6_MCAST_MASK_2);
 }
 
 
@@ -230,7 +235,7 @@ ip6_addr_ismulticast_iflocal(const Ip6Addr& ip6addr)
 inline bool
 ip6_addr_ismulticast_linklocal(const Ip6Addr& ip6addr)
 {
-    return (ip6addr.addr[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(
+    return (ip6addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(
         IP6_MCAST_LINK_LOCAL_MASK_1);
 }
 
@@ -252,18 +257,17 @@ ip6_addr_ismulticast_linklocal(const Ip6Addr& ip6addr)
 /// @param type address type; see @ref lwip_ipv6_scope_type.
 /// @return 1 if the address has a constrained scope, 0 if it does not.
 ///
-inline bool ip6_addr_has_scope(const Ip6Addr& ip6_addr, const Ip6AddrScopeType type)
+inline bool ip6_addr_has_scope(const Ip6AddrInfo& ip6_addr, const Ip6AddrScopeType type)
 {
-    return ip6_addr_islinklocal(ip6_addr) || type != IP6_UNICAST && (
+    return ip6_addr_is_linklocal(ip6_addr) || type != IP6_UNICAST && (
         ip6_addr_ismulticast_iflocal(ip6_addr) || ip6_addr_ismulticast_linklocal(ip6_addr)
     );
-}
+} 
 
 
-/// 
-/// Does the given IPv6 address have a scope, and as such should also have a zone to be 
-/// meaningful, but does not actually have a zone? (0/1)
-/// 
+/**
+ * Does the given IPv6 address have a scope, and as such should also have a zone to be meaningful, but does not actually have a zone? (0/1)
+ */
 inline bool
 ip6_addr_lacks_zone(const Ip6AddrInfo& addr_info, const Ip6AddrScopeType scope_type)
 {
@@ -272,28 +276,33 @@ ip6_addr_lacks_zone(const Ip6AddrInfo& addr_info, const Ip6AddrScopeType scope_t
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
 cmp_ip6_addr_zoneless(const Ip6Addr& addr1, const Ip6Addr& addr2)
 {
-    return addr1.addr[0] == addr2.addr[0] && addr1.addr[1] == addr2.addr[1] && addr1.addr[
-        2] == addr2.addr[2] && addr1.addr[3] == addr2.addr[3];
+    return addr1.word[0] == addr2.word[0] && addr1.word[1] == addr2.word[1] && addr1.word[
+        2] == addr2.word[2] && addr1.word[3] == addr2.word[3];
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip6_addr_equal(const Ip6Addr& addr1, const Ip6Addr& addr2)
+ip6_addr_equal(const Ip6AddrInfo& addr1, const Ip6AddrInfo& addr2)
 {
-     return addr1.addr[0] == addr2.addr[0] && addr1.addr[1] == addr2.addr[1] && addr1.addr[
-        2] == addr2.addr[2] && addr1.addr[3] == addr2.addr[3];
+    return addr1.addr.word[0] == addr2.addr.word[0] && addr1.addr.word[1] == addr2
+                                                                             .addr.word[1]
+        && addr1.addr.word[2] == addr2.addr.word[2] && addr1.addr.word[3] == addr2
+                                                                             .addr.word[3
+        ];
 }
 
-inline bool is_ip6_zone_equal(const Ip6AddrInfo& info1, const Ip6AddrInfo& info2)
+
+inline bool
+is_ip6_zone_equal(const Ip6AddrInfo& info1, const Ip6AddrInfo& info2)
 {
     return info1.zone == info2.zone;
 }
@@ -310,14 +319,13 @@ set_ip6_addr_part(Ip6Addr& addr,
                   const uint32_t c,
                   const uint32_t d)
 {
-    addr.addr[index] = pp_htonl(make_u32(a, b, c, d));
-}
+    addr.word[index] = pp_htonl(make_u32(a, b, c, d));
+} 
 
-
-/// 
-/// Set a full IPv6 address by passing the 4 uint32_t indices in network byte order (use 
-/// pp_htonl() for constants) 
-/// 
+/**
+ * Set a full IPv6 address by passing the 4 uint32_t indices in network byte order (use 
+ * pp_htonl() for constants) 
+*/
 inline void
 set_ip6_addr(Ip6AddrInfo& addr_info,
              const uint32_t a,
@@ -325,10 +333,10 @@ set_ip6_addr(Ip6AddrInfo& addr_info,
              const uint32_t c,
              const uint32_t d)
 {
-    addr_info.addr.addr[0] = a;
-    addr_info.addr.addr[1] = b;
-    addr_info.addr.addr[2] = c;
-    addr_info.addr.addr[3] = d;
+    addr_info.addr.word[0] = a;
+    addr_info.addr.word[1] = b;
+    addr_info.addr.word[2] = c;
+    addr_info.addr.word[3] = d;
     clear_ip6_addr_zone(addr_info);
 }
 
@@ -340,35 +348,35 @@ inline uint16_t get_ip6_addr_u16_blk(const Ip6Addr& addr, size_t block)
 {
     if (block == 1)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[0]) >> 16 & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[0]) >> 16 & 0xffff);
     }
     if (block == 2)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[0]) & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[0]) & 0xffff);
     }
     if (block == 3)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[1]) >> 16 & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[1]) >> 16 & 0xffff);
     }
     if (block == 4)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[1]) & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[1]) & 0xffff);
     }
     if (block == 5)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[2]) >> 16 & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[2]) >> 16 & 0xffff);
     }
     if (block == 6)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[2]) & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[2]) & 0xffff);
     }
     if (block == 7)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[3]) >> 16 & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[3]) >> 16 & 0xffff);
     }
     if (block == 8)
     {
-        return (uint16_t)(lwip_htonl(addr.addr[3]) & 0xffff);
+        return (uint16_t)(lwip_htonl(addr.word[3]) & 0xffff);
     }
 }
 
@@ -378,10 +386,10 @@ inline uint16_t get_ip6_addr_u16_blk(const Ip6Addr& addr, size_t block)
 /// 
 inline void set_ip6_addr(Ip6AddrInfo& daddr, const Ip6AddrInfo& saddr)
 {
-    daddr.addr.addr[0] = saddr.addr.addr[0];
-    daddr.addr.addr[1] = saddr.addr.addr[1];
-    daddr.addr.addr[2] = saddr.addr.addr[2];
-    daddr.addr.addr[3] = saddr.addr.addr[3];
+    daddr.addr.word[0] = saddr.addr.word[0];
+    daddr.addr.word[1] = saddr.addr.word[1];
+    daddr.addr.word[2] = saddr.addr.word[2];
+    daddr.addr.word[3] = saddr.addr.word[3];
     set_ip6_addr_zone(daddr, saddr.zone);
 }
 
@@ -391,10 +399,10 @@ inline void set_ip6_addr(Ip6AddrInfo& daddr, const Ip6AddrInfo& saddr)
 /// 
 inline void zero_ip6_addr(Ip6AddrInfo& addr_info)
 {
-    addr_info.addr.addr[0] = 0;
-    addr_info.addr.addr[1] = 0;
-    addr_info.addr.addr[2] = 0;
-    addr_info.addr.addr[3] = 0;
+    addr_info.addr.word[0] = 0;
+    addr_info.addr.word[1] = 0;
+    addr_info.addr.word[2] = 0;
+    addr_info.addr.word[3] = 0;
     addr_info.zone = IP6_NO_ZONE;
 }
 
@@ -413,10 +421,10 @@ inline void set_ip6_addr_any(Ip6AddrInfo& addr_info)
 /// 
 inline void set_ip6_addr_loopback(Ip6AddrInfo& addr_info)
 {
-    addr_info.addr.addr[0] = 0;
-    addr_info.addr.addr[1] = 0;
-    addr_info.addr.addr[2] = 0;
-    addr_info.addr.addr[3] = pp_htonl(0x00000001UL);
+    addr_info.addr.word[0] = 0;
+    addr_info.addr.word[1] = 0;
+    addr_info.addr.word[2] = 0;
+    addr_info.addr.word[3] = pp_htonl(0x00000001UL);
     clear_ip6_addr_zone(addr_info);
 }
 
@@ -426,10 +434,10 @@ inline void set_ip6_addr_loopback(Ip6AddrInfo& addr_info)
 /// 
 inline void set_ip6_addr_hton(Ip6AddrInfo& dest, Ip6AddrInfo& src)
 {
-    dest.addr.addr[0] = lwip_htonl(src.addr.addr[0]);
-    dest.addr.addr[1] = lwip_htonl(src.addr.addr[1]);
-    dest.addr.addr[2] = lwip_htonl(src.addr.addr[2]);
-    dest.addr.addr[3] = lwip_htonl(src.addr.addr[3]);
+    dest.addr.word[0] = lwip_htonl(src.addr.word[0]);
+    dest.addr.word[1] = lwip_htonl(src.addr.word[1]);
+    dest.addr.word[2] = lwip_htonl(src.addr.word[2]);
+    dest.addr.word[3] = lwip_htonl(src.addr.word[3]);
     set_ip6_addr_zone(dest, src.zone);
 }
 
@@ -440,7 +448,7 @@ inline void set_ip6_addr_hton(Ip6AddrInfo& dest, Ip6AddrInfo& src)
 inline bool
 cmp_ip6_net_zoneless(const Ip6Addr& addr1, const Ip6Addr& addr2)
 {
-    return addr1.addr[0] == addr2.addr[0] && addr1.addr[1] == addr2.addr[1];
+    return addr1.word[0] == addr2.word[0] && addr1.word[1] == addr2.word[1];
 }
 
 
@@ -457,16 +465,17 @@ ip6_addr_on_same_net(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info
     return cmp_ip6_net_zoneless(addr_info1.addr, addr_info2.addr) && cmp_ip6_addr_zone2(
         addr_info1,
         addr_info2);
-}
+} 
 
 
-/// 
-/// Exact-host comparison *after* ip6_addr_netcmp() succeeded, for efficiency.
-/// 
+/**
+ * Exact-host comparison *after* ip6_addr_netcmp() succeeded, for efficiency.
+ */
 inline bool
-ip6_addr_hosts_equal(const Ip6Addr& addr1, const Ip6Addr& addr2)
+ip6_addr_hosts_equal(const Ip6AddrInfo& addr1, const Ip6AddrInfo& addr2)
 {
-    return addr1.addr[2] == addr2.addr[2] && addr1.addr[3] == addr2.addr[3];
+    return addr1.addr.word[2] == addr2.addr.word[2] && 
+        addr1.addr.word[3] == addr2.addr.word[3];
 }
 
 
@@ -476,61 +485,61 @@ ip6_addr_hosts_equal(const Ip6Addr& addr1, const Ip6Addr& addr2)
 inline bool
 cmp_ip6_addr2(const Ip6AddrInfo& addr_info, const Ip6Addr& addr, const Ip6AddrZone zone)
 {
-    return addr_info.addr.addr[0] == addr.addr[0] && addr_info.addr.addr[1] == addr.addr[1
-        ] && addr_info.addr.addr[2] == addr.addr[2] && addr_info.addr.addr[3] == addr.addr
+    return addr_info.addr.word[0] == addr.word[0] && addr_info.addr.word[1] == addr.word[1
+        ] && addr_info.addr.word[2] == addr.word[2] && addr_info.addr.word[3] == addr.word
         [3] && cmp_ip6_addr_zone(addr_info, zone);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline uint32_t get_ip6_subnet_id(Ip6Addr& addr)
 {
-    return lwip_htonl(addr.addr[2]) & IP6_SUBNET_ID_MASK;
+    return lwip_htonl(addr.word[2]) & IP6_SUBNET_ID_MASK;
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip6_addr_any(const Ip6Addr& addr)
+ip6_addr_is_any(const Ip6AddrInfo& addr)
 {
-    return addr.addr[0] == 0 && addr.addr[1] == 0 && addr.addr[2] == 0 && addr.addr[3] ==
-        0;
+    return addr.addr.word[0] == 0 && addr.addr.word[1] == 0 
+    && addr.addr.word[2] == 0 && addr.addr.word[3] == 0;
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip6_addr_loopback(const Ip6Addr& addr)
+ip6_addr_is_loopback(const Ip6AddrInfo& addr)
 {
-    return addr.addr[0] == 0UL && addr.addr[1] == 0UL && addr.addr[2] == 0UL && addr.addr[
-        3] == pp_htonl(IP6_ADDR_LOOPBACK_MASK);
+    return addr.addr.word[0] == 0UL && addr.addr.word[1] == 0UL && addr.addr.word[2] == 0UL && 
+        addr.addr.word[3] == pp_htonl(IP6_ADDR_LOOPBACK_MASK);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
 is_ip6_addr_global(const Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_GLOBAL_MASK_1)) == pp_htonl(
+    return (addr.word[0] & pp_htonl(IP6_ADDR_GLOBAL_MASK_1)) == pp_htonl(
         IP6_ADDR_GLOBAL_MASK_2);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
 is_ip6_addr_site_local(const Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_SITE_LOCAL_MASK_1)) == pp_htonl(
+    return (addr.word[0] & pp_htonl(IP6_ADDR_SITE_LOCAL_MASK_1)) == pp_htonl(
         IP6_ADDR_SITE_LOCAL_MASK_2);
 }
 
@@ -540,7 +549,7 @@ is_ip6_addr_site_local(const Ip6Addr& addr)
 ///
 inline bool is_ip6_addr_unique_local(const Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_UNIQUE_LOCAL_MASK_1)) == pp_htonl(IP6_ADDR_UNIQUE_LOCAL_MASK_2);
+    return (addr.word[0] & pp_htonl(IP6_ADDR_UNIQUE_LOCAL_MASK_1)) == pp_htonl(IP6_ADDR_UNIQUE_LOCAL_MASK_2);
 }
 
 
@@ -550,7 +559,7 @@ inline bool is_ip6_addr_unique_local(const Ip6Addr& addr)
 inline bool
 is_ip6_addr_ip4_mapped_ip6(const Ip6Addr& addr)
 {
-    return addr.addr[0] == 0 && addr.addr[1] == 0 && addr.addr[2] == pp_htonl(
+    return addr.word[0] == 0 && addr.word[1] == 0 && addr.word[2] == pp_htonl(
         IP6_ADDR_MAPPED_MASK);
 }
 
@@ -561,7 +570,7 @@ is_ip6_addr_ip4_mapped_ip6(const Ip6Addr& addr)
 inline bool
 is_ip6_addr_mcast(const Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_1)) == pp_htonl(
+    return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_1)) == pp_htonl(
         IP6_ADDR_MCAST_MASK_2);
 }
 
@@ -572,7 +581,7 @@ is_ip6_addr_mcast(const Ip6Addr& addr)
 inline uint32_t
 get_ip6_addr_mcast_transient_flag(const Ip6Addr& addr)
 {
-    return addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_3);
+    return addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_3);
 }
 
 
@@ -582,7 +591,7 @@ get_ip6_addr_mcast_transient_flag(const Ip6Addr& addr)
 inline uint32_t
 get_ip6_addr_mcast_prefix_flag(const Ip6Addr& addr)
 {
-    return addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_4);
+    return addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_4);
 }
 
 
@@ -592,7 +601,7 @@ get_ip6_addr_mcast_prefix_flag(const Ip6Addr& addr)
 inline uint32_t
 get_ip6_addr_mcast_rendezvous_flag(const Ip6Addr& addr)
 {
-    return addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_5);
+    return addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_5);
 }
 
 
@@ -602,7 +611,7 @@ get_ip6_addr_mcast_rendezvous_flag(const Ip6Addr& addr)
 inline Ip6MulticastScope
 get_ip6_addr_mcast_scope(const Ip6Addr& addr)
 {
-    return Ip6MulticastScope(lwip_htonl(addr.addr[0]) >> 16 & 0xf);
+    return Ip6MulticastScope(lwip_htonl(addr.word[0]) >> 16 & 0xf);
 }
 
 
@@ -612,7 +621,7 @@ get_ip6_addr_mcast_scope(const Ip6Addr& addr)
 inline bool
 is_ip6_addr_mcast_admin_local(Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_6)) == pp_htonl(
+    return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_6)) == pp_htonl(
         IP6_ADDR_MCAST_MASK_7);
 }
 
@@ -623,7 +632,7 @@ constexpr auto IP6_ADDR_MCAST_MASK_9 = 0xff050000UL;
 inline bool
 is_ip6_addr_mcast_site_local(Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_8)) == pp_htonl(
+    return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_8)) == pp_htonl(
         IP6_ADDR_MCAST_MASK_9);
 }
 
@@ -633,14 +642,14 @@ constexpr auto IP6_ADDR_MCAST_MASK_11 = 0xff080000UL;
 inline bool
 is_ip6_addr_mcast_org_local(Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_10)) == pp_htonl(IP6_ADDR_MCAST_MASK_11);
+    return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_10)) == pp_htonl(IP6_ADDR_MCAST_MASK_11);
 }
 
 constexpr auto IP6_ADDR_MCAST_MASK_12 = 0xff0e0000UL;
 
 inline bool is_ip6_addr_mcast_global(Ip6Addr& addr)
 {
-    return (addr.addr[0] & pp_htonl(IP6_ADDR_MCAST_MASK_10)) == pp_htonl(IP6_ADDR_MCAST_MASK_12);
+    return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_10)) == pp_htonl(IP6_ADDR_MCAST_MASK_12);
 }
 
 constexpr auto IP6_ADDR_IF_LOCAL_MASK_1 = 0xff010000UL;
@@ -653,8 +662,8 @@ constexpr auto IP6_ADDR_IF_LOCAL_MASK_1 = 0xff010000UL;
 /// appropriate itself. */
 inline bool is_ip6_addr_all_nodes_if_local(Ip6Addr& addr)
 {
-    return addr.addr[0] == pp_htonl(0xff010000UL) && addr.addr[1] == 0UL
-        && addr.addr[2] == 0UL && addr.addr[3] == pp_htonl(0x00000001UL);
+    return addr.word[0] == pp_htonl(0xff010000UL) && addr.word[1] == 0UL
+        && addr.word[2] == 0UL && addr.word[3] == pp_htonl(0x00000001UL);
 }
 
 constexpr auto IP6_ADDR_LINK_LOCAL_MASK_2 = 0xff020000UL;
@@ -664,17 +673,17 @@ constexpr auto IP6_ADDR_LINK_LOCAL_MASK_3 = 0x00000001UL;
 inline bool
 ip6_addr_isallnodes_linklocal(Ip6Addr& addr)
 {
-    return addr.addr[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.addr[1] ==
-        0UL && addr.addr[2] == 0UL && addr.addr[3] == pp_htonl(
+    return addr.word[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.word[1] ==
+        0UL && addr.word[2] == 0UL && addr.word[3] == pp_htonl(
             IP6_ADDR_LINK_LOCAL_MASK_3);
 }
 
 inline void set_ip6_addr_all_nodes_link_local(Ip6AddrInfo& addr_info)
 {
-    addr_info.addr.addr[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
-    addr_info.addr.addr[1] = 0;
-    addr_info.addr.addr[2] = 0;
-    addr_info.addr.addr[3] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_3);
+    addr_info.addr.word[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
+    addr_info.addr.word[1] = 0;
+    addr_info.addr.word[2] = 0;
+    addr_info.addr.word[3] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_3);
     clear_ip6_addr_zone(addr_info);
 }
 
@@ -682,18 +691,18 @@ constexpr auto IP6_ADDR_LINK_LOCAL_MASK_4 = 0x00000002UL;
 
 inline bool is_ip6_addr_all_routers_link_local(Ip6Addr& addr)
 {
-    return addr.addr[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.addr[1] == 0UL
-        && addr.addr[2] == 0UL && addr.addr[3] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_4);
+    return addr.word[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.word[1] == 0UL
+        && addr.word[2] == 0UL && addr.word[3] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_4);
 }
 
 
 
 inline void set_ip6_addr_all_routers_link_local(Ip6AddrInfo& addr_info)
 {
-    addr_info.addr.addr[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
-    addr_info.addr.addr[1] = 0;
-    addr_info.addr.addr[2] = 0;
-    addr_info.addr.addr[3] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_4);
+    addr_info.addr.word[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
+    addr_info.addr.word[1] = 0;
+    addr_info.addr.word[2] = 0;
+    addr_info.addr.word[3] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_4);
     clear_ip6_addr_zone(addr_info);
 }
 
@@ -705,8 +714,8 @@ constexpr auto IP6_ADDR_SOLICITED_NODE_MASK_2 = 0xff000000UL;
 inline bool
 is_ip6_addr_solicited_node(Ip6Addr& addr)
 {
-    return addr.addr[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.addr[2] ==
-        pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1) && (addr.addr[3] &
+    return addr.word[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && addr.word[2] ==
+        pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1) && (addr.word[3] &
             pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_2)) == pp_htonl(
             IP6_ADDR_SOLICITED_NODE_MASK_2);
 }
@@ -714,10 +723,10 @@ is_ip6_addr_solicited_node(Ip6Addr& addr)
 
 inline void set_ip6_addr_solicited_node(Ip6AddrInfo& addr_info, uint32_t if_id)
 {
-    addr_info.addr.addr[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
-    addr_info.addr.addr[1] = 0;
-    addr_info.addr.addr[2] = pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1);
-    addr_info.addr.addr[3] = pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_2) | if_id;
+    addr_info.addr.word[0] = pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2);
+    addr_info.addr.word[1] = 0;
+    addr_info.addr.word[2] = pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1);
+    addr_info.addr.word[3] = pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_2) | if_id;
     clear_ip6_addr_zone(addr_info);
 }
 
@@ -725,9 +734,9 @@ inline void set_ip6_addr_solicited_node(Ip6AddrInfo& addr_info, uint32_t if_id)
 
 inline bool cmp_ip6_addr_solicited_nodes(Ip6Addr& target_addr, Ip6Addr& solicit_addr)
 {
-    return target_addr.addr[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && target_addr.addr[1] == 0 &&
-        target_addr.addr[2] == pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1) && target_addr.addr[3] == (
-            pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_2) | solicit_addr.addr[3]);
+    return target_addr.word[0] == pp_htonl(IP6_ADDR_LINK_LOCAL_MASK_2) && target_addr.word[1] == 0 &&
+        target_addr.word[2] == pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_1) && target_addr.word[3] == (
+            pp_htonl(IP6_ADDR_SOLICITED_NODE_MASK_2) | solicit_addr.word[3]);
 }
 
 
@@ -742,12 +751,12 @@ inline bool is_ip6_addr_tentative(Ip6AddrState addr_state)
     return addr_state & IP6_ADDR_TENTATIVE;
 }
 
-//
-//
-//
-inline bool is_ip6_addr_valid(Ip6AddrState addr_state)
+/**
+ *
+ */
+inline bool ip6_addr_is_valid(const Ip6AddrInfo& addr_info)
 {
-    return addr_state & IP6_ADDR_VALID;
+    return addr_info.address_state & IP6_ADDR_VALID;
 }
 
 
@@ -796,10 +805,10 @@ inline bool is_ip6_addr_life_infinite(uint32_t addr_life)
 inline Ip6AddrInfo make_ip6_addr_any()
 {
     Ip6AddrInfo info{};
-    info.addr.addr[0] = 0;
-    info.addr.addr[1] = 0;
-    info.addr.addr[2] = 0;
-    info.addr.addr[3] = 0;
+    info.addr.word[0] = 0;
+    info.addr.word[1] = 0;
+    info.addr.word[2] = 0;
+    info.addr.word[3] = 0;
     info.zone = IP6_NO_ZONE;
     return info;
 }
@@ -810,10 +819,10 @@ inline Ip6AddrInfo make_ip6_addr_any()
 ///
 inline void set_ip6_addr_any2(Ip6AddrInfo& info)
 {
-    info.addr.addr[0] = 0;
-    info.addr.addr[1] = 0;
-    info.addr.addr[2] = 0;
-    info.addr.addr[3] = 0;
+    info.addr.word[0] = 0;
+    info.addr.word[1] = 0;
+    info.addr.word[2] = 0;
+    info.addr.word[3] = 0;
     info.zone = IP6_NO_ZONE;
 }
 
@@ -834,10 +843,10 @@ make_ip6_addr_host(const uint32_t a, const uint32_t b, const uint32_t c, const u
 /// 
 inline void copy_ip6_addr(Ip6Addr& dest, const Ip6Addr& src)
 {
-    dest.addr[0] = src.addr[0];
-    dest.addr[1] = src.addr[1];
-    dest.addr[2] = src.addr[2];
-    dest.addr[3] = src.addr[3];
+    dest.word[0] = src.word[0];
+    dest.word[1] = src.word[1];
+    dest.word[2] = src.word[2];
+    dest.word[3] = src.word[3];
 }
 
 

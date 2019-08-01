@@ -39,7 +39,7 @@ static LwipStatus dhcp_inc_pcb_refcount()
         udp_recv(dhcp_pcb, dhcp_recv, nullptr);
     }
     dhcp_pcb_refcount++;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 
@@ -107,7 +107,7 @@ dhcp_check(NetworkInterface * netif)
     /* create an ARP query for the offered IP address, expecting that no host
        responds, as the IP address should not be in use. */
     LwipStatus result = etharp_query(netif, &dhcp.offered_ip_addr, nullptr);
-    if (result != STATUS_OK) {
+    if (result != STATUS_SUCCESS) {
         Logf(true, "dhcp_check: could not perform ARP query\n");
     }
     if (dhcp.tries < 255) {
@@ -587,7 +587,7 @@ dhcp_start(NetworkInterface * netif)
 
     Logf(true, "dhcp_start(): starting DHCP configuration\n");
 
-    if (dhcp_inc_pcb_refcount() != STATUS_OK) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount() != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return ERR_MEM;
     }
     dhcp->pcb_allocated = 1;
@@ -595,12 +595,12 @@ dhcp_start(NetworkInterface * netif)
     if (!is_netif_link_up(netif)) {
         /* set state INIT and wait for dhcp_network_changed() to call dhcp_discover() */
         dhcp_set_state(dhcp, DHCP_STATE_INIT);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
 
     /* (re)start the DHCP negotiation */
     LwipStatus result = dhcp_discover(netif);
-    if (result != STATUS_OK) {
+    if (result != STATUS_SUCCESS) {
         /* free resources allocated above */
         dhcp_release_and_stop(netif);
         return ERR_MEM;
@@ -626,7 +626,7 @@ dhcp_inform(NetworkInterface * netif)
 
 
 
-    if (dhcp_inc_pcb_refcount() != STATUS_OK) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount() != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return;
     }
 
@@ -785,7 +785,7 @@ static LwipStatus
 dhcp_discover(NetworkInterface * netif)
 {
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    LwipStatus result = STATUS_OK;
+    LwipStatus result = STATUS_SUCCESS;
     uint16_t options_out_len;
 
     Logf(true, "dhcp_discover()\n");
@@ -1186,7 +1186,7 @@ LwipStatus
 dhcp_release(NetworkInterface * netif)
 {
     dhcp_release_and_stop(netif);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -1524,7 +1524,7 @@ again:
         dhcp->boot_file_name[DHCP_FILE_LEN - 1] = 0;
     }
 
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -1576,7 +1576,7 @@ dhcp_recv(void* arg, UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& addr, uint1
         goto free_pbuf_and_return;
     }
     /* option fields could be unfold? */
-    if (dhcp_parse_reply(p, dhcp) != STATUS_OK) {
+    if (dhcp_parse_reply(p, dhcp) != STATUS_SUCCESS) {
         Logf(true,
             "problem unfolding DHCP message - too short on memory?\n");
         goto free_pbuf_and_return;

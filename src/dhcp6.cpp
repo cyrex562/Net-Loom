@@ -99,7 +99,7 @@ static LwipStatus dhcp6_inc_pcb_refcount()
         // udp_recv(dhcp6_pcb, dhcp6_recv, nullptr);
     }
     dhcp6_pcb_refcount++;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /** Free DHCP PCB if the last netif stops using it */
@@ -177,7 +177,7 @@ static struct Dhcp6Context* dhcp6_get_struct(NetworkInterface* netif, const char
     }
     if (!dhcp6->pcb_allocated)
     {
-        if (dhcp6_inc_pcb_refcount() != STATUS_OK)
+        if (dhcp6_inc_pcb_refcount() != STATUS_SUCCESS)
         {
             /* ensure DHCP6 PCB is allocated */
             delete dhcp6;
@@ -266,7 +266,7 @@ LwipStatus dhcp6_enable_stateless(NetworkInterface* netif)
     {
         Logf(true,
              ("dhcp6_enable_stateless(): stateless DHCPv6 already enabled"));
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     else if (dhcp6->state != DHCP6_STATE_OFF)
     {
@@ -277,7 +277,7 @@ LwipStatus dhcp6_enable_stateless(NetworkInterface* netif)
     Logf(true,
          ("dhcp6_enable_stateless(): stateless DHCPv6 enabled\n"));
     dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE, "dhcp6_enable_stateless");
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -448,7 +448,7 @@ dhcp6_request_config(NetworkInterface*netif, Dhcp6Context *dhcp6)
     dhcp6_information_request(netif, dhcp6);
   }
 
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 
@@ -614,7 +614,7 @@ static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context*
             break;
         }
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 void dhcp6_recv(uint8_t* arg,
@@ -661,7 +661,7 @@ void dhcp6_recv(uint8_t* arg,
         //          xid, dhcp6->xid));
         goto free_pbuf_and_return;
     } /* option fields could be unfold? */
-    if (dhcp6_parse_reply(p, dhcp6) != STATUS_OK)
+    if (dhcp6_parse_reply(p, dhcp6) != STATUS_SUCCESS)
     {
         Logf(true,
              ("problem unfolding DHCPv6 message - too short on memory?\n"));

@@ -558,7 +558,7 @@ ip6_reass(struct PacketBuffer *p)
      * field of whatever header was originally before it. Since the packet made
      * it through the original header processing routines at least up to the
      * fragment header, we do not need any further sanity checks here. */
-    if (IP6H_NEXTH(iphdr_ptr) == IP6_NEXTH_FRAGMENT) {
+    if (get_ip6_hdr_next_hop(iphdr_ptr) == IP6_NEXTH_FRAGMENT) {
       iphdr_ptr->_nexth = ipr->nexth;
     } else {
       uint8_t *ptr = (uint8_t *)iphdr_ptr + IP6_HDR_LEN;
@@ -755,6 +755,6 @@ ip6_frag(struct PacketBuffer *p, NetworkInterface*netif, const Ip6Addr *dest)
     left = (uint16_t)(left - cop);
     fragment_offset = (uint16_t)(fragment_offset + cop);
   }
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 

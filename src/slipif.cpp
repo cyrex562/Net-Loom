@@ -125,7 +125,7 @@ slipif_output(NetworkInterface* netif, struct PacketBuffer* p)
         }
     } /* End with packet delimiter. */
     sio_send(SLIP_END, priv->sd);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * Send a PacketBuffer doing the necessary SLIP encapsulation
  *
@@ -267,7 +267,7 @@ slipif_rxbyte_input(NetworkInterface* netif, uint8_t c)
     struct PacketBuffer* p = slipif_rxbyte(netif, c);
     if (p != nullptr)
     {
-        if (netif->input(p, netif) != STATUS_OK)
+        if (netif->input(p, netif) != STATUS_SUCCESS)
         {
             free_pkt_buf(p);
         }
@@ -344,7 +344,7 @@ slipif_init(NetworkInterface* netif)
     /* Create a thread to poll the serial line. */ // fixme:
     // sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop_thread, netif,
     //                SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO),;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /**
  * @ingroup slipif
  * Polls the serial device and feeds the IP layer with incoming packets.
@@ -384,7 +384,7 @@ slipif_process_rxqueue(NetworkInterface* netif)
         }
         priv->rxpackets = q->next;
         q->next = nullptr; // SYS_ARCH_UNPROTECT(old_level);
-        if (netif->input(p, netif) != STATUS_OK)
+        if (netif->input(p, netif) != STATUS_SUCCESS)
         {
             free_pkt_buf(p);
         } // SYS_ARCH_PROTECT(old_level);
@@ -398,7 +398,7 @@ slipif_process_rxqueue(NetworkInterface* netif)
             }
             priv->rxpackets = q->next;
             q->next = nullptr; // sys_arch_unprotect(old_level);
-            if (netif->input(p, netif) != STATUS_OK)
+            if (netif->input(p, netif) != STATUS_SUCCESS)
             {
                 free_pkt_buf(p);
             } // SYS_ARCH_PROTECT(old_level);

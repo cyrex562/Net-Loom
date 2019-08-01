@@ -385,7 +385,7 @@ static LwipStatus dns_lookup_local(const char* hostname,
     auto entry = local_hostlist_dynamic;
     while (entry != nullptr)
     {
-        if ((lwip_stricmp(entry->name, hostname) == 0) && LwipDnsAddrtypeMatchIp(
+        if ((lwip_stricmp(entry->name, hostname) == 0) && match_dns_addr_ip(
             dns_addrtype,
             &entry->addr))
         {
@@ -393,7 +393,7 @@ static LwipStatus dns_lookup_local(const char* hostname,
             {
                 copy_ip_addr(addr, &entry->addr);
             }
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
         entry = entry->next;
     }
@@ -469,7 +469,7 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddrInfo* addr)
     copy_ip_addr(&entry->addr, addr);
     entry->next = local_hostlist_dynamic;
     local_hostlist_dynamic = entry;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 
@@ -491,9 +491,9 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddrInfo* addr)
 static LwipStatus dns_lookup(const char* name,
                             IpAddrInfo* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
 {
-    if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_OK)
+    if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_SUCCESS)
     {
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     // if (DNS_LOOKUP_LOCAL_EXTERN(name, addr, LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(dns_addrtype))
     //     == ERR_OK)
@@ -505,7 +505,7 @@ static LwipStatus dns_lookup(const char* name,
         if ((i.state == DNS_STATE_DONE) && (lwip_strnicmp(
             name,
             i.name,
-            sizeof(i.name)) == 0) && LwipDnsAddrtypeMatchIp(
+            sizeof(i.name)) == 0) && match_dns_addr_ip(
             dns_addrtype,
             &i.ipaddr))
         {
@@ -516,7 +516,7 @@ static LwipStatus dns_lookup(const char* name,
             {
                 copy_ip_addr(addr, &i.ipaddr);
             }
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
     }
     return ERR_ARG;
@@ -651,7 +651,7 @@ static LwipStatus dns_send(const uint8_t idx)
         /* call specified callback function if provided */
         dns_call_found(idx, nullptr); /* flush this entry */
         entry->state = DNS_STATE_UNUSED;
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* if here, we have either a new query or a retry on a previous query to process */
     // auto pbuf = pbuf_alloc();
     PacketBuffer pbuf{};
@@ -756,7 +756,7 @@ static UdpPcb* dns_alloc_random_port(void)
         }
     }
     while (err == ERR_USE);
-    if (err != STATUS_OK)
+    if (err != STATUS_SUCCESS)
     {
         udp_remove(pcb);
         return nullptr;
@@ -923,7 +923,7 @@ dns_check_entry(uint8_t i)
 
       /* send DNS packet for this entry */
       err = dns_send(i);
-      if (err != STATUS_OK) {
+      if (err != STATUS_SUCCESS) {
         Logf(true,
                     ("dns_send returned error: %s\n", status_to_string(err).c_str()));
       }
@@ -955,7 +955,7 @@ dns_check_entry(uint8_t i)
 
         /* send DNS packet for this entry */
         err = dns_send(i);
-        if (err != STATUS_OK) {
+        if (err != STATUS_SUCCESS) {
           Logf(true,
                       ("dns_send returned error: %s\n", status_to_string(err).c_str()));
         }
@@ -1413,20 +1413,20 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
     if (strcmp(hostname, "localhost") == 0)
     {
         set_ip_addr_loopback(lwip_dns_addrtype_is_ipv6(dns_addrtype), addr);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
         if ((is_ip_addr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
             is_ip_addr_v4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
     }
     // already have this address cached?
-    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_OK)
+    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_SUCCESS)
     {
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     if ((dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) || (dns_addrtype ==
         LWIP_DNS_ADDRTYPE_IPV6_IPV4))
@@ -1441,9 +1441,9 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
         {
             fallback = LWIP_DNS_ADDRTYPE_IPV4;
         }
-        if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == STATUS_OK)
+        if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == STATUS_SUCCESS)
         {
-            return STATUS_OK;
+            return STATUS_SUCCESS;
         }
     }
     bool is_mdns = false;

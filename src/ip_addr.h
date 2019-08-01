@@ -91,10 +91,10 @@ set_ip_addr_type(IpAddrInfo& ipaddr, const IpAddrType iptype)
 inline void
 clear_ip_addr(IpAddrInfo& ipaddr)
 {
-    ipaddr.u_addr.ip6.addr.addr[0] = 0;
-    ipaddr.u_addr.ip6.addr.addr[1] = 0;
-    ipaddr.u_addr.ip6.addr.addr[2] = 0;
-    ipaddr.u_addr.ip6.addr.addr[3] = 0;
+    ipaddr.u_addr.ip6.addr.word[0] = 0;
+    ipaddr.u_addr.ip6.addr.word[1] = 0;
+    ipaddr.u_addr.ip6.addr.word[2] = 0;
+    ipaddr.u_addr.ip6.addr.word[3] = 0;
     clear_ip6_addr_zone(ipaddr.u_addr.ip6);
 }
 
@@ -273,7 +273,7 @@ compare_ip_addr(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
     }
     if (is_ip_addr_v6(addr1))
     {
-        return is_ip6_addr_equal(addr1.u_addr.ip6, addr2.u_addr.ip6);
+        return ip6_addr_equal(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
     return is_ip4_addr_equal(addr1.u_addr.ip4.address, addr2.u_addr.ip4.address);
 }
@@ -287,7 +287,7 @@ is_ip_addr_any(const IpAddrInfo& ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
     {
-        return is_ip6_addr_any(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_any(ipaddr.u_addr.ip6.addr);
     }
     return ip4_addr_isany(ipaddr.u_addr.ip4.address);
 }
@@ -315,7 +315,7 @@ is_ip_addr_loopback(const IpAddrInfo& ipaddr)
 {
     if ((is_ip_addr_v6(ipaddr)))
     {
-        return is_ip6_addr_loopback(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_loopback(ipaddr.u_addr.ip6.addr);
     }
     return is_ip4_addr_loopback(ipaddr.u_addr.ip4.address);
 }
@@ -329,7 +329,7 @@ is_ip_addr_link_local(const IpAddrInfo& ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
     {
-        return ip6_addr_islinklocal(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_linklocal(ipaddr.u_addr.ip6.addr);
     }
     return is_ip4_addr_link_local(ipaddr.u_addr.ip4.address);
 }
@@ -392,10 +392,10 @@ inline IpAddrInfo create_ip_addr_ip4_any()
 ///
 inline IpAddrInfo create_ip_addr_ip6_any() {
     IpAddrInfo addr{};
-    addr.u_addr.ip6.addr.addr[0] = 0;
-    addr.u_addr.ip6.addr.addr[1] = 0;
-    addr.u_addr.ip6.addr.addr[2] = 0;
-    addr.u_addr.ip6.addr.addr[3] = 0;
+    addr.u_addr.ip6.addr.word[0] = 0;
+    addr.u_addr.ip6.addr.word[1] = 0;
+    addr.u_addr.ip6.addr.word[2] = 0;
+    addr.u_addr.ip6.addr.word[3] = 0;
     addr.u_addr.ip6.zone = IP6_NO_ZONE;
     addr.type = IPADDR_TYPE_V6;
     return addr;
@@ -408,10 +408,10 @@ inline IpAddrInfo create_ip_addr_ip6_any() {
 inline IpAddrInfo create_ip_addr_any()
 {
     IpAddrInfo addr{};
-    addr.u_addr.ip6.addr.addr[0] = 0;
-    addr.u_addr.ip6.addr.addr[1] = 0;
-    addr.u_addr.ip6.addr.addr[2] = 0;
-    addr.u_addr.ip6.addr.addr[3] = 0;
+    addr.u_addr.ip6.addr.word[0] = 0;
+    addr.u_addr.ip6.addr.word[1] = 0;
+    addr.u_addr.ip6.addr.word[2] = 0;
+    addr.u_addr.ip6.addr.word[3] = 0;
     addr.u_addr.ip6.zone = IP6_NO_ZONE;
     addr.type = IPADDR_TYPE_ANY;
     return addr;

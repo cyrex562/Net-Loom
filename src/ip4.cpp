@@ -22,8 +22,8 @@
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
 LwipStatus
-source_route_ip4_addr(const Ip4Addr& src,
-                      const Ip4Addr& dest,
+source_route_ip4_addr(const Ip4AddrInfo& src,
+                      const Ip4AddrInfo& dest,
                       NetworkInterface& out_netif,
                       const std::vector<NetworkInterface>& netifs)
 {
@@ -49,7 +49,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
                if (grp.group_address.addr == dst_addr.addr)
                {
                    found_netif = netif;
-                   return STATUS_OK;
+                   return STATUS_SUCCESS;
                }
             }
         }
@@ -60,7 +60,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
             if (net.addr == addr_info.network.addr)
             {
                 found_netif = netif;
-                return STATUS_OK;
+                return STATUS_SUCCESS;
             }
         }
 
@@ -136,7 +136,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
     /* Find network interface where to forward this IP packet to. */
     NetworkInterface out_netif{};
     auto rc = source_route_ip4_addr(src_addr, dst_addr, out_netif, netifs);
-    if (rc != STATUS_OK)
+    if (rc != STATUS_SUCCESS)
     {
         return rc;
     }
@@ -153,7 +153,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
         {
             icmp_time_exceeded(pkt_buf, ICMP_TE_TTL);
         }
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
 
     /* Incrementally update the IP checksum. */
@@ -177,12 +177,12 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
             icmp_dest_unreach(pkt_buf, ICMP_DUR_FRAG);
 
         }
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     /* transmit PacketBuffer on chosen interface */
     // netif->output(netif, pkt_buf, curr_dst_addr);
     // todo: send packet on outbound interface
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 ///
@@ -200,9 +200,9 @@ ip4_input_accept(NetworkInterface& netif)
     //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
 
     /* interface is up and configured? */
-    if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
+    if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
         /* unicast to this interface address? */
-        if (is_ip4_addr_equal(&curr_dst_addr, get_netif_ip4_addr(netif,)) ||
+        if (is_ip4_addr_equal(&curr_dst_addr, get_netif_ip4_addr(netif,,)) ||
             /* or broadcast on this interface network address? */
             ip4_addr_isbroadcast(&curr_dst_addr, netif)
 
@@ -260,7 +260,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 //    Logf(true | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %d\n", (uint16_t)IPH_V(iphdr)));
     free_pkt_buf(p);
     
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   /* obtain IP header length in bytes */
@@ -292,7 +292,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     /* free (drop) packet pbufs */
     free_pkt_buf(p);
     
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   /* verify checksum */
@@ -301,7 +301,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       free_pkt_buf(p);
 
       
-      return STATUS_OK;
+      return STATUS_SUCCESS;
     }
   }
 
@@ -397,7 +397,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
       /* free (drop) packet pbufs */
       free_pkt_buf(p);
       
-      return STATUS_OK;
+      return STATUS_SUCCESS;
     }
   }
 
@@ -416,7 +416,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
     }
     free_pkt_buf(p);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
   /* packet consists of multiple fragments? */
   if ((get_ip4_hdr_offset(iphdr) & pp_htons(IP4_OFF_MASK | IP4_MF_FLAG)) != 0) {
@@ -427,7 +427,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
     p = ip4_reass(p);
     /* packet not fully reassembled yet? */
     if (p == nullptr) {
-      return STATUS_OK;
+      return STATUS_SUCCESS;
     }
     iphdr = (const struct Ip4Hdr *)p->payload;
 
@@ -442,7 +442,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
 
     /* unsupported protocol feature */
     
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
 
@@ -517,7 +517,7 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
   ip4_addr_set_any(curr_src_addr);
   ip4_addr_set_any(curr_dst_addr);
 
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -546,9 +546,13 @@ ip4_input(struct PacketBuffer *p, NetworkInterface*inp)
  *  unique identifiers independent of destination"
  */
 LwipStatus
-ip4_output_if(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr *dest,
-              uint8_t ttl, uint8_t tos,
-              uint8_t proto, NetworkInterface*netif)
+ip4_output_if(PacketBuffer& p,
+              const Ip4AddrInfo& src,
+              const Ip4AddrInfo& dest,
+              uint8_t ttl,
+              uint8_t tos,
+              uint8_t proto,
+              NetworkInterface& netif)
 {
   return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, nullptr, 0);
 }
@@ -573,7 +577,7 @@ ip4_output_if_opt(struct PacketBuffer* p,
     const Ip4Addr* src_used = src;
     if (dest != nullptr) {
         if (ip4_addr_isany(src)) {
-            src_used = get_netif_ip4_addr(netif,);
+            src_used = get_netif_ip4_addr(netif,,);
         }
     }
 
@@ -594,13 +598,13 @@ ip4_output_if_opt(struct PacketBuffer* p,
  * when it is 'any'.
  */
   LwipStatus
-  ip4_output_if_src(struct PacketBuffer *p,
-                    const Ip4Addr *src,
-                    const Ip4Addr *dest,
+  ip4_output_if_src(PacketBuffer& p,
+                    const Ip4AddrInfo& src,
+                    const Ip4AddrInfo& dest,
                     uint8_t ttl,
                     uint8_t tos,
                     uint8_t proto,
-                    NetworkInterface*netif)
+                    NetworkInterface& netif)
   {
 
   return ip4_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, nullptr, 0);
@@ -780,9 +784,9 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
  *         see ip_output_if() for more return values
  */
   LwipStatus
-  ip4_output(struct PacketBuffer *p,
-             const Ip4Addr *src,
-             const Ip4Addr *dest,
+  ip4_output(PacketBuffer& p,
+             const Ip4AddrInfo& src,
+             const Ip4AddrInfo& dest,
              uint8_t ttl,
              uint8_t tos,
              uint8_t proto)

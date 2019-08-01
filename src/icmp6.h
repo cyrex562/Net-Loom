@@ -119,14 +119,15 @@ struct Icmp6EchoHdr
     uint16_t seqno;
 };
 
-void icmp6_input(struct PacketBuffer *p, NetworkInterface*inp);
-void icmp6_dest_unreach(struct PacketBuffer *p, enum Icmp6DurCode c);
-void icmp6_packet_too_big(struct PacketBuffer *p, uint32_t mtu);
-void icmp6_time_exceeded(struct PacketBuffer *p, enum Icmp6TeCode c);
-void icmp6_time_exceeded_with_addrs(struct PacketBuffer *p, enum Icmp6TeCode c,
-                                    const Ip6Addr *src_addr,
-                                    const Ip6Addr *dest_addr);
-void icmp6_param_problem(struct PacketBuffer *p, enum Icmp6PpCode c, const uint8_t *pointer);
+void icmp6_input(PacketBuffer& pkt_buf, NetworkInterface& netif);
+void icmp6_dest_unreach(PacketBuffer& p, enum Icmp6DurCode c);
+void icmp6_packet_too_big(PacketBuffer& p, uint32_t mtu);
+void icmp6_time_exceeded(PacketBuffer& p, enum Icmp6TeCode c);
+void icmp6_time_exceeded_with_addrs(PacketBuffer& p,
+                                    enum Icmp6TeCode c,
+                                    const Ip6Addr& src_addr,
+                                    const Ip6Addr& dest_addr);
+void icmp6_param_problem(PacketBuffer& p, enum Icmp6PpCode c, const uint8_t *pointer);
 
 //
 // END OF FILE

@@ -88,14 +88,16 @@ struct Ip6Hdr {
     Ip6Addr dest;
 } ;
 
-inline uint32_t get_ip6_hdr_v(Ip6Hdr* hdr)
+
+inline uint32_t
+get_ip6_hdr_v(Ip6Hdr* hdr)
 {
     return ((lwip_ntohl((hdr)->_v_tc_fl) >> 28) & 0x0f);
 }
 
-inline uint32_t get_ip6_hdr_tc(Ip6Hdr* hdr)
+inline uint32_t get_ip6_hdr_tc(Ip6Hdr& hdr)
 {
-    return ((lwip_ntohl((hdr)->_v_tc_fl) >> 20) & 0xff);
+    return ((lwip_ntohl((hdr)._v_tc_fl) >> 20) & 0xff);
 }
 
 inline uint32_t IP6H_FL(Ip6Hdr* hdr)
@@ -108,9 +110,9 @@ inline uint16_t IP6H_PLEN(Ip6Hdr* hdr)
     return (lwip_ntohs((hdr)->_plen));
 }
 
-inline uint8_t IP6H_NEXTH(Ip6Hdr* hdr)
+inline uint8_t get_ip6_hdr_next_hop(Ip6Hdr& hdr)
 {
-    return ((hdr)->_nexth);
+    return hdr._nexth;
 }
 
 inline uint8_t* IP6H_NEXTH_P(Ip6Hdr* hdr)
@@ -118,9 +120,11 @@ inline uint8_t* IP6H_NEXTH_P(Ip6Hdr* hdr)
     return (reinterpret_cast<uint8_t *>(hdr) + 6);
 }
 
-inline uint8_t IP6H_HOPLIM(Ip6Hdr* hdr)
+
+inline uint8_t
+get_ip6_hdr_hop_limit(Ip6Hdr& hdr)
 {
-    return ((hdr)->_hoplim);
+    return hdr._hoplim;
 }
 
 inline void get_ip6_hdr_vTCFL_SET(Ip6Hdr* hdr, uint32_t v, uint32_t tc, uint32_t fl)
@@ -136,9 +140,9 @@ inline void set_ip6_hdr_plen(Ip6Hdr* hdr, uint32_t plen)
 
 inline void IP6H_NEXTH_SET(Ip6Hdr* hdr, uint8_t nexth){ (hdr)->_nexth = (nexth);}
 
-inline void set_ip6_hdr_hop_limit(Ip6Hdr* hdr, uint8_t hl)
+inline void set_ip6_hdr_hop_limit(Ip6Hdr& hdr, const uint8_t hop_limit)
 {
-    (hdr)->_hoplim = (uint8_t)(hl);
+    hdr._hoplim = hop_limit;
 }
 
 
@@ -293,40 +297,64 @@ IP6_FRAG_ID(Ip6FragHdr* hdr)
 
 
 //#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
+LwipStatus
+route_ip6_packet(const Ip6AddrInfo& src, const Ip6AddrInfo& dest, NetworkInterface& out_netif, std::vector
+                 <NetworkInterface> interfaces);
 
 
-NetworkInterface*ip6_route(const Ip6Addr *src, const Ip6Addr *dest);
-
-
-LwipStatus         ip6_input(struct PacketBuffer *p, NetworkInterface* inp);
-LwipStatus         ip6_output(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
-                         uint8_t hl, uint8_t tc, uint8_t nexth);
-LwipStatus         ip6_output_if(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest,
-                            uint8_t hl, uint8_t tc, uint8_t nexth, NetworkInterface*netif);
-LwipStatus         ip6_output_if_src(struct PacketBuffer *pbuf,
-                                     Ip6Addr* src,
-                                     const Ip6Addr *dest,
+LwipStatus         recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif);
+LwipStatus         ip6_output(PacketBuffer& p,
+                              const Ip6AddrInfo& src,
+                              const Ip6AddrInfo& dest,
+                              uint8_t hl,
+                              uint8_t tc,
+                              uint8_t nexth);
+LwipStatus         ip6_output_if(PacketBuffer& p,
+                                 const Ip6AddrInfo& src,
+                                 const Ip6AddrInfo& dest,
+                                 uint8_t hl,
+                                 uint8_t tc,
+                                 uint8_t nexth,
+                                 NetworkInterface& netif);
+LwipStatus         ip6_output_if_src(PacketBuffer& pbuf,
+                                     Ip6AddrInfo& src,
+                                     const Ip6AddrInfo& dest,
                                      uint8_t hl,
                                      uint8_t tc,
                                      uint8_t nexth,
-                                     NetworkInterface*netif);
+                                     NetworkInterface& netif);
+
 
 LwipStatus         ip6_output_hinted(struct PacketBuffer *p, const Ip6Addr *src, const Ip6Addr *dest);
+
 
 LwipStatus         ip6_options_add_hbh_ra(struct PacketBuffer * p, uint8_t nexth, uint8_t value);
 
 
+LwipStatus
+forward_ip6_packet(PacketBuffer& pkt_buf,
+                   Ip6Hdr& iphdr,
+                   NetworkInterface& in_netif,
+                   Ip6AddrInfo& dest_addr,
+                   Ip6AddrInfo& src_addr,
+                   std::vector<NetworkInterface>& interfaces);
 
-// #define true_print(p)
 
-inline void ip6_addr_select_zone(Ip6Addr* dest, Ip6Addr* src)
+inline LwipStatus
+select_ip6_addr_zone(Ip6AddrInfo& dest, const Ip6AddrInfo& src, const std::vector<NetworkInterface>& interfaces)
 {
-    const auto selected_netif = ip6_route((src), (dest));
-    if (selected_netif != nullptr)
-    {
-        assign_ip6_addr_zone((dest), IP6_UNKNOWN, selected_netif,);
+    NetworkInterface selected_netif{};
+    if(route_ip6_packet((src), (dest), selected_netif, interfaces) == STATUS_SUCCESS) {
+        assign_ip6_addr_zone(dest, IP6_UNKNOWN, selected_netif);
+        return STATUS_SUCCESS;
     }
+    return STATUS_ERROR;
 }
+
+
+bool
+check_accept_ip6_pkt(const NetworkInterface& netif, const Ip6AddrInfo& src_addr, const Ip6AddrInfo& dest_addr);
+
 
 //
 // END OF FILE

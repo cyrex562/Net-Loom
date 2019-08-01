@@ -34,7 +34,7 @@ sys_msleep(const uint32_t ms)
   if (ms > 0) {
     Semaphore delaysem{};
     LwipStatus err = sys_sem_new(&delaysem, 0);
-    if (err == STATUS_OK) {
+    if (err == STATUS_SUCCESS) {
       sys_arch_sem_wait(&delaysem, ms);
       sys_sem_free(&delaysem);
     }
@@ -193,7 +193,7 @@ sys_sem_new(Semaphore* sem, uint8_t count)
         }
 
         sem->sem = new_sem;
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
 
     /* failed to allocate memory... */
@@ -297,7 +297,7 @@ sys_mutex_new(Mutex* mutex)
 
 
         mutex->mut = new_mut;
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
 
     /* failed to allocate memory... */
@@ -503,7 +503,7 @@ sys_new_mailbox(Mailbox* mbox, size_t size)
     sys_arch_unprotect(lev);
 
 
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 void
@@ -575,7 +575,7 @@ sys_mbox_trypost(Mailbox* q, void* msg)
     lwip_assert("Error releasing sem", ret != 0);
 
     sys_arch_unprotect(lev);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 LwipStatus

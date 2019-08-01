@@ -623,7 +623,7 @@ pcapif_low_level_output(NetworkInterface* netif, struct PacketBuffer* p)
     {
         /* unicast packet */
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
  * packet from the interface into the PacketBuffer.
  */
@@ -743,7 +743,7 @@ pcapif_input(uint8_t* user, const struct pcap_pkthdr* pkt_header, const uint8_t*
     p = pcapif_rx_ref(p);
 #endif
         /* pass all packets to ethernet_input, which decides what packets it supports */
-        if (netif->input(p, netif) != STATUS_OK)
+        if (netif->input(p, netif) != STATUS_SUCCESS)
         {
             Logf(true, ("ethernetif_input: IP input error\n"));
             free_pkt_buf(p);
@@ -777,7 +777,7 @@ pcapif_init(NetworkInterface* netif)
     // NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, 100000000);
     /* sets link up or down based on current status */
     pcapif_low_level_init(netif);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 void

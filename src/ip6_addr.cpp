@@ -235,7 +235,7 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
 
   for (uint32_t current_block_index = 0; current_block_index < 8; current_block_index++) {
     /* get the current 16-bit block */
-    uint32_t current_block_value = lwip_htonl(addr.addr[current_block_index >> 1]);
+    uint32_t current_block_value = lwip_htonl(addr.word[current_block_index >> 1]);
     if ((current_block_index & 0x1) == 0) {
       current_block_value = current_block_value >> 16;
     }
@@ -254,7 +254,7 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
       if (empty_block_flag == 0) {
         /* generate empty block "::", but only if more than one contiguous zero block,
          * according to current formatting suggestions RFC 5952. */
-        uint32_t next_block_value = lwip_htonl(addr.addr[(current_block_index + 1) >> 1]);
+        uint32_t next_block_value = lwip_htonl(addr.word[(current_block_index + 1) >> 1]);
         if ((current_block_index & 0x1) == 0x01) {
             next_block_value = next_block_value >> 16;
         }

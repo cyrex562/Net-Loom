@@ -98,11 +98,11 @@ ppp_connect(PppPcb* pcb, uint16_t holdoff)
     if (holdoff == 0)
     {
         ppp_do_connect(pcb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     new_phase(pcb, PPP_PHASE_HOLDOFF);
     sys_timeout_debug((uint32_t)(holdoff * 1000), ppp_do_connect, pcb, "ppp_do_connect");
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /*
  * Listen for an incoming PPP connection.
  *
@@ -123,7 +123,7 @@ ppp_listen(PppPcb* pcb)
     {
         new_phase(pcb, PPP_PHASE_INITIALIZE);
         pcb->link_cb->listen(pcb, (uint8_t*)pcb->link_ctx_cb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
     return ERR_IF;
 } /*
@@ -149,7 +149,7 @@ ppp_close(PppPcb* pcb, uint8_t nocarrier)
     if (pcb->phase == PPP_PHASE_DEAD)
     {
         pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* Already terminating, nothing to do */
     if (pcb->phase >= PPP_PHASE_TERMINATE)
     {
@@ -159,7 +159,7 @@ ppp_close(PppPcb* pcb, uint8_t nocarrier)
     {
         new_phase(pcb, PPP_PHASE_DISCONNECT);
         ppp_link_terminated(pcb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /*
      * Only accept carrier lost signal on the stable running phase in order
      * to prevent changing the PPP phase FSM in transition phases.
@@ -173,12 +173,12 @@ ppp_close(PppPcb* pcb, uint8_t nocarrier)
         lcp_lowerdown(pcb);
         /* forced link termination, this will force link protocol to disconnect. */
         link_terminated(pcb);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* Disconnect */
     // PPPDEBUG(LOG_DEBUG, ("ppp_close[%d]: kill_link -> lcp_close\n", pcb->netif->num));
     /* LCP soft close request. */
     lcp_close(pcb, "User request");
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /*
  * Release the control block.
  *
@@ -216,13 +216,13 @@ ppp_ioctl(PppPcb* pcb, uint8_t cmd, uint8_t* arg)
             goto fail;
         }
         *(int *)arg = (int)(false || pcb->if4_up || pcb->if6_up);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     case kPppctlgErrcode: /* Get the PPP error code. */ if (!arg)
         {
             goto fail;
         }
         *(int *)arg = (int)(pcb->err_code);
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     default:
         goto fail;
     }
@@ -249,7 +249,7 @@ ppp_netif_init_cb(NetworkInterface* netif)
     netif->output_ip6 = ppp_netif_output_ip6;
     netif->flags = NETIF_FLAG_UP; /* @todo: Initialize interface hostname */
     /* netif_set_hostname(netif, "lwip"); */
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } /*
  * Send an IPv4 packet on the given connection.
  */
@@ -319,7 +319,7 @@ ppp_netif_output(NetworkInterface* netif, struct PacketBuffer* pb, uint16_t prot
     case 0:
         break; /* Don't compress */
     case CI_MPPE:
-        if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != STATUS_OK)
+        if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != STATUS_SUCCESS)
         {
             // LINK_STATS_INC(link.memerr);
             // LINK_STATS_INC(link.drop);
@@ -524,7 +524,7 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
         {
             if (pcb->ccp_receive_method == CI_MPPE)
             {
-                if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != STATUS_OK)
+                if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != STATUS_SUCCESS)
                 {
                     free_pkt_buf(pb);
                     return false;
@@ -564,7 +564,7 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
         }
         if (protocol == PPP_IPV6)
         {
-            ip6_input(pb, pcb->netif);
+            recv_ip6_pkt(pb, pcb->netif);
             free_pkt_buf(pb);
             return false;
         }
@@ -782,9 +782,9 @@ get_mask(uint32_t addr)
 inline void
 IN6_LLADDR_FROM_EUI64(Ip6Addr* ip6, Eui64* eui64)
 {
-    ip6->addr[0] = pp_htonl(0xfe800000);
-    ip6->addr[1] = 0;
-    eui64_copy(eui64, (Eui64*)&ip6->addr[2]);
+    ip6->word[0] = pp_htonl(0xfe800000);
+    ip6->word[1] = 0;
+    eui64_copy(eui64, (Eui64*)&ip6->word[2]);
 } /********************************************************************
  *
  * sif6addr - Config the interface with an IPv6 link-local address

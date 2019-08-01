@@ -437,7 +437,7 @@ etharp_update_arp_entry(struct NetworkInterface* netif, const Ip4Addr* ipaddr, s
         /* free the queued IP packet */
         free_pkt_buf(p);
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 
@@ -495,7 +495,7 @@ etharp_remove_static_entry(const Ip4Addr* ipaddr)
     }
     /* entry found, free it */
     etharp_free_entry(i);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 
@@ -628,12 +628,12 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
     IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
 
     /* this interface is not configured? */
-    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
+    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
         for_us = 0;
     }
     else {
         /* ARP packet directed to us? */
-        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif,)));
+        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif,,)));
     }
 
     /* ARP message directed to us?
@@ -662,13 +662,13 @@ etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
                        (struct MacAddress *)netif->hwaddr,
                        &hdr->shwaddr,
                        (struct MacAddress *)netif->hwaddr,
-                       get_netif_ip4_addr(netif,),
+                       get_netif_ip4_addr(netif,,),
                        &hdr->shwaddr,
                        &sipaddr,
                        ARP_REPLY);
             /* we are not configured? */
         }
-        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,))) {
+        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
             /* { for_us == 0 and netif->ip_addr.addr == 0 } */
             Logf(true, ("etharp_input: we are unconfigured, ARP request ignored.\n"));
             /* request was not directed to us */
@@ -717,13 +717,13 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
     if (arp_table[arp_idx].state == ETHARP_STATE_STABLE) {
         if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_BROADCAST) {
             /* issue a standard request using broadcast */
-            if (etharp_request(netif, &arp_table[arp_idx].ipaddr) == STATUS_OK) {
+            if (etharp_request(netif, &arp_table[arp_idx].ipaddr) == STATUS_SUCCESS) {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
         else if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_UNICAST) {
             /* issue a unicast request (for 15 seconds) to prevent unnecessary broadcast */
-            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == STATUS_OK) {
+            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == STATUS_SUCCESS) {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
@@ -787,7 +787,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     else {
         /* outside local network? if so, this can neither be a global broadcast nor
            a subnet broadcast. */
-        if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
+        if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,,), get_netif_ip4_netmask(netif,)) &&
             !is_ip4_addr_link_local(ipaddr)) {
             auto iphdr = reinterpret_cast<Ip4Hdr&>(q->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
@@ -930,7 +930,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
     if (is_new_entry || (q == nullptr)) {
         /* try to resolve it; send out ARP request */
         result = etharp_request(netif, ipaddr);
-        if (result != STATUS_OK) {
+        if (result != STATUS_SUCCESS) {
             /* ARP request couldn't be sent */
             /* We don't re-send arp request in etharp_tmr, but we still queue packets,
                since this failure could be temporary, and the next packet calling
@@ -1006,7 +1006,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
                 }
 
                 // Logf(true | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %d\n", (void *)q, i));
-                result = STATUS_OK;
+                result = STATUS_SUCCESS;
             }
             else {
                 /* the pool MEMP_ARP_QUEUE is empty */
@@ -1050,7 +1050,7 @@ etharp_raw(NetworkInterface& netif,
            const Ip4Addr& ipdst_addr,
            const uint16_t opcode)
 {
-    LwipStatus result = STATUS_OK;
+    LwipStatus result = STATUS_SUCCESS;
     // lwip_assert("netif != NULL", netif != nullptr);
 
     /* allocate a PacketBuffer for the outgoing ARP request packet */
@@ -1128,7 +1128,7 @@ etharp_request_dst(NetworkInterface& netif, const Ip4Addr& ipaddr, const MacAddr
                       netif.ethernet_addresses[0],
                       hw_dst_addr,
                       (struct MacAddress *)netif->hwaddr,
-                      get_netif_ip4_addr(netif,),
+                      get_netif_ip4_addr(netif,,),
                       &ETH_ZERO_ADDR,
                       ipaddr,
                       ARP_REQUEST);

@@ -120,7 +120,7 @@ zepif_udp_recv(void* arg,
 
     /* Call into 6LoWPAN code. */
     auto err = netif_lowpan6->input(p, netif_lowpan6);
-    if (err == STATUS_OK)
+    if (err == STATUS_SUCCESS)
     {
         return;
     }
@@ -164,7 +164,7 @@ zepif_linkoutput(NetworkInterface* netif, struct PacketBuffer* p)
   zep->len = (uint8_t)p->tot_len;
 
     auto err = pbuf_take_at(q, p->payload, sizeof(struct ZepHdr));
-    if (err == STATUS_OK)
+    if (err == STATUS_SUCCESS)
     {
         zepif_udp_recv(netif, state->pcb, pbuf_clone(q), nullptr, 0, netif);
         err = udp_sendto(state->pcb, q, state->init.zep_dst_ip_addr, state->init.zep_dst_udp_port);
@@ -210,7 +210,7 @@ zepif_init(NetworkInterface* netif)
     if (state->init.zep_dst_ip_addr == nullptr)
     {
         /* With IPv4 enabled, default to broadcasting packets if no address is set */
-        state->init.zep_dst_ip_addr->u_addr.ip4.addr = IP4_ADDR_BCAST_U32;
+        state->init.zep_dst_ip_addr->u_addr.ip4.word = IP4_ADDR_BCAST_U32;
     }
 
 
@@ -218,7 +218,7 @@ zepif_init(NetworkInterface* netif)
 
   LwipStatus err = lowpan6_if_init(netif);
   lwip_assert("lowpan6_if_init set a state", netif->state == nullptr);
-  if (err == STATUS_OK) {
+  if (err == STATUS_SUCCESS) {
     netif->state = state;
     netif->hwaddr_len = 6;
     if (init_state != nullptr) {
@@ -230,7 +230,7 @@ zepif_init(NetworkInterface* netif)
       netif->hwaddr[0] &= 0xfc;
     }
     err = udp_bind(state->pcb, state->init.zep_src_ip_addr, state->init.zep_src_udp_port);
-    if (err != STATUS_OK)
+    if (err != STATUS_SUCCESS)
     {
         goto err_ret;
     }
@@ -238,13 +238,13 @@ zepif_init(NetworkInterface* netif)
     {
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }
-    lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == STATUS_OK);
+    lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == STATUS_SUCCESS);
     set_ip4_option(&state->pcb->so_options, SOF_BROADCAST);
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);
     lwip_assert("lowpan6_if_init set a state", netif->state == nullptr);
-    if (err == STATUS_OK)
+    if (err == STATUS_SUCCESS)
     {
         netif->state = state;
         netif->hwaddr_len = 6;
@@ -268,7 +268,7 @@ zepif_init(NetworkInterface* netif)
             zep_lowpan_timer_running = true;
         }
 
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     }
   }
 

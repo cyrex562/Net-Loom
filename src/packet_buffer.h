@@ -1,13 +1,11 @@
-//
-// file: packet_buffer.h
-//
+/**
+ * @file packet_buffer.h
+ */
 
 #pragma once
 
 #include <cstdint>
-#include <lwip_debug.h>
 #include <lwip_status.h>
-#include <opt.h>
 #include <vector>
 
 /** Main packet buffer struct */

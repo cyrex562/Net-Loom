@@ -59,7 +59,7 @@ pppapi_do_ppp_set_default(struct TcpipApiCallData *m)
   struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
   
   ppp_set_default(msg->msg.ppp);
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -86,7 +86,7 @@ pppapi_do_ppp_set_notify_phase_callback(struct TcpipApiCallData *m)
    struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
 
   ppp_set_notify_phase_callback(msg->msg.ppp, msg->msg.msg.setnotifyphasecb.notify_phase_cb);
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -118,7 +118,7 @@ static LwipStatus pppapi_do_pppos_create(struct TcpipApiCallData* m)
                                 msg->msg.msg.serialcreate.output_cb,
                                 msg->msg.msg.serialcreate.link_status_cb,
                                 msg->msg.msg.serialcreate.ctx_cb);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -157,7 +157,7 @@ pppapi_do_pppoe_create(struct TcpipApiCallData *m)
   msg->msg.ppp = pppoe_create(msg->msg.msg.ethernetcreate.pppif, msg->msg.msg.ethernetcreate.ethif,
                               msg->msg.msg.ethernetcreate.service_name, msg->msg.msg.ethernetcreate.concentrator_name,
                               msg->msg.msg.ethernetcreate.link_status_cb, msg->msg.msg.ethernetcreate.ctx_cb);
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 
@@ -206,7 +206,7 @@ static LwipStatus pppapi_do_pppol2tp_create(struct TcpipApiCallData* m)
                                          msg->msg.msg.l2tpcreate.secret_len,
                                          msg->msg.msg.l2tpcreate.link_status_cb,
                                          msg->msg.msg.l2tpcreate.ctx_cb);
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**

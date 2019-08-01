@@ -95,7 +95,7 @@ pbuf_take_at(PacketBuffer& buf,
         i++;
     }
 
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } 
 
 
@@ -162,7 +162,7 @@ pbuf_put_at(PacketBuffer& p, size_t offset, uint8_t data)
         p.data[offset] = data;
     }
 
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 } 
 
 //

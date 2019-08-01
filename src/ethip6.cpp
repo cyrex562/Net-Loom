@@ -81,10 +81,10 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
         // Hash IP multicast address to MAC address
         dest.addr[0] = 0x33;
         dest.addr[1] = 0x33;
-        dest.addr[2] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[0];
-        dest.addr[3] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[1];
-        dest.addr[4] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[2];
-        dest.addr[5] = reinterpret_cast<const uint8_t *>(ip6_addr.addr[3])[3];
+        dest.addr[2] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[0];
+        dest.addr[3] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[1];
+        dest.addr[4] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[2];
+        dest.addr[5] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[3];
 
 
         const auto i = 0;
@@ -98,13 +98,13 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     // We have a unicast destination IP address */ /* @todo anycast? */
     /* Ask ND6 what to do with the packet. */
     const auto result = nd6_get_next_hop_addr_or_queue(net_ifc, pkt_buf, ip6_addr, &hwaddr);
-    if (result != STATUS_OK)
+    if (result != STATUS_SUCCESS)
     {
         return result;
     } /* If no hardware address is returned, nd6 has queued the packet for later. */
     if (hwaddr == nullptr)
     {
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* Send out the packet using the returned hardware address. */
     memcpy(dest.addr, hwaddr, 6);
     return ethernet_output(net_ifc,

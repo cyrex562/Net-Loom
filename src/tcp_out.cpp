@@ -129,7 +129,7 @@ tcp_route(const struct TcpPcb *pcb, const IpAddrInfo *src, const IpAddrInfo *dst
     if ((pcb != nullptr) && (pcb->netif_idx != NETIF_NO_INDEX)) {
     // return get_netif_by_index(pcb->netif_idx);
   } else {
-    return ip_route(src, dst);
+    return ip_route(src, dst,);
   }
 }
 
@@ -292,7 +292,7 @@ tcp_write_checks(struct TcpPcb* pcb, uint16_t len)
     }
     else if (len == 0)
     {
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* fail on too much data */
     if (len > pcb->snd_buf)
     {
@@ -324,7 +324,7 @@ tcp_write_checks(struct TcpPcb* pcb, uint16_t len)
         lwip_assert("tcp_write: no pbufs on queue => both queues empty",
                     pcb->unacked == nullptr && pcb->unsent == nullptr);
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 /**
@@ -392,7 +392,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
          len,
          (uint16_t)apiflags);
     LwipStatus err = tcp_write_checks(pcb, len);
-    if (err != STATUS_OK)
+    if (err != STATUS_SUCCESS)
     {
         return err;
     }
@@ -749,7 +749,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
     {
         TCPH_SET_FLAG(seg->tcphdr, TCP_PSH);
     }
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 memerr: tcp_set_flags(pcb, TF_NAGLEMEMERR);
     if (concat_p != nullptr)
     {
@@ -801,7 +801,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   }
 
   if (useg->len <= split) {
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   lwip_assert("split <= mss", split <= pcb->mss);
@@ -920,7 +920,7 @@ tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
   }
 
 
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 memerr:
 
   lwip_assert("seg == NULL", seg == nullptr);
@@ -956,7 +956,7 @@ tcp_send_fin(struct TcpPcb *pcb)
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
       tcp_set_flags(pcb, TF_FIN);
-      return STATUS_OK;
+      return STATUS_SUCCESS;
     }
   }
   /* no data, no length, flags, copy=1, no optdata */
@@ -1071,7 +1071,7 @@ tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
                 pcb->unacked != nullptr || pcb->unsent != nullptr);
   }
 
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /* Build a timestamp option (12 bytes long) at the specified options pointer)
@@ -1178,7 +1178,7 @@ tcp_output(struct TcpPcb *pcb)
      input processing code to call us when input processing is done
      with. */
   if (tcp_input_pcb == pcb) {
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   uint32_t wnd = std::min(pcb->snd_wnd, pcb->cwnd);
@@ -1213,7 +1213,7 @@ tcp_output(struct TcpPcb *pcb)
 
   /* If we don't have a local IP address, we get one from netif */
   if (is_ip_addr_any(&pcb->local_ip)) {
-    const IpAddrInfo *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
+    const IpAddrInfo *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip,);
     if (local_ip == nullptr) {
       return STATUS_E_ROUTING;
     }
@@ -1273,7 +1273,7 @@ tcp_output(struct TcpPcb *pcb)
     }
 
     LwipStatus err = tcp_output_segment(seg, pcb, netif);
-    if (err != STATUS_OK) {
+    if (err != STATUS_SUCCESS) {
       /* segment could not be sent, for whatever reason */
       tcp_set_flags(pcb, TF_NAGLEMEMERR);
       return err;
@@ -1329,7 +1329,7 @@ tcp_output(struct TcpPcb *pcb)
 
 output_done:
   tcp_clear_flags(pcb, TF_NAGLEMEMERR);
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /** Check if a segment's pbufs are used by someone else than TCP.
@@ -1378,7 +1378,7 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
     /* This should not happen: rexmit functions should have checked this.
        However, since this function modifies p->len, we must not continue in this case. */
     Logf(true | LWIP_DBG_LEVEL_SERIOUS, ("tcp_output_segment: segment busy\n"));
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   /* The TCP header has already been constructed, but the ackno and
@@ -1506,12 +1506,12 @@ tcp_output_segment(struct TcpSeg *seg, struct TcpPcb *pcb, NetworkInterface*neti
 
   netif_set_hints(netif, pcb->netif_hints);
     const LwipStatus err = ip_output_if(seg->p,
-                                &pcb->local_ip,
-                                &pcb->remote_ip,
-                                pcb->ttl,
-                                pcb->tos,
-                                IP_PROTO_TCP,
-                                netif);
+                                        &pcb->local_ip,
+                                        &pcb->remote_ip,
+                                        pcb->ttl,
+                                        pcb->tos,
+                                        IP_PROTO_TCP,
+                                        netif);
   netif_reset_hints(netif);
 
 
@@ -1572,7 +1572,7 @@ tcp_rexmit_rto_prepare(struct TcpPcb *pcb)
   /* Don't take any RTT measurements after retransmitting. */
   pcb->rttest = 0;
 
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -1608,7 +1608,7 @@ tcp_rexmit_rto(struct TcpPcb *pcb)
 {
   lwip_assert("tcp_rexmit_rto: invalid pcb", pcb != nullptr);
 
-  if (tcp_rexmit_rto_prepare(pcb) == STATUS_OK) {
+  if (tcp_rexmit_rto_prepare(pcb) == STATUS_SUCCESS) {
     tcp_rexmit_rto_commit(pcb);
   }
 }
@@ -1667,7 +1667,7 @@ tcp_rexmit(struct TcpPcb *pcb)
 
   /* No need to call tcp_output: we are always called from tcp_input()
      and thus tcp_output directly returns. */
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 
@@ -1687,7 +1687,7 @@ tcp_rexmit_fast(struct TcpPcb *pcb)
          "tcp_receive: dupacks %d (%d), fast retransmit %d\n",
              (uint16_t)pcb->dupacks, pcb->lastack,
              lwip_ntohl(pcb->unacked->tcphdr->seqno));
-    if (tcp_rexmit(pcb) == STATUS_OK) {
+    if (tcp_rexmit(pcb) == STATUS_SUCCESS) {
       /* Set ssthresh to half of the minimum of the current
        * cwnd and the advertised window */
       pcb->ssthresh = std::min(pcb->cwnd, pcb->snd_wnd) / 2;
@@ -1940,7 +1940,7 @@ tcp_send_empty_ack(struct TcpPcb *pcb)
   Logf(true,
        "tcp_output: sending ACK for %d\n", pcb->rcv_nxt);
   LwipStatus err = tcp_output_control_segment(pcb, p, &pcb->local_ip, &pcb->remote_ip);
-  if (err != STATUS_OK) {
+  if (err != STATUS_SUCCESS) {
     /* let tcp_fasttmr retry sending this ACK */
     tcp_set_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
   } else {
@@ -2018,7 +2018,7 @@ tcp_zero_window_probe(struct TcpPcb* pcb)
     if (seg == nullptr)
     {
         /* Not expected, persist timer should be off when the send buffer is empty */
-        return STATUS_OK;
+        return STATUS_SUCCESS;
     } /* increment probe count. NOTE: we record probe even if it fails
      to actually transmit due to an error. This ensures memory exhaustion/
      routing problem doesn't leave a zero-window pcb as an indefinite zombie.

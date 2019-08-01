@@ -190,7 +190,9 @@ struct PacketBuffer;
 void nd6_tmr(void);
 void nd6_input(struct PacketBuffer* p, NetworkInterface* inp);
 void nd6_clear_destination_cache(void);
-NetworkInterface* nd6_find_route(const Ip6Addr* ip6addr);
+
+LwipStatus
+nd6_find_route(const Ip6AddrInfo& addr_info, NetworkInterface& out_addr);
 LwipStatus nd6_get_next_hop_addr_or_queue(NetworkInterface* netif,
                                           struct PacketBuffer* q,
                                           const Ip6Addr* ip6addr,

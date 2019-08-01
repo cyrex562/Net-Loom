@@ -107,7 +107,7 @@ mld6_stop(NetworkInterface*netif)
     /* move to "next" */
     group = next;
   }
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -140,7 +140,7 @@ mld6_lookfor_group(NetworkInterface*ifp, const Ip6Addr *addr)
   struct MldGroup *group = ((MldGroup *)netif_get_client_data(ifp, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6));
 
   while (group != nullptr) {
-    if (is_ip6_addr_equal(&(group->group_address), addr)) {
+    if (ip6_addr_equal(&(group->group_address), addr)) {
       return group;
     }
     group = group->next;
@@ -186,7 +186,7 @@ mld6_new_group(NetworkInterface*ifp, const Ip6Addr *addr)
 static LwipStatus
 mld6_remove_group(NetworkInterface*netif, struct MldGroup *group)
 {
-  LwipStatus err = STATUS_OK;
+  LwipStatus err = STATUS_SUCCESS;
 
   /* Is it the first group? */
   if (((MldGroup *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6)) == group) {
@@ -230,7 +230,7 @@ void mld6_input(struct PacketBuffer* pkt_buf, NetworkInterface* in_netif)
     switch (mld_hdr->type)
     {
     case ICMP6_TYPE_MLQ: /* Multicast listener query. */ /* Is it a general query? */ if (
-            ip6_addr_isallnodes_linklocal(curr_dst_addr) && is_ip6_addr_any(
+            ip6_addr_isallnodes_linklocal(curr_dst_addr) && ip6_addr_is_any(
                 &(mld_hdr->multicast_address)))
         {
             /* Report all groups, except all nodes group, and if-local groups. */
@@ -308,10 +308,10 @@ mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we join this interface ? */
-    if (is_ip6_addr_any(srcaddr) ||
+    if (ip6_addr_is_any(srcaddr) ||
         get_netif_ip6_addr_idx(netif, srcaddr) >= 0) {
       err = mld6_joingroup_netif(netif, groupaddr);
-      if (err != STATUS_OK) {
+      if (err != STATUS_SUCCESS) {
         return err;
       }
     }
@@ -369,7 +369,7 @@ mld6_joingroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
 
   /* Increment group use */
   group->use++;
-  return STATUS_OK;
+  return STATUS_SUCCESS;
 }
 
 /**
@@ -395,10 +395,10 @@ mld6_leavegroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr)
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
     /* Should we leave this interface ? */
-    if (is_ip6_addr_any(srcaddr) ||
+    if (ip6_addr_is_any(srcaddr) ||
         get_netif_ip6_addr_idx(netif, srcaddr) >= 0) {
       LwipStatus res = mld6_leavegroup_netif(netif, groupaddr);
-      if (err != STATUS_OK) {
+      if (err != STATUS_SUCCESS) {
         /* Store this result if we have not yet gotten a success */
         err = res;
       }
@@ -461,7 +461,7 @@ mld6_leavegroup_netif(NetworkInterface*netif, const Ip6Addr *groupaddr)
     }
 
     /* Left group */
-    return STATUS_OK;
+    return STATUS_SUCCESS;
   }
 
   /* Group not found */
@@ -564,7 +564,7 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
   // }
 
   /* Select our source address. */
-  if (!is_ip6_addr_valid(get_netif_ip6_addr_state(netif, 0))) {
+  if (!ip6_addr_is_valid(get_netif_ip6_addr_state(netif, 0))) {
     /* This is a special case, when we are performing duplicate address detection.
      * We must join the multicast group, but we don't have a valid address yet. */
     src_addr = nullptr;
@@ -600,8 +600,7 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
 
   /* Send the packet out. */
   // MLD6_STATS_INC(mld6.xmit);
-  ip6_output_if(p, (is_ip6_addr_any(src_addr)) ? nullptr : src_addr, &(group->group_address),
-      MLD6_HL, 0, IP6_NEXTH_HOPBYHOP, netif);
+  ip6_output_if(p, (ip6_addr_is_any(src_addr)) ? nullptr : src_addr, &(group->group_address), MLD6_HL, 0, IP6_NEXTH_HOPBYHOP, netif);
   free_pkt_buf(p);
 }
 

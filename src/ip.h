@@ -37,14 +37,17 @@ struct IpPcb
 
 // struct IpPcb;
 //
-inline bool match_exact_ip_addr_pcb_vers(const IpPcb* pcb, const IpAddrInfo* ipaddr)
+inline bool
+match_exact_ip_addr_pcb_vers(const IpPcb& pcb, const IpAddrInfo& ipaddr)
 {
-    return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
+    return (get_ip_addr_type(pcb.local_ip) == get_ip_addr_type(ipaddr));
 }
 
-inline bool match_ip_addr_pcb_version(const IpPcb* pcb, const IpAddrInfo* ipaddr)
+
+inline bool
+match_ip_addr_pcb_version(const IpPcb& pcb, const IpAddrInfo& ipaddr)
 {
-    return (is_ip_addr_any_type(pcb->local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
+    return (is_ip_addr_any_type(pcb.local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
 
 /*
@@ -166,36 +169,37 @@ inline uint8_t ip_get_option(IpPcb* pcb, const uint8_t opt)
     return ((pcb)->so_options & (opt));
 }
 
-//
-// Sets an IP pcb option (SOF_* flags)
-//
+/**
+ * Sets an IP pcb option (SOF_* flags)
+ */
 inline void set_ip4_option(uint8_t* so_options, const uint8_t opt)
 {
     *so_options = uint8_t(*so_options | opt);
 }
 
-//
-// Resets an IP pcb option (SOF_* flags)
-//
+
+/**
+ * Resets an IP pcb option (SOF_* flags)
+ */
 inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
 {
     pcb->so_options = uint8_t(pcb->so_options & ~opt);
 }
+
 
 /**
  * @ingroup ip
  * Output IP packet, netif is selected by source address
  */
 inline LwipStatus
-ip_output(PacketBuffer* p, IpAddrInfo* src, IpAddrInfo* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
+ip_output(PacketBuffer& p, IpAddrInfo& src, IpAddrInfo& dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
 {
-    if (is_ip_addr_v6(dest))
-    {
+    if (is_ip_addr_v6(dest)) {
         return
-            ip6_output(p, &src->u_addr.ip6, &dest->u_addr.ip6, ttl, tos, proto);
+            ip6_output(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto);
     }
     return
-        ip4_output(p, &src->u_addr.ip4, &dest->u_addr.ip4, ttl, tos, proto);
+        ip4_output(p, src.u_addr.ip4, dest.u_addr.ip4, ttl, tos, proto);
 }
 
 
@@ -204,27 +208,18 @@ ip_output(PacketBuffer* p, IpAddrInfo* src, IpAddrInfo* dest, const uint8_t ttl,
  * Output IP packet to specified interface
  */
 inline LwipStatus
-ip_output_if(PacketBuffer* p, const IpAddrInfo* src, const IpAddrInfo* dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto, NetworkInterface* netif)
+ip_output_if(PacketBuffer& p,
+             const IpAddrInfo& src,
+             const IpAddrInfo& dest,
+             const uint8_t ttl,
+             const uint8_t tos,
+             const uint8_t proto,
+             NetworkInterface& netif)
 {
-    if (is_ip_addr_v6(dest))
-    {
-        return
-            ip6_output_if(p,
-                          &src->u_addr.ip6,
-                          &dest->u_addr.ip6,
-                          ttl,
-                          tos,
-                          proto,
-                          netif);
+    if (is_ip_addr_v6(dest)) {
+        return ip6_output_if(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto, netif);
     }
-    return
-        ip4_output_if(p,
-                      &src->u_addr.ip4,
-                      &dest->u_addr.ip4,
-                      ttl,
-                      tos,
-                      proto,
-                      netif);
+    return ip4_output_if(p, src.u_addr.ip4, dest.u_addr.ip4, ttl, tos, proto, netif);
 }
 
 
@@ -233,26 +228,26 @@ ip_output_if(PacketBuffer* p, const IpAddrInfo* src, const IpAddrInfo* dest, con
 /// Output IP packet to interface specifying source address
 ///
 inline LwipStatus
-ip_output_if_src(PacketBuffer* p,
-                 IpAddrInfo* src,
-                 const IpAddrInfo* dest,
+ip_output_if_src(PacketBuffer& p,
+                 IpAddrInfo& src,
+                 const IpAddrInfo& dest,
                  uint8_t ttl,
                  uint8_t tos,
                  uint8_t proto,
-                 NetworkInterface* netif)
+                 NetworkInterface& netif)
 {
     return
     (is_ip_addr_v6(dest)
          ? ip6_output_if_src(p,
-                             &src->u_addr.ip6,
-                             &dest->u_addr.ip6,
+                             src.u_addr.ip6,
+                             dest.u_addr.ip6,
                              ttl,
                              tos,
                              proto,
                              netif)
          : ip4_output_if_src(p,
-                             &src->u_addr.ip4,
-                             &dest->u_addr.ip4,
+                             src.u_addr.ip4,
+                             dest.u_addr.ip4,
                              ttl,
                              tos,
                              proto,
@@ -275,27 +270,47 @@ ip_output_if_src(PacketBuffer* p,
 //                                     tos, proto, netif_hint)                \
 //                 : ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, \
 //                                     tos, proto, netif_hint))
+
+
 /**
- * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
-inline NetworkInterface* ip_route(const IpAddrInfo* src, const IpAddrInfo* dest)
+inline LwipStatus
+ip_route(const IpAddrInfo& src,
+         const IpAddrInfo& dest,
+         NetworkInterface& out_ifc,
+         const std::vector<NetworkInterface>& interfaces)
 {
-    return (is_ip_addr_v6(dest)
-                ? ip6_route((&src->u_addr.ip6), (&dest->u_addr.ip6))
-                : source_route_ip4_addr((&src->u_addr.ip4), (&dest->u_addr.ip4),,));
+    if (is_ip_addr_v6(dest)) {
+        return route_ip6_packet(src.u_addr.ip6, dest.u_addr.ip6, out_ifc, interfaces);
+    }
+    return source_route_ip4_addr(src.u_addr.ip4, dest.u_addr.ip4, out_ifc, interfaces);
 }
+
+
 /**
- * @ingroup ip
  * Get netif for IP.
  */
-inline const IpAddrInfo* ip_netif_get_local_ip(const NetworkInterface* netif, const IpAddrInfo* dest)
+inline LwipStatus
+ip_netif_get_local_ip(const NetworkInterface& netif,
+                      const IpAddrInfo& dest_addr_info,
+                      IpAddrInfo& out_addr_info)
 {
-    if (is_ip_addr_v6(dest))
-    {
-        return ip6_netif_get_local_ip(netif, &dest->u_addr.ip6);
+    out_addr_info = IpAddrInfo();
+    if (is_ip_addr_v6(dest_addr_info)) {
+        LwipStatus status = get_netif_ip6_local_ip(
+            netif,
+            dest_addr_info.u_addr.ip6,
+            ip6_addr_info);
+        out_addr_info.u_addr.ip6 = ip6_addr_info;
+        return status;
     }
-    return get_netif_ip4_local_ip(netif,);
+    Ip4AddrInfo ip4_addr_info{};
+    LwipStatus status = get_netif_ip4_local_ip(netif,
+                                               dest_addr_info.u_addr.ip4,
+                                               ip4_addr_info);
+    out_addr_info.u_addr.ip4 = ip4_addr_info;
+    return status;
 }
 
 // #define ip_debug_print(is_ipv6, p) \

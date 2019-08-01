@@ -1,29 +1,14 @@
 /**
- * @file netif.cpp
+ * @file network_interface.cpp
  */
-
-
-#include <autoip.h>
-#include <cstdlib> /* atoi */
-#include <def.h>
 #include <dhcp6.h>
 #include <etharp.h>
-#include <ethernet.h>
-#include <igmp.h>
-#include <ip.h>
 #include <ip6_addr.h>
 #include <ip_addr.h>
-#include <lwip_debug.h>
 #include <lwip_status.h>
-#include <mld6.h>
-#include <nd6.h>
 #include <network_interface.h>
-#include <opt.h>
-#include <raw_priv.h>
 #include <sys.h>
-#include <tcp_priv.h>
-#include <tcpip.h>
-#include <udp.h>
+
 
 /**
  * Initialize a lwip network interface structure for a loopback interface
@@ -39,7 +24,7 @@ init_loop_netif(NetworkInterface& netif, const std::string& if_name)
     netif.if_name = if_name;
     netif.netif_type = NETIF_TYPE_LOOPBACK;
     netif.igmp_allowed = true;
-    return STATUS_OK;
+    return STATUS_SUCCESS;
 }
 
 
@@ -342,12 +327,15 @@ poll_netif(NetworkInterface& netif)
  * @return true if replaced, false otherwise.
  */
 bool
-set_netif_ip6_addr_info(NetworkInterface& netif, Ip6AddrInfo& old_addr_info, Ip6AddrInfo& new_addr_info)
+set_netif_ip6_addr_info(NetworkInterface& netif,
+                        Ip6AddrInfo& old_addr_info,
+                        Ip6AddrInfo& new_addr_info)
 {
     auto result = false;
-
-    for(auto& it: netif.ip6_addresses) {
-        if (is_ip6_addr_equal(it.addr, old_addr_info.addr) && is_ip6_zone_equal(old_addr_info, new_addr_info)) {
+    for (auto& it : netif.ip6_addresses) {
+        if (ip6_addr_equal(it, old_addr_info) && is_ip6_zone_equal(
+            old_addr_info,
+            new_addr_info)) {
             it.addr = new_addr_info.addr;
             it.address_state = new_addr_info.address_state;
             it.netmask = new_addr_info.netmask;
@@ -358,7 +346,6 @@ set_netif_ip6_addr_info(NetworkInterface& netif, Ip6AddrInfo& old_addr_info, Ip6
             break;
         }
     }
-
     return result;
 }
 
@@ -372,18 +359,18 @@ set_netif_ip6_addr_info(NetworkInterface& netif, Ip6AddrInfo& old_addr_info, Ip6
  * for the given netif, or no match will be found.
  *
  * @param netif the netif to check
- * @param addr the IPv6 address to find
+ * @param addr_info the IPv6 address to find
  * @return >= 0: address found, this is its index
  *         -1: address not found on this netif
  */
 int
-get_netif_ip6_addr_idx(NetworkInterface& netif, const Ip6Addr& addr)
+get_netif_ip6_addr_idx(NetworkInterface& netif, const Ip6AddrInfo& addr_info)
 {
     auto result = -1;
     auto found_index = 0;
 
     for (auto& it : netif.ip6_addresses) {
-        if (is_ip6_addr_equal(it.addr, addr)) {
+        if (ip6_addr_equal(it, addr_info)) {
             result = found_index;
             break;
         }
@@ -441,10 +428,12 @@ netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& inte
  * @return the most suitable source address to use, or NULL if no suitable
  *         source address is found
  */
-bool
-select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr, Ip6AddrInfo& out_src_addr)
+LwipStatus
+select_ip6_src_addr(const NetworkInterface& netif,
+                    const Ip6AddrInfo& dest_addr,
+                    Ip6AddrInfo& out_src_addr)
 {
-    auto result = false;
+    LwipStatus result = STATUS_SUCCESS;
     Ip6MulticastScope dest_scope;
     Ip6MulticastScope cand_scope;
     auto best_scope = IP6_MULTICAST_SCOPE_RESERVED;
@@ -456,7 +445,7 @@ select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr,
     if (is_ip6_addr_global(dest_addr.addr)) {
         dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
     }
-    else if (ip6_addr_islinklocal(dest_addr.addr) || is_ip6_addr_loopback(dest_addr.addr)) {
+    else if (ip6_addr_is_linklocal(dest_addr.addr) || ip6_addr_is_loopback(dest_addr.addr)) {
         dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
     }
     else if (is_ip6_addr_unique_local(dest_addr.addr)) {
@@ -475,7 +464,7 @@ select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr,
     Ip6AddrInfo best_addr{};
     for (auto& it : netif.ip6_addresses) {
         /* Consider only valid (= preferred and deprecated) addresses. */
-        if (!is_ip6_addr_valid(it.address_state)) {
+        if (!ip6_addr_is_valid(it.address_state)) {
             continue;
         }
         /* Determine the scope of this candidate address. Same ordering idea. */
@@ -483,7 +472,7 @@ select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr,
         if (is_ip6_addr_global(cand_addr)) {
             cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
         }
-        else if (ip6_addr_islinklocal(cand_addr)) {
+        else if (ip6_addr_is_linklocal(cand_addr)) {
             cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
         }
         else if (is_ip6_addr_unique_local(cand_addr)) {
@@ -503,7 +492,7 @@ select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr,
         const uint8_t cand_bits = cmp_ip6_net_zoneless(cand_addr, dest_addr.addr); /* just 1 or 0 for now */
         if (cand_bits && ip6_addr_hosts_equal(cand_addr, dest_addr.addr)) {
             out_src_addr = it; /* Rule 1 */
-            result = true;
+            result = STATUS_SUCCESS;
             break;
         }
         /* no alternative yet */

@@ -153,7 +153,7 @@ inline bool lwip_dns_addrtype_is_ipv6(uint8_t t)
     return (((t) == LWIP_DNS_ADDRTYPE_IPV6_IPV4) || ((t) == LWIP_DNS_ADDRTYPE_IPV6));
 }
 
-inline bool LwipDnsAddrtypeMatchIp(uint8_t t, IpAddrInfo* ip)
+inline bool match_dns_addr_ip(uint8_t t, IpAddrInfo& ip)
 {
     return (is_ip_addr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }

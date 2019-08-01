@@ -53,7 +53,7 @@ constexpr auto ICMP_DEST_UNREACH_DATA_SZ = 8; /**
  * @param p the icmp echo request packet, p->payload pointing to the icmp header
  * @param inp the netif on which this packet was received
  */
-void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
+void icmp_input(PacketBuffer& p, NetworkInterface& inp)
 {
     struct IcmpEchoHdr* iecho;
     const Ip4Addr* src;
@@ -85,12 +85,12 @@ void icmp_input(struct PacketBuffer* p, NetworkInterface* inp)
         if (is_ip4_addr_multicast(&curr_dst_addr->u_addr.ip4))
         {
             /* For multicast, use address of receiving interface as source address */
-            src = get_netif_ip4_addr(inp,);
+            src = get_netif_ip4_addr(inp,,);
         } /* broadcast destination address? */
         if (ip4_addr_isbroadcast(&curr_dst_addr->u_addr.ip4, curr_netif))
         {
             /* For broadcast, use address of receiving interface as source address */
-            src = get_netif_ip4_addr(inp,);
+            src = get_netif_ip4_addr(inp,,);
         }
         Logf(true, "icmp_input: ping\n");
         if (p->tot_len < sizeof(struct IcmpEchoHdr))
@@ -255,9 +255,9 @@ icmperr: free_pkt_buf(p);
  *          p->payload pointing to the IP header
  * @param dur_type type of the 'unreachable' packet
  */
-void icmp_dest_unreach(PacketBuffer& pkt_buf, enum icmp_dur_type dur_type)
+void icmp_dest_unreach(PacketBuffer& pkt_buf, enum IcmpDestUnreachCode dur_type)
 {
-    icmp_send_response(pkt_buf, ICMP_DUR, dur_type);
+    send_icmp_response(pkt_buf, ICMP_DUR, dur_type);
 } /**
  * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
  *
@@ -265,9 +265,9 @@ void icmp_dest_unreach(PacketBuffer& pkt_buf, enum icmp_dur_type dur_type)
  *          p->payload pointing to the IP header
  * @param te_type type of the 'time exceeded' packet
  */
-void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type)
+void icmp_time_exceeded(PacketBuffer& pkt_buf, enum IcmpTimeExceededCode te_type)
 {
-    icmp_send_response(pkt_buf, ICMP_TE, te_type);
+    send_icmp_response(pkt_buf, ICMP_TE, te_type);
 } /**
  * Send an icmp packet in response to an incoming packet.
  *
@@ -276,7 +276,7 @@ void icmp_time_exceeded(PacketBuffer& pkt_buf, enum icmp_te_type te_type)
  * @param type Type of the ICMP header
  * @param code Code of the ICMP header
  */
-static void icmp_send_response(struct PacketBuffer* p, uint8_t type, uint8_t code)
+static void send_icmp_response(PacketBuffer& p, uint8_t type, uint8_t code)
 {
     Ip4Addr iphdr_src; /* ICMP header + IP header + 8 bytes of data */
     // struct PacketBuffer* q = pbuf_alloc();

@@ -282,10 +282,10 @@ uint16_t ip6_chksum_pseudo(struct PacketBuffer& p,
     uint32_t acc = 0;
     for (uint8_t addr_part = 0; addr_part < 4; addr_part++)
     {
-        uint32_t addr = src->addr[addr_part];
+        uint32_t addr = src->word[addr_part];
         acc = (uint32_t)(acc + (addr & 0xffffUL));
         acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
-        addr = dest->addr[addr_part];
+        addr = dest->word[addr_part];
         acc = (uint32_t)(acc + (addr & 0xffffUL));
         acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
     } /* fold down to 16 bits */
@@ -427,10 +427,10 @@ uint16_t ip6_chksum_pseudo_partial(PacketBuffer& p,
                                    const Ip6Addr& dest) {
   uint32_t acc = 0;
   for (uint8_t addr_part = 0; addr_part < 4; addr_part++) {
-    uint32_t addr = src->addr[addr_part];
+    uint32_t addr = src->word[addr_part];
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
-    addr = dest->addr[addr_part];
+    addr = dest->word[addr_part];
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
   }
