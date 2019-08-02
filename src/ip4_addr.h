@@ -320,7 +320,7 @@ constexpr auto IP4_ADDR_LINK_LOCAL_MASK_2 = 0xa9fe0000UL;
 ///
 ///
 inline bool
-is_ip4_addr_link_local(const Ip4Addr& addr1)
+is_ip4_addr_link_local(const Ip4AddrInfo& addr1)
 {
     return (addr1.addr & pp_htonl(IP4_ADDR_LINK_LOCAL_MASK_1)) == pp_htonl(
         IP4_ADDR_LINK_LOCAL_MASK_2);

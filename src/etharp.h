@@ -50,9 +50,9 @@ struct EtharpHdr
     uint8_t protolen;
     uint16_t opcode;
     struct MacAddress shwaddr;
-    struct Ip4AddrWordaligned sipaddr;
+    struct Ip4Addr sipaddr;
     struct MacAddress dhwaddr;
-    struct Ip4AddrWordaligned dipaddr;
+    struct Ip4Addr dipaddr;
 };
 
 constexpr auto kSizeofEtharpHdr = 28;
@@ -85,7 +85,7 @@ ssize_t etharp_find_addr(struct NetworkInterface* netif, const Ip4Addr* ipaddr,
 int etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct MacAddress** eth_ret);
 LwipStatus etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr);
 LwipStatus etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct PacketBuffer* q);
-LwipStatus etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr);
+LwipStatus etharp_request(NetworkInterface& netif, const Ip4AddrInfo& ipaddr);
 
 
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
@@ -97,9 +97,10 @@ LwipStatus etharp_request(NetworkInterface& netif, const Ip4Addr& ipaddr);
  *  @param address_index the index of the IPv4 address to use as the source address.
  *  @return STATUS_OK on success; an error message otherwise.
  */
-inline LwipStatus etharp_gratuitous(NetworkInterface& netif, const size_t address_index)
+inline LwipStatus
+etharp_gratuitous(NetworkInterface& netif, const size_t address_index)
 {
-    return etharp_request(netif, get_netif_ip4_addr(netif, address_index,));
+    return etharp_request(netif, get_netif_ip4_addr(netif, address_index, ));
 }
 
 void etharp_cleanup_netif(struct NetworkInterface* netif);

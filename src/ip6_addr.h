@@ -223,9 +223,9 @@ ip6_addr_is_linklocal(const Ip6AddrInfo& addr_info)
 ///
 ///
 inline bool
-ip6_addr_ismulticast_iflocal(const Ip6Addr& ip6addr)
+ip6_addr_is_multicast_if_local(const Ip6AddrInfo& addr_info)
 {
-    return (ip6addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(IP6_MCAST_MASK_2);
+    return (addr_info.addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(IP6_MCAST_MASK_2);
 }
 
 
@@ -233,34 +233,35 @@ ip6_addr_ismulticast_iflocal(const Ip6Addr& ip6addr)
 ///
 ///
 inline bool
-ip6_addr_ismulticast_linklocal(const Ip6Addr& ip6addr)
+ip6_addr_is_multicast_link_local(const Ip6AddrInfo& addr_info)
 {
-    return (ip6addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(
+    return (addr_info.addr.word[0] & pp_htonl(IP6_MCAST_MASK_1)) == pp_htonl(
         IP6_MCAST_LINK_LOCAL_MASK_1);
 }
 
 
-///
-/// Determine whether an IPv6 address has a constrained scope, and as such is
-/// meaningful only if accompanied by a zone index to identify the scope's zone.
-/// The given address type may be used to eliminate at compile time certain
-/// checks that will evaluate to false at run time anyway.
-///
-/// This default implementation follows the default model of RFC 4007, where
-/// only interface-local and link-local scopes are defined.
-///
-/// Even though the unicast loopback address does have an implied link-local
-/// scope, in this implementation it does not have an explicitly assigned zone
-/// index. As such it should not be tested for in this macro.
-///
-/// @param ip6_addr the IPv6 address (const); only its address part is examined.
-/// @param type address type; see @ref lwip_ipv6_scope_type.
-/// @return 1 if the address has a constrained scope, 0 if it does not.
-///
+/**
+ *  Determine whether an IPv6 address has a constrained scope, and as such is
+ *  meaningful only if accompanied by a zone index to identify the scope's zone.
+ *  The given address type may be used to eliminate at compile time certain
+ *  checks that will evaluate to false at run time anyway.
+ * 
+ *  This default implementation follows the default model of RFC 4007, where
+ *  only interface-local and link-local scopes are defined.
+ * 
+ *  Even though the unicast loopback address does have an implied link-local
+ *  scope, in this implementation it does not have an explicitly assigned zone
+ *  index. As such it should not be tested for in this macro.
+ * 
+ *  @param ip6_addr the IPv6 address (const); only its address part is examined.
+ *  @param type address type; see @ref lwip_ipv6_scope_type.
+ *  @return 1 if the address has a constrained scope, 0 if it does not.
+ * 
+*/
 inline bool ip6_addr_has_scope(const Ip6AddrInfo& ip6_addr, const Ip6AddrScopeType type)
 {
     return ip6_addr_is_linklocal(ip6_addr) || type != IP6_UNICAST && (
-        ip6_addr_ismulticast_iflocal(ip6_addr) || ip6_addr_ismulticast_linklocal(ip6_addr)
+        ip6_addr_is_multicast_if_local(ip6_addr) || ip6_addr_is_multicast_link_local(ip6_addr)
     );
 } 
 
@@ -271,8 +272,7 @@ inline bool ip6_addr_has_scope(const Ip6AddrInfo& ip6_addr, const Ip6AddrScopeTy
 inline bool
 ip6_addr_lacks_zone(const Ip6AddrInfo& addr_info, const Ip6AddrScopeType scope_type)
 {
-    return !ip6_addr_has_zone(addr_info) &&
-        ip6_addr_has_scope(addr_info.addr, scope_type);
+    return !ip6_addr_has_zone(addr_info) && ip6_addr_has_scope(addr_info, scope_type);
 }
 
 

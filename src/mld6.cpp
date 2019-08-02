@@ -237,7 +237,7 @@ void mld6_input(struct PacketBuffer* pkt_buf, NetworkInterface* in_netif)
             group = ((MldGroup *)netif_get_client_data(in_netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6));
             while (group != nullptr)
             {
-                if ((!(ip6_addr_ismulticast_iflocal(&(group->group_address)))) && (!(
+                if ((!(ip6_addr_is_multicast_if_local(&(group->group_address)))) && (!(
                     ip6_addr_isallnodes_linklocal(&(group->group_address)))))
                 {
                     mld6_delayed_report(group, mld_hdr->max_resp_delay);

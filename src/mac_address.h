@@ -1,8 +1,11 @@
-///
-/// file: ethernet_address.h
-///
+/**
+ *
+ * @file mac_address.h
+ *
+ */
 
 #pragma once
+#include <cstdint>
 
 constexpr auto ETH_ADDR_LEN = 6;
 
@@ -11,9 +14,9 @@ struct MacAddress
     uint8_t addr[ETH_ADDR_LEN];
 }; 
 
-///
-/// Initialize a struct MacAddress with its 6 bytes (takes care of correct braces)
-///
+/**
+ * Initialize a struct MacAddress with its 6 bytes (takes care of correct braces)
+ */
 inline MacAddress
 make_eth_addr_from_bytes(const uint8_t b0,
                          const uint8_t b1,

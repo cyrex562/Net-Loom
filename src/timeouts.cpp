@@ -47,7 +47,7 @@
 // };
 
 
-const int NUM_CYCLIC_TIMERS = LWIP_ARRAYSIZE(lwip_cyclic_timers);
+// const int NUM_CYCLIC_TIMERS = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 /** The one and only timeout list */
 static struct SysTimeoutContext *next_timeout;
@@ -194,17 +194,18 @@ lwip_cyclic_timer(void* arg)
 }
 
 /** Initialize this module */
-void sys_timeouts_init(void)
+void
+sys_timeouts_init()
 {
-#define LWIP_TCP 1
-    for (size_t i = (LWIP_TCP ? 1 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++)
-    {
-        /* we have to cast via size_t to get rid of const warning
-          (this is OK as cyclic_timer() casts back to const* */
-        sys_timeout(lwip_cyclic_timers[i].interval_ms,
-                    lwip_cyclic_timer,
-                    (void*)&lwip_cyclic_timers[i]);
-    }
+    // #define LWIP_TCP 1
+    //     for (size_t i = (LWIP_TCP ? 1 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++)
+    //     {
+    //         /* we have to cast via size_t to get rid of const warning
+    //           (this is OK as cyclic_timer() casts back to const* */
+    //         sys_timeout(lwip_cyclic_timers[i].interval_ms,
+    //                     lwip_cyclic_timer,
+    //                     (void*)&lwip_cyclic_timers[i]);
+    //     }
 }
 
 

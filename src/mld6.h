@@ -41,10 +41,9 @@
  */
 #pragma once
 #include <ip6_addr.h>
-#include <opt.h>
 
 
-#define MLD6_HBH_HLEN 8
+constexpr auto MLD6_HBH_HLEN = 8;
  /** Multicast listener report/query/done message header. */
 
 
@@ -62,28 +61,13 @@ struct MldHeader
 #include <packet_buffer.h>
 #include <network_interface.h>
 
-/** MLD group */
-struct MldGroup
-{
-    /** next link */
-    struct MldGroup* next;
-    /** multicast address */
-    Ip6Addr group_address;
-    /** signifies we were the last person to report */
-    uint8_t last_reporter_flag;
-    /** current state of the group */
-    uint8_t group_state;
-    /** timer for reporting */
-    uint16_t timer;
-    /** counter of simultaneous uses */
-    uint8_t use;
-};
+
 
 constexpr auto MLD6_TMR_INTERVAL = 100 /* Milliseconds */;
 
 LwipStatus  mld6_stop(NetworkInterface*netif);
 void   mld6_report_groups(NetworkInterface*netif);
-void   mld6_tmr(void);
+void   mld6_tmr();
 struct MldGroup *mld6_lookfor_group(NetworkInterface*ifp, const Ip6Addr *addr);
 void   mld6_input(struct PacketBuffer *pkt_buf, NetworkInterface*in_netif);
 LwipStatus  mld6_joingroup(const Ip6Addr *srcaddr, const Ip6Addr *groupaddr);
