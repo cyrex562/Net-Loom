@@ -5,7 +5,6 @@
 #include <ip4_addr.h>
 #include <network_interface.h>
 #include <packet_buffer.h>
-#include <iosfwd>
 #include <vector>
 
 
@@ -49,9 +48,9 @@ constexpr auto ETHARP_FLAG_FIND_ONLY = 2;
 constexpr auto ETHARP_FLAG_STATIC_ENTRY = 4;
 
 
-/** 
- * the ARP message, see RFC 826 ("Packet format") 
- * 
+/**
+ * the ARP message, see RFC 826 ("Packet format")
+ *
  */
 struct EtharpHdr
 {
@@ -106,11 +105,15 @@ void
 clear_expired_arp_entries(std::vector<EtharpEntry>& entries);
 
 
-ssize_t
-etharp_find_addr(struct NetworkInterface* netif,
-                 const Ip4Addr* ipaddr,
-                 struct MacAddress** eth_ret,
-                 const Ip4Addr** ip_ret);
+LwipStatus
+find_etharp_addr(NetworkInterface& netif,
+                 const Ip4Addr& ipaddr,
+                 MacAddress& eth_ret,
+                 const Ip4Addr& ip_ret,
+                 std::vector<EtharpEntry>& entries,
+                 bool try_hard,
+                 bool find_only,
+                 bool static_entry);
 
 
 int
@@ -150,15 +153,21 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
  *  this is an ARP packet sent by a node in order to spontaneously cause other
  *  nodes to update an entry in their ARP cache.
  *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
- *  
+ *
  *  @param netif the NetworkInterface to send the message from.
- *  @param address_index the index of the IPv4 address to use as the source address.
+ *  @param dest_addr the index of the IPv4 address to use as the source address.
  *  @return STATUS_OK on success; an error message otherwise.
  */
 inline LwipStatus
-etharp_gratuitous(NetworkInterface& netif, const size_t address_index)
+etharp_gratuitous(NetworkInterface& netif, Ip4AddrInfo& dest_addr)
 {
-    return etharp_request(netif, get_netif_ip4_addr(netif, address_index, ));
+    Ip4AddrInfo found_addr{};
+    if (get_netif_ip4_addr(netif, dest_addr, found_addr) != STATUS_SUCCESS)
+    {
+        return STATUS_ERROR;
+    }
+
+    return etharp_request(netif, found_addr);
 }
 
 
@@ -182,7 +191,7 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4A
     memcpy(dest,src,sizeof(Ip4Addr));
     return true;
 }
-    
+
 
 
 /** memcpy-like copying of IP addresses where addresses are known to be

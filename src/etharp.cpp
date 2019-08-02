@@ -303,7 +303,7 @@ etharp_update_arp_entry(NetworkInterface& netif,
 
     return send_ethernet_pkt(netif, entries[found_index].pkt_buf, netif.mac_address, mac_address, ETHTYPE_IP);
 
-    
+
     return STATUS_SUCCESS;
 }
 
@@ -372,7 +372,7 @@ etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info,
     {
         // entry wasn't a static entry, cannot remove it
         return STATUS_E_INVALID_ARG;
-    } 
+    }
     // entry found, free it
     entries.erase(entries.begin() + index);
     return STATUS_SUCCESS;
@@ -383,14 +383,18 @@ etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info,
  * Remove all ARP table entries of the specified netif.
  *
  * @param netif points to a network interface
+ * @param entries
  */
 void
 etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
 {
-    for (int i = 0; i < ARP_TABLE_SIZE; ++i) {
-        uint8_t state = arp_table[i].state;
-        if ((state != ETHARP_STATE_EMPTY) && (arp_table[i].netif == netif)) {
-            // etharp_free_entry(i);
+
+    for (auto it = entries.begin(); it != entries.end(); ++it)
+    {
+
+        if (it->netif.if_name == netif.if_name)
+        {
+            entries.erase(it);
         }
     }
 }
@@ -407,14 +411,17 @@ etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
  * @param ip_ret points to return pointer
  * @return table index if found, -1 otherwise
  */
-ssize_t
-etharp_find_addr(struct NetworkInterface* netif,
-                 const Ip4Addr* ipaddr,
-                 struct MacAddress** eth_ret,
-                 const Ip4Addr** ip_ret)
+LwipStatus
+find_etharp_addr(NetworkInterface& netif,
+                 const Ip4Addr& ipaddr,
+                 MacAddress& eth_ret,
+                 const Ip4Addr& ip_ret,
+                 std::vector<EtharpEntry>& entries,
+                 bool try_hard,
+                 bool find_only,
+                 bool static_entry)
 {
-    lwip_assert("eth_ret != NULL && ip_ret != NULL",
-                eth_ret != nullptr && ip_ret != nullptr);
+
 
 
     int16_t i = etharp_find_entry(ipaddr, netif, ,,,,);
@@ -940,7 +947,7 @@ send_raw_arp_pkt(NetworkInterface& netif,
     etharp_hdr.hwlen = ETH_ADDR_LEN;
     etharp_hdr.protolen = sizeof(Ip4Addr);
 
-    packet_buffer.data = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr), 
+    packet_buffer.data = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr),
                                               reinterpret_cast<uint8_t*>(&etharp_hdr) + sizeof(EtharpHdr));
 
     /* send ARP query */

@@ -143,7 +143,7 @@ LwipStatus autoip_arp_probe(NetworkInterface* netif)
 LwipStatus
 autoip_arp_announce(NetworkInterface* netif)
 {
-  return etharp_gratuitous(netif,);
+  return etharp_gratuitous(netif,,);
 }
 
 //
