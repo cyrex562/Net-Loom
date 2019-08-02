@@ -202,7 +202,7 @@ mld6_remove_group(NetworkInterface*netif, struct MldGroup *group)
     }
     /* Group not find group */
     if (tmpGroup == nullptr) {
-      err = ERR_ARG;
+      err = STATUS_E_INVALID_ARG;
     }
   }
 

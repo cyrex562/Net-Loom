@@ -482,7 +482,7 @@ lowpan6_set_context(uint8_t idx, const Ip6Addr*context)
 {
 
   if (idx >= LWIP_6LOWPAN_NUM_CONTEXTS) {
-    return ERR_ARG;
+    return STATUS_E_INVALID_ARG;
   }
 
 

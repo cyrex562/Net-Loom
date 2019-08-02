@@ -89,7 +89,7 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
 
         const auto i = 0;
 
-        return ethernet_output(net_ifc,
+        return send_ethernet_pkt(net_ifc,
                                pkt_buf,
                                net_ifc.mac_address,
                                dest,
@@ -107,7 +107,7 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
         return STATUS_SUCCESS;
     } /* Send out the packet using the returned hardware address. */
     memcpy(dest.addr, hwaddr, 6);
-    return ethernet_output(net_ifc,
+    return send_ethernet_pkt(net_ifc,
                            pkt_buf,
                            reinterpret_cast<const struct MacAddress*>(net_ifc->hwaddr),
                            &dest,

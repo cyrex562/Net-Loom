@@ -397,7 +397,7 @@ static LwipStatus dns_lookup_local(const char* hostname,
         }
         entry = entry->next;
     }
-    return ERR_ARG;
+    return STATUS_E_INVALID_ARG;
 }
 
 /**
@@ -519,7 +519,7 @@ static LwipStatus dns_lookup(const char* name,
             return STATUS_SUCCESS;
         }
     }
-    return ERR_ARG;
+    return STATUS_E_INVALID_ARG;
 }
 
 /**
@@ -1398,17 +1398,17 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
 {
     if ((addr == nullptr) || (!hostname) || (!hostname[0]))
     {
-        return ERR_ARG;
+        return STATUS_E_INVALID_ARG;
     }
     if (dns_pcbs[0] == nullptr)
     {
-        return ERR_ARG;
+        return STATUS_E_INVALID_ARG;
     }
     size_t hostnamelen = strlen(hostname);
     if (hostnamelen >= DNS_MAX_NAME_LENGTH)
     {
         Logf(true, ("dns_gethostbyname: name too long to resolve"));
-        return ERR_ARG;
+        return STATUS_E_INVALID_ARG;
     }
     if (strcmp(hostname, "localhost") == 0)
     {

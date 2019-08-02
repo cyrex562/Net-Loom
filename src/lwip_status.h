@@ -42,7 +42,7 @@ enum LwipStatus : uint32_t
     /** Connection closed.       */
     ERR_CLSD,
     /** Illegal argument.        */
-    ERR_ARG,
+    STATUS_E_INVALID_ARG,
 
     STATUS_NOT_FOUND,
     STATUS_E_NOT_IMPLEMENTED,
@@ -68,7 +68,7 @@ const std::map<LwipStatus, std::string> STATUS_STRINGS = {
         {ERR_ABRT, "connection aborted"},
         {ERR_RST, "connection reset"},
         {ERR_CLSD, "connection closed"},
-        {ERR_ARG, "illegal argument"},
+        {STATUS_E_INVALID_ARG, "illegal argument"},
         {STATUS_NOT_FOUND, "search didnt find anything"},
         {STATUS_E_NOT_IMPLEMENTED, "function not implemented"},
 };

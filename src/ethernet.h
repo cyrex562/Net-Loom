@@ -53,7 +53,7 @@ inline bool cmp_eth_addr(const MacAddress* addr1, const MacAddress* addr2)
 LwipStatus ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc);
 
 ///
-LwipStatus ethernet_output(NetworkInterface& netif,
+LwipStatus send_ethernet_pkt(NetworkInterface& netif,
                            PacketBuffer& p,
                            const MacAddress& src,
                            const MacAddress& dst,

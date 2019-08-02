@@ -181,7 +181,7 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
                 // pbuf_realloc(priv->q); // LINK_STATS_INC(link.recv);
                 //            Logf(true, ("slipif: Got packet (%d bytes)\n", priv->recved));
                 struct PacketBuffer* t = priv->q;
-                priv->p = priv->q = nullptr;
+                priv->pkt_buf = priv->q = nullptr;
                 priv->i = priv->recved = 0;
                 return t;
             }
@@ -211,12 +211,12 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
         break;
     } /* end switch (priv->state) */
     /* byte received, packet not yet completely received */
-    if (priv->p == nullptr)
+    if (priv->pkt_buf == nullptr)
     {
         /* allocate a new PacketBuffer */
         Logf(true, ("slipif_input: alloc\n"));
         // priv->p = pbuf_alloc();
-        if (priv->p == nullptr)
+        if (priv->pkt_buf == nullptr)
         {
             Logf(true, ("slipif_input: no new PacketBuffer! (DROP)\n"));
             /* don't process any further since we got no PacketBuffer to receive to */
@@ -230,28 +230,28 @@ slipif_rxbyte(NetworkInterface* netif, uint8_t c)
         else
         {
             /* p is the first PacketBuffer in the chain */
-            priv->q = priv->p;
+            priv->q = priv->pkt_buf;
         }
     } /* this automatically drops bytes if > SLIP_MAX_SIZE */
-    if ((priv->p != nullptr) && (priv->recved <= SLIP_MAX_SIZE))
+    if ((priv->pkt_buf != nullptr) && (priv->recved <= SLIP_MAX_SIZE))
     {
-        ((uint8_t *)priv->p->payload)[priv->i] = c;
+        ((uint8_t *)priv->pkt_buf->payload)[priv->i] = c;
         priv->recved++;
         priv->i++;
-        if (priv->i >= priv->p->len)
+        if (priv->i >= priv->pkt_buf->len)
         {
             /* on to the next PacketBuffer */
             priv->i = 0;
-            if (priv->p->next != nullptr && priv->p->next->len > 0)
+            if (priv->pkt_buf->next != nullptr && priv->pkt_buf->next->len > 0)
             {
                 /* p is a chain, on to the next in the chain */
-                priv->p = priv->p->next;
+                priv->pkt_buf = priv->pkt_buf->next;
             }
             else
             {
                 /* p is a single PacketBuffer, set it to NULL so next time a new
                  * PacketBuffer is allocated */
-                priv->p = nullptr;
+                priv->pkt_buf = nullptr;
             }
         }
     }
@@ -332,7 +332,7 @@ slipif_init(NetworkInterface* netif)
         delete priv;
         return ERR_IF;
     } /* Initialize private data */
-    priv->p = nullptr;
+    priv->pkt_buf = nullptr;
     priv->q = nullptr;
     priv->state = SLIP_RECV_NORMAL;
     priv->i = 0;

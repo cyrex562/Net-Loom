@@ -180,7 +180,7 @@ static LwipStatus igmp_remove_group(NetworkInterface* netif, struct IgmpGroup* g
     } /* Group not found in netif's igmp group list */
     if (tmp_group == nullptr)
     {
-        err = ERR_ARG;
+        err = STATUS_E_INVALID_ARG;
     }
     return err;
 }

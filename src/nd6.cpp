@@ -2102,7 +2102,7 @@ nd6_queue_packet(int8_t neighbor_index, struct PacketBuffer* q)
 
 
     if ((neighbor_index < 0) || (neighbor_index >= LWIP_ND6_NUM_NEIGHBORS)) {
-        return ERR_ARG;
+        return STATUS_E_INVALID_ARG;
     }
 
     /* IF q includes a PacketBuffer that must be copied, we have to copy the whole chain
