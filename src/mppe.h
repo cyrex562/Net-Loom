@@ -152,9 +152,11 @@ struct PppMppeState
 };
 
 void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key);
-void mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options);
+
+LwipStatus
+mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
-LwipStatus mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16_t protocol);
+LwipStatus mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
 LwipStatus mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb);
 

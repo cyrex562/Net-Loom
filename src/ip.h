@@ -298,15 +298,13 @@ ip_netif_get_local_ip(const NetworkInterface& netif,
 {
     out_addr_info = IpAddrInfo();
     if (is_ip_addr_v6(dest_addr_info)) {
-        LwipStatus status = get_netif_ip6_local_ip(
-            netif,
-            dest_addr_info.u_addr.ip6,
-            ip6_addr_info);
-        out_addr_info.u_addr.ip6 = ip6_addr_info;
+        const auto status = get_netif_ip6_local_ip(netif,
+                                                   dest_addr_info.u_addr.ip6,
+                                                   out_addr_info.u_addr.ip6);
         return status;
     }
     Ip4AddrInfo ip4_addr_info{};
-    LwipStatus status = get_netif_ip4_local_ip(netif,
+    const auto status = get_netif_ip4_local_ip(netif,
                                                dest_addr_info.u_addr.ip4,
                                                ip4_addr_info);
     out_addr_info.u_addr.ip4 = ip4_addr_info;

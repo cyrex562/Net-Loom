@@ -8,7 +8,6 @@
 #include <eap.h>
 #include <ecp.h>
 #include <lcp.h>
-#include <ppp_impl.h>
 #include <upap.h>
 #include <ppp.h>
 #include <string>
@@ -30,7 +29,8 @@ bool link_required(PppPcb* pcb)
  * LCP has terminated the link; go to the Dead phase and take the
  * physical layer down.
  */
-void link_terminated(PppPcb* pcb)
+bool
+link_terminated(PppPcb& pcb)
 {
     if (pcb->phase == PPP_PHASE_DEAD
         || pcb->phase == PPP_PHASE_MASTER

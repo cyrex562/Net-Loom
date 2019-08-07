@@ -26,13 +26,12 @@
 #include <ppp_opts.h>
 #include <cstring>
 #include <lwip_status.h>
-#include <ppp_impl.h>
 #include <ccp.h>
 #include <mppe.h>
 #include <pppdebug.h>
 #include <pppcrypt.h>
 #include <lcp.h>
-
+#include "netbuf.h"
 constexpr auto SHA1_SIGNATURE_SIZE = 20;
 
 /* ppp_mppe_state.bits definitions */
@@ -115,26 +114,26 @@ void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key) {
 /*
  * Initialize (de)compressor state.
  */
-void
-mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
+LwipStatus
+mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
 {
 
 	const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";
-	if (&pcb->mppe_decomp == state) {
+	if (pcb.mppe_decomp == state) {
 	    debugstr = (const uint8_t*)"mppe_decomp_init";
 	}
 
 
 	/* Save keys. */
-	memcpy(state->session_key, state->master_key, sizeof(state->master_key));
+	memcpy(state.session_key, state.master_key, sizeof(state.master_key));
 
 	if (options & MPPE_OPT_128)
     {
-        state->keylen = 16;
+        state.keylen = 16;
     }
     else if (options & MPPE_OPT_40)
     {
-        state->keylen = 8;
+        state.keylen = 8;
     }
     else {
 		// PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
@@ -144,25 +143,25 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 	}
 	if (options & MPPE_OPT_STATEFUL)
     {
-        state->stateful = 1;
+        state.stateful = 1;
     } /* Generate the initial session key. */
 	mppe_rekey(state, 1);
 
 
 	{
 		int i;
-		char mkey[sizeof(state->master_key) * 2 + 1];
-		char skey[sizeof(state->session_key) * 2 + 1];
+		char mkey[sizeof(state.master_key) * 2 + 1];
+		char skey[sizeof(state.session_key) * 2 + 1];
 
 		// PPPDEBUG(LOG_DEBUG, ("%s[%d]: initialized with %d-bit %s mode\n",
 		//        debugstr, pcb->netif->num, (state->keylen == 16) ? 128 : 40,
 		//        (state->stateful) ? "stateful" : "stateless"));
 
-		for (i = 0; i < (int)sizeof(state->master_key); i++)
-			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
-		for (i = 0; i < (int)sizeof(state->session_key); i++)
+		for (i = 0; i < (int)sizeof(state.master_key); i++)
+			sprintf(mkey + i * 2, "%02x", state.master_key[i]);
+		for (i = 0; i < (int)sizeof(state.session_key); i++)
         {
-            sprintf(skey + i * 2, "%02x", state->session_key[i]);
+            sprintf(skey + i * 2, "%02x", state.session_key[i]);
         } // PPPDEBUG(LOG_DEBUG,
 		//        ("%s[%d]: keys: master: %s initial session: %s\n",
 		//        debugstr, pcb->netif->num, mkey, skey));
@@ -175,13 +174,13 @@ mppe_init(PppPcb *pcb, PppMppeState *state, uint8_t options)
 	 * start at 0.  Setting it to the max here makes the comp/decomp code
 	 * do the right thing (determined through experiment).
 	 */
-	state->ccount = MPPE_CCOUNT_SPACE - 1;
+	state.ccount = MPPE_CCOUNT_SPACE - 1;
 
 	/*
 	 * Note that even though we have initialized the key table, we don't
 	 * set the FLUSHED bit.  This is contrary to RFC 3078, sec. 3.1.
 	 */
-	state->bits = MPPE_BIT_ENCRYPTED;
+	state.bits = MPPE_BIT_ENCRYPTED;
 }
 
 /*
@@ -204,7 +203,7 @@ void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 LwipStatus
-mppe_compress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb, uint16_t protocol)
+mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t protocol)
 {
     LwipStatus err; /* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.

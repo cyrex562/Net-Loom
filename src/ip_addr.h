@@ -287,7 +287,7 @@ is_ip_addr_any(const IpAddrInfo& ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
     {
-        return ip6_addr_is_any(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_any(ipaddr.u_addr.ip6);
     }
     return ip4_addr_isany(ipaddr.u_addr.ip4.address);
 }
@@ -307,31 +307,31 @@ is_ip_addr_mcast(const IpAddrInfo& ipaddr)
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
 is_ip_addr_loopback(const IpAddrInfo& ipaddr)
 {
     if ((is_ip_addr_v6(ipaddr)))
     {
-        return ip6_addr_is_loopback(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_loopback(ipaddr.u_addr.ip6);
     }
     return is_ip4_addr_loopback(ipaddr.u_addr.ip4.address);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
 is_ip_addr_link_local(const IpAddrInfo& ipaddr)
 {
     if (is_ip_addr_v6(ipaddr))
     {
-        return ip6_addr_is_linklocal(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_linklocal(ipaddr.u_addr.ip6);
     }
-    return is_ip4_addr_link_local(ipaddr.u_addr.ip4.address);
+    return is_ip4_addr_link_local(ipaddr.u_addr.ip4);
 }
 
 
@@ -349,9 +349,9 @@ make_ip_addr_ip6(IpAddrInfo& ipaddr,
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline void
 ip_addr_ip6_host(struct IpAddrInfo& ipaddr,
                  const uint32_t i0,
@@ -363,33 +363,36 @@ ip_addr_ip6_host(struct IpAddrInfo& ipaddr,
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline IpAddrInfo create_ip_addr_ip4_bcast()
 {
     IpAddrInfo addr{};
     addr.u_addr.ip4.address.addr = make_u32(255,255,255,255);
     addr.type = IPADDR_TYPE_V4;
+    // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized
     return addr;
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline IpAddrInfo create_ip_addr_ip4_any()
 {
     IpAddrInfo addr{};
     addr.u_addr.ip4.address.addr = make_u32(0,0,0,0);
     addr.type = IPADDR_TYPE_V4;
+    // ReSharper disable CppSomeObjectMembersMightNotBeInitialized
     return addr;
+    // ReSharper restore CppSomeObjectMembersMightNotBeInitialized
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline IpAddrInfo create_ip_addr_ip6_any() {
     IpAddrInfo addr{};
     addr.u_addr.ip6.addr.word[0] = 0;

@@ -6,8 +6,6 @@
 #include <lcp.h>
 #include <ppp_opts.h>
 #include <fsm.h>
-#include <ppp_impl.h>
-#include <ppp_impl.h>
 #include <fsm.h>
 #include <lcp.h>
 #include <chap_new.h>
@@ -138,7 +136,8 @@ void lcp_open(PppPcb *pcb) {
 /*
  * lcp_close - Take LCP down.
  */
-void lcp_close(PppPcb *pcb, const char *reason) {
+bool
+lcp_close(PppPcb& pcb, std::string& reason) {
     Fsm *f = &pcb->lcp_fsm;
     if (pcb->phase != PPP_PHASE_DEAD
 
@@ -199,7 +198,8 @@ void lcp_lowerup(PppPcb *pcb) {
 /*
  * lcp_lowerdown - The lower layer is down.
  */
-void lcp_lowerdown(PppPcb *pcb) {
+bool
+lcp_lowerdown(PppPcb& pcb) {
     Fsm *f = &pcb->lcp_fsm;
 
     if (f->flags & DELAYED_UP) {

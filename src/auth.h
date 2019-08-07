@@ -28,7 +28,8 @@ bool continue_networks(PppPcb* pcb);
 
 bool link_established(PppPcb* pcb, bool auth_required);
 
-void link_terminated(PppPcb* pcb);
+bool
+link_terminated(PppPcb& pcb);
 
 void link_down(PppPcb* pcb);
 

@@ -51,35 +51,67 @@ enum LwipStatus : uint32_t
 };
 
 
-const std::map<LwipStatus, std::string> STATUS_STRINGS = {
-        {STATUS_SUCCESS, "success"},
-        {ERR_MEM, "out of memory"},
-        {ERR_BUF, "buffer error"},
-        {ERR_TIMEOUT, "timeout"},
-        {STATUS_E_ROUTING, "routing error"},
-        {ERR_INPROGRESS, "operation in progress"},
-        {ERR_VAL, "illegal value"},
-        {ERR_WOULDBLOCK, "operation would block"},
-        {ERR_USE, "address in use"},
-        {ERR_ALREADY, "already connecting"},
-        {ERR_ISCONN, "connection already established"},
-        {ERR_CONN, "not connected"},
-        {ERR_IF, "low-level network interface error"},
-        {ERR_ABRT, "connection aborted"},
-        {ERR_RST, "connection reset"},
-        {ERR_CLSD, "connection closed"},
-        {STATUS_E_INVALID_ARG, "illegal argument"},
-        {STATUS_NOT_FOUND, "search didnt find anything"},
-        {STATUS_E_NOT_IMPLEMENTED, "function not implemented"},
-};
-
 //
 //
 //
 inline std::string
-status_to_string(LwipStatus status)
+status_to_string(const LwipStatus status)
 {
-    return STATUS_STRINGS[status];
+    if (status == STATUS_SUCCESS) {
+        return "success";
+    }
+    if (status == ERR_MEM) {
+        return "memory allocation error";
+    }
+    if (status == ERR_BUF) {
+        return "buffer error";
+    }
+    if (status == ERR_TIMEOUT) {
+        return "timeout";
+    }
+    if (status == STATUS_E_ROUTING) {
+        return "routing error";
+    }
+    if (status == ERR_INPROGRESS) {
+        return "operation in progress";
+    }
+    if (status == ERR_VAL) {
+        return "illegal value";
+    }
+    if (status == ERR_WOULDBLOCK) {
+        return "operation would block";
+    }
+    if (status == ERR_USE) {
+        return "address in use";
+    }
+    if (status == ERR_ALREADY) {
+        return "already connecting";
+    }
+    if (status == ERR_ISCONN) {
+        return "connection already established";
+    }
+    if (status == ERR_CONN) {
+        return "not connected";
+    }
+    if (status == ERR_IF) {
+        return "low-level network interface error";
+    }
+    if (status == ERR_ABRT) {
+        return "connection aborted";
+    }
+    if (status == ERR_RST) {
+        return "connection reset";
+    }
+    if (status == ERR_CLSD) {
+        return "connection closed";
+    }
+    if (status == STATUS_E_INVALID_ARG) {
+        return "invalid argument";
+    }
+    if (status == STATUS_E_NOT_IMPLEMENTED) {
+        return "not implemented";
+    }
+    return "unknown status code";
 }
 
 

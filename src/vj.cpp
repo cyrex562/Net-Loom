@@ -1,8 +1,5 @@
 #include <vj.h>
 #include <lwip_debug.h>
-#include <ppp_impl.h>
-#include <ppp_opts.h>
-#include <pppdebug.h>
 #include <pppoe.cpp>
 #include <cstring>
 
@@ -120,11 +117,11 @@ struct vj_u16_t
 /// compressed.
 ///
 uint8_t
-vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
+vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf)
 {
-    struct PacketBuffer* np = *pb;
+    struct PacketBuffer* np = *pkt_buf;
     struct Ip4Hdr& ip = (struct Ip4Hdr *)np->payload;
-    Cstate* cs = comp->last_cs->cs_next;
+    Cstate* cs = vj_comp->last_cs->cs_next;
     uint16_t ilen = get_ip4_hdr_hdr_len(ip);
     TcpHdr* oth;
     uint16_t deltaS, deltaA = 0;
@@ -158,12 +155,12 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
         return (TYPE_IP);
     } /* TCP stack requires that we don't change the packet payload, therefore we copy
    * the whole packet before compression. */
-    np = pbuf_clone(*pb);
+    np = pbuf_clone(*pkt_buf);
     if (!np)
     {
         return (TYPE_IP);
     }
-    *pb = np;
+    *pkt_buf = np;
     ip = (struct Ip4Hdr *)np->payload; /*
    * Packet is compressible -- we're going to send either a
    * COMPRESSED_TCP or UNCOMPRESSED_TCP packet.  Either way we need
@@ -176,7 +173,7 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
         != (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
             &cs->vjcs_u.csu_ip)]).v)
     {
-        Cstate* lastcs = comp->last_cs;
+        Cstate* lastcs = vj_comp->last_cs;
         do
         {
             Cstate* lcs = cs;
@@ -218,12 +215,12 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
             return (TYPE_IP);
         } /* TCP stack requires that we don't change the packet payload, therefore we copy
      * the whole packet before compression. */
-        np = pbuf_clone( *pb);
+        np = pbuf_clone( *pkt_buf);
         if (!np)
         {
             return (TYPE_IP);
         }
-        *pb = np;
+        *pkt_buf = np;
         ip = reinterpret_cast<struct Ip4Hdr *>(np->payload); /*
      * Packet is compressible -- we're going to send either a
      * COMPRESSED_TCP or UNCOMPRESSED_TCP packet.  Either way we need
@@ -249,7 +246,7 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
              * for the datagram, the oldest state is (re-)used.
              */
             Cstate* lcs;
-            Cstate* lastcs = comp->last_cs;
+            Cstate* lastcs = vj_comp->last_cs;
             do
             {
                 lcs = cs;
@@ -270,13 +267,13 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
          * state points to the newest and we only need to set
          * last_cs to update the lru linkage.
          */ // INCR(vjs_misses);
-            comp->last_cs = lcs;
+            vj_comp->last_cs = lcs;
             goto uncompressed;
         found: /*
          * Found it -- move to the front on the connection list.
          */ if (cs == lastcs)
             {
-                comp->last_cs = lcs;
+                vj_comp->last_cs = lcs;
             }
             else
             {
@@ -414,9 +411,9 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
      * get the new packet size.
      */
         deltaS = (uint16_t)(cp - new_seq);
-        if (!comp->compress_slot || comp->last_xmit != cs->cs_id)
+        if (!vj_comp->compress_slot || vj_comp->last_xmit != cs->cs_id)
         {
-            comp->last_xmit = cs->cs_id;
+            vj_comp->last_xmit = cs->cs_id;
             hlen -= deltaS + 4;
             // if (pbuf_remove_header(np, hlen))
             // {
@@ -435,7 +432,7 @@ vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb)
     return (TYPE_COMPRESSED_TCP);
 uncompressed: memcpy(&cs->vjcs_u.csu_ip, ip, hlen);
     set_ip4_hdr_proto(ip, cs->cs_id);
-    comp->last_xmit = cs->cs_id;
+    vj_comp->last_xmit = cs->cs_id;
     return (TYPE_UNCOMPRESSED_TCP);
 } ///
 /// Called when we may have missed a packet.

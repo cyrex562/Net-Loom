@@ -118,9 +118,13 @@ struct LcpOptions
              (x) == CONFNAK ? "NAK" : "REJ")
 
 void lcp_open(PppPcb *pcb);
-void lcp_close(PppPcb *pcb, const char *reason);
+
+bool
+lcp_close(PppPcb& pcb, std::string& reason);
 void lcp_lowerup(PppPcb *pcb);
-void lcp_lowerdown(PppPcb *pcb);
+
+bool
+lcp_lowerdown(PppPcb& pcb);
 void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len);    /* send protocol reject */
 void lcp_delayed_up(void* arg);
 // int setendpoint (char **);

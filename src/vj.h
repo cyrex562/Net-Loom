@@ -140,7 +140,7 @@ constexpr auto VJF_TOSS = 1U /* tossing rcvd frames because of input err */;
 extern void
 vj_compress_init(struct VjCompress* comp);
 extern uint8_t
-vj_compress_tcp(struct VjCompress* comp, struct PacketBuffer** pb);
+vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf);
 extern void
 vj_uncompress_err(struct VjCompress* comp);
 extern int

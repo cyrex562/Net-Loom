@@ -56,10 +56,11 @@ recv_netif_bytes(NetworkInterface& netif,
  * @param netif the netif to add to the collection of interfaces
  * @param interfaces the collection of interfaces to add
  */
-NetworkInterface add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces)
+bool
+add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces)
 {
     interfaces.push_back(netif);
-    return netif;
+    return true;
 }
 
 
@@ -445,7 +446,7 @@ select_ip6_src_addr(const NetworkInterface& netif,
     if (is_ip6_addr_global(dest_addr.addr)) {
         dest_scope = IP6_MULTICAST_SCOPE_GLOBAL;
     }
-    else if (ip6_addr_is_linklocal(dest_addr.addr) || ip6_addr_is_loopback(dest_addr.addr)) {
+    else if (ip6_addr_is_linklocal(dest_addr) || ip6_addr_is_loopback(dest_addr)) {
         dest_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
     }
     else if (is_ip6_addr_unique_local(dest_addr.addr)) {
@@ -464,7 +465,7 @@ select_ip6_src_addr(const NetworkInterface& netif,
     Ip6AddrInfo best_addr{};
     for (auto& it : netif.ip6_addresses) {
         /* Consider only valid (= preferred and deprecated) addresses. */
-        if (!ip6_addr_is_valid(it.address_state)) {
+        if (!ip6_addr_is_valid(it)) {
             continue;
         }
         /* Determine the scope of this candidate address. Same ordering idea. */
@@ -472,7 +473,7 @@ select_ip6_src_addr(const NetworkInterface& netif,
         if (is_ip6_addr_global(cand_addr)) {
             cand_scope = IP6_MULTICAST_SCOPE_GLOBAL;
         }
-        else if (ip6_addr_is_linklocal(cand_addr)) {
+        else if (ip6_addr_is_linklocal(it)) {
             cand_scope = IP6_MULTICAST_SCOPE_LINK_LOCAL;
         }
         else if (is_ip6_addr_unique_local(cand_addr)) {
@@ -490,7 +491,7 @@ select_ip6_src_addr(const NetworkInterface& netif,
         /* We cannot count on the destination address having a proper zone
             * assignment, so do not compare zones in this case. */
         const uint8_t cand_bits = cmp_ip6_net_zoneless(cand_addr, dest_addr.addr); /* just 1 or 0 for now */
-        if (cand_bits && ip6_addr_hosts_equal(cand_addr, dest_addr.addr)) {
+        if (cand_bits && ip6_addr_hosts_equal(it, dest_addr)) {
             out_src_addr = it; /* Rule 1 */
             result = STATUS_SUCCESS;
             break;

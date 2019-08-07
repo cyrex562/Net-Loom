@@ -480,8 +480,8 @@ get_netif_ip6_local_ip(const NetworkInterface& netif,
 
 std::vector<NetworkInterface> init_netif_module();
 
-
-NetworkInterface add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces);
+bool
+add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces);
 
 
 bool remove_netif(NetworkInterface& netif, std::vector<NetworkInterface> interfaces);

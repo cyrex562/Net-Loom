@@ -41,10 +41,48 @@
 #include <ip4_addr.h>
 #include <fsm.h>
 #include <lcp.h>
-// #include <ipcp.h>
 #include <eap_state.h>
 #include <upap.h>
 #include <ipcp_defs.h>
+
+/**
+ * Protocol field values.
+ */
+enum PppProtoFieldValue
+{
+    PPP_IP = 0x21,
+    /* Internet Protocol */
+    PPP_VJC_COMP = 0x2d,
+    /* VJ compressed TCP */
+    PPP_VJC_UNCOMP = 0x2f,
+    /* VJ uncompressed TCP */
+    PPP_IPV6 = 0x57,
+    /* Internet Protocol Version 6 */
+    PPP_COMP = 0xfd,
+    /* compressed packet */
+    PPP_IPCP = 0x8021,
+    /* IP Control Protocol */
+    PPP_IPV6CP = 0x8057,
+    /* IPv6 Control Protocol */
+    PPP_CCP = 0x80fd,
+    /* Compression Control Protocol */
+    PPP_ECP = 0x8053,
+    /* Encryption Control Protocol */
+    PPP_LCP = 0xc021,
+    /* Link Control Protocol */
+    PPP_PAP = 0xc023,
+    /* Password Authentication Protocol */
+    PPP_LQR = 0xc025,
+    /* Link Quality Report protocol */
+    PPP_CHAP = 0xc223,
+    /* Cryptographic Handshake Auth. Protocol */
+    PPP_CBCP = 0xc029,
+    /* Callback Control Protocol */
+    PPP_EAP = 0xc227,
+    /* Extensible Authentication Protocol */
+};
+
+
 
 // Values for phase.
 enum PppPhase
@@ -97,6 +135,9 @@ enum PppErrorCode
 };
 
 
+constexpr auto kPppCtrlPbufMaxSize = 512;
+
+
 /*
  * Lengths of configuration options.
  */
@@ -105,6 +146,411 @@ constexpr auto CILEN_COMPRESS = 4 /* min length for compression protocol opt. */
 constexpr auto CILEN_VJ = 6 /* length for RFC1332 Van-Jacobson opt. */;
 constexpr auto CILEN_ADDR = 6 /* new-style single address option */;
 constexpr auto CILEN_ADDRS = 10 /* old-style dual address option */;
+
+
+/*
+ * Significant octet values.
+ */
+constexpr auto PPP_ALLSTATIONS = 0xff	/* All-Stations broadcast address */;
+constexpr auto PPP_UI = 0x03	/* Unnumbered Information */;
+constexpr auto kPppFlag = 0x7e	/* Flag Sequence */;
+constexpr auto kPppEscape = 0x7d	/* Asynchronous Control Escape */;
+constexpr auto kPppTrans = 0x20	/* Asynchronous transparency modifier */;
+
+
+
+
+/*
+ * What to do with network protocol (NP) packets.
+ */
+enum PppNetworkProtoMode {
+    NPMODE_PASS,		/* pass the packet through */
+    NPMODE_DROP,		/* silently drop the packet */
+    NPMODE_ERROR,		/* return an error */
+    NPMODE_QUEUE		/* save it up for later. */
+};
+
+/*
+ * The following structure records the time in seconds since
+ * the last NP packet was sent or received.
+ */
+struct PppIdle {
+    time_t xmit_idle;		/* time since last NP packet sent */
+    time_t recv_idle;		/* time since last NP packet received */
+};
+
+
+/* values for epdisc.class */
+constexpr auto EPD_NULL = 0	/* null discriminator, no data */;
+constexpr auto EPD_LOCAL = 1;
+constexpr auto EPD_IP = 2;
+constexpr auto EPD_MAC = 3;
+constexpr auto EPD_MAGIC = 4;
+constexpr auto EPD_PHONENUM = 5;
+
+/*
+ * Global variables.
+ */
+
+extern uint8_t	multilink;	/* enable multilink operation */
+extern uint8_t	doing_multilink;
+extern uint8_t	multilink_master;
+extern uint8_t	bundle_eof;
+extern uint8_t	bundle_terminating;
+
+
+extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
+extern int       maxoctets_dir;      /* Direction :
+                      0 - in+out (default)
+                      1 - in
+                      2 - out
+                      3 - max(in,out) */
+extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
+constexpr auto PPP_OCTETS_DIRECTION_SUM = 0;
+constexpr auto PPP_OCTETS_DIRECTION_IN = 1;
+constexpr auto PPP_OCTETS_DIRECTION_OUT = 2;
+constexpr auto PPP_OCTETS_DIRECTION_MAXOVERAL = 3;
+// same as previos, but little different on RADIUS side
+constexpr auto PPP_OCTETS_DIRECTION_MAXSESSION = 4;
+
+// Table of pointers to supported protocols 
+// extern const struct Protent* const kProtocols[];
+
+
+// Values for auth_pending, auth_done
+constexpr auto PAP_WITHPEER = 0x1;
+constexpr auto PAP_PEER = 0x2;
+constexpr auto CHAP_WITHPEER = 0x4;
+constexpr auto CHAP_PEER = 0x8;
+constexpr auto EAP_WITHPEER = 0x10;
+constexpr auto EAP_PEER = 0x20;
+
+// Values for auth_done only
+constexpr auto CHAP_MD5_WITHPEER = 0x40;
+constexpr auto CHAP_MD5_PEER = 0x80;
+constexpr auto CHAP_MS_SHIFT = 8	/* LSB position for MS auths */;
+constexpr auto CHAP_MS_WITHPEER = 0x100;
+constexpr auto CHAP_MS_PEER = 0x200;
+constexpr auto CHAP_MS2_WITHPEER = 0x400;
+constexpr auto CHAP_MS2_PEER = 0x800;
+
+//
+// PPP private functions
+//
+
+ 
+//
+// Functions called from lwIP core.
+//
+
+/* initialize the PPP subsystem */
+int init_ppp_subsys();
+
+/*
+ * Functions called from PPP link protocols.
+ */
+
+/* Create a new PPP control block */
+PppPcb
+init_ppp_pcb(NetworkInterface& pppif);
+
+
+/* Initiate LCP open request */
+void ppp_start(PppPcb *pcb);
+
+/* Called when link failed to setup */
+void ppp_link_failed(PppPcb *pcb);
+
+/* Called when link is normally down (i.e. it was asked to end) */
+void ppp_link_end(PppPcb *pcb);
+
+/* function called to process input packet */
+bool ppp_input(PppPcb *pcb, struct PacketBuffer *pb, Fsm* lcp_fsm);
+
+
+/*
+ * Functions called by PPP protocols.
+ */
+
+/* function called by all PPP subsystems to send packets */
+LwipStatus ppp_write(PppPcb& pcb, PacketBuffer& p);
+
+/* functions called by auth.c link_terminated() */
+LwipStatus
+ppp_link_terminated(PppPcb& pcb);
+
+void new_phase(PppPcb& pcb, int phase);
+
+int ppp_send_config(PppPcb *pcb, int mtu, uint32_t accm, int pcomp, int accomp);
+int ppp_recv_config(PppPcb *pcb, int mru, uint32_t accm, int pcomp, int accomp);
+
+void netif_set_mtu(PppPcb *pcb, int mtu);
+int netif_get_mtu(PppPcb*pcb);
+
+
+void ccp_set(PppPcb*pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
+void ccp_reset_comp(PppPcb*pcb);
+void ccp_reset_decomp(PppPcb*pcb);
+
+
+
+
+int get_idle_time(PppPcb *pcb, struct ppp_idle *ip);
+
+
+
+
+/* Optional protocol names list, to make our messages a little more informative. */
+
+const char * protocol_name(int proto);
+
+
+/* Optional stats support, to get some statistics on the PPP interface */
+
+
+
+
+/*
+ * Inline versions of get/put char/short/long.
+ * Pointer is advanced; we assume that both arguments
+ * are lvalues and will already be in registers.
+ * cp MUST be uint8_t *.
+ */
+#define GETCHAR(c, cp) { \
+    (c) = *(cp)++; \
+}
+#define PUTCHAR(c, cp) { \
+    *(cp)++ = (uint8_t) (c); \
+}
+#define GETSHORT(s, cp) { \
+    (s) = *(cp)++ << 8; \
+    (s) |= *(cp)++; \
+}
+#define PUTSHORT(s, cp) { \
+    *(cp)++ = (uint8_t) ((s) >> 8); \
+    *(cp)++ = (uint8_t) (s); \
+}
+#define GETLONG(l, cp) { \
+    (l) = *(cp)++ << 8; \
+    (l) |= *(cp)++; (l) <<= 8; \
+    (l) |= *(cp)++; (l) <<= 8; \
+    (l) |= *(cp)++; \
+}
+#define PUTLONG(l, cp) { \
+    *(cp)++ = (uint8_t) ((l) >> 24); \
+    *(cp)++ = (uint8_t) ((l) >> 16); \
+    *(cp)++ = (uint8_t) ((l) >> 8); \
+    *(cp)++ = (uint8_t) (l); \
+}
+
+#define INCPTR(n, cp)	((cp) += (n))
+#define DECPTR(n, cp)	((cp) -= (n))
+
+/*
+ * System dependent definitions for user-level 4.3BSD UNIX implementation.
+ */
+// #define Timeout(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
+
+inline void Timeout(SysTimeoutHandler timeout_fn, void* arg, const uint32_t time)
+{
+    sys_untimeout(timeout_fn, arg);
+    sys_timeout(time * 1000, timeout_fn, arg);
+}
+
+
+//#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
+inline void timeout_ms(SysTimeoutHandler time_fn, void* arg, const uint32_t time)
+{
+    sys_untimeout(time_fn, arg);
+    sys_timeout(time * 1000, time_fn, arg);
+}
+    
+    
+inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
+    sys_untimeout((time_fn), (arg));
+}
+#define BZERO(s, n)		memset(s, 0, n)
+#define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
+
+#define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
+
+/*
+ * MAKEHEADER - Add Header fields to a packet.
+ */
+#define MAKEHEADER(p, t) { \
+    PUTCHAR(PPP_ALLSTATIONS, p); \
+    PUTCHAR(PPP_UI, p); \
+    PUTSHORT(t, p); }
+
+/* Procedures exported from auth.c */
+// bool link_required(PppPcb* pcb);     /* we are starting to use the link */
+// void link_terminated(PppPcb *pcb);   /* we are finished with the link */
+// void link_down(PppPcb *pcb, Protent** protocols);	      /* the LCP layer has left the Opened state */
+// void upper_layers_down(PppPcb *pcb, Protent** protocols); /* take all NCPs down */
+// void link_established(PppPcb *pcb, bool auth_required);  /* the link is up; authenticate now */
+// void start_networks(PppPcb *pcb, LcpOptions* go, LcpOptions* ho, LcpOptions* ao, bool multilink, <unknown>, <
+//                     unknown>) noexcept;    /* start all the network control protos */
+// bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
+bool
+auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg);
+                                /* check the user name and passwd against configuration */
+void auth_peer_fail(PppPcb *pcb, int protocol);
+                /* peer failed to authenticate itself */
+void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, std::string& name);
+                /* peer successfully authenticated itself */
+
+void auth_withpeer_fail(PppPcb *pcb, int protocol);
+                /* we failed to authenticate ourselves */
+void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor);
+                /* we successfully authenticated ourselves */
+
+void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
+void np_down(PppPcb *pcb, int proto);  /* a network protocol has gone down */
+void np_finished(PppPcb *pcb, int proto); /* a network protocol no longer needs link */
+bool
+get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret);
+                /* get "secret" for chap */
+
+
+/* Procedures exported from ipcp.c */
+/* int parse_dotted_ip (char *, uint32_t *); */
+
+/* Procedures exported from demand.c */
+
+void demand_conf (void);	/* config interface(s) for demand-dial */
+void demand_block (void);	/* set all NPs to queue up packets */
+void demand_unblock (void); /* set all NPs to pass packets */
+void demand_discard (void); /* set all NPs to discard packets */
+void demand_rexmit (int, uint32_t); /* retransmit saved frames for an NP*/
+int  loop_chars (unsigned char *, int); /* process chars from loopback */
+int  loop_frame (unsigned char *, int); /* should we bring link up? */
+
+
+/* Procedures exported from multilink.c */
+
+void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /* Check multilink-related options */
+
+
+// 
+// Join link to an appropriate bundle
+//
+bool mp_join_bundle(PppPcb* pcb,
+                    std::string& peer_authname,
+                    std::string& bundle_name,
+                    const bool doing_multilink = true,
+                    const bool demand = true);  
+
+void mp_exit_bundle (void);  /* have disconnected our link from bundle */
+void mp_bundle_terminated (void);
+char *epdisc_to_str (struct Epdisc *); /* string from endpoint discrim. */
+int  str_to_epdisc (struct Epdisc *, char *); /* endpt disc. from str */
+
+
+/* Procedures exported from utils.c. */
+void ppp_print_string(const uint8_t *p, int len, void (*printer) (uint8_t *, const char *, ...), uint8_t *arg);   /* Format a string for output */
+int ppp_slprintf(char *buf, int buflen, const char *fmt, ...);            /* sprintf++ */
+int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args);  /* vsprintf++ */
+size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
+size_t ppp_strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
+void ppp_dbglog(const char *fmt, ...);    /* log a debug message */
+void ppp_info(const char *fmt, ...);      /* log an informational message */
+void ppp_notice(const char *fmt, ...);    /* log a notice-level message */
+void ppp_warn(const char *fmt, ...);      /* log a warning message */
+void ppp_error(const char *fmt, ...);     /* log an error message */
+void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
+
+
+/*
+ * Number of necessary timers analysis.
+ *
+ * PPP use at least one timer per each of its protocol, but not all protocols are
+ * active at the same time, thus the number of necessary timeouts is actually
+ * lower than enabled protocols. Here is the actual necessary timeouts based
+ * on code analysis.
+ *
+ * Note that many features analysed here are not working at all and are only
+ * there for a comprehensive analysis of necessary timers in order to prevent
+ * having to redo that each time we add a feature.
+ *
+ * Timer list
+ *
+ * | holdoff timeout
+ *  | low level protocol timeout (PPPoE or PPPoL2P)
+ *   | LCP delayed UP
+ *    | LCP retransmit (FSM)
+ *     | LCP Echo timer
+ *     .| PAP or CHAP or EAP authentication
+ *     . | ECP retransmit (FSM)
+ *     .  | CCP retransmit (FSM) when MPPE is enabled
+ *     .   | CCP retransmit (FSM) when MPPE is NOT enabled
+ *     .    | IPCP retransmit (FSM)
+ *     .    .| IP6CP retransmit (FSM)
+ *     .    . | Idle time limit
+ *     .    .  | Max connect time
+ *     .    .   | Max octets
+ *     .    .    | CCP RACK timeout
+ *     .    .    .
+ * PPP_PHASE_DEAD
+ * PPP_PHASE_HOLDOFF
+ * |   .    .    .
+ * PPP_PHASE_INITIALIZE
+ *  |  .    .    .
+ * PPP_PHASE_ESTABLISH
+ *   | .    .    .
+ *    |.    .    .
+ *     |    .    .
+ * PPP_PHASE_AUTHENTICATE
+ *     |    .    .
+ *     ||   .    .
+ * PPP_PHASE_NETWORK
+ *     | || .    .
+ *     |   |||   .
+ * PPP_PHASE_RUNNING
+ *     |    .|||||
+ *     |    . ||||
+ * PPP_PHASE_TERMINATE
+ *     |    . ||||
+ * PPP_PHASE_NETWORK
+ *    |.         .
+ * PPP_PHASE_ESTABLISH
+ * PPP_PHASE_DISCONNECT
+ * PPP_PHASE_DEAD
+ *
+ * Alright, PPP basic retransmission and LCP Echo consume one timer.
+ *  1
+ *
+ * If authentication is enabled one timer is necessary during authentication.
+ *  1 + PPP_AUTH_SUPPORT
+ *
+ * If ECP is enabled one timer is necessary before IPCP and/or IP6CP, one more
+ * is necessary if CCP is enabled (only with MPPE support but we don't care much
+ * up to this detail level).
+ *  1 + ECP_SUPPORT + CCP_SUPPORT
+ *
+ * If CCP is enabled it might consume a timer during IPCP or IP6CP, thus
+ * we might use IPCP, IP6CP and CCP timers simultaneously.
+ *  1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT
+ *
+ * When entering running phase, IPCP or IP6CP is still running. If idle time limit
+ * is enabled one more timer is necessary. Same for max connect time and max
+ * octets features. Furthermore CCP RACK might be used past this point.
+ *  1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS + CCP_SUPPORT
+ *
+ * IPv4 or IPv6 must be enabled, therefore we don't need to take care the authentication
+ * and the CCP + ECP case, thus reducing overall complexity.
+ * 1 + std::max(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS + CCP_SUPPORT)
+ *
+ * We don't support PPP_IDLETIMELIMIT + PPP_MAXCONNECT + MAXOCTETS features
+ * and adding those defines to ppp_opts.h just for having the value always
+ * defined to 0 isn't worth it.
+ * 1 + std::max(PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT, PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT -1 + CCP_SUPPORT)
+ *
+ * Thus, the following is enough for now.
+ * 1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT
+ */
+
+
+
 
 /************************
 *** PUBLIC DATA TYPES ***
@@ -128,54 +574,54 @@ typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, uint8_t *ctx);
  */
 struct PppSettings
 {
-    bool auth_required; // Peer is required to authenticate */
-    bool null_login; // Username of "" and a password of "" are acceptable 
-    bool explicit_remote; // remote_name specified with remotename opt */
-    bool refuse_pap; // Don't proceed auth. with PAP */
-    bool refuse_chap; // Don't proceed auth. with CHAP */
-    bool refuse_mschap; //Don't proceed auth. with MS-CHAP */
-    bool refuse_mschap_v2; // Don't proceed auth. with MS-CHAPv2 */
-    bool refuse_eap; // Don't proceed auth. with EAP */
-    bool usepeerdns; // Ask peer for DNS adds */
-    bool persist; // Persist mode, always try to open the connection */
-    bool hide_password; // Hide password in dumped packets */
-    bool noremoteip; // Let him have no IP address */
-    bool lax_recv; // accept control chars in asyncmap */
-    bool noendpoint; // don't send/accept endpoint discriminator */
-    bool lcp_echo_adaptive; // request echo only if the link was idle */
-    bool require_mppe; // Require MPPE (Microsoft Point to Point Encryption) 
-    bool refuse_mppe_40; // Allow MPPE 40-bit mode? */
-    bool refuse_mppe_128; // Allow MPPE 128-bit mode? */
-    bool refuse_mppe_stateful; // Allow MPPE stateful mode? */
-    uint64_t listen_time;
+    bool auth_required{}; // Peer is required to authenticate */
+    bool null_login{}; // Username of "" and a password of "" are acceptable 
+    bool explicit_remote{}; // remote_name specified with remotename opt */
+    bool refuse_pap{}; // Don't proceed auth. with PAP */
+    bool refuse_chap{}; // Don't proceed auth. with CHAP */
+    bool refuse_mschap{}; //Don't proceed auth. with MS-CHAP */
+    bool refuse_mschap_v2{}; // Don't proceed auth. with MS-CHAPv2 */
+    bool refuse_eap{}; // Don't proceed auth. with EAP */
+    bool usepeerdns{}; // Ask peer for DNS adds */
+    bool persist{}; // Persist mode, always try to open the connection */
+    bool hide_password{}; // Hide password in dumped packets */
+    bool noremoteip{}; // Let him have no IP address */
+    bool lax_recv{}; // accept control chars in asyncmap */
+    bool noendpoint{}; // don't send/accept endpoint discriminator */
+    bool lcp_echo_adaptive{}; // request echo only if the link was idle */
+    bool require_mppe{}; // Require MPPE (Microsoft Point to Point Encryption) 
+    bool refuse_mppe_40{}; // Allow MPPE 40-bit mode? */
+    bool refuse_mppe_128{}; // Allow MPPE 128-bit mode? */
+    bool refuse_mppe_stateful{}; // Allow MPPE stateful mode? */
+    uint64_t listen_time{};
     // time to listen first (ms), waiting for peer to send LCP packet */
-    uint64_t idle_time_limit; /* Disconnect if idle for this many seconds */
-    uint64_t maxconnect; /* Maximum connect time (seconds) */ /* auth data */
+    uint64_t idle_time_limit{}; /* Disconnect if idle for this many seconds */
+    uint64_t maxconnect{}; /* Maximum connect time (seconds) */ /* auth data */
     // char user[0xff]; /* Username for PAP */
     std::string user;
     // char passwd[0xff]; /* Password for PAP, secret for CHAP */
     std::string passwd;
     // char remote_name[0xff]; /* Peer's name for authentication */
     std::string remote_name;
-    uint64_t pap_timeout_time; /* Timeout (seconds) for auth-req retrans. */
-    uint32_t pap_max_transmits; /* Number of auth-reqs sent */
-    uint64_t pap_req_timeout; /* Time to wait for auth-req from peer */
-    uint64_t chap_timeout_time; /* Timeout (seconds) for retransmitting req */
-    uint32_t chap_max_transmits; /* max # times to send challenge */
-    uint64_t chap_rechallenge_time; /* Time to wait for auth-req from peer */
-    uint64_t eap_req_time; /* Time to wait (for retransmit/fail) */
-    uint32_t eap_allow_req; /* Max Requests allowed */
-    uint64_t eap_timeout_time; /* Time to wait (for retransmit/fail) */
-    uint32_t eap_max_transmits; /* Max Requests allowed */
-    uint64_t fsm_timeout_time; /* Timeout time in seconds */
-    uint32_t fsm_max_conf_req_transmits; /* Maximum Configure-Request transmissions */
-    uint32_t fsm_max_term_transmits; /* Maximum Terminate-Request transmissions */
-    uint32_t fsm_max_nak_loops; /* Maximum number of nak loops tolerated */
-    uint32_t lcp_loopbackfail;
+    uint64_t pap_timeout_time{}; /* Timeout (seconds) for auth-req retrans. */
+    uint32_t pap_max_transmits{}; /* Number of auth-reqs sent */
+    uint64_t pap_req_timeout{}; /* Time to wait for auth-req from peer */
+    uint64_t chap_timeout_time{}; /* Timeout (seconds) for retransmitting req */
+    uint32_t chap_max_transmits{}; /* max # times to send challenge */
+    uint64_t chap_rechallenge_time{}; /* Time to wait for auth-req from peer */
+    uint64_t eap_req_time{}; /* Time to wait (for retransmit/fail) */
+    uint32_t eap_allow_req{}; /* Max Requests allowed */
+    uint64_t eap_timeout_time{}; /* Time to wait (for retransmit/fail) */
+    uint32_t eap_max_transmits{}; /* Max Requests allowed */
+    uint64_t fsm_timeout_time{}; /* Timeout time in seconds */
+    uint32_t fsm_max_conf_req_transmits{}; /* Maximum Configure-Request transmissions */
+    uint32_t fsm_max_term_transmits{}; /* Maximum Terminate-Request transmissions */
+    uint32_t fsm_max_nak_loops{}; /* Maximum number of nak loops tolerated */
+    uint32_t lcp_loopbackfail{};
     /* Number of times we receive our magic number from the peer
                                     before deciding the link is looped-back. */
-    uint64_t lcp_echo_interval; /* Interval between LCP echo-requests */
-    uint32_t lcp_echo_fails; /* Tolerance to unanswered echo-requests */
+    uint64_t lcp_echo_interval{}; /* Interval between LCP echo-requests */
+    uint32_t lcp_echo_fails{}; /* Tolerance to unanswered echo-requests */
 };
 
 struct PppAddrs
@@ -195,67 +641,67 @@ struct PppAddrs
 struct PppPcb
 {
     PppSettings settings;
-    struct LinkCallbacks* link_cb;
-    void* link_ctx_cb;
-    void (*link_status_cb)(PppPcb* pcb, int err_code, void* ctx);
+    // struct LinkCallbacks* link_cb{};
+    void* link_ctx_cb{};
+    // void (*link_status_cb)(PppPcb* pcb, int err_code, void* ctx){};
     /* Status change callback */
-    void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx);
+    // void (*notify_phase_cb)(PppPcb* pcb, uint8_t phase, void* ctx){};
     /* Notify phase callback */
-    void* ctx_cb; /* Callbacks optional pointer */
-    NetworkInterface* netif; /* PPP interface */
-    uint8_t phase; /* where the link is at */
-    uint8_t err_code; /* Code indicating why interface is down. */ /* flags */
-    bool ask_for_local; /* request our address from peer */
-    bool ipcp_is_open; /* haven't called np_finished() */
-    bool ipcp_is_up; /* have called ipcp_up() */
-    bool if4_up; /* True when the IPv4 interface is up. */
-    bool proxy_arp_set; /* Have created proxy arp entry */
-    bool ipv6_cp_is_up; /* have called ip6cp_up() */
-    bool if6_up; /* True when the IPv6 interface is up. */
-    bool lcp_echo_timer_running; /* set if a timer is running */
-    bool vj_enabled; /* Flag indicating VJ compression enabled. */
-    bool ccp_all_rejected; /* we rejected all peer's options */
-    bool mppe_keys_set; /* Have the MPPE keys been set? */ /* auth data */
+    // void* ctx_cb{}; /* Callbacks optional pointer */
+    NetworkInterface netif{}; /* PPP interface */
+    uint8_t phase{}; /* where the link is at */
+    uint8_t err_code{}; /* Code indicating why interface is down. */ /* flags */
+    bool ask_for_local{}; /* request our address from peer */
+    bool ipcp_is_open{}; /* haven't called np_finished() */
+    bool ipcp_is_up{}; /* have called ipcp_up() */
+    bool if4_up{}; /* True when the IPv4 interface is up. */
+    bool proxy_arp_set{}; /* Have created proxy arp entry */
+    bool ipv6_cp_is_up{}; /* have called ip6cp_up() */
+    bool if6_up{}; /* True when the IPv6 interface is up. */
+    bool lcp_echo_timer_running{}; /* set if a timer is running */
+    bool vj_enabled{}; /* Flag indicating VJ compression enabled. */
+    bool ccp_all_rejected{}; /* we rejected all peer's options */
+    bool mppe_keys_set{}; /* Have the MPPE keys been set? */ /* auth data */
     std::string peer_authname; /* The name by which the peer authenticated itself to us. */
-    uint16_t auth_pending;
+    uint16_t auth_pending{};
     /* Records which authentication operations haven't completed yet. */
-    uint16_t auth_done; /* Records which authentication operations have been completed. */
+    uint16_t auth_done{}; /* Records which authentication operations have been completed. */
     upap_state upap; /* PAP data */
     chap_client_state chap_client; /* CHAP client data */
     chap_server_state chap_server; /* CHAP server data */
     EapState eap; /* EAP data */
-    Fsm lcp_fsm; /* LCP fsm structure */
-    LcpOptions lcp_wantoptions; /* Options that we want to request */
-    LcpOptions lcp_gotoptions; /* Options that peer ack'd */
-    LcpOptions lcp_allowoptions; /* Options we allow peer to request */
-    LcpOptions lcp_hisoptions; /* Options that we ack'd */
-    uint16_t peer_mru; /* currently negotiated peer MRU */
-    uint8_t lcp_echos_pending; /* Number of outstanding echo msgs */
-    uint8_t lcp_echo_number; /* ID number of next echo frame */
-    uint8_t num_np_open; /* Number of network protocols which we have opened. */
-    uint8_t num_np_up; /* Number of network protocols which have come up. */
-    struct VjCompress vj_comp; /* Van Jacobson compression header. */
-    Fsm ccp_fsm; /* CCP fsm structure */
-    CcpOptions ccp_wantoptions; /* what to request the peer to use */
-    CcpOptions ccp_gotoptions; /* what the peer agreed to do */
-    CcpOptions ccp_allowoptions; /* what we'll agree to do */
-    CcpOptions ccp_hisoptions; /* what we agreed to do */
-    uint8_t ccp_localstate;
+    Fsm lcp_fsm{}; /* LCP fsm structure */
+    LcpOptions lcp_wantoptions{}; /* Options that we want to request */
+    LcpOptions lcp_gotoptions{}; /* Options that peer ack'd */
+    LcpOptions lcp_allowoptions{}; /* Options we allow peer to request */
+    LcpOptions lcp_hisoptions{}; /* Options that we ack'd */
+    uint16_t peer_mru{}; /* currently negotiated peer MRU */
+    uint8_t lcp_echos_pending{}; /* Number of outstanding echo msgs */
+    uint8_t lcp_echo_number{}; /* ID number of next echo frame */
+    uint8_t num_np_open{}; /* Number of network protocols which we have opened. */
+    uint8_t num_np_up{}; /* Number of network protocols which have come up. */
+    struct VjCompress vj_comp{}; /* Van Jacobson compression header. */
+    Fsm ccp_fsm{}; /* CCP fsm structure */
+    CcpOptions ccp_wantoptions{}; /* what to request the peer to use */
+    CcpOptions ccp_gotoptions{}; /* what the peer agreed to do */
+    CcpOptions ccp_allowoptions{}; /* what we'll agree to do */
+    CcpOptions ccp_hisoptions{}; /* what we agreed to do */
+    uint8_t ccp_localstate{};
     /* Local state (mainly for handling reset-reqs and reset-acks). */
-    uint8_t ccp_receive_method; /* Method chosen on receive path */
-    uint8_t ccp_transmit_method; /* Method chosen on transmit path */
-    PppMppeState mppe_comp; /* MPPE "compressor" structure */
-    PppMppeState mppe_decomp; /* MPPE "decompressor" structure */
-    Fsm ipcp_fsm; /* IPCP fsm structure */
-    IpcpOptions ipcp_wantoptions; /* Options that we want to request */
-    IpcpOptions ipcp_gotoptions; /* Options that peer ack'd */
-    IpcpOptions ipcp_allowoptions; /* Options we allow peer to request */
-    IpcpOptions ipcp_hisoptions; /* Options that we ack'd */
-    Fsm ipv6cp_fsm; /* IPV6CP fsm structure */
-    Ipv6CpOptions ipv6cp_wantoptions; /* Options that we want to request */
-    Ipv6CpOptions ipv6cp_gotoptions; /* Options that peer ack'd */
-    Ipv6CpOptions ipv6cp_allowoptions; /* Options we allow peer to request */
-    Ipv6CpOptions ipv6cp_hisoptions; /* Options that we ack'd */
+    uint8_t ccp_receive_method{}; /* Method chosen on receive path */
+    uint8_t ccp_transmit_method{}; /* Method chosen on transmit path */
+    PppMppeState mppe_comp{}; /* MPPE "compressor" structure */
+    PppMppeState mppe_decomp{}; /* MPPE "decompressor" structure */
+    Fsm ipcp_fsm{}; /* IPCP fsm structure */
+    IpcpOptions ipcp_wantoptions{}; /* Options that we want to request */
+    IpcpOptions ipcp_gotoptions{}; /* Options that peer ack'd */
+    IpcpOptions ipcp_allowoptions{}; /* Options we allow peer to request */
+    IpcpOptions ipcp_hisoptions{}; /* Options that we ack'd */
+    Fsm ipv6cp_fsm{}; /* IPV6CP fsm structure */
+    Ipv6CpOptions ipv6cp_wantoptions{}; /* Options that we want to request */
+    Ipv6CpOptions ipv6cp_gotoptions{}; /* Options that peer ack'd */
+    Ipv6CpOptions ipv6cp_allowoptions{}; /* Options we allow peer to request */
+    Ipv6CpOptions ipv6cp_hisoptions{}; /* Options that we ack'd */
 };
 
 /************************
@@ -322,15 +768,15 @@ inline void PppSetAuthRequired(PppPcb* ppp, const bool boolval)
  *
  * Default is unset (0.0.0.0).
  */
-inline void PppSetIpcpOuraddr(PppPcb* ppp, Ip4Addr* addr)
+inline void set_ppp_ipcp_our_addr(PppPcb& ppp, const Ip4Addr& addr)
 {
-    (ppp)->ipcp_wantoptions.ouraddr = get_ip4_addr_u32(addr);
-    (ppp)->ask_for_local = (ppp)->ipcp_wantoptions.ouraddr != 0;
+    (ppp).ipcp_wantoptions.ouraddr = get_ip4_addr_u32(addr);
+    (ppp).ask_for_local = (ppp).ipcp_wantoptions.ouraddr != 0;
 }
 
-inline void PppSetIpcpHisaddr(PppPcb* ppp, Ip4Addr* addr)
+inline void set_ppp_ipcp_his_addr(PppPcb& ppp, const Ip4Addr& addr)
 {
-    ((ppp)->ipcp_wantoptions.hisaddr = get_ip4_addr_u32(addr));
+    ((ppp).ipcp_wantoptions.hisaddr = get_ip4_addr_u32(addr));
 }
 
 /*
@@ -339,9 +785,9 @@ inline void PppSetIpcpHisaddr(PppPcb* ppp, Ip4Addr* addr)
  *
  * Default is unset (0.0.0.0).
  */
-inline void PppSetIpcpDnsaddr(PppPcb* ppp, uint32_t index, Ip4Addr* addr)
+inline void set_ppp_ipcp_dns_addr(PppPcb& ppp, uint32_t index, Ip4Addr& addr)
 {
-    ((ppp)->ipcp_allowoptions.dnsaddr[index] = get_ip4_addr_u32(addr));
+    ((ppp).ipcp_allowoptions.dnsaddr[index] = get_ip4_addr_u32(addr));
 }
 
 /*
@@ -350,12 +796,16 @@ inline void PppSetIpcpDnsaddr(PppPcb* ppp, uint32_t index, Ip4Addr* addr)
  *
  * Default is false.
  */
-#define PPP_SET_USEPEERDNS(ppp, boolval) ((ppp)->settings.usepeerdns = (boolval))
+inline void
+PPP_SET_USEPEERDNS(PppPcb& ppp, bool boolval)
+{
+    ((ppp).settings.usepeerdns = (boolval));
+}
 
 
 
 /* Disable MPPE (Microsoft Point to Point Encryption). This parameter is exclusive. */
-constexpr auto kPppMppeDisable = 0x00;
+constexpr auto PPP_MPPE_DISABLE = 0x00;
 /* Require the use of MPPE (Microsoft Point to Point Encryption). */
 constexpr auto PPP_MPPE_ENABLE = 0x01;
 /* Allow MPPE to use stateful mode. Stateless mode is still attempted first. */
@@ -379,7 +829,11 @@ void ppp_set_mppe(PppPcb *pcb, uint8_t flags);
  *
  * Default is 0.
  */
-#define ppp_set_listen_time(ppp, intval) ((ppp)->settings.listen_time = (intval))
+inline void
+ppp_set_listen_time(PppPcb& ppp, uint64_t intval)
+{
+    ((ppp).settings.listen_time = (intval));
+}
 
 /*
  * If set, we will attempt to initiate a connection but if no reply is received from
@@ -464,7 +918,7 @@ void ppp_set_notify_phase_callback(PppPcb *pcb, ppp_notify_phase_cb_fn notify_ph
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipStatus ppp_connect(PppPcb *pcb, uint16_t holdoff);
+LwipStatus ppp_connect(PppPcb& pcb, uint64_t holdoff);
 
 
 /*
@@ -475,7 +929,7 @@ LwipStatus ppp_connect(PppPcb *pcb, uint16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-LwipStatus ppp_listen(PppPcb *pcb);
+LwipStatus ppp_listen(PppPcb& pcb);
 
 
 /*
@@ -489,7 +943,7 @@ LwipStatus ppp_listen(PppPcb *pcb);
  *
  * Return 0 on success, an error code on failure.
  */
-LwipStatus ppp_close(PppPcb *pcb, uint8_t nocarrier);
+LwipStatus ppp_close(PppPcb& pcb, bool nocarrier);
 
 /*
  * Release the control block.
@@ -540,15 +994,17 @@ LwipStatus ppp_ioctl(PppPcb *pcb, uint8_t cmd, uint8_t *arg);
         netif_set_link_callback((ppp)->netif, link_cb);
 
 
-static void ppp_do_connect(void* arg);
+static LwipStatus
+ppp_do_connect(PppPcb& pcb);
 
 static LwipStatus ppp_netif_init_cb(NetworkInterface* netif);
 
-static LwipStatus ppp_netif_output_ip4(NetworkInterface* netif, struct PacketBuffer* pb, const Ip4Addr* ipaddr);
+static LwipStatus ppp_netif_output_ip4(NetworkInterface& netif, PacketBuffer& pb, const Ip4Addr& ipaddr, PppPcb& ppp_pcb);
 
-static LwipStatus ppp_netif_output_ip6(NetworkInterface* netif, struct PacketBuffer* pb, const Ip6Addr* ipaddr);
+static LwipStatus ppp_netif_output_ip6(NetworkInterface& netif, PacketBuffer& pb, const Ip6Addr& ipaddr, PppPcb& ppp_pcb);
 
-static LwipStatus ppp_netif_output(NetworkInterface* netif, struct PacketBuffer* pb, uint16_t protocol);
+LwipStatus
+ppp_netif_output(NetworkInterface& netif, PacketBuffer& pb, PppProtoFieldValue protocol, PppPcb& ppp_pcb);
 
 int
 sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode);
