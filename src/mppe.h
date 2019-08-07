@@ -4,6 +4,7 @@
 #pragma once
 #include <pppcrypt.h>
 #include <lwip_status.h>
+#include <packet_buffer.h>
 
 constexpr auto MPPE_PAD = 4	/* MPPE growth per frame */;
 constexpr auto MPPE_MAX_KEY_LEN = 16	/* largest key length (128-bit) */;
@@ -158,7 +159,7 @@ mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
 LwipStatus mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
-LwipStatus mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb);
+LwipStatus mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, void* pkt_buf);
 
 //
 // END OF FILE

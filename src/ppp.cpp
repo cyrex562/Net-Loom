@@ -519,78 +519,76 @@ ppp_link_end(PppPcb& pcb)
  * This function and all handlers run in the context of the tcpip_thread
  */
 bool
-ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
+ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
 {
     magic_randomize();
-    if (pb->len < 2)
+    if (pkt_buf.data.size() < 2)
     {
-        free_pkt_buf(pb);
         return false;
     }
-    const auto pb_payload_0 = uint8_t(static_cast<uint8_t*>(pb->payload)[0]);
-    const auto pb_payload_1 = uint8_t(static_cast<uint8_t*>(pb->payload)[1]);
+    const auto pb_payload_0 = pkt_buf.data[0];
+    const auto pb_payload_1 = pkt_buf.data[1];
     uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
     const size_t proto_size = 2; // sizeof(protocol)
     // pbuf_remove_header(pb, proto_size);
-    if (pb->len < 2)
+    if (pkt_buf.data.size() < 2)
     {
-        free_pkt_buf(pb);
         return false;
-    } // protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
+    } 
+    // protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
     // pbuf_remove_header(pb, proto_size);
     if (protocol == PPP_COMP)
     {
-        if (protocol != PPP_LCP && lcp_fsm->state != PPP_FSM_OPENED)
+        if (protocol != PPP_LCP && lcp_fsm.state != PPP_FSM_OPENED)
         {
             ppp_dbglog("Discarded non-LCP packet when LCP not open");
-            free_pkt_buf(pb);
             return false;
-        } /// Until we get past the authentication phase, toss all packets except LCP, LQR and authentication packets.
-        if (pcb->phase <= PPP_PHASE_AUTHENTICATE && !(protocol == PPP_LCP || protocol ==
+        } 
+        
+        // Until we get past the authentication phase, toss all packets except LCP, LQR and authentication packets.
+        if (ppp_pcb.phase <= PPP_PHASE_AUTHENTICATE && !(protocol == PPP_LCP || protocol ==
                 PPP_LQR || protocol == PPP_PAP || protocol == PPP_CHAP || protocol ==
-                PPP_EAP)
-        )
+                PPP_EAP))
         {
-            ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
-            free_pkt_buf(pb);
+            ppp_dbglog("discarding proto 0x%x in phase %d", protocol, ppp_pcb.phase);
             return false;
-        } /// Extract and hide protocol (do PFC decompression if necessary)
-        uint8_t* pl = static_cast<uint8_t*>(pb->payload);
-        if (pl[0] & 0x01)
+        } 
+        
+        // Extract and hide protocol (do PFC decompression if necessary)
+        if (pkt_buf.data[0] & 0x01)
         {
-            protocol = pl[0];
-            // pbuf_remove_header(pb, 1);
+            protocol = pkt_buf.data[0];
         }
         else
         {
-            protocol = (pl[0] << 8) | pl[1];
+            protocol = (pkt_buf.data[0] << 8) | pkt_buf.data[1];
             // pbuf_remove_header(pb, 2);
         }
         if (protocol == PPP_COMP)
         {
-            if (pcb->ccp_receive_method == CI_MPPE)
+            if (ppp_pcb.ccp_receive_method == CI_MPPE)
             {
-                if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != STATUS_SUCCESS)
+                if (mppe_decompress(ppp_pcb, &ppp_pcb.mppe_decomp, &pkt_buf) != STATUS_SUCCESS)
                 {
-                    free_pkt_buf(pb);
+                    free_pkt_buf(pkt_buf);
                     return false;
                 }
             }
             else
             {
                 // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
-                free_pkt_buf(pb);
+                free_pkt_buf(pkt_buf);
                 return false;
                 /// Cannot really happen, we only negotiate what we are able to do
             }
             /// Assume no PFC
-            if (pb->len < 2)
+            if (pkt_buf.len < 2)
             {
-                free_pkt_buf(pb);
+                free_pkt_buf(pkt_buf);
                 return false;
             }
             /// Extract and hide protocol (do PFC decompression if necessary)
-            pl = static_cast<uint8_t*>(pb->payload);
+            pl = static_cast<uint8_t*>(pkt_buf.payload);
             if (pl[0] & 0x01)
             {
                 protocol = pl[0];
@@ -604,21 +602,21 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
         }
         if (protocol == PPP_IP)
         {
-            ip4_input(pb, pcb->netif);
-            free_pkt_buf(pb);
+            ip4_input(pkt_buf, ppp_pcb.netif);
+            free_pkt_buf(pkt_buf);
             return false;
         }
         if (protocol == PPP_IPV6)
         {
-            recv_ip6_pkt(pb, pcb->netif);
-            free_pkt_buf(pb);
+            recv_ip6_pkt(pkt_buf, ppp_pcb.netif);
+            free_pkt_buf(pkt_buf);
             return false;
         }
         if (protocol == PPP_VJC_UNCOMP)
         {
-            if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0)
+            if (ppp_pcb.vj_enabled && vj_uncompress_uncomp(pkt_buf, &ppp_pcb.vj_comp) >= 0)
             {
-                ip4_input(pb, pcb->netif);
+                ip4_input(pkt_buf, ppp_pcb.netif);
                 return false;
             }
             const char* pname = protocol_name(protocol);
@@ -636,10 +634,10 @@ ppp_input(PppPcb* pcb, struct PacketBuffer* pb, Fsm* lcp_fsm)
             //     free_pkt_buf(pb);
             //     return false;
             // }
-            lcp_sprotrej(pcb, static_cast<uint8_t*>(pb->payload), pb->len);
+            lcp_sprotrej(ppp_pcb, static_cast<uint8_t*>(pkt_buf.payload), pkt_buf.len);
         }
     }
-    free_pkt_buf(pb);
+    free_pkt_buf(pkt_buf);
     return true;
 }
 

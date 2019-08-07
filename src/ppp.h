@@ -266,7 +266,7 @@ void ppp_link_failed(PppPcb& pcb);
 void ppp_link_end(PppPcb& pcb);
 
 /* function called to process input packet */
-bool ppp_input(PppPcb *pcb, struct PacketBuffer *pb, Fsm* lcp_fsm);
+bool ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm);
 
 
 /*

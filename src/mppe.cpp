@@ -281,14 +281,14 @@ void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state)
  * Decompress (decrypt) an MPPE packet.
  */
 LwipStatus
-mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
+mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, void* pkt_buf)
 {
-	struct PacketBuffer *n0 = *pb; /* MPPE Header */
+	struct PacketBuffer *n0 = *pkt_buf; /* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
 		// PPPDEBUG(LOG_DEBUG,
 		//        ("mppe_decompress[%d]: short pkt (%d)\n",
 		//        pcb->netif->num, n0->len));
-		state->sanity_errors += 100;
+		ppp_mppe_state->sanity_errors += 100;
 		goto sanity_error;
 	}
 
@@ -303,19 +303,19 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 		// PPPDEBUG(LOG_DEBUG,
 		//        ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
 		//        pcb->netif->num));
-		state->sanity_errors += 100;
+		ppp_mppe_state->sanity_errors += 100;
 		goto sanity_error;
 	}
-	if (!state->stateful && !flushed) {
+	if (!ppp_mppe_state->stateful && !flushed) {
 		// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
 		//        "stateless mode!\n", pcb->netif->num));
-		state->sanity_errors += 100;
+		ppp_mppe_state->sanity_errors += 100;
 		goto sanity_error;
 	}
-	if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
+	if (ppp_mppe_state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
 		// PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
 		//        "flag packet!\n", pcb->netif->num));
-		state->sanity_errors += 100;
+		ppp_mppe_state->sanity_errors += 100;
 		goto sanity_error;
 	}
 
@@ -323,31 +323,31 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 	 * Check the coherency count.
 	 */
 
-	if (!state->stateful) {
+	if (!ppp_mppe_state->stateful) {
 		/* Discard late packet */
-		if ((ccount - state->ccount) % MPPE_CCOUNT_SPACE > MPPE_CCOUNT_SPACE / 2) {
-			state->sanity_errors++;
+		if ((ccount - ppp_mppe_state->ccount) % MPPE_CCOUNT_SPACE > MPPE_CCOUNT_SPACE / 2) {
+			ppp_mppe_state->sanity_errors++;
 			goto sanity_error;
 		}
 
 		/* RFC 3078, sec 8.1.  Rekey for every packet. */
-		while (state->ccount != ccount) {
-			mppe_rekey(state, 0);
-			state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
+		while (ppp_mppe_state->ccount != ccount) {
+			mppe_rekey(ppp_mppe_state, 0);
+			ppp_mppe_state->ccount = (ppp_mppe_state->ccount + 1) % MPPE_CCOUNT_SPACE;
 		}
 	} else {
 		/* RFC 3078, sec 8.2. */
-		if (!state->discard) {
+		if (!ppp_mppe_state->discard) {
 			/* normal state */
-			state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
-			if (ccount != state->ccount) {
+			ppp_mppe_state->ccount = (ppp_mppe_state->ccount + 1) % MPPE_CCOUNT_SPACE;
+			if (ccount != ppp_mppe_state->ccount) {
 				/*
 				 * (ccount > state->ccount)
 				 * Packet loss detected, enter the discard state.
 				 * Signal the peer to rekey (by sending a CCP Reset-Request).
 				 */
-				state->discard = 1;
-				ccp_resetrequest(&pcb->ccp_localstate);
+				ppp_mppe_state->discard = 1;
+				ccp_resetrequest(&ppp_pcb->ccp_localstate);
 				return ERR_BUF;
 			}
 		} else {
@@ -358,16 +358,16 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 			} else {
 				/* Rekey for every missed "flag" packet. */
 				while ((ccount & ~0xff) !=
-				       (state->ccount & ~0xff)) {
-					mppe_rekey(state, 0);
-					state->ccount =
-					    (state->ccount +
+				       (ppp_mppe_state->ccount & ~0xff)) {
+					mppe_rekey(ppp_mppe_state, 0);
+					ppp_mppe_state->ccount =
+					    (ppp_mppe_state->ccount +
 					     256) % MPPE_CCOUNT_SPACE;
 				}
 
 				/* reset */
-				state->discard = 0;
-				state->ccount = ccount;
+				ppp_mppe_state->discard = 0;
+				ppp_mppe_state->ccount = ccount;
 				/*
 				 * Another problem with RFC 3078 here.  It implies that the
 				 * peer need not send a Reset-Ack packet.  But RFC 1962
@@ -379,7 +379,7 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 		}
 		if (flushed)
         {
-            mppe_rekey(state, 0);
+            mppe_rekey(ppp_mppe_state, 0);
         }
     }
 
@@ -388,25 +388,25 @@ mppe_decompress(PppPcb *pcb, PppMppeState *state, struct PacketBuffer **pb)
 
 	/* Decrypt the packet. */
 	for (struct PacketBuffer* n = n0; n != nullptr; n = n->next) {
-		lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
+		lwip_arc4_crypt(&ppp_mppe_state->arc4, (uint8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;
 		}
 	}
 
 	/* good packet credit */
-	state->sanity_errors >>= 1;
+	ppp_mppe_state->sanity_errors >>= 1;
 
 	return STATUS_SUCCESS;
 
 sanity_error:
-	if (state->sanity_errors >= SANITY_MAX) {
+	if (ppp_mppe_state->sanity_errors >= SANITY_MAX) {
 		/*
 		 * Take LCP down if the peer is sending too many bogons.
 		 * We don't want to do this for a single or just a few
 		 * instances since it could just be due to packet corruption.
 		 */
-		lcp_close(pcb, "Too many MPPE errors");
+		lcp_close(ppp_pcb, "Too many MPPE errors");
 	}
 	return ERR_BUF;
 }
