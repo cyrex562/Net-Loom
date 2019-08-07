@@ -251,18 +251,19 @@ int init_ppp_subsys();
  */
 
 /* Create a new PPP control block */
-PppPcb
-init_ppp_pcb(NetworkInterface& pppif);
+std::tuple<bool, PppPcb>
+init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces);
 
 
 /* Initiate LCP open request */
-void ppp_start(PppPcb *pcb);
+LwipStatus
+ppp_start(PppPcb& pcb);
 
 /* Called when link failed to setup */
-void ppp_link_failed(PppPcb *pcb);
+void ppp_link_failed(PppPcb& pcb);
 
 /* Called when link is normally down (i.e. it was asked to end) */
-void ppp_link_end(PppPcb *pcb);
+void ppp_link_end(PppPcb& pcb);
 
 /* function called to process input packet */
 bool ppp_input(PppPcb *pcb, struct PacketBuffer *pb, Fsm* lcp_fsm);

@@ -118,7 +118,7 @@ void lcp_init(PppPcb *pcb) {
 /*
  * lcp_open - LCP is allowed to come up.
  */
-void lcp_open(PppPcb *pcb) {
+void lcp_open(PppPcb& pcb) {
     Fsm *f = &pcb->lcp_fsm;
     LcpOptions *wo = &pcb->lcp_wantoptions;
 
@@ -171,7 +171,7 @@ lcp_close(PppPcb& pcb, std::string& reason) {
 /*
  * lcp_lowerup - The lower layer is up.
  */
-void lcp_lowerup(PppPcb *pcb) {
+void lcp_lowerup(PppPcb& pcb) {
     LcpOptions *wo = &pcb->lcp_wantoptions;
     Fsm *f = &pcb->lcp_fsm;
     /*

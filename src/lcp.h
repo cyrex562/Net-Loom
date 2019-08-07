@@ -117,11 +117,11 @@ struct LcpOptions
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
              (x) == CONFNAK ? "NAK" : "REJ")
 
-void lcp_open(PppPcb *pcb);
+void lcp_open(PppPcb& pcb);
 
 bool
 lcp_close(PppPcb& pcb, std::string& reason);
-void lcp_lowerup(PppPcb *pcb);
+void lcp_lowerup(PppPcb& pcb);
 
 bool
 lcp_lowerdown(PppPcb& pcb);
