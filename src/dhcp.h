@@ -6,7 +6,7 @@
 #include <ip4.h>
 #include <opt.h>
 #include <network_interface.h>
-
+#include "udp.h"
 
 /* DHCP message item offsets and length */
 constexpr unsigned int DHCP_CHADDR_LEN = 16U;

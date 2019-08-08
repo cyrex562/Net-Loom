@@ -413,24 +413,32 @@ etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
  */
 LwipStatus
 find_etharp_addr(NetworkInterface& netif,
-                 const Ip4Addr& ipaddr,
+                 const Ip4AddrInfo& ipaddr,
                  MacAddress& eth_ret,
-                 const Ip4Addr& ip_ret,
+                 Ip4AddrInfo& ip_ret,
                  std::vector<EtharpEntry>& entries,
                  bool try_hard,
                  bool find_only,
                  bool static_entry)
 {
-
-
-
-    int16_t i = etharp_find_entry(ipaddr, netif, ,,,,);
-    if ((i >= 0) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
-        *eth_ret = &arp_table[i].MacAddress;
-        *ip_ret = &arp_table[i].ipaddr;
-        return i;
+    size_t found_index = 0;
+    if (etharp_find_entry(ipaddr,
+                          netif,
+                          entries,
+                          try_hard,
+                          find_only,
+                          static_entry,
+                          found_index) != STATUS_SUCCESS)
+    {
+        return STATUS_ERROR;
     }
-    return -1;
+
+    if ((found_index >= 0) && (entries[found_index].state >= ETHARP_STATE_STABLE)) {
+        eth_ret = entries[found_index].mac_address;
+        ip_ret = entries[found_index].ip4_addr_info;
+        return STATUS_SUCCESS;
+    }
+    return STATUS_ERROR;
 }
 
 

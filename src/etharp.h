@@ -107,9 +107,9 @@ clear_expired_arp_entries(std::vector<EtharpEntry>& entries);
 
 LwipStatus
 find_etharp_addr(NetworkInterface& netif,
-                 const Ip4Addr& ipaddr,
+                 const Ip4AddrInfo& ipaddr,
                  MacAddress& eth_ret,
-                 const Ip4Addr& ip_ret,
+                 const Ip4AddrInfo& ip_ret,
                  std::vector<EtharpEntry>& entries,
                  bool try_hard,
                  bool find_only,
