@@ -8,11 +8,18 @@
 #include <lwip_status.h>
 #include <vector>
 
+enum Direction
+{
+    DIR_IN,
+    DIR_OUT
+};
+
 /** Main packet buffer struct */
 struct PacketBuffer
 {
     std::vector<uint8_t> data;
     uint32_t input_netif_idx;
+    Direction direction;
     // todo: add an {offset : header/framing} map for processing
 };
 

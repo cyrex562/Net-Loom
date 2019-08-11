@@ -29,9 +29,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <ppp_opts.h>
-#include <ppp_impl.h>
 #include <pppcrypt.h>
 
 

@@ -109,18 +109,19 @@ LwipStatus
 find_etharp_addr(NetworkInterface& netif,
                  const Ip4AddrInfo& ipaddr,
                  MacAddress& eth_ret,
-                 const Ip4AddrInfo& ip_ret,
+                 Ip4AddrInfo& ip_ret,
                  std::vector<EtharpEntry>& entries,
                  bool try_hard,
                  bool find_only,
                  bool static_entry);
 
 
-int
-etharp_get_entry(size_t i,
-                 Ip4Addr** ipaddr,
-                 struct NetworkInterface** netif,
-                 struct MacAddress** eth_ret);
+bool
+etharp_get_entry(size_t index,
+                 Ip4AddrInfo& ipaddr,
+                 NetworkInterface& netif,
+                 MacAddress& eth_ret,
+                 std::vector<EtharpEntry> entries);
 
 
 LwipStatus
@@ -216,6 +217,8 @@ LwipStatus etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info, NetworkI
                                       bool find_only,
                                       bool static_entry);
 
-void etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif);
+
+LwipStatus
+recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif);
 
 

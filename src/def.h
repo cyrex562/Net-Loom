@@ -71,11 +71,16 @@ constexpr unsigned int NETIF_MAX_HWADDR_LEN = 6; // typedef int64_t LONGLONG;
 typedef uintptr_t HCRYPTPROV;
 int
 lwip_getpid();
+
+
 typedef uint32_t LwipInAddr; // #endif
+
+
 struct LwipInAddrStruct
 {
     uint32_t _s_addr;
 };
+
 
 struct LwipIn6Addr
 {

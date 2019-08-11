@@ -202,7 +202,7 @@ forward_ip6_packet(PacketBuffer& pkt_buf,
 
 
     // Do not forward packets onto the same network interface on which they arrived.
-    if (dest_netif.if_name == in_netif.if_name) {
+    if (dest_netif.name == in_netif.name) {
         Logf(true,
              ("ip6_forward: not bouncing packets back on incoming interface.\n"));
         return STATUS_E_ROUTING;

@@ -15,7 +15,7 @@
 #include <vector>
 #include "auto_ip_state.h"
 #include "mld6_group.h"
-
+#include "pcap_if_private.h"
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
 constexpr auto NETIF_CHECKSUM_GEN_TCP = 0x0004;
@@ -117,6 +117,7 @@ struct NetworkInterface
     Dhcp6Context dhcp6_ctx;
     AutoipState auto_ip_state;
     MldGroup mld_group;
+    PcapInterface pcap_if_private;
     std::vector<IgmpGroup> igmp_groups;
     std::string hostname;
     uint16_t checksum_flags;
@@ -132,13 +133,13 @@ struct NetworkInterface
     bool mld6;
     bool ip6_autoconfig_enabled;
     bool default_interface;
-    std::string if_name;
+    std::string name;
     uint32_t if_num; /** Number of Router Solicitation messages that remain to be sent. */
     uint8_t rtr_solicit_count;
     uint64_t timestamp;
     uint16_t loop_cnt_current;
-    std::vector<PacketBuffer> rx_buffer;
-    std::vector<PacketBuffer> tx_buffer;
+    std::queue<PacketBuffer> rx_buffer;
+    std::queue<PacketBuffer> tx_buffer;
 };
 
 

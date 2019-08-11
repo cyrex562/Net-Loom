@@ -21,7 +21,7 @@ LwipStatus
 init_loop_netif(NetworkInterface& netif, const std::string& if_name)
 {
     // todo: when creating interface check if one with same name already exists.
-    netif.if_name = if_name;
+    netif.name = if_name;
     netif.netif_type = NETIF_TYPE_LOOPBACK;
     netif.igmp_allowed = true;
     return STATUS_SUCCESS;
@@ -144,7 +144,7 @@ remove_netif(NetworkInterface& netif, std::vector<NetworkInterface> interfaces)
     auto matching_index = -1;
     for (int i = 0; i < interfaces.size(); i++) {
         auto ifc = interfaces[i];
-        if (interfaces[i].if_name == netif.if_name) {
+        if (interfaces[i].name == netif.name) {
             matching_index = i;
             break;
         }
@@ -393,7 +393,7 @@ netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& inte
 {
     auto result = -1;
     for (auto& it : interfaces) {
-        if (name == it.if_name) {
+        if (name == it.name) {
             result = it.if_num;
         }
     }
