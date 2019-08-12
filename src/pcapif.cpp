@@ -399,19 +399,19 @@ bool pcapif_low_level_init(NetworkInterface& netif, std::vector<NetworkInterface
         adapter_num = int(netif.state) - 1;
         if (adapter_num < 0)
         {
-            return;
+            return false;
         }
     }
     memset(&guid, 0, sizeof(guid)); // PACKET_LIB_GET_ADAPTER_NETADDRESS(&netaddr);
     if (get_adapter_index_from_addr((struct LwipInAddrStruct *)&netaddr, guid, GUID_LEN) <
         0)
     {
-        return;
+        return false;
     }
     adapter_num = get_adapter_index(guid);
     if (adapter_num < 0)
     {
-        return;
+        return false;
     } /* Do whatever else is needed to initialize interface. */
     auto pcap_if_private = pcapif_init_adapter(adapter_num);
 
@@ -439,6 +439,7 @@ bool pcapif_low_level_init(NetworkInterface& netif, std::vector<NetworkInterface
     // Logf(true,
     //      ("pcapif: MacAddress %02X%02X%02X%02X%02X%02X\n", netif->hwaddr[0], netif->hwaddr[1]
     //          , netif->hwaddr[2], netif->hwaddr[3], netif->hwaddr[4], netif->hwaddr[5]));
+    return true;
 }
 
 /** low_level_output():
@@ -500,7 +501,7 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf, PcapInte
     // }
 
     /* signal that packet should be sent */
-    if (pcap_sendpacket(pcap_if.adapter, pkt_buf.data.data, tot_len) < 0)
+    if (pcap_sendpacket(pcap_if.adapter, pkt_buf.data.data(), tot_len) < 0)
     {
         return false;
     }
@@ -509,7 +510,7 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf, PcapInte
     {
         pcapif_add_tx_packet(pcap_if, pkt_buf);
     }
-    auto ethhdr = static_cast<struct EthHdr *>(pkt_buf.data.data);
+    auto ethhdr = reinterpret_cast<struct EthHdr *>(pkt_buf.data.data());
     if ((ethhdr->dest.addr[0] & 1) != 0)
     {
         /* broadcast or multicast packet*/

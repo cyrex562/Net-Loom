@@ -568,27 +568,27 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         {
             if (ppp_pcb.ccp_receive_method == CI_MPPE)
             {
-                if (mppe_decompress(ppp_pcb, &ppp_pcb.mppe_decomp, &pkt_buf) != STATUS_SUCCESS)
+                if (mppe_decompress(ppp_pcb, ppp_pcb.mppe_decomp, &pkt_buf) != STATUS_SUCCESS)
                 {
-                    free_pkt_buf(pkt_buf);
+                    // delete pkt_buf;
                     return false;
                 }
             }
             else
             {
                 // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
-                free_pkt_buf(pkt_buf);
+                // free_pkt_buf(pkt_buf);
                 return false;
                 /// Cannot really happen, we only negotiate what we are able to do
             }
             /// Assume no PFC
-            if (pkt_buf.len < 2)
+            if (pkt_buf.data.size() < 2)
             {
-                free_pkt_buf(pkt_buf);
+                // free_pkt_buf(pkt_buf);
                 return false;
             }
             /// Extract and hide protocol (do PFC decompression if necessary)
-            pl = static_cast<uint8_t*>(pkt_buf.payload);
+            auto pl = static_cast<uint8_t*>(pkt_buf.data.data());
             if (pl[0] & 0x01)
             {
                 protocol = pl[0];

@@ -10,12 +10,12 @@
 // } ;
 // typedef struct Ip4AddrPacked Ip4AddrPT;
 /* Size of the IPv4 header. Same as 'sizeof(struct Ip4Hdr)'. */
-constexpr auto IP4_HDR_LEN = 20; /* Maximum size of the IPv4 header with options. */
-constexpr auto IP4_HDR_LEN_MAX = 60;
-constexpr auto IP4_RES_FLAG = 0x8000U; /* reserved fragment flag */
-constexpr auto IP4_DF_FLAG = 0x4000U; /* don't fragment flag */
-constexpr auto IP4_MF_FLAG = 0x2000U; /* more fragments flag */
-constexpr auto IP4_OFF_MASK = 0x1fffU; /* mask for fragmenting bits */ /* The IPv4 header */
+constexpr size_t IP4_HDR_LEN = 20; /* Maximum size of the IPv4 header with options. */
+constexpr size_t IP4_HDR_LEN_MAX = 60;
+constexpr uint16_t IP4_RES_FLAG = 0x8000U; /* reserved fragment flag */
+constexpr uint16_t IP4_DF_FLAG = 0x4000U; /* don't fragment flag */
+constexpr uint16_t IP4_MF_FLAG = 0x2000U; /* more fragments flag */
+constexpr uint16_t IP4_OFF_MASK = 0x1fffU; /* mask for fragmenting bits */ /* The IPv4 header */
 
 struct Ip4Hdr
 {
@@ -38,14 +38,31 @@ inline uint8_t get_ip4_hdr_version(const Ip4Hdr& hdr)
     return ((hdr)._v_hl >> 4);
 }
 
+inline uint8_t get_ip4_hdr_version2(const Ip4Hdr* hdr)
+{
+    return ((hdr)->_v_hl >> 4);
+}
+
 inline uint8_t get_ip4_hdr_hdr_len(const Ip4Hdr& hdr)
 {
     return ((hdr)._v_hl & 0x0f);
 }
 
+
+inline uint8_t get_ip4_hdr_hdr_len2(const Ip4Hdr* hdr)
+{
+    return ((hdr)->_v_hl & 0x0f);
+}
+
+
 inline uint8_t get_ip4_hdr_hdr_len_bytes(const Ip4Hdr& hdr)
 {
     return uint8_t(get_ip4_hdr_hdr_len(hdr) * 4);
+}
+
+inline uint8_t get_ip4_hdr_hdr_len_bytes2(const Ip4Hdr* hdr)
+{
+    return uint8_t(get_ip4_hdr_hdr_len2(hdr) * 4);
 }
 
 inline uint8_t get_ip4_hdr_tos(const Ip4Hdr& hdr)
@@ -56,6 +73,11 @@ inline uint8_t get_ip4_hdr_tos(const Ip4Hdr& hdr)
 inline uint16_t get_ip4_hdr_len(const Ip4Hdr& hdr)
 {
     return hdr._len;
+}
+
+inline uint16_t get_ip4_hdr_len2(const Ip4Hdr* hdr)
+{
+    return hdr->_len;
 }
 
 inline uint16_t get_ip4_hdr_id(const Ip4Hdr& hdr)
@@ -146,7 +168,9 @@ source_route_ip4_addr(const Ip4AddrInfo& src,
                       NetworkInterface& out_netif,
                       const std::vector<NetworkInterface>& netifs);
 
-LwipStatus ip4_input(struct PacketBuffer *p, NetworkInterface*inp);
+
+bool
+ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif);
 LwipStatus ip4_output(PacketBuffer& p,
                       const Ip4AddrInfo& src,
                       const Ip4AddrInfo& dest,

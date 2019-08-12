@@ -1354,7 +1354,7 @@ tcp_receive(struct TcpPcb* pcb)
                     {
                         /* Must remove the FIN from the header as we're trimming
                          * that byte of sequence-space from the packet */
-                        TCPH_FLAGS_SET(inseg.tcphdr,
+                        set_tcp_hdr_flags(inseg.tcphdr,
                                        tcph_flags(inseg.tcphdr) & ~(unsigned int)TCP_FIN);
                     } /* Adjust length of segment to fit in the window. */
                     lwip_assert("window size > 0xFFFF", (pcb->rcv_wnd) <= 0xFFFF);
@@ -1685,7 +1685,7 @@ tcp_receive(struct TcpPcb* pcb)
                                         {
                                             /* Must remove the FIN from the header as we're trimming
                                              * that byte of sequence-space from the packet */
-                                            TCPH_FLAGS_SET(
+                                            set_tcp_hdr_flags(
                                                 next->next->tcphdr,
                                                 tcph_flags(
                                                     next->next->tcphdr) & ~TCP_FIN);

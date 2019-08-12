@@ -44,6 +44,8 @@
 #include <eap_state.h>
 #include <upap.h>
 #include <ipcp_defs.h>
+#include "timeouts.h"
+
 
 /**
  * Protocol field values.

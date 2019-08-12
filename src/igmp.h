@@ -6,9 +6,9 @@
 // IGMP constants
 //
 constexpr auto IGMP_TTL = 1;
-constexpr auto IGMP_MIN_LEN = 8;
-constexpr auto ROUTER_ALERT = 0x9404U;
-constexpr auto ROUTER_ALERT_LEN = 4; //
+constexpr size_t IGMP_MIN_LEN = 8;
+constexpr uint16_t ROUTER_ALERT = 0x9404U;
+constexpr size_t ROUTER_ALERT_LEN = 4; //
 // IGMP message types, including version number.
 //
 enum IgmpMsgType
@@ -21,24 +21,32 @@ enum IgmpMsgType
     // Ver. 2 membership report 
     IGMP_LEAVE_GROUP = 0x17,
     // Leave-group message      
-}; //
-// Group  membership states
-//
+};
+
+/**
+ * Group  membership states
+ */
 enum IgmpGroupMembershipState
 {
     IGMP_GROUP_NON_MEMBER = 0,
     IGMP_GROUP_DELAYING_MEMBER = 1,
     IGMP_GROUP_IDLE_MEMBER = 2,
-}; //
-// IGMP packet format.
-//
+};
+
+
+/**
+ * IGMP packet format.
+ */
 struct IgmpMsg
 {
     uint8_t igmp_msgtype;
     uint8_t igmp_maxresp;
     uint16_t igmp_checksum;
     Ip4Addr igmp_group_address;
-}; // IGMP timer
+};
+
+
+// IGMP timer
 // Milliseconds
 constexpr auto IGMP_TMR_INTERVAL = 100;
 constexpr auto IGMP_V1_DELAYING_MEMBER_TMR = (1000 / IGMP_TMR_INTERVAL);
@@ -65,6 +73,8 @@ LwipStatus igmp_leavegroup(const Ip4Addr& ifaddr, const Ip4Addr& groupaddr);
 
 LwipStatus igmp_leavegroup_netif(NetworkInterface& netif, const Ip4Addr& groupaddr);
 
-void igmp_tmr(); //
+void igmp_tmr();
+
+//
 // END OF FILE
 //

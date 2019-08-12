@@ -281,6 +281,22 @@ inline bool is_netif_up(const NetworkInterface& netif)
 }
 
 
+inline bool find_igmp_group(NetworkInterface& netif, Ip4AddrInfo& addr, IgmpGroup& found_igmp_group)
+{
+    for (auto& it : netif.igmp_groups)
+    {
+        if(is_ip4_addr_equal(it.group_address, addr.address))
+        {
+            found_igmp_group = it;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
 /**
  *
  */

@@ -171,37 +171,48 @@ set_netif_default(NetworkInterface& netif, std::vector<NetworkInterface> interfa
 {
     // step 1: set whichever interface is currently the default to false;
     // step 2: set whichever interface was requested to the new default
-
     auto result = false;
     auto found = false;
-
     auto old_def_idx = 0;
     auto i = 0;
-
-    for (auto& interface : interfaces) {
-        if (interface.default_interface) {
+    for (auto& interface : interfaces) 
+    {
+        if
+        (interface.default_interface
+        )
+ {
             interface.default_interface = false;
             old_def_idx = i;
             break;
         }
-        i++;
+        i
+        ++;
     }
-
-    for (auto& interface : interfaces) {
-        if (interface.if_name == netif.if_name) {
+    for (auto& interface : interfaces) 
+    {
+        if
+        (interface
+        .
+        if_name
+        ==
+        netif
+        .
+        if_name
+        )
+ {
             interface.default_interface = true;
             found = true;
             break;
         }
     }
-
-    if (!found) {
+    if (!found)
+    {
         interfaces[old_def_idx].default_interface = true;
     }
-    else {
+    else
+    {
         result = true;
     }
-
     return result;
 }
 

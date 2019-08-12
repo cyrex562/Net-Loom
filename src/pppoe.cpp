@@ -74,7 +74,6 @@
 #include <ethernet.h>
 #include <ipcp.h>
 #include <lcp.h>
-#include <ppp_impl.h>
 #include <pppoe.h>
 #include <algorithm>
 

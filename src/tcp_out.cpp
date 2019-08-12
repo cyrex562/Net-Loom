@@ -2041,7 +2041,7 @@ tcp_zero_window_probe(struct TcpPcb* pcb)
     if (is_fin)
     {
         /* FIN segment, no data */
-        TCPH_FLAGS_SET(tcphdr, TCP_ACK | TCP_FIN);
+        set_tcp_hdr_flags(tcphdr, TCP_ACK | TCP_FIN);
     }
     else
     {
