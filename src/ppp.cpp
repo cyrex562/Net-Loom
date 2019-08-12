@@ -602,7 +602,7 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         }
         if (protocol == PPP_IP)
         {
-            ip4_input(pkt_buf, ppp_pcb.netif);
+            ip4_input(pkt_buf, ppp_pcb.netif,);
             free_pkt_buf(pkt_buf);
             return false;
         }
@@ -616,7 +616,7 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         {
             if (ppp_pcb.vj_enabled && vj_uncompress_uncomp(pkt_buf, &ppp_pcb.vj_comp) >= 0)
             {
-                ip4_input(pkt_buf, ppp_pcb.netif);
+                ip4_input(pkt_buf, ppp_pcb.netif,);
                 return false;
             }
             const char* pname = protocol_name(protocol);

@@ -92,7 +92,7 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
     // {
     //     return false;
     // } // todo: make whether we care about experimental IP addresses an configurable option
-    if (is_ip4_addr_experimental(dst_addr))
+    if (is_ip4_experimental(dst_addr.addr))
     {
         return false;
     }
@@ -109,43 +109,38 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
 } 
 
 
-///
-/// Forwards an IP packet. It finds an appropriate route for the
-/// packet, decrements the TTL value of the packet, adjusts the
-/// checksum and outputs the packet on the appropriate interface.
-///
-/// pkt_buf the packet to forward (p->payload points to IP header)
-/// netifs a collection of valid network interfaces that can be used to send the packet.
-///
+/**
+ *
+ * Forwards an IP packet. It finds an appropriate route for the
+ * packet, decrements the TTL value of the packet, adjusts the
+ * checksum and outputs the packet on the appropriate interface.
+ *
+ * pkt_buf the packet to forward (p->payload points to IP header)
+ * netifs a collection of valid network interfaces that can be used to send the packet.
+ *
+ */
 static LwipStatus
 forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& netifs)
 {
-
-    Ip4Addr dst_addr{};
-    Ip4Addr src_addr{};
-
-    if (!can_forward_ip4_pkt(pkt_buf)) {
+    // todo: get Ip4AddrInfo src/dst from pkt_buf / network interface
+    Ip4AddrInfo dst_addr{};
+    Ip4AddrInfo src_addr{};
+    if (!can_forward_ip4_pkt(pkt_buf))
+    {
         return STATUS_E_ROUTING;
-    }
-
-    /* RFC3927 2.7: do not forward link-local addresses */
-    if (is_ip4_addr_link_local(dst_addr)) {
+    } /* RFC3927 2.7: do not forward link-local addresses */
+    if (is_ip4_addr_link_local(dst_addr.address))
+    {
         return STATUS_E_ROUTING;
-    }
-
-    /* Find network interface where to forward this IP packet to. */
+    } /* Find network interface where to forward this IP packet to. */
     NetworkInterface out_netif{};
-    auto rc = source_route_ip4_addr(src_addr, dst_addr, out_netif, netifs);
+    const auto rc = source_route_ip4_addr(src_addr, dst_addr, out_netif, netifs);
     if (rc != STATUS_SUCCESS)
     {
         return rc;
-    }
-
-    /* decrement TTL */
-    // todo: get ip4 hdr from packet
+    } /* decrement TTL */ // todo: get ip4 hdr from packet
     Ip4Hdr hdr{};
-    set_ip4_hdr_ttl(hdr, get_ip4_hdr_ttl(hdr) - 1);
-    /* send ICMP if TTL == 0 */
+    set_ip4_hdr_ttl(hdr, get_ip4_hdr_ttl(hdr) - 1); /* send ICMP if TTL == 0 */
     if (get_ip4_hdr_ttl(hdr) == 0)
     {
         /* Don't send ICMP messages in response to ICMP messages */
@@ -154,79 +149,68 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
             icmp_time_exceeded(pkt_buf, ICMP_TE_TTL);
         }
         return STATUS_SUCCESS;
+    } /* Incrementally update the IP checksum. */
+    if (get_ip4_hdr_checksum(hdr) >= pp_htons(0xffffU - 0x100))
+    {
+        set_ip4_hdr_checksum(hdr,
+                             (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100) + 1));
     }
-
-    /* Incrementally update the IP checksum. */
-    if (get_ip4_hdr_checksum(hdr) >= pp_htons(0xffffU - 0x100)) {
-        set_ip4_hdr_checksum(hdr, (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100) + 1));
-    }
-    else {
-        set_ip4_hdr_checksum(hdr, (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100)));
-    }
-
-    /* don't fragment if interface has mtu set to 0 [loopif] */
-    if (out_netif.mtu && pkt_buf.raw.size() > out_netif.mtu) {
-        if ((get_ip4_hdr_offset(hdr) & pp_ntohs(IP4_DF_FLAG)) == 0) {
-
-            ip4_frag(pkt_buf, out_netif, dst_addr);
-
+    else
+    {
+        set_ip4_hdr_checksum(hdr,
+                             (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100)));
+    } /* don't fragment if interface has mtu set to 0 [loopif] */
+    if (out_netif.mtu && pkt_buf.data.size() > out_netif.mtu)
+    {
+        if ((get_ip4_hdr_offset(hdr) & pp_ntohs(IP4_DF_FLAG)) == 0)
+        {
+            ip4_frag(pkt_buf, out_netif, dst_addr.address);
         }
-        else {
-
+        else
+        {
             /* send ICMP Destination Unreachable code 4: "Fragmentation Needed and DF Set" */
             icmp_dest_unreach(pkt_buf, ICMP_DUR_FRAG);
-
         }
         return STATUS_SUCCESS;
-    }
-    /* transmit PacketBuffer on chosen interface */
+    } /* transmit PacketBuffer on chosen interface */
     // netif->output(netif, pkt_buf, curr_dst_addr);
     // todo: send packet on outbound interface
     return STATUS_SUCCESS;
-}
-
-///
+} ///
 /// Return true if the current input packet should be accepted on this netif
 /// 
 static bool
 ip4_input_accept(NetworkInterface& netif)
 {
-    Ip4Addr curr_dst_addr{};
-    Ip4Addr curr_src_addr{};
+    Ip4AddrInfo curr_dst_addr{};
+    Ip4AddrInfo curr_src_addr{};
     //  Logf(true, ("ip_input: iphdr->dest 0x%x netif->ip_addr 0x%x (0x%x, 0x%x, 0x%x)\n",
     //                         ip4_addr_get_u32(ip4_current_dest_addr()), ip4_addr_get_u32(netif_ip4_addr(netif)),
     //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
     //                         ip4_addr_get_u32(netif_ip4_addr(netif)) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
     //                         ip4_addr_get_u32(ip4_current_dest_addr()) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
-
     /* interface is up and configured? */
-    if (is_netif_up(netif) && !ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
+    Ip4AddrInfo out_ip4_addr_info{};
+    get_netif_ip4_addr(netif, curr_dst_addr, out_ip4_addr_info);
+    if (is_netif_up(netif) && !is_ip4_addr_any(out_ip4_addr_info.address))
+    {
         /* unicast to this interface address? */
-        if (is_ip4_addr_equal(&curr_dst_addr, get_netif_ip4_addr(netif,,)) ||
+        if (is_ip4_addr_equal(curr_dst_addr.address, out_ip4_addr_info.address) ||
             /* or broadcast on this interface network address? */
-            ip4_addr_isbroadcast(&curr_dst_addr, netif)
-
-            || get_ip4_addr_u32(&curr_dst_addr) == pp_htonl(make_ip4_addr_loopback().addr)
-
-        ) {
-            Logf(true,
-                 "ip4_input: packet accepted on interface %c%c\n",
-                 netif->name[0],
-                 netif->name[1]);
-            /* accept on this netif */
-            return 1;
-        }
-
-        /* connections to link-local addresses must persist after changing
+            is_netif_ip4_addr_bcast(curr_dst_addr.address, netif) ||
+            get_ip4_addr_u32(curr_dst_addr.address) == pp_htonl(
+                make_ip4_addr_loopback().addr))
+        {
+            return true;
+        } /* connections to link-local addresses must persist after changing
             the netif's address (RFC3927 ch. 1.9) */
-        if (autoip_accept_packet(netif, &curr_dst_addr)) {
-            Logf(true, "ip4_input: LLA packet accepted on interface %c%c\n", netif->name[0], netif->name[1]);
+        if (autoip_accept_packet(netif, curr_dst_addr.address))
+        {
             /* accept on this netif */
-            return 1;
+            return true;
         }
-
     }
-    return 0;
+    return false;
 }
 
 /**
@@ -244,7 +228,7 @@ ip4_input_accept(NetworkInterface& netif)
  *         processed, but currently always returns ERR_OK)
  */
 bool
-ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif)
+ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInterface>& interfaces)
 {
     auto check_ip_src = 1;
     Ip4AddrInfo curr_dst_addr{};
@@ -323,17 +307,12 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif)
     {
         /* start trying with inp. if that's not acceptable, start walking the
            list of configured netifs. */
-        if (ip4_input_accept(netif))
+        if (!ip4_input_accept(netif))
         {
-            netif = netif;
-        }
-        else
-        {
-            netif = nullptr;
             /* Packets sent to the loopback address must not be accepted on an
                   * interface that does not have the loopback address assigned to it,
                   * unless a non-loopback interface is used for loopback traffic. */
-            if (!is_ip4_addr_loopback(curr_dst_addr))
+            if (!is_ip4_addr_loopback(curr_dst_addr.address))
             {
                 for (netif = netif_list; netif != nullptr; netif = netif->next)
                 {

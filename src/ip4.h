@@ -170,7 +170,7 @@ source_route_ip4_addr(const Ip4AddrInfo& src,
 
 
 bool
-ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif);
+ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInterface>& interfaces);
 LwipStatus ip4_output(PacketBuffer& p,
                       const Ip4AddrInfo& src,
                       const Ip4AddrInfo& dest,

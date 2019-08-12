@@ -412,7 +412,7 @@ bool autoip_supplied_address(const NetworkInterface* netif)
     return true;
 }
 
-bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr)
+bool autoip_accept_packet(NetworkInterface& netif, const Ip4Addr& addr)
 {
     const auto autoip = netif_autoip_data(netif);
     return (autoip != nullptr) && is_ip4_addr_equal(addr, &(autoip->llipaddr));
