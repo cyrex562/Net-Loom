@@ -30,6 +30,9 @@ add_subdirectory(fmt)
 # compile libzmq
 add_subdirectory(libzmq)
 
+# compile mbedtls
+add_subdirectory(mbedtls)
+
 #add_subdirectory(fmt/build)
 
 file(GLOB SRC_FILES src/*.c src/*.cpp)
@@ -39,6 +42,7 @@ add_library(lwip STATIC ${SRC_FILES})
 target_include_directories(lwip PUBLIC src)
 target_include_directories(lwip PUBLIC npcap/Include)
 target_include_directories(lwip PUBLIC npcap/Include/pcap)
+target_include_directories(lwip PUBLIC mbedtls/include)
 target_link_libraries(lwip fmt)
 target_link_libraries(lwip libzmq)
 target_link_libraries(lwip npcap/Lib/x64/wpcap.lib)

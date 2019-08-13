@@ -11,54 +11,34 @@ constexpr auto kBridgeIfcDebug = true;
 constexpr auto kBridgeIfcFdbDebug = true;
 constexpr auto kBridgeIfcFwDebug = true;
 
-struct BridgeIfcPrivate;
+struct BridgeInterface;
 
 struct BridgeIfcPort
 {
-    struct BridgeIfcPrivate* bridge;
-    NetworkInterface* port_netif;
-    uint8_t port_num;
+    // BridgeInterface bridge;
+    NetworkInterface port_netif;
+    uint32_t port_num;
 };
 
-struct BridgeIfcFdbStaticEntry
+struct BridgeFdbEntry
 {
-    uint8_t used;
+    bool used;
     BridgeIfcPortMask dst_ports;
-    struct MacAddress addr;
-};
-
-struct BridgeIfDfDbEntry
-{
-    uint8_t used;
     uint8_t port;
-    uint32_t ts;
-    struct MacAddress addr;
+    uint64_t ts;
+    MacAddress addr;
+    bool dynamic;
 };
 
-struct BridgeIfcFdb
+struct BridgeInterface
 {
-    uint16_t max_fdb_entries;
-    BridgeIfDfDbEntry* fdb;
+    NetworkInterface netif;
+    struct MacAddress mac_address;
+    std::vector<BridgeIfcPort> ports;
+    std::vector<BridgeFdbEntry> fdbs;
 };
 
-struct BridgeIfcPrivate
-{
-    NetworkInterface* netif;
-    struct MacAddress MacAddress;
-    uint8_t max_ports;
-    uint8_t num_ports;
-    BridgeIfcPort* ports;
-    uint16_t max_fdbs_entries;
-    BridgeIfcFdbStaticEntry* fdbs;
-    uint16_t max_fdbd_entries;
-    BridgeIfcFdb* fdbd;
-};
-
-
-
-
-
-/** @ingroup bridgeif
+/**
  * Initialisation data for @ref bridgeif_init.
  * An instance of this type must be passed as parameter 'state' to @ref netif_add
  * when the bridge is added.
@@ -89,14 +69,23 @@ struct BridgeIfcInitData {
 
 LwipStatus bridgeif_init(NetworkInterface*netif);
 LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
-LwipStatus bridgeif_fdb_add(NetworkInterface*bridgeif, const struct MacAddress *addr, BridgeIfcPortMask ports);
-LwipStatus remove_bridgeif_fdb(NetworkInterface*bridgeif, const struct MacAddress *addr);
+
+
+bool
+bridgeif_fdb_add(const MacAddress& addr,
+                 BridgeIfcPortMask ports,
+                 BridgeInterface
+                 & bridge_ifc);
+
+
+bool
+remove_bridgeif_fdb(BridgeInterface& bridge_ifc, const MacAddress& addr);
 
 /* FDB interface, can be replaced by own implementation */
 bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx);
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeIfcFdb* fdb_ptr, struct MacAddress *dst_addr);
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeInterface& fdb_ptr, MacAddress& dst_addr);
 
-BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
+// BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 
 static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetworkInterface* netif);
 

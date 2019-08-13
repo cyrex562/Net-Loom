@@ -35,6 +35,20 @@ make_eth_addr_from_bytes(const uint8_t b0,
     };
 } 
 
+inline bool cmp_mac_address(const MacAddress& mac1, const MacAddress& mac2)
+{
+    for (auto i = 0; i < 6; i++)
+    {
+        if (mac1.addr[i] != mac2.addr[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
 //
 // END OF FILE
 //

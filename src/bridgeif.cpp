@@ -26,127 +26,116 @@ uint8_t bridgeif_netif_client_id = 0xff;
  * bit [BRIDGEIF_MAX_PORTS]: cpu port
  * 0: drop
  */
-LwipStatus bridgeif_fdb_add(NetworkInterface* bridgeif,
-                           const struct MacAddress* addr,
-                           const BridgeIfcPortMask ports)
+bool
+bridgeif_fdb_add(const MacAddress& addr,
+                 const BridgeIfcPortMask ports,
+                 BridgeInterface& bridge_ifc)
 {
-    lwip_assert("invalid netif", bridgeif != nullptr);
-    const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
-    lwip_assert("invalid state", br != nullptr);
-    for (auto i = 0; i < br->max_fdbs_entries; i++)
-    {
-        if (!br->fdbs[i].used)
-        {
-            if (!br->fdbs[i].used)
-            {
-                br->fdbs[i].used = 1;
-                br->fdbs[i].dst_ports = ports;
-                memcpy(&br->fdbs[i].addr, addr, sizeof(struct MacAddress));
-                return STATUS_SUCCESS;
-            }
-        }
-    }
-    return ERR_MEM;
+    BridgeFdbEntry fdb{};
+    fdb.used = true;
+    fdb.dst_ports = ports;
+    fdb.addr = addr;
+    bridge_ifc.fdbs.push_back(fdb);
+    return true;
 }
 
 
-///
-/// Remove a static entry from the forwarding database
-///
-LwipStatus remove_bridgeif_fdb(NetworkInterface* bridgeif, const struct MacAddress* addr)
+/**
+ * Remove a static entry from the forwarding database
+ */
+bool
+remove_bridgeif_fdb(BridgeInterface& bridge_ifc, const MacAddress& addr)
 {
-    lwip_assert("invalid netif", bridgeif != nullptr);
-    const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
-    lwip_assert("invalid state", br != nullptr);
-    for (auto i = 0; i < br->max_fdbs_entries; i++)
+    int index = -1;
+    for (auto i = 0; i < bridge_ifc.fdbs.size(); i++)
     {
-        if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr, addr, sizeof(struct MacAddress)))
+        if (cmp_mac_address(addr ,bridge_ifc.fdbs[i].addr))
         {
-            if (br->fdbs[i].used && !memcmp(&br->fdbs[i].addr,
-                                            addr,
-                                            sizeof(struct MacAddress)))
-            {
-                memset(&br->fdbs[i], 0, sizeof(BridgeIfcFdbStaticEntry));
-                return STATUS_SUCCESS;
-            }
+            index = i;
+            break;
         }
     }
-    return ERR_VAL;
+
+    if (index > -1)
+    {
+        auto it = bridge_ifc.fdbs.begin();
+        bridge_ifc.fdbs.erase(it + index);
+        return true;
+    }
+
+    return false;
 }
 
-/// Get the forwarding port(s) (as bit mask) for the specified destination mac address
-static BridgeIfcPortMask bridgeif_find_dst_ports(BridgeIfcPrivate* br,
-                                                 struct MacAddress* dst_addr)
+/**
+ * Get the forwarding port(s) (as bit mask) for the specified destination mac address
+ */
+static BridgeIfcPortMask
+bridgeif_find_dst_ports(BridgeInterface& bridge_ifc, MacAddress& dst_addr)
 {
     /* first check for static entries */
-    for (auto i = 0; i < br->max_fdbs_entries; i++)
+    for (auto& fdb : bridge_ifc.fdbs)
     {
-        if (br->fdbs[i].used)
+        if (cmp_mac_address(fdb.addr, dst_addr))
         {
-            if (!memcmp(&br->fdbs[i].addr, dst_addr, sizeof(struct MacAddress)))
-            {
-                const auto ret = br->fdbs[i].dst_ports;
-                return ret;
-            }
+            return fdb.dst_ports;
         }
     }
-    if (dst_addr->addr[0] & 1)
+
+    if (dst_addr.addr[0] & 1)
     {
-        /* no match found: flood remaining group address */
         return BRIDGE_FLOOD;
-    } /* no match found: check dynamic fdb for port or fall back to flooding */
-    return bridgeif_fdb_get_dst_ports(br->fdbd, dst_addr);
+    }
+
+    return bridgeif_fdb_get_dst_ports(bridge_ifc, dst_addr);
 }
 
-/// 
-/// Helper function to see if a destination mac belongs to the bridge
-/// (bridge netif or one of the port netifs), in which case the frame
-/// is sent to the cpu only.
-///
-static int bridgeif_is_local_mac(BridgeIfcPrivate* br, struct MacAddress* addr)
+/**
+ * Helper function to see if a destination mac belongs to the bridge
+ * (bridge netif or one of the port netifs), in which case the frame
+ * is sent to the cpu only.
+ */
+static bool
+bridgeif_is_local_mac(BridgeInterface& br, MacAddress& addr)
 {
-    if (!memcmp(br->netif->hwaddr, addr, sizeof(struct MacAddress)))
+    if (!cmp_mac_address(br.netif.mac_address, addr))
     {
-        return 1;
+        return true;
     }
-    for (auto i = 0; i < br->num_ports; i++)
+    for (auto& port : br.ports)
     {
-        auto portif = br->ports[i].port_netif;
-        if (portif != nullptr)
+        if (cmp_mac_address(port.port_netif.mac_address, addr))
         {
-            if (!memcmp(portif->hwaddr, addr, sizeof(struct MacAddress)))
-            {
-                return 1;
-            }
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
-/* Output helper function */
-static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
-                                       struct PacketBuffer* p,
-                                       uint8_t dstport_idx)
+/**
+ * Output helper function
+ */
+static bool
+bridgeif_send_to_port(BridgeInterface& br_ifc, PacketBuffer& pkt_buf, uint32_t dstport_idx)
 {
     if (dstport_idx < kBridgeIfcMaxPorts)
     {
         /* possibly an external port */
-        if (dstport_idx < br->max_ports)
+        if (dstport_idx < br_ifc->max_ports)
         {
-            auto portif = br->ports[dstport_idx].port_netif;
+            auto portif = br_ifc->ports[dstport_idx].port_netif;
             if ((portif != nullptr) && (portif->linkoutput != nullptr))
             {
                 /* prevent sending out to rx port */
-                if (get_and_inc_netif_num(portif) != p->input_netif_idx)
+                if (get_and_inc_netif_num(portif) != pkt_buf->input_netif_idx)
                 {
                     if (is_netif_link_up(portif))
                     {
                         Logf(kBridgeIfcFwDebug,
                              "br -> flood(%p:%d) -> %d\n",
-                             reinterpret_cast<uint8_t *>(p),
-                             p->input_netif_idx,
+                             reinterpret_cast<uint8_t *>(pkt_buf),
+                             pkt_buf->input_netif_idx,
                              get_and_inc_netif_num(portif));
-                        return portif->linkoutput(portif, p);
+                        return portif->linkoutput(portif, pkt_buf);
                     }
                 }
             }
@@ -161,7 +150,7 @@ static LwipStatus bridgeif_send_to_port(BridgeIfcPrivate* br,
 
 /** Helper function to pass a PacketBuffer to all ports marked in 'dstports'
  */
-static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
+static LwipStatus bridgeif_send_to_ports(BridgeInterface* br,
                                         struct PacketBuffer* p,
                                         BridgeIfcPortMask dstports)
 {
@@ -189,7 +178,7 @@ static LwipStatus bridgeif_send_to_ports(BridgeIfcPrivate* br,
  */
 LwipStatus bridgeif_output(NetworkInterface* netif, struct PacketBuffer* p)
 {
-    const auto br = static_cast<BridgeIfcPrivate *>(netif->state);
+    const auto br = static_cast<BridgeInterface *>(netif->state);
     const auto dst = reinterpret_cast<MacAddress *>(p->payload);
     const auto dstports = bridgeif_find_dst_ports(br, dst);
     const auto err = bridgeif_send_to_ports(br, p, dstports);
@@ -222,7 +211,7 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
     {
         return ERR_VAL;
     }
-    auto* br = reinterpret_cast<BridgeIfcPrivate *>(port->bridge);
+    auto* br = reinterpret_cast<BridgeInterface *>(port->bridge);
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
     p->input_netif_idx = rx_idx;
     auto dst = reinterpret_cast<struct MacAddress *>(p->payload);
@@ -311,41 +300,41 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     lwip_assert("init_data != NULL", (init_data != nullptr));
     lwip_assert("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
                 init_data->max_ports <= kBridgeIfcMaxPorts);
-    auto alloc_len_sizet = sizeof(BridgeIfcPrivate) + (init_data->max_ports * sizeof(
+    auto alloc_len_sizet = sizeof(BridgeInterface) + (init_data->max_ports * sizeof(
         BridgeIfcPort) + (init_data->max_fdb_static_entries * sizeof(
-        BridgeIfcFdbStaticEntry)));
-    auto br = new BridgeIfcPrivate;
+        BridgeFdbEntry)));
+    auto br = new BridgeInterface;
     if (br == nullptr)
     {
         Logf(true, ("bridgeif_init: out of memory\n"));
         return ERR_MEM;
     }
-    memcpy(&br->MacAddress, &init_data->MacAddress, sizeof(br->MacAddress));
+    memcpy(&br->mac_address, &init_data->MacAddress, sizeof(br->mac_address));
     br->netif = netif;
     br->max_ports = init_data->max_ports;
     br->ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
     br->max_fdbs_entries = init_data->max_fdb_static_entries;
-    br->fdbs = reinterpret_cast<BridgeIfcFdbStaticEntry *>(reinterpret_cast<uint8_t *>(br + 1) + (init_data->
+    br->fdbs = reinterpret_cast<BridgeFdbEntry *>(reinterpret_cast<uint8_t *>(br + 1) + (init_data->
         max_ports * sizeof(BridgeIfcPort)));
     init_data = static_cast<BridgeIfcInitData *>(netif->state);
     lwip_assert("init_data != NULL", (init_data != nullptr));
     lwip_assert("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
                 init_data->max_ports <= kBridgeIfcMaxPorts);
-    alloc_len_sizet = sizeof(BridgeIfcPrivate) + (init_data->max_ports * sizeof(
+    alloc_len_sizet = sizeof(BridgeInterface) + (init_data->max_ports * sizeof(
         BridgeIfcPort) + (init_data->max_fdb_static_entries * sizeof(
-        BridgeIfcFdbStaticEntry)));
-    br = new BridgeIfcPrivate;
+        BridgeFdbEntry)));
+    br = new BridgeInterface;
     if (br == nullptr)
     {
         Logf(true, ("bridgeif_init: out of memory\n"));
         return ERR_MEM;
     }
-    memcpy(&br->MacAddress, &init_data->MacAddress, sizeof(br->MacAddress));
+    memcpy(&br->mac_address, &init_data->MacAddress, sizeof(br->mac_address));
     br->netif = netif;
     br->max_ports = init_data->max_ports;
     br->ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
     br->max_fdbs_entries = init_data->max_fdb_static_entries;
-    br->fdbs = reinterpret_cast<BridgeIfcFdbStaticEntry *>(reinterpret_cast<uint8_t *>(br
+    br->fdbs = reinterpret_cast<BridgeFdbEntry *>(reinterpret_cast<uint8_t *>(br
         + 1) + (init_data->max_ports * sizeof(BridgeIfcPort)));
     br->max_fdbd_entries = init_data->max_fdb_dynamic_entries;
     br->fdbd = bridgeif_fdb_init(init_data->max_fdb_dynamic_entries);
@@ -371,7 +360,7 @@ LwipStatus bridgeif_init(NetworkInterface* netif)
     netif->output_ip6 = ethip6_output;
     netif->linkoutput = bridgeif_output; /* set MAC hardware address length */
     netif->hwaddr_len = ETH_ADDR_LEN; /* set MAC hardware address */
-    memcpy(netif->hwaddr, &br->MacAddress, ETH_ADDR_LEN); /* maximum transfer unit */
+    memcpy(netif->hwaddr, &br->mac_address, ETH_ADDR_LEN); /* maximum transfer unit */
     netif->mtu = 1500; /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH |
@@ -403,7 +392,7 @@ LwipStatus bridgeif_add_port(NetworkInterface* bridgeif, NetworkInterface* porti
         /* can only add ETHERNET/ETHARP interfaces */
         return ERR_VAL;
     }
-    const auto br = static_cast<BridgeIfcPrivate *>(bridgeif->state);
+    const auto br = static_cast<BridgeInterface *>(bridgeif->state);
     if (br->num_ports >= br->max_ports)
     {
         return ERR_VAL;
