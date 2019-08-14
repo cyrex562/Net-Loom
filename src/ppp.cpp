@@ -469,11 +469,10 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
  * Initiate LCP open request 
  * 
  */
-LwipStatus
+bool
 ppp_start(PppPcb& pcb)
 {
     // todo: check results of init functions
-    auto status = STATUS_SUCCESS;
     pcb.mppe_keys_set = false;
     memset(&pcb.mppe_comp, 0, sizeof(pcb.mppe_comp));
     memset(&pcb.mppe_decomp, 0, sizeof(pcb.mppe_decomp));
@@ -481,7 +480,7 @@ ppp_start(PppPcb& pcb)
     new_phase(pcb, PPP_PHASE_ESTABLISH);
     lcp_open(pcb);
     lcp_lowerup(pcb);
-    return status;
+    return true;
 } 
 
 
@@ -530,21 +529,21 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
     const auto pb_payload_1 = pkt_buf.data[1];
     uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
     const size_t proto_size = 2; // sizeof(protocol)
+    // todo: replicate this call
     // pbuf_remove_header(pb, proto_size);
     if (pkt_buf.data.size() < 2)
     {
         return false;
-    } 
-    // protocol = (static_cast<uint8_t *>(pb->payload)[0] << 8) | static_cast<uint8_t*>(pb->payload)[1];
-    // pbuf_remove_header(pb, proto_size);
+    }
+
     if (protocol == PPP_COMP)
     {
         if (protocol != PPP_LCP && lcp_fsm.state != PPP_FSM_OPENED)
         {
             ppp_dbglog("Discarded non-LCP packet when LCP not open");
             return false;
-        } 
-        
+        }
+
         // Until we get past the authentication phase, toss all packets except LCP, LQR and authentication packets.
         if (ppp_pcb.phase <= PPP_PHASE_AUTHENTICATE && !(protocol == PPP_LCP || protocol ==
                 PPP_LQR || protocol == PPP_PAP || protocol == PPP_CHAP || protocol ==
@@ -552,8 +551,8 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         {
             ppp_dbglog("discarding proto 0x%x in phase %d", protocol, ppp_pcb.phase);
             return false;
-        } 
-        
+        }
+
         // Extract and hide protocol (do PFC decompression if necessary)
         if (pkt_buf.data[0] & 0x01)
         {
@@ -568,23 +567,20 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         {
             if (ppp_pcb.ccp_receive_method == CI_MPPE)
             {
-                if (mppe_decompress(ppp_pcb, &ppp_pcb.mppe_decomp, &pkt_buf) != STATUS_SUCCESS)
+                if (mppe_decompress(ppp_pcb, ppp_pcb.mppe_decomp, &pkt_buf) != STATUS_SUCCESS)
                 {
-                    free_pkt_buf(pkt_buf);
                     return false;
                 }
             }
             else
             {
                 // PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
-                free_pkt_buf(pkt_buf);
                 return false;
                 /// Cannot really happen, we only negotiate what we are able to do
             }
             /// Assume no PFC
             if (pkt_buf.len < 2)
             {
-                free_pkt_buf(pkt_buf);
                 return false;
             }
             /// Extract and hide protocol (do PFC decompression if necessary)
@@ -603,13 +599,11 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         if (protocol == PPP_IP)
         {
             ip4_input(pkt_buf, ppp_pcb.netif);
-            free_pkt_buf(pkt_buf);
             return false;
         }
         if (protocol == PPP_IPV6)
         {
             recv_ip6_pkt(pkt_buf, ppp_pcb.netif);
-            free_pkt_buf(pkt_buf);
             return false;
         }
         if (protocol == PPP_VJC_UNCOMP)
@@ -637,7 +631,6 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
             lcp_sprotrej(ppp_pcb, static_cast<uint8_t*>(pkt_buf.payload), pkt_buf.len);
         }
     }
-    free_pkt_buf(pkt_buf);
     return true;
 }
 

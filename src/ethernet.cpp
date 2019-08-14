@@ -146,7 +146,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
     }
     else if (type == pp_htons(ETHTYPE_PPPOEDISC)) {
 
-        pppoe_disc_input(net_ifc, pkt_buf);
+        pppoe_disc_input(net_ifc, pkt_buf,);
 
 
     }

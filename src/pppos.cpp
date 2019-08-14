@@ -182,7 +182,7 @@ pppos_write(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* p)
     LwipStatus err = STATUS_SUCCESS;
     if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG)
     {
-        err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
+        err = pppos_output_append(pppos, err, nb, PPP_FLAG, 0, nullptr);
     } /* Load output buffer. */
     fcs_out = PPP_INITFCS;
     uint8_t* s = (uint8_t*)p->payload;
@@ -226,7 +226,7 @@ pppos_netif_output(PppPcb* ppp, uint8_t* ctx, struct PacketBuffer* pb, uint16_t 
     LwipStatus err = STATUS_SUCCESS;
     if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG)
     {
-        err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
+        err = pppos_output_append(pppos, err, nb, PPP_FLAG, 0, nullptr);
     }
     fcs_out = PPP_INITFCS;
     if (!pppos->accomp)
@@ -364,11 +364,11 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
                   * would appear as an escape character.  Since this is an ASCII ']'
                   * and there is no reason that I know of to escape it, I won't complicate
                   * the code to handle this case. GLL */
-            if (cur_char == kPppEscape)
+            if (cur_char == PPP_ESCAPE)
             {
                 pppos->in_escaped = 1; /* Check for the flag character. */
             }
-            else if (cur_char == kPppFlag)
+            else if (cur_char == PPP_FLAG)
             {
                 /* If this is just an extra flag character, ignore it. */
                 if (pppos->in_state <= PDADDRESS)
@@ -452,7 +452,7 @@ pppos_input(PppPcb* ppp, uint8_t* s, int l)
             if (pppos->in_escaped)
             {
                 pppos->in_escaped = 0;
-                cur_char ^= kPppTrans;
+                cur_char ^= PPP_TRANS;
             } /* Process character relative to current state. */
             switch (pppos->in_state)
             {
@@ -676,8 +676,8 @@ pppos_output_append(pppos_pcb* pppos,
     } /* Copy to output buffer escaping special characters. */
     if (accm && ESCAPE_P(pppos->out_accm, c))
     {
-        *((uint8_t*)nb->payload + nb->len++) = kPppEscape;
-        *((uint8_t*)nb->payload + nb->len++) = c ^ kPppTrans;
+        *((uint8_t*)nb->payload + nb->len++) = PPP_ESCAPE;
+        *((uint8_t*)nb->payload + nb->len++) = c ^ PPP_TRANS;
     }
     else
     {
@@ -695,7 +695,7 @@ pppos_output_last(pppos_pcb* pppos,
     PppPcb* ppp = pppos->ppp; /* Add FCS and trailing flag. */
     err = pppos_output_append(pppos, err, nb, ~(*fcs) & 0xFF, 1, nullptr);
     err = pppos_output_append(pppos, err, nb, (~(*fcs) >> 8) & 0xFF, 1, nullptr);
-    err = pppos_output_append(pppos, err, nb, kPppFlag, 0, nullptr);
+    err = pppos_output_append(pppos, err, nb, PPP_FLAG, 0, nullptr);
     if (err != STATUS_SUCCESS)
     {
         goto failed;

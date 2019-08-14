@@ -1,9 +1,7 @@
 #pragma once
-#include <fsm.h>
-#include <servprov.h>
 #include <mppe.h>
-
-    struct PppPcb;
+#include "fsm_def.h"
+struct PppPcb;
 
 /*
  * CCP codes.
@@ -30,9 +28,9 @@ constexpr auto kDeflateMinWorks = 9;
 /*
  * Local state (mainly for handling reset-reqs and reset-acks).
  */
-constexpr auto kRackPending = 1	/* waiting for reset-ack */;
-constexpr auto kRreqRepeat = 2	/* send another reset-req if no reset-ack */;
-constexpr auto kRacktimeout = 1	/* second */;
+constexpr auto RESET_ACK_PENDING = 1	/* waiting for reset-ack */;
+constexpr auto REPEAT_RESET_REQ = 2	/* send another reset-req if no reset-ack */;
+constexpr auto RESET_ACK_TIMEOUT = 1	/* second */;
 
 /*
  * Parts of a CCP packet.
@@ -144,7 +142,9 @@ void ccp_down(Fsm*, Fsm* lcp_fsm, PppPcb* pcb);
 int ccp_extcode(Fsm*, int, int, uint8_t*, int, PppPcb* PppPcb);
 void ccp_rack_timeout(void*);
 const char* method_name(struct CcpOptions*, struct CcpOptions*);
-void ccp_resetrequest(uint8_t* PppPcb_ccp_local_state);  /* Issue a reset-request. */
+
+bool
+ccp_resetrequest(uint8_t* PppPcb_ccp_local_state, Fsm& f);  /* Issue a reset-request. */
 
 
 inline bool ccp_test(PppPcb* pcb, uint8_t* opt_buf, uint32_t option, uint32_t idx)

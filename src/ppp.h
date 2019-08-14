@@ -7,13 +7,13 @@
 * The authors hereby grant permission to use, copy, modify, distribute,
 * and license this software and its documentation for any purpose, provided
 * that existing copyright notices are retained in all copies and that this
-* notice and the following disclaimer are included verbatim in any 
+* notice and the following disclaimer are included verbatim in any
 * distributions. No written agreement, license, or royalty fee is required
 * for any of the authorized uses.
 *
 * THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS *AS IS* AND ANY EXPRESS OR
 * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 * IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
@@ -44,6 +44,9 @@
 #include <eap_state.h>
 #include <upap.h>
 #include <ipcp_defs.h>
+#include "timeouts.h"
+#include "fsm_def.h"
+
 
 /**
  * Protocol field values.
@@ -103,7 +106,7 @@ enum PppPhase
 };
 
 
-// Error codes. 
+// Error codes.
 enum PppErrorCode
 {
     PPPERR_NONE = 0,
@@ -135,7 +138,7 @@ enum PppErrorCode
 };
 
 
-constexpr auto kPppCtrlPbufMaxSize = 512;
+constexpr auto PPP_CTRL_PBUF_MAX_SIZE = 512;
 
 
 /*
@@ -153,11 +156,9 @@ constexpr auto CILEN_ADDRS = 10 /* old-style dual address option */;
  */
 constexpr auto PPP_ALLSTATIONS = 0xff	/* All-Stations broadcast address */;
 constexpr auto PPP_UI = 0x03	/* Unnumbered Information */;
-constexpr auto kPppFlag = 0x7e	/* Flag Sequence */;
-constexpr auto kPppEscape = 0x7d	/* Asynchronous Control Escape */;
-constexpr auto kPppTrans = 0x20	/* Asynchronous transparency modifier */;
-
-
+constexpr auto PPP_FLAG = 0x7e	/* Flag Sequence */;
+constexpr auto PPP_ESCAPE = 0x7d	/* Asynchronous Control Escape */;
+constexpr auto PPP_TRANS = 0x20	/* Asynchronous transparency modifier */;
 
 
 /*
@@ -169,6 +170,7 @@ enum PppNetworkProtoMode {
     NPMODE_ERROR,		/* return an error */
     NPMODE_QUEUE		/* save it up for later. */
 };
+
 
 /*
  * The following structure records the time in seconds since
@@ -191,21 +193,20 @@ constexpr auto EPD_PHONENUM = 5;
 /*
  * Global variables.
  */
+// extern uint8_t	multilink;	/* enable multilink operation */
+// extern uint8_t	doing_multilink;
+// extern uint8_t	multilink_master;
+// extern uint8_t	bundle_eof;
+// extern uint8_t	bundle_terminating;
 
-extern uint8_t	multilink;	/* enable multilink operation */
-extern uint8_t	doing_multilink;
-extern uint8_t	multilink_master;
-extern uint8_t	bundle_eof;
-extern uint8_t	bundle_terminating;
 
-
-extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
-extern int       maxoctets_dir;      /* Direction :
-                      0 - in+out (default)
-                      1 - in
-                      2 - out
-                      3 - max(in,out) */
-extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
+// extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
+// extern int       maxoctets_dir;      /* Direction :
+//                       0 - in+out (default)
+//                       1 - in
+//                       2 - out
+//                       3 - max(in,out) */
+// extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 constexpr auto PPP_OCTETS_DIRECTION_SUM = 0;
 constexpr auto PPP_OCTETS_DIRECTION_IN = 1;
 constexpr auto PPP_OCTETS_DIRECTION_OUT = 2;
@@ -213,7 +214,7 @@ constexpr auto PPP_OCTETS_DIRECTION_MAXOVERAL = 3;
 // same as previos, but little different on RADIUS side
 constexpr auto PPP_OCTETS_DIRECTION_MAXSESSION = 4;
 
-// Table of pointers to supported protocols 
+// Table of pointers to supported protocols
 // extern const struct Protent* const kProtocols[];
 
 
@@ -238,7 +239,7 @@ constexpr auto CHAP_MS2_PEER = 0x800;
 // PPP private functions
 //
 
- 
+
 //
 // Functions called from lwIP core.
 //
@@ -256,7 +257,7 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
 
 
 /* Initiate LCP open request */
-LwipStatus
+bool
 ppp_start(PppPcb& pcb);
 
 /* Called when link failed to setup */
@@ -365,8 +366,8 @@ inline void timeout_ms(SysTimeoutHandler time_fn, void* arg, const uint32_t time
     sys_untimeout(time_fn, arg);
     sys_timeout(time * 1000, time_fn, arg);
 }
-    
-    
+
+
 inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
     sys_untimeout((time_fn), (arg));
 }
@@ -432,14 +433,14 @@ int  loop_frame (unsigned char *, int); /* should we bring link up? */
 void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /* Check multilink-related options */
 
 
-// 
+//
 // Join link to an appropriate bundle
 //
 bool mp_join_bundle(PppPcb* pcb,
                     std::string& peer_authname,
                     std::string& bundle_name,
                     const bool doing_multilink = true,
-                    const bool demand = true);  
+                    const bool demand = true);
 
 void mp_exit_bundle (void);  /* have disconnected our link from bundle */
 void mp_bundle_terminated (void);
@@ -576,7 +577,7 @@ typedef void (*ppp_link_status_cb_fn)(PppPcb *pcb, int err_code, uint8_t *ctx);
 struct PppSettings
 {
     bool auth_required{}; // Peer is required to authenticate */
-    bool null_login{}; // Username of "" and a password of "" are acceptable 
+    bool null_login{}; // Username of "" and a password of "" are acceptable
     bool explicit_remote{}; // remote_name specified with remotename opt */
     bool refuse_pap{}; // Don't proceed auth. with PAP */
     bool refuse_chap{}; // Don't proceed auth. with CHAP */
@@ -590,7 +591,7 @@ struct PppSettings
     bool lax_recv{}; // accept control chars in asyncmap */
     bool noendpoint{}; // don't send/accept endpoint discriminator */
     bool lcp_echo_adaptive{}; // request echo only if the link was idle */
-    bool require_mppe{}; // Require MPPE (Microsoft Point to Point Encryption) 
+    bool require_mppe{}; // Require MPPE (Microsoft Point to Point Encryption)
     bool refuse_mppe_40{}; // Allow MPPE 40-bit mode? */
     bool refuse_mppe_128{}; // Allow MPPE 128-bit mode? */
     bool refuse_mppe_stateful{}; // Allow MPPE stateful mode? */

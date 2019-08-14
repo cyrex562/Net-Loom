@@ -68,10 +68,12 @@ constexpr unsigned int NETIF_MAX_HWADDR_LEN = 6; // typedef int64_t LONGLONG;
 //  LONGLONG QuadPart;
 //} LARGE_INTEGER;
 // typedef void* HANDLE;
+
 typedef uintptr_t HCRYPTPROV;
-int
-lwip_getpid();
-typedef uint32_t LwipInAddr; // #endif
+
+
+typedef uint32_t LwipInAddr;
+
 struct LwipInAddrStruct
 {
     uint32_t _s_addr;
@@ -85,3 +87,10 @@ struct LwipIn6Addr
         uint8_t u8_addr[16];
     } un; // #define s6_addr  un.u8_addr
 };
+
+int
+lwip_getpid();
+
+//
+// END OF FILE
+//

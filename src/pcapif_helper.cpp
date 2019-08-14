@@ -4,11 +4,10 @@
  */
 
 #include <pcapif_helper.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <arch.h>
+#include <cstdlib>
+#include <cstdio>
+
 
 #ifdef WIN32
 
@@ -25,10 +24,7 @@
 #pragma warning ( pop )
 #endif
 
-// struct pcapifh_linkstate {
-//   LPADAPTER        lpAdapter;
-//   PPACKET_OID_DATA ppacket_oid_data;
-// };
+
 
 // struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
 // {
@@ -83,9 +79,6 @@
 
 /* @todo: add linux/unix implementation? */
 
-struct pcapifh_linkstate {
-  uint8_t empty;
-};
 
 struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
 {

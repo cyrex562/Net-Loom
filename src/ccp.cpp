@@ -178,9 +178,9 @@ static int ccp_extcode(Fsm* f,
         fsm_sdata(f, CCP_RESETACK, id, nullptr, 0);
         break;
     case CCP_RESETACK:
-        if ((PppPcb->ccp_localstate & kRackPending) && id == f->reqid)
+        if ((PppPcb->ccp_localstate & RESET_ACK_PENDING) && id == f->reqid)
         {
-            PppPcb->ccp_localstate &= ~(kRackPending | kRreqRepeat);
+            PppPcb->ccp_localstate &= ~(RESET_ACK_PENDING | REPEAT_RESET_REQ);
             Untimeout(ccp_rack_timeout, f);
             ccp_reset_decomp(PppPcb);
         }
@@ -1196,7 +1196,7 @@ static void ccp_down(Fsm* f, Fsm* lcp_fsm, PppPcb* pcb)
     // PppPcb* pcb = f->pcb;
     const auto go = &pcb->ccp_gotoptions;
 
-    if (pcb->ccp_localstate & kRackPending)
+    if (pcb->ccp_localstate & RESET_ACK_PENDING)
     {
         Untimeout(ccp_rack_timeout, f);
     }
@@ -1266,25 +1266,26 @@ static void ccp_datainput(PppPcb* pcb, uint8_t* pkt, int len)
  * We have received a packet that the decompressor failed to
  * decompress. Issue a reset-request.
  */
-void ccp_resetrequest(uint8_t* ppp_pcb_ccp_local_state, Fsm* f)
+bool
+ccp_resetrequest(uint8_t& ppp_pcb_ccp_local_state, Fsm& f)
 {
-    if (f->state != PPP_FSM_OPENED)
+    if (f.state != PPP_FSM_OPENED)
     {
-        return;
+        return false;
     } /*
      * Send a reset-request to reset the peer's compressor.
      * We don't do that if we are still waiting for an
      * acknowledgement to a previous reset-request.
      */
-    if (!(*ppp_pcb_ccp_local_state & kRackPending))
+    if (!(ppp_pcb_ccp_local_state & RESET_ACK_PENDING))
     {
-        fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, nullptr, 0);
-        Timeout(ccp_rack_timeout, f, kRacktimeout);
-        *ppp_pcb_ccp_local_state |= kRackPending;
+        fsm_sdata(f, CCP_RESETREQ, f.reqid = ++f.id, nullptr, 0);
+        // timeout(ccp_rack_timeout, f, kRacktimeout);
+        ppp_pcb_ccp_local_state |= RESET_ACK_PENDING;
     }
     else
     {
-        *ppp_pcb_ccp_local_state |= kRreqRepeat;
+        ppp_pcb_ccp_local_state |= REPEAT_RESET_REQ;
     }
 }
 
@@ -1296,15 +1297,15 @@ static void ccp_rack_timeout(void* arg)
 {
     auto args = static_cast<CcpRackTimeoutArgs*>(arg);
 
-    if (args->f->state == PPP_FSM_OPENED && (args->pcb->ccp_localstate & kRreqRepeat))
+    if (args->f->state == PPP_FSM_OPENED && (args->pcb->ccp_localstate & REPEAT_RESET_REQ))
     {
         fsm_sdata(args->f, CCP_RESETREQ, args->f->reqid, nullptr, 0);
-        Timeout(ccp_rack_timeout, args, kRacktimeout);
-        args->pcb->ccp_localstate &= ~kRreqRepeat;
+        Timeout(ccp_rack_timeout, args, RESET_ACK_TIMEOUT);
+        args->pcb->ccp_localstate &= ~REPEAT_RESET_REQ;
     }
     else
     {
-        args->pcb->ccp_localstate &= ~kRackPending;
+        args->pcb->ccp_localstate &= ~RESET_ACK_PENDING;
     }
 }
 

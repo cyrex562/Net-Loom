@@ -353,7 +353,7 @@ void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len) {
 
 
     fsm_sdata(f, PROTREJ, ++f->id,
-          p, len);
+              p, len);
 }
 
 

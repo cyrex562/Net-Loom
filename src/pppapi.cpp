@@ -155,8 +155,7 @@ pppapi_do_pppoe_create(struct TcpipApiCallData *m)
   struct pppapi_msg *msg = (struct pppapi_msg *)(void*)m;
 
   msg->msg.ppp = pppoe_create(msg->msg.msg.ethernetcreate.pppif, msg->msg.msg.ethernetcreate.ethif,
-                              msg->msg.msg.ethernetcreate.service_name, msg->msg.msg.ethernetcreate.concentrator_name,
-                              msg->msg.msg.ethernetcreate.link_status_cb, msg->msg.msg.ethernetcreate.ctx_cb);
+                              msg->msg.msg.ethernetcreate.service_name, msg->msg.msg.ethernetcreate.concentrator_name,,);
   return STATUS_SUCCESS;
 }
 

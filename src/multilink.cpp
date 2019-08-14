@@ -30,23 +30,9 @@
 
 #define NOMINMAX
 #include <ppp_opts.h>
-/* Multilink support
- *
- * Multilink uses Samba TDB (Trivial Database Library), which
- * we cannot port, because it needs a filesystem.
- *
- * We have to choose between doing a memory-shared TDB-clone,
- * or dropping multilink support at all.
- */
-
 #include <cstring>
 #include <cstdlib>
-// #include <netinet/in.h>
-// #include <unistd.h>
-
-#include <ppp_impl.h>
 #include <lcp.h>
-// #include <tdb.h>
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */

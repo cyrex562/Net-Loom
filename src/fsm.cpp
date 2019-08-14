@@ -199,7 +199,7 @@ void terminate_layer(Fsm *f, int nextstate) {
     } /* Init restart counter and send Terminate-Request */
     f->retransmits = pcb->settings.fsm_max_term_transmits;
     fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-          reinterpret_cast<const uint8_t *>(f->term_reason), f->term_reason_len);
+              reinterpret_cast<const uint8_t *>(f->term_reason), f->term_reason_len);
 
     if (f->retransmits == 0) {
     /*
@@ -275,7 +275,7 @@ void fsm_timeout(void* arg) {
     } else {
         /* Send Terminate-Request */
         fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-              (const uint8_t *) f->term_reason, f->term_reason_len);
+                  (const uint8_t *) f->term_reason, f->term_reason_len);
         Timeout(fsm_timeout, f, pcb->settings.fsm_timeout_time);
         --f->retransmits;
     }
@@ -801,28 +801,26 @@ void fsm_sconfreq(Fsm* f, int retransmit) {
  *
  * Used for all packets sent to our peer by this module.
  */
-void fsm_sdata(Fsm *f, uint8_t code, uint8_t id, const uint8_t *data, int datalen) {
-    PppPcb *pcb = f->pcb; /* Adjust length to be smaller than MTU */
-    if (datalen > pcb->peer_mru - FSM_PKT_HDR_LEN)
-    datalen = pcb->peer_mru - FSM_PKT_HDR_LEN;
+void
+fsm_sdata(Fsm& f, uint8_t code, uint8_t id, const uint8_t* data, size_t datalen)
+{
+    PppPcb pcb = f.pcb; /* Adjust length to be smaller than MTU */
+    if (datalen > pcb->peer_mru - FSM_PKT_HDR_LEN) datalen = pcb->peer_mru -
+        FSM_PKT_HDR_LEN;
     int outlen = datalen + FSM_PKT_HDR_LEN;
-
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(outlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     PacketBuffer* p = new PacketBuffer;
-    if(nullptr == p)
-    {
+    if (nullptr == p) {
         return;
     }
-    if(p->tot_len != p->len) {
+    if (p->tot_len != p->len) {
         free_pkt_buf(p);
         return;
     }
-
     uint8_t* outp = (uint8_t*)p->payload;
-    if (datalen)
-    {
+    if (datalen) {
         /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
-    memcpy(outp + PPP_HDRLEN + FSM_PKT_HDR_LEN, data, datalen);
+        memcpy(outp + PPP_HDRLEN + FSM_PKT_HDR_LEN, data, datalen);
     }
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);

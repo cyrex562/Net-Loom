@@ -1,25 +1,38 @@
-#ifndef LWIP_PCAPIF_HELPER_H
-#define LWIP_PCAPIF_HELPER_H
+#pragma once
+#include <cstdint>
 
-#ifdef __cplusplus
-extern "C" {
+
+#ifdef _MSC_VER
+struct pcapifh_linkstate
+{
+    uint8_t empty;
+};
+#else
+
+      struct pcapifh_linkstate {
+  LPADAPTER        lpAdapter;
+  PPACKET_OID_DATA ppacket_oid_data;
+};
 #endif
 
-struct pcapifh_linkstate;
 
-enum pcapifh_link_event {
-  PCAPIF_LINKEVENT_UNKNOWN,
-  PCAPIF_LINKEVENT_UP,
-  PCAPIF_LINKEVENT_DOWN
+enum pcapifh_link_event
+{
+    PCAPIF_LINKEVENT_UNKNOWN,
+    PCAPIF_LINKEVENT_UP,
+    PCAPIF_LINKEVENT_DOWN
 };
 
-struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name);
-enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state);
-void pcapifh_linkstate_close(struct pcapifh_linkstate* state);
 
+struct pcapifh_linkstate*
+pcapifh_linkstate_init(char* adapter_name);
 
-#ifdef __cplusplus
-}
-#endif
+enum pcapifh_link_event
+pcapifh_linkstate_get(struct pcapifh_linkstate* state);
 
-#endif /* LWIP_PCAPIF_HELPER_H */
+void
+pcapifh_linkstate_close(struct pcapifh_linkstate* state);
+
+//
+// END OF FILE
+//

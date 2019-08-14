@@ -5,9 +5,12 @@
 #include <pppcrypt.h>
 #include <lwip_status.h>
 #include <packet_buffer.h>
-
-constexpr auto MPPE_PAD = 4	/* MPPE growth per frame */;
-constexpr auto MPPE_MAX_KEY_LEN = 16	/* largest key length (128-bit) */;
+#include "lcp.h"
+constexpr auto MPPE_PAD = 4 /* MPPE growth per frame */;
+constexpr auto MPPE_MAX_KEY_LEN = 16 /* largest key length (128-bit) */;
+constexpr auto MPPE_CCOUNT_SPACE = 0x1000; /* The size of the ccount space */
+constexpr auto MPPE_OVERHEAD_LEN = 2; /* MPPE overhead/packet */
+constexpr auto SANITY_MAX = 1600; /* Max bogon factor we will tolerate */
 
 /* option bits for CcpOptions.mppe */
 enum MppeOptions
@@ -58,6 +61,44 @@ enum MppeBits
 
 /* Does not include H bit; used for least significant octet only. */
 constexpr auto MPPE_ALL_BITS = (MPPE_D_BIT|MPPE_L_BIT|MPPE_S_BIT|MPPE_M_BIT|MPPE_H_BIT);
+
+
+/* Shared MPPE padding between MSCHAP and MPPE */
+constexpr auto SHA1_PAD_SIZE = 40;
+
+static const uint8_t MPPE_SHA1_PAD1[SHA1_PAD_SIZE] = {
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t MPPE_SHA1_PAD2[SHA1_PAD_SIZE] = {
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
+};
+
+/*
+ * State for an MPPE (de)compressor.
+ */
+struct PppMppeState
+{
+    lwip_arc4_context arc4;
+    uint8_t master_key[MPPE_MAX_KEY_LEN];
+    uint8_t session_key[MPPE_MAX_KEY_LEN];
+    uint8_t keylen; /* key length in bytes */ /* NB: 128-bit == 16, 40-bit == 8!
+     * If we want to support 56-bit, the unit has to change to bits
+     */
+    uint8_t bits; /* MPPE control bits */
+    uint16_t ccount; /* 12-bit coherency count (seqno)  */
+    uint16_t sanity_errors; /* take down LCP if too many */
+    unsigned int stateful :1; /* stateful mode flag */
+    unsigned int discard :1; /* stateful mode packet loss flag */
+};
+
+
 
 /* Build a CI from mppe opts (see RFC 3078) */
 inline void mppe_opts_to_ci(const MppeOptions opts, uint8_t* ci)
@@ -117,49 +158,27 @@ inline uint8_t MPPE_CI_TO_OPTS(const uint8_t* ci, uint8_t opts)
     }
 }
 
-/* Shared MPPE padding between MSCHAP and MPPE */
-constexpr auto SHA1_PAD_SIZE = 40;
 
-static const uint8_t MPPE_SHA1_PAD1[SHA1_PAD_SIZE] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-static const uint8_t MPPE_SHA1_PAD2[SHA1_PAD_SIZE] = {
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
-};
-
-/*
- * State for an MPPE (de)compressor.
- */
-struct PppMppeState
+inline bool
+close_on_bad_mppe_state(PppPcb& ppp_pcb, PppMppeState& state)
 {
-    lwip_arc4_context arc4;
-    uint8_t master_key[MPPE_MAX_KEY_LEN];
-    uint8_t session_key[MPPE_MAX_KEY_LEN];
-    uint8_t keylen; /* key length in bytes */ /* NB: 128-bit == 16, 40-bit == 8!
-     * If we want to support 56-bit, the unit has to change to bits
-     */
-    uint8_t bits; /* MPPE control bits */
-    uint16_t ccount; /* 12-bit coherency count (seqno)  */
-    uint16_t sanity_errors; /* take down LCP if too many */
-    unsigned int stateful :1; /* stateful mode flag */
-    unsigned int discard :1; /* stateful mode packet loss flag */
-};
+    if (state.sanity_errors > SANITY_MAX) {
+        std::string msg = "too many MPPE errors";
+        return lcp_close(ppp_pcb, msg);
+    }
+    return true;
+}
 
 void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key);
 
-LwipStatus
+bool
 mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
 LwipStatus mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
-LwipStatus mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, void* pkt_buf);
+
+bool
+mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf);
 
 //
 // END OF FILE

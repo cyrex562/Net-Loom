@@ -132,6 +132,7 @@ struct NetworkInterface
     bool mld6;
     bool ip6_autoconfig_enabled;
     bool default_interface;
+    bool passive;
     std::string if_name;
     uint32_t if_num; /** Number of Router Solicitation messages that remain to be sent. */
     uint8_t rtr_solicit_count;
