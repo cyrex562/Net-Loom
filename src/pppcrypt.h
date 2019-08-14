@@ -31,23 +31,25 @@
  */
 #pragma once
 
-#include <ppp_opts.h>
-
 /* This header file is included in all PPP modules needing hashes and/or ciphers */
 
 /*
  * If included PolarSSL copy is not used, user is expected to include
  * external libraries in cc.h (which is included by arch.h).
  */
-#include <arch.h>
 
+#include <mbedtls/md4.h>
+#include <mbedtls/md5.h>
+#include <mbedtls/sha1.h>
+#include <mbedtls/des.h>
+#include <mbedtls/arc4.h>
 
 /*
  * Map hashes and ciphers functions to PolarSSL
  */
 
 
-#include <md4.h>
+
 #define lwip_md4_context md4_context
 #define lwip_md4_init(context)
 #define lwip_md4_starts md4_starts
@@ -55,7 +57,7 @@
 #define lwip_md4_finish md4_finish
 #define lwip_md4_free(context)
 
-#include <md5.h>
+
 #define lwip_md5_context md5_context
 #define lwip_md5_init(context)
 #define lwip_md5_starts md5_starts
@@ -63,7 +65,7 @@
 #define lwip_md5_finish md5_finish
 #define lwip_md5_free(context)
 
-#include <sha1.h>
+
 #define lwip_sha1_context Sha1Context
 #define lwip_sha1_init(context)
 #define lwip_sha1_starts sha1_starts
@@ -71,14 +73,14 @@
 #define lwip_sha1_finish sha1_finish
 #define lwip_sha1_free(context)
 
-#include <des.h>
+
 #define lwip_des_context des_context
 #define lwip_des_init(context)
 #define lwip_des_setkey_enc des_setkey_enc
 #define lwip_des_crypt_ecb des_crypt_ecb
 #define lwip_des_free(context)
 
-#include <arc4.h>
+
 #define lwip_arc4_context Arc4Context
 #define lwip_arc4_init(context)
 #define lwip_arc4_setup arc4_setup

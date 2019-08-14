@@ -579,12 +579,12 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
                 /// Cannot really happen, we only negotiate what we are able to do
             }
             /// Assume no PFC
-            if (pkt_buf.len < 2)
+            if (pkt_buf.data.size() < 2)
             {
                 return false;
             }
             /// Extract and hide protocol (do PFC decompression if necessary)
-            pl = static_cast<uint8_t*>(pkt_buf.payload);
+            auto pl = static_cast<uint8_t*>(pkt_buf.data.data());
             if (pl[0] & 0x01)
             {
                 protocol = pl[0];
@@ -610,7 +610,7 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         {
             if (ppp_pcb.vj_enabled && vj_uncompress_uncomp(pkt_buf, &ppp_pcb.vj_comp) >= 0)
             {
-                ip4_input(pkt_buf, ppp_pcb.netif);
+                ip4_input(pkt_buf, ppp_pcb.netif,);
                 return false;
             }
             const char* pname = protocol_name(protocol);

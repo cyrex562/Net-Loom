@@ -79,6 +79,7 @@ struct LwipInAddrStruct
     uint32_t _s_addr;
 };
 
+
 struct LwipIn6Addr
 {
     union

@@ -38,7 +38,7 @@ enum TcpFlags : uint8_t
     /* Valid TCP header flags */
 };
 
-constexpr auto TCP_FLAGS = 0x3fU;
+constexpr uint16_t TCP_FLAGS = 0x3fU;
 constexpr auto MAX_TCP_OPT_BYTES = 40; ///
 ///
 ///
@@ -61,23 +61,22 @@ tcph_flags(TcpHdr* phdr)
 ///
 ///
 inline void
-TCPH_HDRLEN_SET(TcpHdr* phdr, size_t len)
+TCPH_HDRLEN_SET(TcpHdr* phdr, const size_t len)
 {
     (phdr)->_hdrlen_rsvd_flags = lwip_htons(((len) << 12) | tcph_flags(phdr));
 }
 
 inline void
-TCPH_FLAGS_SET(TcpHdr* phdr, uint8_t flags)
+set_tcp_hdr_flags(TcpHdr* phdr, const uint8_t flags)
 {
     (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & pp_htons(~TCP_FLAGS)) |
         lwip_htons(flags));
 }
 
 inline void
-TCPH_HDRLEN_FLAGS_SET(TcpHdr* phdr, size_t len, uint8_t flags)
+TCPH_HDRLEN_FLAGS_SET(TcpHdr* phdr, const size_t len, const uint8_t flags)
 {
-    (phdr)->_hdrlen_rsvd_flags = (uint16_t)(lwip_htons((uint16_t)((len) << 12) | (flags))
-    );
+    (phdr)->_hdrlen_rsvd_flags = uint16_t(lwip_htons(uint16_t((len) << 12) | (flags)));
 }
 
 inline void

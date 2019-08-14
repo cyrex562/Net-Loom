@@ -7,8 +7,6 @@
 #include <lwip_status.h>
 #include <network_interface.h>
 #include <udp.h>
-
-#include <ppp_impl.h>
 #include <lcp.h>
 #include <ipcp.h>
 #include <pppcrypt.h>

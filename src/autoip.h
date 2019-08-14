@@ -46,7 +46,7 @@ bool autoip_network_changed(NetworkInterface* netif);
 bool autoip_supplied_address(const NetworkInterface* netif);
 
 /* for lwIP internal use by ip4.c */
-bool autoip_accept_packet(NetworkInterface* netif, const Ip4Addr* addr);
+bool autoip_accept_packet(NetworkInterface& netif, const Ip4Addr& addr);
 
 inline AutoipState
 netif_autoip_data(const NetworkInterface& netif)

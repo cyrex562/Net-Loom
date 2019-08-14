@@ -15,7 +15,7 @@
 #include <vector>
 #include "auto_ip_state.h"
 #include "mld6_group.h"
-
+#include "pcap_if_private.h"
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
 constexpr auto NETIF_CHECKSUM_GEN_TCP = 0x0004;
@@ -117,6 +117,7 @@ struct NetworkInterface
     Dhcp6Context dhcp6_ctx;
     AutoipState auto_ip_state;
     MldGroup mld_group;
+    PcapInterface pcap_if_private;
     std::vector<IgmpGroup> igmp_groups;
     std::string hostname;
     uint16_t checksum_flags;
@@ -138,8 +139,8 @@ struct NetworkInterface
     uint8_t rtr_solicit_count;
     uint64_t timestamp;
     uint16_t loop_cnt_current;
-    std::vector<PacketBuffer> rx_buffer;
-    std::vector<PacketBuffer> tx_buffer;
+    std::queue<PacketBuffer> rx_buffer;
+    std::queue<PacketBuffer> tx_buffer;
 };
 
 
@@ -279,6 +280,22 @@ inline bool is_netif_up(const NetworkInterface& netif)
 {
     return netif.up;
 }
+
+
+inline bool find_igmp_group(NetworkInterface& netif, Ip4AddrInfo& addr, IgmpGroup& found_igmp_group)
+{
+    for (auto& it : netif.igmp_groups)
+    {
+        if(is_ip4_addr_equal(it.group_address, addr.address))
+        {
+            found_igmp_group = it;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 
 /**

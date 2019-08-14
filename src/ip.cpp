@@ -96,7 +96,7 @@ ip_input(struct PacketBuffer *p, NetworkInterface*inp)
     if (get_ip_hdr_version(p->payload) == 6) {
       return recv_ip6_pkt(p, inp);
     }
-    return ip4_input(p, inp);
+    return ip4_input(p, inp,);
   }
   return ERR_VAL;
 }

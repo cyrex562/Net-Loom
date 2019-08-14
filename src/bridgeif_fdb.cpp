@@ -16,10 +16,10 @@ constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
  * ATTENTION: This is meant as an example only, in real-world use, you should
  * provide a better implementation :-)
  */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx)
+bool bridgeif_fdb_update_src(BridgeFdbEntry& fdb, MacAddress& src_addr, uint64_t port_idx)
 {
     int i;
-    const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
+    const auto fdb = static_cast<BridgeIfcFdb *>(fdb);
     for (i = 0; i < fdb->max_fdb_entries; i++)
     {
         auto e = &fdb->fdb[i];
@@ -124,25 +124,25 @@ void bridgeif_age_tmr(void* arg)
  * @ingroup bridgeif_fdb
  * Init our simple fdb list
  */
-BridgeIfcFdb* bridgeif_fdb_init(const uint16_t max_fdb_entries)
-{
-    const auto alloc_len_sizet = sizeof(BridgeIfcFdb) + (max_fdb_entries * sizeof(
-        BridgeIfDfDbEntry));
-    const auto alloc_len = size_t(alloc_len_sizet);
-    lwip_assert("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-    Logf(kBridgeIfcDebug,
-         "bridgeif_fdb_init: allocating %d bytes for private FDB data\n",
-         int(alloc_len));
-    const auto fdb = new BridgeIfcFdb;
-    if (fdb == nullptr)
-    {
-        return nullptr;
-    }
-    fdb->max_fdb_entries = max_fdb_entries;
-    fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
-    // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
-    return fdb;
-}
+// BridgeIfcFdb* bridgeif_fdb_init(const uint16_t max_fdb_entries)
+// {
+//     const auto alloc_len_sizet = sizeof(BridgeIfcFdb) + (max_fdb_entries * sizeof(
+//         BridgeIfDfDbEntry));
+//     const auto alloc_len = size_t(alloc_len_sizet);
+//     lwip_assert("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
+//     Logf(kBridgeIfcDebug,
+//          "bridgeif_fdb_init: allocating %d bytes for private FDB data\n",
+//          int(alloc_len));
+//     const auto fdb = new BridgeIfcFdb;
+//     if (fdb == nullptr)
+//     {
+//         return nullptr;
+//     }
+//     fdb->max_fdb_entries = max_fdb_entries;
+//     fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
+//     // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
+//     return fdb;
+// }
 
 //
 // END OF FILE

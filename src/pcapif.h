@@ -23,7 +23,13 @@ constexpr auto PCAPIF_LOOPBACKFILTER_NUM_TX_PACKETS = 128;
 
 // #define PCAPIF_NOTIFY_LINKSTATE(netif, linkfunc) sys_timeout(PCAPIF_LINKUP_DELAY, (sys_timeout_handler)linkfunc, netif)
 
+constexpr auto ETH_MIN_FRAME_LEN = 60U;
+constexpr auto ETH_MAX_FRAME_LEN = 1518U;
+constexpr auto ADAPTER_NAME_LEN = 128;
+constexpr auto ADAPTER_DESC_LEN = 128;
+constexpr auto PCAPIF_LOOPBACKFILTER_NUM_TX_PACKETS = 128;
 
+/* Packet Adapter informations */
 
 /* Define PCAPIF_RX_LOCK_LWIP and PCAPIF_RX_UNLOCK_LWIP if you need to lock the lwIP core
    before/after pbuf_alloc() or netif->input() are called on RX. */
@@ -58,11 +64,12 @@ struct PcapIfPrivate
 };
 
 
-struct pcapif_pbuf_custom
-{
-   // struct pbuf_custom pc;
-   struct PacketBuffer* p;
-};
+bool
+pcapif_recv(PcapInterface& pcap_if,
+            NetworkInterface
+            & netif,
+            const struct pcap_pkthdr* pkt_header,
+            const uint8_t* packet);
 
 
 LwipStatus
@@ -87,6 +94,5 @@ pcaipf_is_tx_packet(NetworkInterface& netif,
                     PcapIfPrivate& priv);
 
 //
+// END OF FILE
 //
-//
-

@@ -1,5 +1,4 @@
 #define NOMINMAX
-#include <ppp_impl.h>
 #include <chap_new.h>
 #include <chap_ms.h>
 #include <pppcrypt.h>

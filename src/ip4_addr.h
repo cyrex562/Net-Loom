@@ -316,17 +316,19 @@ is_ip4_addr_multicast(const Ip4Addr& addr1)
 constexpr auto IP4_ADDR_LINK_LOCAL_MASK_1 = 0xffff0000UL;
 constexpr auto IP4_ADDR_LINK_LOCAL_MASK_2 = 0xa9fe0000UL;
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip4_addr_link_local(const Ip4AddrInfo& addr1)
+is_ip4_addr_link_local(const Ip4Addr& addr1)
 {
-    return (addr1.address.addr & pp_htonl(IP4_ADDR_LINK_LOCAL_MASK_1)) == pp_htonl(
+    return (addr1.addr & pp_htonl(IP4_ADDR_LINK_LOCAL_MASK_1)) == pp_htonl(
         IP4_ADDR_LINK_LOCAL_MASK_2);
 }
 
-/// Get one byte from the 4-byte address
+/**
+ * Get one byte from the 4-byte address
+ */
 inline uint8_t
 get_ip4_addr_byte(const Ip4Addr& ipaddr, const size_t idx)
 {

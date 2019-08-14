@@ -150,9 +150,9 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
     uint16_t age_stable = 0;
     for (auto& it : entries)
     {
-        if (is_ip4_addr_equal(ipaddr.address, it.ip4_addr_info.address) && netif.if_name == it
+        if (is_ip4_addr_equal(ipaddr.address, it.ip4_addr_info.address) && netif.name == it
                                                                                      .netif
-                                                                                     .if_name
+                                                                                     .name
         )
         {
             found_index = i;
@@ -392,7 +392,7 @@ etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
     for (auto it = entries.begin(); it != entries.end(); ++it)
     {
 
-        if (it->netif.if_name == netif.if_name)
+        if (it->netif.name == netif.name)
         {
             entries.erase(it);
         }
@@ -409,6 +409,10 @@ etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
  * @param ipaddr points to the (network order) IP address index
  * @param eth_ret points to return pointer
  * @param ip_ret points to return pointer
+ * @param entries
+ * @param try_hard
+ * @param find_only
+ * @param static_entry
  * @return table index if found, -1 otherwise
  */
 LwipStatus
@@ -417,9 +421,9 @@ find_etharp_addr(NetworkInterface& netif,
                  MacAddress& eth_ret,
                  Ip4AddrInfo& ip_ret,
                  std::vector<EtharpEntry>& entries,
-                 bool try_hard,
-                 bool find_only,
-                 bool static_entry)
+                 const bool try_hard,
+                 const bool find_only,
+                 const bool static_entry)
 {
     size_t found_index = 0;
     if (etharp_find_entry(ipaddr,
@@ -432,8 +436,8 @@ find_etharp_addr(NetworkInterface& netif,
     {
         return STATUS_ERROR;
     }
-
-    if ((found_index >= 0) && (entries[found_index].state >= ETHARP_STATE_STABLE)) {
+    if ((found_index >= 0) && (entries[found_index].state >= ETHARP_STATE_STABLE))
+    {
         eth_ret = entries[found_index].mac_address;
         ip_ret = entries[found_index].ip4_addr_info;
         return STATUS_SUCCESS;
@@ -445,28 +449,28 @@ find_etharp_addr(NetworkInterface& netif,
 /**
  * Possibility to iterate over stable ARP table entries
  *
- * @param i entry number, 0 to ARP_TABLE_SIZE
+ * @param index entry number, 0 to ARP_TABLE_SIZE
  * @param ipaddr return value: IP address
  * @param netif return value: points to interface
  * @param eth_ret return value: ETH address
+ * @param entries
  * @return 1 on valid index, 0 otherwise
  */
-int
-etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, struct MacAddress** eth_ret)
+bool
+etharp_get_entry(size_t index,
+                 Ip4AddrInfo& ipaddr,
+                 NetworkInterface& netif,
+                 MacAddress& eth_ret,
+                 std::vector<EtharpEntry> entries)
 {
-    lwip_assert("ipaddr != NULL", ipaddr != nullptr);
-    lwip_assert("netif != NULL", netif != nullptr);
-    lwip_assert("eth_ret != NULL", eth_ret != nullptr);
-
-    if ((i < ARP_TABLE_SIZE) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
-        *ipaddr = &arp_table[i].ipaddr;
-        *netif = arp_table[i].netif;
-        *eth_ret = &arp_table[i].MacAddress;
-        return 1;
+    if ((index < ARP_TABLE_SIZE) && (entries[index].state >= ETHARP_STATE_STABLE))
+    {
+        ipaddr = entries[index].ip4_addr_info;
+        netif = entries[index].netif;
+        eth_ret = entries[index].mac_address;
+        return true;
     }
-    else {
-        return 0;
-    }
+    return false;
 }
 
 
@@ -477,123 +481,105 @@ etharp_get_entry(size_t i, Ip4Addr** ipaddr, struct NetworkInterface** netif, st
  * Should be called for incoming ARP packets. The PacketBuffer in the argument
  * is freed by this function.
  *
- * @param p The ARP packet that arrived on netif. Is freed by this function.
+ * @param pkt_buf The ARP packet that arrived on netif. Is freed by this function.
  * @param netif The lwIP network interface on which the ARP packet PacketBuffer arrived.
  *
  * @see free_pkt_buf()
  */
-void
-etharp_input(struct PacketBuffer* p, struct NetworkInterface* netif)
+LwipStatus
+recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif)
 {
     Ip4Addr sipaddr{};
     Ip4Addr dipaddr{};
     uint8_t for_us;
 
 
-    if (netif == nullptr) {
-        return;
-    }
 
-    auto hdr = reinterpret_cast<struct EtharpHdr *>(p->payload);
-
+    auto hdr = reinterpret_cast<struct EtharpHdr *>(pkt_buf->payload);
     /* RFC 826 "Packet Reception": */
-    if ((hdr->hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) ||
-        (hdr->hwlen != ETH_ADDR_LEN) ||
-        (hdr->protolen != sizeof(Ip4Addr)) ||
-        (hdr->proto != pp_htons(ETHTYPE_IP))) {
+    if ((hdr->hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) || (hdr->hwlen !=
+        ETH_ADDR_LEN) || (hdr->protolen != sizeof(Ip4Addr)) || (hdr->proto != pp_htons(
+        ETHTYPE_IP)))
+    {
         //    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
         //                ("etharp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%d/%d/%d/%d)\n",
         //                 hdr->hwtype, (uint16_t)hdr->hwlen, hdr->proto, (uint16_t)hdr->protolen));
         // ETHARP_STATS_INC(etharp.proterr);
         // ETHARP_STATS_INC(etharp.drop);
-        free_pkt_buf(p);
+        free_pkt_buf(pkt_buf);
         return;
-    }
-    // ETHARP_STATS_INC(etharp.recv);
-
+    } // ETHARP_STATS_INC(etharp.recv);
     /* We have to check if a host already has configured our random
      * created link local address and continuously check if there is
      * a host with this IP-address so we can detect collisions */
     autoip_arp_reply(netif, hdr);
-
-
     /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
-     * structure packing (not using structure copy which breaks strict-aliasing rules). */
+        * structure packing (not using structure copy which breaks strict-aliasing rules). */
     IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, &sipaddr);
     IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
-
     /* this interface is not configured? */
-    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
+    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif, , )))
+    {
         for_us = 0;
     }
-    else {
+    else
+    {
         /* ARP packet directed to us? */
-        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif,,)));
-    }
-
-    /* ARP message directed to us?
+        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif, , )));
+    } /* ARP message directed to us?
         -> add IP address in ARP cache; assume requester wants to talk to us,
            can result in directly sending the queued packets for this host.
        ARP message not directed to us?
         ->  update the source IP address in the cache, if present */
-    etharp_update_arp_entry(netif,
-                            &sipaddr,
-                            &(hdr->shwaddr),,,,);
-
-    /* now act on the message itself */
-
-    /* ARP request? */
-    if (hdr->opcode == pp_htons(ARP_REQUEST)) {
+    etharp_update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), , , , );
+    /* now act on the message itself */ /* ARP request? */
+    if (hdr->opcode == pp_htons(ARP_REQUEST))
+    {
         /* ARP request. If it asked for our address, we send out a
          * reply. In any case, we time-stamp any existing ARP entry,
          * and possibly send out an IP packet that was queued on it. */
-
         Logf(true, ("etharp_input: incoming ARP request\n"));
         /* ARP request for our address? */
-        if (for_us) {
+        if (for_us)
+        {
             /* send ARP response */
             send_raw_arp_pkt(netif,
                              (struct MacAddress *)netif->hwaddr,
                              &hdr->shwaddr,
                              (struct MacAddress *)netif->hwaddr,
-                             get_netif_ip4_addr(netif,,),
+                             get_netif_ip4_addr(netif, , ),
                              &hdr->shwaddr,
                              &sipaddr,
-                             ARP_REPLY);
-            /* we are not configured? */
+                             ARP_REPLY); /* we are not configured? */
         }
-        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif,,))) {
+        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif, , )))
+        {
             /* { for_us == 0 and netif->ip_addr.addr == 0 } */
             Logf(true, ("etharp_input: we are unconfigured, ARP request ignored.\n"));
             /* request was not directed to us */
         }
-        else {
+        else
+        {
             /* { for_us == 0 and netif->ip_addr.addr != 0 } */
             Logf(true, ("etharp_input: ARP request was not for us.\n"));
         }
-
     }
-    else if (hdr->opcode == pp_htons(ARP_REPLY)) {
-
+    else if (hdr->opcode == pp_htons(ARP_REPLY))
+    {
         /* ARP reply. We already updated the ARP cache earlier. */
         Logf(true, ("etharp_input: incoming ARP reply\n"));
-
         /* DHCP wants to know about ARP replies from any host with an
-         * IP address also offered to us by the DHCP server. We do not
-         * want to take a duplicate IP address on a single network.
-         * @todo How should we handle redundant (fail-over) interfaces? */
+                * IP address also offered to us by the DHCP server. We do not
+                * want to take a duplicate IP address on a single network.
+                * @todo How should we handle redundant (fail-over) interfaces? */
         dhcp_arp_reply(netif, &sipaddr);
-
-
     }
-    else {
-
+    else
+    {
         //      Logf(true | LWIP_DBG_TRACE, ("etharp_input: ARP unknown opcode type %"S16_F"\n", lwip_htons(hdr->opcode)));
         // ETHARP_STATS_INC(etharp.err);
-
-    }
-    /* free ARP packet */
-    free_pkt_buf(p);
+    } /* free ARP packet */
+    free_pkt_buf(pkt_buf);
 }
 
 

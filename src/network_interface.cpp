@@ -21,7 +21,7 @@ LwipStatus
 init_loop_netif(NetworkInterface& netif, const std::string& if_name)
 {
     // todo: when creating interface check if one with same name already exists.
-    netif.if_name = if_name;
+    netif.name = if_name;
     netif.netif_type = NETIF_TYPE_LOOPBACK;
     netif.igmp_allowed = true;
     return STATUS_SUCCESS;
@@ -144,7 +144,7 @@ remove_netif(NetworkInterface& netif, std::vector<NetworkInterface> interfaces)
     auto matching_index = -1;
     for (int i = 0; i < interfaces.size(); i++) {
         auto ifc = interfaces[i];
-        if (interfaces[i].if_name == netif.if_name) {
+        if (interfaces[i].name == netif.name) {
             matching_index = i;
             break;
         }
@@ -171,37 +171,48 @@ set_netif_default(NetworkInterface& netif, std::vector<NetworkInterface> interfa
 {
     // step 1: set whichever interface is currently the default to false;
     // step 2: set whichever interface was requested to the new default
-
     auto result = false;
     auto found = false;
-
     auto old_def_idx = 0;
     auto i = 0;
-
-    for (auto& interface : interfaces) {
-        if (interface.default_interface) {
+    for (auto& interface : interfaces) 
+    {
+        if
+        (interface.default_interface
+        )
+ {
             interface.default_interface = false;
             old_def_idx = i;
             break;
         }
-        i++;
+        i
+        ++;
     }
-
-    for (auto& interface : interfaces) {
-        if (interface.if_name == netif.if_name) {
+    for (auto& interface : interfaces) 
+    {
+        if
+        (interface
+        .
+        if_name
+        ==
+        netif
+        .
+        if_name
+        )
+ {
             interface.default_interface = true;
             found = true;
             break;
         }
     }
-
-    if (!found) {
+    if (!found)
+    {
         interfaces[old_def_idx].default_interface = true;
     }
-    else {
+    else
+    {
         result = true;
     }
-
     return result;
 }
 
@@ -393,7 +404,7 @@ netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& inte
 {
     auto result = -1;
     for (auto& it : interfaces) {
-        if (name == it.if_name) {
+        if (name == it.name) {
             result = it.if_num;
         }
     }

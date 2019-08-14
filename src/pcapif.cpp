@@ -144,7 +144,6 @@ get_adapter_index_from_addr(LwipInAddrStruct& netaddr)
 
 
 
-
 /// Get the index of an adapter by its GUID
 ///
 /// @param adapter_guid GUID of the adapter
@@ -183,27 +182,29 @@ get_adapter_index(const char* adapter_guid)
     return -1;
 }
 
-static pcap_t*
+pcap_t*
 pcapif_open_adapter(const char* adapter_name, char* errbuf)
 {
-    pcap_t* adapter;
-    // pcap_t* adapter = pcap_open_live(adapter_name,
-    //                                  /* name of the device */
-    //                                  65536,
-    //                                  /* portion of the packet to capture */
-    //                                  /* 65536 guarantees that the whole packet will be captured on all the link layers */
-    //                                  PCAP_OPENFLAG_PROMISCUOUS,
-    //                                  /* promiscuous mode */
-    //                                  /*-*/
-    //                                  1,
-    //                                  /* don't wait at all for lower latency */
-    //                                  errbuf); /* error buffer */
+    pcap_t* adapter = pcap_open_live(adapter_name,
+                                     /* name of the device */
+                                     65536,
+                                     /* portion of the packet to capture */
+                                     /* 65536 guarantees that the whole packet will be captured on all the link layers */
+                                     PCAP_OPENFLAG_PROMISCUOUS,
+                                     /* promiscuous mode */
+                                     /*-*/
+                                     1,
+                                     /* don't wait at all for lower latency */
+                                     errbuf); /* error buffer */
     return adapter;
-} /**
+}
+
+
+
+/**
  * Open a network adapter and set it up for packet input
  *
  * @param adapter_num the index of the adapter to use
- * @param arg argument to pass to input
  * @return an adapter handle on success, NULL on failure
  */
 static struct PcapIfPrivate*
@@ -211,7 +212,7 @@ pcapif_init_adapter(int adapter_num, uint8_t* arg)
 {
     int i;
     int number_of_adapters;
-    char errbuf[PCAP_ERRBUF_SIZE + 1];
+    char errbuf[PCAP_ERRBUF_SIZE + 1];  // NOLINT(cppcoreguidelines-avoid-c-arrays)
     pcap_if_t* alldevs;
     pcap_if_t* d;
     pcap_if_t* used_adapter = nullptr;
@@ -460,18 +461,18 @@ pcapif_low_level_init(NetworkInterface& netif, MacAddress& my_mac_addr, int adap
     netif.mac_address =
     memcpy(&netif.mac_address, my_mac_addr, ETH_ADDR_LEN);
     /* get the initial link state of the selected interface */
-    pa->last_link_event = pcapifh_linkstate_get(pa->link_state);
-    if (pa->last_link_event == PCAPIF_LINKEVENT_DOWN)
+    pcap_if_private.last_link_event = pcapifh_linkstate_get(pcap_if_private.link_state);
+    if (pcap_if_private.last_link_event == PCAPIF_LINKEVENT_DOWN)
     {
-        set_netif_link_down(netif,);
+        set_netif_link_down(netif, interfaces);
     }
     else
     {
-        set_netif_link_up(netif,);
+        set_netif_link_up(netif, interfaces);
     }
-    sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
-    pa->rx_run = 1;
-    pa->rx_running = 1;
+    // sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
+    pcap_if_private.rx_run = 1;
+    pcap_if_private.rx_running = 1;
     // sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0, );
     // Logf(true,
     //      ("pcapif: MacAddress %02X%02X%02X%02X%02X%02X\n", netif->hwaddr[0], netif->hwaddr[1]
@@ -539,8 +540,56 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
     } /* signal that packet should be sent */
     // if (pcap_sendpacket(pa->adapter, buf, tot_len) < 0)
     // {
-    //     return ERR_BUF;
+    //     /* no PacketBuffer chain, don't have to copy -> faster */
+    //     buf = &(pkt_buf.data)[ETH_PAD_SIZE];
     // }
+    // else
+    // {
+    //     /* PacketBuffer chain, copy into contiguous buffer */
+    //     if (pkt_buf.data.size() >= sizeof(buffer))
+    //     {
+    //         // LINK_STATS_INC(link.lenerr);
+    //         // LINK_STATS_INC(link.drop);
+    //         // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+    //         return ERR_BUF;
+    //     }
+    //     unsigned char* ptr = buffer;
+    //     for (struct PacketBuffer* q = pkt_buf; q != nullptr; q = q->next)
+    //     {
+    //         /* Send the data from the PacketBuffer to the interface, one PacketBuffer at a
+    //            time. The size of the data in each PacketBuffer is kept in the ->len
+    //            variable. */ /* send data from(q->payload, q->len); */
+    //         Logf(true,
+    //              "netif: send ptr %p q->payload %p q->len %i q->next %p\n",
+    //              ptr,
+    //              q->payload,
+    //              (int)q->len,
+    //              (void*)q->next);
+    //         if (q == pkt_buf)
+    //         {
+    //             memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
+    //             ptr += q->len - ETH_PAD_SIZE;
+    //         }
+    //         else
+    //         {
+    //             memcpy(ptr, q->payload, q->len);
+    //             ptr += q->len;
+    //         }
+    //     }
+    // }
+    // if (tot_len < ETH_MIN_FRAME_LEN)
+    // {
+    //     /* ensure minimal frame length */
+    //     memset(&buf[tot_len], 0, ETH_MIN_FRAME_LEN - tot_len);
+    //     tot_len = ETH_MIN_FRAME_LEN;
+    // }
+
+    /* signal that packet should be sent */
+    if (pcap_sendpacket(pcap_if.adapter, pkt_buf.data.data(), tot_len) < 0)
+    {
+        return false;
+    }
+
     if (is_netif_link_up(netif))
     {
         pcapif_add_tx_packet(pa, buf);
@@ -554,12 +603,18 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
     {
         /* unicast packet */
     }
-    return STATUS_SUCCESS;
-} /** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
+    return true;
+}
+
+
+/** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
  * packet from the interface into the PacketBuffer.
  */
-static struct PacketBuffer*
-pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packet_len)
+bool
+pcapif_low_level_read(NetworkInterface& netif,
+                      const uint8_t* packet,
+                      size_t packet_len,
+                      PacketBuffer& out_pbuf)
 {
     int length = packet_len;
     const struct MacAddress* dest = (const struct MacAddress*)packet;
@@ -625,41 +680,49 @@ pcapif_low_level_input(NetworkInterface* netif, const uint8_t* packet, int packe
     return p;
 }
 
-static void
-pcapif_rx_pbuf_free_custom(struct PacketBuffer* p)
-{
-    lwip_assert("NULL pointer", p != nullptr);
-    struct pcapif_pbuf_custom* ppc = (struct pcapif_pbuf_custom*)p;
-    lwip_assert("NULL pointer", ppc->p != nullptr);
-    free_pkt_buf(ppc->p);
-    ppc->p = nullptr;
-    delete p;
-}
+// static void
+// pcapif_rx_pbuf_free_custom(struct PacketBuffer* p)
+// {
+//     lwip_assert("NULL pointer", p != nullptr);
+//     struct PcapIfPbufCustom* ppc = (struct PcapIfPbufCustom*)p;
+//
+//     free_pkt_buf(ppc->p);
+//     ppc->p = nullptr;
+//     delete p;
+// }
 
-static struct PacketBuffer*
-pcapif_rx_ref(struct PacketBuffer* p)
-{
-    lwip_assert("NULL pointer", p != nullptr);
-    lwip_assert("chained PacketBuffer not supported here", p->next == nullptr);
-    // ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
-    struct pcapif_pbuf_custom* ppc = new pcapif_pbuf_custom;
-    lwip_assert("out of memory for RX", ppc != nullptr);
-    ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
-    ppc->p = p;
-    // struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
-    //                                              p->tot_len,
-    //                                              PBUF_REF,
-    //                                              &ppc->pc,
-    //                                              p->payload,
-    //                                              p->tot_len);
-    lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
-    return q;
-} /** pcapif_input: This function is called when a packet is ready to be read
+/**
+ *
+ */
+// PacketBuffer
+// pcapif_rx_ref(PacketBuffer& pbuf)
+// {
+//     // ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
+//     struct PcapIfPbufCustom* ppc = new PcapIfPbufCustom;
+//     lwip_assert("out of memory for RX", ppc != nullptr);
+//     ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
+//     ppc->p = pbuf;
+//     // struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
+//     //                                              p->tot_len,
+//     //                                              PBUF_REF,
+//     //                                              &ppc->pc,
+//     //                                              p->payload,
+//     //                                              p->tot_len);
+//     lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
+//     return q;
+// }
+
+
+/**
+ * pcapif_input: This function is called when a packet is ready to be read
  * from the interface. It uses the function low_level_input() that should
  * handle the actual reception of bytes from the network interface.
  */
-static void
-pcapif_input(uint8_t* user, const struct pcap_pkthdr* pkt_header, const uint8_t* packet)
+bool
+pcapif_recv(PcapInterface& pcap_if,
+            NetworkInterface& netif,
+            const struct pcap_pkthdr* pkt_header,
+            const uint8_t* packet)
 {
     struct PcapIfPrivate* pa = (struct PcapIfPrivate*)user;
     // int packet_len = pkt_header->caplen;
@@ -670,22 +733,14 @@ pcapif_input(uint8_t* user, const struct pcap_pkthdr* pkt_header, const uint8_t*
     /* if no packet could be read, silently ignore this */
     if (p != nullptr)
     {
-#if PCAPIF_RX_REF
-    p = pcapif_rx_ref(p);
-#endif
-        /* pass all packets to ethernet_input, which decides what packets it supports */
-        if (netif->input(p, netif) != STATUS_SUCCESS)
-        {
-            Logf(true, ("ethernetif_input: IP input error\n"));
-            free_pkt_buf(p);
-        }
+        return false;
     }
     // PCAPIF_RX_UNLOCK_LWIP();
 } /**
  * pcapif_init(): initialization function, pass to netif_add().
  */
-LwipStatus
-pcapif_init(NetworkInterface* netif)
+bool
+pcapif_init(NetworkInterface& netif, std::string& name, std::vector<NetworkInterface>& interfaces)
 {
     static int ethernetif_index;
     sys_prot_t lev;
