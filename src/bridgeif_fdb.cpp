@@ -16,10 +16,10 @@ constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
  * ATTENTION: This is meant as an example only, in real-world use, you should
  * provide a better implementation :-)
  */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx)
+bool bridgeif_fdb_update_src(BridgeFdbEntry& fdb, MacAddress& src_addr, uint64_t port_idx)
 {
     int i;
-    const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
+    const auto fdb = static_cast<BridgeIfcFdb *>(fdb);
     for (i = 0; i < fdb->max_fdb_entries; i++)
     {
         auto e = &fdb->fdb[i];

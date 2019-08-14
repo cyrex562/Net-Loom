@@ -82,7 +82,7 @@ bool
 remove_bridgeif_fdb(BridgeInterface& bridge_ifc, const MacAddress& addr);
 
 /* FDB interface, can be replaced by own implementation */
-bool bridgeif_fdb_update_src(void* fdb_ptr, struct MacAddress* src_addr, uint8_t port_idx);
+bool bridgeif_fdb_update_src(BridgeFdbEntry& fdb, MacAddress& src_addr, uint64_t port_idx);
 BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeInterface& fdb_ptr, MacAddress& dst_addr);
 
 // BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);

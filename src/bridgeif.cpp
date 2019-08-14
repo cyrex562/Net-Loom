@@ -115,74 +115,63 @@ bridgeif_is_local_mac(BridgeInterface& br, MacAddress& addr)
  * Output helper function
  */
 static bool
-bridgeif_send_to_port(BridgeInterface& br_ifc, PacketBuffer& pkt_buf, uint32_t dstport_idx)
+bridgeif_send_to_port(BridgeInterface& br_ifc,
+                      PacketBuffer& pkt_buf,
+                      uint32_t dstport_idx)
 {
-    if (dstport_idx < kBridgeIfcMaxPorts)
+    /* possibly an external port */
+    if (dstport_idx < br_ifc.ports.size())
     {
-        /* possibly an external port */
-        if (dstport_idx < br_ifc->max_ports)
+        auto port_netif = br_ifc.ports[dstport_idx].port_netif;
+        /* prevent sending out to rx port */
+        if (get_and_inc_netif_num(port_netif) != pkt_buf.input_netif_idx)
         {
-            auto portif = br_ifc->ports[dstport_idx].port_netif;
-            if ((portif != nullptr) && (portif->linkoutput != nullptr))
+            if (is_netif_link_up(port_netif))
             {
-                /* prevent sending out to rx port */
-                if (get_and_inc_netif_num(portif) != pkt_buf->input_netif_idx)
-                {
-                    if (is_netif_link_up(portif))
-                    {
-                        Logf(kBridgeIfcFwDebug,
-                             "br -> flood(%p:%d) -> %d\n",
-                             reinterpret_cast<uint8_t *>(pkt_buf),
-                             pkt_buf->input_netif_idx,
-                             get_and_inc_netif_num(portif));
-                        return portif->linkoutput(portif, pkt_buf);
-                    }
-                }
+                // todo: call appropriate link output
+                // return port_netif.linkoutput(port_netif, pkt_buf);
+                return true;
             }
         }
     }
-    else
-    {
-        lwip_assert("invalid port index", dstport_idx == kBridgeIfcMaxPorts);
-    }
-    return STATUS_SUCCESS;
+    return false;
 }
 
-/** Helper function to pass a PacketBuffer to all ports marked in 'dstports'
+/**
+ * Helper function to pass a PacketBuffer to all ports marked in 'dstports'
  */
-static LwipStatus bridgeif_send_to_ports(BridgeInterface* br,
-                                        struct PacketBuffer* p,
-                                        BridgeIfcPortMask dstports)
+static bool
+bridgeif_send_to_ports(BridgeInterface& br_ifc,
+                       PacketBuffer& pkt_buf,
+                       const BridgeIfcPortMask dstports)
 {
-    LwipStatus ret_err = STATUS_SUCCESS;
+    // todo: redo logic
+    // LwipStatus ret_err = STATUS_SUCCESS;
     BridgeIfcPortMask mask = 1;
     for (uint8_t i = 0; i < kBridgeIfcMaxPorts; i++, mask = static_cast<BridgeIfcPortMask>
          (mask << 1))
     {
         if (dstports & mask)
         {
-            const auto err = bridgeif_send_to_port(br, p, i);
-            if (err != STATUS_SUCCESS)
-            {
-                ret_err = err;
-            }
+            return bridgeif_send_to_port(br_ifc, pkt_buf, i);
         }
-        return ret_err;
+        return false;
     }
-    return ret_err;
+    return false;
 }
 
 /** Output function of the application port of the bridge (the one with an ip address).
  * The forwarding port(s) where this PacketBuffer is sent on is/are automatically selected
  * from the FDB.
  */
-LwipStatus bridgeif_output(NetworkInterface* netif, struct PacketBuffer* p)
+bool
+bridgeif_output(NetworkInterface& netif, PacketBuffer& pkt_buf, BridgeInterface& bridge_ifc)
 {
-    const auto br = static_cast<BridgeInterface *>(netif->state);
-    const auto dst = reinterpret_cast<MacAddress *>(p->payload);
-    const auto dstports = bridgeif_find_dst_ports(br, dst);
-    const auto err = bridgeif_send_to_ports(br, p, dstports);
-    if (p->payload[0] & 1)
+    // const auto br = static_cast<BridgeInterface *>(netif.state);
+    const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
+    const auto dstports = bridgeif_find_dst_ports(bridge_ifc, eth_hdr->dest);
+    const auto err = bridgeif_send_to_ports(bridge_ifc, pkt_buf, dstports);
+    if (eth_hdr->dest.addr[0] & 1)
     {
         /* broadcast or multicast packet*/
     }
@@ -193,53 +182,45 @@ LwipStatus bridgeif_output(NetworkInterface* netif, struct PacketBuffer* p)
     return err;
 }
 
+
 /** The actual bridge input function. Port netif's input is changed to call
  * here. This function decides where the frame is forwarded.
  */
-static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif)
+static bool
+bridgeif_input(PacketBuffer& pkt_buf,
+               NetworkInterface& netif,
+               BridgeIfcPort& br_ifc_port,
+               BridgeInterface& br_ifc)
 {
     BridgeIfcPortMask dstports;
-    if (p == nullptr || netif == nullptr)
-    {
-        return ERR_VAL;
-    }
-    const auto port = static_cast<BridgeIfcPort *>(netif_get_client_data(
-        netif,
-        bridgeif_netif_client_id));
-    lwip_assert("port data not set", port != nullptr);
-    if (port == nullptr || port->bridge == nullptr)
-    {
-        return ERR_VAL;
-    }
-    auto* br = reinterpret_cast<BridgeInterface *>(port->bridge);
+
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
-    p->input_netif_idx = rx_idx;
-    auto dst = reinterpret_cast<struct MacAddress *>(p->payload);
-    auto src = reinterpret_cast<struct MacAddress *>(static_cast<uint8_t *>(p->payload) +
-        sizeof(struct MacAddress));
-    if ((src->addr[0] & 1) == 0)
+    pkt_buf.input_netif_idx = rx_idx;
+    auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.data.data());
+
+    if ((eth_hdr->src.addr[0] & 1) == 0)
     {
         /* update src for all non-group addresses */
         bridgeif_fdb_update_src(br->fdbd, src, port->port_num);
     }
-    if (dst->addr[0] & 1)
+    if (eth_hdr->dest.addr[0] & 1)
     {
         /* group address -> flood + cpu? */
         dstports = bridgeif_find_dst_ports(br, dst);
-        bridgeif_send_to_ports(br, p, dstports);
+        bridgeif_send_to_ports(br, pkt_buf, dstports);
         if (dstports & (1 << kBridgeIfcMaxPorts))
         {
             /* we pass the reference to ->input or have to free it */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", p);
-            if (br->netif->input(p, br->netif) != STATUS_SUCCESS)
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", pkt_buf);
+            if (br->netif->input(pkt_buf, br->netif) != STATUS_SUCCESS)
             {
-                free_pkt_buf(p);
+                free_pkt_buf(pkt_buf);
             }
         }
         else
         {
             /* all references done */
-            free_pkt_buf(p);
+            free_pkt_buf(pkt_buf);
         } /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
         return STATUS_SUCCESS;
     }
@@ -249,14 +230,14 @@ static LwipStatus bridgeif_input(struct PacketBuffer* p, NetworkInterface* netif
         if (bridgeif_is_local_mac(br, dst))
         {
             /* yes, send to cpu port only */
-            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", p);
-            return br->netif->input(p, br->netif);
+            Logf(kBridgeIfcFwDebug, "br -> input(%p)\n", pkt_buf);
+            return br->netif->input(pkt_buf, br->netif);
         } /* get dst port */
         dstports = bridgeif_find_dst_ports(br, dst);
-        bridgeif_send_to_ports(br, p, dstports);
+        bridgeif_send_to_ports(br, pkt_buf, dstports);
         /* no need to send to cpu, flooding is for external ports only */
         /* by  this, we consumed the PacketBuffer */
-        free_pkt_buf(p);
+        free_pkt_buf(pkt_buf);
         /* always return ERR_OK here to prevent the caller freeing the PacketBuffer */
         return STATUS_SUCCESS;
     }
