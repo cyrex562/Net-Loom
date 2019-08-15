@@ -1,22 +1,24 @@
 #pragma once
-#include <cstdint>
+#include <xstring>
 
-
-#ifdef _MSC_VER
+#ifndef WIN32
 struct pcapifh_linkstate
 {
     uint8_t empty;
 };
 #else
 
-      struct pcapifh_linkstate {
-  LPADAPTER        lpAdapter;
-  PPACKET_OID_DATA ppacket_oid_data;
+#include <Packet32.h>
+
+struct pcapifh_linkstate
+{
+    LPADAPTER lpAdapter;
+    PPACKET_OID_DATA ppacket_oid_data;
 };
 #endif
 
 
-enum pcapifh_link_event
+enum PcapIfHlpLinkEvent
 {
     PCAPIF_LINKEVENT_UNKNOWN,
     PCAPIF_LINKEVENT_UP,
@@ -24,14 +26,14 @@ enum pcapifh_link_event
 };
 
 
-struct pcapifh_linkstate*
-pcapifh_linkstate_init(char* adapter_name);
+std::tuple<bool, pcapifh_linkstate>
+pcapifh_linkstate_init(std::string& adapter_name);
 
-enum pcapifh_link_event
-pcapifh_linkstate_get(struct pcapifh_linkstate* state);
+PcapIfHlpLinkEvent
+pcapifh_linkstate_get(pcapifh_linkstate& state);
 
 void
-pcapifh_linkstate_close(struct pcapifh_linkstate* state);
+pcapifh_linkstate_close(pcapifh_linkstate& state);
 
 //
 // END OF FILE

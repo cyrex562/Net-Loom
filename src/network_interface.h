@@ -393,7 +393,8 @@ inline uint32_t get_netif_mtu6(NetworkInterface& netif)
 /**
  * Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 (internal index is 0..254)
  */
-inline uint8_t get_and_inc_netif_num(const NetworkInterface& netif)
+inline uint8_t
+get_and_inc_netif_num(const NetworkInterface& netif)
 {
     return netif.if_num + 1;
 }
@@ -402,7 +403,8 @@ inline uint8_t get_and_inc_netif_num(const NetworkInterface& netif)
 /**
  *
  */
-inline bool rest_ip6_addr_zone(const Ip6AddrInfo& addr_info, const NetworkInterface& netif)
+inline bool
+rest_ip6_addr_zone(const Ip6AddrInfo& addr_info, const NetworkInterface& netif)
 {
     return cmp_ip6_addr_zone(addr_info, Ip6AddrZone(get_and_inc_netif_num(netif)));
 }

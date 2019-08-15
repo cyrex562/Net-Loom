@@ -81,7 +81,7 @@ bridgeif_find_dst_ports(BridgeInterface& bridge_ifc, MacAddress& dst_addr)
         }
     }
 
-    if (dst_addr.addr[0] & 1)
+    if (dst_addr.bytes[0] & 1)
     {
         return BRIDGE_FLOOD;
     }
@@ -160,7 +160,8 @@ bridgeif_send_to_ports(BridgeInterface& br_ifc,
     return false;
 }
 
-/** Output function of the application port of the bridge (the one with an ip address).
+/**
+ * Output function of the application port of the bridge (the one with an ip address).
  * The forwarding port(s) where this PacketBuffer is sent on is/are automatically selected
  * from the FDB.
  */
@@ -171,7 +172,7 @@ bridgeif_output(NetworkInterface& netif, PacketBuffer& pkt_buf, BridgeInterface&
     const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
     const auto dstports = bridgeif_find_dst_ports(bridge_ifc, eth_hdr->dest);
     const auto err = bridgeif_send_to_ports(bridge_ifc, pkt_buf, dstports);
-    if (eth_hdr->dest.addr[0] & 1)
+    if (eth_hdr->dest.bytes[0] & 1)
     {
         /* broadcast or multicast packet*/
     }
@@ -183,8 +184,9 @@ bridgeif_output(NetworkInterface& netif, PacketBuffer& pkt_buf, BridgeInterface&
 }
 
 
-/** The actual bridge input function. Port netif's input is changed to call
- * here. This function decides where the frame is forwarded.
+/**
+ * The actual bridge input function. Port netif's input is changed to call here. This
+ * function decides where the frame is forwarded.
  */
 static bool
 bridgeif_input(PacketBuffer& pkt_buf,
@@ -197,13 +199,14 @@ bridgeif_input(PacketBuffer& pkt_buf,
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
     pkt_buf.input_netif_idx = rx_idx;
     auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.data.data());
+    MacAddress src = eth_hdr->src;
 
-    if ((eth_hdr->src.addr[0] & 1) == 0)
+    if ((src.bytes[0] & 1) == 0)
     {
         /* update src for all non-group addresses */
-        bridgeif_fdb_update_src(br->fdbd, src, port->port_num);
+        bridgeif_fdb_update_src(br_ifc.fdbs[0], src, port->port_num);
     }
-    if (eth_hdr->dest.addr[0] & 1)
+    if (eth_hdr->dest.bytes[0] & 1)
     {
         /* group address -> flood + cpu? */
         dstports = bridgeif_find_dst_ports(br, dst);

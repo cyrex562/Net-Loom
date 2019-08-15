@@ -492,7 +492,7 @@ pppoe_data_input(NetworkInterface*netif, struct PacketBuffer *pb)
   uint8_t shost[6];
 
 
-  memcpy(shost, ((struct EthHdr *)pb->payload)->src.addr, sizeof(shost));
+  memcpy(shost, ((struct EthHdr *)pb->payload)->src.bytes, sizeof(shost));
 
   // if (pbuf_remove_header(pb, sizeof(struct EthHdr)) != 0) {
   //   /* bail out */
@@ -562,8 +562,8 @@ pppoe_output(PppoeSoftc& sc, PacketBuffer& pb)
         ether_type = ETHTYPE_PPPOE;
     }
     ethhdr->type = lwip_htons(ether_type);
-    memcpy(&ethhdr->dest.addr, &sc.sc_dest.addr, sizeof(ethhdr->dest.addr));
-    memcpy(&ethhdr->src.addr, &sc.sc_ethif.mac_address, sizeof(ethhdr->src.addr));
+    memcpy(&ethhdr->dest.bytes, &sc.sc_dest.bytes, sizeof(ethhdr->dest.bytes));
+    memcpy(&ethhdr->src.bytes, &sc.sc_ethif.mac_address, sizeof(ethhdr->src.bytes));
     auto res = false;
     // todo: transmit using link specific to netif
     // LwipStatus res = sc.sc_ethif->linkoutput(sc->sc_ethif, pb);
@@ -639,7 +639,7 @@ pppoe_timeout(void* arg)
     case PPPOE_STATE_PADR_SENT:
       sc->sc_padr_retried++;
       if (sc->sc_padr_retried >= PPPOE_DISC_MAXPADR) {
-        memcpy(&sc->sc_dest, ETH_BCAST_ADDR.addr, sizeof(sc->sc_dest));
+        memcpy(&sc->sc_dest, ETH_BCAST_ADDR.bytes, sizeof(sc->sc_dest));
         sc->sc_state = PPPOE_STATE_PADI_SENT;
         sc->sc_padr_retried = 0;
         if ((err = pppoe_send_padi(sc)) != 0) {
@@ -668,7 +668,7 @@ pppoe_connect(PppPcb *ppp, uint8_t *ctx)
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
   /* changed to real address later */
-  memcpy(&sc->sc_dest, ETH_BCAST_ADDR.addr, sizeof(sc->sc_dest));
+  memcpy(&sc->sc_dest, ETH_BCAST_ADDR.bytes, sizeof(sc->sc_dest));
 
   /* wait PADI if IFF_PASSIVE */
   // if ((sc->sc_sppp.pp_if.if_flags & IFF_PASSIVE)) {
@@ -789,8 +789,8 @@ pppoe_send_padt(NetworkInterface*outgoing_if, u_int session, const uint8_t *dest
   // }
   EthHdr* eth_hdr = (EthHdr *)pb->payload;
   eth_hdr->type = pp_htons(ETHTYPE_PPPOEDISC);
-  memcpy(&eth_hdr->dest.addr, dest, sizeof(eth_hdr->dest.addr));
-  memcpy(&eth_hdr->src.addr, &outgoing_if->hwaddr, sizeof(eth_hdr->src.addr));
+  memcpy(&eth_hdr->dest.bytes, dest, sizeof(eth_hdr->dest.bytes));
+  memcpy(&eth_hdr->src.bytes, &outgoing_if->hwaddr, sizeof(eth_hdr->src.bytes));
 
   uint8_t* p = (uint8_t*)(eth_hdr + 1);
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);

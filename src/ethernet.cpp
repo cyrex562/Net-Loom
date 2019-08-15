@@ -85,17 +85,17 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
     // netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
 
 
-    if (ethhdr->dest.addr[0] & 1) {
+    if (ethhdr->dest.bytes[0] & 1) {
         /* this might be a multicast or broadcast packet */
-        if (ethhdr->dest.addr[0] == LNK_LYR_MCAST_ADDR_OUI[0]) {
-            if ((ethhdr->dest.addr[1] == LNK_LYR_MCAST_ADDR_OUI[1]) &&
-                (ethhdr->dest.addr[2] == LNK_LYR_MCAST_ADDR_OUI[2])) {
+        if (ethhdr->dest.bytes[0] == LNK_LYR_MCAST_ADDR_OUI[0]) {
+            if ((ethhdr->dest.bytes[1] == LNK_LYR_MCAST_ADDR_OUI[1]) &&
+                (ethhdr->dest.bytes[2] == LNK_LYR_MCAST_ADDR_OUI[2])) {
                 /* mark the PacketBuffer as link-layer multicast */
                 // pkt_buf.ll_multicast = true;
             }
         }
-        else if ((ethhdr->dest.addr[0] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[0]) &&
-            (ethhdr->dest.addr[1] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[1])) {
+        else if ((ethhdr->dest.bytes[0] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[0]) &&
+            (ethhdr->dest.bytes[1] == LNK_LYR_IP6_MCAST_ADDR_PREFIX[1])) {
             /* mark the PacketBuffer as link-layer multicast */
             // pkt_buf.ll_multicast = true;
         }

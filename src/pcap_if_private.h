@@ -4,13 +4,6 @@
 #include <queue>
 #include <pcap.h>
 
-struct PcapIfPendingPacket
-{
-    // struct PcapIfPendingPacket* next;
-    size_t len;
-    std::vector<uint8_t> data;
-};
-
 
 struct PcapInterface
 {
@@ -22,7 +15,7 @@ struct PcapInterface
     volatile int rx_run;
     volatile int rx_running;
     struct pcapifh_linkstate* link_state;
-    enum pcapifh_link_event last_link_event;
+    enum PcapIfHlpLinkEvent last_link_event;
     // std::vector<PcapIfPendingPacket> packets;
     // struct PcapIfPendingPacket* tx_packets;
     // struct PcapIfPendingPacket* free_packets;

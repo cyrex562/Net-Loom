@@ -7,73 +7,80 @@
 #include <arch.h>
 #include <cstdlib>
 #include <cstdio>
+#include <string>
 
 
 #ifdef WIN32
 
 #define WIN32_LEAN_AND_MEAN
-
-#ifdef _MSC_VER
-#pragma warning( push, 3 )
-#endif
 #define NOMINMAX
-// #include <windows.h>
-// #include <packet32.h>
-// #include <ntddndis.h>
-#ifdef _MSC_VER
-#pragma warning ( pop )
-#endif
+#include <Windows.h>
+#include <ntddndis.h>
 
 
+/**
+ *
+ */
+std::tuple<bool, pcapifh_linkstate>
+pcapifh_linkstate_init(std::string& adapter_name)
+{
+    pcapifh_linkstate state{};
+    state.ppacket_oid_data = PPACKET_OID_DATA(
+        malloc(sizeof(PACKET_OID_DATA) + sizeof(NDIS_MEDIA_STATE)));
+    if (state.ppacket_oid_data == nullptr)
+    {
+        return std::make_tuple(false, state);
+    }
+    state.lpAdapter = PacketOpenAdapter(PCHAR(adapter_name.c_str()));
+    if ((state.lpAdapter == nullptr) || (state.lpAdapter->hFile == INVALID_HANDLE_VALUE))
+    {
+        /* failed to open adapter */
+        return std::make_tuple(false, state);
+    }
+    return std::make_tuple(true, state);
+}
 
-// struct pcapifh_linkstate* pcapifh_linkstate_init(char *adapter_name)
-// {
-//   struct pcapifh_linkstate* state = (struct pcapifh_linkstate*)malloc(sizeof(struct pcapifh_linkstate));
-//   if (state != nullptr) {
-//     memset(state, 0, sizeof(struct pcapifh_linkstate));
-//     state->ppacket_oid_data = (PPACKET_OID_DATA)malloc(sizeof(PACKET_OID_DATA) + sizeof(NDIS_MEDIA_STATE));
-//     if (state->ppacket_oid_data == nullptr) {
-//       free(state);
-//       state = nullptr;
-//     } else {
-//       state->lpAdapter = PacketOpenAdapter((char*)adapter_name);
-//       if ((state->lpAdapter == nullptr) || (state->lpAdapter->hFile == INVALID_HANDLE_VALUE)) {
-//         /* failed to open adapter */
-//         free(state);
-//         state = nullptr;
-//       }
-//     }
-//   }
-//   return state;
-// }
 
-// enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state)
-// {
-//   enum pcapifh_link_event ret = PCAPIF_LINKEVENT_UNKNOWN;
-//   if (state != nullptr) {
-//     state->ppacket_oid_data->Oid    = OID_GEN_MEDIA_CONNECT_STATUS;
-//     state->ppacket_oid_data->Length = sizeof(NDIS_MEDIA_STATE);
-//     if (PacketRequest(state->lpAdapter, FALSE, state->ppacket_oid_data)) {
-//       NDIS_MEDIA_STATE fNdisMediaState;
-//       fNdisMediaState = (*((PNDIS_MEDIA_STATE)(state->ppacket_oid_data->Data)));
-//       ret = ((fNdisMediaState == NdisMediaStateConnected) ? PCAPIF_LINKEVENT_UP : PCAPIF_LINKEVENT_DOWN);
-//     }
-//   }
-//   return ret;
-// }
+/**
+ *
+ */
+PcapIfHlpLinkEvent
+pcapifh_linkstate_get(pcapifh_linkstate& state)
+{
+    auto ret = PCAPIF_LINKEVENT_UNKNOWN;
+    state.ppacket_oid_data->Oid = OID_GEN_MEDIA_CONNECT_STATUS;
+    state.ppacket_oid_data->Length = sizeof(NDIS_MEDIA_STATE);
+    if (PacketRequest(state.lpAdapter, FALSE, state.ppacket_oid_data) != 0U)
+    {
+        const auto ndis_media_state = (*PNDIS_MEDIA_STATE(state.ppacket_oid_data->Data));
+        if (ndis_media_state == NdisMediaStateConnected)
+        {
+            ret = PCAPIF_LINKEVENT_UP;
+        }
+        else
+        {
+            ret = PCAPIF_LINKEVENT_DOWN;
+        }
+    }
+    return ret;
+}
 
-// void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
-// {
-//   if (state != nullptr) {
-//     if (state->lpAdapter != nullptr) {
-//       PacketCloseAdapter(state->lpAdapter);
-//     }
-//     if (state->ppacket_oid_data != nullptr) {
-//       free(state->ppacket_oid_data);
-//     }
-//     free(state);
-//   }
-// }
+
+/**
+ *
+ */
+void
+pcapifh_linkstate_close(pcapifh_linkstate& state)
+{
+    if (state.lpAdapter != nullptr)
+    {
+        PacketCloseAdapter(state.lpAdapter);
+    }
+    if (state.ppacket_oid_data != nullptr)
+    {
+        free(state.ppacket_oid_data);
+    }
+}
 
 #else /* WIN32 */
 

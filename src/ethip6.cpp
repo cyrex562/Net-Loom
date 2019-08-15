@@ -79,12 +79,12 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     if (is_ip6_addr_mcast(ip6_addr))
     {
         // Hash IP multicast address to MAC address
-        dest.addr[0] = 0x33;
-        dest.addr[1] = 0x33;
-        dest.addr[2] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[0];
-        dest.addr[3] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[1];
-        dest.addr[4] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[2];
-        dest.addr[5] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[3];
+        dest.bytes[0] = 0x33;
+        dest.bytes[1] = 0x33;
+        dest.bytes[2] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[0];
+        dest.bytes[3] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[1];
+        dest.bytes[4] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[2];
+        dest.bytes[5] = reinterpret_cast<const uint8_t *>(ip6_addr.word[3])[3];
 
 
         const auto i = 0;
@@ -106,7 +106,7 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     {
         return STATUS_SUCCESS;
     } /* Send out the packet using the returned hardware address. */
-    memcpy(dest.addr, hwaddr, 6);
+    memcpy(dest.bytes, hwaddr, 6);
     return send_ethernet_pkt(net_ifc,
                            pkt_buf,
                            reinterpret_cast<const struct MacAddress*>(net_ifc->hwaddr),

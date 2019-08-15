@@ -654,12 +654,12 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     }
     else if (is_ip4_addr_multicast(ipaddr)) {
         /* Hash IP multicast address to MAC address.*/
-        mcastaddr.addr[0] = LNK_LYR_MCAST_ADDR_OUI[0];
-        mcastaddr.addr[1] = LNK_LYR_MCAST_ADDR_OUI[1];
-        mcastaddr.addr[2] = LNK_LYR_MCAST_ADDR_OUI[2];
-        mcastaddr.addr[3] = ip4_addr2(ipaddr) & 0x7f;
-        mcastaddr.addr[4] = ip4_addr3(ipaddr);
-        mcastaddr.addr[5] = ip4_addr4(ipaddr);
+        mcastaddr.bytes[0] = LNK_LYR_MCAST_ADDR_OUI[0];
+        mcastaddr.bytes[1] = LNK_LYR_MCAST_ADDR_OUI[1];
+        mcastaddr.bytes[2] = LNK_LYR_MCAST_ADDR_OUI[2];
+        mcastaddr.bytes[3] = ip4_addr2(ipaddr) & 0x7f;
+        mcastaddr.bytes[4] = ip4_addr3(ipaddr);
+        mcastaddr.bytes[5] = ip4_addr4(ipaddr);
         /* destination Ethernet address is multicast */
         dest = &mcastaddr;
         /* unicast destination IP address? */

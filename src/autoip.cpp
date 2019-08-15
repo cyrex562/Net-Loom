@@ -358,7 +358,7 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
          */
         Ip4Addr dipaddr{};
         MacAddress netifaddr{};
-        memcpy(netifaddr.addr,netif->hwaddr,ETH_ADDR_LEN);
+        memcpy(netifaddr.bytes,netif->hwaddr,ETH_ADDR_LEN);
         /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
                    * structure packing (not using structure copy which breaks strict-aliasing rules).
                    */

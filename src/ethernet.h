@@ -46,7 +46,7 @@ constexpr uint8_t LNK_LYR_IP6_MCAST_ADDR_PREFIX[] = {0x33, 0x33};
 ///
 inline bool cmp_eth_addr(const MacAddress* addr1, const MacAddress* addr2)
 {
-    return (memcmp((addr1)->addr, (addr2)->addr, ETH_ADDR_LEN) == 0);
+    return (memcmp((addr1)->bytes, (addr2)->bytes, ETH_ADDR_LEN) == 0);
 }
 
 ///

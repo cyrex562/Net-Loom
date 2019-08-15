@@ -11,7 +11,7 @@ constexpr auto ETH_ADDR_LEN = 6;
 
 struct MacAddress
 {
-    uint8_t addr[ETH_ADDR_LEN];
+    uint8_t bytes[ETH_ADDR_LEN];
 }; 
 
 /**
@@ -39,7 +39,7 @@ inline bool cmp_mac_address(const MacAddress& mac1, const MacAddress& mac2)
 {
     for (auto i = 0; i < 6; i++)
     {
-        if (mac1.addr[i] != mac2.addr[i])
+        if (mac1.bytes[i] != mac2.bytes[i])
         {
             return false;
         }
