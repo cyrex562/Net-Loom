@@ -43,8 +43,7 @@
  */
 
 #pragma once
-
-
+#include "ppp.h"
 /*
  * Packet header = Code, id, length.
  */
@@ -125,15 +124,51 @@ struct upap_state
 };
 
 
+bool
+upap_authwithpeer(PppPcb& pcb,
+                  std::string& user,
+                  std::string& password,
+                  upap_state& upap);
 
-void upap_authwithpeer(PppPcb *pcb, std::string& user, std::string& password);
+bool
+upap_authpeer(PppPcb& pcb, upap_state& upap);
 
-void upap_authpeer(PppPcb*pcb);
+bool
+upap_sresp(PppPcb& pcb, uint8_t code, uint8_t id, std::string& msg);
 
+std::tuple<bool, upap_state>
+upap_init(PppPcb& pcb);
 
-// extern const struct Protent pap_protent;
+bool
+upap_lowerup(PppPcb& pcb, upap_state& upap);
 
-static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, std::string& msg);
+bool
+upap_lowerdown(PppPcb& pcb, upap_state& upap);
+
+bool
+upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap);
+
+bool
+upap_proto_rejected(PppPcb& pcb, upap_state& upap);
+
+bool
+upap_timeout(upap_state& upap, PppPcb& pcb);
+
+bool
+upap_reqtimeout(PppPcb& pcb, upap_state& upap);
+
+bool
+upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+
+bool
+upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+
+bool
+upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+
+bool
+upap_sauthreq(PppPcb& pcb, upap_state& upap);
+
 
 //
 //

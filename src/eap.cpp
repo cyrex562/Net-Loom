@@ -166,7 +166,7 @@ void eap_authwithpeer(PppPcb* pcb)
  * Format a standard EAP Failure message and send it to the peer.
  * (Server operation)
  */
-static void eap_send_failure(PppPcb* pcb)
+static void eap_send_failure(PppPcb& pcb)
 {
     struct PacketBuffer* p = new PacketBuffer;
 
@@ -333,7 +333,7 @@ static bool pncrypt_setkey(int timeoffs)
  * indicates if there was an error in handling the last query.  It is
  * 0 for success and non-zero for failure.
  */
-static void eap_figure_next_state(PppPcb* pcb, const int status)
+static void eap_figure_next_state(PppPcb& pcb, const int status)
 {
     unsigned char secbuf[MAXSECRETLEN], clear[8];
     char *cp; // struct t_pw tpw;
@@ -343,8 +343,8 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
     int plen;
     struct Base64State bs{};
 
-    pcb->settings.eap_timeout_time = pcb->eap.es_savedtime;
-    switch (pcb->eap.es_server.ea_state)
+    pcb.settings.eap_timeout_time = pcb.eap.es_savedtime;
+    switch (pcb.eap.es_server.ea_state)
     {
     case eapBadAuth:
         return;
@@ -352,26 +352,26 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
     case eapIdentify:
 
         /* Discard any previous session. */
-        ts = reinterpret_cast<struct t_server *>(pcb->eap.es_server.ea_session);
+        ts = reinterpret_cast<struct t_server *>(pcb.eap.es_server.ea_session);
         if (ts != nullptr)
         {
             // t_serverclose(ts);
-            pcb->eap.es_server.ea_session = nullptr;
-            pcb->eap.es_server.ea_skey = nullptr;
+            pcb.eap.es_server.ea_session = nullptr;
+            pcb.eap.es_server.ea_skey = nullptr;
         }
 
         if (status != 0)
         {
-            pcb->eap.es_server.ea_state = eapBadAuth;
+            pcb.eap.es_server.ea_state = eapBadAuth;
             break;
         }
 
         /* If we've got a pseudonym, try to decode to real name. */
-        if (pcb->eap.es_server.ea_peer.length() > SRP_PSEUDO_LEN && pcb
-                                                                    ->eap.es_server.
+        if (pcb.eap.es_server.ea_peer.length() > SRP_PSEUDO_LEN && pcb
+                                                                    .eap.es_server.
                                                                     ea_peer.find(
                                                                         SRP_PSEUDO_ID) !=
-            std::string::npos && (pcb->eap.es_server.ea_peer.length() - SRP_PSEUDO_LEN) *
+            std::string::npos && (pcb.eap.es_server.ea_peer.length() - SRP_PSEUDO_LEN) *
             3 / 4 < sizeof(secbuf))
         {
             BZERO(&bs, sizeof(bs));
@@ -406,7 +406,7 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
                  */
                 if ((i = plen = *(unsigned char *)clear) > 7) i = 7;
                 // pcb->eap.es_server.ea_peer.length() = plen;
-                std::string dp = pcb->eap.es_server.ea_peer;
+                std::string dp = pcb.eap.es_server.ea_peer;
                 // memcpy(dp, clear + 1, i);
                 plen -= i;
                 dp += i;
@@ -420,9 +420,9 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
                     dp += 8;
                     plen -= 8;
                 }
-                pcb->eap.es_server.ea_peer[pcb->eap.es_server.ea_peer.length()] = '\0';
+                pcb.eap.es_server.ea_peer[pcb.eap.es_server.ea_peer.length()] = '\0';
                 ppp_dbglog("decoded pseudonym to \"%.*q\"",
-                           pcb->eap.es_server.ea_peer.length(), pcb->eap.es_server.ea_peer);
+                           pcb.eap.es_server.ea_peer.length(), pcb.eap.es_server.ea_peer);
             }
             else
             {
@@ -482,118 +482,118 @@ static void eap_figure_next_state(PppPcb* pcb, const int status)
         //     break;
         // }
 
-        pcb->eap.es_server.ea_state = eapMD5Chall;
+        pcb.eap.es_server.ea_state = eapMD5Chall;
         break;
 
     case eapSRP1:
-        ts = (struct t_server *)pcb->eap.es_server.ea_session;
+        ts = (struct t_server *)pcb.eap.es_server.ea_session;
         if (ts != nullptr && status != 0)
         {
             // t_serverclose(ts);
-            pcb->eap.es_server.ea_session = nullptr;
-            pcb->eap.es_server.ea_skey = nullptr;
+            pcb.eap.es_server.ea_session = nullptr;
+            pcb.eap.es_server.ea_skey = nullptr;
         }
         if (status == 1)
         {
-            pcb->eap.es_server.ea_state = eapMD5Chall;
+            pcb.eap.es_server.ea_state = eapMD5Chall;
         }
-        else if (status != 0 || pcb->eap.es_server.ea_session == nullptr)
+        else if (status != 0 || pcb.eap.es_server.ea_session == nullptr)
         {
-            pcb->eap.es_server.ea_state = eapBadAuth;
+            pcb.eap.es_server.ea_state = eapBadAuth;
         }
         else
         {
-            pcb->eap.es_server.ea_state = eapSRP2;
+            pcb.eap.es_server.ea_state = eapSRP2;
         }
         break;
 
     case eapSRP2:
 
-        ts = (struct t_server *)pcb->eap.es_server.ea_session;
+        ts = (struct t_server *)pcb.eap.es_server.ea_session;
         if (ts != nullptr && status != 0)
         {
             // t_serverclose(ts);
-            pcb->eap.es_server.ea_session = nullptr;
-            pcb->eap.es_server.ea_skey = nullptr;
+            pcb.eap.es_server.ea_session = nullptr;
+            pcb.eap.es_server.ea_skey = nullptr;
         }
-        if (status != 0 || pcb->eap.es_server.ea_session == nullptr)
+        if (status != 0 || pcb.eap.es_server.ea_session == nullptr)
         {
-            pcb->eap.es_server.ea_state = eapBadAuth;
+            pcb.eap.es_server.ea_state = eapBadAuth;
         }
         else
         {
-            pcb->eap.es_server.ea_state = eapSRP3;
+            pcb.eap.es_server.ea_state = eapSRP3;
         }
         break;
 
     case eapSRP3:
     case eapSRP4:
 
-        ts = (struct t_server *)pcb->eap.es_server.ea_session;
+        ts = (struct t_server *)pcb.eap.es_server.ea_session;
         if (ts != nullptr && status != 0)
         {
             // t_serverclose(ts);
-            pcb->eap.es_server.ea_session = nullptr;
-            pcb->eap.es_server.ea_skey = nullptr;
+            pcb.eap.es_server.ea_session = nullptr;
+            pcb.eap.es_server.ea_skey = nullptr;
         }
-        if (status != 0 || pcb->eap.es_server.ea_session == nullptr)
+        if (status != 0 || pcb.eap.es_server.ea_session == nullptr)
         {
-            pcb->eap.es_server.ea_state = eapBadAuth;
+            pcb.eap.es_server.ea_state = eapBadAuth;
         }
         else
         {
-            pcb->eap.es_server.ea_state = eapOpen;
+            pcb.eap.es_server.ea_state = eapOpen;
         }
         break;
 
     case eapMD5Chall:
         if (status != 0)
         {
-            pcb->eap.es_server.ea_state = eapBadAuth;
+            pcb.eap.es_server.ea_state = eapBadAuth;
         }
         else
         {
-            pcb->eap.es_server.ea_state = eapOpen;
+            pcb.eap.es_server.ea_state = eapOpen;
         }
         break;
 
     default:
-        pcb->eap.es_server.ea_state = eapBadAuth;
+        pcb.eap.es_server.ea_state = eapBadAuth;
         break;
     }
-    if (pcb->eap.es_server.ea_state == eapBadAuth) eap_send_failure(pcb);
+    if (pcb.eap.es_server.ea_state == eapBadAuth) eap_send_failure(pcb);
 }
 
 /*
  * Format an EAP Request message and send it to the peer.  Message
  * type depends on current state.  (Server operation)
  */
-static void eap_send_request(PppPcb* pcb)
+static void eap_send_request(PppPcb& pcb)
 {
     int len;
     const char* str;
 
     /* Handle both initial auth and restart */
-    if (pcb->eap.es_server.ea_state < eapIdentify &&
-        pcb->eap.es_server.ea_state != eapInitial)
+    if (pcb.eap.es_server.ea_state < eapIdentify &&
+        pcb.eap.es_server.ea_state != eapInitial)
     {
-        pcb->eap.es_server.ea_state = eapIdentify;
+        pcb.eap.es_server.ea_state = eapIdentify;
 
-        if (pcb->settings.explicit_remote && !pcb->peer_authname.empty())
+        if (pcb.settings.explicit_remote && !pcb.peer_authname.empty())
         {
             /*
              * If we already know the peer's
              * unauthenticated name, then there's no
              * reason to ask.  Go to next state instead.
              */
-            auto len = pcb->peer_authname.length();
+            auto len = pcb.peer_authname.length();
             if (len > MAXNAMELEN)
             {
                 len = MAXNAMELEN;
             }
             // memcpy(pcb->eap.es_server.ea_peer, pcb->peer_authname, len);
 
-            pcb->eap.es_server.ea_peer = pcb->peer_authname;
+            pcb.eap.es_server.ea_peer = pcb.peer_authname;
 
             // pcb->eap.es_server.ea_peer[len] = '\0';
             // pcb->eap.es_server.ea_peerlen = len;
@@ -601,10 +601,10 @@ static void eap_send_request(PppPcb* pcb)
         }
     }
 
-    if (pcb->settings.eap_max_transmits > 0 &&
-        pcb->eap.es_server.ea_requests >= pcb->settings.eap_max_transmits)
+    if (pcb.settings.eap_max_transmits > 0 &&
+        pcb.eap.es_server.ea_requests >= pcb.settings.eap_max_transmits)
     {
-        if (pcb->eap.es_server.ea_responses > 0)
+        if (pcb.eap.es_server.ea_responses > 0)
         {
             ppp_error("EAP: too many Requests sent");
         }
@@ -638,7 +638,7 @@ static void eap_send_request(PppPcb* pcb)
     uint8_t* lenloc = outp;
     INCPTR(2, outp);
 
-    switch (pcb->eap.es_server.ea_state)
+    switch (pcb.eap.es_server.ea_state)
     {
     case eapIdentify:
         PUTCHAR(EAPT_IDENTITY, outp);
@@ -654,16 +654,16 @@ static void eap_send_request(PppPcb* pcb)
          * pick a random challenge length between
          * EAP_MIN_CHALLENGE_LENGTH and EAP_MAX_CHALLENGE_LENGTH
          */
-        pcb->eap.es_challen =
+        pcb.eap.es_challen =
             EAP_MIN_CHALLENGE_LENGTH +
             magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
-        { *(outp)++ = (uint8_t) (pcb->eap.es_challen); };
-        magic_random_bytes(pcb->eap.es_challenge, pcb->eap.es_challen);
-        memcpy(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
-        ((outp) += (pcb->eap.es_challen));
-        memcpy(outp, pcb->eap.es_server.ea_name.c_str(), pcb->eap.es_server.ea_name.length());
+        { *(outp)++ = (uint8_t) (pcb.eap.es_challen); };
+        magic_random_bytes(pcb.eap.es_challenge, pcb.eap.es_challen);
+        memcpy(outp, pcb.eap.es_challenge, pcb.eap.es_challen);
+        ((outp) += (pcb.eap.es_challen));
+        memcpy(outp, pcb.eap.es_server.ea_name.c_str(), pcb.eap.es_server.ea_name.length());
         // outp = pcb->eap.es_server.ea_name;
-        ((outp) += (pcb->eap.es_server.ea_name.length()));
+        ((outp) += (pcb.eap.es_server.ea_name.length()));
         break;
 
 
@@ -678,11 +678,11 @@ static void eap_send_request(PppPcb* pcb)
     // pbuf_realloc(p);
     ppp_write(pcb, p);
 
-    pcb->eap.es_server.ea_requests++;
+    pcb.eap.es_server.ea_requests++;
 
-    if (pcb->settings.eap_timeout_time > 0)
+    if (pcb.settings.eap_timeout_time > 0)
     {
-        Timeout(eap_server_timeout, pcb, pcb->settings.eap_timeout_time);
+        Timeout(eap_server_timeout, pcb, pcb.settings.eap_timeout_time);
     }
 }
 
@@ -693,19 +693,19 @@ static void eap_send_request(PppPcb* pcb)
  * after eap_lowerup.
  */
 void
-eap_authpeer(PppPcb* pcb, std::string& localname)
+eap_authpeer(PppPcb& pcb, std::string& localname)
 {
     /* Save the name we're given. */
-    pcb->eap.es_server.ea_name = localname;
+    pcb.eap.es_server.ea_name = localname;
     // pcb->eap.es_server.ea_name.length = strlen(localname);
-    pcb->eap.es_savedtime = pcb->settings.eap_timeout_time; /* Lower layer up yet? */
-    if (pcb->eap.es_server.ea_state == eapInitial || pcb->eap.es_server.ea_state ==
+    pcb.eap.es_savedtime = pcb.settings.eap_timeout_time; /* Lower layer up yet? */
+    if (pcb.eap.es_server.ea_state == eapInitial || pcb.eap.es_server.ea_state ==
         eapPending)
     {
-        pcb->eap.es_server.ea_state = eapPending;
+        pcb.eap.es_server.ea_state = eapPending;
         return;
     }
-    pcb->eap.es_server.ea_state = eapPending;
+    pcb.eap.es_server.ea_state = eapPending;
     /* ID number not updated here intentionally; hashed into M1 */
     eap_send_request(pcb);
 }

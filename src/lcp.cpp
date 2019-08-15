@@ -1910,7 +1910,7 @@ void lcp_down(Fsm *f) {
 
     lcp_echo_lower_down(f->pcb, f);
 
-    link_down(pcb);
+    link_down(pcb,);
 
     ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(pcb, PPP_MRU,
@@ -1934,7 +1934,7 @@ void lcp_starting(Fsm *f) {
  */
 void lcp_finished(Fsm *f) {
     PppPcb *pcb = f->pcb;
-    link_terminated(pcb);
+    link_terminated(pcb,);
 }
 
 

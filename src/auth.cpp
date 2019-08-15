@@ -17,7 +17,7 @@ void (*multilink_join_hook)() = nullptr;
 
 
 
-/*
+/**
  * An Open on LCP has requested a change from Dead to Establish phase.
  */
 bool link_required(PppPcb* pcb)
@@ -25,46 +25,44 @@ bool link_required(PppPcb* pcb)
     return false;
 }
 
-/*
+/**
  * LCP has terminated the link; go to the Dead phase and take the
  * physical layer down.
  */
 bool
-link_terminated(PppPcb& pcb)
+link_terminated(PppPcb& pcb, const bool doing_multilink)
 {
-    if (pcb->phase == PPP_PHASE_DEAD
-        || pcb->phase == PPP_PHASE_MASTER
-    )
-    {
-        return;
+    auto ok = true;
+    if (pcb.phase == PPP_PHASE_DEAD || pcb.phase == PPP_PHASE_MASTER) {
+        return false;
     }
     new_phase(pcb, PPP_PHASE_DISCONNECT);
-
-    if (!doing_multilink)
-    {
+    if (!doing_multilink) {
         ppp_notice("Connection terminated.");
     }
-    else
-    {
+    else {
         ppp_notice("Link terminated.");
     }
-
-
-    lcp_lowerdown(pcb);
-
-    ppp_link_terminated(pcb);
+    if (! lcp_lowerdown(pcb)) {
+        return false;
+    }
+    if (! ppp_link_terminated(pcb)) {
+        return false;
+    }
+    return true;
 }
 
-/*
+/**
  * LCP has gone down; it will either die or try to re-establish.
  */
-void link_down(PppPcb* pcb)
+bool
+link_down(PppPcb& pcb, const bool doing_multilink)
 {
     // notify(link_down_notifier, 0);
     if (!doing_multilink)
     {
         upper_layers_down(pcb);
-        if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
+        if (pcb.phase != PPP_PHASE_DEAD && pcb.phase != PPP_PHASE_MASTER)
         {
             new_phase(pcb, PPP_PHASE_ESTABLISH);
         }
@@ -73,7 +71,7 @@ void link_down(PppPcb* pcb)
        network-layer traffic on the link */
 }
 
-bool upper_layers_down(PppPcb* pcb)
+bool upper_layers_down(PppPcb& pcb)
 {
     // TODO: figure out which lower layer protocols to call/signal for lowerdown()/close()
     return false;
@@ -87,20 +85,21 @@ bool upper_layers_down(PppPcb* pcb)
     // }
     // pcb->num_np_open = 0;
     // pcb->num_np_up = 0;
+    return false; // not implemented
 }
 
 /*
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-bool link_established(PppPcb* pcb, bool auth_required=false)
+bool link_established(PppPcb& pcb, const bool auth_required = false)
 {
-    auto wo = &pcb->lcp_wantoptions;
-    auto go = &pcb->lcp_gotoptions;
-    auto ho = &pcb->lcp_hisoptions;
+    auto wo = pcb.lcp_wantoptions;
+    auto go = pcb.lcp_gotoptions;
+    auto ho = pcb.lcp_hisoptions;
+
     // const struct Protent* protp; /*
     // TODO: send notification that LCP is up
-
     // if (!doing_multilink)
     // {
     //     for (auto i = 0; (protp = protocols[i]) != nullptr; ++i)
@@ -108,9 +107,10 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
     //             && protp->lowerup != nullptr)
     //             (*protp->lowerup)(pcb);
     // }
+
     // if (!auth_required)
     //     set_allowed_addrs(unit, NULL, NULL);
-    if (pcb->settings.auth_required && !(go->neg_upap || go->neg_chap || go->neg_eap))
+    if (pcb.settings.auth_required && !(go.neg_upap || go.neg_chap || go.neg_eap))
     {
         /*
          * We wanted the peer to authenticate itself, and it refused:
@@ -118,34 +118,34 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
          * otherwise treat it as though it authenticated with PAP using
          * a username of "" and a password of "".  If that's not OK,
          * boot it out.
-         */ // if (noauth_addrs != NULL)
-        // {
-        //     set_allowed_addrs(unit, NULL, NULL);
-        // }
-        if (!pcb->settings.null_login || !wo->neg_upap)
+         */
+        if (!pcb.settings.null_login || !wo.neg_upap)
         {
             ppp_warn("peer refused to authenticate: terminating link");
-            pcb->err_code = PPPERR_AUTHFAIL;
-            lcp_close(pcb, "peer refused to authenticate");
+            pcb.err_code = PPPERR_AUTHFAIL;
+            std::string reason = "peer refused to authenticate";
+            // todo: check output of lcp_close
+            lcp_close(pcb, reason);
             return false;
         }
     }
     new_phase(pcb, PPP_PHASE_AUTHENTICATE);
     auto auth = 0;
-    if (go->neg_eap)
+    if (go.neg_eap)
     {
         std::string our_name = PPP_OUR_NAME;
         eap_authpeer(pcb,our_name);
         auth |= EAP_PEER;
     }
-    else if (go->neg_chap)
+    else if (go.neg_chap)
     {
-        chap_auth_peer(pcb, PPP_OUR_NAME, CHAP_DIGEST(go->chap_mdtype));
+        std::string our_name = PPP_OUR_NAME;
+        chap_auth_peer(pcb, our_name, CHAP_DIGEST(go.chap_mdtype));
         auth |= CHAP_PEER;
     }
-    else if (go->neg_upap)
+    else if (go.neg_upap)
     {
-        upap_authpeer(pcb);
+        upap_authpeer(pcb,);
         auth |= PAP_PEER;
     }
     else
@@ -158,19 +158,19 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
     }
     else if (ho->neg_chap)
     {
-        chap_auth_with_peer(pcb, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
+        chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho->chap_mdtype));
         auth |= CHAP_WITHPEER;
     }
     else if (ho->neg_upap)
     {
-        upap_authwithpeer(pcb, pcb->settings.user, pcb->settings.passwd);
+        upap_authwithpeer(pcb, pcb.settings.user, pcb.settings.passwd,);
         auth |= PAP_WITHPEER;
     }
     else
     {
     }
-    pcb->auth_pending = auth;
-    pcb->auth_done = 0;
+    pcb.auth_pending = auth;
+    pcb.auth_done = 0;
     if (!auth)
     {
         enter_network_phase(pcb);
@@ -181,7 +181,7 @@ bool link_established(PppPcb* pcb, bool auth_required=false)
 //
 // Enter the network phase
 //
-bool enter_network_phase(PppPcb* pcb)
+bool enter_network_phase(PppPcb& pcb)
 {
     return start_networks(pcb);
 }
@@ -253,23 +253,24 @@ bool continue_networks(PppPcb* pcb)
     return true;
 }
 
-///
-/// auth_check_passwd - Check the user name and passwd against configuration.
-///
-/// returns:
-///      0: Authentication failed.
-///      1: Authentication succeeded.
-/// In either case, msg points to an appropriate message and msglen to the message len.
-///
+/**
+ * Check the user name and passwd against configuration.
+ *
+ *  returns:
+ *       0: Authentication failed.
+ *       1: Authentication succeeded.
+ * In either case, msg points to an appropriate message and msglen to the message len.
+ */
+
 bool
-auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg)
+auth_check_passwd(PppPcb& pcb, std::string& auser, std::string& apasswd, std::string& msg)
 {
-    if (!pcb->settings.user.empty() && !pcb->settings.passwd.empty())
+    if (!pcb.settings.user.empty() && !pcb.settings.passwd.empty())
     {
-        const auto secretuserlen = pcb->settings.user.length();
-        const auto secretpasswdlen = pcb->settings.passwd.length();
+        const auto secretuserlen = pcb.settings.user.length();
+        const auto secretpasswdlen = pcb.settings.passwd.length();
         if (secretuserlen == auser.length() && secretpasswdlen == apasswd.length() &&
-            auser == pcb->settings.user && apasswd == pcb->settings.passwd)
+            auser == pcb.settings.user && apasswd == pcb.settings.passwd)
         {
             msg = "Login ok";
             return true;
@@ -282,20 +283,22 @@ auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::st
 /*
  * The peer has failed to authenticate himself using `protocol'.
  */
-void auth_peer_fail(PppPcb *pcb, int protocol) {
+bool
+auth_peer_fail(PppPcb& pcb, int protocol) {
 
     /*
      * Authentication failure: take the link down
      */
-
-    pcb->err_code = PPPERR_AUTHFAIL;
-    lcp_close(pcb, "Authentication failed");
+    pcb.err_code = PPPERR_AUTHFAIL;
+    std::string reason = "Authentication failed.";
+    return lcp_close(pcb, reason);
 }
 
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
-void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, std::string& name)
+bool
+auth_peer_success(PppPcb& pcb, int protocol, int prot_flavor, std::string& name)
 {
     int bit;
 
@@ -344,12 +347,12 @@ void auth_peer_success(PppPcb* pcb, int protocol, int prot_flavor, std::string& 
     }
 }
 
-/*
+/**
  * We have failed to authenticate ourselves to the peer using `protocol'.
  */
-void auth_withpeer_fail(PppPcb* pcb, int protocol)
+bool
+auth_withpeer_fail(PppPcb& pcb, int protocol)
 {
-
     /*
      * We've failed to authenticate ourselves to our peer.
      *
@@ -360,14 +363,16 @@ void auth_withpeer_fail(PppPcb* pcb, int protocol)
      * He'll probably take the link down, and there's not much
      * we can do except wait for that.
      */
-    pcb->err_code = PPPERR_AUTHFAIL;
-    lcp_close(pcb, "Failed to authenticate ourselves to peer");
+    pcb.err_code = PPPERR_AUTHFAIL;
+    std::string msg = "Failed to authenticate ourselves to peer";
+    return lcp_close(pcb, msg);
 }
 
-/*
+/**
  * We have successfully authenticated ourselves with the peer using `protocol'.
  */
-void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor)
+bool
+auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor)
 {
     int bit;
     auto prot = "";
@@ -414,13 +419,13 @@ void auth_withpeer_success(PppPcb* pcb, int protocol, int prot_flavor)
     ppp_notice("%s authentication succeeded", prot);
 
     /* Save the authentication method for later. */
-    pcb->auth_done |= bit;
+    pcb.auth_done |= bit;
 
     /*
      * If there is no more authentication still being done,
      * proceed to the network (or callback) phase.
      */
-    if ((pcb->auth_pending &= ~bit) == 0)
+    if ((pcb.auth_pending &= ~bit) == 0)
     {
         enter_network_phase(pcb);
     }

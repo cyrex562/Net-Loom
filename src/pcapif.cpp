@@ -5,19 +5,14 @@
  */
 #include <pcapif.h>
 #include <opt.h>
-#include <def.h>
 #include <etharp.h>
-#include <ethip6.h>
 #include <ip.h>
 #include <lwip_debug.h>
 #include <packet_buffer.h>
 #include <sys.h>
-#include <tcpip.h>
-#include <timeouts.h>
 #include <pcapif_helper.h>
 #include <pcap.h>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <utility>
 
@@ -132,41 +127,42 @@ get_adapter_index_from_addr(sockaddr_in& netaddr)
 
 
 
+
+
+
+
+
 /// Get the index of an adapter by its GUID
 ///
 /// @param adapter_guid GUID of the adapter
 /// @return index of the adapter or negative on error
 ///
-
-
-#define PCAP_ERRBUF_SIZE 0xff
-
 static int
 get_adapter_index(const char* adapter_guid)
 {
-    // pcap_if_t* alldevs;
-    // pcap_if_t* d;
-    // char errbuf[PCAP_ERRBUF_SIZE + 1];
-    // int idx = 0; /* Retrieve the interfaces list */
-    // if (pcap_findalldevs(&alldevs, errbuf) == -1)
-    // {
-    //     printf("Error in pcap_findalldevs: %s\n", errbuf);
-    //     return -1;
-    // } /* Scan the list and compare name vs. adapter_guid */
-    // for (d = alldevs; d != nullptr; d = d->next, idx++)
-    // {
-    //     if (strstr(d->name, adapter_guid))
-    //     {
-    //         pcap_freealldevs(alldevs);
-    //         return idx;
-    //     }
-    // } /* not found, dump all adapters */
-    // printf("%d available adapters:\n", idx);
-    // for (d = alldevs, idx = 0; d != nullptr; d = d->next, idx++)
-    // {
-    //     printf("- %d: %s\n", idx, d->name);
-    // }
-    // pcap_freealldevs(alldevs);
+    pcap_if_t* alldevs;
+    pcap_if_t* d;
+    char errbuf[PCAP_ERRBUF_SIZE + 1];
+    int idx = 0; /* Retrieve the interfaces list */
+    if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    {
+        printf("Error in pcap_findalldevs: %s\n", errbuf);
+        return -1;
+    } /* Scan the list and compare name vs. adapter_guid */
+    for (d = alldevs; d != nullptr; d = d->next, idx++)
+    {
+        if (strstr(d->name, adapter_guid))
+        {
+            pcap_freealldevs(alldevs);
+            return idx;
+        }
+    } /* not found, dump all adapters */
+    printf("%d available adapters:\n", idx);
+    for (d = alldevs, idx = 0; d != nullptr; d = d->next, idx++)
+    {
+        printf("- %d: %s\n", idx, d->name);
+    }
+    pcap_freealldevs(alldevs);
     return -1;
 }
 
@@ -198,8 +194,8 @@ pcapif_open_adapter(const char* adapter_name, char* errbuf)
 static std::tuple<bool, PcapIfPrivate>
 pcapif_init_adapter(uint32_t adapter_num)
 {
-    int i;
-    int number_of_adapters;
+
+    uint32_t number_of_adapters = 0;
     char errbuf[PCAP_ERRBUF_SIZE + 1]; // NOLINT(cppcoreguidelines-avoid-c-arrays)
     pcap_if_t* alldevs;
     pcap_if_t* d;
@@ -221,7 +217,8 @@ pcapif_init_adapter(uint32_t adapter_num)
             size_t len;
             len = strlen(d->name);
             lwip_assert("len < ADAPTER_NAME_LEN", len < ADAPTER_NAME_LEN);
-            strcpy(pa->name, d->name);
+            pa.name = d->name;
+
             used_adapter = d; /* format vendor description */
             if (desc != nullptr)
             {
@@ -239,21 +236,24 @@ pcapif_init_adapter(uint32_t adapter_num)
                     len -= 17;
                     desc += 17;
                 }
-                len = std::min(len, ADAPTER_DESC_LEN - 1);
+                len = std::min(len, size_t(ADAPTER_DESC_LEN - 1));
                 while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
                 {
                     /* don't copy trailing whitespace */
                     len--;
                 }
-                strncpy(pa->description, desc, len);
-                pa->description[len] = 0;
+                pa.description = desc;
             }
             else
             {
-                strcpy(pa->description, "<no_desc>");
+                pa.description = "<no description>";
+
             }
         }
-    } /* Scan the list printing every entry */
+    }
+
+    /* Scan the list printing every entry */
+    auto i = 0;
     for (d = alldevs, i = 0; d != nullptr; d = d->next, i++)
     {
         char* desc = d->description;
@@ -290,7 +290,7 @@ pcapif_init_adapter(uint32_t adapter_num)
                 len -= 17;
                 desc += 17;
             }
-            len = std::min(len, 127);
+            len = std::min(len, size_t(127));
             while ((desc[len - 1] == ' ') || (desc[len - 1] == '\t'))
             {
                 /* don't copy trailing whitespace */
@@ -300,37 +300,34 @@ pcapif_init_adapter(uint32_t adapter_num)
             descBuf[len] = 0;
             printf("     Desc: \"%s\"\n", descBuf);
         }
-    } /* invalid adapter index -> check this after printing the adapters */
-    if (adapter_num < 0)
-    {
-        printf("Invalid adapter_num: %d\n", adapter_num);
-        free(pa);
-        pcap_freealldevs(alldevs);
-        return nullptr;
-    } /* adapter index out of range */
+    }
+
     if (adapter_num >= number_of_adapters)
     {
         printf("Invalid adapter_num: %d\n", adapter_num);
-        free(pa);
         pcap_freealldevs(alldevs);
-        return nullptr;
-    } /* set up the selected adapter */
+        return std::make_tuple(false, pa);
+    }
+
+    /* set up the selected adapter */
     lwip_assert("used_adapter != NULL", used_adapter != nullptr); /* Open the device */
-    pa->adapter = pcapif_open_adapter(used_adapter->name, errbuf);
-    if (pa->adapter == nullptr)
+    pa.adapter = pcapif_open_adapter(used_adapter->name, errbuf);
+    if (pa.adapter == nullptr)
     {
         printf("\nUnable to open the adapter. %s is not supported by pcap (\"%s\").\n",
                used_adapter->name,
                errbuf); /* Free the device list */
         pcap_freealldevs(alldevs);
-        free(pa);
-        return nullptr;
+        return std::make_tuple(false, pa);
     }
-    printf("Using adapter: \"%s\"\n", pa->description);
     pcap_freealldevs(alldevs);
-    pa->link_state = pcapifh_linkstate_init(pa->name);
-    pa->last_link_event = PCAPIF_LINKEVENT_UNKNOWN;
-    return pa;
+    bool ok;
+    std::tie(ok, pa.link_state) = pcapifh_linkstate_init(pa.name);
+    if (!ok) {
+        return std::make_tuple(false, pa);
+    }
+    pa.last_link_event = PCAPIF_LINKEVENT_UNKNOWN;
+    return std::make_tuple(true, pa);
 }
 
 
@@ -370,24 +367,20 @@ pcapif_check_linkstate(NetworkInterface& netif, PcapIfPrivate& pa)
  * Close the adapter (no more packets can be sent or received)
  *
  * @param netif netif to shutdown
+ * @param pa
  */
-void
-pcapif_shutdown(NetworkInterface* netif)
+bool
+pcapif_shutdown(NetworkInterface& netif, PcapIfPrivate& pa)
 {
-    // auto pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
-    PcapIfPrivate* pa = nullptr;
-    // if (pa)
-    // {
-    //     pa->rx_run = 0;
-    //     if (pa->adapter)
-    //     {
-    //         pcap_breakloop(pa->adapter);
-    //         pcap_close(pa->adapter);
-    //     } /* wait for rxthread to end */
-    //     while (pa->rx_running);
-    //     pcapifh_linkstate_close(pa->link_state);
-    //     free(pa);
-    // }
+    pa.rx_run = 0;
+    if (pa.adapter) {
+        pcap_breakloop(pa.adapter);
+        pcap_close(pa.adapter);
+    }
+    /* wait for rxthread to end */
+    while (pa.rx_running);
+    pcapifh_linkstate_close(pa.link_state);
+    return true;
 }
 
 
@@ -417,9 +410,14 @@ pcapif_input_thread(uint8_t* arg)
 /**
  * Low-level initialization: find the correct adapter and initialize it.
  */
-static bool
-pcapif_low_level_init(NetworkInterface& netif, MacAddress& my_mac_addr, int adapter_num, sockaddr_in& netaddr)
+std::tuple<bool, PcapIfPrivate>
+pcapif_low_level_init(NetworkInterface& netif,
+                      MacAddress& my_mac_addr,
+                      int adapter_num,
+                      sockaddr_in& netaddr,
+                      std::vector<NetworkInterface>& interfaces)
 {
+    PcapIfPrivate pa{};
     char guid[GUID_LEN + 1] = {};
     /* If 'state' is != NULL at this point, we assume it is an 'int' giving
            the index of the adapter to use (+ 1 because 0==NULL is invalid).
@@ -430,34 +428,23 @@ pcapif_low_level_init(NetworkInterface& netif, MacAddress& my_mac_addr, int adap
     uint32_t adapter_index;
 
     std::tie(ok, adapter_index) = get_adapter_index_from_addr(netaddr);
-    if (!ok)
-    {
-        return false;
-    }
+    if (!ok) { return std::make_tuple(false, pa); }
 
     adapter_num = get_adapter_index(guid);
-    if (adapter_num < 0)
-    {
-        return false;
-    }
+    if (adapter_num < 0) { return std::make_tuple(false, pa); }
 
     /* Do whatever else is needed to initialize interface. */
-    struct PcapIfPrivate* pa = pcapif_init_adapter(adapter_num);
-    if (pa == nullptr)
-    {
-        return false;
-    }
+    std::tie(ok, pa) = pcapif_init_adapter(adapter_num);
+    if (!ok) { return std::make_tuple(false, pa); }
 
-
-    netif.state = pa; /* change the MAC address to a unique value
-     so that multiple ethernetifs are supported */
+    // netif.state = pa; /* change the MAC address to a unique value
+    //  so that multiple ethernetifs are supported */
     /* @todo: this does NOT support multiple processes using this adapter! */
-    my_mac_addr[ETH_ADDR_LEN - 1] += netif.if_num; /* Copy MAC addr */
-    netif.mac_address =
-    memcpy(&netif.mac_address, my_mac_addr, ETH_ADDR_LEN);
+    my_mac_addr.bytes[ETH_ADDR_LEN - 1] += netif.if_num; /* Copy MAC addr */
+    memcpy(&netif.mac_address, &my_mac_addr, ETH_ADDR_LEN);
     /* get the initial link state of the selected interface */
-    pcap_if_private.last_link_event = pcapifh_linkstate_get(pcap_if_private.link_state);
-    if (pcap_if_private.last_link_event == PCAPIF_LINKEVENT_DOWN)
+    pa.last_link_event = pcapifh_linkstate_get(pa.link_state);
+    if (pa.last_link_event == PCAPIF_LINKEVENT_DOWN)
     {
         set_netif_link_down(netif, interfaces);
     }
@@ -466,127 +453,37 @@ pcapif_low_level_init(NetworkInterface& netif, MacAddress& my_mac_addr, int adap
         set_netif_link_up(netif, interfaces);
     }
     // sys_timeout_debug(500, pcapif_check_linkstate, netif, "pcapif_check_linkstate");
-    pcap_if_private.rx_run = 1;
-    pcap_if_private.rx_running = 1;
+    pa.rx_run = 1;
+    pa.rx_running = 1;
     // sys_thread_new("pcapif_rxthread", pcapif_input_thread, netif, 0, 0, );
+    return std::make_tuple(true, pa);
 }
 
 /** low_level_output():
  * Transmit a packet. The packet is contained in the PacketBuffer that is passed to
  * the function. This PacketBuffer might be chained.
  */
-static bool
+bool
 pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
 {
-
-    unsigned char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
-    unsigned char* buf = buffer;
-    uint16_t tot_len = pkt_buf->tot_len - ETH_PAD_SIZE;
+    // char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
+    // uint8_t* buf = buffer;
+    std::vector<uint8_t> buffer;
+    uint16_t tot_len = pkt_buf.data.size() - ETH_PAD_SIZE;
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
-    PcapIfPrivate* pa = nullptr;
-
-    if ((pkt_buf->len == pkt_buf->tot_len) && (pkt_buf->len >= ETH_MIN_FRAME_LEN + ETH_PAD_SIZE))
-    {
-        /* no PacketBuffer chain, don't have to copy -> faster */
-        buf = &((unsigned char*)pkt_buf->payload)[ETH_PAD_SIZE];
-    }
-    else
-    {
-        /* PacketBuffer chain, copy into contiguous buffer */
-        if (pkt_buf->tot_len >= sizeof(buffer))
-        {
-            // LINK_STATS_INC(link.lenerr);
-            // LINK_STATS_INC(link.drop);
-            // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-            return ERR_BUF;
-        }
-        unsigned char* ptr = buffer;
-        for (struct PacketBuffer* q = pkt_buf; q != nullptr; q = q->next)
-        {
-            /* Send the data from the PacketBuffer to the interface, one PacketBuffer at a
-               time. The size of the data in each PacketBuffer is kept in the ->len
-               variable. */ /* send data from(q->payload, q->len); */
-            Logf(true,
-                 "netif: send ptr %p q->payload %p q->len %i q->next %p\n",
-                 ptr,
-                 q->payload,
-                 (int)q->len,
-                 (void*)q->next);
-            if (q == pkt_buf)
-            {
-                memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
-                ptr += q->len - ETH_PAD_SIZE;
-            }
-            else
-            {
-                memcpy(ptr, q->payload, q->len);
-                ptr += q->len;
-            }
-        }
-    }
-    if (tot_len < ETH_MIN_FRAME_LEN)
-    {
-        /* ensure minimal frame length */
-        memset(&buf[tot_len], 0, ETH_MIN_FRAME_LEN - tot_len);
-        tot_len = ETH_MIN_FRAME_LEN;
-    } /* signal that packet should be sent */
-    // if (pcap_sendpacket(pa->adapter, buf, tot_len) < 0)
-    // {
-    //     /* no PacketBuffer chain, don't have to copy -> faster */
-    //     buf = &(pkt_buf.data)[ETH_PAD_SIZE];
-    // }
-    // else
-    // {
-    //     /* PacketBuffer chain, copy into contiguous buffer */
-    //     if (pkt_buf.data.size() >= sizeof(buffer))
-    //     {
-    //         // LINK_STATS_INC(link.lenerr);
-    //         // LINK_STATS_INC(link.drop);
-    //         // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-    //         return ERR_BUF;
-    //     }
-    //     unsigned char* ptr = buffer;
-    //     for (struct PacketBuffer* q = pkt_buf; q != nullptr; q = q->next)
-    //     {
-    //         /* Send the data from the PacketBuffer to the interface, one PacketBuffer at a
-    //            time. The size of the data in each PacketBuffer is kept in the ->len
-    //            variable. */ /* send data from(q->payload, q->len); */
-    //         Logf(true,
-    //              "netif: send ptr %p q->payload %p q->len %i q->next %p\n",
-    //              ptr,
-    //              q->payload,
-    //              (int)q->len,
-    //              (void*)q->next);
-    //         if (q == pkt_buf)
-    //         {
-    //             memcpy(ptr, &((char*)q->payload)[ETH_PAD_SIZE], q->len - ETH_PAD_SIZE);
-    //             ptr += q->len - ETH_PAD_SIZE;
-    //         }
-    //         else
-    //         {
-    //             memcpy(ptr, q->payload, q->len);
-    //             ptr += q->len;
-    //         }
-    //     }
-    // }
-    // if (tot_len < ETH_MIN_FRAME_LEN)
-    // {
-    //     /* ensure minimal frame length */
-    //     memset(&buf[tot_len], 0, ETH_MIN_FRAME_LEN - tot_len);
-    //     tot_len = ETH_MIN_FRAME_LEN;
-    // }
+    PcapIfPrivate pa{};
 
     /* signal that packet should be sent */
-    if (pcap_sendpacket(pcap_if.adapter, pkt_buf.data.data(), tot_len) < 0)
+    if (pcap_sendpacket(pa.adapter, pkt_buf.data.data(), tot_len) < 0)
     {
         return false;
     }
 
     if (is_netif_link_up(netif))
     {
-        pcapif_add_tx_packet(pa, buf);
+        pcapif_add_tx_packet(pa, pkt_buf.data);
     }
-    struct EthHdr* ethhdr = (struct EthHdr *)pkt_buf->payload;
+    EthHdr* ethhdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
     if ((ethhdr->dest.bytes[0] & 1) != 0)
     {
         /* broadcast or multicast packet*/
@@ -599,145 +496,68 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
 }
 
 
-/** low_level_input(): Allocate a PacketBuffer and transfer the bytes of the incoming
- * packet from the interface into the PacketBuffer.
+/**
+ * Allocate a PacketBuffer and transfer the bytes of the incoming packet from the
+ * interface into the PacketBuffer.
  */
-bool
-pcapif_low_level_read(NetworkInterface& netif,
+std::tuple<bool, PacketBuffer>
+pcapif_low_level_recv(NetworkInterface& netif,
                       const uint8_t* packet,
                       size_t packet_len,
-                      PacketBuffer& out_pbuf)
+                      PcapIfPrivate& pcap_if_priv)
 {
-    int length = packet_len;
-    const struct MacAddress* dest = (const struct MacAddress*)packet;
+    size_t length = packet_len;
+    EthHdr* eth_hdr = (EthHdr*)packet;
+    MacAddress dest = eth_hdr->dest;
+    PacketBuffer pkt_buf{};
+
+    for (size_t i = 0; i < packet_len; i++) {
+        pkt_buf.data.push_back(packet[i]);
+    }
+
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};
-    if (pcaipf_is_tx_packet(netif, packet,))
+    if (pcaipf_is_tx_packet(netif, pkt_buf.data, pcap_if_priv))
     {
         /* don't update counters here! */
-        return nullptr;
+        return std::make_tuple(false, pkt_buf);
     }
-    int unicast = ((dest->bytes[0] & 0x01) == 0);
-    /* We allocate a PacketBuffer chain of pbufs from the pool. */
-    // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
-    Logf(true, "netif: recv length %i p->tot_len %i\n", length, (int)p->tot_len);
-    if (p != nullptr)
-    {
-        /* We iterate over the PacketBuffer chain until we have read the entire
-           packet into the PacketBuffer. */
-        int start = 0;
-        for (struct PacketBuffer* q = p; q != nullptr; q = q->next)
-        {
-            uint16_t copy_len = q->len;
-            /* Read enough bytes to fill this PacketBuffer in the chain. The
-                               available data in the PacketBuffer is given by the q->len
-                               variable. */ /* read data into(q->payload, q->len); */
-            Logf(true,
-                 "netif: recv start %i length %i q->payload %p q->len %i q->next %p\n",
-                 start,
-                 length,
-                 q->payload,
-                 (int)q->len,
-                 (void*)q->next);
-            if (q == p)
-            {
-                memcpy(&((char*)q->payload)[ETH_PAD_SIZE],
-                       &((const char*)packet)[start],
-                       copy_len);
-            }
-            else
-            {
-                memcpy(q->payload, &((const char*)packet)[start], copy_len);
-            }
-            start += copy_len;
-            length -= copy_len;
-            if (length <= 0)
-            {
-                break;
-            }
-        }
-        if (unicast)
-        {
-        }
-        else
-        {
-        }
-    }
-    else
-    {
-        /* drop packet */
-    }
-    return p;
+    const auto unicast = ((dest.bytes[0] & 0x01) == 0);
+    if (unicast) { } // todo: additional actions on unicast packet
+    else { } // todo: additional actions on non-unicast packet
+    return std::make_tuple(true, pkt_buf);
 }
 
-// static void
-// pcapif_rx_pbuf_free_custom(struct PacketBuffer* p)
-// {
-//     lwip_assert("NULL pointer", p != nullptr);
-//     struct PcapIfPbufCustom* ppc = (struct PcapIfPbufCustom*)p;
-//
-//     free_pkt_buf(ppc->p);
-//     ppc->p = nullptr;
-//     delete p;
-// }
 
 /**
- *
+ * This function is called when a packet is ready to be read from the interface. It
+ * uses the function low_level_input() that should handle the actual reception of bytes
+ * from the network interface.
  */
-// PacketBuffer
-// pcapif_rx_ref(PacketBuffer& pbuf)
-// {
-//     // ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
-//     struct PcapIfPbufCustom* ppc = new PcapIfPbufCustom;
-//     lwip_assert("out of memory for RX", ppc != nullptr);
-//     ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
-//     ppc->p = pbuf;
-//     // struct PacketBuffer* q = pbuf_alloced_custom(PBUF_RAW,
-//     //                                              p->tot_len,
-//     //                                              PBUF_REF,
-//     //                                              &ppc->pc,
-//     //                                              p->payload,
-//     //                                              p->tot_len);
-//     lwip_assert("pbuf_alloced_custom returned NULL", q != nullptr);
-//     return q;
-// }
-
-
-/**
- * pcapif_input: This function is called when a packet is ready to be read
- * from the interface. It uses the function low_level_input() that should
- * handle the actual reception of bytes from the network interface.
- */
-bool
-pcapif_recv(PcapInterface& pcap_if,
-            NetworkInterface& netif,
+std::tuple<bool, PacketBuffer>
+pcapif_recv(NetworkInterface& netif,
             const struct pcap_pkthdr* pkt_header,
-            const uint8_t* packet)
+            const uint8_t* packet,
+            PcapIfPrivate& pa)
 {
-    struct PcapIfPrivate* pa = (struct PcapIfPrivate*)user;
-    // int packet_len = pkt_header->caplen;
-    NetworkInterface* netif = (NetworkInterface*)pa->input_fn_arg;
-    struct PacketBuffer* p;
-    // PCAPIF_RX_LOCK_LWIP(); /* move received packet into a new PacketBuffer */
-    // p = pcapif_low_level_input(netif, packet, packet_len);
-    /* if no packet could be read, silently ignore this */
-    if (p != nullptr)
-    {
-        return false;
-    }
-    // PCAPIF_RX_UNLOCK_LWIP();
-} /**
+    bool ok;
+    PacketBuffer pkt_buf{};
+    std::tie(ok, pkt_buf) = pcapif_low_level_recv(netif, packet, pkt_header->caplen, pa);
+    return std::make_tuple(ok, pkt_buf);
+}
+
+
+/**
  * pcapif_init(): initialization function, pass to netif_add().
  */
-bool
+std::tuple<bool, PcapIfPrivate>
 pcapif_init(NetworkInterface& netif,
             std::string& name,
-            std::vector<NetworkInterface>& interfaces)
+            std::vector<NetworkInterface>& interfaces,
+            size_t ipv4_addr_index)
 {
     static int ethernetif_index;
-    sys_prot_t lev;
     auto local_index = ethernetif_index++;
     netif.if_name = name;
     // netif.linkoutput = pcapif_low_level_output;
@@ -751,32 +571,40 @@ pcapif_init(NetworkInterface& netif,
     netif.ethernet = true;
     netif.igmp_allowed = true;
     netif.mld6 = true; /* sets link up or down based on current status */
-    return pcapif_low_level_init(netif, netif.mac_address, local_index,);
+    sockaddr_in net_addr{};
+    net_addr.sin_addr.S_un.S_addr = netif.ip4_addresses[ipv4_addr_index].address.addr;
+    bool ok;
+    PcapIfPrivate pa{};
+    std::tie(ok, pa) = pcapif_low_level_init(netif, netif.mac_address, local_index, net_addr, interfaces);
+    return std::make_tuple(ok, pa);
 }
 
-void
-pcapif_poll(NetworkInterface* netif)
+
+bool
+pcapif_poll(NetworkInterface& netif, PcapIfPrivate& pa)
 {
-    // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
-    PcapIfPrivate* pa = nullptr;
-    int ret;
-    do
-    {
-        if (pa->adapter != nullptr)
-        {
-            // ret = pcap_dispatch(pa->adapter, -1, pcapif_input, (uint8_t*)pa);
-        }
-        else
-        {
-            ret = -1;
-        }
-        if (ret < 0)
-        {
-            /* error (e.g. adapter removed or resume from standby), try to reopen the adapter */
-            // pcap_reopen_adapter(pa);
-        }
-    }
-    while (ret > 0);
-} //
+    // todo: re-write
+    // int ret;
+    // do
+    // {
+    //     if (pa->adapter != nullptr)
+    //     {
+    //         ret = pcap_dispatch(pa->adapter, -1, pcapif_input, (uint8_t*)&pa);
+    //     }
+    //     else
+    //     {
+    //         ret = -1;
+    //     }
+    //     if (ret < 0)
+    //     {
+    //         /* error (e.g. adapter removed or resume from standby), try to reopen the adapter */
+    //         // pcap_reopen_adapter(pa);
+    //     }
+    // }
+    // while (ret > 0);
+}
+
+
+//
 // END OF FILE
 //

@@ -161,7 +161,7 @@ ppp_close(PppPcb& pcb, const bool nocarrier)
         // PPPDEBUG(LOG_DEBUG, ("ppp_close[%d]: carrier lost -> lcp_lowerdown\n", pcb->netif->num));
         lcp_lowerdown(pcb);
         /* forced link termination, this will force link protocol to disconnect. */
-        link_terminated(pcb);
+        link_terminated(pcb,);
         return STATUS_SUCCESS;
     } /* Disconnect */
     // PPPDEBUG(LOG_DEBUG, ("ppp_close[%d]: kill_link -> lcp_close\n", pcb->netif->num));
@@ -652,14 +652,16 @@ ppp_write(PppPcb& pcb, PacketBuffer& p)
     return STATUS_E_NOT_IMPLEMENTED;
 }
 
-LwipStatus
+
+bool
 ppp_link_terminated(PppPcb& pcb)
 {
     // PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated[%d]\n", pcb->netif->num));
+    // todo: call appropriate disconnect function
     // pcb->link_cb->disconnect(pcb, pcb->link_ctx_cb);
     // PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated[%d]: finished.\n", pcb->netif->num));
     // todo: publish link disconnect callback
-    return STATUS_E_NOT_IMPLEMENTED;
+    return false;
 } 
 
 

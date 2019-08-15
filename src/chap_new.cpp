@@ -35,6 +35,7 @@
 #include <magic.h>
 #include <ppp_impl.h>
 #include <ppp_opts.h>
+#include "ppp.h"
 /*
  * Command-line options.
  */
@@ -119,11 +120,11 @@ chap_lowerdown(PppPcb* pcb)
  * otherwise we wait for the lower layer to come up.
  */
 void
-chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
+chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code)
 {
     const struct ChapDigestType* dp;
 
-    if (pcb->chap_server.flags & kAuthStarted)
+    if (pcb.chap_server.flags & kAuthStarted)
     {
         ppp_error("CHAP: peer authentication already started!");
         return;
@@ -136,12 +137,12 @@ chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code)
         ppp_fatal("CHAP digest 0x%x requested but not available",
                   digest_code);
     }
-    pcb->chap_server.digest = dp;
-    pcb->chap_server.name = our_name;
+    pcb.chap_server.digest = dp;
+    pcb.chap_server.name = our_name;
     /* Start with a random ID value */
-    pcb->chap_server.id = magic();
-    pcb->chap_server.flags |= kAuthStarted;
-    if (pcb->chap_server.flags & kLowerup)
+    pcb.chap_server.id = magic();
+    pcb.chap_server.flags |= kAuthStarted;
+    if (pcb.chap_server.flags & kLowerup)
     {
         chap_timeout(pcb);
     }
@@ -183,41 +184,30 @@ chap_auth_with_peer(PppPcb* pcb, std::string& our_name, int digest_code)
  * or a new challenge to start re-authentication.
  */
 static void
-chap_timeout(void* arg)
+chap_timeout(PppPcb& pcb)
 {
-    PppPcb* pcb = (PppPcb*)arg;
-
-    pcb->chap_server.flags &= ~kTimeoutPending;
-    if ((pcb->chap_server.flags & kChallengeValid) == 0)
+    pcb.chap_server.flags &= ~kTimeoutPending;
+    if ((pcb.chap_server.flags & kChallengeValid) == 0)
     {
-        pcb->chap_server.challenge_xmits = 0;
+        pcb.chap_server.challenge_xmits = 0;
         chap_generate_challenge(pcb);
-        pcb->chap_server.flags |= kChallengeValid;
+        pcb.chap_server.flags |= kChallengeValid;
     }
-    else if (pcb->chap_server.challenge_xmits >= pcb->settings.chap_max_transmits)
+    else if (pcb.chap_server.challenge_xmits >= pcb.settings.chap_max_transmits)
     {
-        pcb->chap_server.flags &= ~kChallengeValid;
-        pcb->chap_server.flags |= kAuthDone | kAuthFailed;
+        pcb.chap_server.flags &= ~kChallengeValid;
+        pcb.chap_server.flags |= kAuthDone | kAuthFailed;
         auth_peer_fail(pcb, PPP_CHAP);
         return;
     }
 
-    // p = pbuf_alloc(PBUF_RAW, (uint16_t)(pcb->chap_server.challenge_pktlen), PPP_CTRL_PBUF_TYPE);
-    auto p = new PacketBuffer;
-    if (nullptr == p)
-    {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
-    memcpy(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
+    PacketBuffer p{};
+
+    memcpy(p->payload, pcb.chap_server.challenge, pcb.chap_server.challenge_pktlen);
     ppp_write(pcb, p);
-    ++pcb->chap_server.challenge_xmits;
-    pcb->chap_server.flags |= kTimeoutPending;
-    Timeout(chap_timeout, arg, pcb->settings.chap_timeout_time);
+    ++pcb.chap_server.challenge_xmits;
+    pcb.chap_server.flags |= kTimeoutPending;
+    Timeout(chap_timeout, pcb, pcb.settings.chap_timeout_time);
 }
 
 //
@@ -225,21 +215,22 @@ chap_timeout(void* arg)
 // the challenge packet in pcb->chap_server.challenge_pkt.
 //
 static void
-chap_generate_challenge(PppPcb* pcb)
+chap_generate_challenge(PppPcb& pcb)
 {
-    auto p = pcb->chap_server.challenge;
+    auto p = pcb.chap_server.challenge;
     MAKEHEADER(p, PPP_CHAP);
     p += CHAP_HDR_LEN;
-    pcb->chap_server.digest->generate_challenge(pcb, p);
+    // todo: generate challenge based on digest type
+    //pcb.chap_server.digest->generate_challenge(pcb, p);
     const auto clen = *p;
-    const auto nlen = pcb->chap_server.name.length();
-    memcpy(p + 1 + clen, pcb->chap_server.name.c_str(), nlen);
+    const auto nlen = pcb.chap_server.name.length();
+    memcpy(p + 1 + clen, pcb.chap_server.name.c_str(), nlen);
     const auto len = CHAP_HDR_LEN + 1 + clen + nlen;
-    pcb->chap_server.challenge_pktlen = PPP_HDRLEN + len;
+    pcb.chap_server.challenge_pktlen = PPP_HDRLEN + len;
 
-    p = pcb->chap_server.challenge + PPP_HDRLEN;
+    p = pcb.chap_server.challenge + PPP_HDRLEN;
     p[0] = CHAP_CHALLENGE;
-    p[1] = ++pcb->chap_server.id;
+    p[1] = ++pcb.chap_server.id;
     p[2] = len >> 8;
     p[3] = len;
 }

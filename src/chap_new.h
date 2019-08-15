@@ -210,7 +210,7 @@ typedef struct chap_server_state
 
 
 /* Called by authentication code to start authenticating the peer. */
-extern void chap_auth_peer(PppPcb* pcb, const char* our_name, int digest_code);
+extern void chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code);
 
 
 /* Called by auth. code to start authenticating us to the peer. */
@@ -225,9 +225,9 @@ static void chap_lowerup(PppPcb* pcb);
 
 static void chap_lowerdown(PppPcb* pcb);
 
-static void chap_timeout(void* arg);
+static void chap_timeout(PppPcb& pcb);
 
-static void chap_generate_challenge(PppPcb* pcb);
+static void chap_generate_challenge(PppPcb& pcb);
 
 static void chap_handle_response(PppPcb* pcb,
                                  int code,

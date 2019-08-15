@@ -39,10 +39,9 @@
 #include <vj.h>
 #include <chap_new.h>
 #include <ip4_addr.h>
-#include <fsm.h>
 #include <lcp.h>
 #include <eap_state.h>
-#include <upap.h>
+// #include <upap.h>
 #include <ipcp_defs.h>
 #include "timeouts.h"
 #include "fsm_def.h"
@@ -278,7 +277,7 @@ bool ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm);
 LwipStatus ppp_write(PppPcb& pcb, PacketBuffer& p);
 
 /* functions called by auth.c link_terminated() */
-LwipStatus
+bool
 ppp_link_terminated(PppPcb& pcb);
 
 void new_phase(PppPcb& pcb, int phase);
@@ -318,20 +317,54 @@ const char * protocol_name(int proto);
  * are lvalues and will already be in registers.
  * cp MUST be uint8_t *.
  */
-#define GETCHAR(c, cp) { \
-    (c) = *(cp)++; \
+// #define GETCHAR(c, cp) { \
+//     (c) = *(cp)++; \
+// }
+
+inline uint8_t GETCHAR(std::vector<uint8_t>& cp, size_t& index)
+{
+    return cp[index++];
 }
-#define PUTCHAR(c, cp) { \
-    *(cp)++ = (uint8_t) (c); \
+
+// #define PUTCHAR(c, cp) { \
+//     *(cp)++ = (uint8_t) (c); \
+// }
+inline void PUTCHAR(uint8_t val, std::vector<uint8_t>& cp)
+{
+    cp.push_back(val);
 }
-#define GETSHORT(s, cp) { \
-    (s) = *(cp)++ << 8; \
-    (s) |= *(cp)++; \
+
+inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp)
+{
+    for (auto&c : str) {
+        cp.push_back(c);
+    }
 }
-#define PUTSHORT(s, cp) { \
-    *(cp)++ = (uint8_t) ((s) >> 8); \
-    *(cp)++ = (uint8_t) (s); \
+
+// #define GETSHORT(s, cp) { \
+//     (s) = *(cp)++ << 8; \
+//     (s) |= *(cp)++; \
+// }
+
+inline uint16_t GETSHORT(std::vector<uint8_t>& cp, size_t& index)
+{
+    uint16_t s = cp[index++];
+    s |= cp[index++];
+    return s;
 }
+
+// #define PUTSHORT(s, cp) { \
+//     *(cp)++ = (uint8_t) ((s) >> 8); \
+//     *(cp)++ = (uint8_t) (s); \
+// }
+
+inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
+{
+    cp.push_back(s >> 8);
+    cp.push_back(s);
+}
+
+
 #define GETLONG(l, cp) { \
     (l) = *(cp)++ << 8; \
     (l) |= *(cp)++; (l) <<= 8; \
@@ -379,10 +412,17 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 /*
  * MAKEHEADER - Add Header fields to a packet.
  */
-#define MAKEHEADER(p, t) { \
+// #define MAKEHEADER(p, t) { \
+//     PUTCHAR(PPP_ALLSTATIONS, p); \
+//     PUTCHAR(PPP_UI, p); \
+//     PUTSHORT(t, p); }
+
+inline void MAKEHEADER(std::vector<uint8_t>& p, PppProtoFieldValue t)
+{
     PUTCHAR(PPP_ALLSTATIONS, p); \
     PUTCHAR(PPP_UI, p); \
-    PUTSHORT(t, p); }
+    PUTSHORT(t, p);
+}
 
 /* Procedures exported from auth.c */
 // bool link_required(PppPcb* pcb);     /* we are starting to use the link */
@@ -394,16 +434,19 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 //                     unknown>) noexcept;    /* start all the network control protos */
 // bool continue_networks(PppPcb* pcb); /* start network [ip, etc] control protos */
 bool
-auth_check_passwd(PppPcb* pcb, std::string& auser, std::string& apasswd, std::string& msg);
+auth_check_passwd(PppPcb& pcb, std::string& auser, std::string& apasswd, std::string& msg);
                                 /* check the user name and passwd against configuration */
-void auth_peer_fail(PppPcb *pcb, int protocol);
+bool
+auth_peer_fail(PppPcb& pcb, int protocol);
                 /* peer failed to authenticate itself */
-void auth_peer_success(PppPcb *pcb, int protocol, int prot_flavor, std::string& name);
+bool
+auth_peer_success(PppPcb& pcb, int protocol, int prot_flavor, std::string& name);
                 /* peer successfully authenticated itself */
-
-void auth_withpeer_fail(PppPcb *pcb, int protocol);
+bool
+auth_withpeer_fail(PppPcb& pcb, int protocol);
                 /* we failed to authenticate ourselves */
-void auth_withpeer_success(PppPcb *pcb, int protocol, int prot_flavor);
+bool
+auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor);
                 /* we successfully authenticated ourselves */
 
 void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
@@ -651,8 +694,8 @@ struct PppPcb
     /* Notify phase callback */
     // void* ctx_cb{}; /* Callbacks optional pointer */
     NetworkInterface netif{}; /* PPP interface */
-    uint8_t phase{}; /* where the link is at */
-    uint8_t err_code{}; /* Code indicating why interface is down. */ /* flags */
+    PppPhase phase{}; /* where the link is at */
+    PppErrorCode err_code{}; /* Code indicating why interface is down. */ /* flags */
     bool ask_for_local{}; /* request our address from peer */
     bool ipcp_is_open{}; /* haven't called np_finished() */
     bool ipcp_is_up{}; /* have called ipcp_up() */

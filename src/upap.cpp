@@ -1,535 +1,380 @@
-/*
- * upap.c - User/Password Authentication Protocol.
- *
- * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The name "Carnegie Mellon University" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For permission or any legal
- *    details, please contact
- *      Office of Technology Transfer
- *      Carnegie Mellon University
- *      5000 Forbes Avenue
- *      Pittsburgh, PA  15213-3890
- *      (412) 268-4387, fax: (412) 268-7395
- *      tech-transfer@andrew.cmu.edu
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Computing Services
- *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
- *
- * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+/**
+ * file: upap.cpp
+ * User/Password Authentication Protocol
  */
-
-#include <ppp_opts.h>
-
-/*
- * @todo:
- */
-
-
-#include <ppp_impl.h>
-
 #include <upap.h>
 
-/*
- * Protocol entry points.
+
+/**
+ * Initialize a UPAP unit.
  */
-static void upap_init(PppPcb *pcb);
-static void upap_lowerup(PppPcb *pcb);
-static void upap_lowerdown(PppPcb *pcb);
-static void upap_input(PppPcb *pcb, uint8_t *inpacket, int l);
-static void upap_protrej(PppPcb *pcb);
-
-// const struct protent pap_protent = {
-//     PPP_PAP,
-//     upap_init,
-//     upap_input,
-//     upap_protrej,
-//     upap_lowerup,
-//     upap_lowerdown,
-//     NULL,
-//     NULL,
-//
-//
-//
-//
-// };
-
-static void upap_timeout(void* arg);
-
-static void upap_reqtimeout(void* arg);
-static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len);
-
-static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len);
-static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len);
-static void upap_sauthreq(PppPcb *pcb);
-
-
-
-
-
-/*
- * upap_init - Initialize a UPAP unit.
- */
-static void upap_init(PppPcb *pcb) {
-    pcb->upap.us_user = nullptr;
-    // pcb->upap.us_userlen = 0;
-    pcb->upap.us_passwd = nullptr;
-    // pcb->upap.us_passwdlen = 0;
-    pcb->upap.us_clientstate = UPAPCS_INITIAL;
-
-    pcb->upap.us_serverstate = UPAPSS_INITIAL;
-
-    pcb->upap.us_id = 0;
-}
-
-
-/*
+std::tuple<bool, upap_state>
+upap_init(PppPcb& pcb)
+{
+    upap_state upap;
+    upap.us_clientstate = UPAPCS_INITIAL;
+    upap.us_serverstate = UPAPSS_INITIAL;
+    upap.us_id = 0;
+    return std::make_tuple(true, upap);
+} /**
  * upap_authwithpeer - Authenticate us with our peer (start client).
  *
  * Set new state and send authenticate's.
  */
-void upap_authwithpeer(PppPcb *pcb, std::string& user, std::string& password) {
-    if (user.empty() || password.empty())
-    {
-        return;
+bool
+upap_authwithpeer(PppPcb& pcb, std::string& user, std::string& password, upap_state& upap)
+{
+    if (user.empty() || password.empty()) {
+        return false;
+    } /* Save the username and password we're given */
+    upap.us_user = user;
+    upap.us_passwd = password;
+    upap.us_transmits = 0; /* Lower layer up yet? */
+    if (upap.us_clientstate == UPAPCS_INITIAL || upap.us_clientstate == UPAPCS_PENDING) {
+        upap.us_clientstate = UPAPCS_PENDING;
+        return false;
     }
-
-    /* Save the username and password we're given */
-    pcb->upap.us_user = user;
-    // pcb->upap.us_userlen = (uint8_t)std::min(strlen(user), 0xff);
-    pcb->upap.us_passwd = password;
-    // pcb->upap.us_passwdlen = (uint8_t)std::min(strlen(password), 0xff);
-    pcb->upap.us_transmits = 0;
-
-    /* Lower layer up yet? */
-    if (pcb->upap.us_clientstate == UPAPCS_INITIAL ||
-    pcb->upap.us_clientstate == UPAPCS_PENDING) {
-    pcb->upap.us_clientstate = UPAPCS_PENDING;
-    return;
-    }
-
-    upap_sauthreq(pcb);		/* Start protocol */
-}
-
-
-/*
+    return upap_sauthreq(pcb, upap); /* Start protocol */
+} /**
  * upap_authpeer - Authenticate our peer (start server).
  *
  * Set new state.
  */
-void upap_authpeer(PppPcb *pcb) {
-
+bool
+upap_authpeer(PppPcb& pcb, upap_state& upap)
+{
     /* Lower layer up yet? */
-    if (pcb->upap.us_serverstate == UPAPSS_INITIAL ||
-    pcb->upap.us_serverstate == UPAPSS_PENDING) {
-    pcb->upap.us_serverstate = UPAPSS_PENDING;
-    return;
+    if (pcb.upap.us_serverstate == UPAPSS_INITIAL || pcb.upap.us_serverstate ==
+        UPAPSS_PENDING) {
+        pcb.upap.us_serverstate = UPAPSS_PENDING;
+        return false;
     }
-
-    pcb->upap.us_serverstate = UPAPSS_LISTEN;
-    if (pcb->settings.pap_req_timeout > 0)
-    {
-        Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
+    pcb.upap.us_serverstate = UPAPSS_LISTEN;
+    if (pcb.settings.pap_req_timeout > 0) {
+        if (!upap_reqtimeout(pcb, upap)) {
+            return false;
+        }
     }
-}
-
-
-/*
- * upap_timeout - Retransmission timer for sending auth-reqs expired.
+    return true;
+} /**
+ * Retransmission timer for sending auth-reqs expired.
  */
-static void upap_timeout(void* arg) {
-    auto pcb = static_cast<PppPcb*>(arg);
-
-    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
-    return;
-
-    if (pcb->upap.us_transmits >= pcb->settings.pap_max_transmits) {
-    /* give up in disgust */
-    ppp_error("No response to PAP authenticate-requests");
-    pcb->upap.us_clientstate = UPAPCS_BADAUTH;
-    auth_withpeer_fail(pcb, PPP_PAP);
-    return;
-    }
-
-    upap_sauthreq(pcb);		/* Send Authenticate-Request */
-}
-
-
-
-/*
- * upap_reqtimeout - Give up waiting for the peer to send an auth-req.
+bool
+upap_timeout(upap_state& upap, PppPcb& pcb)
+{
+    if (upap.us_clientstate != UPAPCS_AUTHREQ) return false;
+    if (upap.us_transmits >= pcb.settings.pap_max_transmits) {
+        /* give up in disgust */
+        ppp_error("No response to PAP authenticate-requests");
+        upap.us_clientstate = UPAPCS_BADAUTH;
+        auth_withpeer_fail(pcb, PPP_PAP);
+        return false;
+    } /* Send Authenticate-Request */
+    return upap_sauthreq(pcb, upap);
+} /**
+ * Give up waiting for the peer to send an auth-req.
  */
-static void upap_reqtimeout(void* arg) {
-    auto pcb = (PppPcb*)arg;
-
-    if (pcb->upap.us_serverstate != UPAPSS_LISTEN)
-    {
-        return;			/* huh?? */
+bool
+upap_reqtimeout(PppPcb& pcb, upap_state& upap)
+{
+    if (upap.us_serverstate != UPAPSS_LISTEN) {
+        return false; /* huh?? */
     }
-    auth_peer_fail(pcb, PPP_PAP);
-    pcb->upap.us_serverstate = UPAPSS_BADAUTH;
-}
-
-
-
-/*
- * upap_lowerup - The lower layer is up.
- *
- * Start authenticating if pending.
+    if (!auth_peer_fail(pcb, PPP_PAP)) {
+        return false;
+    }
+    upap.us_serverstate = UPAPSS_BADAUTH;
+    return true;
+} /**
+ * The lower layer is up. Start authenticating if pending.
  */
-static void upap_lowerup(PppPcb *pcb) {
-
-    if (pcb->upap.us_clientstate == UPAPCS_INITIAL)
-    {
-        pcb->upap.us_clientstate = UPAPCS_CLOSED;
+bool
+upap_lowerup(PppPcb& pcb, upap_state& upap)
+{
+    if (upap.us_clientstate == UPAPCS_INITIAL) upap.us_clientstate = UPAPCS_CLOSED;
+    else if (upap.us_clientstate == UPAPCS_PENDING) {
+        if (!upap_sauthreq(pcb, upap)) {
+            return false;
+        }
+    } /* send an auth-request */
+    if (upap.us_serverstate == UPAPSS_INITIAL) upap.us_serverstate = UPAPSS_CLOSED;
+    else if (upap.us_serverstate == UPAPSS_PENDING) {
+        upap.us_serverstate = UPAPSS_LISTEN;
+        if (pcb.settings.pap_req_timeout > 0) {
+            if (!upap_reqtimeout(pcb, upap)) {
+                return false;
+            }
+        }
     }
-    else if (pcb->upap.us_clientstate == UPAPCS_PENDING) {
-    upap_sauthreq(pcb);	/* send an auth-request */
-    }
-
-
-    if (pcb->upap.us_serverstate == UPAPSS_INITIAL)
-    pcb->upap.us_serverstate = UPAPSS_CLOSED;
-    else if (pcb->upap.us_serverstate == UPAPSS_PENDING) {
-    pcb->upap.us_serverstate = UPAPSS_LISTEN;
-    if (pcb->settings.pap_req_timeout > 0)
-    {
-        Timeout(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
-    }
-    }
-
+    return true;
 }
 
-
-/*
+/**
  * upap_lowerdown - The lower layer is down.
  *
  * Cancel all timeouts.
  */
-static void upap_lowerdown(PppPcb *pcb) {
-
-    if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ)	/* Timeout pending? */
-    Untimeout(upap_timeout, pcb);		/* Cancel timeout */
-
-    if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->settings.pap_req_timeout > 0)
-    {
-        Untimeout(upap_reqtimeout, pcb);
+bool
+upap_lowerdown(PppPcb& pcb, upap_state& upap)
+{
+    if (upap.us_clientstate == UPAPCS_AUTHREQ) {
+        if (!upap_timeout(upap, pcb)) {
+            return false;
+        }
     }
-    pcb->upap.us_clientstate = UPAPCS_INITIAL;
-
-    pcb->upap.us_serverstate = UPAPSS_INITIAL;
-
+    if (upap.us_serverstate == UPAPSS_LISTEN && pcb.settings.pap_req_timeout > 0) {
+        if (!upap_reqtimeout(pcb, upap)) {
+            return false;
+        }
+    }
+    upap.us_clientstate = UPAPCS_INITIAL;
+    upap.us_serverstate = UPAPSS_INITIAL;
+    return true;
 }
 
 
-/*
+/**
  * upap_protrej - Peer doesn't speak this protocol.
  *
  * This shouldn't happen.  In any case, pretend lower layer went down.
  */
-static void upap_protrej(PppPcb *pcb) {
-
-    if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ) {
-    ppp_error("PAP authentication failed due to protocol-reject");
-    auth_withpeer_fail(pcb, PPP_PAP);
+bool
+upap_proto_rejected(PppPcb& pcb, upap_state& upap)
+{
+    if (upap.us_clientstate == UPAPCS_AUTHREQ) {
+        ppp_error("PAP authentication failed due to protocol-reject");
+        auth_withpeer_fail(pcb, PPP_PAP);
     }
-
-    if (pcb->upap.us_serverstate == UPAPSS_LISTEN) {
-    ppp_error("PAP authentication of peer failed (protocol-reject)");
-    auth_peer_fail(pcb, PPP_PAP);
+    if (upap.us_serverstate == UPAPSS_LISTEN) {
+        ppp_error("PAP authentication of peer failed (protocol-reject)");
+        auth_peer_fail(pcb, PPP_PAP);
     }
-
-    upap_lowerdown(pcb);
+    return upap_lowerdown(pcb, upap);
 }
 
-
-/*
- * upap_input - Input UPAP packet.
+/**
+ * Input UPAP packet.
  */
-static void upap_input(PppPcb *pcb, uint8_t *inpacket, int l) {
-    uint8_t code, id;
-    int len;
-
+bool
+upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap)
+{
     /*
      * Parse header (code, id and length).
      * If packet too short, drop it.
      */
-    uint8_t* inp = inpacket;
-    if (l < UPAP_HEADERLEN) {
-    // UPAPDEBUG(("pap_input: rcvd short header."));
-    return;
+    if (in_packet.size() < UPAP_HEADERLEN) {
+        return false;
     }
-    GETCHAR(code, inp);
-    GETCHAR(id, inp);
-    GETSHORT(len, inp);
+
+    size_t index = 0;
+    const auto code = GETCHAR(in_packet, index);
+    auto id = GETCHAR(in_packet, index);
+    auto len = GETSHORT(in_packet, index);
     if (len < UPAP_HEADERLEN) {
-    // UPAPDEBUG(("pap_input: rcvd illegal length."));
-    return;
+        return false;
     }
-    if (len > l) {
-    // UPAPDEBUG(("pap_input: rcvd short packet."));
-    return;
+    if (len > in_packet.data.size()) {
+        return false;
     }
     len -= UPAP_HEADERLEN;
-
     /*
      * Action depends on code.
      */
-    switch (code) {
-    case UPAP_AUTHREQ:
-
-    upap_rauthreq(pcb, inp, id, len);
-
-    break;
-
-    case UPAP_AUTHACK:
-    upap_rauthack(pcb, inp, id, len);
-    break;
-
-    case UPAP_AUTHNAK:
-    upap_rauthnak(pcb, inp, id, len);
-    break;
-
-    default:				/* XXX Need code reject */
-    break;
+    if (code == UPAP_AUTHREQ) {
+        return upap_recv_auth_req(pcb, in_packet, id, upap);
     }
+    if (code == UPAP_AUTHACK) {
+        return upap_rcv_auth_ack(pcb, in_packet, id, upap);
+    }
+    if (code == UPAP_AUTHNAK) {
+        return upap_rauthnak(pcb, in_packet, id, upap);
+    }
+    return false;
+    // todo: handle other cases
 }
-
 
 /*
  * upap_rauth - Receive Authenticate.
  */
-static void upap_rauthreq(PppPcb *pcb, uint8_t *inp, int id, int len) {
-    uint8_t ruserlen, rpasswdlen;
-    std::string rhostname;
+bool
+upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, upap_state& upap)
+{
     std::string msg;
-    int msglen;
-
-    if (pcb->upap.us_serverstate < UPAPSS_LISTEN)
-    {
-        return;
-    } /*
+    size_t msglen;
+    if (upap.us_serverstate < UPAPSS_LISTEN) {
+        return false;
+    }
+    /*
      * If we receive a duplicate authenticate-request, we are
      * supposed to return the same status as for the first request.
      */
-    std::string empty_str = "";
-    if (pcb->upap.us_serverstate == UPAPSS_OPEN)
-    {
+    std::string empty_str;;
+
+    if (upap.us_serverstate == UPAPSS_OPEN) {
         upap_sresp(pcb, UPAP_AUTHACK, id, empty_str); /* return auth-ack */
-        return;
+        return false;
     }
-    if (pcb->upap.us_serverstate == UPAPSS_BADAUTH)
-    {
+
+    if (upap.us_serverstate == UPAPSS_BADAUTH) {
         upap_sresp(pcb, UPAP_AUTHNAK, id, empty_str); /* return auth-nak */
-        return;
+        return false;
     }
 
     /*
      * Parse user/passwd.
      */
-    if (len < 1) {
-    // UPAPDEBUG(("pap_rauth: rcvd short packet."));
-    return;
-    }
-    GETCHAR(ruserlen, inp);
-    len -= sizeof (uint8_t) + ruserlen + sizeof (uint8_t);
-    if (len < 0) {
-    // UPAPDEBUG(("pap_rauth: rcvd short packet."));
-    return;
-    }
-    std::string ruser = (char *)inp;
-    INCPTR(ruserlen, inp);
-    GETCHAR(rpasswdlen, inp);
-    if (len < rpasswdlen) {
-    // UPAPDEBUG(("pap_rauth: rcvd short packet."));
-    return;
+    if (in_pkt.empty()) {
+        return false;
     }
 
-    std::string rpasswd = (char *)inp;
+    size_t index = 0;
+    const size_t remote_user_len = GETCHAR(in_pkt, index);
+    int tracked_len = in_pkt.size();
+    const auto req_len = sizeof(uint8_t) + remote_user_len + sizeof(uint8_t);
+    tracked_len -= sizeof(uint8_t) + remote_user_len + sizeof(uint8_t);
 
-    /*
+    if (req_len > in_pkt.size()) {
+        return false;
+    }
+
+    std::string ruser = reinterpret_cast<char *>(in_pkt.data()) + index;
+    index += remote_user_len;
+    const size_t rpasswdlen = GETCHAR(in_pkt, index);
+    if (in_pkt.size() < rpasswdlen) {
+        return false;
+    }
+    std::string rpasswd = (char *)in_pkt.data() + index;
+
+    /**
      * Check the username and password given.
      */
     int retcode = UPAP_AUTHNAK;
     if (auth_check_passwd(pcb, ruser, rpasswd, msg)) {
-      retcode = UPAP_AUTHACK;
+        retcode = UPAP_AUTHACK;
     }
+
     // BZERO(rpasswd, rpasswdlen);
+    if (!upap_sresp(pcb, retcode, id, msg)) { return false; }
 
-    upap_sresp(pcb, retcode, id, msg);
-
-    /* Null terminate and clean remote name. */
-    // ppp_slprintf(rhostname, sizeof(rhostname), "%.*v", ruserlen, ruser);
-    rhostname = ruser;
-
-
+    const std::string rhostname = ruser;
     if (retcode == UPAP_AUTHACK) {
-    pcb->upap.us_serverstate = UPAPSS_OPEN;
-    ppp_notice("PAP peer authentication succeeded for %q", rhostname);
-    auth_peer_success(pcb, PPP_PAP, 0, ruser);
-    } else {
-    pcb->upap.us_serverstate = UPAPSS_BADAUTH;
-    ppp_warn("PAP peer authentication failed for %q", rhostname);
-    auth_peer_fail(pcb, PPP_PAP);
+        upap.us_serverstate = UPAPSS_OPEN;
+        ppp_notice("PAP peer authentication succeeded for %q", rhostname);
+        return auth_peer_success(pcb, PPP_PAP, 0, ruser);
     }
+    upap.us_serverstate = UPAPSS_BADAUTH;
+    ppp_warn("PAP peer authentication failed for %q", rhostname);
 
-    if (pcb->settings.pap_req_timeout > 0)
-    {
-        Untimeout(upap_reqtimeout, pcb);
+    auth_peer_fail(pcb, PPP_PAP);
+
+
+    if (pcb.settings.pap_req_timeout > 0) {
+        upap_reqtimeout(pcb, upap);
     }
 }
 
-
-/*
+/**
  * upap_rauthack - Receive Authenticate-Ack.
  */
-static void upap_rauthack(PppPcb *pcb, uint8_t *inp, int id, int len) {
-    uint8_t msglen;
-    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
-    {
+bool
+upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap)
+{
+    size_t index = 0;
+    if (upap.us_clientstate != UPAPCS_AUTHREQ) {
         /* XXX */
-    return;
-    } /*
+        return false;
+    }
+    /*
      * Parse message.
      */
-    if (len < 1) {
-    // UPAPDEBUG(("pap_rauthack: ignoring missing msg-length."));
-    } else {
-    GETCHAR(msglen, inp);
-    if (msglen > 0) {
-        len -= sizeof (uint8_t);
-        if (len < msglen) {
-        // UPAPDEBUG(("pap_rauthack: rcvd short packet."));
-        return;
+    if (in_pkt.empty()) {
+        // UPAPDEBUG(("pap_rauthack: ignoring missing msg-length."));
+    }
+    else {
+        const uint8_t msglen = GETCHAR(in_pkt, index);
+        if (msglen > 0) {
+            if (in_pkt.size() - 1 < msglen) {
+                return false;
+            }
+            auto msg = reinterpret_cast<char *>(in_pkt.data()) + index;
+            // PRINTMSG(msg, msglen);
         }
-        char* msg = (char *)inp;
-        PRINTMSG(msg, msglen);
     }
-    }
-
-    pcb->upap.us_clientstate = UPAPCS_OPEN;
-
-    auth_withpeer_success(pcb, PPP_PAP, 0);
+    upap.us_clientstate = UPAPCS_OPEN;
+    return auth_withpeer_success(pcb, PPP_PAP, 0);
 }
-
 
 /*
  * upap_rauthnak - Receive Authenticate-Nak.
  */
-static void upap_rauthnak(PppPcb *pcb, uint8_t *inp, int id, int len) {
-    uint8_t msglen;
-    if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
-    {
+bool
+upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap)
+{
+    if (upap.us_clientstate != UPAPCS_AUTHREQ) {
         /* XXX */
-    return;
-    } /*
+        return false;
+    }
+
+    /*
      * Parse message.
      */
-    if (len < 1) {
-    // UPAPDEBUG(("pap_rauthnak: ignoring missing msg-length."));
-    } else {
-    GETCHAR(msglen, inp);
+    if (in_pkt.empty()) {
+        return false;
+    }
+    size_t index = 0;
+    const auto msglen = GETCHAR(in_pkt, index);
     if (msglen > 0) {
-        len -= sizeof (uint8_t);
-        if (len < msglen) {
-        // UPAPDEBUG(("pap_rauthnak: rcvd short packet."));
-        return;
+        if (in_pkt.size() - 1 < msglen) {
+            return false;
         }
-        char* msg = (char *)inp;
+        const auto msg = reinterpret_cast<char *>(in_pkt.data()) + index;
         PRINTMSG(msg, msglen);
     }
-    }
-
-    pcb->upap.us_clientstate = UPAPCS_BADAUTH;
-
+    upap.us_clientstate = UPAPCS_BADAUTH;
     ppp_error("PAP authentication failed");
-    auth_withpeer_fail(pcb, PPP_PAP);
+    return auth_withpeer_fail(pcb, PPP_PAP);
 }
 
-
-/*
- * upap_sauthreq - Send an Authenticate-Request.
+/**
+ * Send an Authenticate-Request.
  */
-static void upap_sauthreq(PppPcb *pcb) {
-    int outlen = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + pcb->upap.us_user.length() + pcb->upap.
-                                                                                    us_passwd.length();
-    // PacketBuffer* p = pbuf_alloc();
+bool
+upap_sauthreq(PppPcb& pcb, upap_state& upap)
+{
+    const size_t out_len = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + upap.us_user.length() +
+        upap.us_passwd.length(); // todo: re-write not to overflow the buffer
     PacketBuffer p{};
-    if(nullptr == p)
-    {
-        return;
-    }
-    if(p->tot_len != p->len) {
-        free_pkt_buf(p);
-        return;
-    }
-
-    uint8_t* outp = (uint8_t*)p->payload;
+    auto outp = p.data;
     MAKEHEADER(outp, PPP_PAP);
-
-    PUTCHAR(UPAP_AUTHREQ, outp);
-    PUTCHAR(++pcb->upap.us_id, outp);
-    PUTSHORT(outlen, outp);
-    PUTCHAR(pcb->upap.us_user.length(), outp);
-    memcpy(outp, pcb->upap.us_user.c_str(), pcb->upap.us_user.length());
-    // INCPTR(pcb->upap.us_userlen, outp);
-    // PUTCHAR(pcb->upap.us_passwdlen, outp);
-    memcpy(outp, pcb->upap.us_passwd.c_str(), pcb->upap.us_passwd.length());
-
-    ppp_write(pcb, p);
-
-    Timeout(upap_timeout, pcb, pcb->settings.pap_timeout_time);
-    ++pcb->upap.us_transmits;
-    pcb->upap.us_clientstate = UPAPCS_AUTHREQ;
+    PUTCHAR((uint8_t)UPAP_AUTHREQ, outp);
+    PUTCHAR(upap.us_id, outp);
+    PUTSHORT((uint16_t)out_len, outp);
+    PUTCHAR(upap.us_user.length(), outp);
+    PUTSTRING(upap.us_user, outp);
+    PUTCHAR(upap.us_passwd.size(), outp);
+    PUTSTRING(upap.us_passwd, outp);
+    ppp_write(pcb, p); // Timeout(upap_timeout, pcb, pcb->settings.pap_timeout_time);
+    ++upap.us_transmits;
+    upap.us_clientstate = UPAPCS_AUTHREQ;
 }
-/*
- * upap_sresp - Send a response (ack or nak).
+
+/**
+ * Send a response (ack or nak).
  */
-static void upap_sresp(PppPcb *pcb, uint8_t code, uint8_t id, std::string& msg) {
-    int outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
-    // PacketBuffer* p = pbuf_alloc();
+bool
+upap_sresp(PppPcb& pcb, const uint8_t code, const uint8_t id, std::string& msg)
+{
+    const size_t outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
     PacketBuffer p{};
-    if(nullptr == p)
-    {
-        return;
-    }
-    if(p->tot_len != p->len) {
-        free_pkt_buf(p);
-        return;
-    }
-
-    uint8_t* outp = (uint8_t*)p->payload;
-    MAKEHEADER(outp, PPP_PAP);
-
-    PUTCHAR(code, outp);
-    PUTCHAR(id, outp);
-    PUTSHORT(outlen, outp);
-    PUTCHAR(msg.length(), outp);
-    memcpy(outp, msg.c_str(), msg.length());
-    ppp_write(pcb, p);
+    MAKEHEADER(p.data, PPP_PAP);
+    PUTCHAR(code, p.data);
+    PUTCHAR(id, p.data);
+    PUTSHORT(outlen, p.data);
+    PUTCHAR(msg.length(), p.data);
+    PUTSTRING(msg, p.data);
+    return ppp_write(pcb, p);
 }
 
 //
-//
+// EOF
 //

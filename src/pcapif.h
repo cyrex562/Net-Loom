@@ -37,21 +37,21 @@ struct PcapIfPrivate
 };
 
 
-bool
-pcapif_recv(PcapInterface& pcap_if,
-            NetworkInterface
+std::tuple<bool, PacketBuffer>
+pcapif_recv(NetworkInterface
             & netif,
             const struct pcap_pkthdr* pkt_header,
-            const uint8_t* packet);
+            const uint8_t* packet,
+            PcapIfPrivate& pa);
 
-
-bool
+std::tuple<bool, PcapIfPrivate>
 pcapif_init(NetworkInterface& netif,
             std::string& name,
-            std::vector<NetworkInterface>& interfaces);
+            std::vector<NetworkInterface>& interfaces,
+            size_t ipv4_addr_index);
 
-void
-pcapif_shutdown(NetworkInterface* netif);
+bool
+pcapif_shutdown(NetworkInterface& netif, PcapIfPrivate& pa);
 
 std::tuple<bool, uint32_t>
 
@@ -74,6 +74,16 @@ pcaipf_is_tx_packet(NetworkInterface& netif,
 
 bool
 pcapif_check_linkstate(NetworkInterface& netif, PcapIfPrivate& pa);
+
+
+std::tuple<bool, PcapIfPrivate>
+pcapif_low_level_init(NetworkInterface& netif,
+                      MacAddress& my_mac_addr,
+                      int adapter_num,
+                      sockaddr_in& netaddr,
+                      std::vector<NetworkInterface>& interfaces);
+
+
 
 //
 // END OF FILE
