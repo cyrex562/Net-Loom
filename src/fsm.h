@@ -44,6 +44,8 @@
 #pragma once
 #include <fsm_def.h>
 #include <cstdint>
+#include "auth.h"
+
 /*
  * Packet header = Code, id, length.
  */
@@ -154,7 +156,8 @@ enum FsmOpts
 /*
  * Prototypes
  */
-void fsm_init(Fsm* f);
+bool
+fsm_init(::Fsm& fsm, PppPcb& pcb);
 void fsm_lowerup(Fsm* f);
 void fsm_lowerdown(Fsm* f);
 bool fsm_open(Fsm* f);

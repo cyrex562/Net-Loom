@@ -13,3 +13,8 @@ inline LwipStatus u8_vector_to_u32(std::vector<uint8_t> vec, const size_t offset
     out_u32 = vec[offset] << 24 | vec[offset +1] << 16 | vec[offset + 2] << 8 | vec[offset + 3];
     return STATUS_SUCCESS;
 }
+
+inline void zero_mem(void* buf, size_t len)
+{
+    memset(buf ,0, len);
+}

@@ -1,51 +1,22 @@
-/*****************************************************************************
-* ppp.h - Network Point to Point Protocol header file.
-*
-* Copyright (c) 2003 by Marc Boucher, Services Informatiques (MBSI) inc.
-* portions Copyright (c) 1997 Global Election Systems Inc.
-*
-* The authors hereby grant permission to use, copy, modify, distribute,
-* and license this software and its documentation for any purpose, provided
-* that existing copyright notices are retained in all copies and that this
-* notice and the following disclaimer are included verbatim in any
-* distributions. No written agreement, license, or royalty fee is required
-* for any of the authorized uses.
-*
-* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS *AS IS* AND ANY EXPRESS OR
-* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-******************************************************************************
-* REVISION HISTORY
-*
-* 03-01-01 Marc Boucher <marc@mbsi.ca>
-*   Ported to lwIP.
-* 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-*   Original derived from BSD codes.
-*****************************************************************************/
-#pragma once
-#include <network_interface.h>
-#include <ccp.h>
-#include <ip6_addr.h>
-#include <mppe.h>
-#include <ipv6cp.h>
-#include <vj.h>
-#include <chap_new.h>
-#include <ip4_addr.h>
-#include <lcp.h>
-#include <eap_state.h>
-// #include <upap.h>
-#include <ipcp_defs.h>
-#include "timeouts.h"
-#include "fsm_def.h"
+/**
+ * @file: ppp.h
+ */
 
+#pragma once
+#include <fsm_def.h>
+#include <timeouts.h>
+#include <ccp.h>
+#include <chap_new.h>
+#include <eap_state.h>
+#include <ip4_addr.h>
+#include <ip6_addr.h>
+#include <ipcp_defs.h>
+#include <ipv6cp.h>
+#include <lcp.h>
+#include <mppe.h>
+#include <network_interface.h>
+#include <upap_state.h>
+#include <vj.h>
 
 /**
  * Protocol field values.
@@ -289,7 +260,12 @@ void netif_set_mtu(PppPcb *pcb, int mtu);
 int netif_get_mtu(PppPcb*pcb);
 
 
-void ccp_set(PppPcb*pcb, uint8_t isopen, uint8_t isup, uint8_t receive_method, uint8_t transmit_method);
+bool
+ccp_set(PppPcb& pcb,
+        bool isopen,
+        bool isup,
+        uint8_t receive_method,
+        uint8_t transmit_method);
 void ccp_reset_comp(PppPcb*pcb);
 void ccp_reset_decomp(PppPcb*pcb);
 
@@ -404,10 +380,10 @@ inline void timeout_ms(SysTimeoutHandler time_fn, void* arg, const uint32_t time
 inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
     sys_untimeout((time_fn), (arg));
 }
-#define BZERO(s, n)		memset(s, 0, n)
-#define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
+// #define BZERO(s, n)		memset(s, 0, n)
+// #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 
-#define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
+// #define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
 
 /*
  * MAKEHEADER - Add Header fields to a packet.

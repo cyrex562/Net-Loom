@@ -1,15 +1,13 @@
 
 #define NOMINMAX
-
-#include <ppp_opts.h>
-#include <protent.h>
-#include <lcp.h>
-#include <mppe.h>
-
-#include <fsm.h>
+#include <auth.h>
 #include <ccp.h>
 #include <cstring>
-#include <auth.h>
+#include <fsm.h>
+#include <lcp.h>
+#include <mppe.h>
+#include <ppp.h>
+#include <protent.h>
 
 /*
  * Do we want / did we get any compression?
@@ -28,7 +26,7 @@ static int ccp_anycompress(CcpOptions* opt)
 static void ccp_init(PppPcb* ppp_pcb)
 {
     ppp_pcb->ccp_fsm.protocol = PPP_CCP;
-    fsm_init(&ppp_pcb->ccp_fsm);
+    fsm_init(&ppp_pcb->ccp_fsm,);
     const auto wo = &ppp_pcb->ccp_wantoptions;
     const auto ao = &ppp_pcb->ccp_allowoptions;
     wo->deflate = true;
@@ -74,20 +72,21 @@ void ccp_reset_decomp(PppPcb* pcb)
 /*
  * ccp_set - inform about the current state of CCP.
  */
-void ccp_set(PppPcb* pcb,
-             uint8_t isopen,
-             uint8_t isup,
-             const uint8_t receive_method,
-             const uint8_t transmit_method)
+bool
+ccp_set(PppPcb& pcb,
+        bool isopen,
+        bool isup,
+        const uint8_t receive_method,
+        const uint8_t transmit_method)
 {
-    pcb->ccp_receive_method = receive_method;
-    pcb->ccp_transmit_method = transmit_method;
+    pcb.ccp_receive_method = receive_method;
+    pcb.ccp_transmit_method = transmit_method;
 }
 
 /*
  * ccp_open - CCP is allowed to come up.
  */
-static bool ccp_open(PppPcb* pcb)
+bool ccp_open(PppPcb& pcb)
 {
     auto f = &pcb->ccp_fsm;
     const auto go = &pcb->ccp_gotoptions;
@@ -210,7 +209,8 @@ static void ccp_protrej(PppPcb* pcb)
 /*
  * ccp_resetci - initialize at start of negotiation.
  */
-static void ccp_resetci(Fsm* f, PppPcb* pcb)
+bool
+ccp_resetci(Fsm& f, PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
     auto go = &pcb->ccp_gotoptions;

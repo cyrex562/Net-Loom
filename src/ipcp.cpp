@@ -46,6 +46,7 @@
 #include <ppp.h>
 #include <fsm.h>
 #include <ipcp_defs.h>
+#include "util.h"
 
 /* Notifiers for when IPCP goes up and down */
 struct notifier* ip_up_notifier = nullptr;
@@ -120,7 +121,7 @@ static void ipcp_clear_addrs(PppPcb* pcb, uint32_t ouraddr, uint32_t hisaddr, ui
 
 
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
-			 (x) == CONFNAK ? "NAK" : "REJ")
+             (x) == CONFNAK ? "NAK" : "REJ")
 
 
 /*
@@ -137,7 +138,7 @@ ipcp_init(PppPcb* pcb)
     f->pcb = pcb;
     f->protocol = PPP_IPCP;
     // f->callbacks = &ipcp_callbacks;
-    fsm_init(f);
+    fsm_init(f,);
 
     /*
      * Some 3G modems use repeated IPCP NAKs as a way of stalling
@@ -271,7 +272,7 @@ ipcp_resetci(Fsm* f)
     {
         go->ouraddr = 0;
     }
-    BZERO(&pcb->ipcp_hisoptions, sizeof(IpcpOptions));
+    zero_mem(&pcb->ipcp_hisoptions, sizeof(IpcpOptions));
 }
 
 
@@ -344,60 +345,60 @@ ipcp_addci(Fsm* f, uint8_t* ucp, int* lenp)
 
 #define ADDCIADDRS(opt, neg, val1, val2) \
     if (neg) { \
-	if (len >= CILEN_ADDRS) { \
-	    uint32_t l; \
-	    PUTCHAR(opt, ucp); \
-	    PUTCHAR(CILEN_ADDRS, ucp); \
-	    l = lwip_ntohl(val1); \
-	    PUTLONG(l, ucp); \
-	    l = lwip_ntohl(val2); \
-	    PUTLONG(l, ucp); \
-	    len -= CILEN_ADDRS; \
-	} else \
-	    go->old_addrs = 0; \
+    if (len >= CILEN_ADDRS) { \
+        uint32_t l; \
+        PUTCHAR(opt, ucp); \
+        PUTCHAR(CILEN_ADDRS, ucp); \
+        l = lwip_ntohl(val1); \
+        PUTLONG(l, ucp); \
+        l = lwip_ntohl(val2); \
+        PUTLONG(l, ucp); \
+        len -= CILEN_ADDRS; \
+    } else \
+        go->old_addrs = 0; \
     }
 
 #define ADDCIVJ(opt, neg, val, old, maxslotindex, cflag) \
     if (neg) { \
-	int vjlen = old? CILEN_COMPRESS : CILEN_VJ; \
-	if (len >= vjlen) { \
-	    PUTCHAR(opt, ucp); \
-	    PUTCHAR(vjlen, ucp); \
-	    PUTSHORT(val, ucp); \
-	    if (!old) { \
-		PUTCHAR(maxslotindex, ucp); \
-		PUTCHAR(cflag, ucp); \
-	    } \
-	    len -= vjlen; \
-	} else \
-	    neg = 0; \
+    int vjlen = old? CILEN_COMPRESS : CILEN_VJ; \
+    if (len >= vjlen) { \
+        PUTCHAR(opt, ucp); \
+        PUTCHAR(vjlen, ucp); \
+        PUTSHORT(val, ucp); \
+        if (!old) { \
+        PUTCHAR(maxslotindex, ucp); \
+        PUTCHAR(cflag, ucp); \
+        } \
+        len -= vjlen; \
+    } else \
+        neg = 0; \
     }
 
 
 #define ADDCIADDR(opt, neg, val) \
     if (neg) { \
-	if (len >= CILEN_ADDR) { \
-	    uint32_t l; \
-	    PUTCHAR(opt, ucp); \
-	    PUTCHAR(CILEN_ADDR, ucp); \
-	    l = lwip_ntohl(val); \
-	    PUTLONG(l, ucp); \
-	    len -= CILEN_ADDR; \
-	} else \
-	    neg = 0; \
+    if (len >= CILEN_ADDR) { \
+        uint32_t l; \
+        PUTCHAR(opt, ucp); \
+        PUTCHAR(CILEN_ADDR, ucp); \
+        l = lwip_ntohl(val); \
+        PUTLONG(l, ucp); \
+        len -= CILEN_ADDR; \
+    } else \
+        neg = 0; \
     }
 
 #define ADDCIDNS(opt, neg, addr) \
     if (neg) { \
-	if (len >= CILEN_ADDR) { \
-	    uint32_t l; \
-	    PUTCHAR(opt, ucp); \
-	    PUTCHAR(CILEN_ADDR, ucp); \
-	    l = lwip_ntohl(addr); \
-	    PUTLONG(l, ucp); \
-	    len -= CILEN_ADDR; \
-	} else \
-	    neg = 0; \
+    if (len >= CILEN_ADDR) { \
+        uint32_t l; \
+        PUTCHAR(opt, ucp); \
+        PUTCHAR(CILEN_ADDR, ucp); \
+        l = lwip_ntohl(addr); \
+        PUTLONG(l, ucp); \
+        len -= CILEN_ADDR; \
+    } else \
+        neg = 0; \
     }
 
 
@@ -455,77 +456,77 @@ ipcp_ackci(Fsm* f, uint8_t* p, int len)
 
 #define ACKCIADDRS(opt, neg, val1, val2) \
     if (neg) { \
-	uint32_t l; \
-	if ((len -= CILEN_ADDRS) < 0) \
-	    goto bad; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_ADDRS || \
-	    citype != opt) \
-	    goto bad; \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	if (val1 != cilong) \
-	    goto bad; \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	if (val2 != cilong) \
-	    goto bad; \
+    uint32_t l; \
+    if ((len -= CILEN_ADDRS) < 0) \
+        goto bad; \
+    GETCHAR(citype, p); \
+    GETCHAR(cilen, p); \
+    if (cilen != CILEN_ADDRS || \
+        citype != opt) \
+        goto bad; \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    if (val1 != cilong) \
+        goto bad; \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    if (val2 != cilong) \
+        goto bad; \
     }
 
 #define ACKCIVJ(opt, neg, val, old, maxslotindex, cflag) \
     if (neg) { \
-	int vjlen = old? CILEN_COMPRESS : CILEN_VJ; \
-	if ((len -= vjlen) < 0) \
-	    goto bad; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != vjlen || \
-	    citype != opt)  \
-	    goto bad; \
-	GETSHORT(cishort, p); \
-	if (cishort != val) \
-	    goto bad; \
-	if (!old) { \
-	    GETCHAR(cimaxslotindex, p); \
-	    if (cimaxslotindex != maxslotindex) \
-		goto bad; \
-	    GETCHAR(cicflag, p); \
-	    if (cicflag != cflag) \
-		goto bad; \
-	} \
+    int vjlen = old? CILEN_COMPRESS : CILEN_VJ; \
+    if ((len -= vjlen) < 0) \
+        goto bad; \
+    GETCHAR(citype, p); \
+    GETCHAR(cilen, p); \
+    if (cilen != vjlen || \
+        citype != opt)  \
+        goto bad; \
+    GETSHORT(cishort, p); \
+    if (cishort != val) \
+        goto bad; \
+    if (!old) { \
+        GETCHAR(cimaxslotindex, p); \
+        if (cimaxslotindex != maxslotindex) \
+        goto bad; \
+        GETCHAR(cicflag, p); \
+        if (cicflag != cflag) \
+        goto bad; \
+    } \
     }
 
 
 #define ACKCIADDR(opt, neg, val) \
     if (neg) { \
-	uint32_t l; \
-	if ((len -= CILEN_ADDR) < 0) \
-	    goto bad; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_ADDR || \
-	    citype != opt) \
-	    goto bad; \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	if (val != cilong) \
-	    goto bad; \
+    uint32_t l; \
+    if ((len -= CILEN_ADDR) < 0) \
+        goto bad; \
+    GETCHAR(citype, p); \
+    GETCHAR(cilen, p); \
+    if (cilen != CILEN_ADDR || \
+        citype != opt) \
+        goto bad; \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    if (val != cilong) \
+        goto bad; \
     }
 
 #define ACKCIDNS(opt, neg, addr) \
     if (neg) { \
-	uint32_t l; \
-	if ((len -= CILEN_ADDR) < 0) \
-	    goto bad; \
-	GETCHAR(citype, p); \
-	GETCHAR(cilen, p); \
-	if (cilen != CILEN_ADDR || citype != opt) \
-	    goto bad; \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	if (addr != cilong) \
-	    goto bad; \
+    uint32_t l; \
+    if ((len -= CILEN_ADDR) < 0) \
+        goto bad; \
+    GETCHAR(citype, p); \
+    GETCHAR(cilen, p); \
+    if (cilen != CILEN_ADDR || citype != opt) \
+        goto bad; \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    if (addr != cilong) \
+        goto bad; \
     }
 
 
@@ -595,7 +596,7 @@ ipcp_nakci(Fsm* f, uint8_t* p, int len, int treat_as_reject)
     IpcpOptions no{}; /* options we've seen Naks for */
     IpcpOptions try_{}; /* options to request next time */
 
-    BZERO(&no, sizeof(no));
+    zero_mem(&no, sizeof(no));
     try_ = *go;
 
     /*
@@ -835,78 +836,78 @@ ipcp_rejci(Fsm* f, uint8_t* p, int len)
      */
 #define REJCIADDRS(opt, neg, val1, val2) \
     if ((neg) && \
-	(cilen = p[1]) == CILEN_ADDRS && \
-	len >= cilen && \
-	p[0] == opt) { \
-	uint32_t l; \
-	len -= cilen; \
-	INCPTR(2, p); \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	/* Check rejected value. */ \
-	if (cilong != val1) \
-	    goto bad; \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	/* Check rejected value. */ \
-	if (cilong != val2) \
-	    goto bad; \
-	try_.old_addrs = 0; \
+    (cilen = p[1]) == CILEN_ADDRS && \
+    len >= cilen && \
+    p[0] == opt) { \
+    uint32_t l; \
+    len -= cilen; \
+    INCPTR(2, p); \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    /* Check rejected value. */ \
+    if (cilong != val1) \
+        goto bad; \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    /* Check rejected value. */ \
+    if (cilong != val2) \
+        goto bad; \
+    try_.old_addrs = 0; \
     }
 
 #define REJCIVJ(opt, neg, val, old, maxslot, cflag) \
     if (go->neg && \
-	p[1] == (old? CILEN_COMPRESS : CILEN_VJ) && \
-	len >= p[1] && \
-	p[0] == opt) { \
-	len -= p[1]; \
-	INCPTR(2, p); \
-	GETSHORT(cishort, p); \
-	/* Check rejected value. */  \
-	if (cishort != val) \
-	    goto bad; \
-	if (!old) { \
-	   GETCHAR(cimaxslotindex, p); \
-	   if (cimaxslotindex != maxslot) \
-	     goto bad; \
-	   GETCHAR(ciflag, p); \
-	   if (ciflag != cflag) \
-	     goto bad; \
+    p[1] == (old? CILEN_COMPRESS : CILEN_VJ) && \
+    len >= p[1] && \
+    p[0] == opt) { \
+    len -= p[1]; \
+    INCPTR(2, p); \
+    GETSHORT(cishort, p); \
+    /* Check rejected value. */  \
+    if (cishort != val) \
+        goto bad; \
+    if (!old) { \
+       GETCHAR(cimaxslotindex, p); \
+       if (cimaxslotindex != maxslot) \
+         goto bad; \
+       GETCHAR(ciflag, p); \
+       if (ciflag != cflag) \
+         goto bad; \
         } \
-	try_.neg = 0; \
+    try_.neg = 0; \
      }
 
 
 #define REJCIADDR(opt, neg, val) \
     if (go->neg && \
-	(cilen = p[1]) == CILEN_ADDR && \
-	len >= cilen && \
-	p[0] == opt) { \
-	uint32_t l; \
-	len -= cilen; \
-	INCPTR(2, p); \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	/* Check rejected value. */ \
-	if (cilong != val) \
-	    goto bad; \
-	try_.neg = 0; \
+    (cilen = p[1]) == CILEN_ADDR && \
+    len >= cilen && \
+    p[0] == opt) { \
+    uint32_t l; \
+    len -= cilen; \
+    INCPTR(2, p); \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    /* Check rejected value. */ \
+    if (cilong != val) \
+        goto bad; \
+    try_.neg = 0; \
     }
 
 #define REJCIDNS(opt, neg, dnsaddr) \
     if (go->neg && \
-	((cilen = p[1]) == CILEN_ADDR) && \
-	len >= cilen && \
-	p[0] == opt) { \
-	uint32_t l; \
-	len -= cilen; \
-	INCPTR(2, p); \
-	GETLONG(l, p); \
-	cilong = lwip_htonl(l); \
-	/* Check rejected value. */ \
-	if (cilong != dnsaddr) \
-	    goto bad; \
-	try_.neg = 0; \
+    ((cilen = p[1]) == CILEN_ADDR) && \
+    len >= cilen && \
+    p[0] == opt) { \
+    uint32_t l; \
+    len -= cilen; \
+    INCPTR(2, p); \
+    GETLONG(l, p); \
+    cilong = lwip_htonl(l); \
+    /* Check rejected value. */ \
+    if (cilong != dnsaddr) \
+        goto bad; \
+    try_.neg = 0; \
     }
 
 
@@ -991,7 +992,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
     /*
      * Reset all his options.
      */
-    BZERO(ho, sizeof(*ho));
+    zero_mem(ho, sizeof(*ho));
 
     /*
      * Process all his options.
@@ -1345,14 +1346,14 @@ ip_demand_conf(int u)
         return 0;
 #if 0 /* UNUSED */
     if (wo->default_route)
-	if (sifdefaultroute(pcb, wo->ouraddr, wo->hisaddr,
-		wo->replace_default_route))
-	    default_route_set[u] = 1;
+    if (sifdefaultroute(pcb, wo->ouraddr, wo->hisaddr,
+        wo->replace_default_route))
+        default_route_set[u] = 1;
 #endif /* UNUSED */
 #if 0 /* UNUSED - PROXY ARP */
     if (wo->proxy_arp)
-	if (sifproxyarp(pcb, wo->hisaddr))
-	    proxy_arp_set[u] = 1;
+    if (sifproxyarp(pcb, wo->hisaddr))
+        proxy_arp_set[u] = 1;
 #endif /* UNUSED - PROXY ARP */
 
     ppp_notice("local  IP address %I", wo->ouraddr);

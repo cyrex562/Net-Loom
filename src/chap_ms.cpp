@@ -5,6 +5,9 @@
 #include <magic.h>
 #include <mppe.h> /* For mppe_sha1_pad*, mppe_set_key() */
 #include <ccp.h>
+#include "ppp.h"
+#include <string.h>
+#include "util.h"
 
 
 // /*
@@ -361,7 +364,7 @@ challenge_response(const uint8_t* challenge,
     uint8_t ZPasswordHash[21];
     mbedtls_des_context des;
     uint8_t des_key[8];
-    BZERO(ZPasswordHash, sizeof(ZPasswordHash));
+    zero_mem(ZPasswordHash, sizeof(ZPasswordHash));
     memcpy(ZPasswordHash, password_hash, MD4_SIGNATURE_SIZE);
     pppcrypt_56_to_64_bit_key(ZPasswordHash + 0, des_key); // lwip_des_init(&des);
     des_setkey_enc(&des, des_key);
@@ -409,7 +412,7 @@ challenge_hash(const uint8_t PeerChallenge[16],
 static void
 ascii2unicode(const char ascii[], int ascii_len, uint8_t unicode[])
 {
-    BZERO(unicode, ascii_len * 2);
+    zero_mem(unicode, ascii_len * 2);
     for (int i = 0; i < ascii_len; i++)
     {
         unicode[i * 2] = (uint8_t)ascii[i];
@@ -462,7 +465,7 @@ ChapMsLanMan(const uint8_t* rchallenge, std::string& secret, uint8_t* response)
     uint8_t password_hash[MD4_SIGNATURE_SIZE];
     des_context des;
     uint8_t des_key[8]; /* LANMan password is case insensitive */
-    BZERO(ucase_password, sizeof(ucase_password));
+    zero_mem(ucase_password, sizeof(ucase_password));
     for (auto i = 0; i < secret.length(); i++)
     {
         ucase_password[i] = static_cast<uint8_t>(toupper(secret[i]));
@@ -622,7 +625,7 @@ ChapMS(PppPcb* pcb,
        std::string& secret,
        unsigned char* response)
 {
-    BZERO(response, MS_CHAP_RESPONSE_LEN);
+    zero_mem(response, MS_CHAP_RESPONSE_LEN);
     ChapMS_NT(rchallenge, secret, &response[MS_CHAP_NTRESP]);
     ChapMsLanMan(rchallenge, secret, &response[MS_CHAP_LANMANRESP]);
     /* preferred method is set by option  */
@@ -649,7 +652,7 @@ ChapMS2(PppPcb* pcb,
         int authenticator)
 {
     /* ARGSUSED */
-    BZERO(response, MS_CHAP2_RESPONSE_LEN);
+    zero_mem(response, MS_CHAP2_RESPONSE_LEN);
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
     {

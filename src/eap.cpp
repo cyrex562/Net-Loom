@@ -53,6 +53,8 @@
 #include <pppcrypt.h>
 #include <ppp.h>
 #include <ctime>
+#include "util.h"
+
 
 /*
  * Protocol entry points.
@@ -117,7 +119,7 @@ static const char *eap_state_name(enum EapStateCode esc) {
  */
 static void eap_init(PppPcb* pcb, EapState* eap)
 {
-    BZERO(eap, sizeof(EapState));
+    zero_mem(eap, sizeof(EapState));
     eap->es_server.ea_id = magic();
 }
 
@@ -374,7 +376,7 @@ static void eap_figure_next_state(PppPcb& pcb, const int status)
             std::string::npos && (pcb.eap.es_server.ea_peer.length() - SRP_PSEUDO_LEN) *
             3 / 4 < sizeof(secbuf))
         {
-            BZERO(&bs, sizeof(bs));
+            zero_mem(&bs, sizeof(bs));
             // plen = b64dec(&bs, pcb->eap.es_server.ea_peer + SRP_PSEUDO_LEN,
             //               pcb->eap.es_server.ea_peerlen - SRP_PSEUDO_LEN, secbuf);
             int toffs = 0;

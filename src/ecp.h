@@ -31,6 +31,8 @@
  * $Id: ecp.h,v 1.2 2003/01/10 07:12:36 fcusack Exp $
  */
 #pragma once
+#include <cstdint>
+#include <ppp.h>
 
 struct EcpOptions
 {
@@ -38,15 +40,16 @@ struct EcpOptions
     unsigned enctype; /* Encryption type */
 };
 
-extern Fsm ecp_fsm[];
-extern EcpOptions ecp_wantoptions[];
-extern EcpOptions ecp_gotoptions[];
-extern EcpOptions ecp_allowoptions[];
-extern EcpOptions ecp_hisoptions[];
-
-// extern const struct Protent kEcpProtent;
-
+/*
+ * Protocol entry points from main code.
+ */
+void ecp_init (PppPcb* unit);
 bool ecp_open(PppPcb* ppp_pcb, int unit);
+void ecp_close (int unit, char *);
+void ecp_lowerup (int unit);
+void ecp_lowerdown (int);
+void ecp_input (int unit, uint8_t *pkt, int len);
+void ecp_protrej (int unit);
 
 
 //

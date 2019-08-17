@@ -58,28 +58,18 @@
  */
 
 #define NOMINMAX
-
-#include <fsm.h>
 #include <ecp.h>
+#include <ppp.h>
 
-/*
- * Protocol entry points from main code.
- */
-void ecp_init (PppPcb* unit);
-bool ecp_open(PppPcb* ppp_pcb, int unit);
-void ecp_close (int unit, char *);
-void ecp_lowerup (int unit);
-void ecp_lowerdown (int);
-void ecp_input (int unit, uint8_t *pkt, int len);
-void ecp_protrej (int unit);
+
 
 constexpr auto NUM_PPP = 0xff;
 
-Fsm ecp_fsm[NUM_PPP];
-EcpOptions ecp_wantoptions[NUM_PPP];	/* what to request the peer to use */
-EcpOptions ecp_gotoptions[NUM_PPP];	/* what the peer agreed to do */
-EcpOptions ecp_allowoptions[NUM_PPP];	/* what we'll agree to do */
-EcpOptions ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
+// Fsm ecp_fsm[NUM_PPP];
+// EcpOptions ecp_wantoptions[NUM_PPP];	/* what to request the peer to use */
+// EcpOptions ecp_gotoptions[NUM_PPP];	/* what the peer agreed to do */
+// EcpOptions ecp_allowoptions[NUM_PPP];	/* what we'll agree to do */
+// EcpOptions ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
 
 // static const FsmCallbacks ecp_callbacks = {
 //     nullptr, /* ecp_resetci, */
@@ -102,7 +92,7 @@ EcpOptions ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
 /*
  * ecp_init - initialize ECP.
  */
-static void ecp_init(PppPcb* unit)
+void ecp_init(PppPcb* unit)
 {
     // auto f = &ecp_fsm[unit];
     // f->unit = unit;

@@ -44,6 +44,8 @@
 
 #pragma once
 #include "ppp.h"
+#include "upap_state.h"
+
 /*
  * Packet header = Code, id, length.
  */
@@ -110,18 +112,7 @@ enum UpapServerStates
  * Timeouts.
  */
 
-/*
- * Each interface is described by upap structure.
- */
-struct upap_state
-{
-    std::string us_user; /* User */
-    std::string us_passwd; /* Password */
-    uint8_t us_clientstate; /* Client state */
-    uint8_t us_serverstate; /* Server state */
-    uint8_t us_id; /* Current id */
-    uint8_t us_transmits; /* Number of auth-reqs sent */
-};
+
 
 
 bool

@@ -12,6 +12,9 @@
 #include <magic.h>
 #include "auth.h"
 #include <algorithm>
+#include "util.h"
+#include "ppp.h"
+
 
 // static const fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
 //     lcp_resetci,		/* Reset our Configuration Information */
@@ -86,9 +89,9 @@ void lcp_init(PppPcb *pcb) {
     f->protocol = PPP_LCP;
     // f->callbacks = &lcp_callbacks;
 
-    fsm_init(f);
+    fsm_init(f,);
 
-    BZERO(wo, sizeof(*wo));
+    zero_mem(wo, sizeof(*wo));
     wo->neg_mru = true;
     wo->mru = PPP_DEFMRU;
     wo->neg_asyncmap = true;
@@ -96,7 +99,7 @@ void lcp_init(PppPcb *pcb) {
     wo->neg_pcompression = true;
     wo->neg_accompression = true;
 
-    BZERO(ao, sizeof(*ao));
+    zero_mem(ao, sizeof(*ao));
     ao->neg_mru = true;
     ao->mru = PPP_MAXMRU;
     ao->neg_asyncmap = true;
@@ -786,7 +789,7 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     int looped_back = 0;
     int cilen;
 
-    BZERO(&no, sizeof(no));
+    zero_mem(&no, sizeof(no));
     try_ = *go;
 
     /*
@@ -1407,7 +1410,7 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
     /*
      * Reset all his options.
      */
-    BZERO(ho, sizeof(*ho));
+    zero_mem(ho, sizeof(*ho));
 
     /*
      * Process all his options.
