@@ -48,22 +48,20 @@
 
 #define NOMINMAX
 #include <fsm.h>
-#include "ppp.h"
+#include <ppp.h>
 
-/*
- * fsm_init - Initialize fsm.
- *
+/**
  * Initialize fsm state.
  */
 bool
 fsm_init(Fsm& fsm, PppPcb& pcb)
 {
-    PppPcb* pcb = fsm->pcb;
-    fsm->state = PPP_FSM_INITIAL;
-    fsm->flags = 0;
-    fsm->id = 0; /* XXX Start with random id? */
-    fsm->maxnakloops = pcb->settings.fsm_max_nak_loops;
-    fsm->term_reason_len = 0;
+    // PppPcb* pcb = fsm->pcb;
+    fsm.state = PPP_FSM_INITIAL;
+    fsm.flags = 0;
+    fsm.id = 0; /* XXX Start with random id? */
+    fsm.maxnakloops = pcb.settings.fsm_max_nak_loops;
+    fsm.term_reason_len = 0;
 }
 
 
@@ -107,10 +105,10 @@ void fsm_lowerdown(Fsm *f) {
 
     case PPP_FSM_STOPPED:
     f->state = PPP_FSM_STARTING;
-    if( f->callbacks->starting )
-    {
-        (*f->callbacks->starting)(f);
-    }
+    // if( f->callbacks->starting )
+    // {
+    //     (*f->callbacks->starting)(f);
+    // }
     break;
 
     case PPP_FSM_CLOSING:
@@ -127,10 +125,10 @@ void fsm_lowerdown(Fsm *f) {
     break;
 
     case PPP_FSM_OPENED:
-    if( f->callbacks->down )
-    {
-        (*f->callbacks->down)(f, f, f->pcb);
-    }
+    // if( f->callbacks->down )
+    // {
+    //     (*f->callbacks->down)(f, f, f->pcb);
+    // }
     f->state = PPP_FSM_STARTING;
     break;
     // FSMDEBUG(("%s: Down event in state %d!", PROTO_NAME(f), f->state));
