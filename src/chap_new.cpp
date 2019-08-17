@@ -33,7 +33,7 @@
 #include <chap_md5.h>
 #include <chap_new.h>
 #include <magic.h>
-#include <ppp_impl.h>
+
 #include <ppp_opts.h>
 #include "ppp.h"
 /*

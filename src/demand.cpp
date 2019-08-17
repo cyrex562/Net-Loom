@@ -34,7 +34,7 @@
 #include <fsm.h>
 #include <ipcp.h>
 #include <lcp.h>
-#include <ppp_impl.h>
+
 #include <cstdlib>
 #include <cstring>
 #include <pppos.h>

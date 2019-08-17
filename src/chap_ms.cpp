@@ -359,7 +359,7 @@ challenge_response(const uint8_t* challenge,
                    uint8_t response[24])
 {
     uint8_t ZPasswordHash[21];
-    lwip_des_context des;
+    mbedtls_des_context des;
     uint8_t des_key[8];
     BZERO(ZPasswordHash, sizeof(ZPasswordHash));
     memcpy(ZPasswordHash, password_hash, MD4_SIGNATURE_SIZE);
@@ -380,7 +380,7 @@ challenge_hash(const uint8_t PeerChallenge[16],
                std::string& username,
                uint8_t Challenge[8])
 {
-    lwip_sha1_context sha1Context;
+    mbedtls_sha1_context sha1Context;
     uint8_t sha1_hash[SHA1_SIGNATURE_SIZE];
     const char* user = username.c_str(); /* remove domain from "domain\username" */
     // TODO: re-write to remove domain from username
@@ -419,12 +419,12 @@ ascii2unicode(const char ascii[], int ascii_len, uint8_t unicode[])
 static void
 NTPasswordHash(uint8_t* secret, int secret_len, uint8_t hash[MD4_SIGNATURE_SIZE])
 {
-    lwip_md4_context md4Context;
-    lwip_md4_init(&md4Context);
-    lwip_md4_starts(&md4Context);
-    lwip_md4_update(&md4Context, secret, secret_len);
-    lwip_md4_finish(&md4Context, hash);
-    lwip_md4_free(&md4Context);
+    mbedtls_md4_context md4Context;
+    mbedtls_md4_init(&md4Context);
+    mbedtls_md4_starts_ret(&md4Context);
+    mbedtls_md4_update_ret(&md4Context, secret, secret_len);
+    mbedtls_md4_finish_ret(&md4Context, hash);
+    mbedtls_md4_free(&md4Context);
 }
 
 static void
@@ -484,7 +484,7 @@ GenerateAuthenticatorResponse(const uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE]
                               std::string& username,
                               uint8_t authResponse[MS_AUTH_RESPONSE_LENGTH + 1])
 {
-    lwip_sha1_context sha1Context;
+    mbedtls_sha1_context sha1Context;
     uint8_t Digest[SHA1_SIGNATURE_SIZE];
     uint8_t Challenge[8];
     lwip_sha1_init(&sha1Context);
@@ -538,7 +538,7 @@ Set_Start_Key(PppPcb* pcb, const uint8_t* rchallenge, std::string& secret)
     uint8_t unicodePassword[MAX_NT_PASSWORD * 2];
     uint8_t PasswordHash[MD4_SIGNATURE_SIZE];
     uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE];
-    lwip_sha1_context sha1Context;
+    mbedtls_sha1_context sha1Context;
     uint8_t Digest[SHA1_SIGNATURE_SIZE]; /* >= MPPE_MAX_KEY_LEN */
     /* Hash (x2) the Unicode version of the secret (== password). */
     ascii2unicode(secret.c_str(), secret.length(), unicodePassword);
@@ -563,7 +563,7 @@ SetMasterKeys(PppPcb* pcb, std::string& secret, uint8_t NTResponse[24], int IsSe
     uint8_t unicodePassword[MAX_NT_PASSWORD * 2];
     uint8_t PasswordHash[MD4_SIGNATURE_SIZE];
     uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE];
-    lwip_sha1_context sha1Context;
+    mbedtls_sha1_context sha1Context;
     uint8_t MasterKey[SHA1_SIGNATURE_SIZE]; /* >= MPPE_MAX_KEY_LEN */
     uint8_t Digest[SHA1_SIGNATURE_SIZE]; /* >= MPPE_MAX_KEY_LEN */
     const uint8_t* s; /* Hash (x2) the Unicode version of the secret (== password). */

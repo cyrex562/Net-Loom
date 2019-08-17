@@ -69,7 +69,7 @@ inline uint8_t MPPE_CCOUNT(uint8_t* p)
 static void
 mppe_rekey(PppMppeState& state, int initial_key)
 {
-    lwip_sha1_context sha1_ctx;
+    mbedtls_sha1_context sha1_ctx;
     uint8_t sha1_digest[SHA1_SIGNATURE_SIZE]; /*
      * Key Derivation, from RFC 3078, RFC 3079.
      * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.

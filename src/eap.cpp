@@ -48,7 +48,7 @@
 #include <eap_state.h>
 #include <auth.h>
 #include <magic.h>
-#include <ppp_impl.h>
+
 #include <ppp_opts.h>
 #include <pppcrypt.h>
 #include <ppp.h>
@@ -939,7 +939,7 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, size_t len)
     uint8_t vallen;
     std::string secret;
     std::string rhostname;
-    lwip_md5_context mdContext;
+    mbedtls_md5_context mdContext;
     uint8_t hash[MD5_SIGNATURE_SIZE] = {};
     /*
      * Note: we update es_client.ea_id *only if* a Response
@@ -1042,14 +1042,14 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, size_t len)
             eap_send_nak(pcb, id, EAPT_SRP);
             break;
         }
-        lwip_md5_init(&mdContext);
-        lwip_md5_starts(&mdContext);
+        mbedtls_md5_init(&mdContext);
+        mbedtls_md5_starts_ret(&mdContext);
         typenum = id;
-        lwip_md5_update(&mdContext, &typenum, 1);
-        lwip_md5_update(&mdContext, (uint8_t *)secret.c_str(), secret.length());
+        mbedtls_md5_update_ret(&mdContext, &typenum, 1);
+        mbedtls_md5_update_ret(&mdContext, (uint8_t *)secret.c_str(), secret.length());
         // BZERO(secret, sizeof(secret));
-        lwip_md5_update(&mdContext, inp, vallen);
-        lwip_md5_finish(&mdContext, hash);
+        mbedtls_md5_update_ret(&mdContext, inp, vallen);
+        mbedtls_md5_finish_ret(&mdContext, hash);
         lwip_md5_free(&mdContext);
         eap_chap_response(pcb, id, hash, pcb->eap.es_client.ea_name);
         break;
@@ -1230,13 +1230,13 @@ static void eap_response(PppPcb* pcb, const char* inp, int id, int len)
             eap_send_failure(pcb);
             break;
         }
-        lwip_md5_init(&mdContext);
-        lwip_md5_starts(&md_context);
+        mbedtls_md5_init(&mdContext);
+        mbedtls_md5_starts_ret(&md_context);
         md5_update(&md_context, &pcb->eap.es_server.ea_id, 1);
         md5_update(&md_context, (uint8_t*)secret.c_str(), secret.length());
         // BZERO(secret, sizeof(secret));
-        lwip_md5_update(&md_context, pcb->eap.es_challenge, pcb->eap.es_challen);
-        lwip_md5_finish(&md_context, hash);
+        mbedtls_md5_update_ret(&md_context, pcb->eap.es_challenge, pcb->eap.es_challen);
+        mbedtls_md5_finish_ret(&md_context, hash);
         lwip_md5_free(&mdContext);
         if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0)
         {

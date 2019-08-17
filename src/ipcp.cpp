@@ -42,7 +42,7 @@
 
 #include <ipcp.h>
 #include <ppp_opts.h>
-#include <ppp_impl.h>
+
 #include <ppp.h>
 #include <fsm.h>
 #include <ipcp_defs.h>

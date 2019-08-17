@@ -39,7 +39,7 @@
 
 #include <eui64.h>
 
-#include <ppp_impl.h>
+
 
 
 /*

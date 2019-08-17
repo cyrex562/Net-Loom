@@ -148,7 +148,7 @@
  */
 
 #include <ipv6cp.h>
-#include <ppp_impl.h>
+
 #include <fsm.h>
 #include <ipcp.h>
 #include <magic.h>

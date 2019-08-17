@@ -29,7 +29,7 @@
  */
 
 #include <lcp.h>
-#include <ppp_impl.h>
+
 
 
 static void ppp_logit(int level, const char *fmt, va_list args);

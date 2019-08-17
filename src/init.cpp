@@ -16,7 +16,7 @@
 #include <timeouts.h>
 #include <udp.h>
 #include <lwip_debug.h>
-#include <ppp_impl.h>
+
 #include <ppp_opts.h>
 
 /**

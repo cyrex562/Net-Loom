@@ -5,7 +5,7 @@
 #include <protent.h>
 #include <lcp.h>
 #include <mppe.h>
-#include <ppp_impl.h>
+
 #include <fsm.h>
 #include <ccp.h>
 #include <cstring>

@@ -37,7 +37,7 @@
 #include <network_interface.h>
 #include <tcpip_priv.h>
 #include <ip4.h> /* for ip4_input() */
-#include <ppp_impl.h>
+
 #include <pppos.h>
 #include <vj.h>
 #include <ppp.h>

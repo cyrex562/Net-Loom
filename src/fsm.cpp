@@ -48,7 +48,7 @@
 
 #define NOMINMAX
 #include <fsm.h>
-#include <ppp_impl.h>
+
 
 /*
  * fsm_init - Initialize fsm.

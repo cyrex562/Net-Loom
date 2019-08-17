@@ -34,11 +34,11 @@
 
 static uint8_t pppcrypt_get_7bits(uint8_t *input, int startBit) {
     unsigned int word = (unsigned)input[startBit / 8] << 8;
-	word |= (unsigned)input[startBit / 8 + 1];
+    word |= (unsigned)input[startBit / 8 + 1];
 
-	word >>= 15 - (startBit % 8 + 7);
+    word >>= 15 - (startBit % 8 + 7);
 
-	return word & 0xFE;
+    return word & 0xFE;
 }
 
 /* IN  56 bit DES key missing parity bits

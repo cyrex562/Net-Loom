@@ -50,23 +50,23 @@
 
 
 
-#define lwip_md4_context md4_context
-#define lwip_md4_init(context)
-#define lwip_md4_starts md4_starts
-#define lwip_md4_update md4_update
-#define lwip_md4_finish md4_finish
-#define lwip_md4_free(context)
+// #define lwip_md4_context md4_context
+// #define lwip_md4_init(context)
+// #define lwip_md4_starts md4_starts
+// #define lwip_md4_update md4_update
+// #define lwip_md4_finish md4_finish
+// #define lwip_md4_free(context)
 
 
-#define lwip_md5_context md5_context
-#define lwip_md5_init(context)
-#define lwip_md5_starts md5_starts
-#define lwip_md5_update md5_update
-#define lwip_md5_finish md5_finish
+// #define lwip_md5_context md5_context
+// #define mbedtls_md5_init(context)
+// #define mbedtls_md5_starts_ret md5_starts
+// #define mbedtls_md5_update_ret md5_update
+// #define mbedtls_md5_finish_ret md5_finish
 #define lwip_md5_free(context)
 
 
-#define lwip_sha1_context Sha1Context
+// #define lwip_sha1_context Sha1Context
 #define lwip_sha1_init(context)
 #define lwip_sha1_starts sha1_starts
 #define lwip_sha1_update sha1_update
@@ -74,14 +74,14 @@
 #define lwip_sha1_free(context)
 
 
-#define lwip_des_context des_context
+// #define lwip_des_context des_context
 #define lwip_des_init(context)
 #define lwip_des_setkey_enc des_setkey_enc
 #define lwip_des_crypt_ecb des_crypt_ecb
 #define lwip_des_free(context)
 
 
-#define lwip_arc4_context Arc4Context
+// #define mbed_tls_arc4_context Arc4Context
 #define lwip_arc4_init(context)
 #define lwip_arc4_setup arc4_setup
 #define lwip_arc4_crypt arc4_crypt

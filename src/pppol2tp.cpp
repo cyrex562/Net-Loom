@@ -379,7 +379,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
     uint16_t avpflags, vendorid, attributetype, messagetype=0;
   LwipStatus err;
 
-  lwip_md5_context md5_ctx;
+  mbedtls_md5_context md5_ctx;
   uint8_t md5_hash[16];
   uint8_t challenge_id = 0;
 
@@ -508,13 +508,13 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
               return;
             }
             /* Generate hash of ID, secret, challenge */
-            lwip_md5_init(&md5_ctx);
-            lwip_md5_starts(&md5_ctx);
+            mbedtls_md5_init(&md5_ctx);
+            mbedtls_md5_starts_ret(&md5_ctx);
             challenge_id = PPPOL2TP_MESSAGETYPE_SCCCN;
-            lwip_md5_update(&md5_ctx, &challenge_id, 1);
-            lwip_md5_update(&md5_ctx, l2tp->secret, l2tp->secret_len);
-            lwip_md5_update(&md5_ctx, inp, avplen);
-            lwip_md5_finish(&md5_ctx, l2tp->challenge_hash);
+            mbedtls_md5_update_ret(&md5_ctx, &challenge_id, 1);
+            mbedtls_md5_update_ret(&md5_ctx, l2tp->secret, l2tp->secret_len);
+            mbedtls_md5_update_ret(&md5_ctx, inp, avplen);
+            mbedtls_md5_finish_ret(&md5_ctx, l2tp->challenge_hash);
             lwip_md5_free(&md5_ctx);
             l2tp->send_challenge = 1;
             goto skipavp;
@@ -524,13 +524,13 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
                return;
             }
             /* Generate hash of ID, secret, challenge */
-            lwip_md5_init(&md5_ctx);
-            lwip_md5_starts(&md5_ctx);
+            mbedtls_md5_init(&md5_ctx);
+            mbedtls_md5_starts_ret(&md5_ctx);
             challenge_id = PPPOL2TP_MESSAGETYPE_SCCRP;
-            lwip_md5_update(&md5_ctx, &challenge_id, 1);
-            lwip_md5_update(&md5_ctx, l2tp->secret, l2tp->secret_len);
-            lwip_md5_update(&md5_ctx, l2tp->secret_rv, sizeof(l2tp->secret_rv));
-            lwip_md5_finish(&md5_ctx, md5_hash);
+            mbedtls_md5_update_ret(&md5_ctx, &challenge_id, 1);
+            mbedtls_md5_update_ret(&md5_ctx, l2tp->secret, l2tp->secret_len);
+            mbedtls_md5_update_ret(&md5_ctx, l2tp->secret_rv, sizeof(l2tp->secret_rv));
+            mbedtls_md5_finish_ret(&md5_ctx, md5_hash);
             lwip_md5_free(&md5_ctx);
             if ( memcmp(inp, md5_hash, sizeof(md5_hash)) ) {
               // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge response from peer and secret key do not match\n"));

@@ -85,17 +85,17 @@ static const uint8_t MPPE_SHA1_PAD2[SHA1_PAD_SIZE] = {
  */
 struct PppMppeState
 {
-    lwip_arc4_context arc4;
+    mbedtls_arc4_context arc4;
     uint8_t master_key[MPPE_MAX_KEY_LEN];
     uint8_t session_key[MPPE_MAX_KEY_LEN];
-    uint8_t keylen; /* key length in bytes */ /* NB: 128-bit == 16, 40-bit == 8!
+    size_t keylen; /* key length in bytes */ /* NB: 128-bit == 16, 40-bit == 8!
      * If we want to support 56-bit, the unit has to change to bits
      */
     uint8_t bits; /* MPPE control bits */
     uint16_t ccount; /* 12-bit coherency count (seqno)  */
     uint16_t sanity_errors; /* take down LCP if too many */
-    unsigned int stateful :1; /* stateful mode flag */
-    unsigned int discard :1; /* stateful mode packet loss flag */
+    bool stateful; /* stateful mode flag */
+    bool discard; /* stateful mode packet loss flag */
 };
 
 

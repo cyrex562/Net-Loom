@@ -32,7 +32,7 @@
 #include <chap_md5.h>
 #include <magic.h>
 #include <ppp.h>
-#include <ppp_impl.h>
+
 #include <pppcrypt.h>
 
 
@@ -62,12 +62,12 @@ int chap_md5_verify_response(PppPcb* pcb,
     const int response_len = *response++;
     if (response_len == MD5_HASH_SIZE) {
         /* Generate hash of ID, secret, challenge */
-        
+
         md5_starts(&ctx);
         md5_update(&ctx, &idbyte, 1);
         md5_update(&ctx, secret, secret_len);
-        lwip_md5_update(&ctx, challenge, challenge_len);
-        lwip_md5_finish(&ctx, hash);
+        mbedtls_md5_update_ret(&ctx, challenge, challenge_len);
+        mbedtls_md5_finish_ret(&ctx, hash);
         lwip_md5_free(&ctx); /* Test if our hash matches the peer's response */
         if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
             ppp_slprintf(message, message_space, "Access granted");
@@ -89,16 +89,16 @@ chap_md5_make_response(PppPcb* pcb,
                        const int secret_len,
                        unsigned char* private_)
 {
-    lwip_md5_context ctx;
+    mbedtls_md5_context ctx;
     unsigned char idbyte = id;
     int challenge_len = *challenge++;
-    lwip_md5_init(&ctx);
-    lwip_md5_starts(&ctx);
-    lwip_md5_update(&ctx, &idbyte, 1);
-    lwip_md5_update(&ctx, reinterpret_cast<const uint8_t *>(secret), secret_len);
-    lwip_md5_update(&ctx, challenge, challenge_len);
-    lwip_md5_finish(&ctx, &response[1]);
-    lwip_md5_free(&ctx);
+    mbedtls_md5_init(&ctx);
+    mbedtls_md5_starts_ret(&ctx);
+    mbedtls_md5_update_ret(&ctx, &idbyte, 1);
+    mbedtls_md5_update_ret(&ctx, reinterpret_cast<const uint8_t *>(secret), secret_len);
+    mbedtls_md5_update_ret(&ctx, challenge, challenge_len);
+    mbedtls_md5_finish_ret(&ctx, &response[1]);
+    mbedtls_md5_free(&ctx);
     response[0] = MD5_HASH_SIZE;
 }
 
