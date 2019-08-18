@@ -237,7 +237,7 @@ void lcp_input(PppPcb *pcb, uint8_t *p, int len) {
     Untimeout(lcp_delayed_up, f);
     fsm_lowerup(f);
     }
-    fsm_input(f, p, len);
+    fsm_input(f, p);
 }
 
 /*
@@ -258,7 +258,7 @@ static int lcp_extcode(Fsm *f, int code, int id, uint8_t *inp, int len) {
         break;
     magp = inp;
     PUTLONG(go->magicnumber, magp);
-    fsm_sdata(f, ECHOREP, id, inp, len);
+    fsm_send_data(, f, ECHOREP, id, inp);
     break;
 
     case ECHOREP:
@@ -355,8 +355,8 @@ void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len) {
      */
 
 
-    fsm_sdata(f, PROTREJ, ++f->id,
-              p, len);
+    fsm_send_data(, f, PROTREJ,
+                ++f->id, p);
 }
 
 
@@ -2049,7 +2049,7 @@ void lcp_send_echo_request(Fsm *f) {
         uint32_t lcp_magic = go->magicnumber;
     uint8_t* pktp = pkt;
     PUTLONG(lcp_magic, pktp);
-        fsm_sdata(f, ECHOREQ, pcb->lcp_echo_number++, pkt, pktp - pkt);
+        fsm_send_data(, f, ECHOREQ, pcb->lcp_echo_number++, pkt);
     ++pcb->lcp_echos_pending;
     }
 }

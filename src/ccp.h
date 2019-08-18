@@ -123,11 +123,14 @@ struct CcpRackTimeoutArgs
  * ccp_open - CCP is allowed to come up.
  */
 void ccp_init(PppPcb* ppp_pcb);
-bool ccp_open(PppPcb& pcb);
-void ccp_close(PppPcb* pcb, const char* reason);
+bool ccp_open(PppPcb* pcb);
+
+
+bool
+ccp_close(PppPcb& pcb, std::string& reason);
 void ccp_lowerup(PppPcb* pcb);
 void ccp_lowerdown(PppPcb* pcb);
-void ccp_input(PppPcb* pcb, uint8_t* pkt, int len, Protent** protocols);
+void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
 void ccp_protrej(PppPcb* pcb);
 void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
 
@@ -146,8 +149,9 @@ int ccp_extcode(Fsm*, int, int, uint8_t*, int, PppPcb* PppPcb);
 void ccp_rack_timeout(void*);
 const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
+ /** Issue a reset-request. */
 bool
-ccp_resetrequest(uint8_t* PppPcb_ccp_local_state, Fsm& f);  /* Issue a reset-request. */
+ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f);
 
 
 inline bool ccp_test(PppPcb* pcb, uint8_t* opt_buf, uint32_t option, uint32_t idx)

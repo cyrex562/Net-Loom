@@ -3,11 +3,10 @@
 #include <auth.h>
 #include <ccp.h>
 #include <cstring>
-#include <fsm.h>
-#include <lcp.h>
-#include <mppe.h>
-#include <ppp.h>
-#include <protent.h>
+#include <auth.h>
+#include "ppp.h"
+#include <spdlog/spdlog.h>
+
 
 /*
  * Do we want / did we get any compression?
@@ -81,6 +80,7 @@ ccp_set(PppPcb& pcb,
 {
     pcb.ccp_receive_method = receive_method;
     pcb.ccp_transmit_method = transmit_method;
+    return true;
 }
 
 /*
@@ -104,11 +104,11 @@ bool ccp_open(PppPcb& pcb)
 /*
  * ccp_close - Terminate CCP.
  */
-static void ccp_close(PppPcb* pcb, const char* reason)
+static bool
+ccp_close(PppPcb& pcb, std::string& reason)
 {
-    const auto f = &pcb->ccp_fsm;
-    ccp_set(pcb, 0, 0, 0, 0);
-    fsm_close(f, reason);
+    ccp_set(pcb, false, false, 0, 0);
+    fsm_close(pcb.ccp_fsm, reason);
 }
 
 /*
@@ -131,28 +131,33 @@ static void ccp_lowerdown(PppPcb* pcb)
 /*
  * ccp_input - process a received CCP packet.
  */
-static void ccp_input(PppPcb* pcb, uint8_t* pkt, int len, Protent** protocols)
+void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
 {
-    const auto f = &pcb->ccp_fsm;
-    const auto go = &pcb->ccp_gotoptions; /*
+    auto f = pcb.ccp_fsm;
+    auto go = pcb.ccp_gotoptions; /*
      * Check for a terminate-request so we can print a message.
      */
-    const auto oldstate = f->state;
-    fsm_input(f, pkt, len);
-    if (oldstate == PPP_FSM_OPENED && pkt[0] == TERMREQ && f->state != PPP_FSM_OPENED)
+    const auto oldstate = f.state;
+    fsm_input(pcb.ccp_fsm, pkt);
+    if (oldstate == PPP_FSM_OPENED && pkt[0] == TERMREQ && pcb.ccp_fsm.state != PPP_FSM_OPENED)
     {
-        ppp_notice("Compression disabled by peer.");
-        if (go->mppe)
+        spdlog::info("Compression disabled by peer.");
+        if (go.mppe)
         {
-            ppp_error("MPPE disabled, closing LCP");
-            lcp_close(pcb, "MPPE disabled by peer");
+            spdlog::error("MPPE disabled, closing LCP");
+            std::string msg = "MPPE disabled by peer";
+            lcp_close(pcb, msg);
         }
     } /*
      * If we get a terminate-ack and we're not asking for compression,
      * close CCP.
      */
     if (oldstate == PPP_FSM_REQSENT && pkt[0] == TERMACK && !ccp_anycompress(go))
-        ccp_close(pcb, "No compression negotiated");
+    {
+        std::string msg = "No compression negotiated";
+        ccp_close(pcb, msg);
+    }
+
 }
 
 /*
@@ -174,7 +179,7 @@ static int ccp_extcode(Fsm* f,
         }
         ccp_reset_comp(PppPcb); /* send a reset-ack, which the transmitter will see and
            reset its compression state. */
-        fsm_sdata(f, CCP_RESETACK, id, nullptr, 0);
+        fsm_send_data(, f, CCP_RESETACK, id, nullptr);
         break;
     case CCP_RESETACK:
         if ((PppPcb->ccp_localstate & RESET_ACK_PENDING) && id == f->reqid)
@@ -1267,7 +1272,7 @@ static void ccp_datainput(PppPcb* pcb, uint8_t* pkt, int len)
  * decompress. Issue a reset-request.
  */
 bool
-ccp_resetrequest(uint8_t& ppp_pcb_ccp_local_state, Fsm& f)
+ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f)
 {
     if (f.state != PPP_FSM_OPENED)
     {
@@ -1279,7 +1284,7 @@ ccp_resetrequest(uint8_t& ppp_pcb_ccp_local_state, Fsm& f)
      */
     if (!(ppp_pcb_ccp_local_state & RESET_ACK_PENDING))
     {
-        fsm_sdata(f, CCP_RESETREQ, f.reqid = ++f.id, nullptr, 0);
+        fsm_send_data(, f, CCP_RESETREQ, f.reqid = ++f.id, nullptr);
         // timeout(ccp_rack_timeout, f, kRacktimeout);
         ppp_pcb_ccp_local_state |= RESET_ACK_PENDING;
     }
@@ -1299,7 +1304,7 @@ static void ccp_rack_timeout(void* arg)
 
     if (args->f->state == PPP_FSM_OPENED && (args->pcb->ccp_localstate & REPEAT_RESET_REQ))
     {
-        fsm_sdata(args->f, CCP_RESETREQ, args->f->reqid, nullptr, 0);
+        fsm_send_data(, args->f, CCP_RESETREQ, args->f->reqid, nullptr);
         Timeout(ccp_rack_timeout, args, RESET_ACK_TIMEOUT);
         args->pcb->ccp_localstate &= ~REPEAT_RESET_REQ;
     }

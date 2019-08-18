@@ -261,11 +261,7 @@ int netif_get_mtu(PppPcb*pcb);
 
 
 bool
-ccp_set(PppPcb& pcb,
-        bool isopen,
-        bool isup,
-        uint8_t receive_method,
-        uint8_t transmit_method);
+ccp_set(PppPcb& pcb, bool isopen, bool isup, uint8_t receive_method, uint8_t transmit_method);
 void ccp_reset_comp(PppPcb*pcb);
 void ccp_reset_decomp(PppPcb*pcb);
 

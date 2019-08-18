@@ -229,7 +229,7 @@ static void
 ipcp_input(PppPcb* pcb, uint8_t* p, int len)
 {
     Fsm* f = &pcb->ipcp_fsm;
-    fsm_input(f, p, len);
+    fsm_input(f, p);
 }
 
 

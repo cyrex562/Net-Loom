@@ -30,7 +30,7 @@
  * $Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp $
  */
 #pragma once
-
+#include <vector>
 extern const struct ChapDigestType CHAP_MS_DIGEST;
 extern const struct ChapDigestType CHAP_MS_2_DIGEST;
 
@@ -99,7 +99,8 @@ static void GenerateAuthenticatorResponse(const uint8_t PasswordHashHash[MD4_SIG
                                           uint8_t authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
 
 
-static void	Set_Start_Key (PppPcb *pcb, const uint8_t *, std::string&);
+static bool
+set_start_key(::PppPcb& pcb, std::vector<uint8_t>&, std::string&);
 static void	SetMasterKeys (PppPcb *pcb, std::string&, uint8_t[24], int);
 
 

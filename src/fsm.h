@@ -44,8 +44,8 @@
 #pragma once
 #include <fsm_def.h>
 #include <cstdint>
+#include <vector>
 #include "auth.h"
-
 /*
  * Packet header = Code, id, length.
  */
@@ -161,12 +161,21 @@ fsm_init(::Fsm& fsm, PppPcb& pcb);
 void fsm_lowerup(Fsm* f);
 void fsm_lowerdown(Fsm* f);
 bool fsm_open(Fsm* f);
-void fsm_close(Fsm* f, const char* reason);
-void fsm_input(Fsm* f, uint8_t* inpacket, int l);
+
+
+bool
+fsm_close(Fsm& fsm, std::string& reason);
+
+
+bool
+fsm_input(::Fsm& fsm, std::vector<uint8_t>& packet);
 void fsm_protreject(Fsm* f);
-void fsm_sdata(Fsm& f, uint8_t code, uint8_t id, const uint8_t* data, size_t datalen);
+void fsm_send_data(PppPcb& pcb, Fsm& fsm, uint8_t code, uint8_t id, std::vector<uint8_t>& data);
 void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len);
-void fsm_timeout (void*);
+
+
+bool
+fsm_timeout(PppPcb& pcb, Fsm& fsm);
 void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
 void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len);
 void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len);

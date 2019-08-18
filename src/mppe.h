@@ -6,6 +6,7 @@
 #include <lwip_status.h>
 #include <packet_buffer.h>
 #include "lcp.h"
+#include "mbedtls/arc4.h"
 constexpr auto MPPE_PAD = 4 /* MPPE growth per frame */;
 constexpr auto MPPE_MAX_KEY_LEN = 16 /* largest key length (128-bit) */;
 constexpr auto MPPE_CCOUNT_SPACE = 0x1000; /* The size of the ccount space */
@@ -86,17 +87,53 @@ static const uint8_t MPPE_SHA1_PAD2[SHA1_PAD_SIZE] = {
 struct PppMppeState
 {
     mbedtls_arc4_context arc4;
-    uint8_t master_key[MPPE_MAX_KEY_LEN];
-    uint8_t session_key[MPPE_MAX_KEY_LEN];
-    size_t keylen; /* key length in bytes */ /* NB: 128-bit == 16, 40-bit == 8!
-     * If we want to support 56-bit, the unit has to change to bits
-     */
+    std::vector<uint8_t> master_key;
+    std::vector<uint8_t> session_key;
     uint8_t bits; /* MPPE control bits */
-    uint16_t ccount; /* 12-bit coherency count (seqno)  */
-    uint16_t sanity_errors; /* take down LCP if too many */
+    size_t ccount; /* 12-bit coherency count (seqno)  */
+    size_t sanity_errors; /* take down LCP if too many */
     bool stateful; /* stateful mode flag */
     bool discard; /* stateful mode packet loss flag */
 };
+
+
+inline bool
+cmp_ppp_mppe_state(PppMppeState& state1, PppMppeState& state2)
+{
+    if (!cmp_arc4_ctx(state1.arc4, state2.arc4))
+    {
+        return false;
+    }
+    if (state1.master_key != state2.master_key)
+    {
+        return false;
+    }
+    if (state1.session_key != state2.session_key)
+    {
+        return false;
+    }
+    if (state1.bits != state2.bits)
+    {
+        return false;
+    }
+    if (state1.ccount != state2.ccount)
+    {
+        return false;
+    }
+    if (state1.sanity_errors != state2.sanity_errors)
+    {
+        return false;
+    }
+    if (state1.stateful != state2.stateful)
+    {
+        return false;
+    }
+    if (state1.discard != state2.discard)
+    {
+        return false;
+    }
+    return true;
+}
 
 
 
@@ -169,12 +206,17 @@ close_on_bad_mppe_state(PppPcb& ppp_pcb, PppMppeState& state)
     return true;
 }
 
-void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key);
+
+bool
+mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key);
 
 bool
 mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
-LwipStatus mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
+
+
+bool
+mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
 
 bool

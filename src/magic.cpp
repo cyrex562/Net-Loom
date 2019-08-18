@@ -123,7 +123,7 @@ static void magic_churnrand(char *rand_data, uint32_t rand_len) {
     mbedtls_md5_update_ret(&md5_ctx, (uint8_t *)&sys_data, sizeof(sys_data));
   }
   mbedtls_md5_finish_ret(&md5_ctx, (uint8_t *)magic_randpool);
-  lwip_md5_free(&md5_ctx);
+  mbedtls_md5_free(&md5_ctx);
 /*  Logf(LOG_INFO, ("magic_churnrand: -> 0\n")); */
 }
 
@@ -168,7 +168,7 @@ void magic_random_bytes(uint8_t* buf, size_t buf_len) {
     mbedtls_md5_update_ret(&md5_ctx, (uint8_t *)magic_randpool, sizeof(magic_randpool));
     mbedtls_md5_update_ret(&md5_ctx, (uint8_t *)&magic_randcount, sizeof(magic_randcount));
     mbedtls_md5_finish_ret(&md5_ctx, tmp);
-    lwip_md5_free(&md5_ctx);
+    mbedtls_md5_free(&md5_ctx);
     magic_randcount++;
     uint32_t n = std::min(buf_len, size_t(MD5_HASH_SIZE));
     memcpy(buf, tmp, n);
