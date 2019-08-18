@@ -1,12 +1,6 @@
 
 #define NOMINMAX
-
-#include <ppp_opts.h>
-#include <protent.h>
-#include <lcp.h>
-#include <mppe.h>
-
-#include <fsm.h>
+#include <auth.h>
 #include <ccp.h>
 #include <cstring>
 #include <auth.h>
@@ -31,7 +25,7 @@ static int ccp_anycompress(CcpOptions* opt)
 static void ccp_init(PppPcb* ppp_pcb)
 {
     ppp_pcb->ccp_fsm.protocol = PPP_CCP;
-    fsm_init(&ppp_pcb->ccp_fsm);
+    fsm_init(&ppp_pcb->ccp_fsm,);
     const auto wo = &ppp_pcb->ccp_wantoptions;
     const auto ao = &ppp_pcb->ccp_allowoptions;
     wo->deflate = true;
@@ -92,7 +86,7 @@ ccp_set(PppPcb& pcb,
 /*
  * ccp_open - CCP is allowed to come up.
  */
-static bool ccp_open(PppPcb* pcb)
+bool ccp_open(PppPcb& pcb)
 {
     auto f = &pcb->ccp_fsm;
     const auto go = &pcb->ccp_gotoptions;
@@ -220,7 +214,8 @@ static void ccp_protrej(PppPcb* pcb)
 /*
  * ccp_resetci - initialize at start of negotiation.
  */
-static void ccp_resetci(Fsm* f, PppPcb* pcb)
+bool
+ccp_resetci(Fsm& f, PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
     auto go = &pcb->ccp_gotoptions;

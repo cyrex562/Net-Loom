@@ -72,7 +72,7 @@ constexpr auto RESET_ACK_TIMEOUT = 1	/* second */;
 #define CILEN_DEFLATE		4	/* length of its config option */
 
 #define DEFLATE_MIN_SIZE	9
-#define DEFLATE_MAX_SIZE	15
+constexpr auto DEFLATE_MAX_SIZE = 15;
 #define DEFLATE_METHOD_VAL	8
 #define DEFLATE_SIZE(x)		(((x) >> 4) + 8)
 #define DEFLATE_METHOD(x)	((x) & 0x0F)
@@ -133,7 +133,10 @@ void ccp_lowerdown(PppPcb* pcb);
 void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
 void ccp_protrej(PppPcb* pcb);
 void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
-void ccp_resetci(Fsm*, PppPcb* pcb);
+
+
+bool
+ccp_resetci(Fsm&, PppPcb& pcb);
 size_t ccp_cilen(PppPcb* ppp_pcb);
 void ccp_addci(Fsm*, uint8_t*, int*, PppPcb* pcb);
 int ccp_ackci(Fsm*, uint8_t*, int, PppPcb* pcb);

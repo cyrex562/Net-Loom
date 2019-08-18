@@ -626,7 +626,7 @@ ChapMS(PppPcb* pcb,
        std::string& secret,
        unsigned char* response)
 {
-    BZERO(response, MS_CHAP_RESPONSE_LEN);
+    zero_mem(response, MS_CHAP_RESPONSE_LEN);
     ChapMS_NT(rchallenge, secret, &response[MS_CHAP_NTRESP]);
     ChapMsLanMan(rchallenge, secret, &response[MS_CHAP_LANMANRESP]);
     /* preferred method is set by option  */
@@ -653,7 +653,7 @@ ChapMS2(PppPcb* pcb,
         int authenticator)
 {
     /* ARGSUSED */
-    BZERO(response, MS_CHAP2_RESPONSE_LEN);
+    zero_mem(response, MS_CHAP2_RESPONSE_LEN);
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
     {
