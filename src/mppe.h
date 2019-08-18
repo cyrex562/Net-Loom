@@ -213,7 +213,10 @@ mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key);
 bool
 mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
 void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
-LwipStatus mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
+
+
+bool
+mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
 void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
 
 bool

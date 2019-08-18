@@ -35,6 +35,7 @@
 #include "netbuf.h"
 #include "mbedtls/arc4.h"
 #include "mbedtls/sha1.h"
+#include "spdlog/spdlog.h"
 constexpr auto SHA1_SIGNATURE_SIZE = 20;
 
 /* ppp_mppe_state.bits definitions */
@@ -196,63 +197,54 @@ void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
  * It's strange to call this a compressor, since the output is always
  * MPPE_OVHD + 2 bytes larger than the input.
  */
-LwipStatus
+bool
 mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t protocol)
 {
-    LwipStatus err; /* TCP stack requires that we don't change the packet payload, therefore we copy
-     * the whole packet before encryption.
-     */
-    // struct PacketBuffer* np = pbuf_alloc();
     PacketBuffer np{};
-    if (!np) {
-        return ERR_MEM;
-    }
+
 
     /* Hide MPPE header + protocol */
+    // todo: remove headerf from np;
     // pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
-
-    if ((err = copy_pkt_buf(np, *pb)) != STATUS_SUCCESS) {
-        free_pkt_buf(np);
-        return err;
-    }
+    copy_pkt_buf(np, pb);
 
     /* Reveal MPPE header + protocol */
+    // todo: add header
     // pbuf_add_header(np, MPPE_OVHD + sizeof(protocol));
 
-    *pb = np;
-    uint8_t* pl = (uint8_t*)np->payload;
-
-    state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
-    // PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
+    state.ccount = (state.ccount + 1) % MPPE_CCOUNT_SPACE;
+    spdlog::debug("mppe_compress[{}]: ccount {}\n", pcb.netif.if_num, state.ccount);
     /* FIXME: use PUT* macros */
-    pl[0] = state->ccount>>8;
-    pl[1] = state->ccount;
+    np.data.resize(pcb.netif.mtu);
+    np.data[0] = state.ccount>>8;
+    np.data[1] = state.ccount;
 
-    if (!state->stateful ||	/* stateless mode     */
-        ((state->ccount & 0xff) == 0xff) ||	/* "flag" packet      */
-        (state->bits & MPPE_BIT_FLUSHED)) {	/* CCP Reset-Request  */
+    if (!state.stateful ||	/* stateless mode     */
+        ((state.ccount & 0xff) == 0xff) ||	/* "flag" packet      */
+        (state.bits & MPPE_BIT_FLUSHED)) {	/* CCP Reset-Request  */
         /* We must rekey */
-        if (state->stateful) {
+        if (state.stateful) {
             // PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: rekeying\n", pcb->netif->num));
+            spdlog::debug("mppe_compress[{}]: rekeying\n", pcb.netif.if_num);
         }
         mppe_rekey(state, 0);
-        state->bits |= MPPE_BIT_FLUSHED;
+        state.bits |= MPPE_BIT_FLUSHED;
     }
-    pl[0] |= state->bits;
-    state->bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
-    pl += MPPE_OVERHEAD_LEN;
-
+    np.data[0] |= state.bits;
+    state.bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
+    auto ptr = 0;
+    ptr += MPPE_OVERHEAD_LEN;
     /* Add protocol */
     /* FIXME: add PFC support */
-    pl[0] = protocol >> 8;
-    pl[1] = protocol;
+    np.data[ptr] = protocol >> 8;
+    np.data[ptr + 1] = protocol;
 
     /* Hide MPPE header */
     // pbuf_remove_header(np, MPPE_OVHD);
 
     /* Encrypt packet */
     for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
-        mbedtls_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
+        mbedtls_arc4_crypt(&state.arc4, (uint8_t*)n->payload, n->len);
         if (n->tot_len == n->len) {
             break;
         }
