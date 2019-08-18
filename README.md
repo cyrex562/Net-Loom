@@ -1,4 +1,4 @@
-# lwip_refactor
+# Fifth Column Network Stack (5CNS)
 
 This project is an attempt to re-write the Light Weight IP stack in modern C++.
 
