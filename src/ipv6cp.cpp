@@ -294,7 +294,7 @@ void ipv6cp_lowerdown(PppPcb *pcb) {
  * ipv6cp_input - Input IPV6CP packet.
  */
 void ipv6cp_input(PppPcb *pcb, uint8_t *p, int len) {
-    fsm_input(&pcb->ipv6cp_fsm, p, len);
+    fsm_input(&pcb->ipv6cp_fsm, p);
 }
 
 

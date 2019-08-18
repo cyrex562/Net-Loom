@@ -515,7 +515,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
             mbedtls_md5_update_ret(&md5_ctx, l2tp->secret, l2tp->secret_len);
             mbedtls_md5_update_ret(&md5_ctx, inp, avplen);
             mbedtls_md5_finish_ret(&md5_ctx, l2tp->challenge_hash);
-            lwip_md5_free(&md5_ctx);
+            mbedtls_md5_free(&md5_ctx);
             l2tp->send_challenge = 1;
             goto skipavp;
           case PPPOL2TP_AVPTYPE_CHALLENGERESPONSE:
@@ -531,7 +531,7 @@ static void pppol2tp_dispatch_control_packet(Pppol2tpPcb *l2tp, uint16_t port, s
             mbedtls_md5_update_ret(&md5_ctx, l2tp->secret, l2tp->secret_len);
             mbedtls_md5_update_ret(&md5_ctx, l2tp->secret_rv, sizeof(l2tp->secret_rv));
             mbedtls_md5_finish_ret(&md5_ctx, md5_hash);
-            lwip_md5_free(&md5_ctx);
+            mbedtls_md5_free(&md5_ctx);
             if ( memcmp(inp, md5_hash, sizeof(md5_hash)) ) {
               // PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge response from peer and secret key do not match\n"));
               pppol2tp_abort_connect(l2tp);

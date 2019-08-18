@@ -55,7 +55,7 @@ int chap_md5_verify_response(PppPcb* pcb,
                          char* message,
                          const int message_space)
 {
-    md5_context ctx;
+    mbedtls_md5_context ctx;
     unsigned char idbyte = id;
     unsigned char hash[MD5_HASH_SIZE];
     const int challenge_len = *challenge++;
@@ -63,12 +63,12 @@ int chap_md5_verify_response(PppPcb* pcb,
     if (response_len == MD5_HASH_SIZE) {
         /* Generate hash of ID, secret, challenge */
 
-        md5_starts(&ctx);
-        md5_update(&ctx, &idbyte, 1);
-        md5_update(&ctx, secret, secret_len);
+        mbedtls_md5_starts_ret(&ctx);
+        mbedtls_md5_update_ret(&ctx, &idbyte, 1);
+        mbedtls_md5_update_ret(&ctx, secret, secret_len);
         mbedtls_md5_update_ret(&ctx, challenge, challenge_len);
         mbedtls_md5_finish_ret(&ctx, hash);
-        lwip_md5_free(&ctx); /* Test if our hash matches the peer's response */
+        mbedtls_md5_free(&ctx); /* Test if our hash matches the peer's response */
         if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
             ppp_slprintf(message, message_space, "Access granted");
             return 1;

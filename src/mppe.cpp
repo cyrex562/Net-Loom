@@ -33,6 +33,8 @@
 #include <lcp.h>
 #include <ppp.h>
 #include "netbuf.h"
+#include "mbedtls/arc4.h"
+#include "mbedtls/sha1.h"
 constexpr auto SHA1_SIGNATURE_SIZE = 20;
 
 /* ppp_mppe_state.bits definitions */
@@ -70,99 +72,96 @@ static void
 mppe_rekey(PppMppeState& state, int initial_key)
 {
     mbedtls_sha1_context sha1_ctx;
-    uint8_t sha1_digest[SHA1_SIGNATURE_SIZE]; /*
+    // uint8_t sha1_digest[SHA1_SIGNATURE_SIZE];
+    uint8_t raw_sha1_digest[SHA1_SIGNATURE_SIZE] = {};
+
+    /*
      * Key Derivation, from RFC 3078, RFC 3079.
      * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
      */
-    lwip_sha1_init(&sha1_ctx);
-    lwip_sha1_starts(&sha1_ctx);
-    lwip_sha1_update(&sha1_ctx, state.master_key, state.keylen);
-    lwip_sha1_update(&sha1_ctx, MPPE_SHA1_PAD1, SHA1_PAD_SIZE);
-    lwip_sha1_update(&sha1_ctx, state.session_key, state.keylen);
-    lwip_sha1_update(&sha1_ctx, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
-    lwip_sha1_finish(&sha1_ctx, sha1_digest);
-    lwip_sha1_free(&sha1_ctx);
-    memcpy(state.session_key, sha1_digest, state.keylen);
-    if (!initial_key) {
-        lwip_arc4_init(&state->arc4);
-        lwip_arc4_setup(&state.arc4, sha1_digest, state.keylen);
-        lwip_arc4_crypt(&state.arc4, state.session_key, state.keylen);
-        lwip_arc4_free(&state->arc4);
+    mbedtls_sha1_init(&sha1_ctx);
+    mbedtls_sha1_starts_ret(&sha1_ctx);
+    mbedtls_sha1_update_ret(&sha1_ctx, state.master_key.data(), state.master_key.size());
+    mbedtls_sha1_update_ret(&sha1_ctx, MPPE_SHA1_PAD1, SHA1_PAD_SIZE);
+    mbedtls_sha1_update_ret(&sha1_ctx, state.session_key.data(), state.session_key.size());
+    mbedtls_sha1_update_ret(&sha1_ctx, MPPE_SHA1_PAD2, SHA1_PAD_SIZE);
+    mbedtls_sha1_finish_ret(&sha1_ctx, raw_sha1_digest);
+    mbedtls_sha1_free(&sha1_ctx);
+
+    state.session_key.reserve(SHA1_SIGNATURE_SIZE);
+    memcpy(state.session_key.data(), raw_sha1_digest, SHA1_SIGNATURE_SIZE);
+    if (initial_key == 0) {
+        mbedtls_arc4_init(&state.arc4);
+        mbedtls_arc4_setup(&state.arc4, raw_sha1_digest, SHA1_SIGNATURE_SIZE);
+        // todo: where should the output go?
+        // mbedtls_arc4_crypt(&state.arc4, state.session_key.size(), state.session_key.data());
+        mbedtls_arc4_free(&state.arc4);
     }
-    if (state.keylen == 8) {
+    if (state.session_key.size() == 8) {
         /* See RFC 3078 */
         state.session_key[0] = 0xd1;
         state.session_key[1] = 0x26;
         state.session_key[2] = 0x9e;
     }
-    lwip_arc4_init(&state->arc4);
-    lwip_arc4_setup(&state.arc4, state.session_key, state.keylen);
+    mbedtls_arc4_init(&state.arc4);
+    mbedtls_arc4_setup(&state.arc4, state.session_key.data(), state.session_key.size());
 }
 
 /**
  * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
  * don't have to keep multiple copies of keys.
  */
-void mppe_set_key(PppPcb *pcb, PppMppeState *state, uint8_t *key) {
-    memcpy(state->master_key, key, MPPE_MAX_KEY_LEN);
+bool
+mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key)
+{
+    std::copy(key.begin(), key.end(), state.master_key);
+    return true;
 }
 
-/*
+/**
  * Initialize (de)compressor state.
  */
 bool
 mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
 {
-
-    const uint8_t *debugstr = (const uint8_t*)"mppe_comp_init";
-    if (pcb.mppe_decomp == state) {
-        debugstr = (const uint8_t*)"mppe_decomp_init";
+    std::string debugstr = "mppe_comp_init";
+    if (cmp_ppp_mppe_state(pcb.mppe_decomp, state))
+    {
+        debugstr = "mppe_decomp_init";
     }
 
-
     /* Save keys. */
-    memcpy(state.session_key, state.master_key, sizeof(state.master_key));
-
+    std::copy(state.master_key.begin(), state.master_key.end(), state.session_key);
     if (options & MPPE_OPT_128)
     {
-        state.keylen = 16;
+        // state.keylen = 16;
     }
     else if (options & MPPE_OPT_40)
     {
-        state.keylen = 8;
+        // state.keylen = 8;
     }
-    else {
-        // PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
-        // 	pcb->netif->num));
-        lcp_close(pcb, "MPPE required but peer negotiation failed");
-        return;
+    else
+    {
+        std::string msg = "MPPE required but peer negotiation failed";
+        lcp_close(pcb, msg);
+        return false;
     }
     if (options & MPPE_OPT_STATEFUL)
     {
-        state.stateful = 1;
-    } /* Generate the initial session key. */
-    mppe_rekey(state, 1);
-
-
-    {
-        int i;
-        char mkey[sizeof(state.master_key) * 2 + 1];
-        char skey[sizeof(state.session_key) * 2 + 1];
-
-        // PPPDEBUG(LOG_DEBUG, ("%s[%d]: initialized with %d-bit %s mode\n",
-        //        debugstr, pcb->netif->num, (state->keylen == 16) ? 128 : 40,
-        //        (state->stateful) ? "stateful" : "stateless"));
-
-        for (i = 0; i < (int)sizeof(state.master_key); i++)
-            sprintf(mkey + i * 2, "%02x", state.master_key[i]);
-        for (i = 0; i < (int)sizeof(state.session_key); i++)
-        {
-            sprintf(skey + i * 2, "%02x", state.session_key[i]);
-        } // PPPDEBUG(LOG_DEBUG,
-        //        ("%s[%d]: keys: master: %s initial session: %s\n",
-        //        debugstr, pcb->netif->num, mkey, skey));
+        state.stateful = true;
     }
 
+    /* Generate the initial session key. */
+    mppe_rekey(state, 1);
+    int i;
+    char mkey[sizeof(state.master_key) * 2 + 1];
+    char skey[sizeof(state.session_key) * 2 + 1];
+    for (i = 0; i < (int)sizeof(state.master_key); i++)
+        sprintf(mkey + i * 2, "%02x", state.master_key[i]);
+    for (i = 0; i < (int)sizeof(state.session_key); i++)
+    {
+        sprintf(skey + i * 2, "%02x", state.session_key[i]);
+    }
 
     /*
      * Initialize the coherency count.  The initial value is not specified
@@ -170,13 +169,12 @@ mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
      * start at 0.  Setting it to the max here makes the comp/decomp code
      * do the right thing (determined through experiment).
      */
-    state.ccount = MPPE_CCOUNT_SPACE - 1;
-
-    /*
+    state.ccount = MPPE_CCOUNT_SPACE - 1; /*
      * Note that even though we have initialized the key table, we don't
      * set the FLUSHED bit.  This is contrary to RFC 3078, sec. 3.1.
      */
     state.bits = MPPE_BIT_ENCRYPTED;
+    return true;
 }
 
 /*
@@ -254,7 +252,7 @@ mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t proto
 
     /* Encrypt packet */
     for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
-        lwip_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
+        mbedtls_arc4_crypt(&state->arc4, (uint8_t*)n->payload, n->len);
         if (n->tot_len == n->len) {
             break;
         }

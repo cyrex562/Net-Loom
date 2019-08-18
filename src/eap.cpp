@@ -97,9 +97,11 @@ static void eap_lowerdown(PppPcb *pcb);
 /* Local forward declarations. */
 static void eap_server_timeout(void* arg);
 
-inline bool eap_client_active(PppPcb* ppp_pcb)
+
+inline bool
+eap_client_active(PppPcb& ppp_pcb)
 {
-    return (ppp_pcb->eap.es_client.ea_state == kEapListen);
+    return (ppp_pcb.eap.es_client.ea_state == kEapListen);
 }
 
 /*
@@ -125,16 +127,18 @@ static void eap_init(PppPcb* pcb, EapState* eap)
  * eap_client_timeout - Give up waiting for the peer to send any
  * Request messages.
  */
-static void eap_client_timeout(void* arg) {
-    auto pcb = reinterpret_cast<PppPcb *>(arg);
-
-  if (!eap_client_active(pcb))
-  {
-      return;
+bool
+eap_client_timeout(PppPcb& pcb)
+{
+    // auto pcb = reinterpret_cast<PppPcb *>(pcb);
+    if (!eap_client_active(pcb))
+    {
+        return false;
     }
     ppp_error("EAP: timeout waiting for Request from peer");
-  auth_withpeer_fail(pcb, PPP_EAP);
-  pcb->eap.es_client.ea_state = eapBadAuth;
+    auth_withpeer_fail(pcb, PPP_EAP);
+    pcb.eap.es_client.ea_state = eapBadAuth;
+    return true;
 }
 
 //
@@ -1050,7 +1054,7 @@ static void eap_request(PppPcb* pcb, uint8_t* inp, int id, size_t len)
         // BZERO(secret, sizeof(secret));
         mbedtls_md5_update_ret(&mdContext, inp, vallen);
         mbedtls_md5_finish_ret(&mdContext, hash);
-        lwip_md5_free(&mdContext);
+        mbedtls_md5_free(&mdContext);
         eap_chap_response(pcb, id, hash, pcb->eap.es_client.ea_name);
         break;
 
@@ -1078,7 +1082,7 @@ static void eap_response(PppPcb* pcb, const char* inp, int id, int len)
     int secret_len;
     std::string secret;
     std::string rhostname;
-    md5_context md_context;
+    mbedtls_md5_context md_context;
     uint8_t hash[MD5_SIGNATURE_SIZE] ={};
 
 
@@ -1237,7 +1241,7 @@ static void eap_response(PppPcb* pcb, const char* inp, int id, int len)
         // BZERO(secret, sizeof(secret));
         mbedtls_md5_update_ret(&md_context, pcb->eap.es_challenge, pcb->eap.es_challen);
         mbedtls_md5_finish_ret(&md_context, hash);
-        lwip_md5_free(&mdContext);
+        mbedtls_md5_free(&mdContext);
         if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0)
         {
             eap_send_failure(pcb);
