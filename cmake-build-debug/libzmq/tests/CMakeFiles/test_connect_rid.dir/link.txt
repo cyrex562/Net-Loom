@@ -1,3 +1,0 @@
-C:\Users\JoshMadden\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\192.5728.100\bin\cmake\win\bin\cmake.exe -E remove -f CMakeFiles\test_connect_rid.dir/objects.a
-C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\ar.exe cr CMakeFiles\test_connect_rid.dir/objects.a @CMakeFiles\test_connect_rid.dir\objects1.rsp
-C:\PROGRA~2\MINGW-~1\I686-8~1.0-P\mingw32\bin\G__~1.EXE  -std=gnu++11 -Wno-tautological-constant-compare -g   -Wl,--whole-archive CMakeFiles\test_connect_rid.dir/objects.a -Wl,--no-whole-archive  -o ..\bin\test_connect_rid.exe -Wl,--out-implib,..\lib\libtest_connect_rid.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\test_connect_rid.dir\linklibs.rsp

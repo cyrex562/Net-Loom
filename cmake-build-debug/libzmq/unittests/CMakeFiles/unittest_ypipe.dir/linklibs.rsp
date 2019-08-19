@@ -1,1 +1,0 @@
--lws2_32 ../lib/libtestutil-static.a ../lib/libzmq.a -lws2_32 -lrpcrt4 -liphlpapi ../lib/libunity.a -lws2_32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

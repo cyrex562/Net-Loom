@@ -16,50 +16,30 @@ constexpr auto BRIDGE_FDB_TIMEOUT_SEC = (60*5) /* 5 minutes FDB timeout */;
  * ATTENTION: This is meant as an example only, in real-world use, you should
  * provide a better implementation :-)
  */
-bool bridgeif_fdb_update_src(BridgeFdbEntry& fdb, MacAddress& src_addr, uint64_t port_idx)
+bool
+bridgeif_fdb_update_src(std::vector<BridgeFdbEntry>& fdb,
+                        MacAddress& src_addr,
+                        uint64_t port_idx)
 {
     int i;
-    const auto fdb = static_cast<BridgeIfcFdb *>(fdb);
-    for (i = 0; i < fdb->max_fdb_entries; i++)
+    for (auto& e : fdb)
     {
-        auto e = &fdb->fdb[i];
-        if (e->used && e->ts)
+        if (e.used && e.ts)
         {
-            if (!memcmp(&e->addr, src_addr, sizeof(struct MacAddress)))
+            if (memcmp(&e.addr, &src_addr, sizeof(struct MacAddress)) == 0)
             {
-                // Logf(BRIDGEIF_FDB_DEBUG,
-                //             ("br: update src %02x:%02x:%02x:%02x:%02x:%02x (from %d) @ idx %d\n"
-                //                 , src_addr->addr[0], src_addr->addr[1], src_addr->addr[2],
-                //                 src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
-                //                 port_idx, i));
-                e->ts = BRIDGE_FDB_TIMEOUT_SEC;
-                e->port = port_idx;
-                return true;
-            }
-        }
-    } /* not found, allocate new entry from free */
-    for (i = 0; i < fdb->max_fdb_entries; i++)
-    {
-        auto e = &fdb->fdb[i];
-        if (!e->used || !e->ts)
-        {
-            if (!e->used || !e->ts)
-            {
-                // Logf(BRIDGEIF_FDB_DEBUG,
-                //             ("br: create src %02x:%02x:%02x:%02x:%02x:%02x (from %d) @ idx %d\n"
-                //                 , src_addr->addr[0], src_addr->addr[1], src_addr->addr[2],
-                //                 src_addr->addr[3], src_addr->addr[4], src_addr->addr[5],
-                //                 port_idx, i));
-                memcpy(&e->addr, src_addr, sizeof(struct MacAddress));
-                e->ts = BRIDGE_FDB_TIMEOUT_SEC;
-                e->port = port_idx;
-                e->used = 1;
+                e.ts = BRIDGE_FDB_TIMEOUT_SEC;
+                e.port = port_idx;
                 return true;
             }
         }
     }
-
-    return false;
+    BridgeFdbEntry entry{};
+    entry.ts = BRIDGE_FDB_TIMEOUT_SEC;
+    entry.port = port_idx;
+    entry.used = true;
+    fdb.push_back(entry);
+    return true;
 }
 
 /**

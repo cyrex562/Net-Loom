@@ -1,1 +1,0 @@
--IC:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/include -IC:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/src -IC:/Users/JoshMadden/Documents/GitHub/lwip_refactor/cmake-build-debug/libzmq -IC:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/external/unity -IC:/Users/JoshMadden/Documents/GitHub/lwip_refactor/libzmq/tests/../external/unity 
