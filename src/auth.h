@@ -1,11 +1,11 @@
 //
 // auth.h: PPP authentication code header file.
-// 
+//
 //
 
 #pragma once
 #include <string>
-
+#include "upap_state.h"
 // struct Protent;
 
 struct PppPcb;
@@ -27,7 +27,7 @@ bool upper_layers_down(PppPcb& pcb);
 
 bool continue_networks(PppPcb* pcb);
 
-bool link_established(PppPcb& pcb, const bool auth_required);
+bool link_established(PppPcb& pcb, upap_state& state, const bool auth_required);
 
 bool
 link_terminated(PppPcb& pcb, const bool doing_multilink);

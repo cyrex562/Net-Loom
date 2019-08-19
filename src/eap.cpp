@@ -148,24 +148,22 @@ eap_client_timeout(PppPcb& pcb)
 // Start the client and wait for requests
 // Called after eap_lowerup
 //
-void eap_authwithpeer(PppPcb* pcb)
+bool
+eap_authwithpeer(PppPcb& pcb)
 {
-    const auto localname = pcb->settings.user;
-    auto eap = &pcb->eap;
-    // if (nullptr == localname)
-    // {
-    //     return; /* Save the peer name we're given */
-    // }
-
+    const auto localname = pcb.settings.user;
+    auto eap = &pcb.eap;
     eap->es_client.ea_name = localname;
-    // eap->es_client.ea_namelen = strlen(localname);
-    eap->es_client.ea_state = kEapListen;
-    //
+    eap->es_client.ea_state = kEapListen; //
     // Start a timer so that if the other end just goes
     // silent, we don't sit here waiting forever.
     //
-    if (pcb->settings.eap_req_time > 0)
-        Timeout(eap_client_timeout, pcb, pcb->settings.eap_req_time);
+    if (pcb.settings.eap_req_time > 0) {
+        if (!eap_client_timeout(pcb)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /*

@@ -1898,7 +1898,7 @@ void lcp_up(Fsm *f) {
 
     lcp_echo_lowerup(f->pcb);  /* Enable echo messages */
 
-    link_established(pcb, true);
+    link_established(pcb, ,true);
 }
 
 

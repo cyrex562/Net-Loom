@@ -92,7 +92,7 @@ bool upper_layers_down(PppPcb& pcb)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-bool link_established(PppPcb& pcb, const bool auth_required = false)
+bool link_established(PppPcb& pcb, upap_state& state, const bool auth_required = false)
 {
     auto wo = pcb.lcp_wantoptions;
     auto go = pcb.lcp_gotoptions;
@@ -145,23 +145,23 @@ bool link_established(PppPcb& pcb, const bool auth_required = false)
     }
     else if (go.neg_upap)
     {
-        upap_authpeer(pcb,);
+        upap_authpeer(pcb, state);
         auth |= PAP_PEER;
     }
     else
     {
     }
-    if (ho->neg_eap)
+    if (ho.neg_eap)
     {
         eap_authwithpeer(pcb);
         auth |= EAP_WITHPEER;
     }
-    else if (ho->neg_chap)
+    else if (ho.neg_chap)
     {
-        chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho->chap_mdtype));
+        chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho.chap_mdtype),);
         auth |= CHAP_WITHPEER;
     }
-    else if (ho->neg_upap)
+    else if (ho.neg_upap)
     {
         upap_authwithpeer(pcb, pcb.settings.user, pcb.settings.passwd,);
         auth |= PAP_WITHPEER;

@@ -150,7 +150,8 @@ struct Base64State
 static char base64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-void eap_authwithpeer(PppPcb *pcb);
+bool
+eap_authwithpeer(PppPcb& pcb);
 void eap_authpeer(PppPcb& pcb, std::string& localname);
 
 extern const struct Protent eap_protent;

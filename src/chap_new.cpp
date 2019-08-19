@@ -36,6 +36,7 @@
 
 #include <ppp_opts.h>
 #include "ppp.h"
+#include "spdlog/spdlog.h"
 /*
  * Command-line options.
  */
@@ -57,12 +58,12 @@
 
 
 /* Values for flags in chap_client_state and chap_server_state */
-constexpr auto kLowerup = 1;
-constexpr auto kAuthStarted = 2;
-constexpr auto kAuthDone = 4;
-constexpr auto kAuthFailed = 8;
-constexpr auto kTimeoutPending = 0x10;
-constexpr auto kChallengeValid = 0x20;
+// constexpr auto kLowerup = 1;
+// constexpr auto kAuthStarted = 2;
+// constexpr auto kAuthDone = 4;
+// constexpr auto kAuthFailed = 8;
+// constexpr auto kTimeoutPending = 0x10;
+// constexpr auto kChallengeValid = 0x20;
 
 /*
  * Prototypes.
@@ -90,16 +91,18 @@ chap_init(PppPcb* pcb)
 /*
  * chap_lowerup - we can start doing stuff now.
  */
-static void
-chap_lowerup(PppPcb* pcb)
+bool
+chap_lowerup(PppPcb& pcb)
 {
-    pcb->chap_client.flags |= kLowerup;
+    pcb.chap_client.flags.lower_up = true;
 
-    pcb->chap_server.flags |= kLowerup;
-    if (pcb->chap_server.flags & kAuthStarted)
+    pcb.chap_server.flags.lower_up = true;
+    if (pcb.chap_server.flags.auth_started)
     {
         chap_timeout(pcb);
     }
+
+    return true;
 }
 
 static void
@@ -149,33 +152,37 @@ chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code)
 }
 
 
-/*
- * chap_auth_with_peer - Prepare to authenticate ourselves to the peer.
- * There isn't much to do until we receive a challenge.
+/**
+ * Prepare to authenticate ourselves to the peer. There isn't much to do until we
+ * receive a challenge.
  */
-void
-chap_auth_with_peer(PppPcb* pcb, std::string& our_name, int digest_code)
+bool
+chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDigestType& chap_digest_type)
 {
-    const struct ChapDigestType* dp;
+    // const struct ChapDigestType dp;
     int i;
 
-    if (pcb->chap_client.flags & kAuthStarted)
+    if (pcb.chap_client.flags & kAuthStarted)
     {
-        ppp_error("CHAP: authentication with peer already started!");
-        return;
+        spdlog::error("CHAP: authentication with peer already started!");
+        return false;
     }
+
+    // todo: get chap digest code
     // for (i = 0; (dp = chap_digests[i]) != nullptr; ++i)
     //     if (dp->code == digest_code)
     //         break;
 
-    if (dp == nullptr)
-    {
-        ppp_fatal("CHAP digest 0x%x requested but not available",
-                  digest_code);
-    }
-    pcb->chap_client.digest = dp;
-    pcb->chap_client.name = our_name;
-    pcb->chap_client.flags |= kAuthStarted;
+    // if (dp == nullptr)
+    // {
+    //     ppp_fatal("CHAP digest 0x%x requested but not available",
+    //               digest_code);
+    // }
+    pcb.chap_client.digest = chap_digest_type;
+    pcb.chap_client.name = our_name;
+    pcb.chap_client.flags |= kAuthStarted;
+
+    return true;
 }
 
 /*

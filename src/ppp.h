@@ -271,40 +271,24 @@ void ccp_reset_decomp(PppPcb*pcb);
 int get_idle_time(PppPcb *pcb, struct ppp_idle *ip);
 
 
-
-
 /* Optional protocol names list, to make our messages a little more informative. */
-
 const char * protocol_name(int proto);
 
 
-/* Optional stats support, to get some statistics on the PPP interface */
-
-
-
-
-/*
- * Inline versions of get/put char/short/long.
- * Pointer is advanced; we assume that both arguments
- * are lvalues and will already be in registers.
- * cp MUST be uint8_t *.
- */
-// #define GETCHAR(c, cp) { \
-//     (c) = *(cp)++; \
-// }
-
-inline uint8_t GETCHAR(std::vector<uint8_t>& cp, size_t& index)
+inline std::tuple<bool,uint8_t> GETCHAR(std::vector<uint8_t>& cp, size_t& index)
 {
-    return cp[index++];
+    if (index > cp.size()) {
+        return std::make_tuple(false, 0);
+    }
+    return std::make_tuple(true, cp[index++]);
 }
 
-// #define PUTCHAR(c, cp) { \
-//     *(cp)++ = (uint8_t) (c); \
-// }
+
 inline void PUTCHAR(uint8_t val, std::vector<uint8_t>& cp)
 {
     cp.push_back(val);
 }
+
 
 inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp)
 {
@@ -313,22 +297,17 @@ inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp)
     }
 }
 
-// #define GETSHORT(s, cp) { \
-//     (s) = *(cp)++ << 8; \
-//     (s) |= *(cp)++; \
-// }
 
-inline uint16_t GETSHORT(std::vector<uint8_t>& cp, size_t& index)
+inline std::tuple<bool, uint16_t> GETSHORT(std::vector<uint8_t>& cp, size_t& index)
 {
+    if (index > cp.size()) {
+        return std::make_tuple(false, 0);
+    }
     uint16_t s = cp[index++];
     s |= cp[index++];
-    return s;
+    return std::make_tuple(true, s);
 }
 
-// #define PUTSHORT(s, cp) { \
-//     *(cp)++ = (uint8_t) ((s) >> 8); \
-//     *(cp)++ = (uint8_t) (s); \
-// }
 
 inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
 {
@@ -337,18 +316,35 @@ inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
 }
 
 
-#define GETLONG(l, cp) { \
-    (l) = *(cp)++ << 8; \
-    (l) |= *(cp)++; (l) <<= 8; \
-    (l) |= *(cp)++; (l) <<= 8; \
-    (l) |= *(cp)++; \
+// #define GETLONG(l, cp) { \
+//     (l) = *(cp)++ << 8; \
+//     (l) |= *(cp)++; (l) <<= 8; \
+//     (l) |= *(cp)++; (l) <<= 8; \
+//     (l) |= *(cp)++; \
+// }
+
+inline std::tuple<bool, long> GETLONG(long l, std::vector<uint8_t>& cp, size_t& index)
+{
+    if (index > cp.size()) {
+        return std::make_tuple(false, 0);
+    }
+
+    long l = cp[index] << 8;
+    l |= cp[index + 1];
+    l <<= 8;
+    l |= cp[index + 2];
+    l <<= 8;
 }
-#define PUTLONG(l, cp) { \
-    *(cp)++ = (uint8_t) ((l) >> 24); \
-    *(cp)++ = (uint8_t) ((l) >> 16); \
-    *(cp)++ = (uint8_t) ((l) >> 8); \
-    *(cp)++ = (uint8_t) (l); \
-}
+
+
+
+// #define PUTLONG(l, cp) { \
+//     *(cp)++ = (uint8_t) ((l) >> 24); \
+//     *(cp)++ = (uint8_t) ((l) >> 16); \
+//     *(cp)++ = (uint8_t) ((l) >> 8); \
+//     *(cp)++ = (uint8_t) (l); \
+// }
+
 
 #define INCPTR(n, cp)	((cp) += (n))
 #define DECPTR(n, cp)	((cp) -= (n))
@@ -684,7 +680,7 @@ struct PppPcb
     /* Records which authentication operations haven't completed yet. */
     uint16_t auth_done{}; /* Records which authentication operations have been completed. */
     upap_state upap; /* PAP data */
-    chap_client_state chap_client; /* CHAP client data */
+    ChapClientState chap_client; /* CHAP client data */
     chap_server_state chap_server; /* CHAP server data */
     EapState eap; /* EAP data */
     Fsm lcp_fsm{}; /* LCP fsm structure */

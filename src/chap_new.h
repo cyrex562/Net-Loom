@@ -32,8 +32,7 @@
 #include <ppp_defs.h>
 #include <ppp_opts.h>
 #include <string>
-
-
+#include <vector>
 struct PppPcb;
 
 /*
@@ -184,28 +183,37 @@ struct ChapDigestType
 };
 
 
+struct ChapStateFlags
+{
+    bool lower_up;
+    bool auth_started;
+    bool auth_failed;
+    bool timeout_pending;
+};
+
+
 /*
  * Each interface is described by chap structure.
  */
-
-struct chap_client_state
+struct ChapClientState
 {
-    uint8_t flags;
+    ChapStateFlags flags;
     std::string name;
-    const ChapDigestType* digest;
-    unsigned char priv[64]; /* private area for digest's use */
-} ;
+    ChapDigestType digest;
+    std::vector<uint8_t> priv; /* private area for digest's use */
+    
+};
 
 
-typedef struct chap_server_state
+typedef struct ChapServerState
 {
-    uint8_t flags;
+    ChapStateFlags flags;
     uint8_t id;
     std::string name;
-    const ChapDigestType* digest;
-    int challenge_xmits;
-    int challenge_pktlen;
-    unsigned char challenge[CHAL_MAX_PKTLEN];
+    const ChapDigestType digest;
+    size_t challenge_xmits;
+    size_t challenge_pktlen;
+    std::vector<uint8_t> challenge;
 } chap_server_state;
 
 
@@ -214,14 +222,15 @@ extern void chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code);
 
 
 /* Called by auth. code to start authenticating us to the peer. */
-extern void chap_auth_with_peer(PppPcb* pcb, std::string& our_name, int digest_code);
+bool chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDigestType& chap_digest_type);
 
 /* Represents the CHAP protocol to the main pppd code */
 extern const struct Protent kChapProtent;
 
 static void chap_init(PppPcb* pcb);
 
-static void chap_lowerup(PppPcb* pcb);
+static bool
+chap_lowerup(PppPcb& pcb);
 
 static void chap_lowerdown(PppPcb* pcb);
 
