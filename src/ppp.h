@@ -5,15 +5,12 @@
 #pragma once
 #include <fsm_def.h>
 #include <timeouts.h>
-#include <ccp.h>
 #include <chap_new.h>
 #include <eap_state.h>
 #include <ip4_addr.h>
 #include <ip6_addr.h>
 #include <ipcp_defs.h>
 #include <ipv6cp.h>
-#include <lcp.h>
-#include <mppe.h>
 #include <network_interface.h>
 #include <upap_state.h>
 #include <vj.h>
@@ -316,38 +313,39 @@ inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
 }
 
 
-// #define GETLONG(l, cp) { \
-//     (l) = *(cp)++ << 8; \
-//     (l) |= *(cp)++; (l) <<= 8; \
-//     (l) |= *(cp)++; (l) <<= 8; \
-//     (l) |= *(cp)++; \
-// }
-
-inline std::tuple<bool, long> GETLONG(long l, std::vector<uint8_t>& cp, size_t& index)
+inline std::tuple<bool, long>
+GETLONG(long l, std::vector<uint8_t>& cp, size_t& index)
 {
-    if (index > cp.size()) {
+    if (index > cp.size())
+    {
         return std::make_tuple(false, 0);
     }
-
-    long l = cp[index] << 8;
-    l |= cp[index + 1];
+    l = cp[index++] << 8;
+    l |= cp[index++];
     l <<= 8;
-    l |= cp[index + 2];
+    l |= cp[index++];
     l <<= 8;
+    l |= cp[index++];
+    return std::make_tuple(true, l);
 }
 
 
+inline void
+PUTLONG(long l, std::vector<uint8_t>& cp, size_t& index)
+{
+    if (index + 4 > cp.size())
+    {
+        cp.resize(cp.size() + 4);
+    }
+    cp[index++] = l >> 24;
+    cp[index++] = l >> 16;
+    cp[index++] = l >> 8;
+    cp[index++] = l;
+}
 
-// #define PUTLONG(l, cp) { \
-//     *(cp)++ = (uint8_t) ((l) >> 24); \
-//     *(cp)++ = (uint8_t) ((l) >> 16); \
-//     *(cp)++ = (uint8_t) ((l) >> 8); \
-//     *(cp)++ = (uint8_t) (l); \
-// }
 
-
-#define INCPTR(n, cp)	((cp) += (n))
-#define DECPTR(n, cp)	((cp) -= (n))
+// #define INCPTR(n, cp)	((cp) += (n))
+// #define DECPTR(n, cp)	((cp) -= (n))
 
 /*
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
@@ -447,7 +445,7 @@ void mp_check_options (LcpOptions* wo, LcpOptions* ao, bool* doing_multilink); /
 //
 // Join link to an appropriate bundle
 //
-bool mp_join_bundle(PppPcb* pcb,
+bool mp_join_bundle(PppPcb& pcb,
                     std::string& peer_authname,
                     std::string& bundle_name,
                     const bool doing_multilink = true,

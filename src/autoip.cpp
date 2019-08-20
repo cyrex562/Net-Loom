@@ -7,16 +7,21 @@
 #include <lwip_debug.h>
 
 
+/**
+ * Pseudo random macro based on netif informations. You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
+ */
 //
-// Pseudo random macro based on netif informations.
-// You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
 //
-inline uint32_t autoip_gen_rand(NetworkInterface* netif)
+inline uint32_t
+autoip_gen_rand(NetworkInterface& netif)
 {
-    return (uint32_t(netif->hwaddr[5] & 0xff) << 24 | uint32_t(netif->hwaddr[3] & 0xff) <<
-            16 | uint32_t(netif->hwaddr[2] & 0xff) << 8 | uint32_t(
-                netif->hwaddr[4] & 0xff)) +
-        (netif_autoip_data(netif) ? netif_autoip_data(netif)->tried_llipaddr : 0);
+    // todo: replace with system random function or real pseudo-random math function.
+    auto x = (uint32_t(netif.mac_address.bytes[5] & 0xff) << 24 |
+        uint32_t(netif.mac_address.bytes[3] & 0xff) << 16 |
+        uint32_t(netif.mac_address.bytes[2] & 0xff) << 8 | uint32_t(
+            netif.mac_address.bytes[4] & 0xff));
+    auto state = netif_autoip_data(netif);
+    return x + state.tried_llipaddr;
 }
 
 

@@ -1,120 +1,59 @@
-///
-/// file: lcp.cpp
-///
+/**
+ * lcp.cpp
+ */
+
 
 #define NOMINMAX
 #include <lcp.h>
 #include <ppp_opts.h>
 #include <fsm.h>
-#include <fsm.h>
-#include <lcp.h>
 #include <chap_new.h>
 #include <magic.h>
 #include "auth.h"
 #include <algorithm>
 #include "util.h"
 #include "ppp.h"
-
-
-// static const fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
-//     lcp_resetci,		/* Reset our Configuration Information */
-//     lcp_cilen,			/* Length of our Configuration Information */
-//     lcp_addci,			/* Add our Configuration Information */
-//     lcp_ackci,			/* ACK our Configuration Information */
-//     lcp_nakci,			/* NAK our Configuration Information */
-//     lcp_rejci,			/* Reject our Configuration Information */
-//     lcp_reqci,			/* Request peer's Configuration Information */
-//     lcp_up,			/* Called when fsm reaches OPENED state */
-//     lcp_down,			/* Called when fsm leaves OPENED state */
-//     lcp_starting,		/* Called when we want the lower layer up */
-//     lcp_finished,		/* Called when we want the lower layer down */
-//     NULL,			/* Called when Protocol-Reject received */
-//     NULL,			/* Retransmission is necessary */
-//     lcp_extcode,		/* Called to handle LCP-specific codes */
-//     "LCP"			/* String name of protocol */
-// };
-
-/*
- * Protocol entry points.
- * Some of these are called directly.
- */
-
-// const struct protent lcp_protent = {
-//     PPP_LCP,
-//     lcp_init,
-//     lcp_input,
-//     lcp_protrej,
-//     lcp_lowerup,
-//     lcp_lowerdown,
-//     lcp_open,
-//     lcp_close,
-//     NULL,
-//     NULL,
-//     NULL
-// };
-
-
-
-// static int
-// setendpoint(argv)
-//     char **argv;
-// {
-//     if (str_to_epdisc(&lcp_wantoptions[0].endpoint, *argv)) {
-// 	lcp_wantoptions[0].neg_endpoint = 1;
-// 	return 1;
-//     }
-//     option_error("Can't parse '%s' as an endpoint discriminator", *argv);
-//     return 0;
-// }
-//
-// void
-// printendpoint(opt, printer, arg)
-//     option_t *opt;
-//     void (*printer) (uint8_t *, char *, ...);
-//     uint8_t *arg;
-// {
-// 	printer(arg, "%s", epdisc_to_str(&lcp_wantoptions[0].endpoint));
-// }
+#include <lcp_options.h>
 
 
 /*
  * lcp_init - Initialize LCP.
  */
-void lcp_init(PppPcb *pcb) {
-    Fsm *f = &pcb->lcp_fsm;
-    LcpOptions *wo = &pcb->lcp_wantoptions;
-    LcpOptions *ao = &pcb->lcp_allowoptions;
+void lcp_init(PppPcb& pcb) {
+    Fsm f = pcb.lcp_fsm;
+    LcpOptions wo = pcb.lcp_wantoptions;
+    LcpOptions ao = pcb.lcp_allowoptions;
 
-    f->pcb = pcb;
-    f->protocol = PPP_LCP;
+    // f->pcb = pcb;
+    f.protocol = PPP_LCP;
     // f->callbacks = &lcp_callbacks;
 
-    fsm_init(f,);
+    fsm_init(f, pcb);
 
-    zero_mem(wo, sizeof(*wo));
-    wo->neg_mru = true;
-    wo->mru = PPP_DEFMRU;
-    wo->neg_asyncmap = true;
-    wo->neg_magicnumber = true;
-    wo->neg_pcompression = true;
-    wo->neg_accompression = true;
+    zero_mem(&wo, sizeof(LcpOptions));
+    wo.neg_mru = true;
+    wo.mru = PPP_DEFMRU;
+    wo.neg_asyncmap = true;
+    wo.neg_magicnumber = true;
+    wo.neg_pcompression = true;
+    wo.neg_accompression = true;
 
-    zero_mem(ao, sizeof(*ao));
-    ao->neg_mru = true;
-    ao->mru = PPP_MAXMRU;
-    ao->neg_asyncmap = true;
+    zero_mem(&ao, sizeof(LcpOptions));
+    ao.neg_mru = true;
+    ao.mru = PPP_MAXMRU;
+    ao.neg_asyncmap = true;
 
-    ao->neg_chap = true;
-    ao->chap_mdtype = MDTYPE_NONE;
+    ao.neg_chap = true;
+    ao.chap_mdtype = MDTYPE_NONE;
 
-    ao->neg_upap = true;
+    ao.neg_upap = true;
 
-    ao->neg_eap = true;
+    ao.neg_eap = true;
 
-    ao->neg_magicnumber = true;
-    ao->neg_pcompression = true;
-    ao->neg_accompression = true;
-    ao->neg_endpoint = true;
+    ao.neg_magicnumber = true;
+    ao.neg_pcompression = true;
+    ao.neg_accompression = true;
+    ao.neg_endpoint = true;
 }
 
 
@@ -1898,7 +1837,7 @@ void lcp_up(Fsm *f) {
 
     lcp_echo_lowerup(f->pcb);  /* Enable echo messages */
 
-    link_established(pcb, ,true);
+    link_established(pcb, ,, true);
 }
 
 

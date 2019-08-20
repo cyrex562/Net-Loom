@@ -5,8 +5,7 @@
 #include <cstdint>
 #include "fsm.h"
 #include "chap_new.h"
-
-struct PppPcb;
+#include <ppp.h>
 
 /*
  * When the link comes up we want to be able to wait for a short while,
@@ -68,36 +67,7 @@ struct Epdisc
     unsigned char value[MAX_ENDP_LEN];
 };
 
-/*
- * The state of options is described by an lcp_options structure.
- */
-struct LcpOptions
-{
-    bool passive; /* Don't die if we don't get a response */
-    bool silent; /* Wait for the other end to start first */
-    bool restart; /* Restart vs. exit after close */
-    bool neg_mru; /* Negotiate the MRU? */
-    bool neg_asyncmap; /* Negotiate the async map? */
-    bool neg_upap; /* Ask for UPAP authentication? */
-    bool neg_chap; /* Ask for CHAP authentication? */
-    bool neg_eap; /* Ask for EAP authentication? */
-    bool neg_magicnumber; /* Ask for magic number? */
-    bool neg_pcompression; /* HDLC Protocol Field Compression? */
-    bool neg_accompression; /* HDLC Address/Control Field Compression? */
-    bool neg_lqr; /* Negotiate use of Link Quality Reports */
-    bool neg_cbcp; /* Negotiate use of CBCP */
-    bool neg_mrru; /* negotiate multilink MRRU */
-    bool neg_ssnhf; /* negotiate short sequence numbers */
-    bool neg_endpoint; /* negotiate endpoint discriminator */
-    uint16_t mru; /* Value of MRU */
-    uint16_t mrru; /* Value of MRRU, and multilink enable */
-    ChapMdTypes chap_mdtype; /* which MD types (hashing algorithm) */
-    uint32_t asyncmap; /* Value of async map */
-    uint32_t magicnumber;
-    uint8_t numloops; /* Number of loops during magic number neg. */
-    uint32_t lqr_period; /* Reporting period for LQR 1/100ths second */
-    struct Epdisc endpoint; /* endpoint discriminator */
-};
+
 
 /*
  * Length of each type of configuration option (in octets)
@@ -148,7 +118,7 @@ void lcp_received_echo_reply(Fsm *f, int id, uint8_t *inp, int len);
 void lcp_send_echo_request(Fsm *f);
 void lcp_link_failure(Fsm *f);
 void lcp_echo_check(Fsm *f);
-void lcp_init(PppPcb *pcb);
+void lcp_init(PppPcb& pcb);
 void lcp_input(PppPcb *pcb, uint8_t *p, int len);
 void lcp_protrej(PppPcb *pcb);
 

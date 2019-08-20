@@ -1,6 +1,5 @@
 #include <bridgeif.h>
 #include <cstring>
-#include <lwip_debug.h>
 #include <sys.h>
 
 // constexpr auto BRIDGE_IF_AGE_TIMER_MS = 1000;
@@ -43,86 +42,50 @@ bridgeif_fdb_update_src(std::vector<BridgeFdbEntry>& fdb,
 }
 
 /**
- * @ingroup bridgeif_fdb
  * Walk our list of auto-learnt fdb entries and return a port to forward or BR_FLOOD if unknown
  */
-BridgeIfcPortMask bridgeif_fdb_get_dst_ports(void* fdb_ptr, struct MacAddress* dst_addr)
+BridgeIfcPortMask bridgeif_fdb_get_dst_ports(std::vector<BridgeFdbEntry>& entries, MacAddress& dst_addr)
 {
-    const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
-    for (auto i = 0; i < fdb->max_fdb_entries; i++)
+    for (auto& entry : entries)
     {
-        auto e = &fdb->fdb[i];
-        if (e->used && e->ts)
+        if(cmp_mac_address(entry.addr, dst_addr))
         {
-            if (!memcmp(&e->addr, dst_addr, sizeof(struct MacAddress)))
-            {
-                const auto ret = BridgeIfcPortMask(uint64_t(1 << e->port));
-                return ret;
-            }
+            return BridgeIfcPortMask(uint64_t(1 << entry.port));
         }
     }
+
     return BRIDGE_FLOOD;
 }
 
 
-//
-// @ingroup bridgeif_fdb
-// Aging implementation of our simple fdb
-//
-bool bridgeif_fdb_age_one_second(void* fdb_ptr)
+/**
+ * Aging implementation of our simple fdb
+ */
+bool bridgeif_fdb_age_one_second(std::vector<BridgeFdbEntry>& entries)
 {
-    const auto fdb = static_cast<BridgeIfcFdb *>(fdb_ptr);
-    const auto lev = sys_arch_protect_int();
-    for (auto i = 0; i < fdb->max_fdb_entries; i++)
+    for (auto& entry : entries)
     {
-        auto e = &fdb->fdb[i];
-        if (e->used && e->ts)
+        entry.ts--;
+        // todo: check timestamps against limits in time elapsed.
+        if (entry.ts == 0)
         {
-            if (e->used && e->ts)
-            {
-                if (--e->ts == 0)
-                {
-                    e->used = 0;
-                }
-            }
+            entry.used = false;
         }
     }
-    sys_arch_unprotect(lev);
+
     return true;
 }
 
-/** Timer callback for fdb aging, called once per second */
-void bridgeif_age_tmr(void* arg)
-{
-    const auto fdb = static_cast<BridgeIfcFdb *>(arg);
-    lwip_assert("invalid arg", arg != nullptr);
-    bridgeif_fdb_age_one_second(fdb);
-    // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, arg, "bridgeif_age_tmr");
-}
 
 /**
- * @ingroup bridgeif_fdb
- * Init our simple fdb list
+ * Timer callback for fdb aging, called once per second
  */
-// BridgeIfcFdb* bridgeif_fdb_init(const uint16_t max_fdb_entries)
-// {
-//     const auto alloc_len_sizet = sizeof(BridgeIfcFdb) + (max_fdb_entries * sizeof(
-//         BridgeIfDfDbEntry));
-//     const auto alloc_len = size_t(alloc_len_sizet);
-//     lwip_assert("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
-//     Logf(kBridgeIfcDebug,
-//          "bridgeif_fdb_init: allocating %d bytes for private FDB data\n",
-//          int(alloc_len));
-//     const auto fdb = new BridgeIfcFdb;
-//     if (fdb == nullptr)
-//     {
-//         return nullptr;
-//     }
-//     fdb->max_fdb_entries = max_fdb_entries;
-//     fdb->fdb = reinterpret_cast<BridgeIfDfDbEntry *>(fdb + 1);
-//     // sys_timeout_debug(BRIDGE_IF_AGE_TIMER_MS, bridgeif_age_tmr, fdb, "bridgeif_age_tmr");
-//     return fdb;
-// }
+bool
+bridgeif_age_tmr(std::vector<BridgeFdbEntry>& entries)
+{
+    return bridgeif_fdb_age_one_second(entries);
+}
+
 
 //
 // END OF FILE

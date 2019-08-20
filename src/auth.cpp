@@ -92,7 +92,7 @@ bool upper_layers_down(PppPcb& pcb)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-bool link_established(PppPcb& pcb, upap_state& state, const bool auth_required = false)
+bool link_established(PppPcb& pcb, upap_state& state, ChapDigestType& chap_digest_type, const bool auth_required = false)
 {
     auto wo = pcb.lcp_wantoptions;
     auto go = pcb.lcp_gotoptions;
@@ -158,12 +158,12 @@ bool link_established(PppPcb& pcb, upap_state& state, const bool auth_required =
     }
     else if (ho.neg_chap)
     {
-        chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho.chap_mdtype),);
+        if (!chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho.chap_mdtype), chap_digest_type)) {return false;}
         auth |= CHAP_WITHPEER;
     }
     else if (ho.neg_upap)
     {
-        upap_authwithpeer(pcb, pcb.settings.user, pcb.settings.passwd,);
+        if (!upap_authwithpeer(pcb, pcb.settings.user, pcb.settings.passwd, state)){ return false; }
         auth |= PAP_WITHPEER;
     }
     else
@@ -189,7 +189,7 @@ bool enter_network_phase(PppPcb& pcb)
 //
 // Start networks?
 //
-bool start_networks(PppPcb* pcb, const bool multilink)
+bool start_networks(PppPcb& pcb, const bool multilink)
 {
     new_phase(pcb, PPP_PHASE_NETWORK);
     if (multilink)

@@ -33,6 +33,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <lcp.h>
+#include <ppp.h>
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */
@@ -94,7 +95,7 @@ void mp_check_options(LcpOptions* wo, LcpOptions* ao, bool* doing_multilink)
  * Make a new bundle or join us to an existing bundle
  * if we are doing multilink.
  */
-bool mp_join_bundle(PppPcb* pcb,
+bool mp_join_bundle(PppPcb& pcb,
                     std::string& peer_authname,
                     std::string& bundle_name,
                     const bool doing_multilink,
@@ -106,7 +107,7 @@ bool mp_join_bundle(PppPcb* pcb,
 
     if (doing_multilink) {
         /* have previously joined a bundle */
-        if (!pcb->lcp_gotoptions.neg_mrru || !pcb->lcp_hisoptions.neg_mrru) {
+        if (!pcb.lcp_gotoptions.neg_mrru || !pcb.lcp_hisoptions.neg_mrru) {
             // notice("oops, didn't get multilink on renegotiation");
             lcp_close(pcb, "multilink required");
             return false;
@@ -116,13 +117,13 @@ bool mp_join_bundle(PppPcb* pcb,
         return false;
     }
 
-    if (!pcb->lcp_gotoptions.neg_mrru || !pcb->lcp_hisoptions.neg_mrru) {
+    if (!pcb.lcp_gotoptions.neg_mrru || !pcb.lcp_hisoptions.neg_mrru) {
         /* not doing multilink */
         // if (go->neg_mrru)
             // notice("oops, multilink negotiated only for receive");
-        mtu = pcb->lcp_hisoptions.neg_mru?pcb->lcp_hisoptions.mru: PPP_MRU;
-        if (mtu > pcb->lcp_gotoptions.mru)
-            mtu = pcb->lcp_allowoptions.mru;
+        mtu = pcb.lcp_hisoptions.neg_mru?pcb.lcp_hisoptions.mru: PPP_MRU;
+        if (mtu > pcb.lcp_gotoptions.mru)
+            mtu = pcb.lcp_allowoptions.mru;
         if (demand) {
             /* already have a bundle */
             // cfg_bundle(0, 0, 0, 0);
@@ -144,20 +145,20 @@ bool mp_join_bundle(PppPcb* pcb,
      * character has to be quoted.
      */
     auto bundle_id_len = 4 * peer_authname.length() + 10;
-    if (pcb->lcp_hisoptions.neg_endpoint)
-        bundle_id_len += uint64_t(3 * pcb->lcp_hisoptions.endpoint.length) + 8;
+    if (pcb.lcp_hisoptions.neg_endpoint)
+        bundle_id_len += uint64_t(3 * pcb.lcp_hisoptions.endpoint.length) + 8;
     if (!bundle_name.empty())
         bundle_id_len += 3 * bundle_name.length() + 2;
     bundle_id = new char[bundle_id_len];
     memset(bundle_id, 0, bundle_id_len);
     auto p = bundle_id;
     p += snprintf(p, bundle_id_len-1, "BUNDLE=\"%q\"", peer_authname);
-    if (pcb->lcp_hisoptions.neg_endpoint || !bundle_name.empty())
+    if (pcb.lcp_hisoptions.neg_endpoint || !bundle_name.empty())
         *p++ = '/';
-    if (pcb->lcp_hisoptions.neg_endpoint)
+    if (pcb.lcp_hisoptions.neg_endpoint)
     {
         p += snprintf(p, bundle_id+bundle_id_len-p, "%s",
-                  epdisc_to_str(&pcb->lcp_hisoptions.endpoint));
+                  epdisc_to_str(&pcb.lcp_hisoptions.endpoint));
     }
     if (!bundle_name.empty())
     {
@@ -173,7 +174,7 @@ bool mp_join_bundle(PppPcb* pcb,
      * For demand mode, we only need to configure the bundle
      * and attach the link.
      */
-    mtu = std::min(pcb->lcp_hisoptions.mrru, pcb->lcp_allowoptions.mru);
+    mtu = std::min(pcb.lcp_hisoptions.mrru, pcb.lcp_allowoptions.mru);
     if (demand)
     {
         // cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);

@@ -6,6 +6,7 @@
 #pragma once
 #include <string>
 #include "upap_state.h"
+#include "chap_new.h"
 // struct Protent;
 
 struct PppPcb;
@@ -13,7 +14,7 @@ struct PppPcb;
 bool
 auth_withpeer_fail(PppPcb& pcb, int protocol);
 
-bool start_networks(PppPcb* pcb, const bool multilink = true);
+bool start_networks(PppPcb& pcb, const bool multilink = true);
 
 static bool enter_network_phase(PppPcb& pcb);
 
@@ -27,7 +28,7 @@ bool upper_layers_down(PppPcb& pcb);
 
 bool continue_networks(PppPcb* pcb);
 
-bool link_established(PppPcb& pcb, upap_state& state, const bool auth_required);
+bool link_established(PppPcb& pcb, upap_state& state, ChapDigestType& chap_digest_type, const bool auth_required);
 
 bool
 link_terminated(PppPcb& pcb, const bool doing_multilink);
