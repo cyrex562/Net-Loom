@@ -6,10 +6,10 @@ struct NetworkInterface;
 typedef uint64_t BridgeIfcPortMask;
 
 constexpr auto BRIDGE_FLOOD = BridgeIfcPortMask(-1);
-constexpr auto kBridgeIfcMaxPorts = 7;
-constexpr auto kBridgeIfcDebug = true;
-constexpr auto kBridgeIfcFdbDebug = true;
-constexpr auto kBridgeIfcFwDebug = true;
+constexpr auto BRIDGE_IFC_MAX_PORTS = 7;
+constexpr auto BRIDGE_IFC_DEBUG = true;
+constexpr auto BRIDGE_IFC_FDB_DEBUG = true;
+constexpr auto BRIDGE_IFC_FW_DEBUG = true;
 
 struct BridgeInterface;
 
@@ -45,7 +45,7 @@ struct BridgeInterface
  */
 struct BridgeIfcInitData {
   /** MAC address of the bridge (cannot use the netif's addresses) */
-  struct MacAddress MacAddress;
+  struct MacAddress mac_address;
   /** Maximum number of ports in the bridge (ports are stored in an array, this
       influences memory allocated for netif->state of the bridge netif). */
   uint8_t            max_ports;
@@ -66,8 +66,8 @@ struct BridgeIfcInitData {
  * (each byte of MacAddress must be passed)
  */
 //#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
-
-LwipStatus bridgeif_init(NetworkInterface*netif);
+bool
+bridgeif_init(NetworkInterface& ifc, BridgeIfcInitData& init_data);
 LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
 
 
@@ -87,7 +87,8 @@ BridgeIfcPortMask bridgeif_fdb_get_dst_ports(BridgeInterface& fdb_ptr, MacAddres
 
 // BridgeIfcFdb* bridgeif_fdb_init(uint16_t max_fdb_entries);
 
-static LwipStatus bridgeif_tcpip_input(struct PacketBuffer* p, NetworkInterface* netif);
+static bool
+bridgeif_tcpip_input(PacketBuffer& pkt, NetworkInterface& ifc);
 
 //
 // END OF FILE

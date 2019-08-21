@@ -398,6 +398,6 @@ LwipStatus
 tcpip_rfc7668_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
   /* send data to upper layer, return the result */
-  return tcpip_inpkt(p, inp, rfc7668_input);
+  return tcpip_inpkt(p, inp);
 }
 

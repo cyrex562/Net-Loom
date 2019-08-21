@@ -410,7 +410,7 @@ lowpan6_frag(NetworkInterface*netif, struct PacketBuffer *p, const struct Lowpan
     pbuf_take_at(p_frag, (uint8_t*)&crc, p_frag->len - 2);
 
     /* send the packet */
-  
+
 
     Logf(true, "lowpan6_send: sending packet %p\n", (uint8_t *)p);
     err = netif->linkoutput(netif, p_frag);
@@ -442,7 +442,7 @@ lowpan6_frag(NetworkInterface*netif, struct PacketBuffer *p, const struct Lowpan
       pbuf_take_at(p_frag, (uint8_t*)&crc, p_frag->len - 2);
 
       /* send the packet */
-   
+
       Logf(true, "lowpan6_send: sending packet %p\n", (uint8_t *)p);
       err = netif->linkoutput(netif, p_frag);
     }
@@ -511,7 +511,7 @@ lowpan6_hwaddr_to_addr(NetworkInterface*netif, struct Lowpan6LinkAddr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
-    // 
+    //
     if (sizeof(netif->hwaddr) < 8)
     {
         printf("netif hwaddr must be greater than 8\n");
@@ -873,6 +873,6 @@ lowpan6_set_pan_id(uint16_t pan_id)
 LwipStatus
 tcpip_6lowpan_input(struct PacketBuffer *p, NetworkInterface*inp)
 {
-  return tcpip_inpkt(p, inp, lowpan6_input);
+  return tcpip_inpkt(p, inp);
 }
 

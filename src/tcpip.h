@@ -31,7 +31,9 @@ struct tcpip_callback_msg;
 
 void   tcpip_init(TcpipInitDoneFn tcpip_init_done, void* arg);
 
-LwipStatus  tcpip_inpkt(struct PacketBuffer *p, NetworkInterface*inp, NetifInputFn input_fn);
+
+bool
+tcpip_inpkt(PacketBuffer& pkt, NetworkInterface& ifc);
 LwipStatus  tcpip_input(struct PacketBuffer *p, NetworkInterface*inp);
 
 LwipStatus  tcpip_try_callback(TcpipCallbackFn function, void* ctx);
