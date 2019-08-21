@@ -14,6 +14,10 @@
 #include <network_interface.h>
 #include <upap_state.h>
 #include <vj.h>
+#include <lcp_options.h>
+#include <ccp_options.h>
+#include <mppe_def.h>
+
 
 /**
  * Protocol field values.
@@ -314,13 +318,13 @@ inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
 
 
 inline std::tuple<bool, long>
-GETLONG(long l, std::vector<uint8_t>& cp, size_t& index)
+GETLONG(std::vector<uint8_t>& cp, size_t& index)
 {
     if (index > cp.size())
     {
         return std::make_tuple(false, 0);
     }
-    l = cp[index++] << 8;
+    long l = cp[index++] << 8;
     l |= cp[index++];
     l <<= 8;
     l |= cp[index++];

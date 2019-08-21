@@ -158,7 +158,7 @@ bool link_established(PppPcb& pcb, upap_state& state, ChapDigestType& chap_diges
     }
     else if (ho.neg_chap)
     {
-        if (!chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho.chap_mdtype), chap_digest_type)) {return false;}
+        if (!chap_auth_with_peer(pcb, pcb.settings.user, CHAP_DIGEST(ho.chap_mdtype))) {return false;}
         auth |= CHAP_WITHPEER;
     }
     else if (ho.neg_upap)

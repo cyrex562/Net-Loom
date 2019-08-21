@@ -143,44 +143,44 @@ chap_candigest(ChapMdTypes mdtype, ChapDigestCodes digest)
 /*
  * The code for each digest type has to supply one of these.
  */
-struct ChapDigestType
-{
-     ChapDigestCodes code; /*
-     * Note: challenge and response arguments below are formatted as
-     * a length byte followed by the actual challenge/response data.
-     */
-    void
-    (*generate_challenge)(PppPcb* pcb, unsigned char* challenge);
-
-
-    int
-    (*verify_response)(PppPcb* pcb,
-                       int id,
-                       std::string& name,
-                       std::string& secret,
-                       const unsigned char* challenge,
-                       const unsigned char* response,
-                       std::string& message,
-                       int message_space);
-
-
-    void
-    (*make_response)(PppPcb* pcb,
-                     unsigned char* response,
-                     int id,
-                     std::string& our_name,
-                     const unsigned char* challenge,
-                     std::string& secret,
-                     unsigned char* priv);
-
-
-    int
-    (*check_success)(PppPcb* pcb, unsigned char* pkt, int len, unsigned char* priv);
-
-
-    void
-    (*handle_failure)(PppPcb* pcb, unsigned char* pkt, int len);
-};
+// struct ChapDigestType
+// {
+//      ChapDigestCodes code; /*
+//      * Note: challenge and response arguments below are formatted as
+//      * a length byte followed by the actual challenge/response data.
+//      */
+//     void
+//     (*generate_challenge)(PppPcb* pcb, unsigned char* challenge);
+//
+//
+//     int
+//     (*verify_response)(PppPcb* pcb,
+//                        int id,
+//                        std::string& name,
+//                        std::string& secret,
+//                        const unsigned char* challenge,
+//                        const unsigned char* response,
+//                        std::string& message,
+//                        int message_space);
+//
+//
+//     void
+//     (*make_response)(PppPcb* pcb,
+//                      unsigned char* response,
+//                      int id,
+//                      std::string& our_name,
+//                      const unsigned char* challenge,
+//                      std::string& secret,
+//                      unsigned char* priv);
+//
+//
+//     int
+//     (*check_success)(PppPcb* pcb, unsigned char* pkt, int len, unsigned char* priv);
+//
+//
+//     void
+//     (*handle_failure)(PppPcb* pcb, unsigned char* pkt, int len);
+// };
 
 
 struct ChapStateFlags
@@ -189,7 +189,20 @@ struct ChapStateFlags
     bool auth_started;
     bool auth_failed;
     bool timeout_pending;
+    bool challenge_valid;
+    bool auth_done;
 };
+
+
+inline void clear_chap_state_flags(ChapStateFlags& flags)
+{
+    flags.lower_up = false;
+    flags.auth_started = false;
+    flags.auth_failed = false;
+    flags.timeout_pending = false;
+    flags.challenge_valid = false;
+    flags.auth_done = false;
+}
 
 
 /*
@@ -199,9 +212,9 @@ struct ChapClientState
 {
     ChapStateFlags flags;
     std::string name;
-    ChapDigestType digest;
+    // ChapDigestType digest;
     std::vector<uint8_t> priv; /* private area for digest's use */
-    
+
 };
 
 
@@ -210,7 +223,7 @@ typedef struct ChapServerState
     ChapStateFlags flags;
     uint8_t id;
     std::string name;
-    const ChapDigestType digest;
+    // ChapDigestType digest;
     size_t challenge_xmits;
     size_t challenge_pktlen;
     std::vector<uint8_t> challenge;
@@ -222,7 +235,7 @@ extern void chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code);
 
 
 /* Called by auth. code to start authenticating us to the peer. */
-bool chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDigestType& chap_digest_type);
+bool chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
 extern const struct Protent kChapProtent;
@@ -232,9 +245,11 @@ static void chap_init(PppPcb* pcb);
 static bool
 chap_lowerup(PppPcb& pcb);
 
-static void chap_lowerdown(PppPcb* pcb);
+static bool
+chap_lower_down(PppPcb& pcb);
 
-static void chap_timeout(PppPcb& pcb);
+static bool
+chap_timeout(PppPcb& pcb);
 
 static void chap_generate_challenge(PppPcb& pcb);
 

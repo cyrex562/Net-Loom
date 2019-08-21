@@ -105,15 +105,17 @@ chap_lowerup(PppPcb& pcb)
     return true;
 }
 
-static void
-chap_lowerdown(PppPcb* pcb)
+
+bool
+chap_lower_down(PppPcb& pcb)
 {
-    pcb->chap_client.flags = 0;
-    if (pcb->chap_server.flags & kTimeoutPending)
+    clear_chap_state_flags(pcb.chap_client.flags);
+    if (pcb.chap_server.flags.timeout_pending)
     {
-        Untimeout(chap_timeout, pcb);
+        chap_timeout(pcb);
     }
-    pcb->chap_server.flags = 0;
+    clear_chap_state_flags(pcb.chap_server.flags);
+    return true;
 }
 
 
@@ -127,7 +129,7 @@ chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code)
 {
     const struct ChapDigestType* dp;
 
-    if (pcb.chap_server.flags & kAuthStarted)
+    if (pcb.chap_server.flags.auth_started)
     {
         ppp_error("CHAP: peer authentication already started!");
         return;
@@ -140,12 +142,13 @@ chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code)
         ppp_fatal("CHAP digest 0x%x requested but not available",
                   digest_code);
     }
-    pcb.chap_server.digest = dp;
+    // todo: handle with pub/sub
+    // pcb.chap_server.digest = dp;
     pcb.chap_server.name = our_name;
     /* Start with a random ID value */
     pcb.chap_server.id = magic();
-    pcb.chap_server.flags |= kAuthStarted;
-    if (pcb.chap_server.flags & kLowerup)
+    pcb.chap_server.flags.auth_started = true;
+    if (pcb.chap_server.flags.lower_up)
     {
         chap_timeout(pcb);
     }
@@ -157,12 +160,12 @@ chap_auth_peer(PppPcb& pcb, std::string& our_name, int digest_code)
  * receive a challenge.
  */
 bool
-chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDigestType& chap_digest_type)
+chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code)
 {
     // const struct ChapDigestType dp;
     int i;
 
-    if (pcb.chap_client.flags & kAuthStarted)
+    if (pcb.chap_client.flags.auth_started)
     {
         spdlog::error("CHAP: authentication with peer already started!");
         return false;
@@ -178,9 +181,9 @@ chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDig
     //     ppp_fatal("CHAP digest 0x%x requested but not available",
     //               digest_code);
     // }
-    pcb.chap_client.digest = chap_digest_type;
+    // pcb.chap_client.digest = chap_digest_type;
     pcb.chap_client.name = our_name;
-    pcb.chap_client.flags |= kAuthStarted;
+    pcb.chap_client.flags.auth_started = true;
 
     return true;
 }
@@ -190,31 +193,37 @@ chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code, ChapDig
  * This could be either a retransmission of a previous challenge,
  * or a new challenge to start re-authentication.
  */
-static void
+bool
 chap_timeout(PppPcb& pcb)
 {
-    pcb.chap_server.flags &= ~kTimeoutPending;
-    if ((pcb.chap_server.flags & kChallengeValid) == 0)
+    pcb.chap_server.flags.timeout_pending = false;
+    if ((pcb.chap_server.flags.challenge_valid == false))
     {
         pcb.chap_server.challenge_xmits = 0;
         chap_generate_challenge(pcb);
-        pcb.chap_server.flags |= kChallengeValid;
+        pcb.chap_server.flags.challenge_valid = true;
     }
     else if (pcb.chap_server.challenge_xmits >= pcb.settings.chap_max_transmits)
     {
-        pcb.chap_server.flags &= ~kChallengeValid;
-        pcb.chap_server.flags |= kAuthDone | kAuthFailed;
+        pcb.chap_server.flags.challenge_valid = false;
+        pcb.chap_server.flags.auth_done = true;
+        pcb.chap_server.flags.auth_failed = true;
         auth_peer_fail(pcb, PPP_CHAP);
-        return;
+        return false;
     }
 
     PacketBuffer p{};
 
-    memcpy(p->payload, pcb.chap_server.challenge, pcb.chap_server.challenge_pktlen);
+    memcpy(p.data.data(), pcb.chap_server.challenge.data.data(), pcb.chap_server.challenge_pktlen);
+
     ppp_write(pcb, p);
     ++pcb.chap_server.challenge_xmits;
-    pcb.chap_server.flags |= kTimeoutPending;
-    Timeout(chap_timeout, pcb, pcb.settings.chap_timeout_time);
+    pcb.chap_server.flags.timeout_pending = true;
+
+    // todo: figure out way to call with re-schedule
+    // Timeout(chap_timeout, pcb, pcb.settings.chap_timeout_time);
+
+    return true;
 }
 
 //
