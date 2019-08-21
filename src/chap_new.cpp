@@ -227,20 +227,21 @@ chap_timeout(PppPcb& pcb)
 }
 
 //
-// chap_generate_challenge - generate a challenge string and format
+// generate a challenge string and format
 // the challenge packet in pcb->chap_server.challenge_pkt.
 //
-static void
+void
 chap_generate_challenge(PppPcb& pcb)
 {
     auto p = pcb.chap_server.challenge;
     MAKEHEADER(p, PPP_CHAP);
-    p += CHAP_HDR_LEN;
+    auto p_ptr = p.data();
+    p_ptr += CHAP_HDR_LEN;
     // todo: generate challenge based on digest type
     //pcb.chap_server.digest->generate_challenge(pcb, p);
-    const auto clen = *p;
+    const auto clen = *p_ptr;
     const auto nlen = pcb.chap_server.name.length();
-    memcpy(p + 1 + clen, pcb.chap_server.name.c_str(), nlen);
+    memcpy(p_ptr + 1 + clen, pcb.chap_server.name.c_str(), nlen);
     const auto len = CHAP_HDR_LEN + 1 + clen + nlen;
     pcb.chap_server.challenge_pktlen = PPP_HDRLEN + len;
 

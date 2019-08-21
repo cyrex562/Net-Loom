@@ -389,6 +389,10 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 
 inline void MAKEHEADER(std::vector<uint8_t>& p, PppProtoFieldValue t)
 {
+    auto put_size = 1 + 1 + 2;
+    if (p.size() < put_size) {
+        p.resize(p.size() + put_size);
+    }
     PUTCHAR(PPP_ALLSTATIONS, p); \
     PUTCHAR(PPP_UI, p); \
     PUTSHORT(t, p);
