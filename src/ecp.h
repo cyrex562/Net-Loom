@@ -44,7 +44,7 @@ struct EcpOptions
  * Protocol entry points from main code.
  */
 void ecp_init (PppPcb* unit);
-bool ecp_open(PppPcb* ppp_pcb, int unit);
+bool ecp_open(PppPcb& ppp_pcb, int unit);
 void ecp_close (int unit, char *);
 void ecp_lowerup (int unit);
 void ecp_lowerdown (int);

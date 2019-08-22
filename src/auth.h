@@ -18,15 +18,16 @@ bool start_networks(PppPcb& pcb, const bool multilink = true);
 
 static bool enter_network_phase(PppPcb& pcb);
 
-static void check_idle(void* arg);
+bool
+check_idle(PppPcb& pcb);
 
-static void connect_time_expired(void* arg); // static void check_maxoctets(void*);
+bool connect_time_expired(PppPcb& pcb); // static void check_maxoctets(void*);
 
 bool link_required(PppPcb* pcb);
 
 bool upper_layers_down(PppPcb& pcb);
 
-bool continue_networks(PppPcb* pcb);
+bool continue_networks(PppPcb& pcb);
 
 bool link_established(PppPcb& pcb, UpapState& state, const bool auth_required);
 
@@ -49,11 +50,13 @@ auth_peer_success(PppPcb& pcb,
                   int prot_flavor,
                   std::string& name);
 
-void np_up(PppPcb* pcb, int proto);
+bool
+np_up(PppPcb& pcb, int proto);
 
-void np_down(PppPcb* pcb, int proto);
+bool
+np_down(PppPcb& pcb, int proto);
 
-void np_finished(PppPcb* pcb, int proto);
+void np_finished(PppPcb& pcb, int proto);
 
 bool
 get_secret(PppPcb& pcb, std::string& client, std::string& server, std::string& secret);

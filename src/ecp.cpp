@@ -101,7 +101,7 @@ void ecp_init(PppPcb* unit)
     // fsm_init(f);
 }
 
-bool ecp_open(PppPcb* ppp_pcb, int unit)
+bool ecp_open(PppPcb& ppp_pcb, int unit)
 {
     return false;
 }

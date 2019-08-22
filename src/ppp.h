@@ -422,10 +422,11 @@ auth_withpeer_fail(PppPcb& pcb, int protocol);
 bool
 auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor);
                 /* we successfully authenticated ourselves */
-
-void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
-void np_down(PppPcb *pcb, int proto);  /* a network protocol has gone down */
-void np_finished(PppPcb *pcb, int proto); /* a network protocol no longer needs link */
+bool
+np_up(PppPcb& pcb, int proto);    /* a network protocol has come up */
+bool
+np_down(PppPcb& pcb, int proto);  /* a network protocol has gone down */
+void np_finished(PppPcb& pcb, int proto); /* a network protocol no longer needs link */
 bool
 get_secret(PppPcb& pcb, std::string& client, std::string& server, std::string& secret);
                 /* get "secret" for chap */
