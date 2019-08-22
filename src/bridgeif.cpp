@@ -169,7 +169,7 @@ bool
 bridgeif_output(NetworkInterface& netif, PacketBuffer& pkt_buf, BridgeInterface& bridge_ifc)
 {
     // const auto br = static_cast<BridgeInterface *>(netif.state);
-    const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
+    const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.bytes.data());
     const auto dstports = bridgeif_find_dst_ports(bridge_ifc, eth_hdr->dest);
     const auto err = bridgeif_send_to_ports(bridge_ifc, pkt_buf, dstports);
     if (eth_hdr->dest.bytes[0] & 1)
@@ -198,7 +198,7 @@ bridgeif_input(PacketBuffer& pkt_buf,
 
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
     pkt_buf.input_netif_idx = rx_idx;
-    auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.data.data());
+    auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.bytes.data());
     MacAddress src = eth_hdr->src;
 
     if ((src.bytes[0] & 1) == 0)
@@ -305,64 +305,68 @@ bridgeif_init(NetworkInterface& ifc, BridgeIfcInitData& init_data)
     // br.fdbs = reinterpret_cast<BridgeFdbEntry *>(reinterpret_cast<uint8_t *>(br + 1) + (init_data.
     //     max_ports * sizeof(BridgeIfcPort)));
     // init_data = static_cast<BridgeIfcInitData *>(ifc.state);
-    lwip_assert("init_data != NULL", (init_data != nullptr));
+    // lwip_assert("init_data != NULL", (init_data != nullptr));
     lwip_assert("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
                 init_data.max_ports <= BRIDGE_IFC_MAX_PORTS);
-    alloc_len_sizet = sizeof(BridgeInterface) + (init_data.max_ports * sizeof(
-        BridgeIfcPort) + (init_data.max_fdb_static_entries * sizeof(
-        BridgeFdbEntry)));
-    br = new BridgeInterface;
-    if (br == nullptr)
-    {
-        Logf(true, ("bridgeif_init: out of memory\n"));
-        return ERR_MEM;
-    }
+    // alloc_len_sizet = sizeof(BridgeInterface) + (init_data.max_ports * sizeof(
+    //     BridgeIfcPort) + (init_data.max_fdb_static_entries * sizeof(
+    //     BridgeFdbEntry)));
+
     memcpy(&br.mac_address, &init_data.mac_address, sizeof(br.mac_address));
     br.netif = ifc;
-    br.max_ports = init_data.max_ports;
-    br.ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
-    br.max_fdbs_entries = init_data.max_fdb_static_entries;
-    br.fdbs = reinterpret_cast<BridgeFdbEntry *>(reinterpret_cast<uint8_t *>(br
-        + 1) + (init_data.max_ports * sizeof(BridgeIfcPort)));
-    br.max_fdbd_entries = init_data.max_fdb_dynamic_entries;
-    br.fdbd = bridgeif_fdb_init(init_data.max_fdb_dynamic_entries);
-    if (br.fdbd == nullptr)
-    {
-        Logf(true, ("bridgeif_init: out of memory in fdb_init\n"));
-        delete br;
-        return ERR_MEM;
-    } /* Initialize interface hostname */
+    // br.max_ports = init_data.max_ports;
+    // br.ports = reinterpret_cast<BridgeIfcPort *>(br + 1);
+    // br.max_fdbs_entries = init_data.max_fdb_static_entries;
+    // br.fdbs = reinterpret_cast<BridgeFdbEntry *>(reinterpret_cast<uint8_t *>(br
+    //     + 1) + (init_data.max_ports * sizeof(BridgeIfcPort)));
+    // br.max_fdbd_entries = init_data.max_fdb_dynamic_entries;
+    // br.fdbd = bridgeif_fdb_init(init_data.max_fdb_dynamic_entries);
+    // if (br.fdbd == nullptr)
+    // {
+    //     Logf(true, ("bridgeif_init: out of memory in fdb_init\n"));
+    //     delete br;
+    //     return ERR_MEM;
+    // }
+
+    /* Initialize interface hostname */
     ifc.hostname = "lwip"; /*
      * Initialize the snmp variables and counters inside the NetworkInterface*.
      * The last argument should be replaced with your link speed, in units
      * of bits per second.
      */ // MIB2_INIT_NETIF(netif, snmp_ifType_ethernet_csmacd, 0);
-    ifc.state = br;
-    ifc.name[0] = BRIDGE_IFC_NAME[0];
-    ifc.name[1] = BRIDGE_IFC_NAME[1];
+    // ifc.state = br;
+    // ifc.name[0] = BRIDGE_IFC_NAME[0];
+    // ifc.name[1] = BRIDGE_IFC_NAME[1];
+    ifc.name = "br";
     /* We directly use etharp_output() here to save a function call.
         * You can instead declare your own function an call etharp_output()
         * from it if you have to do some checks before sending (e.g. if link
         * is available...) */
-    ifc.output = etharp_output;
-    ifc.output_ip6 = ethip6_output;
-    ifc.linkoutput = bridgeif_output; /* set MAC hardware address length */
-    ifc.hwaddr_len = ETH_ADDR_LEN; /* set MAC hardware address */
-    memcpy(ifc.hwaddr, &br.mac_address, ETH_ADDR_LEN); /* maximum transfer unit */
+    // ifc.output = etharp_output;
+    // ifc.output_ip6 = ethip6_output;
+    // ifc.linkoutput = bridgeif_output; /* set MAC hardware address length */
+    // ifc.hwaddr_len = ETH_ADDR_LEN; /* set MAC hardware address */
+    // memcpy(ifc.hwaddr, &br.mac_address, ETH_ADDR_LEN); /* maximum transfer unit */
+    ifc.mac_address = br.mac_address;
     ifc.mtu = 1500; /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
-    ifc.flags = NETIF_FLAG_BCAST | NETIF_FLAG_ETH_ARP | NETIF_FLAG_ETH |
-        NETIF_FLAG_IGMP | NETIF_FLAG_MLD6 | NETIF_FLAG_LINK_UP; /*
-     * For hardware/netifs that implement MAC filtering.
+    ifc.flags.broadcast = true;
+    ifc.flags.eth_arp = true;
+    ifc.flags.ethernet = true;
+    ifc.flags.igmp = true;
+    ifc.flags.mld6 = true;
+    ifc.flags.link_up = true;
+
+    /* For hardware/netifs that implement MAC filtering.
      * All-nodes link-local is handled by default, so we must let the hardware know
      * to allow multicast packets in.
      * Should set mld_mac_filter previously. */
-    if (ifc.mld_mac_filter != nullptr)
-    {
-        Ip6Addr ip6_allnodes_ll{};
-        set_ip6_addr_all_nodes_link_local(&ip6_allnodes_ll);
-        ifc.mld_mac_filter(ifc, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
-    }
+    // if (ifc.mld_mac_filter != nullptr)
+    // {
+    //     Ip6Addr ip6_allnodes_ll{};
+    //     set_ip6_addr_all_nodes_link_local(&ip6_allnodes_ll);
+    //     ifc.mld_mac_filter(ifc, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
+    // }
     return STATUS_SUCCESS;
 }
 
@@ -370,32 +374,36 @@ bridgeif_init(NetworkInterface& ifc, BridgeIfcInitData& init_data)
  * @ingroup bridgeif
  * Add a port to the bridge
  */
-LwipStatus bridgeif_add_port(NetworkInterface* bridgeif, NetworkInterface* portif)
+bool
+bridgeif_add_port(NetworkInterface& bridge_netif,
+                  NetworkInterface& port_ifc,
+                  BridgeInterface& bridge_if)
 {
-    lwip_assert("bridgeif != NULL", bridgeif != nullptr);
-    lwip_assert("bridgeif->state != NULL", bridgeif->state != nullptr);
-    lwip_assert("portif != NULL", portif != nullptr);
-    if (!(portif->flags & NETIF_FLAG_ETH_ARP) || !(portif->flags & NETIF_FLAG_ETH))
+    if (!(port_ifc.flags.eth_arp) || !(port_ifc.flags.ethernet))
     {
         /* can only add ETHERNET/ETHARP interfaces */
         return ERR_VAL;
     }
-    const auto br = static_cast<BridgeInterface *>(bridgeif->state);
-    if (br->num_ports >= br->max_ports)
-    {
-        return ERR_VAL;
-    }
-    const auto port = &br->ports[br->num_ports];
-    port->port_netif = portif;
-    port->port_num = br->num_ports;
-    port->bridge = br;
-    br->num_ports++; /* let the port call us on input */
-    portif->input = bridgeif_input; /* store pointer to bridge in netif */
-    netif_set_client_data(portif, bridgeif_netif_client_id, port);
+
+    // const auto bridge_if = static_cast<BridgeInterface *>(bridge_netif.state);
+    // if (bridge_if.num_ports >= bridge_if.max_ports)
+    // {
+    //     return ERR_VAL;
+    // }
+
+    BridgeIfcPort port {};
+    port.port_netif = port_ifc;
+    port.port_num = 0;
+    bridge_if.ports.push_back(port);
+
+    // port_ifc.input = bridgeif_input; /* store pointer to bridge in netif */
+    // netif_set_client_data(port_ifc, bridgeif_netif_client_id, port);
     /* remove ETHARP flag to prevent sending report events on netif-up */
-    netif_clear_flags(portif, NETIF_FLAG_ETH_ARP);
+    // netif_clear_flags(port_ifc, NETIF_FLAG_ETH_ARP);
+    port_ifc.flags.eth_arp = false;
     return STATUS_SUCCESS;
 }
+
 
 //
 // END OF FILE

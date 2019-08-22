@@ -43,9 +43,9 @@ static LwipStatus dhcp_inc_pcb_refcount()
 }
 
 
-/// 
+///
 /// Free DHCP PCB if the last netif stops using it
-/// 
+///
 static void dhcp_dec_pcb_refcount(void)
 {
     // lwip_assert("dhcp_pcb_refcount(): refcount error", (dhcp_pcb_refcount > 0));
@@ -132,7 +132,7 @@ static void dhcp_handle_offer(NetworkInterface * netif, DhcpMsg * msg_in, DhcpCo
          static_cast<void*>(netif),
          netif->name[0],
          netif->name[1],
-         uint16_t(netif->if_num)); /* obtain the server address */
+         uint16_t(netif->number)); /* obtain the server address */
     if (dhcp_option_given(dhcp_ctx->dhcp_options, DHCP_OPTION_IDX_SERVER_ID)) {
         dhcp->request_timeout = 0; /* stop timer */
         set_ip_addr_ip4_u32(&dhcp->server_ip_addr,
@@ -170,7 +170,7 @@ static LwipStatus dhcp_select(NetworkInterface * netif)
          netif,
          netif->name[0],
          netif->name[1],
-         uint16_t(netif->if_num));
+         uint16_t(netif->number));
     dhcp_set_state(dhcp, DHCP_STATE_REQUESTING);
     /* create and initialize the DHCP message header */
     struct PacketBuffer* p_out = dhcp_create_msg(netif,
@@ -542,7 +542,7 @@ void dhcp_cleanup(NetworkInterface * netif)
 /// was already present, it restarts negotiation.
 ///
 /// netif: The lwIP network interface
-/// 
+///
 /// returns: lwIP error code
 /// * ERR_OK: No error
 /// * ERR_MEM: Out of memory
@@ -551,7 +551,7 @@ LwipStatus
 dhcp_start(NetworkInterface * netif)
 {
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    Logf(true, "dhcp_start(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->if_num);
+    Logf(true, "dhcp_start(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->number);
 
     /* check MTU of the netif */
     if (netif->mtu < kDhcpMaxMsgLenMinRequired) {
@@ -706,8 +706,8 @@ dhcp_network_changed(NetworkInterface * netif)
  * @param netif the network interface on which the reply was received
  * @param addr The IP address we received a reply from
  */
-void
-dhcp_arp_reply(NetworkInterface * netif, const Ip4Addr * addr)
+bool
+dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr)
 {
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
     Logf(true, "dhcp_arp_reply()\n");
@@ -846,7 +846,7 @@ dhcp_bind(NetworkInterface * netif)
 
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
 
-    Logf(true, "dhcp_bind(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->if_num);
+    Logf(true, "dhcp_bind(netif=%p) %c%c%d\n", (void*)netif, netif->name[0], netif->name[1], (uint16_t)netif->number);
 
     /* reset time used of lease */
     dhcp->lease_used = 0;

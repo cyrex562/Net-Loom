@@ -253,21 +253,20 @@ chap_timeout(PppPcb& pcb);
 
 static void chap_generate_challenge(PppPcb& pcb);
 
-static void chap_handle_response(PppPcb* pcb,
+static void chap_handle_response(PppPcb& pcb,
                                  int code,
-                                 unsigned char* pkt,
-                                 size_t len,
-                                 Protent** protocols);
+                                 std::vector<uint8_t>& pkt);
 
-int chap_verify_response(PppPcb* pcb,
-                         std::string& name,
-                         std::string& ourname,
-                         int id,
-                         const struct ChapDigestType* digest,
-                         const unsigned char* challenge,
-                         const unsigned char* response,
-                         char* message,
-                         int message_space);
+
+bool
+chap_verify_response(PppPcb& pcb,
+                     std::string& name,
+                     std::string& ourname,
+                     int id,
+                     std::vector<uint8_t>& challenge,
+                     std::vector<uint8_t>& response,
+                     std::string& message,
+                     int message_space);
 
 static void chap_respond(PppPcb* pcb,
                          int id,

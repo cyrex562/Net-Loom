@@ -56,7 +56,7 @@ bool pbuf_copy_partial(const PacketBuffer& pbuf,
                        const size_t len,
                        const size_t offset)
 {
-    const auto buf_begin = pbuf.data.begin() + offset;
+    const auto buf_begin = pbuf.bytes.begin() + offset;
     const auto buf_end = buf_begin + len;
     data = std::vector<uint8_t>(buf_begin, buf_end);
     return true;
@@ -80,7 +80,7 @@ pbuf_take_at(PacketBuffer& buf,
              size_t offset)
 {
 
-    if (offset > buf.data.size()) {
+    if (offset > buf.bytes.size()) {
         return STATUS_E_INVALID_PARAM;
     }
 
@@ -88,9 +88,9 @@ pbuf_take_at(PacketBuffer& buf,
     
     for (auto& it : dataptr) {
         if (i >= offset) {
-            buf.data.push_back(it);
+            buf.bytes.push_back(it);
         } else {
-            buf.data[i] = it;
+            buf.bytes[i] = it;
         }
         i++;
     }
@@ -136,7 +136,7 @@ pbuf_clone(
 uint8_t
 get_pbuf_byte_at(const PacketBuffer& p, size_t offset)
 {
-    return p.data[offset];
+    return p.bytes[offset];
 } 
 
 
@@ -152,14 +152,14 @@ get_pbuf_byte_at(const PacketBuffer& p, size_t offset)
 LwipStatus
 pbuf_put_at(PacketBuffer& p, size_t offset, uint8_t data)
 {
-    if (offset > p.data.size() - 1) {
+    if (offset > p.bytes.size() - 1) {
         return STATUS_E_INVALID_PARAM;
     }
-    else if (offset == p.data.size() - 1) {
-        p.data.push_back(data);
+    else if (offset == p.bytes.size() - 1) {
+        p.bytes.push_back(data);
     }
     else {
-        p.data[offset] = data;
+        p.bytes[offset] = data;
     }
 
     return STATUS_SUCCESS;

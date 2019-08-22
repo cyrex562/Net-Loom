@@ -218,7 +218,7 @@ forward_ip6_packet(PacketBuffer& pkt_buf,
         return STATUS_E_ROUTING;
     }
 
-    if (dest_netif.mtu && (pkt_buf.data.size() > dest_netif.mtu)) {
+    if (dest_netif.mtu && (pkt_buf.bytes.size() > dest_netif.mtu)) {
         /* Don't send ICMP messages in response to ICMP messages */
         if (get_ip6_hdr_next_hop(iphdr) != IP6_NEXTH_ICMP6) {
             icmp6_packet_too_big(pkt_buf, dest_netif.mtu);
@@ -277,9 +277,9 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
 
     Ip6Hdr ip6_hdr{};
     uint32_t v_tc_fl = 0;
-    if (u8_vector_to_u32(pkt_buf.data), 0) == STATUS_ERROR) {
+    if (u8_vector_to_u32(pkt_buf.bytes), 0) == STATUS_ERROR) {
     }
-    ip6_hdr = ((pkt_buf.data[0] >> 24) & 0xff) | ((pkt_buf.data[1] >> 16) & 0xff) | ((pkt_buf.data[2] >> 8) & 0xff) | (pkt_buf.data[3] & 0xff);
+    ip6_hdr = ((pkt_buf.bytes[0] >> 24) & 0xff) | ((pkt_buf.bytes[1] >> 16) & 0xff) | ((pkt_buf.bytes[2] >> 8) & 0xff) | (pkt_buf.bytes[3] & 0xff);
 
     Ip6Hdr* ip6_hdr = reinterpret_cast<Ip6Hdr *>(pkt_buf->payload);
 

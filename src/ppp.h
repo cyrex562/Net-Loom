@@ -276,7 +276,7 @@ int get_idle_time(PppPcb *pcb, struct ppp_idle *ip);
 const char * protocol_name(int proto);
 
 
-inline std::tuple<bool,uint8_t> GETCHAR(std::vector<uint8_t>& cp, size_t& index)
+inline std::tuple<bool,uint8_t> GETCHAR(std::vector<uint8_t>& cp, size_t index)
 {
     if (index > cp.size()) {
         return std::make_tuple(false, 0);
@@ -427,7 +427,7 @@ void np_up(PppPcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(PppPcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(PppPcb *pcb, int proto); /* a network protocol no longer needs link */
 bool
-get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret);
+get_secret(PppPcb& pcb, std::string& client, std::string& server, std::string& secret);
                 /* get "secret" for chap */
 
 
@@ -685,7 +685,7 @@ struct PppPcb
     uint16_t auth_pending{};
     /* Records which authentication operations haven't completed yet. */
     uint16_t auth_done{}; /* Records which authentication operations have been completed. */
-    upap_state upap; /* PAP data */
+    UpapState upap; /* PAP data */
     ChapClientState chap_client; /* CHAP client data */
     chap_server_state chap_server; /* CHAP server data */
     EapState eap; /* EAP data */

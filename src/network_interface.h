@@ -16,6 +16,8 @@
 #include "auto_ip_state.h"
 #include "mld6_group.h"
 #include "pcap_if_private.h"
+
+
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
 constexpr auto NETIF_CHECKSUM_GEN_TCP = 0x0004;
@@ -90,7 +92,7 @@ enum NetifMacFilterAction {
       NETIF_DEL_MAC_FILTER = 0,
   /** Add a filter entry */
       NETIF_ADD_MAC_FILTER = 1
-}; 
+};
 
 
 using NetIfcAddrIdx = uint16_t;
@@ -101,11 +103,24 @@ struct NetIfcHint
     NetIfcAddrIdx addr_hint;
 };
 
+struct NetworkInterfaceFlags
+{
+    bool up;
+    bool broadcast;
+    bool link_up;
+    bool eth_arp;
+    bool ethernet;
+    bool igmp;
+    bool mld6;
+    bool ip6_autoconfig_enabled;
+    bool default_interface;
+    bool passive;
+};
 
-/** 
+/**
  * Generic data structure used for all lwIP network interfaces.
  * The following fields should be filled in by the initialization
- * function for the device driver: hwaddr_len, hwaddr[], mtu, flags 
+ * function for the device driver: hwaddr_len, hwaddr[], mtu, flags
  */
 struct NetworkInterface
 {
@@ -124,18 +139,10 @@ struct NetworkInterface
     uint16_t mtu; /** maximum transfer unit (in bytes) */
     uint16_t mtu6; /** maximum transfer unit (in bytes), updated by RA */
     MacAddress mac_address;
-    bool up;
-    bool broadcast;
-    bool link_up;
-    bool eth_arp;
-    bool ethernet;
-    bool igmp_allowed;
-    bool mld6;
-    bool ip6_autoconfig_enabled;
-    bool default_interface;
-    bool passive;
-    std::string if_name;
-    uint32_t if_num; /** Number of Router Solicitation messages that remain to be sent. */
+    NetworkInterfaceFlags flags;
+    std::string name;
+    uint32_t number;
+    /** Number of Router Solicitation messages that remain to be sent. */
     uint8_t rtr_solicit_count;
     uint64_t timestamp;
     uint16_t loop_cnt_current;
@@ -244,10 +251,8 @@ get_netif_ip4_gw(const NetworkInterface& netif, const size_t index)
 /**
  *
  */
-inline LwipStatus
-get_netif_ip4_addr(const NetworkInterface& netif,
-                   const Ip4AddrInfo& dest_addr_info,
-                   Ip4AddrInfo& out_addr_info)
+inline std::tuple<bool, Ip4AddrInfo>
+get_netif_ip4_addr(const NetworkInterface& netif, const Ip4AddrInfo& dest_addr_info)
 {
     for (auto& it : netif.ip4_addresses) {
         if (it.address.addr == dest_addr_info.address.addr) {
@@ -264,7 +269,7 @@ get_default_netif(const std::vector<NetworkInterface>& interfaces,
                   NetworkInterface& out_netif)
 {
     for (auto& ifc : interfaces) {
-        if (ifc.default_interface) {
+        if (ifc.flags.default_interface) {
             out_netif = ifc;
             return STATUS_SUCCESS;
         }
@@ -278,7 +283,7 @@ get_default_netif(const std::vector<NetworkInterface>& interfaces,
  */
 inline bool is_netif_up(const NetworkInterface& netif)
 {
-    return netif.up;
+    return netif.flags.up;
 }
 
 
@@ -304,7 +309,7 @@ inline bool find_igmp_group(NetworkInterface& netif, Ip4AddrInfo& addr, IgmpGrou
 inline bool is_netif_link_up(const NetworkInterface& netif)
 {
 
-    return netif.link_up;
+    return netif.flags.link_up;
 }
 
 
@@ -396,7 +401,7 @@ inline uint32_t get_netif_mtu6(NetworkInterface& netif)
 inline uint8_t
 get_and_inc_netif_num(const NetworkInterface& netif)
 {
-    return netif.if_num + 1;
+    return netif.number + 1;
 }
 
 
@@ -441,21 +446,21 @@ assign_ip6_addr_zone(Ip6AddrInfo& addr_info,
 
 
 /**
- * 
+ *
  */
 inline LwipStatus
 get_netif_ip4_local_ip(const NetworkInterface& netif,
                        const Ip4AddrInfo& dest_addr_info,
                        Ip4AddrInfo& out_addr_info)
 {
-    return get_netif_ip4_addr(netif, dest_addr_info, out_addr_info);
+    return get_netif_ip4_addr(netif, dest_addr_info);
 }
 
 
 /**
  * Get list head of IGMP groups for netif.
  * Note: The allsystems group IP is contained in the list as first entry.
- * 
+ *
 */
 inline IgmpGroup get_netif_igmp_group(NetworkInterface& netif, size_t index)
 {

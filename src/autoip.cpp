@@ -7,36 +7,9 @@
 #include <lwip_debug.h>
 
 
-/**
- * Pseudo random macro based on netif informations. You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h
- */
-//
-//
-inline uint32_t
-autoip_gen_rand(NetworkInterface& netif)
-{
-    // todo: replace with system random function or real pseudo-random math function.
-    auto x = (uint32_t(netif.mac_address.bytes[5] & 0xff) << 24 |
-        uint32_t(netif.mac_address.bytes[3] & 0xff) << 16 |
-        uint32_t(netif.mac_address.bytes[2] & 0xff) << 8 | uint32_t(
-            netif.mac_address.bytes[4] & 0xff));
-    auto state = netif_autoip_data(netif);
-    return x + state.tried_llipaddr;
-}
 
 
-//
-// Macro that generates the initial IP address to be tried by AUTOIP.
-// If you want to override this, define it to something else in lwipopts.h.
-//
-inline uint32_t autoip_gen_seed_addr(NetworkInterface* netif)
-{
-    return lwip_htonl(kAutoipRangeStart + uint32_t(
-        uint8_t(netif->hwaddr[4]) | uint32_t(uint8_t(netif->hwaddr[5])) << 8));
-}
 
-LwipStatus autoip_arp_announce(NetworkInterface* netif);
-bool autoip_start_probing(NetworkInterface* netif);
 
 
 //
@@ -62,7 +35,7 @@ bool autoip_set_struct(NetworkInterface* netif, struct AutoipState* autoip)
 //
 // @param netif The netif under AutoIP control
 //
-bool autoip_restart(NetworkInterface* netif)
+bool autoip_restart(NetworkInterface& netif)
 {
     // ReSharper disable once CppLocalVariableMayBeConst
     auto autoip = netif_autoip_data(netif);
@@ -113,16 +86,16 @@ bool autoip_create_addr(NetworkInterface* netif, Ip4Addr* ipaddr)
     auto addr = lwip_ntohl(autoip_gen_seed_addr(netif));
     addr += autoip->tried_llipaddr;
     addr = kAutoipNet | (addr & 0xffff); /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
-    if (addr < kAutoipRangeStart)
+    if (addr < AUTOIP_RANGE_START)
     {
-        addr += kAutoipRangeEnd - kAutoipRangeStart + 1;
+        addr += kAutoipRangeEnd - AUTOIP_RANGE_START + 1;
     }
     if (addr > kAutoipRangeEnd)
     {
-        addr -= kAutoipRangeEnd - kAutoipRangeStart + 1;
+        addr -= kAutoipRangeEnd - AUTOIP_RANGE_START + 1;
     }
     lwip_assert("AUTOIP address not in range",
-                (addr >= kAutoipRangeStart) && (addr <= kAutoipRangeEnd));
+                (addr >= AUTOIP_RANGE_START) && (addr <= kAutoipRangeEnd));
     set_ip4_addr_u32(ipaddr, lwip_htonl(addr));
 
     return true;
@@ -351,25 +324,30 @@ void autoip_tmr(void)
 // @param netif network interface to use for autoip processing
 // @param hdr Incoming ARP packet
 //
-void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
+bool
+autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr)
 {
     auto autoip = netif_autoip_data(netif);
-    if ((autoip != nullptr) && (autoip->state != AUTOIP_STATE_OFF))
+    if (autoip.state != AUTOIP_STATE_OFF)
     {
-        Ip4Addr sipaddr{}; /* when ip.src == llipaddr && hw.src != netif->hwaddr
+        Ip4Addr sipaddr{};
+
+        /* when ip.src == llipaddr && hw.src != netif->hwaddr
          *
          * when probing  ip.dst == llipaddr && hw.src != netif->hwaddr
          * we have a conflict and must solve it
          */
         Ip4Addr dipaddr{};
         MacAddress netifaddr{};
-        memcpy(netifaddr.bytes,netif->hwaddr,ETH_ADDR_LEN);
-        /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
-                   * structure packing (not using structure copy which breaks strict-aliasing rules).
-                   */
-        IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, &sipaddr);
-        IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
-        if (autoip->state == AUTOIP_STATE_PROBING)
+        memcpy(netifaddr.bytes, netif.mac_address.bytes, ETH_ADDR_LEN);
+
+        /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers
+         * without structure packing (not using structure copy which breaks
+         * strict-aliasing rules).
+         */
+        hdr.sipaddr = sipaddr;
+        hdr.dipaddr = dipaddr;
+        if (autoip.state == AUTOIP_STATE_PROBING)
         {
             /* RFC 3927 Section 2.2.1:
              * from beginning to after ANNOUNCE_WAIT
@@ -377,9 +355,9 @@ void autoip_arp_reply(NetworkInterface* netif, EtharpHdr* hdr)
              * ip.src == llipaddr OR
              * ip.dst == llipaddr && hw.src != own hwaddr
              */
-            if ((is_ip4_addr_equal(&sipaddr, &autoip->llipaddr)) || (
-                ip4_addr_isany_val(sipaddr) && is_ip4_addr_equal(&dipaddr, &autoip->llipaddr)
-                && !cmp_eth_addr(&netifaddr, &hdr->shwaddr)))
+            if ((is_ip4_addr_equal(sipaddr, autoip.llipaddr)) || (
+                is_ip4_addr_any(sipaddr) && is_ip4_addr_equal(dipaddr, autoip.llipaddr)
+                && !cmp_eth_addr(&netifaddr, hdr.shwaddr)))
             {
                 autoip_restart(netif);
             }

@@ -1,6 +1,4 @@
 #pragma once
-
-#include <arch.h>
 #include <ethernet.h>
 #include <ip4_addr.h>
 #include <network_interface.h>
@@ -27,7 +25,17 @@ enum EtharpOpcode
     ARP_REPLY = 2
 };
 
-typedef int64_t ssize_t;
+
+
+/** the time an ARP entry stays pending after first request,
+ *  for ARP_TMR_INTERVAL = 1000, this is
+ *  10 seconds.
+ *
+ *  @internal Keep this number at least 2, otherwise it might
+ *  run out instantly if the timeout occurs directly after a request.
+ */
+constexpr auto ARP_MAX_PENDING = 5;
+using ssize_t = int64_t;
 
 constexpr auto SIZEOF_ETHARP_HDR = 28;
 
@@ -91,7 +99,7 @@ struct EtharpEntry
     struct NetworkInterface netif;
     struct MacAddress mac_address{};
     uint64_t ctime{};
-    EtharpState state;
+    EtharpState state{};
     PacketBuffer pkt_buf;
 };
 
@@ -136,7 +144,7 @@ etharp_query(struct NetworkInterface* netif,
              struct PacketBuffer* q);
 
 
-LwipStatus
+bool
 etharp_request(NetworkInterface& netif, const Ip4AddrInfo& ipaddr);
 
 
@@ -159,13 +167,16 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
  *  @param dest_addr the index of the IPv4 address to use as the source address.
  *  @return STATUS_OK on success; an error message otherwise.
  */
-inline LwipStatus
+inline bool
 etharp_gratuitous(NetworkInterface& netif, Ip4AddrInfo& dest_addr)
 {
     Ip4AddrInfo found_addr{};
-    if (get_netif_ip4_addr(netif, dest_addr, found_addr) != STATUS_SUCCESS)
+    bool ok = true;
+    Ip4AddrInfo addr{};
+    std::tie(ok, addr) = get_netif_ip4_addr(netif, dest_addr);
+    if (!ok)
     {
-        return STATUS_ERROR;
+        return false;
     }
 
     return etharp_request(netif, found_addr);
@@ -194,7 +205,6 @@ inline bool IpaddrWordalignedCopyToIp4AddrT(Ip4AddrWordaligned* dest, const Ip4A
 }
 
 
-
 /** memcpy-like copying of IP addresses where addresses are known to be
 * 16-bit-aligned if the port is correctly configured (so a port could define
 * this to copying 2 uint16_t's) - no NULL-pointer-checking needed. */
@@ -218,7 +228,26 @@ LwipStatus etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info, NetworkI
                                       bool static_entry);
 
 
-LwipStatus
-recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif);
+bool
+recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<EtharpEntry>& entries);
 
 
+bool
+etharp_request_dst(NetworkInterface& netif,
+                   const Ip4AddrInfo& ipaddr,
+                   const MacAddress& hw_dst_addr);
+
+
+bool
+send_raw_arp_pkt(NetworkInterface& netif,
+                 const MacAddress& ethsrc_addr,
+                 const MacAddress& ethdst_addr,
+                 const MacAddress& hwsrc_addr,
+                 const Ip4AddrInfo& ipsrc_addr,
+                 const MacAddress& hwdst_addr,
+                 const Ip4AddrInfo& ipdst_addr,
+                 const uint16_t opcode);
+
+//
+// END OF FILE
+//

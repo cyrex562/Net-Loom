@@ -8,21 +8,24 @@
 /**
  * Initialize a UPAP unit.
  */
-std::tuple<bool, upap_state>
+std::tuple<bool, UpapState>
 upap_init(PppPcb& pcb)
 {
-    upap_state upap;
+    UpapState upap;
     upap.us_clientstate = UPAPCS_INITIAL;
     upap.us_serverstate = UPAPSS_INITIAL;
     upap.us_id = 0;
     return std::make_tuple(true, upap);
-} /**
+}
+
+
+/**
  * upap_authwithpeer - Authenticate us with our peer (start client).
  *
  * Set new state and send authenticate's.
  */
 bool
-upap_authwithpeer(PppPcb& pcb, std::string& user, std::string& password, upap_state& upap)
+upap_authwithpeer(PppPcb& pcb, std::string& user, std::string& password, UpapState& upap)
 {
     if (user.empty() || password.empty()) {
         return false;
@@ -35,13 +38,16 @@ upap_authwithpeer(PppPcb& pcb, std::string& user, std::string& password, upap_st
         return false;
     }
     return upap_sauthreq(pcb, upap); /* Start protocol */
-} /**
+}
+
+
+/**
  * upap_authpeer - Authenticate our peer (start server).
  *
  * Set new state.
  */
 bool
-upap_authpeer(PppPcb& pcb, upap_state& upap)
+upap_authpeer(PppPcb& pcb, UpapState& upap)
 {
     /* Lower layer up yet? */
     if (pcb.upap.us_serverstate == UPAPSS_INITIAL || pcb.upap.us_serverstate ==
@@ -56,11 +62,13 @@ upap_authpeer(PppPcb& pcb, upap_state& upap)
         }
     }
     return true;
-} /**
+}
+
+/**
  * Retransmission timer for sending auth-reqs expired.
  */
 bool
-upap_timeout(upap_state& upap, PppPcb& pcb)
+upap_timeout(UpapState& upap, PppPcb& pcb)
 {
     if (upap.us_clientstate != UPAPCS_AUTHREQ) return false;
     if (upap.us_transmits >= pcb.settings.pap_max_transmits) {
@@ -71,11 +79,14 @@ upap_timeout(upap_state& upap, PppPcb& pcb)
         return false;
     } /* Send Authenticate-Request */
     return upap_sauthreq(pcb, upap);
-} /**
+}
+
+
+/**
  * Give up waiting for the peer to send an auth-req.
  */
 bool
-upap_reqtimeout(PppPcb& pcb, upap_state& upap)
+upap_reqtimeout(PppPcb& pcb, UpapState& upap)
 {
     if (upap.us_serverstate != UPAPSS_LISTEN) {
         return false; /* huh?? */
@@ -85,11 +96,14 @@ upap_reqtimeout(PppPcb& pcb, upap_state& upap)
     }
     upap.us_serverstate = UPAPSS_BADAUTH;
     return true;
-} /**
+}
+
+
+/**
  * The lower layer is up. Start authenticating if pending.
  */
 bool
-upap_lowerup(PppPcb& pcb, upap_state& upap)
+upap_lowerup(PppPcb& pcb, UpapState& upap)
 {
     if (upap.us_clientstate == UPAPCS_INITIAL) upap.us_clientstate = UPAPCS_CLOSED;
     else if (upap.us_clientstate == UPAPCS_PENDING) {
@@ -109,13 +123,14 @@ upap_lowerup(PppPcb& pcb, upap_state& upap)
     return true;
 }
 
+
 /**
  * upap_lowerdown - The lower layer is down.
  *
  * Cancel all timeouts.
  */
 bool
-upap_lowerdown(PppPcb& pcb, upap_state& upap)
+upap_lowerdown(PppPcb& pcb, UpapState& upap)
 {
     if (upap.us_clientstate == UPAPCS_AUTHREQ) {
         if (!upap_timeout(upap, pcb)) {
@@ -139,7 +154,7 @@ upap_lowerdown(PppPcb& pcb, upap_state& upap)
  * This shouldn't happen.  In any case, pretend lower layer went down.
  */
 bool
-upap_proto_rejected(PppPcb& pcb, upap_state& upap)
+upap_proto_rejected(PppPcb& pcb, UpapState& upap)
 {
     if (upap.us_clientstate == UPAPCS_AUTHREQ) {
         ppp_error("PAP authentication failed due to protocol-reject");
@@ -152,11 +167,12 @@ upap_proto_rejected(PppPcb& pcb, upap_state& upap)
     return upap_lowerdown(pcb, upap);
 }
 
+
 /**
  * Input UPAP packet.
  */
 bool
-upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap)
+upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, UpapState& upap)
 {
     /*
      * Parse header (code, id and length).
@@ -165,11 +181,20 @@ upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap)
     if (in_packet.size() < UPAP_HEADERLEN) {
         return false;
     }
-
+    auto ok = true;
     size_t index = 0;
-    const auto code = GETCHAR(in_packet, index);
-    auto id = GETCHAR(in_packet, index);
-    auto len = GETSHORT(in_packet, index);
+
+    uint8_t code = 0;
+    std::tie(ok, code) = GETCHAR(in_packet, index);
+    if (!ok) {return false;}
+
+    uint8_t id = 0;
+    std::tie(ok, id) = GETCHAR(in_packet, index);
+    if (!ok) {return false;}
+
+    uint16_t len = 0;
+    std::tie(ok, len) = GETSHORT(in_packet, index);
+    if (!ok) {return false;}
     if (len < UPAP_HEADERLEN) {
         return false;
     }
@@ -197,7 +222,7 @@ upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap)
  * upap_rauth - Receive Authenticate.
  */
 bool
-upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, upap_state& upap)
+upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, UpapState& upap)
 {
     std::string msg;
     size_t msglen;
@@ -228,7 +253,15 @@ upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, upap
     }
 
     size_t index = 0;
-    const size_t remote_user_len = GETCHAR(in_pkt, index);
+    bool ok = false;
+    uint8_t remote_user_len = 0;
+
+    std::tie(ok, remote_user_len) = GETCHAR(in_pkt, index);
+    if (!ok)
+    {
+        return false;
+    }
+
     int tracked_len = in_pkt.size();
     const auto req_len = sizeof(uint8_t) + remote_user_len + sizeof(uint8_t);
     tracked_len -= sizeof(uint8_t) + remote_user_len + sizeof(uint8_t);
@@ -239,11 +272,14 @@ upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, upap
 
     std::string ruser = reinterpret_cast<char *>(in_pkt.data()) + index;
     index += remote_user_len;
-    const size_t rpasswdlen = GETCHAR(in_pkt, index);
+
+    uint8_t rpasswdlen = 0;
+
+    std::tie(ok, rpasswdlen) = GETCHAR(in_pkt, index);
     if (in_pkt.size() < rpasswdlen) {
         return false;
     }
-    std::string rpasswd = (char *)in_pkt.data() + index;
+    std::string rpasswd = reinterpret_cast<char *>(in_pkt.data()) + index;
 
     /**
      * Check the username and password given.
@@ -277,7 +313,7 @@ upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, upap
  * upap_rauthack - Receive Authenticate-Ack.
  */
 bool
-upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap)
+upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, UpapState& upap)
 {
     size_t index = 0;
     if (upap.us_clientstate != UPAPCS_AUTHREQ) {
@@ -291,13 +327,18 @@ upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state&
         // UPAPDEBUG(("pap_rauthack: ignoring missing msg-length."));
     }
     else {
-        const uint8_t msglen = GETCHAR(in_pkt, index);
+        bool ok = true;
+        uint8_t msglen = 0;
+        std::tie(ok, msglen) = GETCHAR(in_pkt, index);
+        if (!ok)
+        {
+            return false;
+        }
         if (msglen > 0) {
             if (in_pkt.size() - 1 < msglen) {
                 return false;
             }
             auto msg = reinterpret_cast<char *>(in_pkt.data()) + index;
-            // PRINTMSG(msg, msglen);
         }
     }
     upap.us_clientstate = UPAPCS_OPEN;
@@ -308,7 +349,7 @@ upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state&
  * upap_rauthnak - Receive Authenticate-Nak.
  */
 bool
-upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap)
+upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, UpapState& upap)
 {
     if (upap.us_clientstate != UPAPCS_AUTHREQ) {
         /* XXX */
@@ -322,29 +363,32 @@ upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upa
         return false;
     }
     size_t index = 0;
-    const auto msglen = GETCHAR(in_pkt, index);
+    bool ok = true;
+    uint8_t msglen = 0;
+    std::tie(ok, msglen) = GETCHAR(in_pkt, index);
     if (msglen > 0) {
         if (in_pkt.size() - 1 < msglen) {
             return false;
         }
         const auto msg = reinterpret_cast<char *>(in_pkt.data()) + index;
-        PRINTMSG(msg, msglen);
+        // PRINTMSG(msg, msglen);
     }
     upap.us_clientstate = UPAPCS_BADAUTH;
     ppp_error("PAP authentication failed");
     return auth_withpeer_fail(pcb, PPP_PAP);
 }
 
+
 /**
  * Send an Authenticate-Request.
  */
 bool
-upap_sauthreq(PppPcb& pcb, upap_state& upap)
+upap_sauthreq(PppPcb& pcb, UpapState& upap)
 {
     const size_t out_len = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + upap.us_user.length() +
         upap.us_passwd.length(); // todo: re-write not to overflow the buffer
     PacketBuffer p{};
-    auto outp = p.data;
+    auto outp = p.bytes;
     MAKEHEADER(outp, PPP_PAP);
     PUTCHAR((uint8_t)UPAP_AUTHREQ, outp);
     PUTCHAR(upap.us_id, outp);
@@ -358,6 +402,7 @@ upap_sauthreq(PppPcb& pcb, upap_state& upap)
     upap.us_clientstate = UPAPCS_AUTHREQ;
 }
 
+
 /**
  * Send a response (ack or nak).
  */
@@ -366,14 +411,15 @@ upap_sresp(PppPcb& pcb, const uint8_t code, const uint8_t id, std::string& msg)
 {
     const size_t outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
     PacketBuffer p{};
-    MAKEHEADER(p.data, PPP_PAP);
-    PUTCHAR(code, p.data);
-    PUTCHAR(id, p.data);
-    PUTSHORT(outlen, p.data);
-    PUTCHAR(msg.length(), p.data);
-    PUTSTRING(msg, p.data);
+    MAKEHEADER(p.bytes, PPP_PAP);
+    PUTCHAR(code, p.bytes);
+    PUTCHAR(id, p.bytes);
+    PUTSHORT(outlen, p.bytes);
+    PUTCHAR(msg.length(), p.bytes);
+    PUTSTRING(msg, p.bytes);
     return ppp_write(pcb, p);
 }
+
 
 //
 // EOF

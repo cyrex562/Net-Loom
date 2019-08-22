@@ -214,7 +214,7 @@ chap_timeout(PppPcb& pcb)
 
     PacketBuffer p{};
 
-    memcpy(p.data.data(), pcb.chap_server.challenge.data.data(), pcb.chap_server.challenge_pktlen);
+    memcpy(p.bytes.data(), pcb.chap_server.challenge.data.bytes(), pcb.chap_server.challenge_pktlen);
 
     ppp_write(pcb, p);
     ++pcb.chap_server.challenge_xmits;
@@ -244,8 +244,7 @@ chap_generate_challenge(PppPcb& pcb)
     memcpy(p_ptr + 1 + clen, pcb.chap_server.name.c_str(), nlen);
     const auto len = CHAP_HDR_LEN + 1 + clen + nlen;
     pcb.chap_server.challenge_pktlen = PPP_HDRLEN + len;
-
-    p = pcb.chap_server.challenge + PPP_HDRLEN;
+    p_ptr = pcb.chap_server.challenge.data() + PPP_HDRLEN;
     p[0] = CHAP_CHALLENGE;
     p[1] = ++pcb.chap_server.id;
     p[2] = len >> 8;
@@ -256,42 +255,40 @@ chap_generate_challenge(PppPcb& pcb)
  * chap_handle_response - check the response to our challenge.
  */
 static void
-chap_handle_response(PppPcb* pcb,
+chap_handle_response(PppPcb& pcb,
                      int code,
-                     unsigned char* pkt,
-                     size_t len,
-                     Protent** protocols)
+                     std::vector<uint8_t>& pkt)
 {
     int response_len;
     // const char* name = nullptr; /* initialized to shut gcc up */
-        std::string name;
-
+    std::string name;
     char rname[MAXNAMELEN + 1];
     char message[256];
-
-    if ((pcb->chap_server.flags & kLowerup) == 0)
+    if ((pcb.chap_server.flags.lower_up) == false)
     {
         return;
     }
-    if (code != pcb->chap_server.challenge[PPP_HDRLEN + 1] || len < 2)
+    if (code != pcb.chap_server.challenge[PPP_HDRLEN + 1] || pkt.size() < 2)
     {
         return;
     }
-    if (pcb->chap_server.flags & kChallengeValid)
+    if (pcb.chap_server.flags.challenge_valid)
     {
-        const unsigned char* response = pkt;
-        GETCHAR(response_len, pkt);
-        len -= response_len + 1; /* length of name */
-        name = reinterpret_cast<char *>(pkt) + response_len;
+        uint8_t* response = pkt.data();
+        bool ok = true;
+        uint8_t response_len = 0;
+        std::tie(ok, response_len) = GETCHAR(pkt, 0);
+        // len -= response_len + 1; /* length of name */
+        name = reinterpret_cast<char *>(response) + response_len;
 
-        if (pcb->chap_server.flags & kTimeoutPending)
+        if (pcb.chap_server.flags.timeout_pending)
         {
-            pcb->chap_server.flags &= ~kTimeoutPending;
-            Untimeout(chap_timeout, pcb);
+            pcb.chap_server.flags.timeout_pending = false;
+            chap_timeout(pcb);
         }
-        if (pcb->settings.explicit_remote)
+        if (pcb.settings.explicit_remote)
         {
-            // name = pcb->remote_name;
+            name = pcb.peer_authname;
         }
         else
         {
@@ -299,23 +296,22 @@ chap_handle_response(PppPcb* pcb,
             // ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
             // name = rname;
         }
-        const auto ok = chap_verify_response(pcb,
-                                             name,
-                                             pcb->chap_server.name,
-                                             code,
-                                             pcb->chap_server.digest,
-                                             pcb->chap_server.challenge + PPP_HDRLEN + CHAP_HDR_LEN,
-                                             response,
-                                             message,
-                                             sizeof(message));
+        ok = chap_verify_response(pcb,
+                                  name,
+                                  pcb.chap_server.name,
+                                  code,
+                                  pcb.chap_server.challenge + PPP_HDRLEN + CHAP_HDR_LEN,
+                                  response,
+                                  message,
+                                  sizeof(message));
 
         if (!ok)
         {
-            pcb->chap_server.flags |= kAuthFailed;
+            pcb.chap_server.flags |= kAuthFailed;
             ppp_warn("Peer %q failed CHAP authentication", name);
         }
     }
-    else if ((pcb->chap_server.flags & kAuthDone) == 0)
+    else if ((pcb.chap_server.flags & kAuthDone) == 0)
     {
         return;
     } /* send the response */
@@ -336,7 +332,7 @@ chap_handle_response(PppPcb* pcb,
     auto outp = static_cast<unsigned char *>(p->payload);
     MAKEHEADER(outp, PPP_CHAP);
 
-    outp[0] = (pcb->chap_server.flags & kAuthFailed) ? CHAP_FAILURE : CHAP_SUCCESS;
+    outp[0] = (pcb.chap_server.flags & kAuthFailed) ? CHAP_FAILURE : CHAP_SUCCESS;
     outp[1] = code;
     outp[2] = len >> 8;
     outp[3] = len;
@@ -344,55 +340,52 @@ chap_handle_response(PppPcb* pcb,
         memcpy(outp + CHAP_HDR_LEN, message, mlen);
     ppp_write(pcb, p);
 
-    if (pcb->chap_server.flags & kChallengeValid)
+    if (pcb.chap_server.flags & kChallengeValid)
     {
-        pcb->chap_server.flags &= ~kChallengeValid;
-        if (!(pcb->chap_server.flags & kAuthDone) && !(pcb->chap_server.flags & kAuthFailed))
+        pcb.chap_server.flags &= ~kChallengeValid;
+        if (!(pcb.chap_server.flags & kAuthDone) && !(pcb.chap_server.flags & kAuthFailed))
         {
         }
-        if (pcb->chap_server.flags & kAuthFailed)
+        if (pcb.chap_server.flags & kAuthFailed)
         {
             auth_peer_fail(pcb, PPP_CHAP);
         }
         else
         {
-            if ((pcb->chap_server.flags & kAuthDone) == 0)
+            if ((pcb.chap_server.flags & kAuthDone) == 0)
             {
                 auth_peer_success(pcb,
                                   PPP_CHAP,
-                                  pcb->chap_server.digest->code,
+                                  pcb.chap_server.digest->code,
                                   name);
             }
-            if (pcb->settings.chap_rechallenge_time)
+            if (pcb.settings.chap_rechallenge_time)
             {
-                pcb->chap_server.flags |= kTimeoutPending;
+                pcb.chap_server.flags |= kTimeoutPending;
                 Timeout(chap_timeout,
                         pcb,
-                        pcb->settings.chap_rechallenge_time);
+                        pcb.settings.chap_rechallenge_time);
             }
         }
-        pcb->chap_server.flags |= kAuthDone;
+        pcb.chap_server.flags |= kAuthDone;
     }
 }
 
-/*
- * chap_verify_response - check whether the peer's response matches
- * what we think it should be.  Returns 1 if it does (authentication
- * succeeded), or 0 if it doesn't.
+/**
+ * Check whether the peer's response matches what we think it should be.
+ * Returns 1 if it does (authentication succeeded), or 0 if it doesn't.
  */
-int
-chap_verify_response(PppPcb* pcb,
+bool
+chap_verify_response(PppPcb& pcb,
                      std::string& name,
                      std::string& ourname,
-                     const int id,
-                     ChapDigestType* digest,
-                     const unsigned char* challenge,
-                     const unsigned char* response,
+                     int id,
+                     std::vector<uint8_t>& challenge,
+                     std::vector<uint8_t>& response,
                      std::string& message,
                      int message_space)
 {
     std::string secret;
-    int secret_len;
 
     /* Get the secret that the peer is supposed to know */
     if (!get_secret(pcb, name, ourname, secret))
@@ -578,7 +571,7 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
         break;
 
     case CHAP_RESPONSE:
-        chap_handle_response(pcb, id, pkt, len, protocols);
+        chap_handle_response(pcb, id, pkt);
         break;
 
     case CHAP_FAILURE:

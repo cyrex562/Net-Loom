@@ -4,38 +4,17 @@
 
 #include <opt.h>
 #include <autoip.h>
-
 #include <dhcp.h>
-
 #include <etharp.h>
-
 #include <ethernet.h>
-
 #include <iana.h>
-
 #include <ieee.h>
-
 #include <lwip_debug.h>
-
-#include <cstring>
 #include <dhcp.cpp>
 #include <ip4.h>
-#include "util.h"
-
-
-/** the time an ARP entry stays pending after first request,
- *  for ARP_TMR_INTERVAL = 1000, this is
- *  10 seconds.
- *
- *  @internal Keep this number at least 2, otherwise it might
- *  run out instantly if the timeout occurs directly after a request.
- */
-constexpr auto kArpMaxPending = 5;
-
-
-
-
-
+#include <util.h>
+#include <cstring>
+#include "spdlog/spdlog.h"
 
 
 // static struct EtharpEntry arp_table[ARP_TABLE_SIZE];
@@ -43,20 +22,6 @@ constexpr auto kArpMaxPending = 5;
 // static NetIfcAddrIdx etharp_cached_entry;
 
 
-
-
-
-static LwipStatus etharp_request_dst(NetworkInterface& netif, const Ip4AddrInfo& ipaddr, const MacAddress& hw_dst_addr);
-
-
-static LwipStatus send_raw_arp_pkt(NetworkInterface& netif,
-                                   const MacAddress& ethsrc_addr,
-                                   const MacAddress& ethdst_addr,
-                                   const MacAddress& hwsrc_addr,
-                                   const Ip4AddrInfo& ipsrc_addr,
-                                   const MacAddress& hwdst_addr,
-                                   const Ip4AddrInfo& ipdst_addr,
-                                   const uint16_t opcode);
 
 
 /**
@@ -77,7 +42,7 @@ clear_expired_arp_entries(std::vector<EtharpEntry>& entries)
         }
         it->ctime++;
         if (it->ctime >= ARP_MAXAGE || it->state == ETHARP_STATE_PENDING && it->ctime >=
-            kArpMaxPending)
+            ARP_MAX_PENDING)
         {
             entries.erase(it);
         }
@@ -486,100 +451,122 @@ etharp_get_entry(size_t index,
  *
  * @see free_pkt_buf()
  */
-LwipStatus
-recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif)
+bool
+recv_etharp(PacketBuffer& pkt_buf,
+            NetworkInterface& netif,
+            std::vector<EtharpEntry>& entries)
 {
     Ip4Addr sipaddr{};
-    Ip4Addr dipaddr{};
-    uint8_t for_us;
+    const Ip4Addr dipaddr{};
+    auto for_us = false;
+    EtharpHdr hdr{};
+    memcpy(&hdr, pkt_buf.bytes.data(), sizeof(EtharpHdr));
 
-
-
-    auto hdr = reinterpret_cast<struct EtharpHdr *>(pkt_buf->payload);
     /* RFC 826 "Packet Reception": */
-    if ((hdr->hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) || (hdr->hwlen !=
-        ETH_ADDR_LEN) || (hdr->protolen != sizeof(Ip4Addr)) || (hdr->proto != pp_htons(
-        ETHTYPE_IP)))
+    if ((hdr.hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) || (hdr.hwlen != ETH_ADDR_LEN)
+        || (hdr.protolen != sizeof(Ip4Addr)) || (hdr.proto != pp_htons(ETHTYPE_IP)))
     {
-        //    Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-        //                ("etharp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%d/%d/%d/%d)\n",
-        //                 hdr->hwtype, (uint16_t)hdr->hwlen, hdr->proto, (uint16_t)hdr->protolen));
-        // ETHARP_STATS_INC(etharp.proterr);
-        // ETHARP_STATS_INC(etharp.drop);
-        free_pkt_buf(pkt_buf);
-        return;
-    } // ETHARP_STATS_INC(etharp.recv);
-    /* We have to check if a host already has configured our random
+        return false;
+    }
+
+    /*
+     * We have to check if a host already has configured our random
      * created link local address and continuously check if there is
-     * a host with this IP-address so we can detect collisions */
+     * a host with this IP-address so we can detect collisions
+     */
     autoip_arp_reply(netif, hdr);
-    /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
-        * structure packing (not using structure copy which breaks strict-aliasing rules). */
-    IpaddrWordalignedCopyToIp4AddrT(&hdr->sipaddr, &sipaddr);
-    IpaddrWordalignedCopyToIp4AddrT(&hdr->dipaddr, &dipaddr);
+
+    /*
+     * Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers
+     * without structure packing (not using structure copy which breaks strict-aliasing
+     * rules).
+     */
+    hdr.sipaddr = sipaddr;
+    hdr.dipaddr = dipaddr;
+
     /* this interface is not configured? */
-    if (ip4_addr_isany_val(*get_netif_ip4_addr(netif, , )))
+    Ip4AddrInfo dst_addr{};
+    dst_addr.address = dipaddr;
+    Ip4AddrInfo addr{};
+    auto ok = true;
+
+    std::tie(ok, addr) = get_netif_ip4_addr(netif, dst_addr);
+    if (!ok)
     {
-        for_us = 0;
+        return false;
+    }
+
+    if (is_ip4_addr_any(dst_addr.address))
+    {
+        for_us = false;
     }
     else
     {
         /* ARP packet directed to us? */
-        for_us = uint8_t(is_ip4_addr_equal(&dipaddr, get_netif_ip4_addr(netif, , )));
-    } /* ARP message directed to us?
+        for_us = is_ip4_addr_equal(dipaddr, dst_addr.address);
+    }
+
+    /*
+     * ARP message directed to us?
         -> add IP address in ARP cache; assume requester wants to talk to us,
            can result in directly sending the queued packets for this host.
        ARP message not directed to us?
-        ->  update the source IP address in the cache, if present */
-    etharp_update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), , , , );
-    /* now act on the message itself */ /* ARP request? */
-    if (hdr->opcode == pp_htons(ARP_REQUEST))
+        ->  update the source IP address in the cache, if present
+    */
+    Ip4AddrInfo sipaddr_info{};
+    sipaddr_info.address = sipaddr;
+    etharp_update_arp_entry(netif, sipaddr_info, hdr.shwaddr, true, false, entries,
+                            false);
+    /* now act on the message itself */
+    /* ARP request? */
+    if (hdr.opcode == pp_htons(ARP_REQUEST))
     {
         /* ARP request. If it asked for our address, we send out a
          * reply. In any case, we time-stamp any existing ARP entry,
          * and possibly send out an IP packet that was queued on it. */
-        Logf(true, ("etharp_input: incoming ARP request\n"));
         /* ARP request for our address? */
         if (for_us)
         {
             /* send ARP response */
             send_raw_arp_pkt(netif,
-                             (struct MacAddress *)netif->hwaddr,
-                             &hdr->shwaddr,
-                             (struct MacAddress *)netif->hwaddr,
-                             get_netif_ip4_addr(netif, , ),
-                             &hdr->shwaddr,
-                             &sipaddr,
-                             ARP_REPLY); /* we are not configured? */
+                             netif.mac_address,
+                             hdr.shwaddr,
+                             netif.mac_address,
+                             addr,
+                             hdr.shwaddr,
+                             sipaddr_info,
+                             ARP_REPLY);
         }
-        else if (ip4_addr_isany_val(*get_netif_ip4_addr(netif, , )))
+        /* we are not configured? */
+        else if (is_ip4_addr_any(addr.address))
         {
-            /* { for_us == 0 and netif->ip_addr.addr == 0 } */
-            Logf(true, ("etharp_input: we are unconfigured, ARP request ignored.\n"));
-            /* request was not directed to us */
+            spdlog::info("etharp_input: we are unconfigured, ARP request ignored.\n");
         }
         else
         {
             /* { for_us == 0 and netif->ip_addr.addr != 0 } */
-            Logf(true, ("etharp_input: ARP request was not for us.\n"));
+            spdlog::info("etharp_input: ARP request was not for us.\n");
         }
     }
-    else if (hdr->opcode == pp_htons(ARP_REPLY))
+    else if (hdr.opcode == pp_htons(ARP_REPLY))
     {
         /* ARP reply. We already updated the ARP cache earlier. */
-        Logf(true, ("etharp_input: incoming ARP reply\n"));
-        /* DHCP wants to know about ARP replies from any host with an
-                * IP address also offered to us by the DHCP server. We do not
-                * want to take a duplicate IP address on a single network.
-                * @todo How should we handle redundant (fail-over) interfaces? */
+        spdlog::info("etharp_input: incoming ARP reply\n");
+        /*
+         * DHCP wants to know about ARP replies from any host with an IP address also
+         * offered to us by the DHCP server. We do not want to take a duplicate IP
+         * address on a single network.
+         * @todo How should we handle redundant (fail-over) interfaces?
+         */
         dhcp_arp_reply(netif, &sipaddr);
     }
     else
     {
         //      Logf(true | LWIP_DBG_TRACE, ("etharp_input: ARP unknown opcode type %"S16_F"\n", lwip_htons(hdr->opcode)));
         // ETHARP_STATS_INC(etharp.err);
-    } /* free ARP packet */
-    free_pkt_buf(pkt_buf);
+    }
+    /* free ARP packet */
+    // free_pkt_buf(pkt_buf);
 }
 
 
@@ -667,7 +654,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
     else {
         /* outside local network? if so, this can neither be a global broadcast nor
            a subnet broadcast. */
-        if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,,), get_netif_ip4_netmask(netif,)) &&
+        if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
             !is_ip4_addr_link_local(ipaddr)) {
             auto iphdr = reinterpret_cast<Ip4Hdr&>(q->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
@@ -918,7 +905,7 @@ etharp_query(struct NetworkInterface* netif, const Ip4Addr* ipaddr, struct Packe
  *         ERR_MEM if the ARP packet couldn't be allocated
  *         any other LwipStatus on failure
  */
-static LwipStatus
+static bool
 send_raw_arp_pkt(NetworkInterface& netif,
                  const MacAddress& ethsrc_addr,
                  const MacAddress& ethdst_addr,
@@ -941,7 +928,7 @@ send_raw_arp_pkt(NetworkInterface& netif,
     etharp_hdr.hwlen = ETH_ADDR_LEN;
     etharp_hdr.protolen = sizeof(Ip4Addr);
 
-    packet_buffer.data = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr),
+    packet_buffer.bytes = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr),
                                               reinterpret_cast<uint8_t*>(&etharp_hdr) + sizeof(EtharpHdr));
 
     /* send ARP query */
@@ -968,15 +955,18 @@ send_raw_arp_pkt(NetworkInterface& netif,
  *         ERR_MEM if the ARP packet couldn't be allocated
  *         any other LwipStatus on failure
  */
-static LwipStatus
-etharp_request_dst(NetworkInterface& netif, const Ip4AddrInfo& ipaddr, const MacAddress& hw_dst_addr)
+static bool
+etharp_request_dst(NetworkInterface& netif,
+                   const Ip4AddrInfo& ipaddr,
+                   const MacAddress& hw_dst_addr)
 {
     Ip4AddrInfo src_ip4_addr{};
-    if (get_netif_ip4_addr(netif, ipaddr, src_ip4_addr) != STATUS_SUCCESS)
+    auto ok = true;
+    std::tie(ok, src_ip4_addr) = get_netif_ip4_addr(netif, ipaddr);
+    if (!ok)
     {
-        return STATUS_ERROR;
+        return false;
     }
-
     return send_raw_arp_pkt(netif,
                             netif.mac_address,
                             hw_dst_addr,
@@ -997,7 +987,7 @@ etharp_request_dst(NetworkInterface& netif, const Ip4AddrInfo& ipaddr, const Mac
  *         ERR_MEM if the ARP packet couldn't be allocated
  *         any other LwipStatus on failure
  */
-LwipStatus
+bool
 etharp_request(NetworkInterface& netif, const Ip4AddrInfo& ipaddr)
 {
     Logf(true, ("etharp_request: sending ARP request.\n"));

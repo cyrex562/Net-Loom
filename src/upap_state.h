@@ -5,7 +5,7 @@
 /*
  * Each interface is described by upap structure.
  */
-struct upap_state
+struct UpapState
 {
     std::string us_user; /* User */
     std::string us_passwd; /* Password */

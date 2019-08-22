@@ -155,7 +155,10 @@ void dhcp_stop(NetworkInterface* netif);
 void dhcp_release_and_stop(NetworkInterface* netif);
 void dhcp_inform(NetworkInterface* netif);
 void dhcp_network_changed(NetworkInterface* netif);
-void dhcp_arp_reply(NetworkInterface* netif, const Ip4Addr* addr);
+
+
+bool
+dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr);
 uint8_t dhcp_supplied_address(const NetworkInterface* netif);
 /* to be called every minute */
 void dhcp_coarse_tmr();

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <network_interface.h>
 #include <ethernet.h>
 #include <lwip_status.h>
-struct NetworkInterface;
-typedef uint64_t BridgeIfcPortMask;
+#include <cstdint>
 
+typedef uint64_t BridgeIfcPortMask;
 constexpr auto BRIDGE_FLOOD = BridgeIfcPortMask(-1);
 constexpr auto BRIDGE_IFC_MAX_PORTS = 7;
 constexpr auto BRIDGE_IFC_DEBUG = true;
@@ -68,7 +69,10 @@ struct BridgeIfcInitData {
 //#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 bool
 bridgeif_init(NetworkInterface& ifc, BridgeIfcInitData& init_data);
-LwipStatus bridgeif_add_port(NetworkInterface*bridgeif, NetworkInterface*portif);
+
+
+bool
+bridgeif_add_port(NetworkInterface& bridge_netif, NetworkInterface& port_ifc, BridgeInterface& bridge_if);
 
 
 bool

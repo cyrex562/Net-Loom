@@ -49,7 +49,7 @@
 /*
  * Packet header = Code, id, length.
  */
-constexpr auto UPAP_HEADERLEN = 4;
+constexpr size_t UPAP_HEADERLEN = 4;
 
 
 /*
@@ -119,46 +119,46 @@ bool
 upap_authwithpeer(PppPcb& pcb,
                   std::string& user,
                   std::string& password,
-                  upap_state& upap);
+                  UpapState& upap);
 
 bool
-upap_authpeer(PppPcb& pcb, upap_state& upap);
+upap_authpeer(PppPcb& pcb, UpapState& upap);
 
 bool
 upap_sresp(PppPcb& pcb, uint8_t code, uint8_t id, std::string& msg);
 
-std::tuple<bool, upap_state>
+std::tuple<bool, UpapState>
 upap_init(PppPcb& pcb);
 
 bool
-upap_lowerup(PppPcb& pcb, upap_state& upap);
+upap_lowerup(PppPcb& pcb, UpapState& upap);
 
 bool
-upap_lowerdown(PppPcb& pcb, upap_state& upap);
+upap_lowerdown(PppPcb& pcb, UpapState& upap);
 
 bool
-upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, upap_state& upap);
+upap_input(PppPcb& pcb, std::vector<uint8_t>& in_packet, UpapState& upap);
 
 bool
-upap_proto_rejected(PppPcb& pcb, upap_state& upap);
+upap_proto_rejected(PppPcb& pcb, UpapState& upap);
 
 bool
-upap_timeout(upap_state& upap, PppPcb& pcb);
+upap_timeout(UpapState& upap, PppPcb& pcb);
 
 bool
-upap_reqtimeout(PppPcb& pcb, upap_state& upap);
+upap_reqtimeout(PppPcb& pcb, UpapState& upap);
 
 bool
-upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, UpapState& upap);
 
 bool
-upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+upap_rcv_auth_ack(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, UpapState& upap);
 
 bool
-upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, upap_state& upap);
+upap_rauthnak(PppPcb& pcb, std::vector<uint8_t>& in_pkt, int id, UpapState& upap);
 
 bool
-upap_sauthreq(PppPcb& pcb, upap_state& upap);
+upap_sauthreq(PppPcb& pcb, UpapState& upap);
 
 
 //

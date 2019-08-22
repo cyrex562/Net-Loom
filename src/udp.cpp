@@ -19,51 +19,72 @@
 /* From http://www.iana.org/assignments/port-numbers:
    "The Dynamic and/or Private Ports are those from 49152 through 65535" */
 constexpr auto UDP_LOCAL_PORT_RANGE_START = 0xc000;
-
 constexpr auto UDP_LOCAL_PORT_RANGE_END = 0xffff;
 
+
 inline uint16_t
-UDP_ENSURE_LOCAL_PORT_RANGE(uint16_t port)
+udp_ensure_local_port_range(uint16_t port)
 {
     return uint16_t(
-        ((port) & uint16_t(~UDP_LOCAL_PORT_RANGE_START)) + UDP_LOCAL_PORT_RANGE_START);
-} /* last local UDP port */
+        (port & uint16_t(~UDP_LOCAL_PORT_RANGE_START)) + UDP_LOCAL_PORT_RANGE_START);
+}
+
+/* last local UDP port */
 static uint16_t udp_port = UDP_LOCAL_PORT_RANGE_START; /* The list of UDP PCBs */
+
 /* exported in udp.h (was static) */
-struct UdpPcb* udp_pcbs; /**
+struct UdpPcb* udp_pcbs;
+
+/**
  * Initialize this module.
  */
 void
 udp_init(void)
 {
-    udp_port = UDP_ENSURE_LOCAL_PORT_RANGE(lwip_rand());
-} //
-// Allocate a new local UDP port.
-//
-// @return a new (free) local UDP port number
-//
-// todo: rewrite
-static uint16_t
-udp_new_port(void)
+    udp_port = udp_ensure_local_port_range(lwip_rand());
+}
+
+
+inline bool port_in_list(std::vector<uint16_t>& ports, uint16_t port)
 {
-    uint16_t n = 0;
-again: if (udp_port++ == UDP_LOCAL_PORT_RANGE_END)
+    for (auto& p : ports)
     {
-        udp_port = UDP_LOCAL_PORT_RANGE_START;
-    } // Check all PCBs.
-    for (struct UdpPcb* pcb = udp_pcbs; pcb != nullptr; pcb = pcb->next)
-    {
-        if (pcb->local_port == udp_port)
+        if(port == p)
         {
-            if (++n > (UDP_LOCAL_PORT_RANGE_END - UDP_LOCAL_PORT_RANGE_START))
-            {
-                return 0;
-            }
-            goto again;
+            return true;
         }
     }
-    return udp_port;
-} /** Common code to see if the current input packet matches the pcb
+
+    return false;
+}
+
+/**
+ * Allocate a new local UDP port.
+ *
+ * @return a new (free) local UDP port number
+ */
+// todo: rewrite
+std::tuple<bool, uint16_t>
+udp_new_port(std::vector<uint16_t> used_ports)
+{
+    bool found = false;
+    const uint16_t port = UDP_LOCAL_PORT_RANGE_START;
+    while (port <= UDP_LOCAL_PORT_RANGE_END)
+    {
+        if (!port_in_list(used_ports, port))
+        {
+            found = true;
+            break;
+        }
+    }
+
+    used_ports.push_back(port);
+    return std::make_tuple(found, port);
+}
+
+
+/**
+ * Common code to see if the current input packet matches the pcb
  * (current input packet is accessed via ip(4/6)_current_* macros)
  *
  * @param pcb pcb to check
@@ -81,7 +102,9 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface& inp, bool broadcast)
         curr_in_netif)))
     {
         return 0;
-    } // Dual-stack: PCBs listening to any IP type also listen to any IP address
+    }
+
+    // Dual-stack: PCBs listening to any IP type also listen to any IP address
     if (is_ip_addr_any(&pcb->local_ip))
     {
         if ((broadcast != 0) && !ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
@@ -98,7 +121,7 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface& inp, bool broadcast)
         {
             if (ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
             {
-                if (ip4_addr_isany(pcb->local_ip.u_addr.ip4.address) || 
+                if (ip4_addr_isany(pcb->local_ip.u_addr.ip4.address) ||
                     curr_dst_addr->u_addr.ip4.address.addr == IP4_ADDR_BCAST_U32 || cmp_ip4_addr_net(
                     (pcb->local_ip.u_addr.ip4.address),
                     curr_dst_addr->u_addr.ip4.address,
@@ -239,7 +262,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         }
         if (curr_dst_addr->type == IPADDR_TYPE_V4)
         {
-            for_us = is_ip4_addr_equal(get_netif_ip4_addr(inp,,), &curr_dst_addr->u_addr.ip4);
+            for_us = is_ip4_addr_equal(get_netif_ip4_addr(inp,), &curr_dst_addr->u_addr.ip4);
         }
     }
     if (for_us)
@@ -574,7 +597,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         /* if the local_ip is any or multicast
          * use the outgoing network interface IP address as source address */
-        src_ip.u_addr.ip4 = get_netif_ip4_addr(netif,,)->u_addr.ip4;
+        src_ip.u_addr.ip4 = get_netif_ip4_addr(netif,)->u_addr.ip4;
         src_ip.type = IPADDR_TYPE_V4;
     }
     else
@@ -582,7 +605,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
         /* check if UDP PCB local IP address is correct
          * this could be an old address if netif->ip_addr has changed */
         if (!is_ip4_addr_equal(((pcb->local_ip.u_addr.ip4.address)),
-                          get_netif_ip4_addr(netif,,)))
+                          get_netif_ip4_addr(netif,)))
         {
             /* local_ip doesn't match, drop the packet */
             return STATUS_E_ROUTING;

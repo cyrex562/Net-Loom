@@ -405,7 +405,7 @@ netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& inte
     auto result = -1;
     for (auto& it : interfaces) {
         if (name == it.name) {
-            result = it.if_num;
+            result = it.number;
         }
     }
 

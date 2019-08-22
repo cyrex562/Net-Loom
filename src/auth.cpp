@@ -92,7 +92,7 @@ bool upper_layers_down(PppPcb& pcb)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-bool link_established(PppPcb& pcb, upap_state& state, ChapDigestType& chap_digest_type, const bool auth_required = false)
+bool link_established(PppPcb& pcb, UpapState& state, const bool auth_required = false)
 {
     auto wo = pcb.lcp_wantoptions;
     auto go = pcb.lcp_gotoptions;
@@ -536,37 +536,21 @@ static void connect_time_expired(void* arg)
 }
 
 
-
-
 /*
  * get_secret - open the CHAP secret file and return the secret
  * for authenticating the given client on the given server.
  * (We could be either client or server).
  */
-bool
-get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret)
+std::tuple<bool, std::string>
+get_secret(PppPcb& pcb, std::string& client, std::string& server)
 {
-    // if (!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user))
-    // {
-    //     return 0;
-    // }
-    if (client != pcb->settings.user)
+    std::string secret = "";
+    if (client != pcb.settings.user)
     {
-        return false;
+        return std::make_tuple(false, secret);
     }
-
-    // auto len = strlen(pcb->settings.passwd);
-    // if (len > MAXSECRETLEN)
-    // {
-    //     ppp_error("Secret for %s on %s is too long", client, server);
-    //     len = MAXSECRETLEN;
-    // }
-
-    secret = pcb->settings.passwd;
-
-    // memcpy(secret, pcb->settings.passwd, len);
-    // *secret_len = len;
-    return true;
+    secret = pcb.settings.passwd;
+    return std::make_tuple(true, secret);
 }
 
 //

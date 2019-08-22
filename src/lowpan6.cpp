@@ -170,17 +170,18 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct Lowpan6
  *
  * PAN IDs and seuqence number are not checked
  *
- * @param p input PacketBuffer, p->payload pointing at the IEEE 802.15.4 header
+ * @param pkt input PacketBuffer, p->payload pointing at the IEEE 802.15.4 header
  * @param src pointer to source address filled from the header
  * @param dest pointer to destination address filled from the header
  * @returns ERR_OK if successful
  */
-static LwipStatus
-lowpan6_parse_iee802154_header(struct PacketBuffer *p, struct Lowpan6LinkAddr *src,
-                               struct Lowpan6LinkAddr *dest)
+bool
+lowpan6_parse_iee802154_header(PacketBuffer& pkt,
+                               Lowpan6LinkAddr& src,
+                               Lowpan6LinkAddr& dest)
 {
     int8_t i; /* Parse IEEE 802.15.4 header */
-  uint8_t* puc = (uint8_t *)p->payload;
+  uint8_t* puc = pkt.bytes.data();
   uint16_t frame_control = puc[0] | (puc[1] << 8);
   uint16_t datagram_offset = 2;
   if (frame_control & IEEE_802154_FC_SEQNO_SUPPR) {

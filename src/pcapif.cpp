@@ -39,7 +39,7 @@ pcapif_compare_packets(PcapIfPendingPacket& pending_pkt, std::vector<uint8_t>& t
     if (pending_pkt.data.size() == target_pkt.size())
     {
         if (!memcmp(pending_pkt.data.data(),
-                    target_pkt.data.data(),
+                    target_pkt.data.bytes(),
                     pending_pkt.data.size()))
         {
             return true;
@@ -440,7 +440,7 @@ pcapif_low_level_init(NetworkInterface& netif,
     // netif.state = pa; /* change the MAC address to a unique value
     //  so that multiple ethernetifs are supported */
     /* @todo: this does NOT support multiple processes using this adapter! */
-    my_mac_addr.bytes[ETH_ADDR_LEN - 1] += netif.if_num; /* Copy MAC addr */
+    my_mac_addr.bytes[ETH_ADDR_LEN - 1] += netif.number; /* Copy MAC addr */
     memcpy(&netif.mac_address, &my_mac_addr, ETH_ADDR_LEN);
     /* get the initial link state of the selected interface */
     pa.last_link_event = pcapifh_linkstate_get(pa.link_state);
@@ -469,21 +469,21 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
     // char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
     // uint8_t* buf = buffer;
     std::vector<uint8_t> buffer;
-    uint16_t tot_len = pkt_buf.data.size() - ETH_PAD_SIZE;
+    uint16_t tot_len = pkt_buf.bytes.size() - ETH_PAD_SIZE;
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
     PcapIfPrivate pa{};
 
     /* signal that packet should be sent */
-    if (pcap_sendpacket(pa.adapter, pkt_buf.data.data(), tot_len) < 0)
+    if (pcap_sendpacket(pa.adapter, pkt_buf.bytes.data(), tot_len) < 0)
     {
         return false;
     }
 
     if (is_netif_link_up(netif))
     {
-        pcapif_add_tx_packet(pa, pkt_buf.data);
+        pcapif_add_tx_packet(pa, pkt_buf.bytes);
     }
-    EthHdr* ethhdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
+    EthHdr* ethhdr = reinterpret_cast<EthHdr *>(pkt_buf.bytes.data());
     if ((ethhdr->dest.bytes[0] & 1) != 0)
     {
         /* broadcast or multicast packet*/
@@ -512,13 +512,13 @@ pcapif_low_level_recv(NetworkInterface& netif,
     PacketBuffer pkt_buf{};
 
     for (size_t i = 0; i < packet_len; i++) {
-        pkt_buf.data.push_back(packet[i]);
+        pkt_buf.bytes.push_back(packet[i]);
     }
 
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};
-    if (pcaipf_is_tx_packet(netif, pkt_buf.data, pcap_if_priv))
+    if (pcaipf_is_tx_packet(netif, pkt_buf.bytes, pcap_if_priv))
     {
         /* don't update counters here! */
         return std::make_tuple(false, pkt_buf);
@@ -559,18 +559,19 @@ pcapif_init(NetworkInterface& netif,
 {
     static int ethernetif_index;
     auto local_index = ethernetif_index++;
-    netif.if_name = name;
+    netif.name = name;
     // netif.linkoutput = pcapif_low_level_output;
     // netif.output = etharp_output;
     // netif.output = nullptr; /* not used for PPPoE */
     // netif.output_ip6 = ethip6_output; /* Initialize interface hostname */
-    set_netif_hostname(netif, "lwip");
+    // set_netif_hostname(netif, "lwip");
+    netif.hostname = "lwip";
     netif.mtu = 1500;
-    netif.broadcast = true;
-    netif.eth_arp = true;
-    netif.ethernet = true;
-    netif.igmp_allowed = true;
-    netif.mld6 = true; /* sets link up or down based on current status */
+    netif.flags.broadcast = true;
+    netif.flags.eth_arp = true;
+    netif.flags.ethernet = true;
+    netif.flags.igmp = true;
+    netif.flags.mld6 = true; /* sets link up or down based on current status */
     sockaddr_in net_addr{};
     net_addr.sin_addr.S_un.S_addr = netif.ip4_addresses[ipv4_addr_index].address.addr;
     bool ok;

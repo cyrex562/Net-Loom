@@ -28,7 +28,7 @@ bool upper_layers_down(PppPcb& pcb);
 
 bool continue_networks(PppPcb* pcb);
 
-bool link_established(PppPcb& pcb, upap_state& state, ChapDigestType& chap_digest_type, const bool auth_required);
+bool link_established(PppPcb& pcb, UpapState& state, const bool auth_required);
 
 bool
 link_terminated(PppPcb& pcb, const bool doing_multilink);
@@ -56,7 +56,7 @@ void np_down(PppPcb* pcb, int proto);
 void np_finished(PppPcb* pcb, int proto);
 
 bool
-get_secret(PppPcb* pcb, std::string& client, std::string& server, std::string& secret);
+get_secret(PppPcb& pcb, std::string& client, std::string& server, std::string& secret);
 
 bool
 auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor);
