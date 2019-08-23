@@ -129,7 +129,7 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
     NetworkInterface* curr_ip_netif = nullptr;
     IpAddrInfo* curr_src_addr = nullptr;
     RawPcb* raw_pcbs;
-    const uint8_t broadcast = is_netif_ip4_addr_bcast(curr_dst_addr, curr_ip_netif);
+    const uint8_t broadcast = netif_is_ip4_addr_bcast(curr_dst_addr, curr_ip_netif);
     if (get_ip_hdr_version(p->payload) == 6)
     {
         auto* ip6_hdr = reinterpret_cast<struct Ip6Hdr *>(p->payload);
@@ -459,7 +459,7 @@ raw_sendto_if_src(RawPcb& pcb,
     if (is_ip_addr_v4(dst_ip))
     {
         /* broadcast filter? */
-        if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_netif_ip4_addr_bcast(
+        if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && netif_is_ip4_addr_bcast(
             dst_ip,
             netif))
         {

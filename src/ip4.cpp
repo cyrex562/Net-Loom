@@ -42,7 +42,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
 
     for (const auto& netif : netifs_to_check)
     {
-        if (is_ip4_addr_multicast(dst_addr))
+        if (ip4_addr_is_mcast(dst_addr))
         {
             for (auto grp: netif.igmp_groups)
             {
@@ -197,7 +197,7 @@ ip4_input_accept(NetworkInterface& netif)
         /* unicast to this interface address? */
         if (is_ip4_addr_equal(curr_dst_addr.address, out_ip4_addr_info.address) ||
             /* or broadcast on this interface network address? */
-            is_netif_ip4_addr_bcast(curr_dst_addr.address, netif) ||
+            netif_is_ip4_addr_bcast(curr_dst_addr.address, netif) ||
             get_ip4_addr_u32(curr_dst_addr.address) == pp_htonl(
                 make_ip4_addr_loopback().addr))
         {
@@ -288,7 +288,7 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInt
     // copy_ip4_addr_to_ip_addr(&curr_dst_hdr->dest, &iphdr->dest);
     // copy_ip4_addr_to_ip_addr(curr_src_hdr->src, iphdr->src);
     /* match packet against an interface, i.e. is this packet for us? */
-    if (is_ip4_addr_multicast(curr_dst_addr.address))
+    if (ip4_addr_is_mcast(curr_dst_addr.address))
     {
         IgmpGroup found_igmp_group{};
         if (netif.igmp_allowed && find_igmp_group(netif, curr_dst_addr, found_igmp_group))
@@ -359,7 +359,7 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInt
         /* DHCP servers need 0.0.0.0 to be allowed as source address (RFC 1.1.2.2: 3.2.1.3/a) */
         && !ip4_addr_isany_val(*curr_src_addr))
     {
-        if (ip4_addr_isbroadcast(curr_src_addr, netif) || is_ip4_addr_multicast(
+        if (ip4_addr_isbroadcast(curr_src_addr, netif) || ip4_addr_is_mcast(
             curr_src_addr))
         {
             /* packet source is not valid */
@@ -432,7 +432,7 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInt
             else
             {
                 /* send ICMP destination protocol unreachable unless is was a broadcast */
-                if (!ip4_addr_isbroadcast(curr_dst_addr, netif) && !is_ip4_addr_multicast(
+                if (!ip4_addr_isbroadcast(curr_dst_addr, netif) && !ip4_addr_is_mcast(
                     curr_dst_addr))
                 {
                     // pbuf_header_force(p, (int16_t)iphdr_hlen); /* Move to ip header, no check necessary. */

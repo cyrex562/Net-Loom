@@ -138,24 +138,21 @@ etharp_output(struct NetworkInterface* netif,
               const Ip4Addr* ipaddr);
 
 
-LwipStatus
-etharp_query(struct NetworkInterface* netif,
-             const Ip4Addr* ipaddr,
-             struct PacketBuffer* q);
+bool
+etharp_query(NetworkInterface& netif,
+             const Ip4Addr& addr,
+             PacketBuffer& pkt,
+             std::vector<EtharpEntry>& entries);
 
 
 bool
 etharp_request(NetworkInterface& netif, const Ip4AddrInfo& ipaddr);
 
 
-LwipStatus
+std::tuple<bool, size_t>
 etharp_find_entry(const Ip4AddrInfo& ipaddr,
                   const NetworkInterface& netif,
-                  std::vector<EtharpEntry>& entries,
-                  bool try_hard,
-                  bool find_only,
-                  bool static_entry,
-                  size_t& found_index);
+                  std::vector<EtharpEntry>& entries);
 
 
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";

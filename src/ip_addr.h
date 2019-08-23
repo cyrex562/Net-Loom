@@ -303,7 +303,7 @@ is_ip_addr_mcast(const IpAddrInfo& ipaddr)
     {
         return is_ip6_addr_mcast(ipaddr.u_addr.ip6.addr);
     }
-    return is_ip4_addr_multicast(ipaddr.u_addr.ip4.address);
+    return ip4_addr_is_mcast(ipaddr.u_addr.ip4.address);
 }
 
 

@@ -306,7 +306,7 @@ constexpr auto IP4_ADDR_MCAST_MASK_2 = 0xe0000000UL;
 ///
 ///
 inline bool
-is_ip4_addr_multicast(const Ip4Addr& addr1)
+ip4_addr_is_mcast(const Ip4Addr& addr1)
 {
     return (((addr1).addr & pp_htonl(IP4_ADDR_MCAST_MASK_1)) == pp_htonl(
         IP4_ADDR_MCAST_MASK_2));

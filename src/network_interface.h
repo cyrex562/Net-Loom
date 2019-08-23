@@ -468,7 +468,7 @@ inline IgmpGroup get_netif_igmp_group(NetworkInterface& netif, size_t index)
 }
 
 
-inline bool is_netif_ip4_addr_bcast(const Ip4Addr& addr, const NetworkInterface& netif)
+inline bool netif_is_ip4_addr_bcast(const Ip4Addr& addr, const NetworkInterface& netif)
 {
     for (auto info : netif.ip4_addresses)
     {
@@ -546,6 +546,25 @@ bool set_netif_ip4_gw(NetworkInterface& netif, const Ip4Addr& new_gw, const Ip4A
 
 
 bool set_netif_ip4_addr(NetworkInterface& netif, const Ip4Addr& new_ip4_addr, const Ip4Addr& old_ip4_addr);
+
+/**
+ * remove specified Ip4 address from 
+ */
+inline bool netif_remove_ip4_addr(NetworkInterface& netif, const Ip4Addr& ip_to_remove)
+{
+    auto deleted = false;
+    for (auto it = netif.ip4_addresses.begin(); it != netif.ip4_addresses.end(); it++)
+    {
+        if (it->address.addr == ip_to_remove.addr)
+        {
+            netif.ip4_addresses.erase(it);
+            deleted = true;
+            break;
+        }
+    }
+
+    return deleted;
+}
 
 //
 // END OF FILE

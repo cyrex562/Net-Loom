@@ -82,7 +82,7 @@ void icmp_input(PacketBuffer& p, NetworkInterface& inp)
          (as obviously, an echo request has been sent, too). */ break;
     case ICMP_ECHO:
         src = &curr_dst_addr->u_addr.ip4; /* multicast destination address? */
-        if (is_ip4_addr_multicast(&curr_dst_addr->u_addr.ip4))
+        if (ip4_addr_is_mcast(&curr_dst_addr->u_addr.ip4))
         {
             /* For multicast, use address of receiving interface as source address */
             src = get_netif_ip4_addr(inp,);

@@ -174,7 +174,7 @@ udp_input(struct PacketBuffer* p, NetworkInterface* inp)
         return; // goto end;
     }
     struct UdpHdr* udphdr = (struct UdpHdr *)p->payload; /* is broadcast packet ? */
-    uint8_t broadcast = is_netif_ip4_addr_bcast(curr_dst_addr, curr_netif);
+    uint8_t broadcast = netif_is_ip4_addr_bcast(curr_dst_addr, curr_netif);
     Logf(true, "udp_input: received datagram of length %d\n", p->tot_len);
     /* convert src and dest ports to host byte order */
     uint16_t src = lwip_ntohs(udphdr->src);
@@ -593,7 +593,7 @@ udp_sendto_if_chksum(UdpPcb* pcb,
         }
     }
     else if (ip4_addr_isany((pcb->local_ip.u_addr.ip4.address)) ||
-        is_ip4_addr_multicast((pcb->local_ip.u_addr.ip4.address)))
+        ip4_addr_is_mcast((pcb->local_ip.u_addr.ip4.address)))
     {
         /* if the local_ip is any or multicast
          * use the outgoing network interface IP address as source address */
@@ -650,7 +650,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     {
         return ERR_VAL;
     } /* broadcast filter? */
-    if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_ip_addr_v4(dst_ip) && is_netif_ip4_addr_bcast(
+    if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && is_ip_addr_v4(dst_ip) && netif_is_ip4_addr_bcast(
         dst_ip,
         netif))
     {

@@ -42,25 +42,7 @@ struct DhcpMsg
     uint8_t options[DHCP_OPTIONS_LEN];
 };
 
-/* DHCP client states */
-enum DhcpStateEnum
-{
-    DHCP_STATE_OFF = 0,
-    DHCP_STATE_REQUESTING = 1,
-    DHCP_STATE_INIT = 2,
-    DHCP_STATE_REBOOTING = 3,
-    DHCP_STATE_REBINDING = 4,
-    DHCP_STATE_RENEWING = 5,
-    DHCP_STATE_SELECTING = 6,
-    DHCP_STATE_INFORMING = 7,
-    DHCP_STATE_CHECKING = 8,
-    DHCP_STATE_PERMANENT = 9,
-    /* not yet implemented */
-    DHCP_STATE_BOUND = 10,
-    DHCP_STATE_RELEASING = 11,
-    /* not yet implemented */
-    DHCP_STATE_BACKING_OFF = 12
-};
+
 
 /* DHCP op codes */
 enum DhcpOpCodes
@@ -88,39 +70,7 @@ constexpr auto DHCP_MAGIC_COOKIE = 0x63825363UL;
 
 /* This is a list of options for BOOTP and DHCP, see RFC 2132 for descriptions */
 
-/* BootP options */
-enum DhcpOptions
-{
-    DHCP_OPTION_PAD = 0,
-    DHCP_OPTION_SUBNET_MASK = 1, /* RFC 2132 3.3 */
-    DHCP_OPTION_ROUTER = 3,
-    DHCP_OPTION_DNS_SERVER = 6,
-    DHCP_OPTION_HOSTNAME = 12,
-    DHCP_OPTION_IP_TTL = 23,
-    DHCP_OPTION_MTU = 26,
-    DHCP_OPTION_BROADCAST = 28,
-    DHCP_OPTION_TCP_TTL = 37,
-    DHCP_OPTION_NTP = 42,
-    DHCP_OPTION_END = 255,
-    /* DHCP options */
-    DHCP_OPTION_REQUESTED_IP = 50, /* RFC 2132 9.1, requested IP address */
-    DHCP_OPTION_LEASE_TIME = 51, /* RFC 2132 9.2, time in seconds, in 4 bytes */
-    DHCP_OPTION_OVERLOAD = 52, /* RFC2132 9.3, use file and/or sname field for options */
-    DHCP_OPTION_MESSAGE_TYPE = 53, /* RFC 2132 9.6, important for DHCP */
-    DHCP_OPTION_MESSAGE_TYPE_LEN = 1,
-    DHCP_OPTION_SERVER_ID = 54, /* RFC 2132 9.7, server IP address */
-    DHCP_OPTION_PARAMETER_REQUEST_LIST = 55, /* RFC 2132 9.8, requested option types */
-    DHCP_OPTION_MAX_MSG_SIZE = 57, /* RFC 2132 9.10, message size accepted >= 576 */
-    DHCP_OPTION_US = 60,
-    DHCP_OPTION_CLIENT_ID = 61,
-    DHCP_OPTION_TFTP_SERVERNAME = 66,
-    DHCP_OPTION_BOOTFILE = 67,
-    /* possible combinations of overloading the file and sname fields with options */
-    DHCP_OVERLOAD_NONE = 0,
-    DHCP_OVERLOAD_FILE = 1,
-    DHCP_OVERLOAD_SNAME = 2,
-    DHCP_OVERLOAD_SNAME_FILE = 3,
-};
+
 
 constexpr auto DHCP_OPTION_MAX_MSG_SIZE_LEN = 2;
 constexpr auto DHCP_OPTION_T1 = 58; /* T1 renewal time */
@@ -135,12 +85,7 @@ constexpr auto DHCP_FINE_TIMER_MSECS =  500;
 
 constexpr auto DHCP_BOOT_FILE_LEN   =  128U;
 
-/* AutoIP cooperation flags (struct dhcp.autoip_coop_state) */
-enum DhcpAutoipCoopStateEnumT
-{
-    DHCP_AUTOIP_COOP_STATE_OFF = 0,
-    DHCP_AUTOIP_COOP_STATE_ON = 1
-};
+
 
 
 
@@ -158,7 +103,7 @@ void dhcp_network_changed(NetworkInterface* netif);
 
 
 bool
-dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr);
+dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr, DhcpContext& ctx);
 uint8_t dhcp_supplied_address(const NetworkInterface* netif);
 /* to be called every minute */
 void dhcp_coarse_tmr();
@@ -173,10 +118,10 @@ extern void dhcp_set_ntp_servers(uint8_t num_ntp_servers, const Ip4Addr* ntp_ser
 
 
 
-inline DhcpContext* get_netif_dhcp_ctx(const NetworkInterface* netif)
-{
-    // return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
-}
+// inline DhcpContext* get_netif_dhcp_ctx(const NetworkInterface* netif)
+// {
+//     // return static_cast<DhcpContext*>(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
+// }
 
 
 
@@ -276,7 +221,8 @@ static UdpPcb* dhcp_pcb;
 static uint8_t dhcp_pcb_refcount;
 
 /* DHCP client state machine functions */
-static LwipStatus dhcp_discover(NetworkInterface * netif);
+static bool
+dhcp_discover(NetworkInterface& netif, DhcpContext& ctx);
 static LwipStatus dhcp_select(NetworkInterface * netif);
 static void dhcp_bind(NetworkInterface * netif);
 static LwipStatus dhcp_decline(NetworkInterface * netif);
@@ -294,7 +240,8 @@ static void dhcp_t2_timeout(NetworkInterface * netif);
 
 /* build outgoing messages */
 /* create a DHCP message, fill in common headers */
-static struct PacketBuffer* dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len);
+static std::vector<bool, std::vector<uint8_t>>
+dhcp_create_msg(NetworkInterface& netif, DhcpContext& dhcp, uint8_t message_type);
 /* add a DHCP option (type, then length in bytes) */
 static uint16_t dhcp_option(uint16_t options_out_len, uint8_t * options, uint8_t option_type, uint8_t option_len);
 /* add option values */

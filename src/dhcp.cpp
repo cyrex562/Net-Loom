@@ -68,20 +68,19 @@ static void dhcp_dec_pcb_refcount(void)
  *
  * @param netif the netif under DHCP control
  */
-static void dhcp_handle_nak(NetworkInterface * netif)
+bool
+dhcp_handle_nak(NetworkInterface& netif, DhcpContext& ctx)
 {
-    // DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    auto dhcp = netif->dhcp_ctx;
-    // Logf(true | LWIP_DBG_TRACE,
-    //      ("dhcp_handle_nak(netif=%p) %c%c%d\n", (void *)netif, netif->name[0], netif
-    //          ->name[1], (uint16_t)netif->num));
     /* Change to a defined state - set this before assigning the address
         to ensure the callback can use dhcp_supplied_address() */
-    dhcp_set_state(&dhcp, DHCP_STATE_BACKING_OFF);
+    ctx.state = DHCP_STATE_BACKING_OFF;
     /* remove IP address from interface (must no longer be used, as per RFC2131) */
-    set_netif_addr(netif, nullptr, nullptr, nullptr);
+    if (!netif_remove_ip4_addr(netif, ctx.offered_ip_addr))
+    {
+        return false;
+    }
     /* We can immediately restart discovery */
-    dhcp_discover(netif);
+    return dhcp_discover(netif, ctx);
 }
 
 ///
@@ -93,20 +92,13 @@ static void dhcp_handle_nak(NetworkInterface * netif)
 ///
 /// netif: the netif under DHCP control
 ///
-static void
-dhcp_check(NetworkInterface * netif)
+bool
+dhcp_check(NetworkInterface* netif, DhcpContext& ctx)
 {
-    // DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    auto dhcp = netif->dhcp_ctx;
-    Logf(true,
-         "dhcp_check(netif=%p) %c%c\n",
-         netif,
-         netif->name[0],
-         netif->name[1]);
-    dhcp_set_state(&dhcp, DHCP_STATE_CHECKING);
+    ctx.state = DHCP_STATE_CHECKING;
     /* create an ARP query for the offered IP address, expecting that no host
        responds, as the IP address should not be in use. */
-    LwipStatus result = etharp_query(netif, &dhcp.offered_ip_addr, nullptr);
+    LwipStatus result = etharp_query(netif, &dhcp.offered_ip_addr, nullptr,);
     if (result != STATUS_SUCCESS) {
         Logf(true, "dhcp_check: could not perform ARP query\n");
     }
@@ -175,8 +167,7 @@ static LwipStatus dhcp_select(NetworkInterface * netif)
     /* create and initialize the DHCP message header */
     struct PacketBuffer* p_out = dhcp_create_msg(netif,
                                                  dhcp,
-                                                 DHCP_REQUEST,
-                                                 &options_out_len);
+                                                 DHCP_REQUEST);
     if (p_out != nullptr) {
         auto msg_out = reinterpret_cast<DhcpMsg*>(p_out->payload);
         options_out_len = dhcp_option(options_out_len,
@@ -330,7 +321,7 @@ dhcp_timeout(NetworkInterface * netif)
     /* back-off period has passed, or server selection timed out */
     if (dhcp->state == DHCP_STATE_BACKING_OFF || dhcp->state == DHCP_STATE_SELECTING) {
         Logf(true, "dhcp_timeout(): restarting discovery\n");
-        dhcp_discover(netif);
+        dhcp_discover(netif,);
         /* receiving the requested lease timed out */
     } else if (dhcp->state == DHCP_STATE_REQUESTING) {
         Logf(true, "dhcp_timeout(): REQUESTING, DHCP request timed out\n");
@@ -346,7 +337,7 @@ dhcp_timeout(NetworkInterface * netif)
     } else if (dhcp->state == DHCP_STATE_CHECKING) {
         Logf(true, "dhcp_timeout(): CHECKING, ARP request timed out\n");
         if (dhcp->tries <= 1) {
-            dhcp_check(netif);
+            dhcp_check(netif,);
             /* no ARP replies on the offered address,
                looks like the IP address is indeed free */
         } else {
@@ -358,7 +349,7 @@ dhcp_timeout(NetworkInterface * netif)
         if (dhcp->tries < kRebootTries) {
             dhcp_reboot(netif);
         } else {
-            dhcp_discover(netif);
+            dhcp_discover(netif,);
         }
     }
 }
@@ -599,7 +590,7 @@ dhcp_start(NetworkInterface * netif)
     }
 
     /* (re)start the DHCP negotiation */
-    LwipStatus result = dhcp_discover(netif);
+    LwipStatus result = dhcp_discover(netif,);
     if (result != STATUS_SUCCESS) {
         /* free resources allocated above */
         dhcp_release_and_stop(netif);
@@ -634,7 +625,7 @@ dhcp_inform(NetworkInterface * netif)
     dhcp_set_state(&dhcp, DHCP_STATE_INFORMING);
 
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, &dhcp, DHCP_INFORM, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, &dhcp, DHCP_INFORM);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
@@ -693,7 +684,7 @@ dhcp_network_changed(NetworkInterface * netif)
 
             /* ensure we start with short timeouts, even if already discovering */
             dhcp->tries = 0;
-            dhcp_discover(netif);
+            dhcp_discover(netif,);
             break;
     }
 }
@@ -707,9 +698,9 @@ dhcp_network_changed(NetworkInterface * netif)
  * @param addr The IP address we received a reply from
  */
 bool
-dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr)
+dhcp_arp_reply(NetworkInterface& netif, const Ip4Addr& addr, DhcpContext& ctx)
 {
-    DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
+    // DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
     Logf(true, "dhcp_arp_reply()\n");
     /* is a DHCP client doing an ARP check? */
     if (dhcp != nullptr && dhcp->state == DHCP_STATE_CHECKING) {
@@ -745,7 +736,7 @@ dhcp_decline(NetworkInterface * netif)
     Logf(true, "dhcp_decline()\n");
     dhcp_set_state(dhcp, DHCP_STATE_BACKING_OFF);
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_DECLINE, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_DECLINE);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_REQUESTED_IP, 4);
@@ -780,20 +771,19 @@ dhcp_decline(NetworkInterface * netif)
  * Start the DHCP process, discover a DHCP server.
  *
  * @param netif the netif under DHCP control
+ * @param ctx
  */
-static LwipStatus
-dhcp_discover(NetworkInterface * netif)
+bool
+dhcp_discover(NetworkInterface& netif, DhcpContext& ctx)
 {
-    DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    LwipStatus result = STATUS_SUCCESS;
     uint16_t options_out_len;
 
     Logf(true, "dhcp_discover()\n");
+    ctx.offered_ip_addr.addr = IP4_ADDR_ANY_U32;
+    ctx.state = DHCP_STATE_SELECTING;
 
-    ip4_addr_set_any(&dhcp->offered_ip_addr);
-    dhcp_set_state(dhcp, DHCP_STATE_SELECTING);
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_DISCOVER, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_DISCOVER);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         Logf(true, "dhcp_discover: making request\n");
@@ -959,7 +949,7 @@ dhcp_renew(NetworkInterface * netif)
     dhcp_set_state(dhcp, DHCP_STATE_RENEWING);
 
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
@@ -1011,7 +1001,7 @@ dhcp_rebind(NetworkInterface * netif)
     dhcp_set_state(dhcp, DHCP_STATE_REBINDING);
 
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
@@ -1063,7 +1053,7 @@ dhcp_reboot(NetworkInterface * netif)
     dhcp_set_state(dhcp, DHCP_STATE_REBOOTING);
 
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST, &options_out_len);
+    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
     if (p_out != nullptr) {
         auto* msg_out = (DhcpMsg*)p_out->payload;
         options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
@@ -1141,7 +1131,7 @@ dhcp_release_and_stop(NetworkInterface * netif)
     /* send release message when current IP was assigned via DHCP */
     if (dhcp_supplied_address(netif)) {
         uint16_t options_out_len;
-        struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_RELEASE, &options_out_len);
+        struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
         if (p_out != nullptr) {
             auto* msg_out = (DhcpMsg*)p_out->payload;
             options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_SERVER_ID, 4);
@@ -1601,7 +1591,7 @@ dhcp_recv(void* arg, UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& addr, uint1
 
             if ((netif->flags & NETIF_FLAG_ETH_ARP) != 0) {
                 /* check if the acknowledged lease address is already in use */
-                dhcp_check(netif);
+                dhcp_check(netif,);
             } else {
                 /* bind interface to the acknowledged lease address */
                 dhcp_bind(netif);
@@ -1620,7 +1610,7 @@ dhcp_recv(void* arg, UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& addr, uint1
         (dhcp->state == DHCP_STATE_REBOOTING || dhcp->state == DHCP_STATE_REQUESTING ||
              dhcp->state == DHCP_STATE_REBINDING || dhcp->state == DHCP_STATE_RENEWING)) {
         Logf(true, "DHCP_NAK received\n");
-        dhcp_handle_nak(netif);
+        dhcp_handle_nak(netif,);
     }
     /* received a DHCP_OFFER in DHCP_STATE_SELECTING state? */
     else if (msg_type == DHCP_OFFER && dhcp->state == DHCP_STATE_SELECTING) {
@@ -1628,9 +1618,6 @@ dhcp_recv(void* arg, UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& addr, uint1
         /* remember offered lease */
         dhcp_handle_offer(netif, msg_in,dhcp);
     }
-
-free_pbuf_and_return:
-    free_pkt_buf(p);
 }
 
 /**
@@ -1640,13 +1627,15 @@ free_pbuf_and_return:
  * @param dhcp dhcp control struct
  * @param message_type message type of the request
  */
-static struct PacketBuffer*
-dhcp_create_msg(NetworkInterface * netif, DhcpContext * dhcp, uint8_t message_type, uint16_t * options_out_len)
+static std::vector<bool, std::vector<uint8_t>>
+dhcp_create_msg(NetworkInterface& netif, DhcpContext& dhcp, uint8_t message_type)
 {
     /** default global transaction identifier starting value (easy to match
      *  with a packet analyser). We simply increment for each new request.
      *  Predefine DHCP_GLOBAL_XID to a better value or a function call to generate one
-     *  at runtime, any supporting function prototypes can be defined in DHCP_GLOBAL_XID_HEADER */
+     *  at runtime, any supporting function prototypes can be defined in DHCP_GLOBAL_XID_HEADER
+     *
+     */
 
     static uint32_t xid;
 
