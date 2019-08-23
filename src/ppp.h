@@ -17,44 +17,9 @@
 #include <lcp_options.h>
 #include <ccp_options.h>
 #include <mppe_def.h>
+#include <ppp_def.h>
 
 
-/**
- * Protocol field values.
- */
-enum PppProtoFieldValue
-{
-    PPP_IP = 0x21,
-    /* Internet Protocol */
-    PPP_VJC_COMP = 0x2d,
-    /* VJ compressed TCP */
-    PPP_VJC_UNCOMP = 0x2f,
-    /* VJ uncompressed TCP */
-    PPP_IPV6 = 0x57,
-    /* Internet Protocol Version 6 */
-    PPP_COMP = 0xfd,
-    /* compressed packet */
-    PPP_IPCP = 0x8021,
-    /* IP Control Protocol */
-    PPP_IPV6CP = 0x8057,
-    /* IPv6 Control Protocol */
-    PPP_CCP = 0x80fd,
-    /* Compression Control Protocol */
-    PPP_ECP = 0x8053,
-    /* Encryption Control Protocol */
-    PPP_LCP = 0xc021,
-    /* Link Control Protocol */
-    PPP_PAP = 0xc023,
-    /* Password Authentication Protocol */
-    PPP_LQR = 0xc025,
-    /* Link Quality Report protocol */
-    PPP_CHAP = 0xc223,
-    /* Cryptographic Handshake Auth. Protocol */
-    PPP_CBCP = 0xc029,
-    /* Callback Control Protocol */
-    PPP_EAP = 0xc227,
-    /* Extensible Authentication Protocol */
-};
 
 
 
@@ -246,7 +211,8 @@ bool ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm);
  */
 
 /* function called by all PPP subsystems to send packets */
-LwipStatus ppp_write(PppPcb& pcb, PacketBuffer& p);
+bool
+ppp_write(PppPcb& pcb, PacketBuffer& p);
 
 /* functions called by auth.c link_terminated() */
 bool
@@ -285,16 +251,18 @@ inline std::tuple<bool,uint8_t> GETCHAR(std::vector<uint8_t>& cp, size_t index)
 }
 
 
-inline void PUTCHAR(uint8_t val, std::vector<uint8_t>& cp)
+inline void PUTCHAR(uint8_t val, std::vector<uint8_t>& cp, size_t& index)
 {
     cp.push_back(val);
+    index += 1;
 }
 
 
-inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp)
+inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp, size_t& index)
 {
     for (auto&c : str) {
         cp.push_back(c);
+        index += 1;
     }
 }
 
@@ -310,10 +278,11 @@ inline std::tuple<bool, uint16_t> GETSHORT(std::vector<uint8_t>& cp, size_t& ind
 }
 
 
-inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp)
+inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp, size_t& index)
 {
     cp.push_back(s >> 8);
     cp.push_back(s);
+    index += 2;
 }
 
 
@@ -387,15 +356,15 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 //     PUTCHAR(PPP_UI, p); \
 //     PUTSHORT(t, p); }
 
-inline void MAKEHEADER(std::vector<uint8_t>& p, PppProtoFieldValue t)
+inline void
+MAKEHEADER(std::vector<uint8_t>& p, PppProtoFieldValue t)
 {
     auto put_size = 1 + 1 + 2;
-    if (p.size() < put_size) {
-        p.resize(p.size() + put_size);
-    }
-    PUTCHAR(PPP_ALLSTATIONS, p); \
-    PUTCHAR(PPP_UI, p); \
-    PUTSHORT(t, p);
+    if (p.size() < put_size) { p.resize(p.size() + put_size); }
+    size_t index = 0;
+    PUTCHAR(PPP_ALLSTATIONS, p, index);
+    PUTCHAR(PPP_UI, p, index);
+    PUTSHORT(t, p, index);
 }
 
 /* Procedures exported from auth.c */

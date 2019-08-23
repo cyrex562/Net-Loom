@@ -184,7 +184,7 @@ static void
 ipcp_open(PppPcb* pcb)
 {
     Fsm* f = &pcb->ipcp_fsm;
-    fsm_open(f);
+    fsm_open(, f);
     pcb->ipcp_is_open = true;
 }
 
@@ -196,7 +196,7 @@ static void
 ipcp_close(PppPcb* pcb, const char* reason)
 {
     Fsm* f = &pcb->ipcp_fsm;
-    fsm_close(f, reason);
+    fsm_close(, f, reason);
 }
 
 
@@ -207,7 +207,7 @@ static void
 ipcp_lowerup(PppPcb* pcb)
 {
     Fsm* f = &pcb->ipcp_fsm;
-    fsm_lowerup(f);
+    fsm_lowerup(, f);
 }
 
 
@@ -229,7 +229,7 @@ static void
 ipcp_input(PppPcb* pcb, uint8_t* p, int len)
 {
     Fsm* f = &pcb->ipcp_fsm;
-    fsm_input(f, p);
+    fsm_input(, f, p);
 }
 
 

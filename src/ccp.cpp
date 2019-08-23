@@ -11,10 +11,11 @@
 /*
  * Do we want / did we get any compression?
  */
-static int ccp_anycompress(CcpOptions* opt)
+bool
+ccp_anycompress(CcpOptions& options)
 {
-    return ((opt)->deflate || (opt)->bsd_compress || (opt)->predictor_1 || (opt)->
-        predictor_2 || (opt)->mppe);
+    return ((options).deflate || (options).bsd_compress || (options).predictor_1 || (options).
+        predictor_2 || (options).mppe);
 }
 
 
@@ -22,25 +23,27 @@ static int ccp_anycompress(CcpOptions* opt)
 /*
  * ccp_init - initialize CCP.
  */
-static void ccp_init(PppPcb* ppp_pcb)
+bool
+ccp_init(PppPcb& pcb)
 {
-    ppp_pcb->ccp_fsm.protocol = PPP_CCP;
-    fsm_init(&ppp_pcb->ccp_fsm,);
-    const auto wo = &ppp_pcb->ccp_wantoptions;
-    const auto ao = &ppp_pcb->ccp_allowoptions;
-    wo->deflate = true;
-    wo->deflate_size = DEFLATE_MAX_SIZE;
-    wo->deflate_correct = true;
-    wo->deflate_draft = true;
-    ao->deflate = true;
-    ao->deflate_size = DEFLATE_MAX_SIZE;
-    ao->deflate_correct = true;
-    ao->deflate_draft = true;
-    wo->bsd_compress = true;
-    wo->bsd_bits = BSD_MAX_BITS;
-    ao->bsd_compress = true;
-    ao->bsd_bits = BSD_MAX_BITS;
-    ao->predictor_1 = true;
+    pcb.ccp_fsm.protocol = PPP_CCP;
+    if (!fsm_init(pcb.ccp_fsm, pcb)) { return false; }
+    const auto wo = &pcb.ccp_wantoptions;
+    const auto ao = &pcb.ccp_allowoptions;
+    pcb.ccp_wantoptions.deflate = true;
+    pcb.ccp_wantoptions.deflate_size = DEFLATE_MAX_SIZE;
+    pcb.ccp_wantoptions.deflate_correct = true;
+    pcb.ccp_wantoptions.deflate_draft = true;
+    pcb.ccp_allowoptions.deflate = true;
+    pcb.ccp_allowoptions.deflate_size = DEFLATE_MAX_SIZE;
+    pcb.ccp_allowoptions.deflate_correct = true;
+    pcb.ccp_allowoptions.deflate_draft = true;
+    pcb.ccp_wantoptions.bsd_compress = true;
+    pcb.ccp_wantoptions.bsd_bits = BSD_MAX_BITS;
+    pcb.ccp_allowoptions.bsd_compress = true;
+    pcb.ccp_allowoptions.bsd_bits = BSD_MAX_BITS;
+    pcb.ccp_allowoptions.predictor_1 = true;
+    return true;
 }
 
 void ccp_reset_comp(PppPcb* pcb)
@@ -88,17 +91,17 @@ ccp_set(PppPcb& pcb,
  */
 bool ccp_open(PppPcb& pcb)
 {
-    auto f = &pcb->ccp_fsm;
-    const auto go = &pcb->ccp_gotoptions;
-    if (f->state != PPP_FSM_OPENED)
+    // auto f = &pcb->ccp_fsm;
+    // const auto go = &pcb->ccp_gotoptions;
+    if (pcb.ccp_fsm.state != PPP_FSM_OPENED)
         ccp_set(pcb, 1, 0, 0, 0); /*
      * Find out which compressors the kernel supports before
      * deciding whether to open in silent mode.
      */
-    ccp_resetci(f, pcb);
-    if (!ccp_anycompress(go))
-        f->flags |= OPT_SILENT;
-    fsm_open(f);
+    ccp_resetci(pcb.ccp_fsm ,pcb);
+    if (!ccp_anycompress(pcb.ccp_gotoptions))
+        pcb.ccp_fsm.options.silent = true;
+    fsm_open(, pcb.ccp_fsm);
 }
 
 /*
@@ -108,7 +111,7 @@ static bool
 ccp_close(PppPcb& pcb, std::string& reason)
 {
     ccp_set(pcb, false, false, 0, 0);
-    fsm_close(pcb.ccp_fsm, reason);
+    fsm_close(, pcb.ccp_fsm, reason);
 }
 
 /*
@@ -117,7 +120,7 @@ ccp_close(PppPcb& pcb, std::string& reason)
 static void ccp_lowerup(PppPcb* pcb)
 {
     const auto f = &pcb->ccp_fsm;
-    fsm_lowerup(f);
+    fsm_lowerup(, f);
 }
 
 /*
@@ -138,7 +141,7 @@ void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
      * Check for a terminate-request so we can print a message.
      */
     const auto oldstate = f.state;
-    fsm_input(pcb.ccp_fsm, pkt);
+    fsm_input(, pcb.ccp_fsm, pkt);
     if (oldstate == PPP_FSM_OPENED && pkt[0] == TERMREQ && pcb.ccp_fsm.state != PPP_FSM_OPENED)
     {
         spdlog::info("Compression disabled by peer.");

@@ -73,115 +73,55 @@ enum CpCodes
     /* Code Reject */
 };
 
-
-
-
-
-// struct FsmCallbacks {
-//     /* Reset our Configuration Information */
-//     void (*resetci)(Fsm *, PppPcb*);
-//     /* Length of our Configuration Information */
-//     size_t  (*cilen)	 (PppPcb*);
-//     /* Add our Configuration Information */
-//     void (*addci) (Fsm *, uint8_t *, int *, PppPcb*);
-//     /* ACK our Configuration Information */
-//     int  (*ackci) (Fsm *, uint8_t *, int, PppPcb*);
-//     /* NAK our Configuration Information */
-//     int (*nakci)(Fsm*, const uint8_t*, int, int, PppPcb*);
-//     /* Reject our Configuration Information */
-//     int (*rejci)(Fsm*, const uint8_t*, int, PppPcb*);
-//     /* Request peer's Configuration Information */
-//     int  (*reqci)	 (Fsm *, uint8_t *, size_t *, int, PppPcb*);
-//     /* Called when fsm reaches PPP_FSM_OPENED state */
-//     void (*up) (Fsm *, PppPcb*);
-//     /* Called when fsm leaves PPP_FSM_OPENED state */
-//     void (*down) (Fsm *, Fsm*, PppPcb*);
-//     /* Called when we want the lower layer */
-//     void (*starting)	 (Fsm *);
-//     /* Called when we don't want the lower layer */
-//     void (*finished) (Fsm *);
-//     /* Called when Protocol-Reject received */
-//     void (*protreject)	 (int);
-//     /* Retransmission is necessary */
-//     void (*retransmit)	 (Fsm *);
-//     /* Called when unknown code received */
-//     int  (*extcode)	 (Fsm *, int, int, uint8_t *, int, PppPcb*);
-//     const char *proto_name;	/* String name for protocol (for messages) */
-// } ;
-
-
-/*
- * Link states.
- */
-enum PppFsmLinkStates
-{
-    PPP_FSM_INITIAL = 0,
-    /* Down, hasn't been opened */
-    PPP_FSM_STARTING = 1,
-    /* Down, been opened */
-    PPP_FSM_CLOSED = 2,
-    /* Up, hasn't been opened */
-    PPP_FSM_STOPPED = 3,
-    /* Open, waiting for down event */
-    PPP_FSM_CLOSING = 4,
-    /* Terminating the connection, not open */
-    PPP_FSM_STOPPING = 5,
-    /* Terminating, but open */
-    PPP_FSM_REQSENT = 6,
-    /* We've sent a Config Request */
-    PPP_FSM_ACKRCVD = 7,
-    /* We've received a Config Ack */
-    PPP_FSM_ACKSENT = 8,
-    /* We've sent a Config Ack */
-    PPP_FSM_OPENED = 9,
-    /* Connection available */
-};
-
-
-
-/*
- * Flags - indicate options controlling FSM operation
- */
-enum FsmOpts
-{
-    OPT_PASSIVE = 1,
-    /* Don't die if we don't get a response */
-    OPT_RESTART = 2,
-    /* Treat 2nd OPEN as DOWN, UP */
-    OPT_SILENT = 4,
-    /* Wait for peer to speak first */
-};
-
-
 /*
  * Prototypes
  */
 bool
 fsm_init(::Fsm& fsm, PppPcb& pcb);
-void fsm_lowerup(Fsm* f);
-void fsm_lowerdown(Fsm* f);
-bool fsm_open(Fsm* f);
+
+bool
+fsm_lowerup(PppPcb& pcb, Fsm& f);
+
+bool
+fsm_lowerdown(Fsm& f);
+bool fsm_open(PppPcb& pcb, Fsm& f);
 
 
 bool
-fsm_close(Fsm& fsm, std::string& reason);
+fsm_close(PppPcb& pcb, Fsm& fsm, std::string& reason);
 
 
 bool
-fsm_input(::Fsm& fsm, std::vector<uint8_t>& packet);
-void fsm_protreject(Fsm* f);
-void fsm_send_data(PppPcb& pcb, Fsm& fsm, uint8_t code, uint8_t id, std::vector<uint8_t>& data);
-void fsm_rtermreq(Fsm* f, int id, uint8_t *p, size_t len);
+fsm_input(PppPcb& pcb, ::Fsm& fsm, std::vector<uint8_t>& packet);
+
+bool
+fsm_proto_rej(PppPcb& pcb, Fsm& f);
+bool fsm_send_data2(PppPcb& pcb, Fsm& fsm, uint8_t code, uint8_t id, std::vector<uint8_t>& data);
+
+bool
+fsm_recv_term_req(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t>& packet);
 
 
 bool
 fsm_timeout(PppPcb& pcb, Fsm& fsm);
-void fsm_rconfreq(Fsm *f, uint8_t id, uint8_t *inp, size_t len);
-void fsm_rconfack(Fsm* f, int id, uint8_t *inp, size_t len);
-void fsm_rconfnakrej(Fsm* f, int code, int id, uint8_t *inp, size_t len);
-void fsm_rtermack(Fsm *f);
-void fsm_rcoderej(Fsm* f, uint8_t *inp, size_t len);
-void fsm_sconfreq(Fsm *f, int retransmit);
+
+bool
+fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet);
+
+bool
+fsm_recv_conf_ack(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t> packet);
+
+bool
+fsm_recv_conf_nak_rej(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t>& packet);
+
+bool
+fsm_recv_term_ack(PppPcb& pcb, Fsm& f);
+
+bool
+fsm_recv_code_rej(PppPcb& pcb, Fsm& f, std::vector<uint8_t> packet);
+
+bool
+fsm_senc_conf_req(PppPcb& pcb, Fsm& f, bool retransmit);
 
 //
 // END OF FILE

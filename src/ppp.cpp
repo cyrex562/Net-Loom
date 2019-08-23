@@ -79,7 +79,7 @@ ppp_connect(PppPcb& pcb, uint64_t holdoff)
     new_phase(pcb, PPP_PHASE_HOLDOFF);
     // sys_timeout_debug((uint32_t)(holdoff * 1000), ppp_do_connect, pcb, "ppp_do_connect");
     return STATUS_SUCCESS;
-} 
+}
 
 
 /**
@@ -89,8 +89,8 @@ ppp_connect(PppPcb& pcb, uint64_t holdoff)
  *
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
- * 
- * 
+ *
+ *
  */
 LwipStatus
 ppp_listen(PppPcb& pcb)
@@ -98,7 +98,7 @@ ppp_listen(PppPcb& pcb)
     if (pcb.phase != PPP_PHASE_DEAD)
     {
         return ERR_ALREADY;
-    } 
+    }
     magic_randomize();
     // if (pcb.link_cb->listen)
     // {
@@ -111,7 +111,7 @@ ppp_listen(PppPcb& pcb)
 
     // return ERR_IF;
     return STATUS_E_NOT_IMPLEMENTED;
-} 
+}
 
 /*
  * Initiate the end of a PPP connection.
@@ -169,7 +169,7 @@ ppp_close(PppPcb& pcb, const bool nocarrier)
     std::string reason = "User request";
     lcp_close(pcb, reason);
     return STATUS_SUCCESS;
-} 
+}
 
 
 /**
@@ -188,19 +188,19 @@ ppp_free(PppPcb& pcb, std::vector<NetworkInterface>& interfaces)
     if (pcb.phase != PPP_PHASE_DEAD)
     {
         return ERR_CONN;
-    } 
+    }
     remove_netif(pcb.netif, interfaces);
     // todo: send status update that ppp pcb  has been freed.
     //LwipStatus err = pcb->link_cb->free(pcb, (uint8_t*)pcb->link_ctx_cb);
     // delete pcb; // LWIP_MEMPOOL_FREE(PppPcb, pcb);
     return STATUS_SUCCESS;
-} 
+}
 
 
-/** 
+/**
  * Get and set parameters for the given connection.
- * Return 0 on success, an error code on failure. 
- * 
+ * Return 0 on success, an error code on failure.
+ *
  */
 LwipStatus
 ppp_ioctl(PppPcb* pcb, uint8_t cmd, uint8_t* arg)
@@ -244,7 +244,7 @@ ppp_do_connect(PppPcb& pcb)
     }
 
     return STATUS_ERROR;
-} 
+}
 
 
 /**
@@ -260,7 +260,7 @@ ppp_do_connect(PppPcb& pcb)
 //     netif->flags = NETIF_FLAG_UP; /* @todo: Initialize interface hostname */
 //     /* netif_set_hostname(netif, "lwip"); */
 //     return STATUS_SUCCESS;
-// } 
+// }
 
 /**
  * Send an IPv4 packet on the given connection.
@@ -272,7 +272,7 @@ ppp_netif_output_ip4(NetworkInterface& netif,
                      PppPcb& ppp_pcb)
 {
     return ppp_netif_output(netif, pb, PPP_IP, ppp_pcb);
-} 
+}
 
 
 /*
@@ -303,9 +303,9 @@ ppp_netif_output(NetworkInterface& netif, PacketBuffer& pb, PppProtoFieldValue p
     {
         // PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: MPPE required, not up\n", pcb->netif->num));
         goto err_rte_drop;
-    } 
-    
-    
+    }
+
+
     /**
      * Attempt Van Jacobson header compression if VJ is configured and
      * this is an IP packet.
@@ -367,13 +367,13 @@ ppp_netif_output(NetworkInterface& netif, PacketBuffer& pb, PppProtoFieldValue p
 err_rte_drop: err = STATUS_E_ROUTING; // LINK_STATS_INC(link.rterr);
     // LINK_STATS_INC(link.drop);
     // MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-err: 
+err:
     // if (fpb)
     // {
     //     free_pkt_buf(fpb);
     // }
     return err;
-} 
+}
 
 
 int
@@ -386,7 +386,7 @@ init_ppp_subsys()
      */
     magic_init();
     return 0;
-} 
+}
 
 /**
  * Create a new PPP control block.
@@ -401,14 +401,14 @@ init_ppp_subsys()
 std::tuple<bool, PppPcb>
 init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
 {
-    // const struct Protent* protp; 
+    // const struct Protent* protp;
     /* PPP is single-threaded: without a callback,
      * there is no way to know when the link is up. */
     // if (link_status_cb == nullptr)
     // {
     //     return nullptr;
-    // } 
-    
+    // }
+
     // pcb = (PppPcb*)LWIP_MEMPOOL_ALLOC(PppPcb);
     // const auto pcb = new PppPcb;
 
@@ -438,9 +438,9 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
     if (!add_netif(pcb.netif, interfaces))
     {
         return std::make_tuple(false, pcb);
-    } 
-    
-    
+    }
+
+
     //pcb->link_cb = callbacks;
     // TODO: consider implementing "copy callbacks" fn
     // pcb->link_cb->connect = callbacks->connect;
@@ -462,12 +462,12 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
     // }
     new_phase(pcb, PPP_PHASE_DEAD);
     return std::make_tuple(true, pcb);
-} 
+}
 
 
-/** 
- * Initiate LCP open request 
- * 
+/**
+ * Initiate LCP open request
+ *
  */
 bool
 ppp_start(PppPcb& pcb)
@@ -481,13 +481,13 @@ ppp_start(PppPcb& pcb)
     lcp_open(pcb);
     lcp_lowerup(pcb);
     return true;
-} 
+}
 
 
 
-/** 
- * Called when link failed to setup 
- * 
+/**
+ * Called when link failed to setup
+ *
  */
 void
 ppp_link_failed(PppPcb& pcb)
@@ -496,7 +496,7 @@ ppp_link_failed(PppPcb& pcb)
     pcb.err_code = PPPERR_OPEN;
     // pcb.link_status_cb(pcb, pcb.err_code, pcb.ctx_cb);
     // todo: publish link failed notification.
-} 
+}
 
 /** Called when link is normally down (i.e. it was asked to end) */
 void
@@ -510,7 +510,7 @@ ppp_link_end(PppPcb& pcb)
     }
     // pcb.link_status_cb(pcb, pcb.err_code, pcb.ctx_cb);
     // todo: publish link down notification.
-} 
+}
 
 
 /*
@@ -643,7 +643,7 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
  * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
  * functions (which are callbacks of the netif PPP interface).
  */
-LwipStatus
+bool
 ppp_write(PppPcb& pcb, PacketBuffer& p)
 {
     // write a packetbuffer to the next layer protocol and/or to the netif
@@ -662,7 +662,7 @@ ppp_link_terminated(PppPcb& pcb)
     // PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated[%d]: finished.\n", pcb->netif->num));
     // todo: publish link disconnect callback
     return false;
-} 
+}
 
 
 
@@ -682,7 +682,7 @@ new_phase(PppPcb* pcb, int p)
     //     pcb->notify_phase_cb(pcb, p, pcb->ctx_cb);
     // }
     // todo: publish notification of phase change.
-} 
+}
 
 /*
  * ppp_send_config - configure the transmit-side characteristics of

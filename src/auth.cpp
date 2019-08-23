@@ -393,28 +393,39 @@ check_idle(PppPcb& pcb)
         // todo: fix up to do time stuff.
         check_idle(pcb);
     }
-} //
-// connect_time_expired - log a message and close the connection.
-//
+}
+
+/**
+ *log a message and close the connection.
+ */
 bool
 connect_time_expired(PppPcb& pcb)
 {
     // const auto pcb = static_cast<PppPcb*>(pcb);
     spdlog::info("Connect time expired");
-    pcb->err_code = PPPERR_CONNECTTIME; /* Close connection */
-    lcp_close(pcb, "Connect time expired");
-} /*
- * get_secret - open the CHAP secret file and return the secret
+
+    pcb.err_code = PPPERR_CONNECTTIME;
+    /* Close connection */
+    std::string msg = "connect time expired";
+    return lcp_close(pcb, msg);
+}
+
+
+/**
+ * Open the CHAP secret file and return the secret
  * for authenticating the given client on the given server.
  * (We could be either client or server).
  */
 std::tuple<bool, std::string>
 get_secret(PppPcb& pcb, std::string& client, std::string& server)
 {
-    std::string secret = "";
+    std::string secret;
     if (client != pcb.settings.user) { return std::make_tuple(false, secret); }
     secret = pcb.settings.passwd;
     return std::make_tuple(true, secret);
-} //
+}
+
+
+//
 // END OF FILE
 //

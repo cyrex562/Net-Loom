@@ -64,14 +64,14 @@ void lcp_open(PppPcb& pcb) {
     Fsm *f = &pcb->lcp_fsm;
     LcpOptions *wo = &pcb->lcp_wantoptions;
 
-    f->flags &= ~(OPT_PASSIVE | OPT_SILENT);
+    f->options &= ~(OPT_PASSIVE | OPT_SILENT);
     if (wo->passive)
-    f->flags |= OPT_PASSIVE;
+    f->options |= OPT_PASSIVE;
     if (wo->silent)
     {
-        f->flags |= OPT_SILENT;
+        f->options |= OPT_SILENT;
     }
-    fsm_open(f);
+    fsm_open(, f);
 }
 
 
@@ -89,14 +89,14 @@ lcp_close(PppPcb& pcb, std::string& reason) {
     {
         new_phase(pcb, PPP_PHASE_TERMINATE);
     }
-    if (f->flags & DELAYED_UP) {
+    if (f->options & DELAYED_UP) {
     Untimeout(lcp_delayed_up, f);
     f->state = PPP_FSM_STOPPED;
     }
     int oldstate = f->state;
 
-    fsm_close(f, reason);
-    if (oldstate == PPP_FSM_STOPPED && (f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
+    fsm_close(, f, reason);
+    if (oldstate == PPP_FSM_STOPPED && (f->options & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
     /*
      * This action is not strictly according to the FSM in RFC1548,
      * but it does mean that the program terminates if you do a
@@ -104,7 +104,7 @@ lcp_close(PppPcb& pcb, std::string& reason) {
      * because we are in passive/silent mode or because we have
      * delayed the fsm_lowerup() call and it hasn't happened yet.
      */
-    f->flags &= ~DELAYED_UP;
+    f->options &= ~DELAYED_UP;
     lcp_finished(f);
     }
 }
@@ -130,10 +130,10 @@ void lcp_lowerup(PppPcb& pcb) {
     pcb->peer_mru = PPP_MRU;
 
     if (pcb->settings.listen_time != 0) {
-    f->flags |= DELAYED_UP;
+    f->options |= DELAYED_UP;
     timeout_ms(lcp_delayed_up, f, pcb->settings.listen_time);
     } else
-    fsm_lowerup(f);
+    fsm_lowerup(, f);
 }
 
 
@@ -144,8 +144,8 @@ bool
 lcp_lowerdown(PppPcb& pcb) {
     Fsm *f = &pcb->lcp_fsm;
 
-    if (f->flags & DELAYED_UP) {
-    f->flags &= ~DELAYED_UP;
+    if (f->options & DELAYED_UP) {
+    f->options &= ~DELAYED_UP;
     Untimeout(lcp_delayed_up, f);
     } else
     fsm_lowerdown(f);
@@ -158,9 +158,9 @@ lcp_lowerdown(PppPcb& pcb) {
 void lcp_delayed_up(void* arg) {
     Fsm *f = (Fsm*)arg;
 
-    if (f->flags & DELAYED_UP) {
-    f->flags &= ~DELAYED_UP;
-    fsm_lowerup(f);
+    if (f->options & DELAYED_UP) {
+    f->options &= ~DELAYED_UP;
+    fsm_lowerup(, f);
     }
 }
 
@@ -171,12 +171,12 @@ void lcp_delayed_up(void* arg) {
 void lcp_input(PppPcb *pcb, uint8_t *p, int len) {
     Fsm *f = &pcb->lcp_fsm;
 
-    if (f->flags & DELAYED_UP) {
-    f->flags &= ~DELAYED_UP;
+    if (f->options & DELAYED_UP) {
+    f->options &= ~DELAYED_UP;
     Untimeout(lcp_delayed_up, f);
-    fsm_lowerup(f);
+    fsm_lowerup(, f);
     }
-    fsm_input(f, p);
+    fsm_input(, f, p);
 }
 
 /*
@@ -279,7 +279,7 @@ void lcp_protrej(PppPcb *pcb) {
      * Can't reject LCP!
      */
     ppp_error("Received Protocol-Reject for LCP!");
-    fsm_protreject(&pcb->lcp_fsm);
+    fsm_proto_rej(, &pcb->lcp_fsm);
 }
 
 

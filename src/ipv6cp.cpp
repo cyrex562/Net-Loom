@@ -73,7 +73,7 @@
     between BULL S.A. and INRIA).
 
     This software is available with usual "research" terms
-    with the aim of retain credits of the software. 
+    with the aim of retain credits of the software.
     Permission to use, copy, modify and distribute this software for any
     purpose and without fee is hereby granted, provided that the above
     copyright notice and this permission notice appear in all copies,
@@ -135,11 +135,11 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp $ 
+ * $Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp $
  */
 
 /*
- * @todo: 
+ * @todo:
  *
  * Proxy Neighbour Discovery.
  *
@@ -264,7 +264,7 @@ void ipv6cp_init(PppPcb *pcb) {
  * ipv6cp_open - IPV6CP is allowed to come up.
  */
 void ipv6cp_open(PppPcb *pcb) {
-    fsm_open(&pcb->ipv6cp_fsm);
+    fsm_open(, &pcb->ipv6cp_fsm);
 }
 
 
@@ -272,7 +272,7 @@ void ipv6cp_open(PppPcb *pcb) {
  * ipv6cp_close - Take IPV6CP down.
  */
 void ipv6cp_close(PppPcb *pcb, const char *reason) {
-    fsm_close(&pcb->ipv6cp_fsm, reason);
+    fsm_close(, &pcb->ipv6cp_fsm, reason);
 }
 
 
@@ -280,7 +280,7 @@ void ipv6cp_close(PppPcb *pcb, const char *reason) {
  * ipv6cp_lowerup - The lower layer is up.
  */
 void ipv6cp_lowerup(PppPcb *pcb) {
-    fsm_lowerup(&pcb->ipv6cp_fsm);
+    fsm_lowerup(, &pcb->ipv6cp_fsm);
 }
 
 
@@ -296,7 +296,7 @@ void ipv6cp_lowerdown(PppPcb *pcb) {
  * ipv6cp_input - Input IPV6CP packet.
  */
 void ipv6cp_input(PppPcb *pcb, uint8_t *p, int len) {
-    fsm_input(&pcb->ipv6cp_fsm, p);
+    fsm_input(, &pcb->ipv6cp_fsm, p);
 }
 
 
@@ -320,11 +320,11 @@ void ipv6cp_resetci(Fsm *f) {
     Ipv6CpOptions *ao = &pcb->ipv6cp_allowoptions;
 
     wo->req_ifaceid = wo->neg_ifaceid && ao->neg_ifaceid;
-    
+
     if (!wo->opt_local) {
     eui64_magic_nz(wo->ourid);
     }
-    
+
     *go = *wo;
     eui64_zero(go->hisid);	/* last proposed interface identifier */
 }
@@ -679,7 +679,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
      * Reset all his options.
      */
     zero_mem(ho, sizeof(*ho));
-    
+
     /*
      * Process all his options.
      */
@@ -712,7 +712,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
         }
 
         /*
-         * If he has no interface identifier, or if we both have same 
+         * If he has no interface identifier, or if we both have same
          * identifier then NAK it with new idea.
          * In particular, if we don't know his identifier, but he does,
          * then accept it.
@@ -723,10 +723,10 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
         orc = CONFREJ;		/* Reject CI */
         break;
         }
-        if (!eui64_iszero(wo->hisid) && 
-        !eui64_equals(ifaceid, wo->hisid) && 
+        if (!eui64_iszero(wo->hisid) &&
+        !eui64_equals(ifaceid, wo->hisid) &&
         eui64_iszero(go->hisid)) {
-            
+
         orc = CONFNAK;
         ifaceid = wo->hisid;
         go->hisid = ifaceid;
@@ -740,7 +740,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
             /* first time, try option */
             ifaceid = wo->hisid;
         }
-        while (eui64_iszero(ifaceid) || 
+        while (eui64_iszero(ifaceid) ||
                eui64_equals(ifaceid, go->ourid))
         {
             /* bad luck */
@@ -856,7 +856,7 @@ bool
 ipv6_demand_conf(PppPcb* u) {
     // Ipv6CpOptions *wo = &ipv6cp_wantoptions[u];
     Ipv6CpOptions *wo = nullptr;
-    
+
     if (!sif6up(u))
     {
         return false;
@@ -930,15 +930,15 @@ void ipv6cp_up(Fsm *f) {
      */
     bool demand = false;
     if (demand) {
-    if (! eui64_equals(go->ourid, wo->ourid) || 
+    if (! eui64_equals(go->ourid, wo->ourid) ||
         ! eui64_equals(ho->hisid, wo->hisid)) {
         if (! eui64_equals(go->ourid, wo->ourid))
         {
-            // warn("Local LL address changed to %s", 
+            // warn("Local LL address changed to %s",
         //      llv6_ntoa(go->ourid));
         if (! eui64_equals(ho->hisid, wo->hisid))
         {
-            // warn("Remote LL address changed to %s", 
+            // warn("Remote LL address changed to %s",
         //      llv6_ntoa(ho->hisid));
         ipv6cp_clear_addrs(f->pcb, go->ourid, ho->hisid);
             }

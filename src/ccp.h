@@ -111,7 +111,8 @@ struct CcpRackTimeoutArgs
 /*
  * ccp_open - CCP is allowed to come up.
  */
-void ccp_init(PppPcb* ppp_pcb);
+bool
+ccp_init(PppPcb& pcb);
 bool ccp_open(PppPcb& pcb);
 
 
