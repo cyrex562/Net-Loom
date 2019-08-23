@@ -156,10 +156,8 @@ inline bool init_ip4_module()
 }
 
 
-LwipStatus
-get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
-                           const std::vector<NetworkInterface>& netifs_to_check,
-                           NetworkInterface& found_netif);
+std::tuple<bool, NetworkInterface>
+get_netif_for_dst_ip4_addr(const Ip4Addr& dst, const std::vector<NetworkInterface>& netifs);
 
 
 LwipStatus

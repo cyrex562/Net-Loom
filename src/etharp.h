@@ -113,15 +113,12 @@ void
 clear_expired_arp_entries(std::vector<EtharpEntry>& entries);
 
 
-LwipStatus
+bool
 find_etharp_addr(NetworkInterface& netif,
                  const Ip4AddrInfo& ipaddr,
                  MacAddress& eth_ret,
                  Ip4AddrInfo& ip_ret,
-                 std::vector<EtharpEntry>& entries,
-                 bool try_hard,
-                 bool find_only,
-                 bool static_entry);
+                 std::vector<EtharpEntry>& entries);
 
 
 bool
@@ -132,10 +129,10 @@ etharp_get_entry(size_t index,
                  std::vector<EtharpEntry> entries);
 
 
-LwipStatus
-etharp_output(struct NetworkInterface* netif,
-              struct PacketBuffer* q,
-              const Ip4Addr* ipaddr);
+bool
+etharp_output(NetworkInterface& netif,
+              PacketBuffer& packet,
+              const Ip4Addr& ipaddr);
 
 
 bool
@@ -212,21 +209,24 @@ inline void IpaddrWordalignedCopyFromIp4AddrT(IpAddrInfo* dest, const Ip4AddrWor
 
 void etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries);
 
-LwipStatus etharp_add_static_entry(const Ip4AddrInfo& ip4_addr_info, MacAddress& mac_address, std::vector<NetworkInterface>&
-                                   interfaces,
-                                   bool try_hard,
-                                   bool static_entry,
-                                   bool find_only,
-                                   std::vector<EtharpEntry>& entries);
-LwipStatus etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info, NetworkInterface& netif, std::vector<EtharpEntry>&
-                                      entries,
-                                      bool try_hard,
-                                      bool find_only,
-                                      bool static_entry);
+
+bool
+etharp_add_static_entry(const Ip4AddrInfo& ip4_addr_info,
+                        MacAddress& mac_address,
+                        std::vector<NetworkInterface>& interfaces,
+                        bool static_entry,
+                        std::vector<EtharpEntry>& entries);
 
 
 bool
-recv_etharp(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<EtharpEntry>& entries);
+etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info,
+                           NetworkInterface& netif,
+                           std::vector<EtharpEntry>&
+                           entries);
+
+
+bool
+etharp_recv(PacketBuffer& pkt_buf, NetworkInterface& netif, DhcpContext& ctx, std::vector<EtharpEntry>& entries);
 
 
 bool

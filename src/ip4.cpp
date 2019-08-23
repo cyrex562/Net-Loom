@@ -1,6 +1,6 @@
 ///
 /// file: ip4.cpp
-/// 
+///
 
 #include <lwip_debug.h>
 #include <autoip.h>
@@ -34,39 +34,33 @@ source_route_ip4_addr(const Ip4AddrInfo& src,
 ///
 /// Find network interface for destination IP.
 ///
-LwipStatus
-get_netif_for_dst_ip4_addr(const Ip4Addr& dst_addr,
-                           const std::vector<NetworkInterface>& netifs_to_check,
-                           NetworkInterface& found_netif)
+std::tuple<bool, NetworkInterface>
+get_netif_for_dst_ip4_addr(const Ip4Addr& dst,
+                           const std::vector<NetworkInterface>& netifs)
 {
-
-    for (const auto& netif : netifs_to_check)
+    for (const auto& netif : netifs)
     {
-        if (ip4_addr_is_mcast(dst_addr))
+        if (ip4_addr_is_mcast(dst))
         {
-            for (auto grp: netif.igmp_groups)
+            for (auto grp : netif.igmp_groups)
             {
-               if (grp.group_address.addr == dst_addr.addr)
-               {
-                   found_netif = netif;
-                   return STATUS_SUCCESS;
-               }
+                if (grp.group_address.addr == dst.addr)
+                {
+                    return std::make_tuple(true, netif);
+                }
             }
         }
-
         for (auto addr_info : netif.ip4_addresses)
         {
-            auto net = get_ip4_addr_net(dst_addr, addr_info.netmask);
+            const auto net = get_ip4_addr_net(dst, addr_info.netmask);
             if (net.addr == addr_info.network.addr)
             {
-                found_netif = netif;
-                return STATUS_SUCCESS;
+                return std::make_tuple(true, netif);
             }
         }
-
     }
-
-    return STATUS_NOT_FOUND;
+    NetworkInterface empty{};
+    return std::make_tuple(false, empty);
 }
 
 
@@ -106,7 +100,7 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
         }
     }
     return true;
-} 
+}
 
 
 /**
@@ -178,7 +172,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
     return STATUS_SUCCESS;
 } ///
 /// Return true if the current input packet should be accepted on this netif
-/// 
+///
 static bool
 ip4_input_accept(NetworkInterface& netif)
 {
@@ -564,8 +558,8 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
         if (optlen > IP4_HDR_LEN_MAX - IP4_HDR_LEN) {
         /* optlen too long */
         Logf(true, "ip4_output_if_opt: optlen too long\n");
-     
-        
+
+
         return ERR_VAL;
       }
       /* round up to a multiple of 4 */
@@ -574,7 +568,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
       /* First write in the IP options */
       // if (pbuf_add_header(p, optlen_aligned)) {
       //   Logf(true, "ip4_output_if_opt: not enough room for IP options in PacketBuffer\n");
-      //   
+      //
       //   return ERR_BUF;
       // }
       memcpy(p->payload, ip_options, optlen);
@@ -594,7 +588,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           // {
           //     Logf(true, "ip4_output: not enough room for IP header in PacketBuffer\n");
           //
-          //     
+          //
           //     return ERR_BUF;
           // }
 
@@ -659,7 +653,7 @@ ip4_output_if_opt_src(struct PacketBuffer *p, const Ip4Addr *src, const Ip4Addr 
           if (p->len < IP4_HDR_LEN)
           {
               Logf(true, "ip4_output: LWIP_IP_HDRINCL but PacketBuffer is too short\n");
-              
+
               return ERR_BUF;
           }
           iphdr = (struct Ip4Hdr *)p->payload;
@@ -784,4 +778,4 @@ ip4_output_hinted(struct PacketBuffer* pkt_buf,
     return err;
 }
 
-  
+

@@ -19,6 +19,9 @@ struct EthHdr
     uint16_t type;
 };
 
+
+
+
 constexpr auto kSizeofEthHdr = (14 + ETH_PAD_SIZE);
 
 /** VLAN header inserted between ethernet header and payload
@@ -35,7 +38,7 @@ constexpr auto VLAN_HDR_LEN = 4;
 inline uint16_t get_vlan_id(EthVlanHdr* vlan_hdr)
 {
     return (lwip_htons((vlan_hdr)->prio_vid) & 0xFFF);
-} 
+}
 
 /// The 24-bit IANA IPv4-multicast OUI is 01-00-5e:
 constexpr uint8_t LNK_LYR_MCAST_ADDR_OUI[] = {0x01, 0x00, 0x5e};
@@ -53,11 +56,12 @@ inline bool cmp_eth_addr(const MacAddress* addr1, const MacAddress* addr2)
 LwipStatus ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc);
 
 ///
-LwipStatus send_ethernet_pkt(NetworkInterface& netif,
-                           PacketBuffer& p,
-                           const MacAddress& src,
-                           const MacAddress& dst,
-                           uint16_t eth_type);
+bool
+send_ethernet_pkt(NetworkInterface& netif,
+                  PacketBuffer& packet,
+                  const MacAddress& src,
+                  const MacAddress& dst,
+                  uint16_t eth_type);
 
 extern const struct MacAddress ETH_BCAST_ADDR;
 

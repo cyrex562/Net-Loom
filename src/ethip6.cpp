@@ -90,11 +90,11 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
         const auto i = 0;
 
         return send_ethernet_pkt(net_ifc,
-                               pkt_buf,
-                               net_ifc.mac_address,
-                               dest,
-                               ETHTYPE_IPV6);
-    } 
+                                 pkt_buf,
+                                 net_ifc.mac_address,
+                                 dest,
+                                 ETHTYPE_IPV6);
+    }
     // We have a unicast destination IP address */ /* @todo anycast? */
     /* Ask ND6 what to do with the packet. */
     const auto result = nd6_get_next_hop_addr_or_queue(net_ifc, pkt_buf, ip6_addr, &hwaddr);
@@ -108,10 +108,10 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     } /* Send out the packet using the returned hardware address. */
     memcpy(dest.bytes, hwaddr, 6);
     return send_ethernet_pkt(net_ifc,
-                           pkt_buf,
-                           reinterpret_cast<const struct MacAddress*>(net_ifc->hwaddr),
-                           &dest,
-                           ETHTYPE_IPV6);
+                             pkt_buf,
+                             reinterpret_cast<const struct MacAddress*>(net_ifc->hwaddr),
+                             &dest,
+                             ETHTYPE_IPV6);
 }
 
 //

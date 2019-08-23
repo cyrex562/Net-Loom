@@ -186,7 +186,7 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
         }
         else
         {
-            return ERR_MEM;
+            return std::make_tuple(false, found_index);
         }
         entries.erase(entries.begin() + i);
     }
@@ -194,7 +194,7 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
     entries[i].ctime = 0;
     entries[i].netif = netif;
     found_index =i;
-    return STATUS_SUCCESS;
+    return std::make_tuple(true, found_index);
 }
 
 
@@ -207,6 +207,9 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
  * @param netif netif related to this entry (used for NETIF_ADDRHINT)
  * @param addr_info IP address of the inserted ARP entry.
  * @param mac_address Ethernet address of the inserted ARP entry.
+ * @param try_hard
+ * @param static_entry
+ * @param entries
  * @param flags See @ref etharp_state
  *
  * @return
@@ -216,16 +219,13 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
  *
  * @see free_pkt_buf()
  */
-static LwipStatus
+static bool
 etharp_update_arp_entry(NetworkInterface& netif,
                         const Ip4AddrInfo& addr_info,
                         MacAddress& mac_address,
-                        bool try_hard,
                         bool static_entry,
-                        std::vector<EtharpEntry> entries,
-                        bool find_only)
+                        std::vector<EtharpEntry> entries)
 {
-
     if (ip4_addr_isany(addr_info.address) ||
         netif_is_ip4_addr_bcast(addr_info.address, netif) ||
         ip4_addr_is_mcast(addr_info.address)) {
@@ -233,10 +233,9 @@ etharp_update_arp_entry(NetworkInterface& netif,
     }
     /* find or create ARP entry */
     size_t found_index = 0;
-    if(etharp_find_entry(addr_info, netif, entries) != STATUS_SUCCESS)
-    {
-        return STATUS_ERROR;
-    }
+    bool ok = true;
+    std::make_tuple(ok, found_index) = etharp_find_entry(addr_info, netif, entries);
+    if(!ok) { return false; }
 
     if (static_entry) {
         /* record static type */
@@ -265,13 +264,11 @@ etharp_update_arp_entry(NetworkInterface& netif,
     /* this is where we will send out queued packets! */
 
     return send_ethernet_pkt(netif, entries[found_index].pkt_buf, netif.mac_address, mac_address, ETHTYPE_IP);
-
-
-    return STATUS_SUCCESS;
 }
 
 
-/** Add a new static entry to the ARP table. If an entry exists for the
+/**
+ * Add a new static entry to the ARP table. If an entry exists for the
  * specified IP address, this entry is overwritten.
  * If packets are queued for the specified IP address, they are sent out.
  *
@@ -284,22 +281,19 @@ etharp_update_arp_entry(NetworkInterface& netif,
  * @param entries
  * @return See return values of etharp_add_static_entry
  */
-LwipStatus
+bool
 etharp_add_static_entry(const Ip4AddrInfo& ip4_addr_info,
                         MacAddress& mac_address,
                         std::vector<NetworkInterface>& interfaces,
-                        bool try_hard,
                         bool static_entry,
-                        bool find_only,
                         std::vector<EtharpEntry>& entries)
 {
     NetworkInterface found_netif{};
-    if( get_netif_for_dst_ip4_addr(ip4_addr_info.address,interfaces, found_netif) != STATUS_SUCCESS)
-    {
-        return STATUS_E_ROUTING;
-    }
-
-    return etharp_update_arp_entry(found_netif, ip4_addr_info, mac_address, try_hard, static_entry, entries, find_only);
+    bool ok;
+    std::tie(ok, found_netif) = get_netif_for_dst_ip4_addr(ip4_addr_info.address,
+                                                           interfaces);
+    if (!ok) { return false; }
+    return etharp_update_arp_entry(found_netif, ip4_addr_info, mac_address, static_entry, entries);
 }
 
 
@@ -307,34 +301,31 @@ etharp_add_static_entry(const Ip4AddrInfo& ip4_addr_info,
  * etharp_add_static_entry.
  *
  * @param ip4_addr_info IP address of the static entry to remove
+ * @param netif
+ * @param entries
  * @return ERR_OK: entry removed
  *         ERR_MEM: entry wasn't found
  *         ERR_ARG: entry wasn't a static entry but a dynamic one
  */
-LwipStatus
+bool
 etharp_remove_static_entry(const Ip4AddrInfo& ip4_addr_info,
                            NetworkInterface& netif,
-                           std::vector<EtharpEntry>& entries,
-                           bool try_hard,
-                           bool find_only,
-                           bool static_entry)
+                           std::vector<EtharpEntry>& entries)
 {
     // find or create ARP entry
     size_t index = 0;
-    if (etharp_find_entry(ip4_addr_info,
-                          netif,
-                          entries) != STATUS_SUCCESS)
-    {
-        return STATUS_ERROR;
-    }
+    bool ok;
+    std::tie(ok, index) = etharp_find_entry(ip4_addr_info, netif ,entries);
+    if (!ok) {return false;}
+
     if (entries[index].state != ETHARP_STATE_STATIC)
     {
         // entry wasn't a static entry, cannot remove it
-        return STATUS_E_INVALID_ARG;
+        return false;
     }
     // entry found, free it
     entries.erase(entries.begin() + index);
-    return STATUS_SUCCESS;
+    return false;
 }
 
 
@@ -369,35 +360,26 @@ etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& entries)
  * @param eth_ret points to return pointer
  * @param ip_ret points to return pointer
  * @param entries
- * @param try_hard
- * @param find_only
- * @param static_entry
  * @return table index if found, -1 otherwise
  */
-LwipStatus
+bool
 find_etharp_addr(NetworkInterface& netif,
                  const Ip4AddrInfo& ipaddr,
                  MacAddress& eth_ret,
                  Ip4AddrInfo& ip_ret,
-                 std::vector<EtharpEntry>& entries,
-                 const bool try_hard,
-                 const bool find_only,
-                 const bool static_entry)
+                 std::vector<EtharpEntry>& entries)
 {
     size_t found_index = 0;
-    if (etharp_find_entry(ipaddr,
-                          netif,
-                          entries) != STATUS_SUCCESS)
-    {
-        return STATUS_ERROR;
-    }
+    bool ok;
+    std::tie(ok, found_index) = etharp_find_entry(ipaddr, netif, entries);
+    if (!ok) { return false; }
     if ((found_index >= 0) && (entries[found_index].state >= ETHARP_STATE_STABLE))
     {
         eth_ret = entries[found_index].mac_address;
         ip_ret = entries[found_index].ip4_addr_info;
-        return STATUS_SUCCESS;
+        return true;
     }
-    return STATUS_ERROR;
+    return false;
 }
 
 
@@ -438,12 +420,14 @@ etharp_get_entry(size_t index,
  *
  * @param pkt_buf The ARP packet that arrived on netif. Is freed by this function.
  * @param netif The lwIP network interface on which the ARP packet PacketBuffer arrived.
+ * @param entries
  *
  * @see free_pkt_buf()
  */
 bool
-recv_etharp(PacketBuffer& pkt_buf,
+etharp_recv(PacketBuffer& pkt_buf,
             NetworkInterface& netif,
+            DhcpContext& ctx,
             std::vector<EtharpEntry>& entries)
 {
     Ip4Addr sipaddr{};
@@ -505,8 +489,7 @@ recv_etharp(PacketBuffer& pkt_buf,
     */
     Ip4AddrInfo sipaddr_info{};
     sipaddr_info.address = sipaddr;
-    etharp_update_arp_entry(netif, sipaddr_info, hdr.shwaddr, true, false, entries,
-                            false);
+    etharp_update_arp_entry(netif, sipaddr_info, hdr.shwaddr, false, entries);
     /* now act on the message itself */
     /* ARP request? */
     if (hdr.opcode == pp_htons(ARP_REQUEST))
@@ -548,7 +531,10 @@ recv_etharp(PacketBuffer& pkt_buf,
          * address on a single network.
          * @todo How should we handle redundant (fail-over) interfaces?
          */
-        dhcp_arp_reply(netif, &sipaddr,);
+        if (!dhcp_arp_reply(netif, sipaddr, ctx))
+        {
+            return false;
+        }
     }
     else
     {
@@ -557,36 +543,55 @@ recv_etharp(PacketBuffer& pkt_buf,
     }
     /* free ARP packet */
     // free_pkt_buf(pkt_buf);
+
+    return true;
 }
 
 
-/** Just a small helper function that sends a PacketBuffer to an ethernet address
- * in the arp_table specified by the index 'arp_idx'.
+/**
+ * Just a small helper function that sends a PacketBuffer to an ethernet address in the
+ * arp_table specified by the index 'arp_idx'.
  */
-static LwipStatus
-etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* q, NetIfcAddrIdx arp_idx)
+bool
+etharp_output_to_arp_index(NetworkInterface& netif,
+                           PacketBuffer& packet,
+                           NetIfcAddrIdx arp_idx,
+                           std::vector<EtharpEntry>& arp_table)
 {
-    lwip_assert("arp_table[arp_idx].state >= ETHARP_STATE_STABLE",
-                arp_table[arp_idx].state >= ETHARP_STATE_STABLE);
+    if (arp_table.size() <= arp_idx)
+    {
+        return false;
+    }
+
     /* if arp table entry is about to expire: re-request it,
-       but only if its state is ETHARP_STATE_STABLE to prevent flooding the
-       network with ARP requests if this address is used frequently. */
-    if (arp_table[arp_idx].state == ETHARP_STATE_STABLE) {
-        if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_BROADCAST) {
+          but only if its state is ETHARP_STATE_STABLE to prevent flooding the
+          network with ARP requests if this address is used frequently. */
+    if (arp_table[arp_idx].state == ETHARP_STATE_STABLE)
+    {
+        if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_BROADCAST)
+        {
             /* issue a standard request using broadcast */
-            if (etharp_request(netif, &arp_table[arp_idx].ipaddr) == STATUS_SUCCESS) {
+            if (etharp_request(netif, arp_table[arp_idx].ip4_addr_info))
+            {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
-        else if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_UNICAST) {
+        else if (arp_table[arp_idx].ctime >= ARP_AGE_REREQUEST_USED_UNICAST)
+        {
             /* issue a unicast request (for 15 seconds) to prevent unnecessary broadcast */
-            if (etharp_request_dst(netif, &arp_table[arp_idx].ipaddr, &arp_table[arp_idx].MacAddress) == STATUS_SUCCESS) {
+            if (etharp_request_dst(netif,
+                                   arp_table[arp_idx].ip4_addr_info,
+                                   arp_table[arp_idx].mac_address) == STATUS_SUCCESS)
+            {
                 arp_table[arp_idx].state = ETHARP_STATE_STABLE_REREQUESTING_1;
             }
         }
     }
-
-    return send_ethernet_pkt(netif, q, (struct MacAddress *)(netif->hwaddr), &arp_table[arp_idx].MacAddress, ETHTYPE_IP);
+    return send_ethernet_pkt(netif,
+                             packet,
+                             netif.mac_address,
+                             arp_table[arp_idx].mac_address,
+                             ETHTYPE_IP);
 }
 
 
@@ -601,44 +606,39 @@ etharp_output_to_arp_index(struct NetworkInterface* netif, struct PacketBuffer* 
  * the gateway is used.
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
- * @param q The PacketBuffer(s) containing the IP packet to be sent.
+ * @param packet The PacketBuffer(s) containing the IP packet to be sent.
  * @param ipaddr The IP address of the packet destination.
  *
  * @return
  * - ERR_RTE No route to destination (no gateway to external networks),
  * or the return type of either etharp_query() or ethernet_output().
  */
-LwipStatus
-etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4Addr* ipaddr)
+bool
+etharp_output(NetworkInterface& netif, PacketBuffer& packet, const Ip4Addr& ipaddr)
 {
-    const struct MacAddress* dest;
-    struct MacAddress mcastaddr{};
+    MacAddress dest;
+    MacAddress mcast_addr;
     auto dst_addr = ipaddr;
-
-
-    lwip_assert("netif != NULL", netif != nullptr);
-    lwip_assert("q != NULL", q != nullptr);
-    lwip_assert("ipaddr != NULL", ipaddr != nullptr);
 
     /* Determine on destination hardware address. Broadcasts and multicasts
      * are special, other IP addresses are looked up in the ARP table. */
 
     /* broadcast destination IP address? */
-    if (ip4_addr_isbroadcast(ipaddr, netif)) {
+    if (netif_is_ip4_addr_bcast(ipaddr, netif)) {
         /* broadcast on Ethernet also */
-        dest = (const struct MacAddress *)&ETH_BCAST_ADDR;
+        dest = make_bcast_eth_addr();
         /* multicast destination IP address? */
     }
     else if (ip4_addr_is_mcast(ipaddr)) {
         /* Hash IP multicast address to MAC address.*/
-        mcastaddr.bytes[0] = LNK_LYR_MCAST_ADDR_OUI[0];
-        mcastaddr.bytes[1] = LNK_LYR_MCAST_ADDR_OUI[1];
-        mcastaddr.bytes[2] = LNK_LYR_MCAST_ADDR_OUI[2];
-        mcastaddr.bytes[3] = ip4_addr2(ipaddr) & 0x7f;
-        mcastaddr.bytes[4] = ip4_addr3(ipaddr);
-        mcastaddr.bytes[5] = ip4_addr4(ipaddr);
+        mcast_addr.bytes[0] = LNK_LYR_MCAST_ADDR_OUI[0];
+        mcast_addr.bytes[1] = LNK_LYR_MCAST_ADDR_OUI[1];
+        mcast_addr.bytes[2] = LNK_LYR_MCAST_ADDR_OUI[2];
+        mcast_addr.bytes[3] = ip4_addr2(ipaddr) & 0x7f;
+        mcast_addr.bytes[4] = ip4_addr3(ipaddr);
+        mcast_addr.bytes[5] = ip4_addr4(ipaddr);
         /* destination Ethernet address is multicast */
-        dest = &mcastaddr;
+        dest = mcast_addr;
         /* unicast destination IP address? */
     }
     else {
@@ -646,7 +646,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
            a subnet broadcast. */
         if (!cmp_ip4_addr_net(ipaddr, get_netif_ip4_addr(netif,), get_netif_ip4_netmask(netif,)) &&
             !is_ip4_addr_link_local(ipaddr)) {
-            auto iphdr = reinterpret_cast<Ip4Hdr&>(q->payload);
+            auto iphdr = reinterpret_cast<Ip4Hdr&>(packet->payload);
             /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
                a link-local source address must always be "directly to its destination
                on the same physical link. The host MUST NOT send the packet to any
@@ -678,7 +678,7 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
                     (is_ip4_addr_equal(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
                     /* the per-pcb-cached entry is stable and the right one! */
                     // ETHARP_STATS_INC(etharp.cachehit);
-                    return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
+                    return etharp_output_to_arp_index(netif, packet, etharp_cached_entry,);
                 }
             }
         }
@@ -693,18 +693,18 @@ etharp_output(struct NetworkInterface* netif, struct PacketBuffer* q, const Ip4A
 
                 (is_ip4_addr_equal(dst_addr, &arp_table[i].ipaddr))) {
                 /* found an existing, stable entry */
-                return etharp_output_to_arp_index(netif, q, i);
+                return etharp_output_to_arp_index(netif, packet, i,);
             }
         }
         /* no stable entry found, use the (slower) query function:
            queue on destination Ethernet address belonging to ipaddr */
-        return etharp_query(netif, dst_addr, q,);
+        return etharp_query(netif, dst_addr, packet,);
     }
 
     /* continuation for multicast/broadcast destinations */
     /* obtain source Ethernet address of the given interface */
     /* send packet directly on the link */
-    return send_ethernet_pkt(netif, q, (struct MacAddress *)(netif->hwaddr), dest, ETHTYPE_IP);
+    return send_ethernet_pkt(netif, packet, (struct MacAddress *)(netif->hwaddr), dest, ETHTYPE_IP);
 }
 
 
@@ -945,7 +945,7 @@ send_raw_arp_pkt(NetworkInterface& netif,
  *         ERR_MEM if the ARP packet couldn't be allocated
  *         any other LwipStatus on failure
  */
-static bool
+bool
 etharp_request_dst(NetworkInterface& netif,
                    const Ip4AddrInfo& ipaddr,
                    const MacAddress& hw_dst_addr)

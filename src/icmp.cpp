@@ -304,7 +304,7 @@ static void send_icmp_response(PacketBuffer& p, uint8_t type, uint8_t code)
             (uint8_t *)p->payload,
             IP4_HDR_LEN + ICMP_DEST_UNREACH_DATA_SZ);
     copy_ip4_addr(&iphdr_src, &iphdr->src);
-    NetworkInterface* netif = get_netif_for_dst_ip4_addr(&iphdr_src,,);
+    NetworkInterface* netif = get_netif_for_dst_ip4_addr(&iphdr_src,);
     if (netif != nullptr)
     {
         /* calculate checksum */

@@ -1,6 +1,6 @@
 ///
 /// file: ethernet.cpp
-/// 
+///
 
 #define NOMINMAX
 
@@ -16,6 +16,9 @@
 
 const struct MacAddress ETH_BCAST_ADDR = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 const struct MacAddress ETH_ZERO_ADDR = {{0, 0, 0, 0, 0, 0}};
+
+
+
 
 
 /**
