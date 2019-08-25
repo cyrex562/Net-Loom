@@ -1,18 +1,18 @@
-#include <auth.h>
-#include <ccp.h>
-#include <dns.h>
-#include <fsm.h>
-#include <ip4.h> /* for ip4_input() */
-#include <ip6.h> /* for ip6_input() */
-#include <ipv6cp.h>
-#include <lcp.h>
-#include <magic.h>
-#include <mppe.h>
-#include <packet_buffer.h>
-#include <ppp_opts.h>
-#include <pppos.h>
-#include <timeouts.h>
-#include <vj.h>
+#include "auth.h"
+#include "ccp.h"
+#include "dns.h"
+#include "fsm.h"
+#include "ip4.h" /* for ip4_input() */
+#include "ip6.h" /* for ip6_input() */
+#include "ipv6cp.h"
+#include "lcp.h"
+#include "magic.h"
+#include "mppe.h"
+#include "packet_buffer.h"
+#include "ppp_opts.h"
+#include "pppos.h"
+#include "timeouts.h"
+#include "vj.h"
 #ifdef _MSC_VER
 #endif
 
@@ -433,7 +433,7 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
     pcb.settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb.settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
     pcb.netif = pppif;
-    Ip4Addr ip4_any = make_ip4_addr_any();
+    Ip4Addr ip4_any = ip4_addr_create_any();
     Ip4Addr ip4_bcast = make_ip4_addr_bcast();
     if (!add_netif(pcb.netif, interfaces))
     {

@@ -1,20 +1,20 @@
 /**
  * @file network_interface.cpp
  */
-#include <dhcp6.h>
-#include <etharp.h>
-#include <ip6_addr.h>
-#include <ip_addr.h>
-#include <lwip_status.h>
-#include <network_interface.h>
-#include <sys.h>
+#include "dhcp6.h"
+#include "etharp.h"
+#include "ip6_addr.h"
+#include "ip_addr.h"
+#include "lwip_status.h"
+#include "network_interface.h"
+#include "sys.h"
 
 
 /**
  * Initialize a lwip network interface structure for a loopback interface
- *  @param netif the lwip network interface structure for this loopif 
+ *  @param netif the lwip network interface structure for this loopif
  *  @param if_name the name of the interface, default is "lo"
- *  @return ERR_OK if the loopif is initialized 
+ *  @return ERR_OK if the loopif is initialized
  *      ERR_MEM if private data couldn't be allocated
  */
 LwipStatus
@@ -67,7 +67,7 @@ add_netif(NetworkInterface& netif, std::vector<NetworkInterface>& interfaces)
 /**
  *
  */
-static LwipStatus
+LwipStatus
 notify_netif_addr_changed(const IpAddrInfo& old_addr, const IpAddrInfo& new_addr)
 {
     // todo: notify message bus that a netif's address has changed.
@@ -175,7 +175,7 @@ set_netif_default(NetworkInterface& netif, std::vector<NetworkInterface> interfa
     auto found = false;
     auto old_def_idx = 0;
     auto i = 0;
-    for (auto& interface : interfaces) 
+    for (auto& interface : interfaces)
     {
         if
         (interface.default_interface
@@ -188,7 +188,7 @@ set_netif_default(NetworkInterface& netif, std::vector<NetworkInterface> interfa
         i
         ++;
     }
-    for (auto& interface : interfaces) 
+    for (auto& interface : interfaces)
     {
         if
         (interface

@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <lwip_status.h>
-#include <packet_buffer.h>
-#include <mac_address.h>
-#include <ip4_addr.h>
-#include <ip6_addr.h>
-#include <igmp_grp.h>
-#include <dhcp_context.h>
-#include <dhcp6_context.h>
+#include "lwip_status.h"
+#include "packet_buffer.h"
+#include "mac_address.h"
+#include "ip4_addr.h"
+#include "ip6_addr.h"
+#include "igmp_grp.h"
+#include "dhcp_context.h"
+#include "dhcp6_context.h"
 #include <vector>
 #include "auto_ip_state.h"
 #include "mld6_group.h"
@@ -127,7 +127,7 @@ struct NetworkInterface
     NetifType netif_type;
     std::vector<Ip4AddrInfo> ip4_addresses;
     std::vector<Ip6AddrInfo> ip6_addresses;
-    void* state; // TODO: replace with different struct
+    // void* state; // TODO: replace with different struct
     DhcpContext dhcp_ctx;
     Dhcp6Context dhcp6_ctx;
     AutoipState auto_ip_state;
@@ -241,10 +241,21 @@ get_netif_ip4_netmask(const NetworkInterface& netif, const size_t index = 0)
 /**
  *
  */
-inline Ip4Addr
-get_netif_ip4_gw(const NetworkInterface& netif, const size_t index)
+inline std::tuple<bool, Ip4Addr>
+get_netif_ip4_gw(const NetworkInterface& netif, const Ip4Addr& addr1)
 {
-    return netif.ip4_addresses[index].gateway;
+    for (auto& addr2 : netif.ip4_addresses)
+    {
+        if (cmp_ip4_addr_net(addr1, addr2.netmask, addr2.address))
+        {
+            if (!ip4_addr_isany(addr2.gateway))
+            {
+                return std::make_tuple(true, addr2.gateway);
+            }
+        }
+    }
+    Ip4Addr empty{};
+    return std::make_tuple(false, empty);
 }
 
 
@@ -252,15 +263,15 @@ get_netif_ip4_gw(const NetworkInterface& netif, const size_t index)
  *
  */
 inline std::tuple<bool, Ip4AddrInfo>
-get_netif_ip4_addr(const NetworkInterface& netif, const Ip4AddrInfo& dest_addr_info)
+get_netif_ip4_addr(const NetworkInterface& netif, const Ip4Addr& dest_addr)
 {
     for (auto& it : netif.ip4_addresses) {
-        if (it.address.addr == dest_addr_info.address.addr) {
-            out_addr_info = it;
-            return STATUS_SUCCESS;
+        if (it.address.u32 == dest_addr.u32) {
+            return std::make_tuple(true, it);
         }
     }
-    return STATUS_NOT_FOUND;
+    Ip4AddrInfo empty{};
+    return std::make_tuple(false, empty);
 }
 
 
@@ -448,12 +459,13 @@ assign_ip6_addr_zone(Ip6AddrInfo& addr_info,
 /**
  *
  */
-inline LwipStatus
-get_netif_ip4_local_ip(const NetworkInterface& netif,
-                       const Ip4AddrInfo& dest_addr_info,
-                       Ip4AddrInfo& out_addr_info)
+inline std::tuple<bool, Ip4Addr>
+get_netif_ip4_local_ip(const NetworkInterface& netif, const Ip4Addr& dest_ip_addr)
 {
-    return get_netif_ip4_addr(netif, dest_addr_info);
+    bool ok = true;
+    Ip4AddrInfo ip_addr{};
+    std::tie(ok, ip_addr) = get_netif_ip4_addr(netif, dest_ip_addr);
+    return std::make_tuple(ok, ip_addr.address);
 }
 
 
@@ -473,6 +485,19 @@ inline bool netif_is_ip4_addr_bcast(const Ip4Addr& addr, const NetworkInterface&
     for (auto info : netif.ip4_addresses)
     {
         if (is_ip4_addr_equal(info.broadcast_address, addr))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline bool netif_ip4_addr_in_net(NetworkInterface& netif, const Ip4Addr& addr)
+{
+    for (auto info : netif.ip4_addresses)
+    {
+        if (cmp_ip4_addr_net(info.address, addr, info.netmask))
         {
             return true;
         }
@@ -548,14 +573,14 @@ bool set_netif_ip4_gw(NetworkInterface& netif, const Ip4Addr& new_gw, const Ip4A
 bool set_netif_ip4_addr(NetworkInterface& netif, const Ip4Addr& new_ip4_addr, const Ip4Addr& old_ip4_addr);
 
 /**
- * remove specified Ip4 address from 
+ * remove specified Ip4 address from
  */
 inline bool netif_remove_ip4_addr(NetworkInterface& netif, const Ip4Addr& ip_to_remove)
 {
     auto deleted = false;
     for (auto it = netif.ip4_addresses.begin(); it != netif.ip4_addresses.end(); it++)
     {
-        if (it->address.addr == ip_to_remove.addr)
+        if (it->address.u32 == ip_to_remove.u32)
         {
             netif.ip4_addresses.erase(it);
             deleted = true;
@@ -564,6 +589,28 @@ inline bool netif_remove_ip4_addr(NetworkInterface& netif, const Ip4Addr& ip_to_
     }
 
     return deleted;
+}
+
+
+bool netif_upsert_ip4(NetworkInterface& netif, Ip4AddrInfo& addr_info)
+{
+    bool updated = false;
+    for (auto& info : netif.ip4_addresses)
+    {
+        if (cmp_ip4_addr_net(addr_info.address, info.address, info.netmask))
+        {
+            info.address = addr_info.address;
+            updated = true;
+            break;
+        }
+    }
+
+    if (!updated)
+    {
+        netif.ip4_addresses.push_back(addr_info);
+    }
+
+    return true;
 }
 
 //

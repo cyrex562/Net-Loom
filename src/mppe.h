@@ -2,11 +2,11 @@
 // file: mppe.h
 //
 #pragma once
-#include <pppcrypt.h>
-#include <lwip_status.h>
-#include <packet_buffer.h>
+#include "pppcrypt.h"
+#include "lwip_status.h"
+#include "packet_buffer.h"
 #include "lcp.h"
-#include <mppe_def.h>
+#include "mppe_def.h"
 
 #include "mbedtls/arc4.h"
 

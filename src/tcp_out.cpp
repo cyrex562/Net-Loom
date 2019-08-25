@@ -61,16 +61,16 @@
  */
 
 #include <cstring>
-#include <def.h>
-#include <inet_chksum.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <ip_addr.h>
-#include <lwip_debug.h>
-#include <network_interface.h>
-#include <opt.h>
-#include <sys.h>
-#include <tcp_priv.h>
+#include "def.h"
+#include "inet_chksum.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "ip_addr.h"
+#include "lwip_debug.h"
+#include "network_interface.h"
+#include "opt.h"
+#include "sys.h"
+#include "tcp_priv.h"
 
 
 /* Allow to add custom TCP header options by defining this hook */

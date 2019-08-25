@@ -2,17 +2,17 @@
 /// file: ip4.cpp
 ///
 
-#include <lwip_debug.h>
-#include <autoip.h>
-#include <def.h>
-#include <icmp.h>
-#include <inet_chksum.h>
-#include <ip.h>
-#include <ip4_frag.h>
-#include <network_interface.h>
-#include <tcp_priv.h>
-#include <udp.h>
-#include <iana.h>
+#include "lwip_debug.h"
+#include "autoip.h"
+#include "def.h"
+#include "icmp.h"
+#include "inet_chksum.h"
+#include "ip.h"
+#include "ip4_frag.h"
+#include "network_interface.h"
+#include "tcp_priv.h"
+#include "udp.h"
+#include "iana.h"
 #include "raw_priv.h"
 #include <vector>
 
@@ -44,7 +44,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst,
         {
             for (auto grp : netif.igmp_groups)
             {
-                if (grp.group_address.addr == dst.addr)
+                if (grp.group_address.u32 == dst.u32)
                 {
                     return std::make_tuple(true, netif);
                 }
@@ -53,7 +53,7 @@ get_netif_for_dst_ip4_addr(const Ip4Addr& dst,
         for (auto addr_info : netif.ip4_addresses)
         {
             const auto net = get_ip4_addr_net(dst, addr_info.netmask);
-            if (net.addr == addr_info.network.addr)
+            if (net.u32 == addr_info.network.u32)
             {
                 return std::make_tuple(true, netif);
             }
@@ -86,13 +86,13 @@ can_forward_ip4_pkt(PacketBuffer& pkt_buf)
     // {
     //     return false;
     // } // todo: make whether we care about experimental IP addresses an configurable option
-    if (is_ip4_experimental(dst_addr.addr))
+    if (is_ip4_experimental(dst_addr.u32))
     {
         return false;
     }
-    if (is_ip4_class_a(dst_addr.addr))
+    if (is_ip4_class_a(dst_addr.u32))
     {
-        const uint32_t net = dst_addr.addr & IP4_CLASS_A_NET;
+        const uint32_t net = dst_addr.u32 & IP4_CLASS_A_NET;
         if (net == 0 || net == uint32_t(IP_LOOPBACKNET) << IP4_CLASS_A_NSHIFT)
         {
             /* don't route loopback packets */
@@ -123,7 +123,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
     {
         return STATUS_E_ROUTING;
     } /* RFC3927 2.7: do not forward link-local addresses */
-    if (is_ip4_addr_link_local(dst_addr.address))
+    if (ip4_addr_is_link_local(dst_addr.address))
     {
         return STATUS_E_ROUTING;
     } /* Find network interface where to forward this IP packet to. */
@@ -193,12 +193,12 @@ ip4_input_accept(NetworkInterface& netif)
             /* or broadcast on this interface network address? */
             netif_is_ip4_addr_bcast(curr_dst_addr.address, netif) ||
             get_ip4_addr_u32(curr_dst_addr.address) == pp_htonl(
-                make_ip4_addr_loopback().addr))
+                make_ip4_addr_loopback().u32))
         {
             return true;
         } /* connections to link-local addresses must persist after changing
             the netif's address (RFC3927 ch. 1.9) */
-        if (autoip_accept_packet(netif, curr_dst_addr.address))
+        if (autoip_accept_packet(,curr_dst_addr.address))
         {
             /* accept on this netif */
             return true;

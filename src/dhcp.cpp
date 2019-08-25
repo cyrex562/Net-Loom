@@ -423,10 +423,10 @@ dhcp_handle_ack(NetworkInterface * netif, DhcpMsg * msg_in)
 
 
     /* clear options we might not get from the ACK */
-    zero_ip4_addr(&dhcp->offered_sn_mask);
-    zero_ip4_addr(&dhcp->offered_gw_addr);
+    ip4_addr_zero(&dhcp->offered_sn_mask);
+    ip4_addr_zero(&dhcp->offered_gw_addr);
 
-    zero_ip4_addr(&dhcp->offered_si_addr);
+    ip4_addr_zero(&dhcp->offered_si_addr);
 
 
     /* lease time given? */
@@ -678,7 +678,7 @@ dhcp_network_changed(NetworkInterface * netif)
                same state */
 
             if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
-                autoip_stop(netif);
+                autoip_stop(netif,);
                 dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
             }
 
@@ -779,7 +779,7 @@ dhcp_discover(NetworkInterface& netif, DhcpContext& ctx)
     uint16_t options_out_len;
 
     Logf(true, "dhcp_discover()\n");
-    ctx.offered_ip_addr.addr = IP4_ADDR_ANY_U32;
+    ctx.offered_ip_addr.u32 = IP4_ADDR_ANY_U32;
     ctx.state = DHCP_STATE_SELECTING;
 
     /* create and initialize the DHCP message header */
@@ -814,7 +814,7 @@ dhcp_discover(NetworkInterface& netif, DhcpContext& ctx)
 
     if (dhcp->tries >= LWIP_DHCP_AUTOIP_COOP_TRIES && dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_OFF) {
         dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_ON;
-        autoip_start(netif);
+        autoip_start(netif,);
     }
     auto msecs = (uint16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
     dhcp->request_timeout = (uint16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
@@ -916,7 +916,7 @@ dhcp_bind(NetworkInterface * netif)
 
 
     if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
-        autoip_stop(netif);
+        autoip_stop(netif,);
         dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
     }
 
@@ -1119,11 +1119,11 @@ dhcp_release_and_stop(NetworkInterface * netif)
 
     /* clean old DHCP offer */
     zero_ip_addr(&dhcp->server_ip_addr);
-    zero_ip4_addr(&dhcp->offered_ip_addr);
-    zero_ip4_addr(&dhcp->offered_sn_mask);
-    zero_ip4_addr(&dhcp->offered_gw_addr);
+    ip4_addr_zero(&dhcp->offered_ip_addr);
+    ip4_addr_zero(&dhcp->offered_sn_mask);
+    ip4_addr_zero(&dhcp->offered_gw_addr);
 
-    zero_ip4_addr(&dhcp->offered_si_addr);
+    ip4_addr_zero(&dhcp->offered_si_addr);
 
     dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
     dhcp->t1_renew_time = dhcp->t2_rebind_time = dhcp->lease_used = dhcp->t0_timeout = 0;
@@ -1150,11 +1150,11 @@ dhcp_release_and_stop(NetworkInterface * netif)
     }
 
     /* remove IP address from interface (prevents routing from selecting this interface) */
-    Ip4Addr any_addr = make_ip4_addr_any();
+    Ip4Addr any_addr = ip4_addr_create_any();
     set_netif_addr(netif, &any_addr, &any_addr, &any_addr);
 
     if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
-        autoip_stop(netif);
+        autoip_stop(netif,);
         dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
     }
 

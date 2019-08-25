@@ -1,5 +1,5 @@
 #pragma once
-#include <mppe.h>
+#include "mppe.h"
 #include "fsm_def.h"
 struct PppPcb;
 

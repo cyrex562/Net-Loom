@@ -73,13 +73,13 @@
 *****************************************************************************/
 
 #define NOMINMAX
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 #include <cstdint>
-#include <sys.h>
-#include <pppcrypt.h>
+#include "sys.h"
+#include "pppcrypt.h"
 
-#include <magic.h>
-#include <pppcrypt.h>
+#include "magic.h"
+#include "pppcrypt.h"
 #include <algorithm>
 
 constexpr auto MD5_HASH_SIZE = 16;

@@ -29,20 +29,20 @@
  */
 
 #define NOMINMAX
-#include <demand.h>
-#include <ppp_opts.h>
-#include <fsm.h>
-#include <ipcp.h>
-#include <lcp.h>
+#include "demand.h"
+#include "ppp_opts.h"
+#include "fsm.h"
+#include "ipcp.h"
+#include "lcp.h"
 
 #include <cstdlib>
 #include <cstring>
-#include <pppos.h>
+#include "pppos.h"
 #ifdef _MSC_VER
 
 #else
-#include <unistd.h>
-#include <syslog.h>
+#include "unistd.h"
+#include "syslog.h"
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/time.h>

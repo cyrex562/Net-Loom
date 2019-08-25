@@ -8,7 +8,7 @@ struct pcapifh_linkstate
 };
 #else
 
-#include <Packet32.h>
+#include "Packet32.h"
 
 struct pcapifh_linkstate
 {

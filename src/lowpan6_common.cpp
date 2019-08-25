@@ -48,15 +48,15 @@
  * 6LowPAN netif implementation
  */
 
-#include <lowpan6_common.h>
+#include "lowpan6_common.h"
 
-#include <ip.h>
-#include <packet_buffer.h>
-#include <ip_addr.h>
-#include <network_interface.h>
-#include <udp.h>
+#include "ip.h"
+#include "packet_buffer.h"
+#include "ip_addr.h"
+#include "network_interface.h"
+#include "udp.h"
 
-#include <string.h>
+#include "string.h"
 #include "lowpan6_opts.h"
 
 /* Determine compression mode for unicast address. */

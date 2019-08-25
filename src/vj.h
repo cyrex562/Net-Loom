@@ -22,8 +22,8 @@
  * - Initial distribution.
  */
 #pragma once
-#include <ip.h>
-#include <tcp_priv.h>
+#include "ip.h"
+#include "tcp_priv.h"
 constexpr auto MAX_SLOTS = 16 /* must be > 2 and < 256 */;
 constexpr auto MAX_HDR = 128; /*
  * Compressed packet format:

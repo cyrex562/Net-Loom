@@ -3,17 +3,17 @@
 ///
 
 #include <cstring>
-#include <def.h>
-#include <icmp.h>
-#include <icmp6.h>
-#include <inet_chksum.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <ip_addr.h>
-#include <lwip_debug.h>
-#include <network_interface.h>
-#include <opt.h>
-#include <udp.h>
+#include "def.h"
+#include "icmp.h"
+#include "icmp6.h"
+#include "inet_chksum.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "ip_addr.h"
+#include "lwip_debug.h"
+#include "network_interface.h"
+#include "opt.h"
+#include "udp.h"
 #include "ip.h"
 
 /* From http://www.iana.org/assignments/port-numbers:
@@ -122,7 +122,7 @@ udp_input_local_match(struct UdpPcb* pcb, NetworkInterface& inp, bool broadcast)
             if (ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
             {
                 if (ip4_addr_isany(pcb->local_ip.u_addr.ip4.address) ||
-                    curr_dst_addr->u_addr.ip4.address.addr == IP4_ADDR_BCAST_U32 || cmp_ip4_addr_net(
+                    curr_dst_addr->u_addr.ip4.address.u32 == IP4_ADDR_BCAST_U32 || cmp_ip4_addr_net(
                     (pcb->local_ip.u_addr.ip4.address),
                     curr_dst_addr->u_addr.ip4.address,
                     get_netif_ip4_netmask(inp)))

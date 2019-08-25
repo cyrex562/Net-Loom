@@ -147,11 +147,11 @@
  *   interface up / set address.
  */
 
-#include <ipv6cp.h>
+#include "ipv6cp.h"
 
-#include <fsm.h>
-#include <ipcp.h>
-#include <magic.h>
+#include "fsm.h"
+#include "ipcp.h"
+#include "magic.h"
 #include "util.h"
 
 

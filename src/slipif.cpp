@@ -53,14 +53,14 @@
  *           pbuf_alloc to work on ISR level!).
  *
  */
-#include <slipif.h>
-#include <opt.h>
-#include <def.h>
-#include <packet_buffer.h>
-//#include <snmp.h>
-#include <sys.h>
-#include <sio.h>
-#include <lwip_debug.h>
+#include "slipif.h"
+#include "opt.h"
+#include "def.h"
+#include "packet_buffer.h"
+//#include "snmp.h"
+#include "sys.h"
+#include "sio.h"
+#include "lwip_debug.h"
 #define SLIP_END     0xC0 /* 0300: start and end of every packet */
 #define SLIP_ESC     0xDB /* 0333: escape start (one byte escaped data follows) */
 #define SLIP_ESC_END 0xDC /* 0334: following escape: original byte is 0xC0 (END) */

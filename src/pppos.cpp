@@ -28,19 +28,19 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 #include <cstring>
-#include <arch.h>
-#include <lwip_status.h>
-#include <packet_buffer.h>
-#include <sys.h>
-#include <network_interface.h>
-#include <tcpip_priv.h>
-#include <ip4.h> /* for ip4_input() */
+#include "arch.h"
+#include "lwip_status.h"
+#include "packet_buffer.h"
+#include "sys.h"
+#include "network_interface.h"
+#include "tcpip_priv.h"
+#include "ip4.h" /* for ip4_input() */
 
-#include <pppos.h>
-#include <vj.h>
-#include <ppp.h>
+#include "pppos.h"
+#include "vj.h"
+#include "ppp.h"
 /* Memory pool */
 // LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "PPPOS_PCB")
 /* callbacks called from PPP core */

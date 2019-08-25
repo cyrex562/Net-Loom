@@ -29,7 +29,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <pppcrypt.h>
+#include "pppcrypt.h"
 
 
 static uint8_t pppcrypt_get_7bits(uint8_t *input, int startBit) {

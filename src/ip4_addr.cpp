@@ -1,6 +1,6 @@
-#include <ip4_addr.h>
-#include <lwip_debug.h>
-#include <network_interface.h>
+#include "ip4_addr.h"
+#include "lwip_debug.h"
+#include "network_interface.h"
 #include <cctype>
 
 
@@ -30,7 +30,7 @@ is_ip4_netmask_valid(const uint32_t netmask)
         }
     } /* no one after the first zero -> valid */
     return true;
-} 
+}
 
 /**
  * Ascii internet address interpretation routine.
@@ -48,7 +48,7 @@ ipaddr_addr(std::string& cp)
         return get_ip4_addr_u32(val);
     }
     const auto addr_none = make_ip4_addr_none();
-    return addr_none.addr;
+    return addr_none.u32;
 }
 
 /**
@@ -74,7 +74,7 @@ ip4_addr_aton(std::string& cp, Ip4Addr& addr)
         base = 16;
     } // todo: implement regex;
     return true;
-} 
+}
 
 /**
  * Convert numeric IP address into decimal dotted ASCII representation.
@@ -89,7 +89,7 @@ ip4_addr_ntoa(const Ip4Addr& addr)
 {
     std::string str;
     return ip4_addr_ntoa_r(addr);
-} 
+}
 
 /**
  * Same as ip4addr_ntoa, but reentrant since a user-supplied buffer is used.

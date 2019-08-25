@@ -1,8 +1,8 @@
 #pragma once
 
-#include <network_interface.h>
-#include <ethernet.h>
-#include <lwip_status.h>
+#include "network_interface.h"
+#include "ethernet.h"
+#include "lwip_status.h"
 #include <cstdint>
 
 typedef uint64_t BridgeIfcPortMask;

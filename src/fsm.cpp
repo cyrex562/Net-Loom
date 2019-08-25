@@ -47,7 +47,7 @@
  */
 
 #define NOMINMAX
-#include <fsm.h>
+#include "fsm.h"
 #include "ppp.h"
 #include <vector>
 #include <string>

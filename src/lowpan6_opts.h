@@ -41,7 +41,7 @@
 #ifndef LWIP_HDR_LOWPAN6_OPTS_H
 #define LWIP_HDR_LOWPAN6_OPTS_H
 
-#include <opt.h>
+#include "opt.h"
 
 /** LWIP_6LOWPAN_NUM_CONTEXTS: define the number of compression
  * contexts per netif type

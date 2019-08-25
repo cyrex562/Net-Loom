@@ -51,16 +51,16 @@
 
 /* Based on igmp.c implementation of igmp v2 protocol */
 
-#include <opt.h>
-#include <mld6.h>
-#include <mld6.h>
-#include <icmp6.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <ip.h>
-#include <inet_chksum.h>
-#include <packet_buffer.h>
-#include <network_interface.h>
+#include "opt.h"
+#include "mld6.h"
+#include "mld6.h"
+#include "icmp6.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "ip.h"
+#include "inet_chksum.h"
+#include "packet_buffer.h"
+#include "network_interface.h"
 #include <cstring>
 
 

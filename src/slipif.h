@@ -38,8 +38,8 @@
  *
  */
 #pragma once
-#include <opt.h>
-#include <network_interface.h>
+#include "opt.h"
+#include "network_interface.h"
 
 
 LwipStatus slipif_init(NetworkInterface* netif);

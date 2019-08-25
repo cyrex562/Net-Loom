@@ -5,7 +5,7 @@
 #include <cstdint>
 #include "fsm.h"
 #include "chap_new.h"
-#include <ppp.h>
+#include "ppp.h"
 
 /*
  * When the link comes up we want to be able to wait for a short while,

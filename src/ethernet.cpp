@@ -4,13 +4,13 @@
 
 #define NOMINMAX
 
-#include <def.h>
-#include <etharp.h>
-#include <ethernet.h>
-#include <ieee.h>
-#include <ip.h>
-#include <lwip_debug.h>
-#include <pppoe.h>
+#include "def.h"
+#include "etharp.h"
+#include "ethernet.h"
+#include "ieee.h"
+#include "ip.h"
+#include "lwip_debug.h"
+#include "pppoe.h"
 #include <cstring>
 
 
@@ -103,7 +103,7 @@ ethernet_input(PacketBuffer& pkt_buf, NetworkInterface& net_ifc)
             // pkt_buf.ll_multicast = true;
         }
 
-        else if (cmp_eth_addr(&ethhdr->dest, &ETH_BCAST_ADDR)) {
+        else if (eth_addr_cmp(&ethhdr->dest, &ETH_BCAST_ADDR)) {
             /* mark the pbuf as link-layer broadcast */
             // pkt_buf.ll_broadcast = true;
         }

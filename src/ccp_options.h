@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <mppe_def.h>
+#include "mppe_def.h"
 
 
 struct CcpOptions {

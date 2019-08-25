@@ -3,10 +3,10 @@
 //
 #pragma once
 
-#include <opt.h>
-#include <lwip_status.h>
-#include <timeouts.h>
-#include <network_interface.h>
+#include "opt.h"
+#include "lwip_status.h"
+#include "timeouts.h"
+#include "network_interface.h"
 
 /** The global semaphore to lock the stack. */
 extern Mutex lock_tcpip_core;

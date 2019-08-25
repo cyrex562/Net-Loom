@@ -2,9 +2,9 @@
 // file: tcpip_priv.h
 //
 #pragma once
-#include <tcpip.h>
-#include <sys.h>
-#include <timeouts.h>
+#include "tcpip.h"
+#include "sys.h"
+#include "timeouts.h"
 
 struct PacketBuffer;
 LwipStatus tcpip_send_msg_wait_sem(TcpipCallbackFn fn, uint8_t* apimsg, Semaphore* sem);

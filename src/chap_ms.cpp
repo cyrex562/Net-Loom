@@ -1,10 +1,10 @@
 #define NOMINMAX
-#include <chap_new.h>
-#include <chap_ms.h>
-#include <pppcrypt.h>
-#include <magic.h>
-#include <mppe.h> /* For mppe_sha1_pad*, mppe_set_key() */
-#include <ccp.h>
+#include "chap_new.h"
+#include "chap_ms.h"
+#include "pppcrypt.h"
+#include "magic.h"
+#include "mppe.h" /* For mppe_sha1_pad*, mppe_set_key() */
+#include "ccp.h"
 #include <spdlog/spdlog.h>
 #include <mbedtls\des.h>
 #include "mbedtls/sha1.h"

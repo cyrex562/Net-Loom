@@ -3,15 +3,15 @@
  * file: pcapif.cpp
  *
  */
-#include <pcapif.h>
-#include <opt.h>
-#include <etharp.h>
-#include <ip.h>
-#include <lwip_debug.h>
-#include <packet_buffer.h>
-#include <sys.h>
-#include <pcapif_helper.h>
-#include <pcap.h>
+#include "pcapif.h"
+#include "opt.h"
+#include "etharp.h"
+#include "ip.h"
+#include "lwip_debug.h"
+#include "packet_buffer.h"
+#include "sys.h"
+#include "pcapif_helper.h"
+#include "pcap.h"
 #include <cstdio>
 #include <cstring>
 #include <utility>
@@ -573,7 +573,7 @@ pcapif_init(NetworkInterface& netif,
     netif.flags.igmp = true;
     netif.flags.mld6 = true; /* sets link up or down based on current status */
     sockaddr_in net_addr{};
-    net_addr.sin_addr.S_un.S_addr = netif.ip4_addresses[ipv4_addr_index].address.addr;
+    net_addr.sin_addr.S_un.S_addr = netif.ip4_addresses[ipv4_addr_index].address.u32;
     bool ok;
     PcapIfPrivate pa{};
     std::tie(ok, pa) = pcapif_low_level_init(netif, netif.mac_address, local_index, net_addr, interfaces);

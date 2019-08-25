@@ -17,10 +17,10 @@
 
 #include <cstdint>
 #include <cstring>
-#include <lowpan6.h>
-#include <timeouts.h>
-#include <udp.h>
-#include <zepif.h>
+#include "lowpan6.h"
+#include "timeouts.h"
+#include "udp.h"
+#include "zepif.h"
 
 constexpr auto kZepMaxDataLen = 127;
 

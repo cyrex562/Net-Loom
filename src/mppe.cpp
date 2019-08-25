@@ -17,21 +17,21 @@
  *      06/18/04 - Matt Domsch <Matt_Domsch@dell.com>, Oleg Makarenko <mole@quadra.ru>
  *                 Use Linux kernel 2.6 arc4 and sha1 routines rather than
  *                 providing our own.
- *      2/15/04 - TS: added #include <version.h> and testing for Kernel
+ *      2/15/04 - TS: added #include "version.h" and testing for Kernel
  *                    version before using
  *                    MOD_DEC_USAGE_COUNT/MOD_INC_USAGE_COUNT which are
  *                    deprecated in 2.6
  */
 
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 #include <cstring>
-#include <lwip_status.h>
-#include <ccp.h>
-#include <mppe.h>
-#include <pppdebug.h>
-#include <pppcrypt.h>
-#include <lcp.h>
-#include <ppp.h>
+#include "lwip_status.h"
+#include "ccp.h"
+#include "mppe.h"
+#include "pppdebug.h"
+#include "pppcrypt.h"
+#include "lcp.h"
+#include "ppp.h"
 #include "netbuf.h"
 #include "mbedtls/arc4.h"
 #include "mbedtls/sha1.h"

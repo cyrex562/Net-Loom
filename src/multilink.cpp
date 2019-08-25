@@ -29,11 +29,11 @@
  */
 
 #define NOMINMAX
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 #include <cstring>
 #include <cstdlib>
-#include <lcp.h>
-#include <ppp.h>
+#include "lcp.h"
+#include "ppp.h"
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */

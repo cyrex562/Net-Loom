@@ -58,8 +58,8 @@
  */
 
 #define NOMINMAX
-#include <ecp.h>
-#include <ppp.h>
+#include "ecp.h"
+#include "ppp.h"
 
 
 

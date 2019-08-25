@@ -3,8 +3,8 @@
  * for managing the link state.
  */
 
-#include <pcapif_helper.h>
-#include <arch.h>
+#include "pcapif_helper.h"
+#include "arch.h"
 #include <cstdlib>
 #include <cstdio>
 #include <string>
@@ -14,8 +14,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <Windows.h>
-#include <ntddndis.h>
+#include "Windows.h"
+#include "ntddndis.h"
 
 
 /**

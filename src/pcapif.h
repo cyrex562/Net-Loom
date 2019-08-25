@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lwip_status.h>
-#include <network_interface.h>
+#include "lwip_status.h"
+#include "network_interface.h"
 #include "pcapif_helper.h"
 #include "pcap.h"
 

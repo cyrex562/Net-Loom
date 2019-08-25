@@ -1,6 +1,6 @@
 #pragma once
-#include <ip4_addr.h>
-#include <ip6_addr.h>
+#include "ip4_addr.h"
+#include "ip6_addr.h"
 
 //
 // IP address types for use in IpAddr.type member.
@@ -204,7 +204,7 @@ set_ip_addr(IpAddrInfo& dest, const IpAddrInfo& src)
 inline void
 zero_ip_addr_ip4(IpAddrInfo& ipaddr)
 {
-    zero_ip4_addr(ipaddr.u_addr.ip4.address);
+    ip4_addr_zero(ipaddr.u_addr.ip4.address);
     set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
 }
 
@@ -331,7 +331,7 @@ is_ip_addr_link_local(const IpAddrInfo& ipaddr)
     {
         return ip6_addr_is_linklocal(ipaddr.u_addr.ip6);
     }
-    return is_ip4_addr_link_local(ipaddr.u_addr.ip4);
+    return ip4_addr_is_link_local(ipaddr.u_addr.ip4);
 }
 
 
@@ -369,7 +369,7 @@ ip_addr_ip6_host(struct IpAddrInfo& ipaddr,
 inline IpAddrInfo create_ip_addr_ip4_bcast()
 {
     IpAddrInfo addr{};
-    addr.u_addr.ip4.address.addr = make_u32(255,255,255,255);
+    addr.u_addr.ip4.address.u32 = make_u32(255,255,255,255);
     addr.type = IPADDR_TYPE_V4;
     // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized
     return addr;
@@ -382,7 +382,7 @@ inline IpAddrInfo create_ip_addr_ip4_bcast()
 inline IpAddrInfo create_ip_addr_ip4_any()
 {
     IpAddrInfo addr{};
-    addr.u_addr.ip4.address.addr = make_u32(0,0,0,0);
+    addr.u_addr.ip4.address.u32 = make_u32(0,0,0,0);
     addr.type = IPADDR_TYPE_V4;
     // ReSharper disable CppSomeObjectMembersMightNotBeInitialized
     return addr;

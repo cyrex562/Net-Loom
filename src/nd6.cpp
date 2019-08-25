@@ -42,18 +42,18 @@
  */
 
 #define NOMINMAX
-#include <opt.h>
-#include <nd6.h>
-#include <nd6_priv.h>
-#include <icmp6.h>
-#include <packet_buffer.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <inet_chksum.h>
-#include <network_interface.h>
-#include <mld6.h>
-#include <dhcp6.h>
-#include <dns.h>
+#include "opt.h"
+#include "nd6.h"
+#include "nd6_priv.h"
+#include "icmp6.h"
+#include "packet_buffer.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "inet_chksum.h"
+#include "network_interface.h"
+#include "mld6.h"
+#include "dhcp6.h"
+#include "dns.h"
 
 #include <cstring>
 #include <algorithm>

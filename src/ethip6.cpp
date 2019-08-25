@@ -39,14 +39,14 @@
  * <delamer@inicotech.com>
  */
 
-#include <ethip6.h>
-#include <ethernet.h>
-#include <ieee.h>
-#include <ip6_addr.h>
-#include <nd6.h>
-#include <network_interface.h>
-#include <packet_buffer.h>
-#include <mac_address.h>
+#include "ethip6.h"
+#include "ethernet.h"
+#include "ieee.h"
+#include "ip6_addr.h"
+#include "nd6.h"
+#include "network_interface.h"
+#include "packet_buffer.h"
+#include "mac_address.h"
 
 #include <cstring>
 

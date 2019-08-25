@@ -39,12 +39,12 @@
  * <delamer@inicotech.com>
  */
 
-#include <opt.h>
-#include <ip6_frag.h>
-#include <ip6.h>
-#include <icmp6.h>
-#include <nd6.h>
-#include <packet_buffer.h>
+#include "opt.h"
+#include "ip6_frag.h"
+#include "ip6.h"
+#include "icmp6.h"
+#include "nd6.h"
+#include "packet_buffer.h"
 #include "ip4_frag.h"
 /* The number of bytes we need to "borrow" from (i.e., overwrite in) the header
  * that precedes the fragment header for reassembly pruposes. */

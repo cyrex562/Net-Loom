@@ -29,26 +29,26 @@
  */
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
+#include "windows.h"
 #include <cstdarg>
 #include <cstdio>
-#include <lwip_debug.h>
-#include <sio.h>
-#include <sys.h>
+#include "lwip_debug.h"
+#include "sio.h"
+#include "sys.h"
 
 
-// #include <Windows.h>
+// #include "Windows.h"
 //#ifdef _MSC_VER
-//#include <Windows.h>
+//#include "Windows.h"
 //#endif
 // #ifdef _MSC_VER
 // #pragma warning (push, 3)
 // #endif
-// #include <windows.h>
+// #include "windows.h"
 // #ifdef _MSC_VER
 // #pragma warning (pop)
 // #endif
-// #include <lwipcfg.h>
+// #include "lwipcfg.h"
 /** When 1, use COM ports, when 0, use named pipes (for simulation). */
 #ifndef SIO_USE_COMPORT
 #define SIO_USE_COMPORT 1

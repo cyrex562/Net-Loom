@@ -1,5 +1,5 @@
 #pragma once
-#include <ip4_addr.h>
+#include "ip4_addr.h"
 #include <cstdint>
 
 /** AutoIP state information per netif */

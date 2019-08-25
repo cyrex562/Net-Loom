@@ -31,14 +31,14 @@
  */
 #pragma once
 
-#include <opt.h>
+#include "opt.h"
 
-#include <sys.h>
-#include <network_interface.h>
-#include <dhcp.h>
-#include <autoip.h>
-#include <tcpip_priv.h>
-#include <ethernet.h>
+#include "sys.h"
+#include "network_interface.h"
+#include "dhcp.h"
+#include "autoip.h"
+#include "tcpip_priv.h"
+#include "ethernet.h"
 
 
 /* API for application */

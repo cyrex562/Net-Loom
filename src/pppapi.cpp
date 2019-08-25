@@ -31,13 +31,13 @@
  *
  */
 
-#include <ppp_opts.h>
-#include <pppapi.h>
-#include <tcpip_priv.h>
-#include <pppoe.h>
-#include <pppol2tp.h>
-#include <pppos.h>
-#include <lwip_status.h>
+#include "ppp_opts.h"
+#include "pppapi.h"
+#include "tcpip_priv.h"
+#include "pppoe.h"
+#include "pppol2tp.h"
+#include "pppos.h"
+#include "lwip_status.h"
 
 // #define API_VAR_DECLARE(x, y) x y
 // #define API_VAR_REF(x) x

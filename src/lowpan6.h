@@ -40,12 +40,12 @@
  */
 
 #pragma once
-#include <lowpan6_opts.h>
-#include <lowpan6_common.h>
-#include <packet_buffer.h>
-#include <ip.h>
-#include <ip_addr.h>
-#include <network_interface.h>
+#include "lowpan6_opts.h"
+#include "lowpan6_common.h"
+#include "packet_buffer.h"
+#include "ip.h"
+#include "ip_addr.h"
+#include "network_interface.h"
 
 #ifdef __cplusplus
 extern "C" {

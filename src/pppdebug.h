@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 
 
 /* Trace levels. */

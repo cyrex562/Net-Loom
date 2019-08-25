@@ -40,12 +40,12 @@
  */
 #pragma once
 
-#include <opt.h>
-#include <ip6_addr.h>
-#include <def.h>
-#include <packet_buffer.h>
-#include <network_interface.h>
-#include <lwip_status.h>
+#include "opt.h"
+#include "ip6_addr.h"
+#include "def.h"
+#include "packet_buffer.h"
+#include "network_interface.h"
+#include "lwip_status.h"
 
 
  /** This is the packed version of Ip6Address,

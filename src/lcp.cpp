@@ -4,16 +4,16 @@
 
 
 #define NOMINMAX
-#include <lcp.h>
-#include <ppp_opts.h>
-#include <fsm.h>
-#include <chap_new.h>
-#include <magic.h>
+#include "lcp.h"
+#include "ppp_opts.h"
+#include "fsm.h"
+#include "chap_new.h"
+#include "magic.h"
 #include "auth.h"
 #include <algorithm>
 #include "util.h"
 #include "ppp.h"
-#include <lcp_options.h>
+#include "lcp_options.h"
 
 
 /*

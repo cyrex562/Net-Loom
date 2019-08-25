@@ -1,9 +1,9 @@
 #pragma once
-#include <ip4.h>
-#include <ip6.h>
-#include <ip_addr.h>
-#include <lwip_status.h>
-#include <packet_buffer.h>
+#include "ip4.h"
+#include "ip6.h"
+#include "ip_addr.h"
+#include "lwip_status.h"
+#include "packet_buffer.h"
 
 enum IpProto
 {
@@ -305,8 +305,7 @@ ip_netif_get_local_ip(const NetworkInterface& netif,
     }
     Ip4AddrInfo ip4_addr_info{};
     const auto status = get_netif_ip4_local_ip(netif,
-                                               dest_addr_info.u_addr.ip4,
-                                               ip4_addr_info);
+                                               dest_addr_info.u_addr.ip4);
     out_addr_info.u_addr.ip4 = ip4_addr_info;
     return status;
 }

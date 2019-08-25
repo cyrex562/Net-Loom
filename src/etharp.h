@@ -1,9 +1,11 @@
 #pragma once
-#include <ethernet.h>
-#include <ip4_addr.h>
-#include <network_interface.h>
-#include <packet_buffer.h>
+#include "ethernet.h"
+#include "ip4_addr.h"
+#include "network_interface.h"
+#include "packet_buffer.h"
+#include "mac_address.h"
 #include <vector>
+#include "ip4_addr.h"
 
 
 /** ARP states */
@@ -63,22 +65,14 @@ constexpr auto ETHARP_FLAG_STATIC_ENTRY = 4;
 struct EtharpHdr
 {
     uint16_t hwtype;
-
     uint16_t proto;
-
     uint8_t hwlen;
-
     uint8_t protolen;
-
     uint16_t opcode;
-
-    struct MacAddress shwaddr;
-
-    struct Ip4Addr sipaddr;
-
-    struct MacAddress dhwaddr;
-
-    struct Ip4Addr dipaddr;
+    MacAddress shwaddr;
+    Ip4Addr sipaddr;
+    MacAddress dhwaddr;
+    Ip4Addr dipaddr;
 };
 
 
@@ -95,7 +89,7 @@ struct EtharpQEntry
 
 struct EtharpEntry
 {
-    Ip4AddrInfo ip4_addr_info{};
+    Ip4Addr ip_addr{};
     struct NetworkInterface netif;
     struct MacAddress mac_address{};
     uint64_t ctime{};
@@ -107,47 +101,38 @@ struct EtharpEntry
 
 
 inline void etharp_init() {} /* Compatibility define, no init needed. */
-
-
-void
+bool
 clear_expired_arp_entries(std::vector<EtharpEntry>& entries);
 
 
-bool
-find_etharp_addr(NetworkInterface& netif,
-                 const Ip4AddrInfo& ipaddr,
-                 MacAddress& eth_ret,
-                 Ip4AddrInfo& ip_ret,
+std::tuple<bool, size_t, MacAddress, Ip4Addr>
+find_etharp_addr(NetworkInterface& net_ifc,
+                 const Ip4Addr& ip_addr,
                  std::vector<EtharpEntry>& entries);
 
-
-bool
-etharp_get_entry(size_t index,
-                 Ip4AddrInfo& ipaddr,
-                 NetworkInterface& netif,
-                 MacAddress& eth_ret,
-                 std::vector<EtharpEntry> entries);
+std::tuple<bool, NetworkInterface, MacAddress, Ip4Addr>
+etharp_get_entry(size_t index, std::vector<EtharpEntry> entries);
 
 
 bool
 etharp_output(NetworkInterface& netif,
               PacketBuffer& packet,
-              const Ip4Addr& ipaddr);
+              const Ip4AddrInfo& ip_addr_info);
 
 
 bool
-etharp_query(NetworkInterface& netif,
-             const Ip4Addr& addr,
-             PacketBuffer& pkt,
+etharp_query(NetworkInterface& net_ifc,
+             const Ip4Addr& ip_addr,
+             PacketBuffer& packet,
              std::vector<EtharpEntry>& entries);
 
 
 bool
-etharp_request(NetworkInterface& netif, const Ip4AddrInfo& ipaddr);
+etharp_request(NetworkInterface& netif, const Ip4Addr& ip_addr);
 
 
 std::tuple<bool, size_t>
-etharp_find_entry(const Ip4AddrInfo& ipaddr,
+etharp_find_entry(const Ip4Addr& ip_addr,
                   const NetworkInterface& netif,
                   std::vector<EtharpEntry>& entries);
 
@@ -162,9 +147,8 @@ etharp_find_entry(const Ip4AddrInfo& ipaddr,
  *  @return STATUS_OK on success; an error message otherwise.
  */
 inline bool
-etharp_gratuitous(NetworkInterface& netif, Ip4AddrInfo& dest_addr)
+etharp_gratuitous(NetworkInterface& netif, Ip4Addr& dest_addr)
 {
-    Ip4AddrInfo found_addr{};
     bool ok = true;
     Ip4AddrInfo addr{};
     std::tie(ok, addr) = get_netif_ip4_addr(netif, dest_addr);
@@ -173,7 +157,7 @@ etharp_gratuitous(NetworkInterface& netif, Ip4AddrInfo& dest_addr)
         return false;
     }
 
-    return etharp_request(netif, found_addr);
+    return etharp_request(netif, addr.address);
 }
 
 
@@ -211,7 +195,7 @@ void etharp_cleanup_netif(NetworkInterface& netif, std::vector<EtharpEntry>& ent
 
 
 bool
-etharp_add_static_entry(const Ip4AddrInfo& ip4_addr_info,
+etharp_add_static_entry(const Ip4Addr& ip_addr,
                         MacAddress& mac_address,
                         std::vector<NetworkInterface>& interfaces,
                         bool static_entry,
@@ -231,7 +215,7 @@ etharp_recv(PacketBuffer& pkt_buf, NetworkInterface& netif, DhcpContext& ctx, st
 
 bool
 etharp_request_dst(NetworkInterface& netif,
-                   const Ip4AddrInfo& ipaddr,
+                   const Ip4Addr& ipaddr,
                    const MacAddress& hw_dst_addr);
 
 
@@ -240,10 +224,11 @@ send_raw_arp_pkt(NetworkInterface& netif,
                  const MacAddress& ethsrc_addr,
                  const MacAddress& ethdst_addr,
                  const MacAddress& hwsrc_addr,
-                 const Ip4AddrInfo& ipsrc_addr,
+                 const Ip4Addr& ipsrc_addr,
                  const MacAddress& hwdst_addr,
-                 const Ip4AddrInfo& ipdst_addr,
+                 const Ip4Addr& ipdst_addr,
                  const uint16_t opcode);
+
 
 //
 // END OF FILE

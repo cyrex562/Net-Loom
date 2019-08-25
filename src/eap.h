@@ -21,9 +21,9 @@
  */
 
 #pragma once
-#include <eap_state.h>
+#include "eap_state.h"
 #include <cstdint>
-#include <complex.h>
+#include "complex.h"
 #ifdef	__cplusplus
 struct PppPcb;
 

@@ -44,14 +44,14 @@
  */
 
 #define NOMINMAX
-#include <eap.h>
-#include <eap_state.h>
-#include <auth.h>
-#include <magic.h>
+#include "eap.h"
+#include "eap_state.h"
+#include "auth.h"
+#include "magic.h"
 
-#include <ppp_opts.h>
-#include <pppcrypt.h>
-#include <ppp.h>
+#include "ppp_opts.h"
+#include "pppcrypt.h"
+#include "ppp.h"
 #include <ctime>
 #include "util.h"
 

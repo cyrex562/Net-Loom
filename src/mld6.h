@@ -40,7 +40,7 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include <ip6_addr.h>
+#include "ip6_addr.h"
 
 
 constexpr auto MLD6_HBH_HLEN = 8;
@@ -58,8 +58,8 @@ struct MldHeader
     /* Options follow. */
 };
 
-#include <packet_buffer.h>
-#include <network_interface.h>
+#include "packet_buffer.h"
+#include "network_interface.h"
 
 
 

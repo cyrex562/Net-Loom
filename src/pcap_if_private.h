@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <queue>
-#include <pcap.h>
+#include "pcap.h"
 
 
 struct PcapInterface

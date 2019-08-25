@@ -37,7 +37,7 @@
 
 #define NOMINMAX
 
-#include <eui64.h>
+#include "eui64.h"
 
 
 

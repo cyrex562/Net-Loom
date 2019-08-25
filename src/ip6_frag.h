@@ -39,10 +39,10 @@
  * <delamer@inicotech.com>
  */
 #pragma once
-#include <packet_buffer.h>
-#include <ip6_addr.h>
-#include <ip6.h>
-#include <network_interface.h>
+#include "packet_buffer.h"
+#include "ip6_addr.h"
+#include "ip6.h"
+#include "network_interface.h"
 
 /** The IPv6 reassembly timer interval in milliseconds. */
 #define IP6_REASS_TMR_INTERVAL 1000

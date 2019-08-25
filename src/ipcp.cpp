@@ -40,12 +40,12 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ipcp.h>
-#include <ppp_opts.h>
+#include "ipcp.h"
+#include "ppp_opts.h"
 
-#include <ppp.h>
-#include <fsm.h>
-#include <ipcp_defs.h>
+#include "ppp.h"
+#include "fsm.h"
+#include "ipcp_defs.h"
 #include "util.h"
 
 /* Notifiers for when IPCP goes up and down */

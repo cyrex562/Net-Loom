@@ -36,8 +36,8 @@
  */
 #pragma once
 
-#include <opt.h>
-#include <raw.h>
+#include "opt.h"
+#include "raw.h"
 
 
 /** return codes for raw_input */

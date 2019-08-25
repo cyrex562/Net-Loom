@@ -1,10 +1,10 @@
 
-#include <opt.h>
-#include <igmp.h>
-#include <def.h>
-#include <ip.h>
-#include <inet_chksum.h>
-#include <network_interface.h>
+#include "opt.h"
+#include "igmp.h"
+#include "def.h"
+#include "ip.h"
+#include "inet_chksum.h"
+#include "network_interface.h"
 
 static struct IgmpGroup* igmp_lookup_group(NetworkInterface* ifp, const Ip4Addr* addr);
 static LwipStatus igmp_remove_group(NetworkInterface* netif, struct IgmpGroup* group);
@@ -198,7 +198,7 @@ igmp_input(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& daddr)
     /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */
   if (pkt_buf->len < IGMP_MIN_LEN) {
     free_pkt_buf(pkt_buf);
-    
+
     Logf(true, ("igmp_input: length error\n"));
     return;
   }
@@ -213,7 +213,7 @@ igmp_input(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& daddr)
   struct IgmpMsg* igmp = (struct IgmpMsg *)pkt_buf->payload;
   if (inet_chksum((uint8_t*)igmp, pkt_buf->len)) {
     free_pkt_buf(pkt_buf);
-    
+
     Logf(true, ("igmp_input: checksum error\n"));
     return;
   }
@@ -238,11 +238,11 @@ igmp_input(PacketBuffer& pkt_buf, NetworkInterface& netif, const Ip4Addr& daddr)
         // Logf(true, ("igmp_input: General IGMP_MEMB_QUERY on \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
 
         if (igmp->igmp_maxresp == 0) {
-   
+
           Logf(true, ("igmp_input: got an all hosts query with time== 0 - this is V1 and not implemented - treat as v2\n"));
           igmp->igmp_maxresp = IGMP_V1_DELAYING_MEMBER_TMR;
         } else {
-      
+
         }
 
         struct IgmpGroup* groupref = get_netif_igmp_group(netif,);
@@ -313,11 +313,11 @@ igmp_joingroup(const Ip4Addr& ifc_addr, const Ip4Addr& grp_addr)
   LwipStatus err = ERR_VAL; /* no matching interface */
   NetworkInterface*netif;
 
- 
+
 
   /* make sure it is multicast address */
-  // 
-  // 
+  //
+  //
 
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
@@ -347,11 +347,11 @@ LwipStatus
 igmp_joingroup_netif(NetworkInterface& netif, const Ip4Addr& groupaddr)
 {
     /* make sure it is multicast address */
-  // 
-  // 
+  //
+  //
 
   /* make sure it is an igmp-enabled netif */
-  // 
+  //
 
   /* find group or create a new one if not found */
   struct IgmpGroup* group = igmp_lookup_group(netif, groupaddr);
@@ -405,11 +405,11 @@ igmp_leavegroup(const Ip4Addr& ifaddr, const Ip4Addr& groupaddr)
   LwipStatus err = ERR_VAL; /* no matching interface */
   NetworkInterface*netif;
 
- 
+
 
   /* make sure it is multicast address */
-  // 
-  // 
+  //
+  //
 
   /* loop through netif's */
   for ((netif) = netif_list; (netif) != nullptr; (netif) = (netif)->next) {
@@ -438,11 +438,11 @@ LwipStatus
 igmp_leavegroup_netif(NetworkInterface& netif, const Ip4Addr& groupaddr)
 {
     /* make sure it is multicast address */
-  // 
-  // 
+  //
+  //
 
   /* make sure it is an igmp-enabled netif */
-  // 
+  //
 
   /* find group */
   struct IgmpGroup* group = find_igmp_grp(netif, groupaddr);
@@ -609,7 +609,7 @@ igmp_send(NetworkInterface*netif, struct IgmpGroup *group, uint8_t type)
 {
   struct PacketBuffer     *p    = nullptr;
   struct IgmpMsg *igmp = nullptr;
-  Ip4Addr   src  = make_ip4_addr_any();
+  Ip4Addr   src  = ip4_addr_create_any();
   Ip4Addr  *dest = nullptr;
 
   /* IP header + "router alert" option + IGMP header */

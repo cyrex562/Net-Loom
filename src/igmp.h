@@ -1,6 +1,6 @@
 #pragma once
-#include <network_interface.h>
-#include <packet_buffer.h>
+#include "network_interface.h"
+#include "packet_buffer.h"
 
 //
 // IGMP constants

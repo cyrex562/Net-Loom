@@ -36,14 +36,14 @@
  */
 #pragma once
 
-#include <opt.h>
+#include "opt.h"
 
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
-#include <packet_buffer.h>
-#include <ip_addr.h>
-#include <ip6_addr.h>
+#include "packet_buffer.h"
+#include "ip_addr.h"
+#include "ip6_addr.h"
 
 
 /** This netbuf has dest-addr/port set */

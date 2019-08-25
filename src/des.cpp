@@ -38,7 +38,7 @@
  *
  *  http://csrc.nist.gov/publications/fips/fips46-3/fips46-3.pdf
  */
-#include <des.h>
+#include "des.h"
 
 /*
  * 32-bit integer manipulation macros (big endian)

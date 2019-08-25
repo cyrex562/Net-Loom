@@ -29,11 +29,11 @@
  */
 
 #define NOMINMAX
-#include <chap_md5.h>
-#include <magic.h>
-#include <ppp.h>
+#include "chap_md5.h"
+#include "magic.h"
+#include "ppp.h"
 
-#include <pppcrypt.h>
+#include "pppcrypt.h"
 
 
 void

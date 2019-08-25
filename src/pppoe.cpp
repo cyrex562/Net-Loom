@@ -69,12 +69,12 @@
  */
 
 #define NOMINMAX
-#include <timeouts.h>
-#include <ieee.h>
-#include <ethernet.h>
-#include <ipcp.h>
-#include <lcp.h>
-#include <pppoe.h>
+#include "timeouts.h"
+#include "ieee.h"
+#include "ethernet.h"
+#include "ipcp.h"
+#include "lcp.h"
+#include "pppoe.h"
 #include <algorithm>
 
 

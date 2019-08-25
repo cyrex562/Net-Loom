@@ -32,7 +32,7 @@
  *
  */
 #pragma once
-#include <lwip_sockets.h>
+#include "lwip_sockets.h"
 
 /* some rarely used options */
 

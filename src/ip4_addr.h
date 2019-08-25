@@ -3,7 +3,7 @@
 /// 
 
 #pragma once
-#include <def.h>
+#include "def.h"
 #include <string>
 
 
@@ -29,7 +29,7 @@ constexpr auto IP4_ADDR_LOOPBACK_U32 = 0x7f000001UL;
 /// This is the aligned version of Ip4Addr, used as local variable, on the stack, etc.
 struct Ip4Addr
 {
-    uint32_t addr;
+    uint32_t u32;
 };
 
 
@@ -60,24 +60,24 @@ make_ip4_addr_from_bytes(const uint8_t a,
 ///
 ///
 inline bool
-is_ip4_addr_any(Ip4Addr& addr)
+is_ip4_addr_any(const Ip4Addr& addr)
 { 
-    return addr.addr == IP4_ADDR_ANY_U32;
+    return addr.u32 == IP4_ADDR_ANY_U32;
 }
 
 
 ///
 ///
 ///
-inline void zero_ip4_addr(Ip4Addr& addr)
+inline void ip4_addr_zero(Ip4Addr& addr)
 {
-    addr.addr = IP4_ADDR_ANY_U32;
+    addr.u32 = IP4_ADDR_ANY_U32;
 }
 
 ///
 ///
 ///
-inline Ip4Addr make_ip4_addr_any()
+inline Ip4Addr ip4_addr_create_any()
 {
    return {IP4_ADDR_ANY_U32};
 }
@@ -88,7 +88,7 @@ inline Ip4Addr make_ip4_addr_any()
 ///
 inline void set_ip4_addr_any(Ip4Addr& addr)
 {
-    addr.addr = IP4_ADDR_ANY_U32;
+    addr.u32 = IP4_ADDR_ANY_U32;
 }
 
 
@@ -201,33 +201,34 @@ is_ip4_bad_class(const uint32_t a)
 constexpr auto IP_LOOPBACKNET   =   127;                 /* official! */
 
 /** Set an IP address given by the four byte-parts */
-inline void
-make_ip4_addr_host_from_bytes(Ip4Addr& ipaddr,
-                              const uint8_t a,
+inline Ip4Addr
+ip4_addr_create_hbo(const uint8_t a,
                               const uint8_t b,
                               const uint8_t c,
                               const uint8_t d)
 {
-    (ipaddr).addr = pp_htonl(make_u32(a, b, c, d));
+    Ip4Addr ipaddr{};
+    (ipaddr).u32 = pp_htonl(make_u32(a, b, c, d));
+    return ipaddr;
 }
 
 inline void copy_ip4_addr(Ip4Addr& dest, const Ip4Addr& src)
 {
     // ((dest).addr = ((src) == nullptr ? 0 : (src).addr));
-    dest.addr = src.addr;
+    dest.u32 = src.u32;
 }
 
 /// Set address to loopback address
 inline void set_ip4_addr_loopback(Ip4Addr& ipaddr)
 {
-    ((ipaddr).addr = pp_htonl(make_ip4_addr_loopback().addr));
+    ((ipaddr).u32 = pp_htonl(make_ip4_addr_loopback().u32));
 }
 
 
 /// Check if an address is in the loopback region 
 inline bool is_ip4_addr_loopback(const Ip4Addr& ipaddr)
 {
-    return (ipaddr.addr & pp_htonl(IP4_CLASS_A_NET)) == pp_htonl(
+    return (ipaddr.u32 & pp_htonl(IP4_CLASS_A_NET)) == pp_htonl(
         uint32_t(IP_LOOPBACKNET) << 24);
 }
 
@@ -236,14 +237,14 @@ inline bool is_ip4_addr_loopback(const Ip4Addr& ipaddr)
 inline void
 set_ip4_addr_hton(Ip4Addr& dest, Ip4Addr& src)
 {
-    dest.addr = lwip_htonl(src.addr);
+    dest.u32 = lwip_htonl(src.u32);
 }
 
 
 /// IPv4 only: set the IP address given as an uint32_t 
 inline void set_ip4_addr_u32(Ip4Addr& dest_ipaddr, uint32_t src_u32)
 {
-    ((dest_ipaddr).addr = (src_u32));
+    ((dest_ipaddr).u32 = (src_u32));
 }
 
 
@@ -251,13 +252,13 @@ inline void set_ip4_addr_u32(Ip4Addr& dest_ipaddr, uint32_t src_u32)
 /** IPv4 only: get the IP address as an uint32_t */
 inline uint32_t get_ip4_addr_u32(const Ip4Addr& src_ipaddr)
 {
-    return ((src_ipaddr).addr);
+    return ((src_ipaddr).u32);
 }
 
 /** Get the network address by combining host address with netmask */
 inline Ip4Addr get_ip4_addr_net(const Ip4Addr& host, const Ip4Addr& netmask)
 {
-    return {host.addr & netmask.addr};
+    return {host.u32 & netmask.u32};
 
 }
 /**
@@ -272,19 +273,19 @@ inline bool cmp_ip4_addr_net(const Ip4Addr& addr1,
                             const Ip4Addr& addr2,
                             const Ip4Addr& mask)
 {
-    return (((addr1).addr & (mask).addr) == ((addr2).addr & (mask).addr));
+    return (((addr1).u32 & (mask).u32) == ((addr2).u32 & (mask).u32));
 }
 
 
 inline bool is_ip4_addr_equal(const Ip4Addr& addr1, const Ip4Addr& addr2)
 {
-    return addr1.addr == addr2.addr;
+    return addr1.u32 == addr2.u32;
 }
 
 
 inline bool ip4_addr_isany(const Ip4Addr& addr1)
 {
-    return addr1.addr == IP4_ADDR_ANY_U32;
+    return addr1.u32 == IP4_ADDR_ANY_U32;
 }
 
 
@@ -296,7 +297,7 @@ bool is_ip4_netmask_valid(uint32_t netmask);
 inline bool
 is_ip4_addr_netmask_valid_2(Ip4Addr& netmask)
 {
-    return is_ip4_netmask_valid((netmask).addr);
+    return is_ip4_netmask_valid((netmask).u32);
 }
 
 constexpr auto IP4_ADDR_MCAST_MASK_1 = 0xf0000000UL;
@@ -308,7 +309,7 @@ constexpr auto IP4_ADDR_MCAST_MASK_2 = 0xe0000000UL;
 inline bool
 ip4_addr_is_mcast(const Ip4Addr& addr1)
 {
-    return (((addr1).addr & pp_htonl(IP4_ADDR_MCAST_MASK_1)) == pp_htonl(
+    return (((addr1).u32 & pp_htonl(IP4_ADDR_MCAST_MASK_1)) == pp_htonl(
         IP4_ADDR_MCAST_MASK_2));
 }
 
@@ -320,9 +321,9 @@ constexpr auto IP4_ADDR_LINK_LOCAL_MASK_2 = 0xa9fe0000UL;
  *
  */
 inline bool
-is_ip4_addr_link_local(const Ip4AddrInfo& addr1)
+ip4_addr_is_link_local(const Ip4Addr& address)
 {
-    return (addr1.address.addr & pp_htonl(IP4_ADDR_LINK_LOCAL_MASK_1)) == pp_htonl(
+    return (address.u32 & pp_htonl(IP4_ADDR_LINK_LOCAL_MASK_1)) == pp_htonl(
         IP4_ADDR_LINK_LOCAL_MASK_2);
 }
 
@@ -334,19 +335,19 @@ get_ip4_addr_byte(const Ip4Addr& ipaddr, const size_t idx)
 {
     if (idx == 0)
     {
-        return ipaddr.addr & 0xff000000UL;
+        return ipaddr.u32 & 0xff000000UL;
     }
     if (idx == 1)
     {
-        return ipaddr.addr & 0x00ff0000UL;
+        return ipaddr.u32 & 0x00ff0000UL;
     }
     if (idx == 2)
     {
-        return ipaddr.addr & 0x0000ff00UL;
+        return ipaddr.u32 & 0x0000ff00UL;
     }
     if (idx == 3)
     {
-        return ipaddr.addr & 0x000000ffUL;
+        return ipaddr.u32 & 0x000000ffUL;
     }
     else
     {

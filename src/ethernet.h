@@ -3,11 +3,11 @@
 //
 
 #pragma once
-#include <opt.h>
-#include <packet_buffer.h>
-#include <network_interface.h>
-#include <ethernet.h>
-#include <mac_address.h>
+#include "opt.h"
+#include "packet_buffer.h"
+#include "network_interface.h"
+#include "ethernet.h"
+#include "mac_address.h"
 #include <cstring>
 
 
@@ -47,9 +47,9 @@ constexpr uint8_t LNK_LYR_MCAST_ADDR_OUI[] = {0x01, 0x00, 0x5e};
 constexpr uint8_t LNK_LYR_IP6_MCAST_ADDR_PREFIX[] = {0x33, 0x33};
 
 ///
-inline bool cmp_eth_addr(const MacAddress* addr1, const MacAddress* addr2)
+inline bool eth_addr_cmp(const MacAddress& addr1, const MacAddress& addr2)
 {
-    return (memcmp((addr1)->bytes, (addr2)->bytes, ETH_ADDR_LEN) == 0);
+    return (memcmp((addr1).bytes, (addr2).bytes, ETH_ADDR_LEN) == 0);
 }
 
 ///

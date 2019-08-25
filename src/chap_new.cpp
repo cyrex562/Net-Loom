@@ -29,12 +29,12 @@
  */
 
 #define NOMINMAX
-#include <auth.h>
-#include <chap_md5.h>
-#include <chap_new.h>
-#include <magic.h>
+#include "auth.h"
+#include "chap_md5.h"
+#include "chap_new.h"
+#include "magic.h"
 
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 #include "ppp.h"
 #include "spdlog/spdlog.h"
 /*

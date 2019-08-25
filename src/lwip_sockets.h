@@ -38,8 +38,8 @@
 
 #pragma once
 
-#include <sys.h>
-#include <opt.h>
+#include "sys.h"
+#include "opt.h"
 
 
 #define SELECT_SEM_T        Semaphore*

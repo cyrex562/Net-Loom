@@ -69,10 +69,10 @@
  */
 #pragma once
 
-#include <ppp_opts.h>
+#include "ppp_opts.h"
 
-#include <ppp.h>
-#include <etharp.h>
+#include "ppp.h"
+#include "etharp.h"
 
 #include <cstdint>
 

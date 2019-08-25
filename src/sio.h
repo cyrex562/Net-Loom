@@ -34,8 +34,8 @@
 
 #pragma once
 
-#include <arch.h>
-#include <opt.h>
+#include "arch.h"
+#include "opt.h"
 
 
 /* If you want to define sio_fd_t elsewhere or differently,

@@ -99,16 +99,16 @@
 
 #include <algorithm>
 #include <cstring>
-#include <def.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <lwip_debug.h>
-#include <nd6.h>
-#include <opt.h>
-#include <sys.h>
-#include <tcp.h>
-#include <tcp_priv.h>
-#include <tcpip.h>
+#include "def.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "lwip_debug.h"
+#include "nd6.h"
+#include "opt.h"
+#include "sys.h"
+#include "tcp.h"
+#include "tcp_priv.h"
+#include "tcpip.h"
 
 
 /* From http://www.iana.org/assignments/port-numbers:
@@ -2354,7 +2354,7 @@ tcp_netif_ip_addr_changed_pcblist(const IpAddrInfo* old_addr, struct TcpPcb* pcb
         if (compare_ip_addr(&pcb->local_ip, old_addr)
 
             /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-            && (!is_ip_addr_v4(pcb->local_ip) || !is_ip4_addr_link_local((&pcb->local_ip.u_addr.ip4)))
+            && (!is_ip_addr_v4(pcb->local_ip) || !ip4_addr_is_link_local((&pcb->local_ip.u_addr.ip4)))
 
         )
         {

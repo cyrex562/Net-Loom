@@ -84,14 +84,14 @@
  * Includes
  *----------------------------------------------------------------------------*/
 
-#include <dns.h>
-#include <opt.h>
-#include <def.h>
-#include <udp.h>
-#include <lwip_debug.h>
-#include <ip_addr.h>
-#include <ip6_addr.h>
-#include <ip4_addr.h>
+#include "dns.h"
+#include "opt.h"
+#include "def.h"
+#include "udp.h"
+#include "lwip_debug.h"
+#include "ip_addr.h"
+#include "ip6_addr.h"
+#include "ip4_addr.h"
 #include <cstring>
 #include <cctype>
 

@@ -67,13 +67,13 @@
 
 
 #include <cstring>
-#include <ip.h>
-#include <lowpan6_ble.h>
-#include <lowpan6_common.h>
-#include <nd6.h>
-#include <network_interface.h>
-#include <packet_buffer.h>
-#include <tcpip.h>
+#include "ip.h"
+#include "lowpan6_ble.h"
+#include "lowpan6_common.h"
+#include "nd6.h"
+#include "network_interface.h"
+#include "packet_buffer.h"
+#include "tcpip.h"
 /** context memory, containing IPv6 addresses */
 static Ip6Addr rfc7668_context[LWIP_6LOWPAN_NUM_CONTEXTS];
 

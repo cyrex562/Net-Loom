@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <opt.h>
-#include <lowpan6.h>
-#include <network_interface.h>
+#include "opt.h"
+#include "lowpan6.h"
+#include "network_interface.h"
 
 #ifdef __cplusplus
 extern "C" {

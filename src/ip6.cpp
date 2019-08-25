@@ -36,21 +36,21 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#include <def.h>
-#include <dhcp6.h>
-#include <icmp6.h>
-#include <ip.h>
-#include <ip6.h>
-#include <ip6_addr.h>
-#include <ip6_frag.h>
-#include <mld6.h>
-#include <nd6.h>
-#include <network_interface.h>
-#include <opt.h>
-#include <raw_priv.h>
-#include <tcp_priv.h>
-#include <udp.h>
-#include <util.h>
+#include "def.h"
+#include "dhcp6.h"
+#include "icmp6.h"
+#include "ip.h"
+#include "ip6.h"
+#include "ip6_addr.h"
+#include "ip6_frag.h"
+#include "mld6.h"
+#include "nd6.h"
+#include "network_interface.h"
+#include "opt.h"
+#include "raw_priv.h"
+#include "tcp_priv.h"
+#include "udp.h"
+#include "util.h"
 
 /**
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
