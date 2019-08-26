@@ -23,15 +23,9 @@
 #pragma once
 #include "eap_state.h"
 #include <cstdint>
-#include "complex.h"
-#ifdef	__cplusplus
-struct PppPcb;
+#include <complex>
 
 constexpr auto SHA_DIGESTSIZE = 20;
-
-extern "C" {
-#endif
-
 /*
  * Packet header = Code, id, length.
  */
@@ -136,8 +130,8 @@ constexpr auto EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH = 3   /* 2^3-1 = 7, 17+
 inline bool
 eap_server_active(const EapState* eap)
 {
-    return eap->es_server.ea_state >= eapIdentify && eap->es_server.ea_state <=
-        eapMD5Chall;
+    return eap->es_server.ea_state >= EAP_IDENTIFY && eap->es_server.ea_state <=
+        EAP_MD5_CHALL;
 }
 
 
@@ -156,6 +150,6 @@ void eap_authpeer(PppPcb& pcb, std::string& localname);
 
 extern const struct Protent eap_protent;
 
-#ifdef	__cplusplus
-}
-#endif
+//
+// END OF FILE
+//

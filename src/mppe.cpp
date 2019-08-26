@@ -22,20 +22,16 @@
  *                    MOD_DEC_USAGE_COUNT/MOD_INC_USAGE_COUNT which are
  *                    deprecated in 2.6
  */
-
-#include "ppp_opts.h"
 #include <cstring>
 #include "lwip_status.h"
-#include "ccp.h"
 #include "mppe.h"
-#include "pppdebug.h"
-#include "pppcrypt.h"
 #include "lcp.h"
 #include "ppp.h"
 #include "netbuf.h"
 #include "mbedtls/arc4.h"
 #include "mbedtls/sha1.h"
 #include "spdlog/spdlog.h"
+#include "ccp.h"
 constexpr auto SHA1_SIGNATURE_SIZE = 20;
 
 /* ppp_mppe_state.bits definitions */
@@ -187,9 +183,11 @@ mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(PppPcb *pcb, PppMppeState *state)
+bool
+mppe_comp_reset(PppPcb& pcb, PppMppeState& state)
 {
-    state->bits |= MPPE_BIT_FLUSHED;
+    state.bits |= MPPE_BIT_FLUSHED;
+    return true;
 }
 
 /*
@@ -243,36 +241,40 @@ mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t proto
     // pbuf_remove_header(np, MPPE_OVHD);
 
     /* Encrypt packet */
-    for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
-        mbedtls_arc4_crypt(&state.arc4, (uint8_t*)n->payload, n->len);
-        if (n->tot_len == n->len) {
-            break;
-        }
-    }
+    // for (struct PacketBuffer* n = np; n != nullptr; n = n->next) {
+    //     mbedtls_arc4_crypt(&state.arc4, (uint8_t*)n->payload, n->len);
+    //     if (n->tot_len == n->len) {
+    //         break;
+    //     }
+    // }
+    // todo: re-write packet encryption function
 
     /* Reveal MPPE header */
     // pbuf_add_header(np, MPPE_OVHD);
+    // todo: replace this logic
 
-    return STATUS_SUCCESS;
+    return true;
 }
 
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state)
+bool
+mppe_decomp_reset(PppPcb& pcb, PppMppeState& state)
 {
+    return true;
 }
 
 /*
  * Decompress (decrypt) an MPPE packet.
  */
 bool
-mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf)
+mppe_decompress(PppPcb& pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf)
 {
     // struct PacketBuffer *n0 = *pkt_buf; /* MPPE Header */
     if (pkt_buf.bytes.size() < MPPE_OVERHEAD_LEN) {
         ppp_mppe_state.sanity_errors += 100;
-        close_on_bad_mppe_state(ppp_pcb, ppp_mppe_state);
+        close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
     }
 
@@ -286,21 +288,21 @@ mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt
         //        ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
         //        pcb->netif->num));
         ppp_mppe_state.sanity_errors += 100;
-        close_on_bad_mppe_state(ppp_pcb, ppp_mppe_state);
+        close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
     }
     if (!ppp_mppe_state.stateful && !flushed) {
         // PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
         //        "stateless mode!\n", pcb->netif->num));
         ppp_mppe_state.sanity_errors += 100;
-        close_on_bad_mppe_state(ppp_pcb, ppp_mppe_state);
+        close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
     }
     if (ppp_mppe_state.stateful && ((ccount & 0xff) == 0xff) && !flushed) {
         // PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
         //        "flag packet!\n", pcb->netif->num));
         ppp_mppe_state.sanity_errors += 100;
-        close_on_bad_mppe_state(ppp_pcb, ppp_mppe_state);
+        close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
     }
 
@@ -312,7 +314,7 @@ mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt
         /* Discard late packet */
         if ((ccount - ppp_mppe_state.ccount) % MPPE_CCOUNT_SPACE > MPPE_CCOUNT_SPACE / 2) {
             ppp_mppe_state.sanity_errors++;
-            close_on_bad_mppe_state(ppp_pcb, ppp_mppe_state);
+            close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
         }
 
@@ -333,7 +335,7 @@ mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt
                  * Signal the peer to rekey (by sending a CCP Reset-Request).
                  */
                 ppp_mppe_state.discard = 1;
-                ccp_resetrequest(ppp_pcb.ccp_localstate);
+                ccp_reset_request(pcb.ccp_localstate, pcb.ccp_fsm, pcb);
                 return false;
             }
         } else {

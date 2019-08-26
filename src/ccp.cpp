@@ -46,28 +46,29 @@ ccp_init(PppPcb& pcb)
     return true;
 }
 
-void ccp_reset_comp(PppPcb* pcb)
+
+bool
+ccp_reset_comp(PppPcb& pcb)
 {
-    switch (pcb->ccp_transmit_method)
+    switch (pcb.ccp_transmit_method)
     {
     case CI_MPPE:
-        mppe_comp_reset(pcb, &pcb->mppe_comp);
+        mppe_comp_reset(pcb, pcb.mppe_comp);
         break;
     default:
         break;
     }
 }
 
-void ccp_reset_decomp(PppPcb* pcb)
+
+bool
+ccp_reset_decomp(PppPcb& pcb)
 {
-    switch (pcb->ccp_receive_method)
+    if (pcb.ccp_receive_method == CI_MPPE)
     {
-    case CI_MPPE:
-        mppe_decomp_reset(pcb, &pcb->mppe_decomp);
-        break;
-    default:
-        break;
+        return mppe_decomp_reset(pcb, pcb.mppe_decomp);
     }
+    return true;
 }
 
 
@@ -89,7 +90,8 @@ ccp_set(PppPcb& pcb,
 /*
  * ccp_open - CCP is allowed to come up.
  */
-bool ccp_open(PppPcb& pcb)
+bool
+ccp_open(PppPcb& pcb)
 {
     // auto f = &pcb->ccp_fsm;
     // const auto go = &pcb->ccp_gotoptions;
@@ -98,10 +100,10 @@ bool ccp_open(PppPcb& pcb)
      * Find out which compressors the kernel supports before
      * deciding whether to open in silent mode.
      */
-    ccp_resetci(pcb.ccp_fsm ,pcb);
+    ccp_resetci(pcb.ccp_fsm, pcb);
     if (!ccp_anycompress(pcb.ccp_gotoptions))
         pcb.ccp_fsm.options.silent = true;
-    fsm_open(, pcb.ccp_fsm);
+    return fsm_open(pcb, pcb.ccp_fsm);
 }
 
 /*
@@ -111,37 +113,38 @@ static bool
 ccp_close(PppPcb& pcb, std::string& reason)
 {
     ccp_set(pcb, false, false, 0, 0);
-    fsm_close(, pcb.ccp_fsm, reason);
+    return fsm_close(pcb, pcb.ccp_fsm, reason);
 }
 
 /*
  * ccp_lowerup - we may now transmit CCP packets.
  */
-static void ccp_lowerup(PppPcb* pcb)
+bool
+ccp_lowerup(PppPcb& pcb)
 {
-    const auto f = &pcb->ccp_fsm;
-    fsm_lowerup(, f);
+    return fsm_lowerup(pcb, pcb.ccp_fsm);
 }
 
 /*
  * ccp_lowerdown - we may not transmit CCP packets.
  */
-static void ccp_lowerdown(PppPcb* pcb)
+bool
+ccp_lowerdown(PppPcb& pcb)
 {
-    fsm_lowerdown(&pcb->ccp_fsm);
+    return fsm_lowerdown(pcb.ccp_fsm);
 }
 
 /*
  * ccp_input - process a received CCP packet.
  */
-void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
+bool ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
 {
     auto f = pcb.ccp_fsm;
     auto go = pcb.ccp_gotoptions; /*
      * Check for a terminate-request so we can print a message.
      */
     const auto oldstate = f.state;
-    fsm_input(, pcb.ccp_fsm, pkt);
+    fsm_input(pcb, pcb.ccp_fsm, pkt);
     if (oldstate == PPP_FSM_OPENED && pkt[0] == TERMREQ && pcb.ccp_fsm.state != PPP_FSM_OPENED)
     {
         spdlog::info("Compression disabled by peer.");
@@ -161,41 +164,36 @@ void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
         ccp_close(pcb, msg);
     }
 
+    return true;
 }
 
-/*
+/**
  * Handle a CCP-specific code.
  */
-static int ccp_extcode(Fsm* f,
-                       const int code,
-                       const int id,
-                       uint8_t* p,
-                       int len,
-                       PppPcb* PppPcb)
+bool
+ccp_extcode(PppPcb& pcb, Fsm& f, const int code, const int id, std::vector<uint8_t>& data)
 {
     switch (code)
     {
     case CCP_RESETREQ:
-        if (f->state != PPP_FSM_OPENED)
-        {
-            break;
-        }
-        ccp_reset_comp(PppPcb); /* send a reset-ack, which the transmitter will see and
+        if (f.state != PPP_FSM_OPENED) { break; }
+        ccp_reset_comp(pcb); /* send a reset-ack, which the transmitter will see and
            reset its compression state. */
-        fsm_send_data(, f, CCP_RESETACK, id, nullptr);
+        fsm_send_data2(pcb, f, CCP_RESETACK, id, data);
         break;
     case CCP_RESETACK:
-        if ((PppPcb->ccp_localstate & RESET_ACK_PENDING) && id == f->reqid)
+        if ((pcb.ccp_localstate & RESET_ACK_PENDING) && id == f.reqid)
         {
-            PppPcb->ccp_localstate &= ~(RESET_ACK_PENDING | REPEAT_RESET_REQ);
-            Untimeout(ccp_rack_timeout, f);
-            ccp_reset_decomp(PppPcb);
+            pcb.ccp_localstate &= ~(RESET_ACK_PENDING | REPEAT_RESET_REQ);
+            //Untimeout(ccp_rack_timeout, f);
+            // todo: replace removal of timeout
+            ccp_reset_decomp(pcb);
         }
         break;
     default:
-        return 0;
+        return false;
     }
-    return 1;
+    return true;
 }
 
 /*
@@ -221,8 +219,8 @@ bool
 ccp_resetci(Fsm& f, PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
-    auto go = &pcb->ccp_gotoptions;
-    auto wo = &pcb->ccp_wantoptions;
+    // auto go = &pcb->ccp_gotoptions;
+    // auto wo = &pcb->ccp_wantoptions;
     const auto ao = &pcb->ccp_allowoptions;
     uint8_t opt_buf[CCP_MAX_OPTION_LENGTH];
     int res;
@@ -1275,7 +1273,7 @@ static void ccp_datainput(PppPcb* pcb, uint8_t* pkt, int len)
  * decompress. Issue a reset-request.
  */
 bool
-ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f)
+ccp_reset_request(uint8_t& ppp_pcb_ccp_local_state, Fsm& f, PppPcb& pcb)
 {
     if (f.state != PPP_FSM_OPENED)
     {
@@ -1287,7 +1285,12 @@ ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f)
      */
     if (!(ppp_pcb_ccp_local_state & RESET_ACK_PENDING))
     {
-        fsm_send_data(, f, CCP_RESETREQ, f.reqid = ++f.id, nullptr);
+        std::vector<uint8_t> empty;
+        if (!fsm_send_data2(pcb, f, CCP_RESETREQ, f.reqid = ++f.id, empty))
+        {
+            return false;
+        }
+
         // timeout(ccp_rack_timeout, f, kRacktimeout);
         ppp_pcb_ccp_local_state |= RESET_ACK_PENDING;
     }
@@ -1295,6 +1298,8 @@ ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f)
     {
         ppp_pcb_ccp_local_state |= REPEAT_RESET_REQ;
     }
+
+    return true;
 }
 
 

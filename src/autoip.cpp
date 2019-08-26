@@ -307,6 +307,8 @@ autoip_timer_fn(std::vector<NetworkInterface>& interfaces,
         default: /* nothing to do in other states */ break;
         }
     }
+
+    return true;
 }
 
 //
@@ -349,7 +351,7 @@ autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
                 is_ip4_addr_any(sipaddr) && is_ip4_addr_equal(dipaddr, state.llipaddr)
                 && !eth_addr_cmp(netifaddr, hdr.shwaddr)))
             {
-                autoip_restart(netif, state);
+                return autoip_restart(netif, state);
             }
         }
         else
@@ -362,10 +364,12 @@ autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
                 netifaddr,
                 hdr.shwaddr))
             {
-                autoip_handle_arp_conflict(netif, state);
+                return autoip_handle_arp_conflict(netif, state);
             }
         }
     }
+
+    return false;
 }
 
 // check if AutoIP supplied netif->ip_addr

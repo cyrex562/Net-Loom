@@ -229,8 +229,14 @@ int netif_get_mtu(PppPcb*pcb);
 
 bool
 ccp_set(PppPcb& pcb, bool isopen, bool isup, uint8_t receive_method, uint8_t transmit_method);
-void ccp_reset_comp(PppPcb*pcb);
-void ccp_reset_decomp(PppPcb*pcb);
+
+
+bool
+ccp_reset_comp(PppPcb& pcb);
+
+
+bool
+ccp_reset_decomp(PppPcb& pcb);
 
 
 
@@ -266,6 +272,12 @@ inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp, size_t& index)
     }
 }
 
+inline void PUTBYTES(std::vector<uint8_t>& bytes, std::vector<uint8_t>& cp , size_t& index)
+{
+    size_t inc = bytes.size();
+    std::copy(bytes.begin(), bytes.begin() + bytes.size(), cp.begin() + index);
+    index += inc;
+}
 
 inline std::tuple<bool, uint16_t> GETSHORT(std::vector<uint8_t>& cp, size_t& index)
 {
@@ -669,7 +681,7 @@ struct PppPcb
     uint8_t lcp_echo_number{}; /* ID number of next echo frame */
     uint8_t num_np_open{}; /* Number of network protocols which we have opened. */
     uint8_t num_np_up{}; /* Number of network protocols which have come up. */
-    struct VjCompress vj_comp{}; /* Van Jacobson compression header. */
+    VjCompress vj_comp{}; /* Van Jacobson compression header. */
     Fsm ccp_fsm{}; /* CCP fsm structure */
     CcpOptions ccp_wantoptions{}; /* what to request the peer to use */
     CcpOptions ccp_gotoptions{}; /* what the peer agreed to do */

@@ -1,5 +1,5 @@
 #pragma once
-#include "mppe.h"
+// #include "mppe.h"
 #include "fsm_def.h"
 struct PppPcb;
 
@@ -118,9 +118,18 @@ bool ccp_open(PppPcb& pcb);
 
 bool
 ccp_close(PppPcb& pcb, std::string& reason);
-void ccp_lowerup(PppPcb* pcb);
-void ccp_lowerdown(PppPcb* pcb);
-void ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
+
+
+bool
+ccp_lowerup(PppPcb& pcb);
+
+
+bool
+ccp_lowerdown(PppPcb& pcb);
+
+
+bool
+ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
 void ccp_protrej(PppPcb* pcb);
 void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
 
@@ -135,13 +144,16 @@ int ccp_rejci(Fsm*, const uint8_t*, int, PppPcb* pcb);
 int ccp_reqci(Fsm*, uint8_t*, size_t*, int, PppPcb* pcb);
 void ccp_up(Fsm*, PppPcb* pcb, Protent** protocols);
 void ccp_down(Fsm*, Fsm* lcp_fsm, PppPcb* pcb);
-int ccp_extcode(Fsm*, int, int, uint8_t*, int, PppPcb* PppPcb);
+
+
+bool
+ccp_extcode(PppPcb& pcb, Fsm&, int, int, std::vector<uint8_t>& data);
 void ccp_rack_timeout(void*);
 const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
  /** Issue a reset-request. */
 bool
-ccp_reset_request(uint8_t ppp_pcb_ccp_local_state, Fsm& f);
+ccp_reset_request(uint8_t& ppp_pcb_ccp_local_state, Fsm& f, PppPcb& pcb);
 
 
 inline bool ccp_test(PppPcb* pcb, uint8_t* opt_buf, uint32_t option, uint32_t idx)

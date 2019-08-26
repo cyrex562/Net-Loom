@@ -3,12 +3,9 @@
 //
 #pragma once
 #include "pppcrypt.h"
-#include "lwip_status.h"
 #include "packet_buffer.h"
 #include "lcp.h"
 #include "mppe_def.h"
-
-#include "mbedtls/arc4.h"
 
 
 
@@ -130,15 +127,21 @@ mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key);
 
 bool
 mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
-void mppe_comp_reset(PppPcb *pcb, PppMppeState *state);
+
+
+bool
+mppe_comp_reset(PppPcb& pcb, PppMppeState& state);
 
 
 bool
 mppe_compress(PppPcb& pcb, PppMppeState& state, ::PacketBuffer& pb, uint16_t protocol);
-void mppe_decomp_reset(PppPcb *pcb, PppMppeState *state);
+
 
 bool
-mppe_decompress(PppPcb& ppp_pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf);
+mppe_decomp_reset(PppPcb& pcb, PppMppeState& state);
+
+bool
+mppe_decompress(PppPcb& pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf);
 
 //
 // END OF FILE
