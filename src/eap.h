@@ -24,7 +24,7 @@
 #include "eap_state.h"
 #include <cstdint>
 #include <complex>
-
+#include "ppp.h"
 constexpr auto SHA_DIGESTSIZE = 20;
 /*
  * Packet header = Code, id, length.
@@ -146,9 +146,10 @@ static char base64[] =
 
 bool
 eap_authwithpeer(PppPcb& pcb);
+
 void eap_authpeer(PppPcb& pcb, std::string& localname);
 
-extern const struct Protent eap_protent;
+// extern const struct Protent eap_protent;
 
 //
 // END OF FILE

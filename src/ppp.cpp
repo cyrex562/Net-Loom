@@ -69,8 +69,11 @@ ppp_connect(PppPcb& pcb, uint64_t holdoff)
     if (pcb.phase != PPP_PHASE_DEAD)
     {
         return ERR_ALREADY;
-    } // PPPDEBUG(LOG_DEBUG, ("ppp_connect[%d]: holdoff=%d\n", pcb->netif->num, holdoff));
-    magic_randomize();
+    }
+
+    // PPPDEBUG(LOG_DEBUG, ("ppp_connect[%d]: holdoff=%d\n", pcb->netif->num, holdoff));
+    // magic_randomize();
+
     if (holdoff == 0)
     {
         ppp_do_connect(pcb);
@@ -99,14 +102,15 @@ ppp_listen(PppPcb& pcb)
     {
         return ERR_ALREADY;
     }
-    magic_randomize();
+
+    // magic_randomize();
+    //
     // if (pcb.link_cb->listen)
     // {
     //     new_phase(pcb, PPP_PHASE_INITIALIZE);
     //     pcb.link_cb->listen(pcb, (uint8_t*)pcb.link_ctx_cb);
     //     return STATUS_SUCCESS;
     // }
-
     // todo: call the appropriate listen function
 
     // return ERR_IF;
@@ -384,7 +388,7 @@ init_ppp_subsys()
      * Initialize magic number generator now so that protocols may
      * use magic numbers in initialization.
      */
-    magic_init();
+    // magic_init();
     return 0;
 }
 
@@ -520,7 +524,7 @@ ppp_link_end(PppPcb& pcb)
 bool
 ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
 {
-    magic_randomize();
+    // magic_randomize();
     if (pkt_buf.bytes.size() < 2)
     {
         return false;
@@ -528,7 +532,9 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
     const auto pb_payload_0 = pkt_buf.bytes[0];
     const auto pb_payload_1 = pkt_buf.bytes[1];
     uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
-    const size_t proto_size = 2; // sizeof(protocol)
+    const size_t proto_size = 2;
+
+    // sizeof(protocol)
     // todo: replicate this call
     // pbuf_remove_header(pb, proto_size);
     if (pkt_buf.bytes.size() < 2)

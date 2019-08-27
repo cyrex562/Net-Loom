@@ -48,6 +48,7 @@
 
 #define NOMINMAX
 #include "fsm.h"
+#include "fsm_def.h"
 #include "ppp.h"
 #include <vector>
 #include <string>
@@ -341,11 +342,11 @@ fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet)
     if (f.state == PPP_FSM_CLOSED) {
         fsm_send_data2(pcb, f, TERMACK, id, data);
         return true;
-    }
-    else if (f.state == PPP_FSM_CLOSING || f.state == PPP_FSM_STOPPING) {
+    } // todo: call appropriate reqci func
+    if (f.state == PPP_FSM_CLOSING || f.state == PPP_FSM_STOPPING) {
         return true;
     }
-    else if (f.state == PPP_FSM_OPENED) {
+    if (f.state == PPP_FSM_OPENED) {
         // todo: call down callback
         if (!fsm_senc_conf_req(pcb, f, false)) { return false;}
     }
@@ -354,7 +355,6 @@ fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet)
         f.state = PPP_FSM_REQSENT;
     }
 
-    // todo: call appropriate reqci func
     // if (f->callbacks->reqci) {
     //     /* Check CI */
     //     int reject_if_disagree = (f->nakloops >= f->maxnakloops);

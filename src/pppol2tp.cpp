@@ -191,7 +191,7 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
 
   /* Generate random vector */
   if (l2tp->secret != nullptr) {
-    magic_random_bytes(l2tp->secret_rv, sizeof(l2tp->secret_rv));
+    magic_random_bytes(l2tp->secret_rv,,);
   }
 
 

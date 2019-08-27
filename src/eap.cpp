@@ -559,13 +559,11 @@ eap_send_request(PppPcb& pcb)
 {
     int len;
     const char* str;
-
     /* Handle both initial auth and restart */
-    if (pcb.eap.es_server.ea_state < EAP_IDENTIFY &&
-        pcb.eap.es_server.ea_state != EAP_INITIAL)
+    if (pcb.eap.es_server.ea_state < EAP_IDENTIFY && pcb.eap.es_server.ea_state !=
+        EAP_INITIAL)
     {
         pcb.eap.es_server.ea_state = EAP_IDENTIFY;
-
         if (pcb.settings.explicit_remote && !pcb.peer_authname.empty())
         {
             /*
@@ -574,42 +572,31 @@ eap_send_request(PppPcb& pcb)
              * reason to ask.  Go to next state instead.
              */
             auto len = pcb.peer_authname.length();
-            if (len > MAXNAMELEN)
-            {
-                len = MAXNAMELEN;
-            }
+            if (len > MAXNAMELEN) { len = MAXNAMELEN; }
             // memcpy(pcb->eap.es_server.ea_peer, pcb->peer_authname, len);
-
             pcb.eap.es_server.ea_peer = pcb.peer_authname;
-
             // pcb->eap.es_server.ea_peer[len] = '\0';
             // pcb->eap.es_server.ea_peerlen = len;
             eap_figure_next_state(pcb, 0);
         }
     }
 
-    if (pcb.settings.eap_max_transmits > 0 &&
-        pcb.eap.es_server.ea_requests >= pcb.settings.eap_max_transmits)
+    if (pcb.settings.eap_max_transmits > 0
+        && pcb.eap.es_server.ea_requests >= pcb.settings.eap_max_transmits)
     {
-        if (pcb.eap.es_server.ea_responses > 0)
-        {
+        if (pcb.eap.es_server.ea_responses > 0) {
             ppp_error("EAP: too many Requests sent");
         }
-        else
-        {
-            ppp_error("EAP: no response to Requests");
-        }
+        else { ppp_error("EAP: no response to Requests"); }
         eap_send_failure(pcb);
-        return;
+        return false;
     }
-
     PacketBuffer p{};
     size_t index = 0;
     MAKEHEADER(p.bytes, PPP_EAP);
     PUTCHAR(EAP_REQUEST, p.bytes, index);
     PUTCHAR(pcb.eap.es_server.ea_id, p.bytes, index);
     index += 2;
-
     auto ea_state = pcb.eap.es_server.ea_state;
     if (ea_state == EAP_IDENTIFY)
     {
@@ -618,46 +605,37 @@ eap_send_request(PppPcb& pcb)
         PUTSTRING(str_name, p.bytes, index);
         index += str_name.size();
     }
-    else if (ea_state == EAP_MD5_CHALL) {
+    else if (ea_state == EAP_MD5_CHALL)
+    {
         PUTCHAR(EAPT_MD5CHAP, p.bytes, index);
+
         /*
          * pick a random challenge length between
          * EAP_MIN_CHALLENGE_LENGTH and EAP_MAX_CHALLENGE_LENGTH
-         */
-        pcb.eap.es_challen = EAP_MIN_CHALLENGE_LENGTH
-            + magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
-        PUTCHAR(pcb.eap.es_challen, p.bytes, index);
+         */ // pcb.eap.es_challen = EAP_MIN_CHALLENGE_LENGTH
+        //     + magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
+        auto new_eap_chall_len = EAP_MIN_CHALLENGE_LENGTH + magic_pow(
+            EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
+        pcb.eap.es_challenge.reserve(new_eap_chall_len);
+        // put the length of the challenge into the packet
+        PUTCHAR(new_eap_chall_len, p.bytes, index);
+        // fill the challenge buffer with random data
+        magic_random_bytes(pcb.eap.es_challenge, pcb.eap.es_challenge.size(), 0);
+        PUTBYTES(pcb.eap.es_challenge, p.bytes, index);
 
-        magic_random_bytes(pcb.eap.es_challenge, pcb.eap.es_challen);
+        //
+        PUTSTRING(pcb.eap.es_server.ea_name, p.bytes, index);
 
-
-
-        memcpy(outp, pcb.eap.es_challenge, pcb.eap.es_challen);
-
-        PUTBYTES()
-
-        ((outp) += (pcb.eap.es_challen));
-        memcpy(outp, pcb.eap.es_server.ea_name.c_str(), pcb.eap.es_server.ea_name.length());
-        // outp = pcb->eap.es_server.ea_name;
-        ((outp) += (pcb.eap.es_server.ea_name.length()));
     }
-    else {
-        return false;
-    }
-
+    else { return false; }
     int outlen = (outp - (unsigned char *)p->payload) - PPP_HDRLEN;
-    PUTSHORT(outlen, lenloc);
-
-    // pbuf_realloc(p);
+    PUTSHORT(outlen, lenloc); // pbuf_realloc(p);
     ppp_write(pcb, p);
-
     pcb.eap.es_server.ea_requests++;
-
     if (pcb.settings.eap_timeout_time > 0)
     {
         Timeout(eap_server_timeout, pcb, pcb.settings.eap_timeout_time);
     }
-
     return true;
 }
 

@@ -41,7 +41,7 @@ chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
 {
     const auto clen = kMd5MinChallenge + magic_pow(kMd5MinMaxPowerOfTwoChallenge);
     *cp++ = clen;
-    magic_random_bytes(cp, clen);
+    magic_random_bytes(cp,,);
 }
 
 

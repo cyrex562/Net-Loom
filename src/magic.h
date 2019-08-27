@@ -76,7 +76,7 @@
 #pragma once
 
 #include "ppp_opts.h"
-
+#include <random>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -101,6 +101,8 @@ void magic_randomize(void);
  */
 uint32_t magic(void);	/* Returns the next magic number */
 
+
+
 /*
  * Fill buffer with random bytes
  *
@@ -111,12 +113,23 @@ uint32_t magic(void);	/* Returns the next magic number */
  * least some degree.  Also, it's important to get a good seed before
  * the first use.
  */
-void magic_random_bytes(uint8_t* buf, size_t buf_len);
+bool
+magic_random_bytes(std::vector<uint8_t> buffer, size_t count, size_t offset);
 
 /*
  * Return a new random number between 0 and (2^pow)-1 included.
  */
 uint32_t magic_pow(uint8_t pow);
+
+
+inline uint8_t magic_rand()
+{
+    std::default_random_engine generator;
+    std::uniform_int_distribution<uint8_t> distribution(0, 0xff);
+
+    uint8_t val = distribution(generator);
+    return val;
+}
 
 #ifdef __cplusplus
 }

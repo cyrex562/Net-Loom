@@ -46,6 +46,7 @@
 #include <cstdint>
 #include <vector>
 #include "auth.h"
+
 /*
  * Packet header = Code, id, length.
  */
@@ -77,14 +78,19 @@ enum CpCodes
  * Prototypes
  */
 bool
-fsm_init(::Fsm& fsm, PppPcb& pcb);
+fsm_init(Fsm& fsm, PppPcb& pcb);
+
 
 bool
 fsm_lowerup(PppPcb& pcb, Fsm& f);
 
+
 bool
 fsm_lowerdown(Fsm& f);
-bool fsm_open(PppPcb& pcb, Fsm& f);
+
+
+bool
+fsm_open(PppPcb& pcb, Fsm& f);
 
 
 bool
@@ -94,9 +100,18 @@ fsm_close(PppPcb& pcb, Fsm& fsm, std::string& reason);
 bool
 fsm_input(PppPcb& pcb, ::Fsm& fsm, std::vector<uint8_t>& packet);
 
+
 bool
 fsm_proto_rej(PppPcb& pcb, Fsm& f);
-bool fsm_send_data2(PppPcb& pcb, Fsm& fsm, uint8_t code, uint8_t id, std::vector<uint8_t>& data);
+
+
+bool
+fsm_send_data2(PppPcb& pcb,
+               Fsm& fsm,
+               uint8_t code,
+               uint8_t id,
+               std::vector<uint8_t>& data);
+
 
 bool
 fsm_recv_term_req(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t>& packet);
@@ -105,20 +120,30 @@ fsm_recv_term_req(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t>& packet);
 bool
 fsm_timeout(PppPcb& pcb, Fsm& fsm);
 
+
 bool
 fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet);
+
 
 bool
 fsm_recv_conf_ack(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t> packet);
 
+
 bool
-fsm_recv_conf_nak_rej(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t>& packet);
+fsm_recv_conf_nak_rej(PppPcb& pcb,
+                      Fsm& f,
+                      int code,
+                      int id,
+                      std::vector<uint8_t>& packet);
+
 
 bool
 fsm_recv_term_ack(PppPcb& pcb, Fsm& f);
 
+
 bool
 fsm_recv_code_rej(PppPcb& pcb, Fsm& f, std::vector<uint8_t> packet);
+
 
 bool
 fsm_senc_conf_req(PppPcb& pcb, Fsm& f, bool retransmit);

@@ -40,7 +40,7 @@ chapms_generate_challenge(PppPcb* pcb, unsigned char* challenge)
     if (mschap_challenge && strlen(mschap_challenge) == 8)
         memcpy(challenge, mschap_challenge, 8);
     else
-        magic_random_bytes(challenge, 8);
+        magic_random_bytes(challenge,,);
 }
 
 static void
@@ -50,7 +50,7 @@ chapms2_generate_challenge(PppPcb* pcb, unsigned char* challenge)
     if (mschap_challenge && strlen(mschap_challenge) == 16)
         memcpy(challenge, mschap_challenge, 16);
     else
-        magic_random_bytes(challenge, 16);
+        magic_random_bytes(challenge,,);
 }
 
 static int
@@ -657,7 +657,7 @@ ChapMS2(PppPcb* pcb,
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
     {
-        magic_random_bytes(&response[MS_CHAP2_PEER_CHALLENGE], MS_CHAP2_PEER_CHAL_LEN);
+        magic_random_bytes(&response[MS_CHAP2_PEER_CHALLENGE],,);
     }
     else
     {
