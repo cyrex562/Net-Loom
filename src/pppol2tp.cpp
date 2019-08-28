@@ -181,7 +181,7 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
   IpAddrInfo any_addr = create_ip_addr_ip6_any();
-  if (is_ip_addr_v6(&l2tp->udp->local_ip))
+  if (ip_addr_is_v6(&l2tp->udp->local_ip))
   {
       udp_bind(l2tp->udp, &any_addr, 0);
   }

@@ -16,8 +16,7 @@
 #include "auto_ip_state.h"
 #include "mld6_group.h"
 #include "pcap_if_private.h"
-
-
+#include "ip_addr.h"
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
 constexpr auto NETIF_CHECKSUM_GEN_TCP = 0x0004;
@@ -507,23 +506,18 @@ inline bool netif_ip4_addr_in_net(NetworkInterface& netif, const Ip4Addr& addr)
 }
 
 
-LwipStatus
-select_ip6_src_addr(const NetworkInterface& netif,
-                    const Ip6AddrInfo& dest_addr,
-                    Ip6AddrInfo& out_src_addr);
+std::tuple<bool, Ip6AddrInfo>
+netif_select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr);
 
 
 /**
  *
  */
-inline LwipStatus
-get_netif_ip6_local_ip(const NetworkInterface& netif,
-                       const Ip6AddrInfo& dest,
-                       Ip6AddrInfo& out_addr)
+inline std::tuple<bool, Ip6AddrInfo>
+get_netif_ip6_local_ip(const NetworkInterface& netif, const Ip6AddrInfo& dest)
 {
-    Ip6AddrInfo out_src_addr{};
-    const auto status = select_ip6_src_addr(netif, dest, out_src_addr);
-    out_addr = out_src_addr;
+    Ip6AddrInfo out_addr{};
+    const auto status = netif_select_ip6_src_addr(netif, dest);
     return status;
 }
 
@@ -611,6 +605,31 @@ bool netif_upsert_ip4(NetworkInterface& netif, Ip4AddrInfo& addr_info)
     }
 
     return true;
+}
+
+
+/**
+ * Get netif for IP.
+ */
+inline std::tuple<bool, IpAddrInfo>
+netif_get_local_ip(const NetworkInterface& netif, const IpAddrInfo& dest_addr_info)
+{
+    auto ok = true;
+    IpAddrInfo out_addr_info{};
+    Ip6AddrInfo ip6_addr_info{};
+    if (ip_addr_is_v6(dest_addr_info)) {
+        std::tie(ok, ip6_addr_info) = get_netif_ip6_local_ip(netif,
+                                                             dest_addr_info.u_addr.ip6);
+        out_addr_info.u_addr.ip6 = ip6_addr_info;
+        return std::make_tuple(ok, out_addr_info);
+    }
+    Ip4AddrInfo ip4_addr_info{};
+    Ip4Addr ip4_addr{};
+    std::tie(ok, ip4_addr) = get_netif_ip4_local_ip(netif,
+                                                    dest_addr_info.u_addr.ip4.address);
+    ip4_addr_info.address = ip4_addr;
+    out_addr_info.u_addr.ip4 = ip4_addr_info;
+    return std::make_tuple(ok, out_addr_info);
 }
 
 //

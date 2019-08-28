@@ -7,6 +7,7 @@
 #include <string>
 #include "upap_state.h"
 #include "chap_new.h"
+#include "ppp_def.h"
 // struct Protent;
 
 struct PppPcb;
@@ -46,8 +47,8 @@ auth_peer_fail(PppPcb& pcb, int protocol);
 
 bool
 auth_peer_success(PppPcb& pcb,
-                  int protocol,
-                  int prot_flavor,
+                  PppProtoFieldValue protocol,
+                  ChapDigestCodes prot_flavor,
                   std::string& name);
 
 bool

@@ -395,7 +395,7 @@ bool
 auth_peer_fail(PppPcb& pcb, int protocol);
                 /* peer failed to authenticate itself */
 bool
-auth_peer_success(PppPcb& pcb, int protocol, int prot_flavor, std::string& name);
+auth_peer_success(PppPcb& pcb, PppProtoFieldValue protocol, ChapDigestCodes prot_flavor, std::string& name);
                 /* peer successfully authenticated itself */
 bool
 auth_withpeer_fail(PppPcb& pcb, int protocol);

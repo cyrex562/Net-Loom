@@ -1213,7 +1213,7 @@ tcp_output(struct TcpPcb *pcb)
 
   /* If we don't have a local IP address, we get one from netif */
   if (is_ip_addr_any(&pcb->local_ip)) {
-    const IpAddrInfo *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip,);
+    const IpAddrInfo *local_ip = netif_get_local_ip(netif, &pcb->remote_ip);
     if (local_ip == nullptr) {
       return STATUS_E_ROUTING;
     }

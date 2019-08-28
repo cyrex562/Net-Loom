@@ -29,7 +29,7 @@ struct IpAddrInfo
     IpAddrType type;
 };
 
-struct NetworkInterface; 
+struct NetworkInterface;
 
 
 ///
@@ -45,7 +45,7 @@ inline bool
 is_ip_addr_v4(const IpAddrInfo& addr)
 {
     return addr.type == IPADDR_TYPE_V4;
-} 
+}
 
 ///
 ///
@@ -54,7 +54,7 @@ inline IpAddrType
 get_ip_addr_type(const IpAddrInfo& ipaddr)
 {
     return ipaddr.type;
-} 
+}
 
 ///
 ///
@@ -63,13 +63,13 @@ inline bool
 is_ip_addr_any_type(const IpAddrInfo& ipaddr)
 {
     return get_ip_addr_type(ipaddr) == IPADDR_TYPE_ANY;
-} 
+}
 
 ///
 ///
 ///
 inline bool
-is_ip_addr_v6(const IpAddrInfo& ipaddr)
+ip_addr_is_v6(const IpAddrInfo& ipaddr)
 {
     return get_ip_addr_type(ipaddr) == IPADDR_TYPE_V6;
 }
@@ -186,7 +186,7 @@ inline void
 set_ip_addr(IpAddrInfo& dest, const IpAddrInfo& src)
 {
     set_ip_addr_type(dest, get_ip_addr_type(src));
-    if (is_ip_addr_v6(src))
+    if (ip_addr_is_v6(src))
     {
         set_ip6_addr(dest.u_addr.ip6, src.u_addr.ip6);
     }
@@ -271,7 +271,7 @@ compare_ip_addr(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
     {
         return false;
     }
-    if (is_ip_addr_v6(addr1))
+    if (ip_addr_is_v6(addr1))
     {
         return ip6_addr_equal(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
@@ -285,7 +285,7 @@ compare_ip_addr(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
 inline bool
 is_ip_addr_any(const IpAddrInfo& ipaddr)
 {
-    if (is_ip_addr_v6(ipaddr))
+    if (ip_addr_is_v6(ipaddr))
     {
         return ip6_addr_is_any(ipaddr.u_addr.ip6);
     }
@@ -299,7 +299,7 @@ is_ip_addr_any(const IpAddrInfo& ipaddr)
 inline bool
 is_ip_addr_mcast(const IpAddrInfo& ipaddr)
 {
-    if (is_ip_addr_v6(ipaddr))
+    if (ip_addr_is_v6(ipaddr))
     {
         return is_ip6_addr_mcast(ipaddr.u_addr.ip6.addr);
     }
@@ -313,7 +313,7 @@ is_ip_addr_mcast(const IpAddrInfo& ipaddr)
 inline bool
 is_ip_addr_loopback(const IpAddrInfo& ipaddr)
 {
-    if ((is_ip_addr_v6(ipaddr)))
+    if ((ip_addr_is_v6(ipaddr)))
     {
         return ip6_addr_is_loopback(ipaddr.u_addr.ip6);
     }
@@ -325,13 +325,13 @@ is_ip_addr_loopback(const IpAddrInfo& ipaddr)
  *
  */
 inline bool
-is_ip_addr_link_local(const IpAddrInfo& ipaddr)
+ip_addr_is_link_local(const IpAddrInfo& ipaddr)
 {
-    if (is_ip_addr_v6(ipaddr))
+    if (ip_addr_is_v6(ipaddr))
     {
         return ip6_addr_is_linklocal(ipaddr.u_addr.ip6);
     }
-    return ip4_addr_is_link_local(ipaddr.u_addr.ip4);
+    return ip4_addr_is_link_local(ipaddr.u_addr.ip4.address);
 }
 
 
