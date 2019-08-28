@@ -3,7 +3,7 @@
 #include "chap_new.h"
 
 
-struct Epdisc
+struct EndpointDiscriminator
 {
     unsigned char class_; /* -- The word "class" is reserved in C++. */
     unsigned char length;
@@ -40,5 +40,5 @@ struct LcpOptions
     uint32_t magicnumber;
     uint8_t numloops; /* Number of loops during magic number neg. */
     uint32_t lqr_period; /* Reporting period for LQR 1/100ths second */
-    Epdisc endpoint; /* endpoint discriminator */
+    EndpointDiscriminator endpoint; /* endpoint discriminator */
 };

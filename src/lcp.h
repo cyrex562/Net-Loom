@@ -59,13 +59,7 @@ constexpr auto CBCP_OPT = 6	/* Use callback control protocol */;
 /* An endpoint discriminator, used with multilink. */
 constexpr auto MAX_ENDP_LEN = 20	/* maximum length of discriminator value */;
 
-struct Epdisc
-{
-    unsigned char class_; /* -- The word "class" is reserved in C++. */
-    unsigned char length;
 
-    unsigned char value[MAX_ENDP_LEN];
-};
 
 
 

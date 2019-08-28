@@ -443,8 +443,8 @@ bool mp_join_bundle(PppPcb& pcb,
 
 void mp_exit_bundle (void);  /* have disconnected our link from bundle */
 void mp_bundle_terminated (void);
-char *epdisc_to_str (struct Epdisc *); /* string from endpoint discrim. */
-int  str_to_epdisc (struct Epdisc *, char *); /* endpt disc. from str */
+char *epdisc_to_str (struct EndpointDiscriminator *); /* string from endpoint discrim. */
+int  str_to_epdisc (struct EndpointDiscriminator *, char *); /* endpt disc. from str */
 
 
 /* Procedures exported from utils.c. */
