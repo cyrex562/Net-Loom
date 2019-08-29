@@ -440,10 +440,8 @@ netif_name_to_index(std::string& name, const std::vector<NetworkInterface>& inte
  * @return the most suitable source address to use, or NULL if no suitable
  *         source address is found
  */
-LwipStatus
-select_ip6_src_addr(const NetworkInterface& netif,
-                    const Ip6AddrInfo& dest_addr,
-                    Ip6AddrInfo& out_src_addr)
+std::tuple<bool, Ip6AddrInfo>
+netif_select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest_addr)
 {
     LwipStatus result = STATUS_SUCCESS;
     Ip6MulticastScope dest_scope;

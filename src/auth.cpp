@@ -234,11 +234,16 @@ auth_peer_fail(PppPcb& pcb, int protocol)
     pcb.err_code = PPPERR_AUTHFAIL;
     std::string reason = "Authentication failed.";
     return lcp_close(pcb, reason);
-} /*
+}
+
+/**
  * The peer has been successfully authenticated using `protocol'.
  */
 bool
-auth_peer_success(PppPcb& pcb, int protocol, int prot_flavor, std::string& name)
+auth_peer_success(PppPcb& pcb,
+                  PppProtoFieldValue protocol,
+                  ChapDigestCodes prot_flavor,
+                  std::string& name)
 {
     int bit;
     switch (protocol) {
@@ -258,15 +263,20 @@ auth_peer_success(PppPcb& pcb, int protocol, int prot_flavor, std::string& name)
     case PPP_EAP: bit = EAP_PEER;
         break;
     default: ppp_warn("auth_peer_success: unknown protocol %x", protocol);
-        return;
+        return false;
     }
     pcb.peer_authname = name; /* Save the authentication method for later. */
-    pcb.auth_done |= bit; /*
+    pcb.auth_done |= bit;
+    /*
      * If there is no more authentication still to be done,
      * proceed to the network (or callback) phase.
      */
-    if ((pcb.auth_pending &= ~bit) == 0) { enter_network_phase(pcb); }
-} /**
+    if ((pcb.auth_pending &= ~bit) == 0) { return enter_network_phase(pcb); }
+    return true;
+}
+
+
+/**
  * We have failed to authenticate ourselves to the peer using `protocol'.
  */
 bool

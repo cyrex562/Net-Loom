@@ -194,7 +194,7 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
 inline LwipStatus
 ip_output(PacketBuffer& p, IpAddrInfo& src, IpAddrInfo& dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
 {
-    if (is_ip_addr_v6(dest)) {
+    if (ip_addr_is_v6(dest)) {
         return
             ip6_output(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto);
     }
@@ -216,7 +216,7 @@ ip_output_if(PacketBuffer& p,
              const uint8_t proto,
              NetworkInterface& netif)
 {
-    if (is_ip_addr_v6(dest)) {
+    if (ip_addr_is_v6(dest)) {
         return ip6_output_if(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto, netif);
     }
     return ip4_output_if(p, src.u_addr.ip4, dest.u_addr.ip4, ttl, tos, proto, netif);
@@ -237,7 +237,7 @@ ip_output_if_src(PacketBuffer& p,
                  NetworkInterface& netif)
 {
     return
-    (is_ip_addr_v6(dest)
+    (ip_addr_is_v6(dest)
          ? ip6_output_if_src(p,
                              src.u_addr.ip6,
                              dest.u_addr.ip6,
@@ -281,42 +281,14 @@ ip_route(const IpAddrInfo& src,
          NetworkInterface& out_ifc,
          const std::vector<NetworkInterface>& interfaces)
 {
-    if (is_ip_addr_v6(dest)) {
+    if (ip_addr_is_v6(dest)) {
         return route_ip6_packet(src.u_addr.ip6, dest.u_addr.ip6, out_ifc, interfaces);
     }
     return source_route_ip4_addr(src.u_addr.ip4, dest.u_addr.ip4, out_ifc, interfaces);
 }
 
 
-/**
- * Get netif for IP.
- */
-inline LwipStatus
-ip_netif_get_local_ip(const NetworkInterface& netif,
-                      const IpAddrInfo& dest_addr_info,
-                      IpAddrInfo& out_addr_info)
-{
-    out_addr_info = IpAddrInfo();
-    if (is_ip_addr_v6(dest_addr_info)) {
-        const auto status = get_netif_ip6_local_ip(netif,
-                                                   dest_addr_info.u_addr.ip6,
-                                                   out_addr_info.u_addr.ip6);
-        return status;
-    }
-    Ip4AddrInfo ip4_addr_info{};
-    const auto status = get_netif_ip4_local_ip(netif,
-                                               dest_addr_info.u_addr.ip4);
-    out_addr_info.u_addr.ip4 = ip4_addr_info;
-    return status;
-}
 
-// #define ip_debug_print(is_ipv6, p) \
-//   ((is_ipv6) ? true_print(p) : ip4_debug_print(p))
 
 LwipStatus ip_input(struct PacketBuffer *p, NetworkInterface *inp);
 
-// #define ip_route_get_local_ip(src, dest, netif, ipaddr) \
-//   do {                                                  \
-//     (netif) = ip_route(src, dest);                      \
-//     (ipaddr) = ip_netif_get_local_ip(netif, dest);      \
-//   } while (0)

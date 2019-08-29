@@ -312,7 +312,7 @@ uint16_t ip_chksum_pseudo(PacketBuffer& p,
                           const IpAddrInfo& src,
                           const IpAddrInfo& dest)
 {
-  if (is_ip_addr_v6(dest)) {
+  if (ip_addr_is_v6(dest)) {
       return ip6_chksum_pseudo(p,
                                proto,
                                proto_len,
@@ -463,7 +463,7 @@ ip_chksum_pseudo_partial(PacketBuffer& p,
                          const IpAddrInfo& src,
                          const IpAddrInfo& dest)
 {
-    if (is_ip_addr_v6(dest))
+    if (ip_addr_is_v6(dest))
     {
         return ip6_chksum_pseudo_partial(p,
                                          proto,

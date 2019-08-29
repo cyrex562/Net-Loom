@@ -572,12 +572,12 @@ udp_sendto_if_chksum(UdpPcb* pcb,
     {
         return ERR_VAL;
     } /* PCB local address is IP_ANY_ADDR or multicast? */
-    if (is_ip_addr_v6(dst_ip))
+    if (ip_addr_is_v6(dst_ip))
     {
         if (ip6_addr_is_any((&pcb->local_ip.u_addr.ip6)) || is_ip6_addr_mcast(
             (&pcb->local_ip.u_addr.ip6)))
         {
-            const auto src_addr = select_ip6_src_addr(netif, &dst_ip->u_addr.ip6,);
+            const auto src_addr = netif_select_ip6_src_addr(netif, &dst_ip->u_addr.ip6);
             src_ip.u_addr.ip6 = dst_ip->u_addr.ip6;
             src_ip.type = IPADDR_TYPE_V6;
         }
@@ -769,7 +769,7 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
         if(is_netif_checksum_enabled(netif, NETIF_CHECKSUM_GEN_UDP))
         {
             /* Checksum is mandatory over IPv6. */
-            if (is_ip_addr_v6(dst_ip) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0)
+            if (ip_addr_is_v6(dst_ip) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0)
             {
                 uint16_t udpchksum;
                 if (have_chksum)
@@ -860,7 +860,7 @@ udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
    * This is legacy support: scope-aware callers should always provide properly
    * zoned source addresses. Do the zone selection before the address-in-use
    * check below; as such we have to make a temporary copy of the address. */
-    if (is_ip_addr_v6(ipaddr) && ip6_addr_lacks_zone((&ipaddr->u_addr.ip6), IP6_UNKNOWN))
+    if (ip_addr_is_v6(ipaddr) && ip6_addr_lacks_zone((&ipaddr->u_addr.ip6), IP6_UNKNOWN))
     {
         copy_ip_addr(&zoned_ipaddr, ipaddr);
         select_ip6_addr_zone((&zoned_ipaddr.u_addr.ip6), (&zoned_ipaddr.u_addr.ip6),);
@@ -972,7 +972,7 @@ udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
     set_ip_addr(&pcb->remote_ip, ipaddr);
     /* If the given IP address should have a zone but doesn't, assign one now,
       * using the bound address to make a more informed decision when possible. */
-    if (is_ip_addr_v6(&pcb->remote_ip) && ip6_addr_lacks_zone(
+    if (ip_addr_is_v6(&pcb->remote_ip) && ip6_addr_lacks_zone(
         (&pcb->remote_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
@@ -1013,7 +1013,7 @@ udp_disconnect(struct UdpPcb* pcb)
     }
     else
     {
-        set_ip_addr_any(is_ip_addr_v6(pcb->remote_ip), &pcb->remote_ip);
+        set_ip_addr_any(ip_addr_is_v6(pcb->remote_ip), &pcb->remote_ip);
     }
     pcb->remote_port = 0;
     pcb->netif_idx = NETIF_NO_INDEX; /* mark PCB as unconnected */

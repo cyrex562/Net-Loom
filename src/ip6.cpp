@@ -94,7 +94,7 @@ route_ip6_packet(const Ip6AddrInfo& src,
             if (rest_ip6_addr_zone(dest, it)) {
                 out_netif = it;
                 return STATUS_SUCCESS;
-            } 
+            }
         }
 
         if (ip6_addr_has_scope(dest, IP6_UNKNOWN) | ip6_addr_has_scope(src, IP6_UNICAST) || ip6_addr_is_loopback(src)) {
@@ -111,8 +111,8 @@ route_ip6_packet(const Ip6AddrInfo& src,
                      }
                 }
 
-               
-                    
+
+
             }
         }
 
@@ -176,8 +176,8 @@ forward_ip6_packet(PacketBuffer& pkt_buf,
     if (ip6_addr_is_linklocal(dest_addr) || ip6_addr_is_loopback(dest_addr)) {
         Logf(true, ("ip6_forward: not forwarding link-local address.\n"));
         return STATUS_ERROR;
-    } 
-    
+    }
+
     /* Find network interface where to forward this IP packet to. */
     Ip6AddrInfo ip6_any_addr{};
     set_ip6_addr_any(ip6_any_addr);
@@ -206,8 +206,8 @@ forward_ip6_packet(PacketBuffer& pkt_buf,
         Logf(true,
              ("ip6_forward: not bouncing packets back on incoming interface.\n"));
         return STATUS_E_ROUTING;
-    } 
-    
+    }
+
     // decrement HL and send ICMP6 if HL == 0
     set_ip6_hdr_hop_limit(iphdr, get_ip6_hdr_hop_limit(iphdr) - 1);
     if (get_ip6_hdr_hop_limit(iphdr) == 0) {
@@ -224,8 +224,8 @@ forward_ip6_packet(PacketBuffer& pkt_buf,
             icmp6_packet_too_big(pkt_buf, dest_netif.mtu);
         }
         return STATUS_E_ROUTING;
-    } 
-    
+    }
+
     // transmit PacketBuffer on chosen interface
     return ip6_output_if(pkt_buf, src_addr, dest_addr, iphdr._hoplim, get_ip6_hdr_tc(iphdr), iphdr._nexth, dest_netif);
 }
@@ -984,7 +984,7 @@ ip6_output_if(PacketBuffer& p,
     if (dest) {
         if (src != nullptr && ip6_addr_is_any(src)) {
 
-            const IpAddrInfo* sel_src_addr = select_ip6_src_addr(netif, dest,);
+            const IpAddrInfo* sel_src_addr = netif_select_ip6_src_addr(netif, dest);
             copy_ip6_addr(&src_used, &sel_src_addr->u_addr.ip6);
             if (ip6_addr_is_any(&src_used)) {
                 /* No appropriate source address was found for this packet. */

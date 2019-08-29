@@ -3,6 +3,15 @@
 #include "chap_new.h"
 
 
+struct EndpointDiscriminator
+{
+    unsigned char class_; /* -- The word "class" is reserved in C++. */
+    unsigned char length;
+    //  unsigned char value[MAX_ENDP_LEN];
+    std::vector<uint8_t> value;
+};
+
+
 /*
  * The state of options is described by an lcp_options structure.
  */
@@ -31,5 +40,5 @@ struct LcpOptions
     uint32_t magicnumber;
     uint8_t numloops; /* Number of loops during magic number neg. */
     uint32_t lqr_period; /* Reporting period for LQR 1/100ths second */
-    struct Epdisc endpoint; /* endpoint discriminator */
+    EndpointDiscriminator endpoint; /* endpoint discriminator */
 };

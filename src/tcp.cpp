@@ -684,7 +684,7 @@ tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
       * This is legacy support: scope-aware callers should always provide properly
       * zoned source addresses. Do the zone selection before the address-in-use
       * check below; as such we have to make a temporary copy of the address. */
-    if (is_ip_addr_v6(ipaddr) && ip6_addr_lacks_zone(&ipaddr->u_addr.ip6, IP6_UNICAST))
+    if (ip_addr_is_v6(ipaddr) && ip6_addr_lacks_zone(&ipaddr->u_addr.ip6, IP6_UNICAST))
     {
         copy_ip_addr(&zoned_ipaddr, ipaddr);
         select_ip6_addr_zone((&zoned_ipaddr.u_addr.ip6), (&zoned_ipaddr.u_addr.ip6),);
@@ -716,7 +716,7 @@ tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
 
                     {
                         /* @todo: check accept_any_ip_version */
-                        if ((is_ip_addr_v6(ipaddr) == is_ip_addr_v6(&cpcb->local_ip)) &&
+                        if ((ip_addr_is_v6(ipaddr) == ip_addr_is_v6(&cpcb->local_ip)) &&
                             (is_ip_addr_any(&cpcb->local_ip) ||
                                 is_ip_addr_any(ipaddr) ||
                                 compare_ip_addr(&cpcb->local_ip, ipaddr)))
@@ -1086,7 +1086,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
     /* check if local IP has been assigned to pcb, if not, get one */
     if (is_ip_addr_any(&pcb->local_ip))
     {
-        const IpAddrInfo* local_ip = ip_netif_get_local_ip(netif, ipaddr,);
+        const IpAddrInfo* local_ip = netif_get_local_ip(netif, ipaddr);
         if (local_ip == nullptr)
         {
             return STATUS_E_ROUTING;
@@ -1096,7 +1096,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
 
     /* If the given IP address should have a zone but doesn't, assign one now.
      * Given that we already have the target netif, this is easy and cheap. */
-    if (is_ip_addr_v6(&pcb->remote_ip) &&
+    if (ip_addr_is_v6(&pcb->remote_ip) &&
         ip6_addr_lacks_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST))
     {
         assign_ip6_addr_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST, netif,);
@@ -2294,7 +2294,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddrIn
     lwip_assert("tcp_eff_send_mss_netif: invalid dst_ip", dest != nullptr);
 
 
-    if (is_ip_addr_v6(dest))
+    if (ip_addr_is_v6(dest))
 
     {
         /* First look in destination cache, to see if there is a Path MTU. */
@@ -2316,7 +2316,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddrIn
     {
         uint16_t offset;
 
-        if (is_ip_addr_v6(dest))
+        if (ip_addr_is_v6(dest))
 
         {
             offset = IP6_HDR_LEN + TCP_HDR_LEN;

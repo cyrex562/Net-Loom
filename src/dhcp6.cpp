@@ -630,7 +630,7 @@ void dhcp6_recv(uint8_t* arg,
     {
         goto free_pbuf_and_return;
     } //
-    if (!is_ip_addr_v6(addr))
+    if (!ip_addr_is_v6(addr))
     {
         printf("invalid server address type\n");
         goto free_pbuf_and_return;

@@ -818,7 +818,7 @@ dns_call_found(uint8_t idx, IpAddrInfo *addr)
 {
     if (addr != nullptr) {
     /* check that address type matches the request and adapt the table entry */
-    if (is_ip_addr_v6(*addr)) {
+    if (ip_addr_is_v6(*addr)) {
       // lwip_assert("invalid response", LWIP_DNS_ADDRTYPE_IS_IPV6(dns_table[idx].reqaddrtype));
       dns_table[idx].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
     } else {
@@ -828,7 +828,7 @@ dns_call_found(uint8_t idx, IpAddrInfo *addr)
   }
 
 
-  // fixme: 
+  // fixme:
   // for (i = 0; i < DNS_MAX_REQUESTS; i++) {
   //   if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
   //     (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
@@ -1417,7 +1417,7 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
     } /* host name already in octet notation? set ip addr and return ERR_OK */
     if (ipaddr_aton(hostname, addr))
     {
-        if ((is_ip_addr_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
+        if ((ip_addr_is_v6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) || (
             is_ip_addr_v4(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
         {
             return STATUS_SUCCESS;

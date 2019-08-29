@@ -23,7 +23,7 @@
 std::string
 ipaddr_ntoa(const IpAddrInfo& addr)
 {
-    if (is_ip_addr_v6(addr))
+    if (ip_addr_is_v6(addr))
     {
         return ip6_addr_ntoa(addr.u_addr.ip6.addr);
     }
@@ -43,7 +43,7 @@ ipaddr_ntoa(const IpAddrInfo& addr)
 std::string
 ipaddr_ntoa_r(const IpAddrInfo& addr)
 {
-  if (is_ip_addr_v6(addr)) {
+  if (ip_addr_is_v6(addr)) {
     return ip6addr_ntoa_r(addr.u_addr.ip6.addr);
   } else {
     return ip4_addr_ntoa_r(addr.u_addr.ip4.address);

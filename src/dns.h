@@ -155,7 +155,7 @@ inline bool lwip_dns_addrtype_is_ipv6(uint8_t t)
 
 inline bool match_dns_addr_ip(uint8_t t, IpAddrInfo& ip)
 {
-    return (is_ip_addr_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
+    return (ip_addr_is_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }
 
 

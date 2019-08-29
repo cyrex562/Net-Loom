@@ -98,7 +98,7 @@ magic_random_bytes(std::vector<uint8_t> buffer, const size_t count, const size_t
     mbedtls_md5_context md5_ctx;
     uint8_t tmp[MD5_HASH_SIZE];
     auto it = buffer.begin() + offset;
-    for (auto i = 0; i < count; i++) { buffer[i] = magic_rand(); }
+    for (auto i = 0; i < count; i++) { buffer[i] = uint8_t(magic_rand()); }
     return true;
 }
 

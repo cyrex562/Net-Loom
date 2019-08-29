@@ -209,7 +209,7 @@ raw_bind(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
     /* If the given IP address should have a zone but doesn't, assign one now.
       * This is legacy support: scope-aware callers should always provide properly
       * zoned source addresses. */
-    if (is_ip_addr_v6(&pcb->local_ip) && ip6_addr_lacks_zone(
+    if (ip_addr_is_v6(&pcb->local_ip) && ip6_addr_lacks_zone(
         (&pcb->local_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
@@ -263,7 +263,7 @@ raw_connect(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
     set_ip_addr(&pcb->remote_ip, ipaddr);
     /* If the given IP address should have a zone but doesn't, assign one now,
       * using the bound address to make a more informed decision when possible. */
-    if (is_ip_addr_v6(&pcb->remote_ip) && ip6_addr_lacks_zone(
+    if (ip_addr_is_v6(&pcb->remote_ip) && ip6_addr_lacks_zone(
         (&pcb->remote_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
@@ -288,7 +288,7 @@ raw_disconnect(struct RawPcb* pcb)
     }
     else
     {
-        set_ip_addr_any(is_ip_addr_v6(&pcb->remote_ip), &pcb->remote_ip);
+        set_ip_addr_any(ip_addr_is_v6(&pcb->remote_ip), &pcb->remote_ip);
     }
     pcb->netif_idx = NETIF_NO_INDEX; /* mark PCB as unconnected */
     raw_clear_flags(pcb, RAW_FLAGS_CONNECTED);
@@ -363,7 +363,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
     if (is_ip_addr_any(&pcb->local_ip) || is_ip_addr_mcast(&pcb->local_ip))
     {
         /* use outgoing network interface IP address as source address */
-        src_ip = ip_netif_get_local_ip(netif, ipaddr,);
+        src_ip = netif_get_local_ip(netif, ipaddr);
         if (src_ip == nullptr)
         {
             return STATUS_E_ROUTING;
@@ -479,7 +479,7 @@ raw_sendto_if_src(RawPcb& pcb,
         // q->multicast_loop = true;
     } /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-    if (is_ip_addr_v6(dst_ip) && pcb->chksum_reqd)
+    if (ip_addr_is_v6(dst_ip) && pcb->chksum_reqd)
     {
         uint16_t chksum = ip6_chksum_pseudo(p,
                                             pcb->protocol,

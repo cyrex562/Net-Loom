@@ -122,12 +122,13 @@ magic_random_bytes(std::vector<uint8_t> buffer, size_t count, size_t offset);
 uint32_t magic_pow(uint8_t pow);
 
 
-inline uint8_t magic_rand()
+inline uint32_t
+magic_rand()
 {
     std::default_random_engine generator;
-    std::uniform_int_distribution<uint8_t> distribution(0, 0xff);
+    std::uniform_int_distribution<uint32_t> distribution(0, 0xff);
 
-    uint8_t val = distribution(generator);
+    auto val = distribution(generator);
     return val;
 }
 

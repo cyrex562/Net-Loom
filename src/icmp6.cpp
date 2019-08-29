@@ -107,7 +107,7 @@ void icmp6_input(PacketBuffer& pkt_buf, NetworkInterface& netif)
         } /* Determine reply source IPv6 address. */
         if (is_ip6_addr_mcast(curr_dst_addr))
         {
-            reply_src = &select_ip6_src_addr(netif, curr_dst_addr,)->u_addr.ip6;
+            reply_src = &netif_select_ip6_src_addr(netif, curr_dst_addr)->u_addr.ip6;
             if (reply_src == nullptr)
             {
                 /* drop */
@@ -241,7 +241,7 @@ static void icmp6_send_response(PacketBuffer& p,
     NetworkInterface* netif = nullptr;
     lwip_assert("icmpv6 packet not a direct response", netif != nullptr);
     const Ip6Addr* reply_dest = nullptr; /* Select an address to use as source. */
-    Ip6Addr reply_src = select_ip6_src_addr(netif, reply_dest,)->u_addr.ip6;
+    Ip6Addr reply_src = netif_select_ip6_src_addr(netif, reply_dest)->u_addr.ip6;
     icmp6_send_response_with_addrs_and_netif(p,
                                              code,
                                              data,
