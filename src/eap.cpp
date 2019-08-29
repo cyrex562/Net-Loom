@@ -782,34 +782,25 @@ static void eap_protrej(PppPcb* pcb)
     eap_lowerdown(pcb);
 }
 
-/*
+/**
  * Format and send a regular EAP Response message.
  */
 static void
-eap_send_response(PppPcb* pcb, uint8_t id, uint8_t typenum, std::string& str)
+eap_send_response(PppPcb& pcb, uint8_t id, uint8_t typenum, std::string& str)
 {
-    const auto msglen = EAP_HEADERLEN + sizeof(uint8_t) + str.length();
+    const auto msg_len = EAP_HEADERLEN + sizeof(uint8_t) + str.length();
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-    auto* p = new PacketBuffer;
-    if (nullptr == p)
-    {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
-    auto outp = p->payload;
-    MAKEHEADER(outp, PPP_EAP);
-    PUTCHAR(EAP_RESPONSE, outp);
-    PUTCHAR(id, outp);
-    pcb->eap.es_client.ea_id = id;
-    PUTSHORT(msglen, outp);
-    PUTCHAR(typenum, outp);
+    PacketBuffer p{};
+    size_t index = 0;
+    MAKEHEADER(p.bytes, PPP_EAP);
+    PUTCHAR(EAP_RESPONSE, p.bytes, index);
+    PUTCHAR(id, p.bytes, index);
+    pcb.eap.es_client.ea_id = id;
+    PUTSHORT(msg_len, p.bytes, index);
+    PUTCHAR(typenum, p.bytes, index);
     if (str.length() > 0)
     {
-        memcpy(outp, str.c_str(), str.length());
+        PUTSTRING(str, p.bytes, index);
     }
     ppp_write(pcb, p);
 }
