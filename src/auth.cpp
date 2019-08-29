@@ -44,13 +44,16 @@ link_down(PppPcb& pcb, const bool doing_multilink)
     // todo: publish a different way
     // notify(link_down_notifier, 0);
     if (!doing_multilink) {
-        upper_layers_down(pcb);
+        if (!upper_layers_down(pcb)) {
+            return false;
+        }
         if (pcb.phase != PPP_PHASE_DEAD && pcb.phase != PPP_PHASE_MASTER) {
             new_phase(pcb, PPP_PHASE_ESTABLISH);
         }
     }
     // XXX if doing_multilink, should do something to stop network-layer traffic on the
     // link
+    return true;
 }
 
 bool
@@ -295,11 +298,14 @@ auth_withpeer_fail(PppPcb& pcb, int protocol)
     pcb.err_code = PPPERR_AUTHFAIL;
     std::string msg = "Failed to authenticate ourselves to peer";
     return lcp_close(pcb, msg);
-} /**
+}
+
+
+/**
  * We have successfully authenticated ourselves with the peer using `protocol'.
  */
 bool
-auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor)
+auth_withpeer_success(PppPcb& pcb, const int protocol, const int prot_flavor)
 {
     int bit;
     auto prot = "";
@@ -331,8 +337,15 @@ auth_withpeer_success(PppPcb& pcb, int protocol, int prot_flavor)
      * If there is no more authentication still being done,
      * proceed to the network (or callback) phase.
      */
-    if ((pcb.auth_pending &= ~bit) == 0) { enter_network_phase(pcb); }
-} /**
+    if ((pcb.auth_pending &= ~bit) == 0) {
+        return enter_network_phase(pcb);
+    }
+
+    return true;
+}
+
+
+/**
  * A network protocol has come up.
  */
 bool
@@ -379,15 +392,19 @@ np_finished(PppPcb& pcb, int proto)
         std::string msg = "no network protocols running";
         lcp_close(pcb, msg);
     }
-} ///
-/// check_idle - check whether the link has been idle for long
-/// enough that we can shut it down.
-///
+}
+
+
+/**
+ * check_idle - check whether the link has been idle for long enough that we can shut it
+ * down.
+ *
+ */
 bool
 check_idle(PppPcb& pcb)
 {
-    // const auto pcb = static_cast<PppPcb*>(pcb);
-    auto tlim = 0; //    if (!get_idle_time(pcb, &idle))
+    auto tlim = 0; //
+    //    if (!get_idle_time(pcb, &idle))
     // return;
     // itime = std::min(idle.xmit_idle, idle.recv_idle);
     // tlim = pcb->settings.idle_time_limit - itime;
@@ -396,13 +413,12 @@ check_idle(PppPcb& pcb)
         ppp_notice("Terminating connection due to lack of activity.");
         pcb.err_code = PPPERR_IDLETIMEOUT;
         std::string msg = "Link inactive";
-        lcp_close(pcb, msg);
+        return lcp_close(pcb, msg);
     }
-    else {
-        // Timeout(check_idle, static_cast<void*>(pcb), tlim);
-        // todo: fix up to do time stuff.
-        check_idle(pcb);
-    }
+
+    // Timeout(check_idle, static_cast<void*>(pcb), tlim);
+    // todo: fix up to do time stuff.
+    return check_idle(pcb);
 }
 
 /**

@@ -6,6 +6,7 @@
 #include "auth.h"
 #include "ppp.h"
 #include <spdlog/spdlog.h>
+#include "mppe.h"
 
 
 /*
@@ -50,13 +51,12 @@ ccp_init(PppPcb& pcb)
 bool
 ccp_reset_comp(PppPcb& pcb)
 {
-    switch (pcb.ccp_transmit_method)
-    {
-    case CI_MPPE:
-        mppe_comp_reset(pcb, pcb.mppe_comp);
-        break;
-    default:
-        break;
+    if (pcb.ccp_transmit_method == CI_MPPE) {
+        return mppe_comp_reset(pcb, pcb.mppe_comp);
+    }
+    else {
+        // unsupported transmit method
+        return false;
     }
 }
 
@@ -68,6 +68,7 @@ ccp_reset_decomp(PppPcb& pcb)
     {
         return mppe_decomp_reset(pcb, pcb.mppe_decomp);
     }
+    // unsupported receive method
     return true;
 }
 

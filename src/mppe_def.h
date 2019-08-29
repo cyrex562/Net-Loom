@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <mbedtls/arc4.h>
 #include <cstdint>
 
