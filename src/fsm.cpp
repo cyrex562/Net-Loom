@@ -703,7 +703,7 @@ fsm_senc_conf_req(PppPcb& pcb, Fsm& f, bool retransmit) {
     cilen = 0;
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(cilen + kHeaderlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     p.bytes.reserve(cilen + 40 + 60 + PPP_HDRLEN + 1500);
 
     /* send the request to our peer */
@@ -746,11 +746,11 @@ fsm_send_data2(PppPcb& pcb, Fsm& f, uint8_t code, uint8_t id, std::vector<uint8_
     }
     size_t outlen = data.size() + FSM_PKT_HDR_LEN;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(outlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     p.bytes.reserve(data.size() + FSM_PKT_HDR_LEN);
     // todo: reserve size for packet
     size_t index = 0;
-    MAKEHEADER(p.bytes, f.protocol);
+    ppp_make_header(p.bytes, f.protocol);
     PUTCHAR(code, p.bytes, index);
     PUTCHAR(id, p.bytes, index);
     PUTSHORT(outlen, p.bytes, index);

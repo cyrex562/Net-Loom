@@ -37,6 +37,7 @@ struct FsmOptions
     bool passive;
     bool restart;
     bool silent;
+    bool delayed_up;
 };
 
 

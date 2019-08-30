@@ -550,7 +550,7 @@ mld6_send(NetworkInterface*netif, struct MldGroup *group, uint8_t type)
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   // struct PacketBuffer* p =
   //     pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
   if (p == nullptr) {
     // MLD6_STATS_INC(mld6.memerr);
     return;

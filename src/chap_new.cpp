@@ -212,7 +212,7 @@ chap_timeout(PppPcb& pcb)
         return false;
     }
 
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf();
 
     memcpy(p.bytes.data(), pcb.chap_server.challenge.data.bytes(), pcb.chap_server.challenge_pktlen);
 
@@ -234,7 +234,7 @@ void
 chap_generate_challenge(PppPcb& pcb)
 {
     auto p = pcb.chap_server.challenge;
-    MAKEHEADER(p, PPP_CHAP);
+    ppp_make_header(p, PPP_CHAP);
     auto p_ptr = p.data();
     p_ptr += CHAP_HDR_LEN;
     // todo: generate challenge based on digest type
@@ -317,20 +317,10 @@ chap_handle_response(PppPcb& pcb,
     } /* send the response */
     const auto mlen = strlen(message);
     len = mlen + CHAP_HDR_LEN;
-    // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + len), PPP_CTRL_PBUF_TYPE);
-    const auto p = new PacketBuffer;
-    if (nullptr == p)
-    {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
+    PacketBuffer p = ppp_make_header();
 
     auto outp = static_cast<unsigned char *>(p->payload);
-    MAKEHEADER(outp, PPP_CHAP);
+    ppp_make_header(outp, PPP_CHAP);
 
     outp[0] = (pcb.chap_server.flags & kAuthFailed) ? CHAP_FAILURE : CHAP_SUCCESS;
     outp[1] = code;
@@ -419,15 +409,16 @@ chap_respond(PppPcb* pcb,
     std::string secret;
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(RESP_MAX_PKTLEN), PPP_CTRL_PBUF_TYPE);
-    auto p = new PacketBuffer;
-    if (nullptr == p) {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
+    // auto p = new PacketBuffer;
+    // if (nullptr == p) {
+    //     return;
+    // }
+    // if (p->tot_len != p->len)
+    // {
+    //     free_pkt_buf(p);
+    //     return;
+    // }
+    PacketBuffer p = init_pkt_buf();
 
     if ((pcb->chap_client.flags & (kLowerup | kAuthStarted)) != (kLowerup | kAuthStarted)) {
         return; /* not ready */
@@ -455,7 +446,7 @@ chap_respond(PppPcb* pcb,
     }
 
     auto outp = p->payload;
-    MAKEHEADER(outp, PPP_CHAP);
+    ppp_make_header(outp, PPP_CHAP);
     outp += CHAP_HDR_LEN;
 
     pcb->chap_client.digest->make_response(pcb,

@@ -81,16 +81,22 @@ constexpr auto MAX_ENDP_LEN = 20	/* maximum length of discriminator value */;
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
              (x) == CONFNAK ? "NAK" : "REJ")
 
-void lcp_open(PppPcb& pcb);
+
+bool
+lcp_open(PppPcb& pcb);
 
 bool
 lcp_close(PppPcb& pcb, std::string& reason);
-void lcp_lowerup(PppPcb& pcb);
+
+
+bool
+lcp_lowerup(PppPcb& pcb);
 
 bool
 lcp_lowerdown(PppPcb& pcb);
 void lcp_sprotrej(PppPcb *pcb, uint8_t *p, int len);    /* send protocol reject */
-void lcp_delayed_up(void* arg);
+bool
+lcp_delayed_up(PppPcb& pcb);
 // int setendpoint (char **);
 void lcp_resetci(Fsm *f);	/* Reset our CI */
 int  lcp_cilen(Fsm *f);		/* Return length of our CI */
@@ -98,25 +104,68 @@ void lcp_addci(Fsm *f, uint8_t *ucp, int *lenp); /* Add our CI to pkt */
 int  lcp_ackci(Fsm *f, uint8_t *p, int len); /* Peer ack'd our CI */
 int  lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject); /* Peer nak'd our CI */
 int  lcp_rejci(Fsm *f, uint8_t *p, int len); /* Peer rej'd our CI */
-int  lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree); /* Rcv peer CI */
-void lcp_up(Fsm *f);		/* We're UP */
-void lcp_down(Fsm *f);		/* We're DOWN */
+bool
+lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if_disagree); /* Rcv peer CI */
+bool
+lcp_up(Fsm& f, PppPcb& pcb, bool multilink);		/* We're UP */
+bool
+lcp_down(Fsm& f, PppPcb& pcb);		/* We're DOWN */
 void lcp_starting (Fsm *);	/* We need lower layer up */
-void lcp_finished (Fsm *);	/* We need lower layer down */
-int  lcp_extcode(Fsm *f, int code, int id, uint8_t *inp, int len);
+bool
+lcp_finished(Fsm&, PppPcb& pcb);	/* We need lower layer down */
+bool
+lcp_extcode(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t>& pkt);
 void lcp_rprotrej(Fsm *f, uint8_t *inp, int len);
 void lcp_echo_lowerup(PppPcb *pcb);
 void lcp_echo_lower_down(PppPcb *pcb, Fsm* f);
 void lcp_echo_timeout(void* arg);
 void lcp_received_echo_reply(Fsm *f, int id, uint8_t *inp, int len);
 void lcp_send_echo_request(Fsm *f);
-void lcp_link_failure(Fsm *f);
+
+
+bool
+lcp_link_failure(Fsm& f, PppPcb& pcb);
 void lcp_echo_check(Fsm *f);
 void lcp_init(PppPcb& pcb);
-void lcp_input(PppPcb *pcb, uint8_t *p, int len);
+
+
+bool
+lcp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
 void lcp_protrej(PppPcb *pcb);
 
 extern const struct Protent kLcpProtent;
+
+
+/**
+ * Reset LCP Options struct.
+ */
+inline void reset_lcp_options(LcpOptions& opts)
+{
+    opts.passive = false;
+    opts.silent = false;
+    opts.restart = false;
+    opts.neg_mru = false;
+    opts.neg_asyncmap = false;
+    opts.neg_upap = false;
+    opts.neg_chap = false;
+    opts.neg_eap = false;
+    opts.neg_magicnumber = false;
+    opts.neg_pcompression = false;
+    opts.neg_accompression = false;
+    opts.neg_lqr = false;
+    opts.neg_cbcp = false;
+    opts.neg_mrru = false;
+    opts.neg_ssnhf = false;
+    opts.neg_endpoint = false;
+    opts.mru = 0;
+    opts.mrru = 0;
+    opts.chap_mdtype = MDTYPE_NONE;
+    opts.asyncmap = 0;
+    opts.magicnumber = 0;
+    opts.numloops = 0;
+    opts.lqr_period = 0;
+    opts.endpoint = EndpointDiscriminator();
+}
 
 //
 // END OF FILE

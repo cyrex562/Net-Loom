@@ -24,6 +24,15 @@ struct PacketBuffer
 };
 
 
+inline PacketBuffer
+init_pkt_buf(size_t size = 0xffff)
+{
+    PacketBuffer p{};
+    p.bytes.reserve(size);
+    return p;
+}
+
+
 /* Initializes the pbuf module. This call is empty for now, but may not be in future. */
 inline bool init_pkt_buf_module()
 {

@@ -12,7 +12,7 @@ struct EndpointDiscriminator
 };
 
 
-/*
+/**
  * The state of options is described by an lcp_options structure.
  */
 struct LcpOptions

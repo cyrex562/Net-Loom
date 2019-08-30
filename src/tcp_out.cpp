@@ -241,7 +241,7 @@ tcp_pbuf_prealloc(
         }
     }
     // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     if (p == nullptr)
     {
         return nullptr;
@@ -556,7 +556,7 @@ tcp_write(struct TcpPcb* pcb, const void* arg, size_t len, uint8_t apiflags)
    */
     while (pos < len)
     {
-        struct PacketBuffer p{};
+        struct PacketBuffer p = init_pkt_buf()
         uint16_t left = len - pos;
         uint16_t max_len = mss_local - optlen;
         uint16_t seglen = std::min(left, max_len);
@@ -785,7 +785,7 @@ LwipStatus
 tcp_split_unsent_seg(struct TcpPcb *pcb, uint16_t split)
 {
   struct TcpSeg *seg = nullptr, *useg = nullptr;
-  struct PacketBuffer p{};
+  struct PacketBuffer p = init_pkt_buf()
   uint16_t chksum = 0;
   uint8_t chksum_swapped = 0;
   lwip_assert("tcp_split_unsent_seg: invalid pcb", pcb != nullptr);
@@ -975,7 +975,7 @@ tcp_send_fin(struct TcpPcb *pcb)
 LwipStatus
 tcp_enqueue_flags(struct TcpPcb *pcb, uint8_t flags)
 {
-  struct PacketBuffer p{};
+  struct PacketBuffer p = init_pkt_buf()
   struct TcpSeg *seg;
   uint8_t optflags = 0;
   uint8_t optlen = 0;
@@ -1715,7 +1715,7 @@ tcp_output_alloc_header_common(uint32_t ackno, uint16_t optlen, uint16_t datalen
                         uint16_t src_port, uint16_t dst_port, uint8_t flags, uint16_t wnd)
 {
     // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
   if (p != nullptr) {
     lwip_assert("check that first pbuf can hold TcpHdr",
                 (p->len >= TCP_HDR_LEN + optlen));

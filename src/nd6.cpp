@@ -1219,7 +1219,7 @@ nd6_send_ns(NetworkInterface* netif, const Ip6Addr* target_addr, uint8_t flags)
 
     /* Allocate a packet. */
     // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     if (p == nullptr) {
         // ND6_STATS_INC(nd6.memerr);
         return;
@@ -1293,7 +1293,7 @@ nd6_send_na(NetworkInterface* netif, const Ip6Addr* target_addr, uint8_t flags)
     uint16_t lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (
         ((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
     // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     if (p == nullptr) {
         // ND6_STATS_INC(nd6.memerr);
         return;
@@ -1386,7 +1386,7 @@ nd6_send_rs(NetworkInterface* netif)
         lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
     }
     // struct PacketBuffer* p = pbuf_alloc();
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     if (p == nullptr) {
         // ND6_STATS_INC(nd6.memerr);
         return ERR_BUF;

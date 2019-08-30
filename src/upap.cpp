@@ -296,7 +296,7 @@ upap_recv_auth_req(PppPcb& pcb, std::vector<uint8_t>& in_pkt, const int id, Upap
     if (retcode == UPAP_AUTHACK) {
         upap.us_serverstate = UPAPSS_OPEN;
         ppp_notice("PAP peer authentication succeeded for %q", rhostname);
-        return auth_peer_success(pcb, PPP_PAP, 0, ruser);
+        return auth_peer_success(pcb, PPP_PAP, CHAP_NONE, ruser);
     }
     upap.us_serverstate = UPAPSS_BADAUTH;
     ppp_warn("PAP peer authentication failed for %q", rhostname);
@@ -387,9 +387,9 @@ upap_sauthreq(PppPcb& pcb, UpapState& upap)
 {
     const size_t out_len = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + upap.us_user.length() +
         upap.us_passwd.length(); // todo: re-write not to overflow the buffer
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf();
     auto outp = p.bytes;
-    MAKEHEADER(outp, PPP_PAP);
+    ppp_make_header(outp, PPP_PAP);
     PUTCHAR((uint8_t)UPAP_AUTHREQ, outp);
     PUTCHAR(upap.us_id, outp);
     PUTSHORT((uint16_t)out_len, outp);
@@ -410,13 +410,14 @@ bool
 upap_sresp(PppPcb& pcb, const uint8_t code, const uint8_t id, std::string& msg)
 {
     const size_t outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
-    PacketBuffer p{};
-    MAKEHEADER(p.bytes, PPP_PAP);
-    PUTCHAR(code, p.bytes);
-    PUTCHAR(id, p.bytes);
-    PUTSHORT(outlen, p.bytes);
-    PUTCHAR(msg.length(), p.bytes);
-    PUTSTRING(msg, p.bytes);
+    size_t index = 0;
+    PacketBuffer p = init_pkt_buf();
+    ppp_make_header(p.bytes, PPP_PAP, index);
+    PUTCHAR(code, p.bytes, index);
+    PUTCHAR(id, p.bytes, index);
+    PUTSHORT(outlen, p.bytes, index);
+    PUTCHAR(msg.length(), p.bytes, index);
+    PUTSTRING(msg, p.bytes, index);
     return ppp_write(pcb, p);
 }
 

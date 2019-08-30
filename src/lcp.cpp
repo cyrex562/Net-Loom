@@ -57,46 +57,50 @@ void lcp_init(PppPcb& pcb) {
 }
 
 
-/*
- * lcp_open - LCP is allowed to come up.
+/**
+ * LCP is allowed to come up.
  */
-void lcp_open(PppPcb& pcb) {
-    Fsm *f = &pcb->lcp_fsm;
-    LcpOptions *wo = &pcb->lcp_wantoptions;
-
-    f->options &= ~(OPT_PASSIVE | OPT_SILENT);
-    if (wo->passive)
-    f->options |= OPT_PASSIVE;
-    if (wo->silent)
+bool
+lcp_open(PppPcb& pcb) {
+    pcb.lcp_fsm.options.passive = false;
+    pcb.lcp_fsm.options.silent = false;
+    if(pcb.lcp_wantoptions.passive)
     {
-        f->options |= OPT_SILENT;
+        pcb.lcp_fsm.options.passive = true;
     }
-    fsm_open(, f);
+
+    if (pcb.lcp_wantoptions.silent)
+    {
+        pcb.lcp_fsm.options.silent = true;
+    }
+    return fsm_open(pcb, pcb.lcp_fsm);
 }
 
 
 /*
- * lcp_close - Take LCP down.
+ *  Take LCP down.
  */
 bool
 lcp_close(PppPcb& pcb, std::string& reason) {
-    Fsm *f = &pcb->lcp_fsm;
-    if (pcb->phase != PPP_PHASE_DEAD
-
-    && pcb->phase != PPP_PHASE_MASTER
-
-    )
+    Fsm f = pcb.lcp_fsm;
+    if (pcb.phase != PPP_PHASE_DEAD && pcb.phase != PPP_PHASE_MASTER)
     {
         new_phase(pcb, PPP_PHASE_TERMINATE);
     }
-    if (f->options & DELAYED_UP) {
-    Untimeout(lcp_delayed_up, f);
-    f->state = PPP_FSM_STOPPED;
+    if (f.options.delayed_up)
+    {
+        // Untimeout(lcp_delayed_up, f);
+        // todo: remove lcp_delayed_up timer
+        f.state = PPP_FSM_STOPPED;
     }
-    int oldstate = f->state;
+    PppFsmLinkState oldstate = f.state;
 
-    fsm_close(, f, reason);
-    if (oldstate == PPP_FSM_STOPPED && (f->options & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
+    if(!fsm_close(pcb, pcb.lcp_fsm, reason))
+    {
+        return false;
+    }
+
+    if (oldstate == PPP_FSM_STOPPED && (f.options.passive || f.options.silent || f.options.delayed_up)) {
     /*
      * This action is not strictly according to the FSM in RFC1548,
      * but it does mean that the program terminates if you do a
@@ -104,115 +108,130 @@ lcp_close(PppPcb& pcb, std::string& reason) {
      * because we are in passive/silent mode or because we have
      * delayed the fsm_lowerup() call and it hasn't happened yet.
      */
-    f->options &= ~DELAYED_UP;
-    lcp_finished(f);
+    f.options.delayed_up = false;
+    lcp_finished(f,);
     }
 }
 
 
-/*
- * lcp_lowerup - The lower layer is up.
+/**
+ * The lower layer is up.
  */
-void lcp_lowerup(PppPcb& pcb) {
-    LcpOptions *wo = &pcb->lcp_wantoptions;
-    Fsm *f = &pcb->lcp_fsm;
-    /*
+bool
+lcp_lowerup(PppPcb& pcb)
+{
+    LcpOptions wo = pcb.lcp_wantoptions;
+    Fsm f = pcb.lcp_fsm; /*
      * Don't use A/C or protocol compression on transmission,
      * but accept A/C and protocol compressed packets
      * if we are going to ask for A/C and protocol compression.
      */
-    if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
-    || ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
-               wo->neg_pcompression, wo->neg_accompression) < 0)
+    if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0 || ppp_recv_config(
+        pcb,
+        PPP_MRU,
+        (pcb.settings.lax_recv ? 0 : 0xffffffff),
+        wo.neg_pcompression,
+        wo.neg_accompression) < 0) { return; }
+    pcb.peer_mru = PPP_MRU;
+    if (pcb.settings.listen_time != 0)
     {
-        return;
+        f.options.delayed_up = true;
+        // timeout_ms(lcp_delayed_up, f, pcb.settings.listen_time);
     }
-    pcb->peer_mru = PPP_MRU;
-
-    if (pcb->settings.listen_time != 0) {
-    f->options |= DELAYED_UP;
-    timeout_ms(lcp_delayed_up, f, pcb->settings.listen_time);
-    } else
-    fsm_lowerup(, f);
+    else
+    {
+        return fsm_lowerup(pcb, f);
+    }
+    return true;
 }
 
 
-/*
- * lcp_lowerdown - The lower layer is down.
+/**
+ * The lower layer is down.
  */
 bool
-lcp_lowerdown(PppPcb& pcb) {
-    Fsm *f = &pcb->lcp_fsm;
-
-    if (f->options & DELAYED_UP) {
-    f->options &= ~DELAYED_UP;
-    Untimeout(lcp_delayed_up, f);
-    } else
-    fsm_lowerdown(f);
-}
-
-
-/*
- * lcp_delayed_up - Bring the lower layer up now.
- */
-void lcp_delayed_up(void* arg) {
-    Fsm *f = (Fsm*)arg;
-
-    if (f->options & DELAYED_UP) {
-    f->options &= ~DELAYED_UP;
-    fsm_lowerup(, f);
+lcp_lowerdown(PppPcb& pcb)
+{
+    Fsm f = pcb.lcp_fsm;
+    if (f.options.delayed_up)
+    {
+        f.options.delayed_up = false; // Untimeout(lcp_delayed_up, f);
     }
-}
-
-
-/*
- * lcp_input - Input LCP packet.
- */
-void lcp_input(PppPcb *pcb, uint8_t *p, int len) {
-    Fsm *f = &pcb->lcp_fsm;
-
-    if (f->options & DELAYED_UP) {
-    f->options &= ~DELAYED_UP;
-    Untimeout(lcp_delayed_up, f);
-    fsm_lowerup(, f);
+    else
+    {
+        return fsm_lowerdown(f);
     }
-    fsm_input(, f, p);
+    return true;
 }
 
-/*
- * lcp_extcode - Handle a LCP-specific code.
- */
-static int lcp_extcode(Fsm *f, int code, int id, uint8_t *inp, int len) {
-    PppPcb *pcb = f->pcb;
-    LcpOptions *go = &pcb->lcp_gotoptions;
-    uint8_t *magp;
 
-    switch( code ){
+/**
+ * Bring the lower layer up now.
+ */
+bool
+lcp_delayed_up(PppPcb& pcb)
+{
+    Fsm f = pcb.lcp_fsm;
+    if (f.options.delayed_up)
+    {
+        f.options.delayed_up = false;
+        return fsm_lowerup(pcb, pcb.lcp_fsm);
+    }
+    return true;
+}
+
+
+/**
+ * Input LCP packet.
+ */
+bool
+lcp_input(PppPcb& pcb,
+          std::vector<uint8_t>& pkt)
+{
+    Fsm f = pcb.lcp_fsm;
+    if (f.options.delayed_up)
+    {
+        f.options.delayed_up = false; // Untimeout(lcp_delayed_up, f);
+        if (!fsm_lowerup(pcb, f)) { return false; }
+    }
+    return fsm_input(pcb, f, pkt);
+}
+
+
+/**
+ * Handle a LCP-specific code.
+ */
+bool
+lcp_extcode(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t>& pkt)
+{
+    // PppPcb pcb = f.pcb;
+    LcpOptions go = pcb.lcp_gotoptions;
+    std::vector<uint8_t> magp;
+    size_t index = 0;
+    switch (code)
+    {
     case PROTREJ:
-    lcp_rprotrej(f, inp, len);
-    break;
-
-    case ECHOREQ:
-    if (f->state != PPP_FSM_OPENED)
+        lcp_rprotrej(f, pkt, len);
         break;
-    magp = inp;
-    PUTLONG(go->magicnumber, magp);
-    fsm_send_data(, f, ECHOREP, id, inp);
-    break;
-
+    case ECHOREQ:
+        if (f.state != PPP_FSM_OPENED)
+            break;
+        magp = pkt;
+        PUTLONG(go.magicnumber, magp, index);
+        if (!fsm_send_data2(pcb, f, ECHOREP, id, pkt))
+        {
+            return false;
+        }
+        break;
     case ECHOREP:
-    lcp_received_echo_reply(f, id, inp, len);
-    break;
-
-    case DISCREQ:
-    case IDENTIF:
-    case TIMEREM:
-    break;
-
+        lcp_received_echo_reply(f, id, pkt, len);
+        break;
+    case DISCREQ: case IDENTIF: case TIMEREM:
+        break;
     default:
-    return 0;
+        return false;
     }
-    return 1;
+    return true;
 }
 
 
@@ -1326,136 +1345,119 @@ bad:
  * inp = Requested CIs
  * lenp = Length of requested CIs
  */
-static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
-    PppPcb *pcb = f->pcb;
-    LcpOptions *go = &pcb->lcp_gotoptions;
-    LcpOptions *ho = &pcb->lcp_hisoptions;
-    LcpOptions *ao = &pcb->lcp_allowoptions;
-    uint8_t *cip;
-    uint8_t *next;
-    size_t cilen;
-    int citype;
+bool
+lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if_disagree) {
+    uint8_t cilen;
+    uint8_t citype;
     ChapDigestCodes cichar;
     u_short cishort;		/* Parsed short value */
     uint32_t cilong;		/* Parse long value */
     int rc = CONFACK;		/* Final packet return code */
-    int orc;			/* Individual option return code */
-    uint8_t *p;			/* Pointer to next char to parse */
-    uint8_t *rejp;		/* Pointer to next char in reject frame */
-    struct PacketBuffer *nakp;          /* Nak buffer */
-    uint8_t *nakoutp;		/* Pointer to next char in Nak frame */
-    auto l = *lenp;		/* Length left */
-
+    // uint8_t *p;			/* Pointer to next char to parse */ // struct PacketBuffer nakp{};          /* Nak buffer */ // auto l = *lenp;		/* Length left */
+    size_t in_index = 0;
+    bool ok;
     /*
      * Reset all his options.
      */
-    zero_mem(ho, sizeof(*ho));
+    reset_lcp_options(pcb.lcp_hisoptions);
 
     /*
      * Process all his options.
      */
-    next = inp;
+    size_t rem_len = inp.size();
+    uint8_t* next = inp.data();
     // nakp = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE));
-    nakp = new PacketBuffer;
-    if(nullptr == nakp)
+    PacketBuffer nakp = init_pkt_buf();
+    uint8_t* nakoutp = nakp.bytes.data();
+    uint8_t* rejp = inp.data();
+    while (rem_len != 0u)
     {
-        return 0;
-    }
-    if(nakp->tot_len != nakp->len) {
-        free_pkt_buf(nakp);
-        return 0;
-    }
-
-    nakoutp = (uint8_t*)nakp->payload;
-    rejp = inp;
-    while (l) {
-    orc = CONFACK;			/* Assume success */
-    cip = p = next;			/* Remember begining of CI */
-    if (l < 2 ||			/* Not enough data for CI header or */
-        p[1] < 2 ||			/*  CI length too small or */
-        p[1] > l) {			/*  CI length too big? */
-        // LCPDEBUG(("lcp_reqci: bad CI length!"));
-        orc = CONFREJ;		/* Reject bad CI */
-        cilen = l;			/* Reject till end of packet */
-        l = 0;			/* Don't loop again */
-        citype = 0;
-        goto endswitch;
-    }
-    GETCHAR(citype, p);		/* Parse CI type */
-    GETCHAR(cilen, p);		/* Parse CI length */
-    l -= cilen;			/* Adjust remaining length */
-    next += cilen;			/* Step to next CI */
-
-    switch (citype) {		/* Check CI type */
-    case CI_MRU:
-        if (!ao->neg_mru ||		/* Allow option? */
-        cilen != CILEN_SHORT) {	/* Check CI length */
-        orc = CONFREJ;		/* Reject CI */
-        break;
+        int opt_rc = CONFACK; /* Assume success */
+        // uint8_t* cip = p = next; /* Remember begining of CI */
+        /* Not enough data for CI header or */ /*  CI length too small or */
+        if (rem_len < 2 || inp[in_index + 1] < 2 || inp[in_index + 1] > rem_len)
+        {
+            /*  CI length too big? */ // LCPDEBUG(("lcp_reqci: bad CI length!"));
+            opt_rc = CONFREJ; /* Reject bad CI */
+            cilen = rem_len; /* Reject till end of packet */
+            rem_len = 0; /* Don't loop again */
+            citype = 0;
+            // todo: call some sort of end method and return or set ok to false
+            // goto endswitch;
+            ok = false;
         }
-        GETSHORT(cishort, p);	/* Parse MRU */
 
-        /*
-         * He must be able to receive at least our minimum.
-         * No need to check a maximum.  If he sends a large number,
-         * we'll just ignore it.
-         */
-        if (cishort < PPP_MINMRU) {
-        orc = CONFNAK;		/* Nak CI */
-        PUTCHAR(CI_MRU, nakoutp);
-        PUTCHAR(CILEN_SHORT, nakoutp);
-        PUTSHORT(PPP_MINMRU, nakoutp);	/* Give him a hint */
-        break;
+        /* Parse CI type */
+        if (ok) { std::tie(ok, citype) = GETCHAR(inp, in_index); }
+
+        /* Parse CI length */
+        if (ok) { std::tie(ok, cilen) = GETCHAR(inp, in_index); }
+        if (ok) {
+            if (citype == CI_MRU) {
+                if (!pcb.lcp_allowoptions.neg_mru || cilen != CILEN_SHORT) {
+                    /* Check CI length */
+                    opt_rc = CONFREJ; /* Reject CI */
+                }
+                else {
+                    GETSHORT(cishort, in_index); /* Parse MRU */
+                    /* He must be able to receive at least our minimum.
+                                                              * No need to check a maximum.  If he sends a large number,
+                                                              * we'll just ignore it.
+                                                              */
+                    if (cishort < PPP_MINMRU) {
+                        opt_rc = CONFNAK; /* Nak CI */
+                        PUTCHAR(CI_MRU, nakoutp);
+                        PUTCHAR(CILEN_SHORT, nakoutp);
+                        PUTSHORT(PPP_MINMRU, nakoutp); /* Give him a hint */
+                        break;
+                    }
+                    pcb.lcp_hisoptions.neg_mru = true; /* Remember he sent MRU */
+                    pcb.lcp_hisoptions.mru = cishort; /* And remember value */
+                }
+            }
         }
-        ho->neg_mru = true;		/* Remember he sent MRU */
-        ho->mru = cishort;		/* And remember value */
-        break;
 
-    case CI_ASYNCMAP:
-        if (!ao->neg_asyncmap ||
-        cilen != CILEN_LONG) {
-        orc = CONFREJ;
-        break;
-        }
-        GETLONG(cilong, p);
+        switch (citype)
+        {
+            /* Check CI type */
+            /* Allow option? */
+        case CI_MRU:
 
-        /*
+
+            break;
+        case CI_ASYNCMAP:
+            if (!ao->neg_asyncmap || cilen != CILEN_LONG)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            GETLONG(cilong, p); /*
          * Asyncmap must have set at least the bits
          * which are set in lcp_allowoptions[unit].asyncmap.
          */
-        if ((ao->asyncmap & ~cilong) != 0) {
-        orc = CONFNAK;
-        PUTCHAR(CI_ASYNCMAP, nakoutp);
-        PUTCHAR(CILEN_LONG, nakoutp);
-        PUTLONG(ao->asyncmap | cilong, nakoutp);
-        break;
-        }
-        ho->neg_asyncmap = true;
-        ho->asyncmap = cilong;
-        break;
-
-    case CI_AUTHTYPE:
-        if (cilen < CILEN_SHORT ||
-        !(false
-
-        || ao->neg_upap
-
-
-        || ao->neg_chap
-
-        || ao->neg_eap
-
-        )) {
-        /*
-         * Reject the option if we're not willing to authenticate.
-         */
-        ppp_dbglog("No auth is possible");
-        orc = CONFREJ;
-        break;
-        }
-        GETSHORT(cishort, p);
-
-        /*
+            if ((ao->asyncmap & ~cilong) != 0)
+            {
+                opt_rc = CONFNAK;
+                PUTCHAR(CI_ASYNCMAP, nakoutp);
+                PUTCHAR(CILEN_LONG, nakoutp);
+                PUTLONG(ao->asyncmap | cilong, nakoutp);
+                break;
+            }
+            ho->neg_asyncmap = true;
+            ho->asyncmap = cilong;
+            break;
+        case CI_AUTHTYPE:
+            if (cilen < CILEN_SHORT || !(false || ao->neg_upap || ao->neg_chap || ao->
+                neg_eap))
+            {
+                /*
+                        * Reject the option if we're not willing to authenticate.
+                        */
+                ppp_dbglog("No auth is possible");
+                opt_rc = CONFREJ;
+                break;
+            }
+            GETSHORT(cishort, p); /*
          * Authtype must be PAP, CHAP, or EAP.
          *
          * Note: if more than one of ao->neg_upap, ao->neg_chap, and
@@ -1465,301 +1467,261 @@ static int lcp_reqci(Fsm *f, uint8_t *inp, int *lenp, int reject_if_disagree) {
          * Whether we end up doing CHAP, UPAP, or EAP depends then on
          * the ordering of the CIs in the peer's Configure-Request.
              */
-
-
-        if (cishort == PPP_PAP) {
-        /* we've already accepted CHAP or EAP */
-        if (false
-
-            || ho->neg_chap
-
-            || ho->neg_eap
-
-            || cilen != CILEN_SHORT) {
-            // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
-            orc = CONFREJ;
-            break;
-        }
-        if (!ao->neg_upap) {	/* we don't want to do PAP */
-            orc = CONFNAK;	/* NAK it and suggest CHAP or EAP */
-            PUTCHAR(CI_AUTHTYPE, nakoutp);
-
-            if (ao->neg_eap) {
-            PUTCHAR(CILEN_SHORT, nakoutp);
-            PUTSHORT(PPP_EAP, nakoutp);
-            } else {
-
-
-            PUTCHAR(CILEN_CHAP, nakoutp);
-            PUTSHORT(PPP_CHAP, nakoutp);
-            PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
-
+            if (cishort == PPP_PAP)
+            {
+                /* we've already accepted CHAP or EAP */
+                if (false || ho->neg_chap || ho->neg_eap || cilen != CILEN_SHORT)
+                {
+                    // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
+                    opt_rc = CONFREJ;
+                    break;
+                }
+                if (!ao->neg_upap)
+                {
+                    /* we don't want to do PAP */
+                    opt_rc = CONFNAK; /* NAK it and suggest CHAP or EAP */
+                    PUTCHAR(CI_AUTHTYPE, nakoutp);
+                    if (ao->neg_eap)
+                    {
+                        PUTCHAR(CILEN_SHORT, nakoutp);
+                        PUTSHORT(PPP_EAP, nakoutp);
+                    }
+                    else
+                    {
+                        PUTCHAR(CILEN_CHAP, nakoutp);
+                        PUTSHORT(PPP_CHAP, nakoutp);
+                        PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                    }
+                    break;
+                }
+                ho->neg_upap = true;
+                break;
             }
-
-            break;
-        }
-        ho->neg_upap = true;
-        break;
-        }
-
-
-        if (cishort == PPP_CHAP) {
-        /* we've already accepted PAP or EAP */
-        if (
-
-            ho->neg_upap ||
-
-            ho->neg_eap ||
-
-            cilen != CILEN_CHAP) {
-            // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
-            orc = CONFREJ;
-            break;
-        }
-        if (!ao->neg_chap) {	/* we don't want to do CHAP */
-            orc = CONFNAK;	/* NAK it and suggest EAP or PAP */
-            PUTCHAR(CI_AUTHTYPE, nakoutp);
-            PUTCHAR(CILEN_SHORT, nakoutp);
-
-            if (ao->neg_eap) {
-            PUTSHORT(PPP_EAP, nakoutp);
-            } else
-
-            if(true) {
-            PUTSHORT(PPP_PAP, nakoutp);
+            if (cishort == PPP_CHAP)
+            {
+                /* we've already accepted PAP or EAP */
+                if (ho->neg_upap || ho->neg_eap || cilen != CILEN_CHAP)
+                {
+                    // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
+                    opt_rc = CONFREJ;
+                    break;
+                }
+                if (!ao->neg_chap)
+                {
+                    /* we don't want to do CHAP */
+                    opt_rc = CONFNAK; /* NAK it and suggest EAP or PAP */
+                    PUTCHAR(CI_AUTHTYPE, nakoutp);
+                    PUTCHAR(CILEN_SHORT, nakoutp);
+                    if (ao->neg_eap) { PUTSHORT(PPP_EAP, nakoutp); }
+                    else if (true) { PUTSHORT(PPP_PAP, nakoutp); }
+                    else {}
+                    break;
+                }
+                {
+                    (cichar) = (ChapDigestCodes)*(p)++;
+                }; /* get digest type */
+                if (!(chap_candigest(ao->chap_mdtype, cichar)))
+                {
+                    /*
+                                * We can't/won't do the requested type,
+                                * suggest something else.
+                                */
+                    opt_rc = CONFNAK;
+                    PUTCHAR(CI_AUTHTYPE, nakoutp);
+                    PUTCHAR(CILEN_CHAP, nakoutp);
+                    PUTSHORT(PPP_CHAP, nakoutp);
+                    PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                    break;
+                }
+                ho->chap_mdtype = chap_mdtype_d(cichar); /* save md type */
+                ho->neg_chap = true;
+                break;
             }
-            else
-
-            {}
-            break;
-        }
-        { (cichar) = (ChapDigestCodes)*(p)++; };	/* get digest type */
-        if (!(chap_candigest(ao->chap_mdtype, cichar))) {
-            /*
-             * We can't/won't do the requested type,
-             * suggest something else.
-             */
-            orc = CONFNAK;
-            PUTCHAR(CI_AUTHTYPE, nakoutp);
-            PUTCHAR(CILEN_CHAP, nakoutp);
-            PUTSHORT(PPP_CHAP, nakoutp);
-            PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
-            break;
-        }
-        ho->chap_mdtype = chap_mdtype_d(cichar); /* save md type */
-        ho->neg_chap = true;
-        break;
-        }
-
-        if (cishort == PPP_EAP) {
-        /* we've already accepted CHAP or PAP */
-        if (
-
-            ho->neg_chap ||
-
-            ho->neg_upap ||
-
-            cilen != CILEN_SHORT) {
-            // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE EAP, rejecting..."));
-            orc = CONFREJ;
-            break;
-        }
-        if (!ao->neg_eap) {	/* we don't want to do EAP */
-            orc = CONFNAK;	/* NAK it and suggest CHAP or PAP */
-            PUTCHAR(CI_AUTHTYPE, nakoutp);
-
-            if (ao->neg_chap) {
-            PUTCHAR(CILEN_CHAP, nakoutp);
-            PUTSHORT(PPP_CHAP, nakoutp);
-            PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
-            } else
-
-            if(true) {
-            PUTCHAR(CILEN_SHORT, nakoutp);
-            PUTSHORT(PPP_PAP, nakoutp);
-            } else
-
-            {}
-            break;
-        }
-        ho->neg_eap = true;
-        break;
-        }
-
-
-        /*
+            if (cishort == PPP_EAP)
+            {
+                /* we've already accepted CHAP or PAP */
+                if (ho->neg_chap || ho->neg_upap || cilen != CILEN_SHORT)
+                {
+                    // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE EAP, rejecting..."));
+                    opt_rc = CONFREJ;
+                    break;
+                }
+                if (!ao->neg_eap)
+                {
+                    /* we don't want to do EAP */
+                    opt_rc = CONFNAK; /* NAK it and suggest CHAP or PAP */
+                    PUTCHAR(CI_AUTHTYPE, nakoutp);
+                    if (ao->neg_chap)
+                    {
+                        PUTCHAR(CILEN_CHAP, nakoutp);
+                        PUTSHORT(PPP_CHAP, nakoutp);
+                        PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                    }
+                    else if (true)
+                    {
+                        PUTCHAR(CILEN_SHORT, nakoutp);
+                        PUTSHORT(PPP_PAP, nakoutp);
+                    }
+                    else {}
+                    break;
+                }
+                ho->neg_eap = true;
+                break;
+            } /*
          * We don't recognize the protocol they're asking for.
          * Nak it with something we're willing to do.
          * (At this point we know ao->neg_upap || ao->neg_chap ||
          * ao->neg_eap.)
          */
-        orc = CONFNAK;
-        PUTCHAR(CI_AUTHTYPE, nakoutp);
-
-
-        if (ao->neg_eap) {
-        PUTCHAR(CILEN_SHORT, nakoutp);
-        PUTSHORT(PPP_EAP, nakoutp);
-        } else
-
-        if (ao->neg_chap) {
-        PUTCHAR(CILEN_CHAP, nakoutp);
-        PUTSHORT(PPP_CHAP, nakoutp);
-        PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
-        } else
-
-        if(true) {
-        PUTCHAR(CILEN_SHORT, nakoutp);
-        PUTSHORT(PPP_PAP, nakoutp);
-        } else
-
-        {}
-        break;
-
-    case CI_QUALITY:
-        if (!ao->neg_lqr ||
-        cilen != CILEN_LQR) {
-        orc = CONFREJ;
-        break;
-        }
-
-        GETSHORT(cishort, p);
-        GETLONG(cilong, p);
-
-        /*
+            opt_rc = CONFNAK;
+            PUTCHAR(CI_AUTHTYPE, nakoutp);
+            if (ao->neg_eap)
+            {
+                PUTCHAR(CILEN_SHORT, nakoutp);
+                PUTSHORT(PPP_EAP, nakoutp);
+            }
+            else if (ao->neg_chap)
+            {
+                PUTCHAR(CILEN_CHAP, nakoutp);
+                PUTSHORT(PPP_CHAP, nakoutp);
+                PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+            }
+            else if (true)
+            {
+                PUTCHAR(CILEN_SHORT, nakoutp);
+                PUTSHORT(PPP_PAP, nakoutp);
+            }
+            else {}
+            break;
+        case CI_QUALITY:
+            if (!ao->neg_lqr || cilen != CILEN_LQR)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            GETSHORT(cishort, p);
+            GETLONG(cilong, p); /*
          * Check the protocol and the reporting period.
          * XXX When should we Nak this, and what with?
          */
-        if (cishort != PPP_LQR) {
-        orc = CONFNAK;
-        PUTCHAR(CI_QUALITY, nakoutp);
-        PUTCHAR(CILEN_LQR, nakoutp);
-        PUTSHORT(PPP_LQR, nakoutp);
-        PUTLONG(ao->lqr_period, nakoutp);
-        break;
-        }
-        break;
-
-
-    case CI_MAGICNUMBER:
-        if (!(ao->neg_magicnumber || go->neg_magicnumber) ||
-        cilen != CILEN_LONG) {
-        orc = CONFREJ;
-        break;
-        }
-        GETLONG(cilong, p);
-
-        /*
+            if (cishort != PPP_LQR)
+            {
+                opt_rc = CONFNAK;
+                PUTCHAR(CI_QUALITY, nakoutp);
+                PUTCHAR(CILEN_LQR, nakoutp);
+                PUTSHORT(PPP_LQR, nakoutp);
+                PUTLONG(ao->lqr_period, nakoutp);
+                break;
+            }
+            break;
+        case CI_MAGICNUMBER:
+            if (!(ao->neg_magicnumber || go->neg_magicnumber) || cilen != CILEN_LONG)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            GETLONG(cilong, p); /*
          * He must have a different magic number.
          */
-        if (go->neg_magicnumber &&
-        cilong == go->magicnumber) {
-        cilong = magic();	/* Don't put magic() inside macro! */
-        orc = CONFNAK;
-        PUTCHAR(CI_MAGICNUMBER, nakoutp);
-        PUTCHAR(CILEN_LONG, nakoutp);
-        PUTLONG(cilong, nakoutp);
-        break;
+            if (go->neg_magicnumber && cilong == go->magicnumber)
+            {
+                cilong = magic(); /* Don't put magic() inside macro! */
+                opt_rc = CONFNAK;
+                PUTCHAR(CI_MAGICNUMBER, nakoutp);
+                PUTCHAR(CILEN_LONG, nakoutp);
+                PUTLONG(cilong, nakoutp);
+                break;
+            }
+            ho->neg_magicnumber = true;
+            ho->magicnumber = cilong;
+            break;
+        case CI_PCOMPRESSION:
+            if (!ao->neg_pcompression || cilen != CILEN_VOID)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            ho->neg_pcompression = true;
+            break;
+        case CI_ACCOMPRESSION:
+            if (!ao->neg_accompression || cilen != CILEN_VOID)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            ho->neg_accompression = true;
+            break;
+        case CI_MRRU:
+            if (!ao->neg_mrru || !multilink || cilen != CILEN_SHORT)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            GETSHORT(cishort, p);
+            /* possibly should insist on a minimum/maximum MRRU here */
+            ho->neg_mrru = true;
+            ho->mrru = cishort;
+            break;
+        case CI_SSNHF:
+            if (!ao->neg_ssnhf || !multilink || cilen != CILEN_VOID)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            ho->neg_ssnhf = true;
+            break;
+        case CI_EPDISC:
+            if (!ao->neg_endpoint || cilen < CILEN_CHAR || cilen > CILEN_CHAR +
+                MAX_ENDP_LEN)
+            {
+                opt_rc = CONFREJ;
+                break;
+            }
+            {
+                (cichar) = (ChapDigestCodes)*(p)++;
+            };
+            cilen -= CILEN_CHAR;
+            ho->neg_endpoint = true;
+            ho->endpoint.class_ = cichar;
+            ho->endpoint.length = cilen;
+            memcpy(ho->endpoint.value, p, cilen);
+            INCPTR(cilen, p);
+            break;
+        default: // LCPDEBUG(("lcp_reqci: rcvd unknown option %d", citype));
+            opt_rc = CONFREJ;
+            break;
         }
-        ho->neg_magicnumber = true;
-        ho->magicnumber = cilong;
-        break;
-
-
-    case CI_PCOMPRESSION:
-        if (!ao->neg_pcompression ||
-        cilen != CILEN_VOID) {
-        orc = CONFREJ;
-        break;
-        }
-        ho->neg_pcompression = true;
-        break;
-
-    case CI_ACCOMPRESSION:
-        if (!ao->neg_accompression ||
-        cilen != CILEN_VOID) {
-        orc = CONFREJ;
-        break;
-        }
-        ho->neg_accompression = true;
-        break;
-
-
-    case CI_MRRU:
-        if (!ao->neg_mrru
-        || !multilink
-        || cilen != CILEN_SHORT) {
-        orc = CONFREJ;
-        break;
-        }
-
-        GETSHORT(cishort, p);
-        /* possibly should insist on a minimum/maximum MRRU here */
-        ho->neg_mrru = true;
-        ho->mrru = cishort;
-        break;
-
-
-    case CI_SSNHF:
-        if (!ao->neg_ssnhf
-
-        || !multilink
-
-        || cilen != CILEN_VOID) {
-        orc = CONFREJ;
-        break;
-        }
-        ho->neg_ssnhf = true;
-        break;
-
-    case CI_EPDISC:
-        if (!ao->neg_endpoint ||
-        cilen < CILEN_CHAR ||
-        cilen > CILEN_CHAR + MAX_ENDP_LEN) {
-        orc = CONFREJ;
-        break;
-        }
-        { (cichar) = (ChapDigestCodes)*(p)++; };
-        cilen -= CILEN_CHAR;
-        ho->neg_endpoint = true;
-        ho->endpoint.class_ = cichar;
-        ho->endpoint.length = cilen;
-        memcpy(ho->endpoint.value, p, cilen);
-        INCPTR(cilen, p);
-        break;
-
-    default:
-        // LCPDEBUG(("lcp_reqci: rcvd unknown option %d", citype));
-        orc = CONFREJ;
-        break;
-    }
-
-endswitch:
-    if (orc == CONFACK &&		/* Good CI */
-        rc != CONFACK)
-    {
-        /*  but prior CI wasnt? */
-        continue;			/* Don't send this one */
-    }
-    if (orc == CONFNAK) {		/* Nak this CI? */
-        if (reject_if_disagree	/* Getting fed up with sending NAKs? */
-        && citype != CI_MAGICNUMBER) {
-        orc = CONFREJ;		/* Get tough if so */
-        } else {
-        if (rc == CONFREJ)	/* Rejecting prior CI? */
-            continue;		/* Don't send this one */
-        rc = CONFNAK;
-        }
-    }
-    if (orc == CONFREJ) {		/* Reject this CI */
-        rc = CONFREJ;
-        if (cip != rejp)
+    endswitch: if (opt_rc == CONFACK && /* Good CI */ rc != CONFACK)
         {
-            /* Need to move rejected CI? */
-        memcpy(rejp, cip, cilen); /* Move it */
+            /*  but prior CI wasnt? */
+            continue; /* Don't send this one */
         }
-        INCPTR(cilen, rejp);	/* Update output pointer */
-    }
+        if (opt_rc == CONFNAK)
+        {
+            /* Nak this CI? */
+            if (reject_if_disagree /* Getting fed up with sending NAKs? */ && citype !=
+                CI_MAGICNUMBER) { opt_rc = CONFREJ; /* Get tough if so */ }
+            else
+            {
+                if (rc == CONFREJ) /* Rejecting prior CI? */
+                    continue; /* Don't send this one */
+                rc = CONFNAK;
+            }
+        }
+        if (opt_rc == CONFREJ)
+        {
+            /* Reject this CI */
+            rc = CONFREJ;
+            if (cip != rejp)
+            {
+                /* Need to move rejected CI? */
+                memcpy(rejp, cip, cilen); /* Move it */
+            }
+            INCPTR(cilen, rejp); /* Update output pointer */
+        }
+
+        rem_len -= cilen; /* Adjust remaining length */
+        in_index += cilen; /* Step to next CI */
     }
 
     /*
@@ -1793,23 +1755,16 @@ endswitch:
 }
 
 
-/*
- * lcp_up - LCP has come UP.
+/**
+ * LCP has come UP.
  */
-void lcp_up(Fsm *f) {
-    PppPcb *pcb = f->pcb;
-    LcpOptions *wo = &pcb->lcp_wantoptions;
-    LcpOptions *ho = &pcb->lcp_hisoptions;
-    LcpOptions *go = &pcb->lcp_gotoptions;
-    LcpOptions *ao = &pcb->lcp_allowoptions;
-    if (!go->neg_magicnumber)
-    {
-        go->magicnumber = 0;
-    }
-    if (!ho->neg_magicnumber)
-    {
-        ho->magicnumber = 0;
-    } /*
+bool
+lcp_up(Fsm& f, PppPcb& pcb, bool multilink)
+{
+    if (!pcb.lcp_gotoptions.neg_magicnumber) { pcb.lcp_gotoptions.magicnumber = 0; }
+    if (!pcb.lcp_hisoptions.neg_magicnumber) { pcb.lcp_hisoptions.magicnumber = 0; }
+
+    /*
      * Set our MTU to the smaller of the MTU we wanted and
      * the MRU our peer wanted.  If we negotiated an MRU,
      * set our MRU to the larger of value we wanted and
@@ -1818,47 +1773,57 @@ void lcp_up(Fsm *f) {
      * the interface MTU is set to the lowest of that, the
      * MTU we want to use, and our link MRU.
      */
-    int mtu = ho->neg_mru ? ho->mru : PPP_MRU;
-    int mru = go->neg_mru ? std::max(wo->mru, go->mru) : PPP_MRU;
-
-    if (!(multilink && go->neg_mrru && ho->neg_mrru))
+    int mtu = pcb.lcp_hisoptions.neg_mru ? pcb.lcp_hisoptions.mru : PPP_MRU;
+    int mru = pcb.lcp_gotoptions.neg_mru
+                  ? std::max(pcb.lcp_wantoptions.mru, pcb.lcp_gotoptions.mru)
+                  : PPP_MRU;
+    if (!(multilink && pcb.lcp_gotoptions.neg_mrru && pcb.lcp_hisoptions.neg_mrru))
     {
-        netif_set_mtu(pcb, std::min(uint16_t(std::min(mtu, mru)), ao->mru));
+        netif_set_mtu(pcb,
+                      std::min(uint16_t(std::min(mtu, mru)), pcb.lcp_allowoptions.mru));
     }
-    ppp_send_config(pcb, mtu,
-            (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
-            ho->neg_pcompression, ho->neg_accompression);
-    ppp_recv_config(pcb, mru,
-            (pcb->settings.lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
-            go->neg_pcompression, go->neg_accompression);
-
-    if (ho->neg_mru)
-    pcb->peer_mru = ho->mru;
-
-    lcp_echo_lowerup(f->pcb);  /* Enable echo messages */
-
-    link_established(pcb, ,, true);
+    ppp_send_config(pcb,
+                    mtu,
+                    (pcb.lcp_hisoptions.neg_asyncmap
+                         ? pcb.lcp_hisoptions.asyncmap
+                         : 0xffffffff),
+                    pcb.lcp_hisoptions.neg_pcompression,
+                    pcb.lcp_hisoptions.neg_accompression);
+    ppp_recv_config(pcb,
+                    mru,
+                    (pcb.settings.lax_recv
+                         ? 0
+                         : pcb.lcp_gotoptions.neg_asyncmap
+                         ? pcb.lcp_gotoptions.asyncmap
+                         : 0xffffffff),
+                    pcb.lcp_gotoptions.neg_pcompression,
+                    pcb.lcp_gotoptions.neg_accompression);
+    if (pcb.lcp_hisoptions.neg_mru)
+        pcb.peer_mru = pcb.lcp_hisoptions.mru;
+    lcp_echo_lowerup(pcb); /* Enable echo messages */
+    UpapState upap_state{};
+    return link_established(pcb, upap_state, true);
 }
 
 
-/*
- * lcp_down - LCP has gone DOWN.
- *
- * Alert other protocols.
+/**
+ * LCP has gone DOWN. Alert other protocols.
  */
-void lcp_down(Fsm *f) {
-    PppPcb *pcb = f->pcb;
-    LcpOptions *go = &pcb->lcp_gotoptions;
-
-    lcp_echo_lower_down(f->pcb, f);
-
-    link_down(pcb,);
-
+bool
+lcp_down(PppPcb& pcb, Fsm& f, bool multilink)
+{
+    lcp_echo_lower_down(pcb, f);
+    if (!link_down(pcb, multilink)) { return false; }
     ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(pcb, PPP_MRU,
-            (go->neg_asyncmap? go->asyncmap: 0xffffffff),
-            go->neg_pcompression, go->neg_accompression);
-    pcb->peer_mru = PPP_MRU;
+    ppp_recv_config(pcb,
+                    PPP_MRU,
+                    (pcb.lcp_gotoptions.neg_asyncmap
+                         ? pcb.lcp_gotoptions.asyncmap
+                         : 0xffffffff),
+                    pcb.lcp_gotoptions.neg_pcompression,
+                    pcb.lcp_gotoptions.neg_accompression);
+    pcb.peer_mru = PPP_MRU;
+    return true;
 }
 
 
@@ -1871,30 +1836,32 @@ void lcp_starting(Fsm *f) {
 }
 
 
-/*
- * lcp_finished - LCP has finished with the lower layer.
+/**
+ * LCP has finished with the lower layer.
  */
-void lcp_finished(Fsm *f) {
-    PppPcb *pcb = f->pcb;
-    link_terminated(pcb,);
-}
+bool
+lcp_finished(Fsm& f, PppPcb& pcb) { return link_terminated(pcb, false); }
 
 
-/*
+/**
  * Time to shut down the link because there is nothing out there.
  */
-
-void lcp_link_failure(Fsm *f) {
-    PppPcb *pcb = f->pcb;
-    if (f->state == PPP_FSM_OPENED) {
-    ppp_info("No response to %d echo-requests", pcb->lcp_echos_pending);
+bool
+lcp_link_failure(Fsm& f, PppPcb& pcb)
+{
+    if (f.state == PPP_FSM_OPENED)
+    {
+        ppp_info("No response to %d echo-requests", pcb.lcp_echos_pending);
         ppp_notice("Serial link appears to be disconnected.");
-    pcb->err_code = PPPERR_PEERDEAD;
-    lcp_close(pcb, "Peer not responding");
+        pcb.err_code = PPPERR_PEERDEAD;
+        std::string msg = "Peer not responding";
+        return lcp_close(pcb, msg);
     }
+    return true;
 }
 
-/*
+
+/**
  * Timer expired for the LCP echo requests from this process.
  */
 
@@ -1966,7 +1933,7 @@ void lcp_send_echo_request(Fsm *f) {
      */
     if (pcb->settings.lcp_echo_fails != 0) {
         if (pcb->lcp_echos_pending >= pcb->settings.lcp_echo_fails) {
-            lcp_link_failure(f);
+            lcp_link_failure(f,);
             pcb->lcp_echos_pending = 0;
     }
     }

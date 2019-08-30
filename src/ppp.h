@@ -361,19 +361,18 @@ inline void Untimeout(SysTimeoutHandler time_fn, void* arg) {
 // #define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
 
 /*
- * MAKEHEADER - Add Header fields to a packet.
+ * ppp_make_header - Add Header fields to a packet.
  */
-// #define MAKEHEADER(p, t) { \
+// #define ppp_make_header(p, t) { \
 //     PUTCHAR(PPP_ALLSTATIONS, p); \
 //     PUTCHAR(PPP_UI, p); \
 //     PUTSHORT(t, p); }
 
 inline void
-MAKEHEADER(std::vector<uint8_t>& p, PppProtoFieldValue t)
+ppp_make_header(std::vector<uint8_t>& p, PppProtoFieldValue t, size_t& index)
 {
     auto put_size = 1 + 1 + 2;
     if (p.size() < put_size) { p.resize(p.size() + put_size); }
-    size_t index = 0;
     PUTCHAR(PPP_ALLSTATIONS, p, index);
     PUTCHAR(PPP_UI, p, index);
     PUTSHORT(t, p, index);

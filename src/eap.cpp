@@ -54,7 +54,7 @@
 #include "ppp.h"
 #include "mbedtls/sha1.h"
 #include <ctime>
-
+#include "mbedtls/md5.h"
 
 
 /*
@@ -174,11 +174,11 @@ eap_authwithpeer(PppPcb& pcb)
 bool
 eap_send_failure(PppPcb& pcb)
 {
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf();
     p.bytes.reserve(1500); // todo: figure out correct size
     size_t index  = 0;
 
-    // MAKEHEADER(outp, PPP_EAP);
+    ppp_make_header(outp, PPP_EAP);
     PUTCHAR(PPP_ALLSTATIONS, p.bytes, index);
     PUTCHAR(PPP_UI, p.bytes, index);
     PUTSHORT(PPP_EAP, p.bytes, index);
@@ -201,10 +201,10 @@ eap_send_failure(PppPcb& pcb)
 bool
 eap_send_success(PppPcb& pcb)
 {
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     p.bytes.reserve(1500);
     size_t index = 0;
-    MAKEHEADER(p.bytes, PPP_EAP);
+    ppp_make_header(p.bytes, PPP_EAP, index);
     PUTCHAR(PPP_ALLSTATIONS, p.bytes, index);
     PUTCHAR(PPP_UI, p.bytes, index);
     PUTSHORT(PPP_EAP, p.bytes, index);
@@ -591,9 +591,9 @@ eap_send_request(PppPcb& pcb)
         eap_send_failure(pcb);
         return false;
     }
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     size_t index = 0;
-    MAKEHEADER(p.bytes, PPP_EAP);
+    ppp_make_header(p.bytes, PPP_EAP);
     PUTCHAR(EAP_REQUEST, p.bytes, index);
     PUTCHAR(pcb.eap.es_server.ea_id, p.bytes, index);
     index += 2;
@@ -790,9 +790,9 @@ eap_send_response(PppPcb& pcb, uint8_t id, uint8_t typenum, std::string& str)
 {
     const auto msg_len = EAP_HEADERLEN + sizeof(uint8_t) + str.length();
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-    PacketBuffer p{};
+    PacketBuffer p = init_pkt_buf()
     size_t index = 0;
-    MAKEHEADER(p.bytes, PPP_EAP);
+    ppp_make_header(p.bytes, PPP_EAP);
     PUTCHAR(EAP_RESPONSE, p.bytes, index);
     PUTCHAR(id, p.bytes, index);
     pcb.eap.es_client.ea_id = id;
@@ -808,26 +808,15 @@ eap_send_response(PppPcb& pcb, uint8_t id, uint8_t typenum, std::string& str)
 /*
  * Format and send an MD5-Challenge EAP Response message.
  */
-static void eap_chap_response(PppPcb* pcb,
-                              uint8_t id,
-                              uint8_t* hash,
-                              std::string& name)
+bool
+eap_chap_response(PppPcb& pcb,
+                  uint8_t id,
+                  uint8_t* hash,
+                  std::string& name)
 {
     const auto msglen = EAP_HEADERLEN + 2 * sizeof(uint8_t) + MD5_SIGNATURE_SIZE + name.length();
-    // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-    auto* p = new PacketBuffer;
-    if (nullptr == p)
-    {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
-    auto outp = p->payload;
-
-    MAKEHEADER(outp, PPP_EAP);
+    PacketBuffer p = init_pkt_buf()
+    ppp_make_header(outp, PPP_EAP);
 
     PUTCHAR(EAP_RESPONSE, outp);
     PUTCHAR(id, outp);
@@ -845,24 +834,26 @@ static void eap_chap_response(PppPcb* pcb,
     ppp_write(pcb, p);
 }
 
-static void eap_send_nak(PppPcb* pcb, uint8_t id, uint8_t type)
+static bool
+eap_send_nak(PppPcb& pcb, uint8_t id, uint8_t type)
 {
     int msglen = EAP_HEADERLEN + 2 * sizeof(uint8_t);
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
-    struct PacketBuffer* p = new PacketBuffer;
-    if (nullptr == p)
-    {
-        return;
-    }
-    if (p->tot_len != p->len)
-    {
-        free_pkt_buf(p);
-        return;
-    }
+    // struct PacketBuffer* p = new PacketBuffer;
+    // if (nullptr == p)
+    // {
+    //     return;
+    // }
+    // if (p->tot_len != p->len)
+    // {
+    //     free_pkt_buf(p);
+    //     return;
+    // }
+    PacketBuffer p = init_pkt_buf();
 
     uint8_t* outp = (uint8_t *)p->payload;
 
-    MAKEHEADER(outp, PPP_EAP);
+    ppp_make_header(outp, PPP_EAP);
 
     PUTCHAR(EAP_RESPONSE, outp);
     PUTCHAR(id, outp);
