@@ -16,7 +16,7 @@ bool
 ccp_anycompress(CcpOptions& options)
 {
     return ((options).deflate || (options).bsd_compress || (options).predictor_1 || (options).
-        predictor_2 || (options).mppe);
+        predictor_2 || mppe_has_options((options).mppe));
 }
 
 
@@ -101,7 +101,7 @@ ccp_open(PppPcb& pcb)
      * Find out which compressors the kernel supports before
      * deciding whether to open in silent mode.
      */
-    ccp_resetci(pcb.ccp_fsm, pcb);
+    ccp_resetci(pcb);
     if (!ccp_anycompress(pcb.ccp_gotoptions))
         pcb.ccp_fsm.options.silent = true;
     return fsm_open(pcb, pcb.ccp_fsm);
@@ -149,7 +149,7 @@ bool ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
     if (oldstate == PPP_FSM_OPENED && pkt[0] == TERMREQ && pcb.ccp_fsm.state != PPP_FSM_OPENED)
     {
         spdlog::info("Compression disabled by peer.");
-        if (go.mppe)
+        if (mppe_has_options(go.mppe))
         {
             spdlog::error("MPPE disabled, closing LCP");
             std::string msg = "MPPE disabled by peer";
@@ -197,44 +197,52 @@ ccp_extcode(PppPcb& pcb, Fsm& f, const int code, const int id, std::vector<uint8
     return true;
 }
 
-/*
- * ccp_protrej - peer doesn't talk CCP.
- */
-static void ccp_protrej(PppPcb* pcb)
-{
-    const auto f = &pcb->ccp_fsm;
-    const auto go = &pcb->ccp_gotoptions;
-    ccp_set(pcb, 0, 0, 0, 0);
-    fsm_lowerdown(f);
-    if (go->mppe)
-    {
-        ppp_error("MPPE required but peer negotiation failed");
-        lcp_close(pcb, "MPPE required but peer negotiation failed");
-    }
-}
-
-/*
- * ccp_resetci - initialize at start of negotiation.
+/**
+ * Peer doesn't talk CCP.
  */
 bool
-ccp_resetci(Fsm& f, PppPcb& pcb)
+ccp_proto_rejected(PppPcb& pcb)
+{
+    const auto f = pcb.ccp_fsm;
+    const auto go = pcb.ccp_gotoptions;
+    if (!ccp_set(pcb, false, false, 0, 0)) { return false; }
+    if (!fsm_lowerdown(pcb.ccp_fsm)) { return false; }
+    if (mppe_has_options(pcb.ccp_gotoptions.mppe)) {
+        spdlog::error("MPPE required but peer negotiation failed");
+        std::string msg = "MPPE required but peer negotiation failed";
+        return lcp_close(pcb, msg);
+    }
+    return true;
+}
+
+/**
+ * Initialize at start of negotiation.
+ */
+bool
+ccp_resetci(PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
     // auto go = &pcb->ccp_gotoptions;
     // auto wo = &pcb->ccp_wantoptions;
-    const auto ao = &pcb->ccp_allowoptions;
-    uint8_t opt_buf[CCP_MAX_OPTION_LENGTH];
+    // const auto ao = &pcb->ccp_allowoptions;
+    // uint8_t opt_buf[CCP_MAX_OPTION_LENGTH];
+    std::vector<uint8_t> opt_buf;
     int res;
-    if (pcb->settings.require_mppe)
+    if (pcb.settings.require_mppe)
     {
-        wo->mppe = ao->mppe = MppeOptions((pcb->settings.refuse_mppe_40 ? MPPE_OPT_NONE : MPPE_OPT_40) | (
-            pcb->settings.refuse_mppe_128 ? MPPE_OPT_NONE : MPPE_OPT_128));
+        if (pcb.settings.refuse_mppe_40 == false) {
+            pcb.ccp_wantoptions.mppe.opt_40 = true;
+        }
+        if (pcb.settings.refuse_mppe_128 == false) {
+            pcb.ccp_wantoptions.mppe.opt_128 = true;
+        }
     }
-    *go = *wo;
-    pcb->ccp_all_rejected = false;
-    if (go->mppe)
+    pcb.ccp_gotoptions = pcb.ccp_wantoptions;
+    pcb.ccp_all_rejected = false;
+    if (mppe_has_options(pcb.ccp_gotoptions.mppe))
     {
-        int auth_mschap_bits = pcb->auth_done; /*
+        int auth_mschap_bits = pcb.auth_done;
+        /*
          * Start with a basic sanity check: mschap[v2] auth must be in
          * exactly one direction.  RFC 3079 says that the keys are
          * 'derived from the credentials of the peer that initiated the call',
@@ -247,250 +255,453 @@ ccp_resetci(Fsm& f, PppPcb& pcb)
             CHAP_MS2_PEER); /* Count the mschap auths */
         auth_mschap_bits >>= CHAP_MS_SHIFT;
         auto numbits = 0;
-        do
-        {
+
+        do {
             numbits += auth_mschap_bits & 1;
             auth_mschap_bits >>= 1;
         }
         while (auth_mschap_bits);
-        if (numbits > 1)
-        {
-            ppp_error("MPPE required, but auth done in both directions.");
-            lcp_close(pcb, "MPPE required but not available");
-            return;
+
+        if (numbits > 1) {
+            std::string msg = "MPPE required but not available";
+            spdlog::error(msg);
+            if (!lcp_close(pcb, msg)) { return false; }
+            return true;
         }
-        if (!numbits)
+        if (numbits == 0) {
+            std::string msg = "MPPE required, but MS-CHAP[v2] auth not performed.";
+            spdlog::error(msg);
+            lcp_close(pcb, msg);
+            return false;
+        }
+
+        /* A plugin (eg radius) may not have obtained key material. */
+        if (!pcb.mppe_keys_set)
         {
-            ppp_error("MPPE required, but MS-CHAP[v2] auth not performed.");
-            lcp_close(pcb, "MPPE required but not available");
-            return;
-        } /* A plugin (eg radius) may not have obtained key material. */
-        if (!pcb->mppe_keys_set)
-        {
-            ppp_error(
+            spdlog::error(
                 "MPPE required, but keys are not available.  "
                 "Possible plugin problem?");
-            lcp_close(pcb, "MPPE required but not available");
-            return;
-        } /* LM auth not supported for MPPE */
-        if (pcb->auth_done & (CHAP_MS_WITHPEER | CHAP_MS_PEER))
+            std::string msg = "MPPE required but not available";
+            lcp_close(pcb, msg);
+            return false;
+        }
+        /* LM auth not supported for MPPE */
+        if (pcb.auth_done & (CHAP_MS_WITHPEER | CHAP_MS_PEER))
         {
             /* This might be noise */
-            if (go->mppe & MPPE_OPT_40)
-            {
-                ppp_notice("Disabling 40-bit MPPE; MS-CHAP LM not supported");
-                go->mppe = MppeOptions(go->mppe & ~MPPE_OPT_40);
-                wo->mppe = MppeOptions(wo->mppe & ~MPPE_OPT_40);
+            if (pcb.ccp_gotoptions.mppe.opt_40) {
+                spdlog::info("Disabling 40-bit MPPE; MS-CHAP LM not supported");
+                pcb.ccp_gotoptions.mppe.opt_40 = false;
+                pcb.ccp_wantoptions.mppe.opt_40 = false;
             }
-        } /* Last check: can we actually negotiate something? */
-        if (!(go->mppe & (MPPE_OPT_40 | MPPE_OPT_128)))
+        }
+        /* Last check: can we actually negotiate something? */
+        if (!(pcb.ccp_gotoptions.mppe.opt_40 || pcb.ccp_gotoptions.mppe.opt_128))
         {
             /* Could be misconfig, could be 40-bit disabled above. */
-            ppp_error("MPPE required, but both 40-bit and 128-bit disabled.");
-            lcp_close(pcb, "MPPE required but not available");
-            return;
-        } /* sync options */
-        ao->mppe = go->mppe; /* MPPE is not compatible with other compression types */
-        ao->bsd_compress = go->bsd_compress = false;
-        ao->predictor_1 = go->predictor_1 = false;
-        ao->predictor_2 = go->predictor_2 = false;
-        ao->deflate = go->deflate = false;
-    } /*
+            std::string msg = "MPPE required, but both 40-bit and 128-bit disabled.";
+            spdlog::error(msg);
+            lcp_close(pcb, msg);
+            return false;
+        }
+
+        // sync options
+        // MPPE is not compatible with other compression types
+        pcb.ccp_allowoptions.bsd_compress = pcb.ccp_gotoptions.bsd_compress = false;
+        pcb.ccp_allowoptions.predictor_1 = pcb.ccp_gotoptions.predictor_1 = false;
+        pcb.ccp_allowoptions.predictor_2 = pcb.ccp_gotoptions.predictor_2 = false;
+        pcb.ccp_allowoptions.deflate = pcb.ccp_gotoptions.deflate = false;
+        pcb.ccp_allowoptions.mppe = pcb.ccp_gotoptions.mppe;
+
+    }
+
+    /*
      * Check whether the kernel knows about the various
      * compression methods we might request.
      */ /* FIXME: we don't need to test if BSD compress is available
      * if BSDCOMPRESS_SUPPORT is set, it is.
      */
-    if (go->bsd_compress)
+    if (pcb.ccp_gotoptions.bsd_compress)
     {
         opt_buf[0] = CI_BSD_COMPRESS;
         opt_buf[1] = CILEN_BSD_COMPRESS;
         for (;;)
         {
-            if (go->bsd_bits < BSD_MIN_BITS)
+            if (pcb.ccp_gotoptions.bsd_bits < BSD_MIN_BITS)
             {
-                go->bsd_compress = false;
+                pcb.ccp_gotoptions.bsd_compress = false;
                 break;
             }
-            opt_buf[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
-            res = ccp_test(pcb, opt_buf, CILEN_BSD_COMPRESS, 0);
+            opt_buf[2] = (((1) << 5) | (pcb.ccp_gotoptions.bsd_bits));
+            res = ccp_test(pcb, opt_buf, 3, 0);
             if (res > 0)
             {
                 break;
             }
-            else if (res < 0)
+            if (res < 0)
             {
-                go->bsd_compress = false;
+                pcb.ccp_gotoptions.bsd_compress = false;
                 break;
             }
-            go->bsd_bits--;
+            pcb.ccp_gotoptions.bsd_bits--;
         }
-    } /* FIXME: we don't need to test if deflate is available
+    }
+
+    /* FIXME: we don't need to test if deflate is available
      * if DEFLATE_SUPPORT is set, it is.
      */
-    if (go->deflate)
+    if (pcb.ccp_gotoptions.deflate)
     {
-        if (go->deflate_correct)
+        if (pcb.ccp_gotoptions.deflate_correct)
         {
             opt_buf[0] = CI_DEFLATE;
             opt_buf[1] = CILEN_DEFLATE;
             opt_buf[3] = DEFLATE_CHK_SEQUENCE;
             for (;;)
             {
-                if (go->deflate_size < kDeflateMinWorks)
+                if (pcb.ccp_gotoptions.deflate_size < DEFLATE_MIN_WORKS)
                 {
-                    go->deflate_correct = false;
+                    pcb.ccp_gotoptions.deflate_correct = false;
                     break;
                 }
-                opt_buf[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+                opt_buf[2] = DEFLATE_MAKE_OPT(pcb.ccp_gotoptions.deflate_size);
                 res = ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0);
                 if (res > 0)
                 {
                     break;
                 }
-                else if (res < 0)
+                if (res < 0)
                 {
-                    go->deflate_correct = false;
+                    pcb.ccp_gotoptions.deflate_correct = false;
                     break;
                 }
-                go->deflate_size--;
+                pcb.ccp_gotoptions.deflate_size--;
             }
         }
-        if (go->deflate_draft)
+        if (pcb.ccp_gotoptions.deflate_draft)
         {
             opt_buf[0] = CI_DEFLATE_DRAFT;
             opt_buf[1] = CILEN_DEFLATE;
             opt_buf[3] = DEFLATE_CHK_SEQUENCE;
             for (;;)
             {
-                if (go->deflate_size < kDeflateMinWorks)
+                if (pcb.ccp_gotoptions.deflate_size < DEFLATE_MIN_WORKS)
                 {
-                    go->deflate_draft = false;
+                    pcb.ccp_gotoptions.deflate_draft = false;
                     break;
                 }
-                opt_buf[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+                opt_buf[2] = DEFLATE_MAKE_OPT(pcb.ccp_gotoptions.deflate_size);
                 res = ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0);
                 if (res > 0)
                 {
                     break;
                 }
-                else if (res < 0)
+                if (res < 0)
                 {
-                    go->deflate_draft = false;
+                    pcb.ccp_gotoptions.deflate_draft = false;
                     break;
                 }
-                go->deflate_size--;
+                pcb.ccp_gotoptions.deflate_size--;
             }
         }
-        if (!go->deflate_correct && !go->deflate_draft)
+        if (!pcb.ccp_gotoptions.deflate_correct && !pcb.ccp_gotoptions.deflate_draft)
         {
-            go->deflate = false;
+            pcb.ccp_gotoptions.deflate = false;
         }
     } /* FIXME: we don't need to test if predictor is available,
      * if PREDICTOR_SUPPORT is set, it is.
      */
-    if (go->predictor_1)
+    if (pcb.ccp_gotoptions.predictor_1)
     {
         opt_buf[0] = CI_PREDICTOR_1;
         opt_buf[1] = CILEN_PREDICTOR_1;
         if (ccp_test(pcb, opt_buf, CILEN_PREDICTOR_1, 0) <= 0)
         {
-            go->predictor_1 = false;
+            pcb.ccp_gotoptions.predictor_1 = false;
         }
     }
-    if (go->predictor_2)
+    if (pcb.ccp_gotoptions.predictor_2)
     {
         opt_buf[0] = CI_PREDICTOR_2;
         opt_buf[1] = CILEN_PREDICTOR_2;
         if (ccp_test(pcb, opt_buf, CILEN_PREDICTOR_2, 0) <= 0)
         {
-            go->predictor_2 = false;
+            pcb.ccp_gotoptions.predictor_2 = false;
         }
     }
+
+    return true;
 }
 
 /*
  * ccp_cilen - Return total length of our configuration info.
  */
-static size_t ccp_cilen(PppPcb* ppp_pcb)
+size_t ccp_cilen(PppPcb& ppp_pcb)
 {
-    auto go = &ppp_pcb->ccp_gotoptions;
+    // auto go = &ppp_pcb->ccp_gotoptions;
 
-    return 0
-        + (go->bsd_compress ? CILEN_BSD_COMPRESS : 0)
-        + (go->deflate && go->deflate_correct ? CILEN_DEFLATE : 0)
-        + (go->deflate && go->deflate_draft ? CILEN_DEFLATE : 0)
-        + (go->predictor_1 ? CILEN_PREDICTOR_1 : 0)
-        + (go->predictor_2 ? CILEN_PREDICTOR_2 : 0)
-        + (go->mppe ? CILEN_MPPE : 0);
+    if (ppp_pcb.ccp_gotoptions.bsd_compress) {
+        if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_correct) {
+            if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_draft) {
+                if (ppp_pcb.ccp_gotoptions.predictor_1) {
+                    if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                            return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1
+                                + CILEN_PREDICTOR_2 + CILEN_MPPE;
+                        }
+                        return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1
+                            + CILEN_PREDICTOR_2 + 0;
+                    }
+                    if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                        return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1
+                            + 0 + CILEN_MPPE;
+                    }
+                    return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1
+                        + 0 + 0;
+                }
+                if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                    if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                        return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + 0 +
+                            CILEN_PREDICTOR_2 + CILEN_MPPE;
+                    }
+                    return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + 0 +
+                        CILEN_PREDICTOR_2 + 0;
+                }
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + 0 + 0 +
+                        CILEN_MPPE;
+                }
+                return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + CILEN_DEFLATE + 0 + 0 + 0;
+            }
+            if (ppp_pcb.ccp_gotoptions.predictor_1) {
+                if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                    if (0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2
+                        + mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return CILEN_MPPE;
+                    }
+                    return 0;
+                }
+
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+                    return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + 0 +
+                        CILEN_MPPE;
+                return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + 0 + 0;
+            }
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + 0 + CILEN_PREDICTOR_2 +
+                        CILEN_MPPE;
+                }
+                return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + 0 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + 0 + 0 + CILEN_MPPE;
+            }
+            return 0 + CILEN_BSD_COMPRESS + CILEN_DEFLATE + 0 + 0 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_draft) {
+            if (ppp_pcb.ccp_gotoptions.predictor_1) {
+                if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                    if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                        return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 +
+                            CILEN_PREDICTOR_2 + CILEN_MPPE;
+                    }
+                    return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 +
+                        CILEN_PREDICTOR_2 + 0;
+                }
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + 0 +
+                        CILEN_MPPE;
+                }
+                return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + 0 + 0;
+            }
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 +
+                        CILEN_MPPE;
+                }
+                return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + 0 + 0 + CILEN_MPPE;
+            }
+            return 0 + CILEN_BSD_COMPRESS + 0 + CILEN_DEFLATE + 0 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.predictor_1) {
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + CILEN_BSD_COMPRESS + 0 + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 +
+                        CILEN_MPPE;
+                }
+                return 0 + CILEN_BSD_COMPRESS + 0 + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + CILEN_BSD_COMPRESS + 0 + 0 + CILEN_PREDICTOR_1 + 0 + CILEN_MPPE;
+            }
+            return 0 + CILEN_BSD_COMPRESS + 0 + 0 + CILEN_PREDICTOR_1 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.predictor_2) {
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+                return 0 + CILEN_BSD_COMPRESS + 0 + 0 + 0 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+            return 0 + CILEN_BSD_COMPRESS + 0 + 0 + 0 + CILEN_PREDICTOR_2 + 0;
+        }
+        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+            return 0 + CILEN_BSD_COMPRESS + 0 + 0 + 0 + 0 + CILEN_MPPE;
+        return 0 + CILEN_BSD_COMPRESS + 0 + 0 + 0 + 0 + 0;
+    }
+    if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_correct) {
+        if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_draft) {
+            if (ppp_pcb.ccp_gotoptions.predictor_1) {
+                if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                    if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                        return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1 +
+                            CILEN_PREDICTOR_2 + CILEN_MPPE;
+                    }
+                    return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1 +
+                        CILEN_PREDICTOR_2 + 0;
+                }
+                return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + CILEN_PREDICTOR_1 + 0 + (
+                    ppp_pcb.ccp_gotoptions.mppe ? CILEN_MPPE : 0);
+            }
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+                }
+                return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + 0 + 0 + CILEN_MPPE;
+            }
+            return 0 + 0 + CILEN_DEFLATE + CILEN_DEFLATE + 0 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.predictor_1) {
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 +
+                        CILEN_MPPE;
+                }
+                return 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + 0 + CILEN_MPPE;
+            }
+            return 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_1 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.predictor_2) {
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + CILEN_DEFLATE + 0 + 0 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+            }
+            return 0 + 0 + CILEN_DEFLATE + 0 + 0 + CILEN_PREDICTOR_2 + 0;
+        }
+        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+            return 0 + 0 + CILEN_DEFLATE + 0 + 0 + 0 + CILEN_MPPE;
+        return 0 + 0 + CILEN_DEFLATE + 0 + 0 + 0 + 0;
+    }
+    if (ppp_pcb.ccp_gotoptions.deflate && ppp_pcb.ccp_gotoptions.deflate_draft) {
+        if (ppp_pcb.ccp_gotoptions.predictor_1) {
+            if (ppp_pcb.ccp_gotoptions.predictor_2) {
+                if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) {
+                    return 0 + 0 + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 +
+                        CILEN_MPPE;
+                }
+                return 0 + 0 + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 + 0;
+            }
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + 0 + CILEN_MPPE;
+            }
+            return 0 + 0 + 0 + CILEN_DEFLATE + CILEN_PREDICTOR_1 + 0 + 0;
+        }
+        if (ppp_pcb.ccp_gotoptions.predictor_2) {
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+                return 0 + 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+            return 0 + 0 + 0 + CILEN_DEFLATE + 0 + CILEN_PREDICTOR_2 + 0;
+        }
+        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + 0 + CILEN_DEFLATE + 0 + 0 + CILEN_MPPE;
+        }
+        return 0 + 0 + 0 + CILEN_DEFLATE + 0 + 0 + 0;
+    }
+    if (ppp_pcb.ccp_gotoptions.predictor_1) {
+        if (ppp_pcb.ccp_gotoptions.predictor_2) {
+            if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+                return 0 + 0 + 0 + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+            return 0 + 0 + 0 + 0 + CILEN_PREDICTOR_1 + CILEN_PREDICTOR_2 + 0;
+        }
+        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+            return 0 + 0 + 0 + 0 + CILEN_PREDICTOR_1 + 0 + CILEN_MPPE;
+        return 0 + 0 + 0 + 0 + CILEN_PREDICTOR_1 + 0 + 0;
+    }
+    if (ppp_pcb.ccp_gotoptions.predictor_2) {
+        if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe))
+            return 0 + 0 + 0 + 0 + 0 + CILEN_PREDICTOR_2 + CILEN_MPPE;
+        return 0 + 0 + 0 + 0 + 0 + CILEN_PREDICTOR_2 + 0;
+    }
+    if (mppe_has_options(ppp_pcb.ccp_gotoptions.mppe)) { return 0 + 0 + 0 + 0 + 0 + 0 + CILEN_MPPE;
+    }
+    return 0 + 0 + 0 + 0 + 0 + 0 + 0;
 }
 
-/*
- * ccp_addci - put our requests in a packet.
+
+
+/**
+ * Put our requests in a packet.
  */
-static void ccp_addci(Fsm* f, uint8_t* p, int* lenp, PppPcb* pcb)
+bool
+ccp_addci(Fsm& f, std::vector<uint8_t>& pkt, PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
-    const auto go = &pcb->ccp_gotoptions;
-    const auto p0 = p;
+    // const auto go = &pcb->ccp_gotoptions;
+    // const auto p0 = pkt;
 
     /*
      * Add the compression types that we can receive, in decreasing
      * preference order.
      */
-    if (go->mppe)
+    if (mppe_has_options(pcb.ccp_gotoptions.mppe))
     {
-        p[0] = CI_MPPE;
-        p[1] = CILEN_MPPE;
-        mppe_opts_to_ci(go->mppe, &p[2]);
-        mppe_init(pcb, &pcb->mppe_decomp, go->mppe);
-        p += CILEN_MPPE;
+        pkt[0] = CI_MPPE;
+        pkt[1] = CILEN_MPPE;
+        mppe_opts_to_ci(pcb.ccp_gotoptions.mppe, &pkt[2]);
+        if (!mppe_init(pcb, pcb.mppe_decomp, pcb.ccp_gotoptions.mppe)) {
+            return false;
+        }
+        pkt += CILEN_MPPE;
     }
     if (go->deflate)
     {
         if (go->deflate_correct)
         {
-            p[0] = CI_DEFLATE;
-            p[1] = CILEN_DEFLATE;
-            p[2] = DEFLATE_MAKE_OPT(go->deflate_size);
-            p[3] = DEFLATE_CHK_SEQUENCE;
-            p += CILEN_DEFLATE;
+            pkt[0] = CI_DEFLATE;
+            pkt[1] = CILEN_DEFLATE;
+            pkt[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+            pkt[3] = DEFLATE_CHK_SEQUENCE;
+            pkt += CILEN_DEFLATE;
         }
         if (go->deflate_draft)
         {
-            p[0] = CI_DEFLATE_DRAFT;
-            p[1] = CILEN_DEFLATE;
-            p[2] = p[2 - CILEN_DEFLATE];
-            p[3] = DEFLATE_CHK_SEQUENCE;
-            p += CILEN_DEFLATE;
+            pkt[0] = CI_DEFLATE_DRAFT;
+            pkt[1] = CILEN_DEFLATE;
+            pkt[2] = pkt[2 - CILEN_DEFLATE];
+            pkt[3] = DEFLATE_CHK_SEQUENCE;
+            pkt += CILEN_DEFLATE;
         }
     }
     if (go->bsd_compress)
     {
-        p[0] = CI_BSD_COMPRESS;
-        p[1] = CILEN_BSD_COMPRESS;
-        p[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
-        p += CILEN_BSD_COMPRESS;
+        pkt[0] = CI_BSD_COMPRESS;
+        pkt[1] = CILEN_BSD_COMPRESS;
+        pkt[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
+        pkt += CILEN_BSD_COMPRESS;
     }
 
     /* XXX Should Predictor 2 be preferable to Predictor 1? */
     if (go->predictor_1)
     {
-        p[0] = CI_PREDICTOR_1;
-        p[1] = CILEN_PREDICTOR_1;
-        p += CILEN_PREDICTOR_1;
+        pkt[0] = CI_PREDICTOR_1;
+        pkt[1] = CILEN_PREDICTOR_1;
+        pkt += CILEN_PREDICTOR_1;
     }
     if (go->predictor_2)
     {
-        p[0] = CI_PREDICTOR_2;
-        p[1] = CILEN_PREDICTOR_2;
-        p += CILEN_PREDICTOR_2;
+        pkt[0] = CI_PREDICTOR_2;
+        pkt[1] = CILEN_PREDICTOR_2;
+        pkt += CILEN_PREDICTOR_2;
     }
 
 
-    go->method = (p > p0) ? p0[0] : 0;
+    go->method = (pkt > p0) ? p0[0] : 0;
 
-    *lenp = p - p0;
+    *lenp = pkt - p0;
 }
 
 /*
@@ -628,7 +839,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
         MPPE_CI_TO_OPTS(&p[2], try_.mppe);
         if ((try_.mppe & MPPE_OPT_STATEFUL) && pcb->settings.refuse_mppe_stateful)
         {
-            ppp_error("Refusing MPPE stateful mode offered by peer");
+            spdlog::error("Refusing MPPE stateful mode offered by peer");
             try_.mppe = MPPE_OPT_NONE;
         }
         else if (((go->mppe | MPPE_OPT_STATEFUL) & try_.mppe) != try_.mppe)
@@ -639,7 +850,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
 
         if (!try_.mppe)
         {
-            ppp_error("MPPE required but peer negotiation failed");
+            spdlog::error("MPPE required but peer negotiation failed");
             lcp_close(pcb, "MPPE required but peer negotiation failed");
         }
     }
@@ -654,7 +865,7 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
          * Stop asking for Deflate if we don't understand his suggestion.
          */
         if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL
-            || DEFLATE_SIZE(p[2]) < kDeflateMinWorks
+            || DEFLATE_SIZE(p[2]) < DEFLATE_MIN_WORKS
             || p[3] != DEFLATE_CHK_SEQUENCE)
             try_.deflate = false;
         else if (DEFLATE_SIZE(p[2]) < go->deflate_size)
@@ -678,10 +889,10 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
          * Peer wants us to use a different number of bits
          * or a different version.
          */
-        if (BSD_VERSION(p[2]) != BSD_CURRENT_VERSION)
+        if (BSD_VERSION(p[2]) != BSD_CURRENT_VERSION) {
             try_.bsd_compress = false;
-        else if (BSD_NBITS(p[2]) < go->bsd_bits)
-            try_.bsd_bits = BSD_NBITS(p[2]);
+        }
+        else if (BSD_NBITS(p[2]) < go->bsd_bits) { try_.bsd_bits = BSD_NBITS(p[2]); }
         p += CILEN_BSD_COMPRESS;
         len -= CILEN_BSD_COMPRESS;
     }
@@ -715,7 +926,7 @@ static int ccp_rejci(Fsm* f, const uint8_t* p, int len, PppPcb* pcb)
     }
     if (go->mppe && len >= CILEN_MPPE && p[0] == CI_MPPE && p[1] == CILEN_MPPE)
     {
-        ppp_error("MPPE required but peer refused");
+        spdlog::error("MPPE required but peer refused");
         lcp_close(pcb, "MPPE required but peer refused");
         p += CILEN_MPPE;
         len -= CILEN_MPPE;
@@ -845,7 +1056,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                      */
                     if (pcb->settings.refuse_mppe_stateful)
                     {
-                        ppp_error("Refusing MPPE stateful mode offered by peer");
+                        spdlog::error("Refusing MPPE stateful mode offered by peer");
                         newret = CONFREJ;
                         break;
                     }
@@ -923,7 +1134,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                 ho->deflate = true;
                 ho->deflate_size = nb = DEFLATE_SIZE(p[2]);
                 if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL || p[3] !=
-                    DEFLATE_CHK_SEQUENCE || nb > ao->deflate_size || nb < kDeflateMinWorks
+                    DEFLATE_CHK_SEQUENCE || nb > ao->deflate_size || nb < DEFLATE_MIN_WORKS
                 )
                 {
                     newret = CONFNAK;
@@ -948,9 +1159,8 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                     for (;;)
                     {
                         res = ccp_test(pcb, p, CILEN_DEFLATE, 1);
-                        if (res > 0)
-                            break; /* it's OK now */
-                        if (res < 0 || nb == kDeflateMinWorks || dont_nak)
+                        if (res > 0) { break; /* it's OK now */ }
+                        if (res < 0 || nb == DEFLATE_MIN_WORKS || dont_nak)
                         {
                             newret = CONFREJ;
                             p[2] = DEFLATE_MAKE_OPT(ho->deflate_size);
@@ -1038,8 +1248,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
                 newret = CONFREJ;
             }
         }
-        if (newret == CONFNAK && dont_nak)
-            newret = CONFREJ;
+        if (newret == CONFNAK && dont_nak) { newret = CONFREJ; }
         if (!(newret == CONFACK || (newret == CONFNAK && ret == CONFREJ)))
         {
             /* we're returning this option */
@@ -1070,7 +1279,7 @@ static int ccp_reqci(Fsm* f, uint8_t* p, size_t* lenp, const int dont_nak, PppPc
     }
     if (ret == CONFREJ && ao->mppe && rej_for_ci_mppe)
     {
-        ppp_error("MPPE required but peer negotiation failed");
+        spdlog::error("MPPE required but peer negotiation failed");
         lcp_close(pcb, "MPPE required but peer negotiation failed");
     }
     return ret;
@@ -1171,23 +1380,23 @@ static void ccp_up(Fsm* f, PppPcb* pcb, Protent** protocols)
         {
             if (go->method == ho->method)
             {
-                ppp_notice("%s compression enabled", method_name(go, ho));
+                spdlog::info("%s compression enabled", method_name(go, ho));
             }
             else
             {
                 ppp_strlcpy(method1, method_name(go, nullptr), sizeof(method1));
-                ppp_notice("%s / %s compression enabled",
+                spdlog::info("%s / %s compression enabled",
                            method1, method_name(ho, nullptr));
             }
         }
         else
         {
-            ppp_notice("%s receive compression enabled", method_name(go, nullptr));
+            spdlog::info("%s receive compression enabled", method_name(go, nullptr));
         }
     }
     else if (ccp_anycompress(ho))
     {
-        ppp_notice("%s transmit compression enabled", method_name(ho, nullptr));
+        spdlog::info("%s transmit compression enabled", method_name(ho, nullptr));
     }
     if (go->mppe)
     {
@@ -1215,7 +1424,7 @@ static void ccp_down(Fsm* f, Fsm* lcp_fsm, PppPcb* pcb)
         if (lcp_fsm->state == PPP_FSM_OPENED)
         {
             /* If LCP is not already going down, make sure it does. */
-            ppp_error("MPPE disabled");
+            spdlog::error("MPPE disabled");
             lcp_close(pcb, "MPPE disabled");
         }
     }
@@ -1242,14 +1451,14 @@ static void ccp_datainput(PppPcb* pcb, uint8_t* pkt, int len)
 // 	    /*
 // 	     * Disable compression by taking CCP down.
 // 	     */
-// 	    ppp_error("Lost compression sync: disabling compression");
+// 	    spdlog::error("Lost compression sync: disabling compression");
 // 	    ccp_close(pcb, "Lost compression sync");
 // #if MPPE_SUPPORT
 // 	    /*
 // 	     * If we were doing MPPE, we must also take the link down.
 // 	     */
 // 	    if (go->mppe) {
-// 		ppp_error("Too many MPPE errors, closing LCP");
+// 		spdlog::error("Too many MPPE errors, closing LCP");
 // 		lcp_close(pcb, "Too many MPPE errors");
 // 	    }
 // #endif /* MPPE_SUPPORT */
@@ -1304,23 +1513,20 @@ ccp_reset_request(uint8_t& ppp_pcb_ccp_local_state, Fsm& f, PppPcb& pcb)
 }
 
 
-/*
+/**
  * Timeout waiting for reset-ack.
  */
-static void ccp_rack_timeout(void* arg)
+bool
+ccp_rack_timeout(Fsm& f, PppPcb& pcb)
 {
-    auto args = static_cast<CcpRackTimeoutArgs*>(arg);
-
-    if (args->f->state == PPP_FSM_OPENED && (args->pcb->ccp_localstate & REPEAT_RESET_REQ))
-    {
-        fsm_send_data(, args->f, CCP_RESETREQ, args->f->reqid, nullptr);
-        Timeout(ccp_rack_timeout, args, RESET_ACK_TIMEOUT);
-        args->pcb->ccp_localstate &= ~REPEAT_RESET_REQ;
+    if (f.state == PPP_FSM_OPENED && (pcb.ccp_localstate & REPEAT_RESET_REQ)) {
+        std::vector<uint8_t> empty;
+        fsm_send_data2(pcb, f, CCP_RESETREQ, f.reqid, empty);
+        // Timeout(ccp_rack_timeout, args, RESET_ACK_TIMEOUT);
+        // todo: schedule timeout
+        pcb.ccp_localstate &= ~REPEAT_RESET_REQ;
     }
-    else
-    {
-        args->pcb->ccp_localstate &= ~RESET_ACK_PENDING;
-    }
+    else { pcb.ccp_localstate &= ~RESET_ACK_PENDING; }
 }
 
 //

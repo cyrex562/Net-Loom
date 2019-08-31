@@ -23,7 +23,7 @@ enum CcpCode
  */
 constexpr auto CCP_MAX_OPTION_LENGTH = 32;
 
-constexpr auto kDeflateMinWorks = 9;
+constexpr auto DEFLATE_MIN_WORKS = 9;
 
 /*
  * Local state (mainly for handling reset-reqs and reset-acks).
@@ -36,8 +36,8 @@ constexpr auto RESET_ACK_TIMEOUT = 1	/* second */;
  * Parts of a CCP packet.
  */
 
-#define CCP_CODE(dp)		((dp)[0])
-#define CCP_ID(dp)		((dp)[1])
+// #define CCP_CODE(dp)		((dp)[0])
+// #define CCP_ID(dp)		((dp)[1])
 #define CCP_LENGTH(dp)		(((dp)[2] << 8) + (dp)[3])
 #define CCP_HDRLEN		4
 
@@ -67,44 +67,45 @@ constexpr auto RESET_ACK_TIMEOUT = 1	/* second */;
  * Definitions for Deflate.
  */
 
-#define CI_DEFLATE		26	/* config option for Deflate */
-#define CI_DEFLATE_DRAFT	24	/* value used in original draft RFC */
-#define CILEN_DEFLATE		4	/* length of its config option */
-
-#define DEFLATE_MIN_SIZE	9
+constexpr auto CI_DEFLATE = 26	/* config option for Deflate */;
+constexpr auto CI_DEFLATE_DRAFT = 24	/* value used in original draft RFC */;
+constexpr auto CILEN_DEFLATE = 4	/* length of its config option */;
+constexpr auto DEFLATE_MIN_SIZE = 9;
 constexpr auto DEFLATE_MAX_SIZE = 15;
-#define DEFLATE_METHOD_VAL	8
-#define DEFLATE_SIZE(x)		(((x) >> 4) + 8)
-#define DEFLATE_METHOD(x)	((x) & 0x0F)
-#define DEFLATE_MAKE_OPT(w)	((((w) - 8) << 4) + DEFLATE_METHOD_VAL)
-#define DEFLATE_CHK_SEQUENCE	0
+constexpr auto DEFLATE_METHOD_VAL = 8;
+
+
+inline uint8_t
+DEFLATE_SIZE(uint8_t x) { return (((x) >> 4) + 8); }
+
+
+inline uint8_t
+DEFLATE_METHOD(uint8_t x) { return ((x) & 0x0F); }
+
+
+inline uint32_t
+DEFLATE_MAKE_OPT(uint32_t w) { return ((((w) - 8) << 4) + DEFLATE_METHOD_VAL); }
+
+constexpr auto DEFLATE_CHK_SEQUENCE = 0;
 /*
  * Definitions for MPPE.
  */
 
-#define CI_MPPE                18      /* config option for MPPE */
-#define CILEN_MPPE              6      /* length of config option */
+constexpr auto CI_MPPE = 18      /* config option for MPPE */;
+constexpr auto CILEN_MPPE = 6      /* length of config option */;
 
-    /*
+/*
  * Definitions for other, as yet unsupported, compression methods.
  */
-
-#define CI_PREDICTOR_1		1	/* config option for Predictor-1 */
-#define CILEN_PREDICTOR_1	2	/* length of its config option */
-#define CI_PREDICTOR_2		2	/* config option for Predictor-2 */
-#define CILEN_PREDICTOR_2	2	/* length of its config option */
-
-
-
-
-extern const struct Protent kCcpProtent;
-
-
+constexpr auto CI_PREDICTOR_1 = 1	/* config option for Predictor-1 */;
+constexpr auto CILEN_PREDICTOR_1 = 2	/* length of its config option */;
+constexpr auto CI_PREDICTOR_2 = 2	/* config option for Predictor-2 */;
+constexpr auto CILEN_PREDICTOR_2 = 2	/* length of its config option */;
 
 struct CcpRackTimeoutArgs
 {
-    Fsm* f;
-    PppPcb* pcb;
+    Fsm f;
+    PppPcb pcb;
 };
 
 
@@ -130,14 +131,20 @@ ccp_lowerdown(PppPcb& pcb);
 
 bool
 ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
-void ccp_protrej(PppPcb* pcb);
+
+
+bool
+ccp_proto_rejected(PppPcb& pcb);
 void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
 
 
 bool
-ccp_resetci(Fsm&, PppPcb& pcb);
-size_t ccp_cilen(PppPcb* ppp_pcb);
-void ccp_addci(Fsm*, uint8_t*, int*, PppPcb* pcb);
+ccp_resetci(PppPcb& pcb);
+size_t ccp_cilen(PppPcb& ppp_pcb);
+
+
+bool
+ccp_addci(Fsm&, std::vector<uint8_t>& pkt, PppPcb& pcb);
 int ccp_ackci(Fsm*, uint8_t*, int, PppPcb* pcb);
 int ccp_nakci(Fsm*, const uint8_t*, int, int, PppPcb* pcb);
 int ccp_rejci(Fsm*, const uint8_t*, int, PppPcb* pcb);
@@ -148,7 +155,10 @@ void ccp_down(Fsm*, Fsm* lcp_fsm, PppPcb* pcb);
 
 bool
 ccp_extcode(PppPcb& pcb, Fsm&, int, int, std::vector<uint8_t>& data);
-void ccp_rack_timeout(void*);
+
+
+bool
+ccp_rack_timeout(Fsm& f, PppPcb& pcb);
 const char* method_name(struct CcpOptions*, struct CcpOptions*);
 
  /** Issue a reset-request. */
@@ -156,7 +166,7 @@ bool
 ccp_reset_request(uint8_t& ppp_pcb_ccp_local_state, Fsm& f, PppPcb& pcb);
 
 
-inline bool ccp_test(PppPcb* pcb, uint8_t* opt_buf, uint32_t option, uint32_t idx)
+inline bool ccp_test(PppPcb& pcb, std::vector<uint8_t>& opt_buf, uint32_t option, uint32_t idx)
 {
     // TODO: figure out what test should do and implement.
     return false;

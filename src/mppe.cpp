@@ -119,7 +119,7 @@ mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key)
  * Initialize (de)compressor state.
  */
 bool
-mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
+mppe_init(PppPcb& pcb, PppMppeState& state, MppeOpts options)
 {
     std::string debugstr = "mppe_comp_init";
     if (cmp_ppp_mppe_state(pcb.mppe_decomp, state))
@@ -129,11 +129,11 @@ mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
 
     /* Save keys. */
     std::copy(state.master_key.begin(), state.master_key.end(), state.session_key);
-    if (options & MPPE_OPT_128)
+    if (options.opt_128)
     {
         // state.keylen = 16;
     }
-    else if (options & MPPE_OPT_40)
+    else if (options.opt_40)
     {
         // state.keylen = 8;
     }
@@ -143,7 +143,7 @@ mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options)
         lcp_close(pcb, msg);
         return false;
     }
-    if (options & MPPE_OPT_STATEFUL)
+    if (options.opt_stateful)
     {
         state.stateful = true;
     }

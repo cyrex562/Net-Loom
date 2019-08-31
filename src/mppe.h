@@ -53,7 +53,7 @@ cmp_ppp_mppe_state(PppMppeState& state1, PppMppeState& state2)
 
 
 /* Build a CI from mppe opts (see RFC 3078) */
-inline void mppe_opts_to_ci(const MppeOptions opts, uint8_t* ci)
+inline void mppe_opts_to_ci(const MppeOpts opts, uint8_t* ci)
 {
     auto ptr = ci; /* uint8_t[4] */ /* H bit */
     if (opts & MPPE_OPT_STATEFUL)
@@ -126,7 +126,7 @@ bool
 mppe_set_key(PppMppeState& state, std::vector<uint8_t>& key);
 
 bool
-mppe_init(PppPcb& pcb, PppMppeState& state, uint8_t options);
+mppe_init(PppPcb& pcb, PppMppeState& state, MppeOpts options);
 
 
 bool
