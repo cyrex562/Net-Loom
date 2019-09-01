@@ -32,16 +32,16 @@
 #include "chap_md5.h"
 #include "magic.h"
 #include "ppp.h"
+#include "mbedtls/md5.h"
 
-#include "pppcrypt.h"
-
-
-void
-chap_md5_generate_challenge(PppPcb* pcb, unsigned char* cp)
+bool
+chap_md5_generate_challenge(PppPcb& pcb, std::vector<uint8_t>& cp)
 {
-    const auto clen = kMd5MinChallenge + magic_pow(kMd5MinMaxPowerOfTwoChallenge);
-    *cp++ = clen;
-    magic_random_bytes(cp,,);
+    const auto clen = MIN_MD5_CHALLENGEN_LEN + magic_pow(MIN_MAX_POW_2_MD5_CHALLENGE_LEN);
+    // *cp++ = clen;
+    cp[0] = clen;
+    magic_random_bytes(cp,clen-1,1);
+    return true;
 }
 
 

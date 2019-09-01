@@ -171,11 +171,11 @@ start_networks(PppPcb& pcb, const bool multilink)
     bool start_ccp = true;
     bool start_ecp = true; // TODO: check bool result
     if (!ccp_open(pcb)) { return false; }
-    int ecp_open_unit = 0;
+    const int ecp_open_unit = 0;
     if (!ecp_open(pcb, ecp_open_unit)) { return false; } /*
      * Bring up other network protocols iff encryption is not required.
      */
-    if (!pcb.ccp_gotoptions.mppe) { if (!continue_networks(pcb)) { return false; } }
+    if (!mppe_has_options(pcb.ccp_gotoptions.mppe)) { if (!continue_networks(pcb)) { return false; } }
     return true;
 }
 

@@ -233,7 +233,8 @@ dhcp6_recv(uint8_t* arg,
            uint16_t port,
            NetworkInterface* netif);
 
-static LwipStatus dhcp6_inc_pcb_refcount();
+static bool
+dhcp6_inc_pcb_refcount(UdpPcb& dhcp6_pcb, uint8_t& dhcp6_pcb_refcount);
 
 static void
 dhcp6_dec_pcb_refcount();
