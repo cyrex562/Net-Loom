@@ -87,7 +87,6 @@ dhcp6_inc_pcb_refcount(UdpPcb& dhcp6_pcb, uint8_t& dhcp6_pcb_refcount)
 
     if (dhcp6_pcb_refcount == 0)
     {
-        lwip_assert("dhcp6_inc_pcb_refcount(): memory leak", dhcp6_pcb == nullptr);
         /* allocate UDP PCB */
         dhcp6_pcb = udp_new_ip_type(IPADDR_TYPE_V6);
         if (dhcp6_pcb == nullptr)

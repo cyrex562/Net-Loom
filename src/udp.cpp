@@ -1115,7 +1115,10 @@ udp_new_ip_type(IpAddrType type)
         set_ip_addr_type(pcb->remote_ip, type);
     }
     return pcb;
-} /** This function is called from netif.c when address is changed
+} 
+
+
+/** This function is called from netif.c when address is changed
  *
  * @param old_addr IP address of the netif before change
  * @param new_addr IP address of the netif after change
