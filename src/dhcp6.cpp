@@ -81,11 +81,12 @@
 
 
 /** Ensure DHCP PCB is allocated and bound */
-static LwipStatus dhcp6_inc_pcb_refcount()
+static bool
+dhcp6_inc_pcb_refcount(UdpPcb& dhcp6_pcb, uint8_t& dhcp6_pcb_refcount)
 {
+
     if (dhcp6_pcb_refcount == 0)
     {
-        lwip_assert("dhcp6_inc_pcb_refcount(): memory leak", dhcp6_pcb == nullptr);
         /* allocate UDP PCB */
         dhcp6_pcb = udp_new_ip_type(IPADDR_TYPE_V6);
         if (dhcp6_pcb == nullptr)
@@ -177,7 +178,7 @@ static struct Dhcp6Context* dhcp6_get_struct(NetworkInterface* netif, const char
     }
     if (!dhcp6->pcb_allocated)
     {
-        if (dhcp6_inc_pcb_refcount() != STATUS_SUCCESS)
+        if (dhcp6_inc_pcb_refcount(,) != STATUS_SUCCESS)
         {
             /* ensure DHCP6 PCB is allocated */
             delete dhcp6;
@@ -745,7 +746,7 @@ dhcp6_tmr(void)
 
 void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddrInfo* ntp_server_addrs)
 {
-    
+
 }
 
 

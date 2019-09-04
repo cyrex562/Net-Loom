@@ -1,7 +1,7 @@
 #pragma once
 // #include "mppe.h"
 #include "fsm_def.h"
-struct PppPcb;
+#include "ppp.h"
 
 /*
  * CCP codes.
