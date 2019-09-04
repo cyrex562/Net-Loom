@@ -50,7 +50,16 @@ cmp_ppp_mppe_state(PppMppeState& state1, PppMppeState& state2)
     return true;
 }
 
-
+inline void mppe_clear_options(MppeOpts& opts)
+{
+    opts.opt_128 = false;
+    opts.opt_40 = false;
+    opts.opt_56 = false;
+    opts.opt_d = false;
+    opts.opt_mppc = false;
+    opts.stateful = false;
+    opts.unknown = false;
+}
 
 /* Build a CI from mppe opts (see RFC 3078) */
 inline void mppe_opts_to_ci(const MppeOpts opts, uint8_t* ci)
@@ -78,36 +87,26 @@ inline void mppe_opts_to_ci(const MppeOpts opts, uint8_t* ci)
 }
 
 /* The reverse of the above */
-inline uint8_t MPPE_CI_TO_OPTS(const uint8_t* ci, uint8_t opts)
+inline MppeOpts
+MPPE_CI_TO_OPTS(const uint8_t* ci)
 {
     const uint8_t* ptr = ci; /* uint8_t[4] */
-    opts = 0; /* H bit */
+    MppeOpts opts{}; /* H bit */
     if (!(ptr[0] & MPPE_H_BIT))
-        opts |= MPPE_OPT_STATEFUL; /* S,L bits */
-    if (ptr[3] & MPPE_S_BIT)
-    {
-        opts |= MPPE_OPT_128;
-    }
+        opts.stateful = true;; /* S,L bits */
+    if (ptr[3] & MPPE_S_BIT) { opts.opt_128 = true; }
     if (ptr[3] & MPPE_L_BIT)
-        opts |= MPPE_OPT_40; /* M,D,C bits */
-    if (ptr[3] & MPPE_M_BIT)
-    {
-        opts |= MPPE_OPT_56;
-    }
+        opts.opt_40 = true; /* M,D,C bits */
+    if (ptr[3] & MPPE_M_BIT) { opts.opt_56 = true; }
     if (ptr[3] & MPPE_D_BIT)
-        opts |= MPPE_OPT_D;
+        opts.opt_d = true;
     if (ptr[3] & MPPE_C_BIT)
-        opts |= MPPE_OPT_MPPC; /* Other bits */
+        opts.opt_mppc = true; /* Other bits */
     if (ptr[0] & ~MPPE_H_BIT)
-        opts |= MPPE_OPT_UNKNOWN;
-    if (ptr[1] || ptr[2])
-    {
-        opts |= MPPE_OPT_UNKNOWN;
-    }
-    if (ptr[3] & ~MPPE_ALL_BITS)
-    {
-        opts |= MPPE_OPT_UNKNOWN;
-    }
+        opts.unknown = true;
+    if (ptr[1] || ptr[2]) { opts.unknown = true; }
+    if (ptr[3] & ~MPPE_ALL_BITS) { opts.unknown = true; }
+    return opts;
 }
 
 

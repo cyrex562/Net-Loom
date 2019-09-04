@@ -29,19 +29,19 @@ struct MppeOpts
 {
     bool opt_40;
     bool opt_128;
-    bool opt_stateful;
+    bool stateful;
     bool opt_56;
     bool opt_mppc;
     bool opt_d;
-    bool opt_unk;
+    bool unknown;
 };
 
 
 inline bool
 mppe_has_options(MppeOpts opts)
 {
-    if (opts.opt_40 | opts.opt_128 | opts.opt_stateful | opts.opt_56 | opts.opt_mppc |
-        opts.opt_d | opts.opt_unk) { return true; }
+    if (opts.opt_40 | opts.opt_128 | opts.stateful | opts.opt_56 | opts.opt_mppc |
+        opts.opt_d | opts.unknown) { return true; }
     return false;
 }
 

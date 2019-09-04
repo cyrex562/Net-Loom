@@ -817,83 +817,88 @@ static int ccp_ackci(Fsm* f, uint8_t* p, int len, PppPcb* pcb)
 }
 
 /*
- * ccp_nakci - process received configure-nak.
+ * Process received configure-nak.
  * Returns 1 iff the nak was OK.
  */
-static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, PppPcb* pcb)
+bool
+ccp_nak_cfg_received(Fsm& f,
+                     std::vector<uint8_t>& pkt_data,
+                     bool treat_as_reject,
+                     PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
-    auto go = &pcb->ccp_gotoptions;
+    // auto go = &pcb->ccp_gotoptions;
     CcpOptions no{}; /* options we've seen already */
     memset(&no, 0, sizeof(no));
-    auto try_ = *go;
+    // auto try_ = *go;
 
-    if (go->mppe && len >= CILEN_MPPE
-        && p[0] == CI_MPPE && p[1] == CILEN_MPPE)
+    if (mppe_has_options(pcb.ccp_gotoptions.mppe) && pkt_data.size() >= CILEN_MPPE
+        && pkt_data[0] == CI_MPPE && pkt_data[1] == CILEN_MPPE)
     {
-        no.mppe = MPPE_OPT_40;
+        no.mppe.opt_40 = true;
         /*
          * Peer wants us to use a different strength or other setting.
          * Fail if we aren't willing to use his suggestion.
          */
-        MPPE_CI_TO_OPTS(&p[2], try_.mppe);
-        if ((try_.mppe & MPPE_OPT_STATEFUL) && pcb->settings.refuse_mppe_stateful)
+        pcb.ccp_gotoptions.mppe = MPPE_CI_TO_OPTS(pkt_data.data() + 2);
+        if ((pcb.ccp_gotoptions.mppe.stateful) && pcb.settings.refuse_mppe_stateful)
         {
             spdlog::error("Refusing MPPE stateful mode offered by peer");
-            try_.mppe = MPPE_OPT_NONE;
+            mppe_clear_options(pcb.ccp_gotoptions.mppe);
         }
-        else if (((go->mppe | MPPE_OPT_STATEFUL) & try_.mppe) != try_.mppe)
-        {
-            /* Peer must have set options we didn't request (suggest) */
-            try_.mppe = MPPE_OPT_NONE;
-        }
+        // else if (((pcb.ccp_gotoptions.mppe.stateful) & pcb.ccp_gotoptions.mppe) != pcb.ccp_gotoptions.mppe)
+        // {
+        //     /* Peer must have set options we didn't request (suggest) */
+        //     mppe_clear_options(pcb.ccp_gotoptions.mppe);
+        // }
 
-        if (!try_.mppe)
+        if (!mppe_has_options(pcb.ccp_gotoptions.mppe))
         {
-            spdlog::error("MPPE required but peer negotiation failed");
-            lcp_close(pcb, "MPPE required but peer negotiation failed");
+            std::string msg = "MPPE required but peer negotiation failed";
+            spdlog::error(msg);
+            lcp_close(pcb, msg);
         }
     }
 
-    if (go->deflate && len >= CILEN_DEFLATE
-        && p[0] == (go->deflate_correct ? CI_DEFLATE : CI_DEFLATE_DRAFT)
-        && p[1] == CILEN_DEFLATE)
+    if (pcb.ccp_gotoptions.deflate && pkt_data.size() >= CILEN_DEFLATE
+        && pkt_data[0] == (pcb.ccp_gotoptions.deflate_correct ? CI_DEFLATE : CI_DEFLATE_DRAFT)
+        && pkt_data[1] == CILEN_DEFLATE)
     {
         no.deflate = true;
         /*
          * Peer wants us to use a different code size or something.
          * Stop asking for Deflate if we don't understand his suggestion.
          */
-        if (DEFLATE_METHOD(p[2]) != DEFLATE_METHOD_VAL
-            || DEFLATE_SIZE(p[2]) < DEFLATE_MIN_WORKS
-            || p[3] != DEFLATE_CHK_SEQUENCE)
-            try_.deflate = false;
-        else if (DEFLATE_SIZE(p[2]) < go->deflate_size)
-            try_.deflate_size = DEFLATE_SIZE(p[2]);
-        p += CILEN_DEFLATE;
+        if (DEFLATE_METHOD(pkt_data[2]) != DEFLATE_METHOD_VAL
+            || DEFLATE_SIZE(pkt_data[2]) < DEFLATE_MIN_WORKS
+            || pkt_data[3] != DEFLATE_CHK_SEQUENCE)
+            pcb.ccp_gotoptions.deflate = false;
+        else if (DEFLATE_SIZE(pkt_data[2]) < pcb.ccp_gotoptions.deflate_size)
+            pcb.ccp_gotoptions.deflate_size = DEFLATE_SIZE(pkt_data[2]);
+        pkt_data += CILEN_DEFLATE;
         len -= CILEN_DEFLATE;
-        if (go->deflate_correct && go->deflate_draft
-            && len >= CILEN_DEFLATE && p[0] == CI_DEFLATE_DRAFT
-            && p[1] == CILEN_DEFLATE)
+        if (pcb.ccp_gotoptions.deflate_correct && pcb.ccp_gotoptions.deflate_draft
+            && len >= CILEN_DEFLATE && pkt_data[0] == CI_DEFLATE_DRAFT
+            && pkt_data[1] == CILEN_DEFLATE)
         {
-            p += CILEN_DEFLATE;
+            pkt_data += CILEN_DEFLATE;
             len -= CILEN_DEFLATE;
         }
     }
 
-    if (go->bsd_compress && len >= CILEN_BSD_COMPRESS
-        && p[0] == CI_BSD_COMPRESS && p[1] == CILEN_BSD_COMPRESS)
+    if (pcb.ccp_gotoptions.bsd_compress && len >= CILEN_BSD_COMPRESS
+        && pkt_data[0] == CI_BSD_COMPRESS && pkt_data[1] == CILEN_BSD_COMPRESS)
     {
         no.bsd_compress = true;
         /*
          * Peer wants us to use a different number of bits
          * or a different version.
          */
-        if (BSD_VERSION(p[2]) != BSD_CURRENT_VERSION) {
-            try_.bsd_compress = false;
+        if (BSD_VERSION(pkt_data[2]) != BSD_CURRENT_VERSION) {
+            pcb.ccp_gotoptions.bsd_compress = false;
         }
-        else if (BSD_NBITS(p[2]) < go->bsd_bits) { try_.bsd_bits = BSD_NBITS(p[2]); }
-        p += CILEN_BSD_COMPRESS;
+        else if (BSD_NBITS(pkt_data[2]) < pcb.ccp_gotoptions.bsd_bits) { pcb.ccp_gotoptions.bsd_bits = BSD_NBITS(pkt_data[2]); }
+        pkt_data += CILEN_BSD_COMPRESS;
         len -= CILEN_BSD_COMPRESS;
     }
 
@@ -904,9 +909,9 @@ static int ccp_nakci(Fsm* f, const uint8_t* p, int len, int treat_as_reject, Ppp
      * There may be remaining options but we ignore them.
      */
 
-    if (f->state != PPP_FSM_OPENED)
-        *go = try_;
-    return 1;
+    // if (f.state != PPP_FSM_OPENED)
+    //     *go = try_;
+    return true;
 }
 
 //

@@ -146,7 +146,7 @@ size_t ccp_cilen(PppPcb& ppp_pcb);
 bool
 ccp_addci(Fsm&, std::vector<uint8_t>& pkt, PppPcb& pcb);
 int ccp_ackci(Fsm*, uint8_t*, int, PppPcb* pcb);
-int ccp_nakci(Fsm*, const uint8_t*, int, int, PppPcb* pcb);
+int ccp_nak_config(Fsm*, const uint8_t*, int, int, PppPcb* pcb);
 int ccp_rejci(Fsm*, const uint8_t*, int, PppPcb* pcb);
 int ccp_reqci(Fsm*, uint8_t*, size_t*, int, PppPcb* pcb);
 void ccp_up(Fsm*, PppPcb* pcb, Protent** protocols);

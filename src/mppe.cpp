@@ -143,7 +143,7 @@ mppe_init(PppPcb& pcb, PppMppeState& state, MppeOpts options)
         lcp_close(pcb, msg);
         return false;
     }
-    if (options.opt_stateful)
+    if (options.stateful)
     {
         state.stateful = true;
     }
