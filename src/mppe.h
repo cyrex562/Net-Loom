@@ -61,29 +61,24 @@ inline void mppe_clear_options(MppeOpts& opts)
     opts.unknown = false;
 }
 
-/* Build a CI from mppe opts (see RFC 3078) */
-inline void mppe_opts_to_ci(const MppeOpts opts, uint8_t* ci)
+/**
+ * Build a CI from mppe opts (see RFC 3078)
+ *
+ */
+inline void
+mppe_opts_to_ci(const MppeOpts opts, uint8_t* ci)
 {
-    auto ptr = ci; /* uint8_t[4] */ /* H bit */
-    if (opts & MPPE_OPT_STATEFUL)
-    {
-        *ptr++ = 0x0;
-    }
-    else
-    {
-        *ptr++ = MPPE_H_BIT;
-    }
-    *ptr++ = 0;
-    *ptr++ = 0; /* S,L bits */
-    *ptr = 0;
-    if (opts & MPPE_OPT_128)
-    {
-        *ptr |= MPPE_S_BIT;
-    }
-    if (opts & MPPE_OPT_40)
-    {
-        *ptr |= MPPE_L_BIT; /* M,D,C bits not supported */
-    }
+    //auto ptr = ci; /* uint8_t[4] */ /* H bit */
+    size_t ptr = 0;
+    if (opts.stateful) { ci[ptr++] = 0x0; }
+    else { ci[ptr++] = MPPE_H_BIT; }
+    ci[ptr++] = 0;
+    ci[ptr++] = 0;
+    ci[ptr++] = 0;
+    // S,L bits
+    if (opts.opt_128) { ci[ptr] |= MPPE_S_BIT; }
+    if (opts.opt_40) { ci[ptr] |= MPPE_L_BIT; }
+    // M,D,C bits not supported
 }
 
 /* The reverse of the above */
