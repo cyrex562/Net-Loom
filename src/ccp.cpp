@@ -952,84 +952,87 @@ ccp_rejci(Fsm& f, std::vector<uint8_t>& pkt, PppPcb& pcb)
  * Returns CONFACK, CONFNAK or CONFREJ and the packet modified
  * appropriately.
  */
-bool
-ccp_reqci(Fsm& f, std::vector<uint8_t>& pkt, bool dont_nak, PppPcb& pcb)
+std::tuple<bool, int>
+ccp_proc_config_req(Fsm& f, std::vector<uint8_t>& pkt, bool dont_nak, PppPcb& pcb)
 {
     // PppPcb* pcb = f->pcb;
     // auto ho = &pcb->ccp_hisoptions;
     // auto ao = &pcb->ccp_allowoptions;
     int res;
     int nb;
-    uint8_t *p0;
+    // uint8_t *p0;
     int clen;
     int type;
-    uint8_t rej_for_ci_mppe = 1; /* Are we rejecting based on a bad/missing */
+    bool rej_for_ci_mppe = true; /* Are we rejecting based on a bad/missing */
     /* CI_MPPE, or due to other options?       */
     auto ret = CONFACK;
-    auto retp = p0 = pkt;
+    // auto retp = p0 = pkt;
+    size_t ptr = 0;
     // int len = *lenp;
     // todo: refactor to clear fields of CcpOptions
-    memset(ho, 0, sizeof(CcpOptions));
-    ho->method = (len > 0) ? pkt[0] : 0;
-    while (len > 0)
+    memset(&pcb.ccp_hisoptions, 0, sizeof(CcpOptions));
+    pcb.ccp_hisoptions.method = (!pkt.empty()) ? pkt[ptr + 0] : 0;
+    while (!pkt.empty())
     {
         CpCodes newret = CONFACK;
-        if (len < 2 || pkt[1] < 2 || pkt[1] > len)
+        if (pkt.size() < 2 || pkt[ptr + 1] < 2 || pkt[ptr + 1] > pkt.size())
         {
             /* length is bad */
-            clen = len;
+            clen = pkt.size();
             newret = CONFREJ;
         }
         else
         {
-            int type = pkt[0];
-            clen = pkt[1];
+            int type = pkt[ptr + 0];
+            clen = pkt[ptr + 1];
             switch (type)
             {
             case CI_MPPE:
-                if (!ao->mppe || clen != CILEN_MPPE)
-                {
+                if (!mppe_has_options(pcb.ccp_allowoptions.mppe) || clen != CILEN_MPPE) {
                     newret = CONFREJ;
                     break;
                 }
-                MPPE_CI_TO_OPTS(&pkt[2], ho->mppe);
+                pcb.ccp_hisoptions.mppe = MPPE_CI_TO_OPTS(pkt.data() + ptr + 2);
                 /* Nak if anything unsupported or unknown are set. */
-                if (ho->mppe & MPPE_OPT_UNSUPPORTED)
-                {
+                if (pcb.ccp_hisoptions.mppe.opt_56 || pcb.ccp_hisoptions.mppe.opt_mppc ||
+                    pcb.ccp_hisoptions.mppe.opt_d) {
                     newret = CONFNAK;
-                    ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_UNSUPPORTED);
+                    pcb.ccp_hisoptions.mppe.opt_56 = false;
+                    pcb.ccp_hisoptions.mppe.opt_mppc = false;
+                    pcb.ccp_hisoptions.mppe.opt_d = false;
                 }
-                if (ho->mppe & MPPE_OPT_UNKNOWN)
-                {
+                if (pcb.ccp_hisoptions.mppe.unknown) {
                     newret = CONFNAK;
-                    ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_UNKNOWN);
-                } /* Check state opt */
-                if (ho->mppe & MPPE_OPT_STATEFUL)
-                {
+                    pcb.ccp_hisoptions.mppe.unknown = false;
+                }
+
+                /* Check state opt */
+                if (pcb.ccp_hisoptions.mppe.stateful) {
                     /*
                      * We can Nak and request stateless, but it's a
                      * lot easier to just assume the peer will request
                      * it if he can do it; stateful mode is bad over
                      * the Internet -- which is where we expect MPPE.
                      */
-                    if (pcb->settings.refuse_mppe_stateful)
-                    {
+                    if (pcb.settings.refuse_mppe_stateful) {
                         spdlog::error("Refusing MPPE stateful mode offered by peer");
                         newret = CONFREJ;
                         break;
                     }
-                } /* Find out which of {S,L} are set. */
-                if ((ho->mppe & MPPE_OPT_128) && (ho->mppe & MPPE_OPT_40))
+                }
+
+                /* Find out which of {S,L} are set. */
+                if ((pcb.ccp_hisoptions.mppe.opt_128) && (pcb.ccp_hisoptions.mppe.opt_40))
                 {
                     /* Both are set, negotiate the strongest. */
                     newret = CONFNAK;
-                    if (ao->mppe & MPPE_OPT_128)
+                    if (pcb.ccp_allowoptions.mppe.opt_128)
                     {
-                        ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_40);
+                        pcb.ccp_hisoptions.mppe.opt_40 = false;
                     }
-                    else if (ao->mppe & MPPE_OPT_40)
+                    else if (pcb.ccp_allowoptions.mppe.opt_40)
                     {
-                        ho->mppe = MppeOptions(ho->mppe & ~MPPE_OPT_128);
+                        pcb.ccp_hisoptions.mppe.opt_128 = false;
                     }
                     else
                     {
