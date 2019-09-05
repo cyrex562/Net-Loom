@@ -112,12 +112,17 @@ bool	ms_lanman = false;    	/* Use LanMan password instead of NT */
 
 
 /* For MPPE debug */
-/* Use "[]|}{?/><,`!2&&(" (sans quotes) for RFC 3079 MS-CHAPv2 test value */
-static char *mschap_challenge = nullptr;
-/* Use "!@\#$%^&*()_+:3|~" (sans quotes, backslash is to escape #) for ... */
-static char *mschap2_peer_challenge = nullptr;
+constexpr char MSCHAP_CHALLENGE[] = "[]|}{?/><,`!2&&(";
 
-static uint8_t* StdText = (uint8_t *)"KGS!@#$%"; /* key from rasapi32.dll */
+constexpr char MSCHAP2_PEER_CHALLENGE[] = "!@\#$%^&*()_+:3|~";
+
+
+/* Use "[]|}{?/><,`!2&&(" (sans quotes) for RFC 3079 MS-CHAPv2 test value */
+// static char *mschap_challenge = nullptr;
+/* Use "!@\#$%^&*()_+:3|~" (sans quotes, backslash is to escape #) for ... */
+// static char *mschap2_peer_challenge = nullptr;
+
+// static uint8_t* StdText = (uint8_t *)"KGS!@#$%"; /* key from rasapi32.dll */
 
 
 /*
