@@ -670,7 +670,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
     u_short cishort;		/* Parsed short value */
 
     Eui64 ifaceid;		/* Parsed interface identifier */
-    int rc = CONFACK;		/* Final packet return code */
+    int rc = CONF_ACK;		/* Final packet return code */
     uint8_t *p;			/* Pointer to next char to parse */
     uint8_t *ucp = inp;		/* Pointer to current output char */
     int l = *len;		/* Length left */
@@ -685,13 +685,13 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
      */
     uint8_t* next = inp;
     while (l) {
-    int orc = CONFACK;			/* Assume success */
+    int orc = CONF_ACK;			/* Assume success */
     uint8_t* cip = p = next;			/* Remember begining of CI */
     if (l < 2 ||			/* Not enough data for CI header or */
         p[1] < 2 ||			/*  CI length too small or */
         p[1] > l) {			/*  CI length too big? */
 
-        orc = CONFREJ;		/* Reject bad CI */
+        orc = CONF_REJECT;		/* Reject bad CI */
         cilen = l;			/* Reject till end of packet */
         l = 0;			/* Don't loop again */
         goto endswitch;
@@ -707,7 +707,7 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
 
         if (!ao->neg_ifaceid ||
         cilen != CILEN_IFACEID) {	/* Check CI length */
-        orc = CONFREJ;		/* Reject CI */
+        orc = CONF_REJECT;		/* Reject CI */
         break;
         }
 
@@ -720,21 +720,21 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
         eui64_get(&ifaceid, (Eui64*)p);
 
         if (eui64_iszero(ifaceid) && eui64_iszero(go->ourid)) {
-        orc = CONFREJ;		/* Reject CI */
+        orc = CONF_REJECT;		/* Reject CI */
         break;
         }
         if (!eui64_iszero(wo->hisid) &&
         !eui64_equals(ifaceid, wo->hisid) &&
         eui64_iszero(go->hisid)) {
 
-        orc = CONFNAK;
+        orc = CONF_NAK;
         ifaceid = wo->hisid;
         go->hisid = ifaceid;
         DECPTR(sizeof(ifaceid), p);
         eui64_put(&ifaceid, (Eui64*)p);
         } else
         if (eui64_iszero(ifaceid) || eui64_equals(ifaceid, go->ourid)) {
-        orc = CONFNAK;
+        orc = CONF_NAK;
         if (eui64_iszero(go->hisid))
         {
             /* first time, try option */
@@ -760,14 +760,14 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
         // IPV6CPDEBUG(("ipv6cp: received COMPRESSTYPE "));
         if (!ao->neg_vj ||
         (cilen != CILEN_COMPRESS)) {
-        orc = CONFREJ;
+        orc = CONF_REJECT;
         break;
         }
         GETSHORT(cishort, p);
         // IPV6CPDEBUG(("(%d)", cishort));
 
         if (!(cishort == IPV6CP_COMP)) {
-        orc = CONFREJ;
+        orc = CONF_REJECT;
         break;
         }
 
@@ -777,41 +777,41 @@ int ipv6cp_reqci(Fsm *f, uint8_t *inp, int *len, int reject_if_disagree) {
 
 
     default:
-        orc = CONFREJ;
+        orc = CONF_REJECT;
         break;
     }
 
 endswitch:
 
 
-    if (orc == CONFACK &&		/* Good CI */
-        rc != CONFACK)
+    if (orc == CONF_ACK &&		/* Good CI */
+        rc != CONF_ACK)
     {
         /*  but prior CI wasnt? */
         continue;			/* Don't send this one */
     }
-    if (orc == CONFNAK) {		/* Nak this CI? */
+    if (orc == CONF_NAK) {		/* Nak this CI? */
         if (reject_if_disagree)
         {
             /* Getting fed up with sending NAKs? */
-        orc = CONFREJ;		/* Get tough if so */
+        orc = CONF_REJECT;		/* Get tough if so */
         }
         else {
-        if (rc == CONFREJ)
+        if (rc == CONF_REJECT)
         {
             /* Rejecting prior CI? */
             continue;		/* Don't send this one */
         }
-        if (rc == CONFACK) {	/* Ack'd all prior CIs? */
-            rc = CONFNAK;	/* Not anymore... */
+        if (rc == CONF_ACK) {	/* Ack'd all prior CIs? */
+            rc = CONF_NAK;	/* Not anymore... */
             ucp = inp;		/* Backup */
         }
         }
     }
 
-    if (orc == CONFREJ &&		/* Reject this CI */
-        rc != CONFREJ) {		/*  but no prior ones? */
-        rc = CONFREJ;
+    if (orc == CONF_REJECT &&		/* Reject this CI */
+        rc != CONF_REJECT) {		/*  but no prior ones? */
+        rc = CONF_REJECT;
         ucp = inp;			/* Backup */
     }
 
@@ -830,10 +830,10 @@ endswitch:
      * input buffer is long enough that we can append the extra
      * option safely.
      */
-    if (rc != CONFREJ && !ho->neg_ifaceid &&
+    if (rc != CONF_REJECT && !ho->neg_ifaceid &&
     wo->req_ifaceid && !reject_if_disagree) {
-    if (rc == CONFACK) {
-        rc = CONFNAK;
+    if (rc == CONF_ACK) {
+        rc = CONF_NAK;
         ucp = inp;				/* reset pointer */
         wo->req_ifaceid = false;		/* don't ask again */
     }

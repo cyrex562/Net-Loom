@@ -1,5 +1,33 @@
 #pragma once
 
+
+/*
+ * Local state (mainly for handling reset-reqs and reset-acks).
+ */
+// enum CcpLocalState
+// {
+//     LOCAL_STATE_NOT_SET = 0,
+//     RESET_ACK_PENDING = 1,
+//     /* waiting for reset-ack */
+//     REPEAT_RESET_REQ = 2,
+//     /* send another reset-req if no reset-ack */
+//     RESET_ACK_TIMEOUT = 1,	/* second */
+// };
+
+struct CcpLocalState
+{
+    bool reset_ack_pending;
+    bool repeat_reset_req;
+    bool reset_ack_timeout;
+};
+
+inline void clear_ccp_local_state(CcpLocalState& local_state)
+{
+    local_state.reset_ack_pending = false;
+    local_state.repeat_reset_req = false;
+    local_state.reset_ack_timeout = false;
+}
+
 /**
  * Protocol field values.
  */

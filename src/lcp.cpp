@@ -1352,7 +1352,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
     ChapDigestCodes cichar;
     u_short cishort;		/* Parsed short value */
     uint32_t cilong;		/* Parse long value */
-    int rc = CONFACK;		/* Final packet return code */
+    int rc = CONF_ACK;		/* Final packet return code */
     // uint8_t *p;			/* Pointer to next char to parse */ // struct PacketBuffer nakp{};          /* Nak buffer */ // auto l = *lenp;		/* Length left */
     size_t in_index = 0;
     bool ok;
@@ -1372,13 +1372,13 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
     uint8_t* rejp = inp.data();
     while (rem_len != 0u)
     {
-        int opt_rc = CONFACK; /* Assume success */
+        int opt_rc = CONF_ACK; /* Assume success */
         // uint8_t* cip = p = next; /* Remember begining of CI */
         /* Not enough data for CI header or */ /*  CI length too small or */
         if (rem_len < 2 || inp[in_index + 1] < 2 || inp[in_index + 1] > rem_len)
         {
             /*  CI length too big? */ // LCPDEBUG(("lcp_reqci: bad CI length!"));
-            opt_rc = CONFREJ; /* Reject bad CI */
+            opt_rc = CONF_REJECT; /* Reject bad CI */
             cilen = rem_len; /* Reject till end of packet */
             rem_len = 0; /* Don't loop again */
             citype = 0;
@@ -1396,7 +1396,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
             if (citype == CI_MRU) {
                 if (!pcb.lcp_allowoptions.neg_mru || cilen != CILEN_SHORT) {
                     /* Check CI length */
-                    opt_rc = CONFREJ; /* Reject CI */
+                    opt_rc = CONF_REJECT; /* Reject CI */
                 }
                 else {
                     GETSHORT(cishort, in_index); /* Parse MRU */
@@ -1405,7 +1405,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                                                               * we'll just ignore it.
                                                               */
                     if (cishort < PPP_MINMRU) {
-                        opt_rc = CONFNAK; /* Nak CI */
+                        opt_rc = CONF_NAK; /* Nak CI */
                         PUTCHAR(CI_MRU, nakoutp);
                         PUTCHAR(CILEN_SHORT, nakoutp);
                         PUTSHORT(PPP_MINMRU, nakoutp); /* Give him a hint */
@@ -1428,7 +1428,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_ASYNCMAP:
             if (!ao->neg_asyncmap || cilen != CILEN_LONG)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             GETLONG(cilong, p); /*
@@ -1437,7 +1437,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
          */
             if ((ao->asyncmap & ~cilong) != 0)
             {
-                opt_rc = CONFNAK;
+                opt_rc = CONF_NAK;
                 PUTCHAR(CI_ASYNCMAP, nakoutp);
                 PUTCHAR(CILEN_LONG, nakoutp);
                 PUTLONG(ao->asyncmap | cilong, nakoutp);
@@ -1454,7 +1454,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                         * Reject the option if we're not willing to authenticate.
                         */
                 ppp_dbglog("No auth is possible");
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             GETSHORT(cishort, p); /*
@@ -1473,13 +1473,13 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                 if (false || ho->neg_chap || ho->neg_eap || cilen != CILEN_SHORT)
                 {
                     // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
-                    opt_rc = CONFREJ;
+                    opt_rc = CONF_REJECT;
                     break;
                 }
                 if (!ao->neg_upap)
                 {
                     /* we don't want to do PAP */
-                    opt_rc = CONFNAK; /* NAK it and suggest CHAP or EAP */
+                    opt_rc = CONF_NAK; /* NAK it and suggest CHAP or EAP */
                     PUTCHAR(CI_AUTHTYPE, nakoutp);
                     if (ao->neg_eap)
                     {
@@ -1503,13 +1503,13 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                 if (ho->neg_upap || ho->neg_eap || cilen != CILEN_CHAP)
                 {
                     // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
-                    opt_rc = CONFREJ;
+                    opt_rc = CONF_REJECT;
                     break;
                 }
                 if (!ao->neg_chap)
                 {
                     /* we don't want to do CHAP */
-                    opt_rc = CONFNAK; /* NAK it and suggest EAP or PAP */
+                    opt_rc = CONF_NAK; /* NAK it and suggest EAP or PAP */
                     PUTCHAR(CI_AUTHTYPE, nakoutp);
                     PUTCHAR(CILEN_SHORT, nakoutp);
                     if (ao->neg_eap) { PUTSHORT(PPP_EAP, nakoutp); }
@@ -1526,7 +1526,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                                 * We can't/won't do the requested type,
                                 * suggest something else.
                                 */
-                    opt_rc = CONFNAK;
+                    opt_rc = CONF_NAK;
                     PUTCHAR(CI_AUTHTYPE, nakoutp);
                     PUTCHAR(CILEN_CHAP, nakoutp);
                     PUTSHORT(PPP_CHAP, nakoutp);
@@ -1543,13 +1543,13 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                 if (ho->neg_chap || ho->neg_upap || cilen != CILEN_SHORT)
                 {
                     // LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE EAP, rejecting..."));
-                    opt_rc = CONFREJ;
+                    opt_rc = CONF_REJECT;
                     break;
                 }
                 if (!ao->neg_eap)
                 {
                     /* we don't want to do EAP */
-                    opt_rc = CONFNAK; /* NAK it and suggest CHAP or PAP */
+                    opt_rc = CONF_NAK; /* NAK it and suggest CHAP or PAP */
                     PUTCHAR(CI_AUTHTYPE, nakoutp);
                     if (ao->neg_chap)
                     {
@@ -1573,7 +1573,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
          * (At this point we know ao->neg_upap || ao->neg_chap ||
          * ao->neg_eap.)
          */
-            opt_rc = CONFNAK;
+            opt_rc = CONF_NAK;
             PUTCHAR(CI_AUTHTYPE, nakoutp);
             if (ao->neg_eap)
             {
@@ -1596,7 +1596,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_QUALITY:
             if (!ao->neg_lqr || cilen != CILEN_LQR)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             GETSHORT(cishort, p);
@@ -1606,7 +1606,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
          */
             if (cishort != PPP_LQR)
             {
-                opt_rc = CONFNAK;
+                opt_rc = CONF_NAK;
                 PUTCHAR(CI_QUALITY, nakoutp);
                 PUTCHAR(CILEN_LQR, nakoutp);
                 PUTSHORT(PPP_LQR, nakoutp);
@@ -1617,7 +1617,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_MAGICNUMBER:
             if (!(ao->neg_magicnumber || go->neg_magicnumber) || cilen != CILEN_LONG)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             GETLONG(cilong, p); /*
@@ -1626,7 +1626,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
             if (go->neg_magicnumber && cilong == go->magicnumber)
             {
                 cilong = magic(); /* Don't put magic() inside macro! */
-                opt_rc = CONFNAK;
+                opt_rc = CONF_NAK;
                 PUTCHAR(CI_MAGICNUMBER, nakoutp);
                 PUTCHAR(CILEN_LONG, nakoutp);
                 PUTLONG(cilong, nakoutp);
@@ -1638,7 +1638,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_PCOMPRESSION:
             if (!ao->neg_pcompression || cilen != CILEN_VOID)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             ho->neg_pcompression = true;
@@ -1646,7 +1646,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_ACCOMPRESSION:
             if (!ao->neg_accompression || cilen != CILEN_VOID)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             ho->neg_accompression = true;
@@ -1654,7 +1654,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_MRRU:
             if (!ao->neg_mrru || !multilink || cilen != CILEN_SHORT)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             GETSHORT(cishort, p);
@@ -1665,7 +1665,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
         case CI_SSNHF:
             if (!ao->neg_ssnhf || !multilink || cilen != CILEN_VOID)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             ho->neg_ssnhf = true;
@@ -1674,7 +1674,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
             if (!ao->neg_endpoint || cilen < CILEN_CHAR || cilen > CILEN_CHAR +
                 MAX_ENDP_LEN)
             {
-                opt_rc = CONFREJ;
+                opt_rc = CONF_REJECT;
                 break;
             }
             {
@@ -1688,30 +1688,30 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
             INCPTR(cilen, p);
             break;
         default: // LCPDEBUG(("lcp_reqci: rcvd unknown option %d", citype));
-            opt_rc = CONFREJ;
+            opt_rc = CONF_REJECT;
             break;
         }
-    endswitch: if (opt_rc == CONFACK && /* Good CI */ rc != CONFACK)
+    endswitch: if (opt_rc == CONF_ACK && /* Good CI */ rc != CONF_ACK)
         {
             /*  but prior CI wasnt? */
             continue; /* Don't send this one */
         }
-        if (opt_rc == CONFNAK)
+        if (opt_rc == CONF_NAK)
         {
             /* Nak this CI? */
             if (reject_if_disagree /* Getting fed up with sending NAKs? */ && citype !=
-                CI_MAGICNUMBER) { opt_rc = CONFREJ; /* Get tough if so */ }
+                CI_MAGICNUMBER) { opt_rc = CONF_REJECT; /* Get tough if so */ }
             else
             {
-                if (rc == CONFREJ) /* Rejecting prior CI? */
+                if (rc == CONF_REJECT) /* Rejecting prior CI? */
                     continue; /* Don't send this one */
-                rc = CONFNAK;
+                rc = CONF_NAK;
             }
         }
-        if (opt_rc == CONFREJ)
+        if (opt_rc == CONF_REJECT)
         {
             /* Reject this CI */
-            rc = CONFREJ;
+            rc = CONF_REJECT;
             if (cip != rejp)
             {
                 /* Need to move rejected CI? */
@@ -1732,17 +1732,17 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
      */
 
     switch (rc) {
-    case CONFACK:
+    case CONF_ACK:
     *lenp = next - inp;
     break;
-    case CONFNAK:
+    case CONF_NAK:
     /*
      * Copy the Nak'd options from the nak buffer to the caller's buffer.
      */
     *lenp = nakoutp - (uint8_t*)nakp->payload;
     memcpy(inp, nakp->payload, *lenp);
     break;
-    case CONFREJ:
+    case CONF_REJECT:
     *lenp = rejp - inp;
     break;
     default:

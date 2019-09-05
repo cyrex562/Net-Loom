@@ -900,23 +900,22 @@ int
 sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode)
 {
     return 0;
-} /*
- * netif_set_mtu - set the MTU on the PPP network interface.
+} 
+
+/**
+ * Set the MTU on the PPP network interface.
  */
 void
-netif_set_mtu(PppPcb* pcb, int mtu)
-{
-    pcb->netif->mtu = mtu;
-    // PPPDEBUG(LOG_INFO, ("netif_set_mtu[%d]: mtu=%d\n", pcb->netif->num, mtu));
-} /*
- * netif_get_mtu - get PPP interface MTU
+netif_set_mtu(PppPcb& pcb, const uint16_t mtu) { pcb.netif.mtu = mtu; }
+
+/**
+ * Get PPP interface MTU
  */
-int
-netif_get_mtu(PppPcb* pcb)
-{
-    return pcb->netif->mtu;
-} /*
- * ccp_set - inform about the current state of CCP.
+uint16_t
+ppp_netif_get_mtu(PppPcb& pcb) { return pcb.netif.mtu; }
+
+/**
+ * Inform about the current state of CCP.
  */
 void
 ccp_set(PppPcb* pcb,
@@ -926,18 +925,20 @@ ccp_set(PppPcb* pcb,
         uint8_t transmit_method)
 {
     pcb->ccp_receive_method = receive_method;
-    pcb->ccp_transmit_method = transmit_method; // PPPDEBUG(LOG_DEBUG,
-    //          ("ccp_set[%d]: is_open=%d, is_up=%d, receive_method=%u, transmit_method=%u\n",
-    //              pcb->netif->num, isopen, isup, receive_method, transmit_method));
-} /********************************************************************
- *
- * get_idle_time - return how long the link has been idle.
- */
+    // comment here
+    pcb->ccp_transmit_method = transmit_method;
+
+}
+
+
+/**
+* get_idle_time - return how long the link has been idle.
+*/
 int
-get_idle_time(PppPcb* pcb, struct ppp_idle* ip)
-{
-    return 1;
-} /********************************************************************
+get_idle_time(PppPcb* pcb, struct ppp_idle* ip) { return 1; } 
+
+
+/********************************************************************
  *
  * get_loop_output - get outgoing packets from the ppp device,
  * and detect when we want to bring the real link up.

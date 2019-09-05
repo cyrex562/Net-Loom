@@ -3,25 +3,21 @@
  */
 
 #pragma once
-#include "fsm_def.h"
-#include "timeouts.h"
+#include "ccp_options.h"
 #include "chap_new.h"
 #include "eap_state.h"
+#include "fsm_def.h"
 #include "ip4_addr.h"
 #include "ip6_addr.h"
 #include "ipcp_defs.h"
 #include "ipv6cp.h"
+#include "lcp_options.h"
+#include "mppe_def.h"
 #include "network_interface.h"
+#include "ppp_def.h"
+#include "timeouts.h"
 #include "upap_state.h"
 #include "vj.h"
-#include "lcp_options.h"
-#include "ccp_options.h"
-#include "mppe_def.h"
-#include "ppp_def.h"
-
-
-
-
 
 // Values for phase.
 enum PppPhase
@@ -223,8 +219,11 @@ void new_phase(PppPcb& pcb, int phase);
 int ppp_send_config(PppPcb *pcb, int mtu, uint32_t accm, int pcomp, int accomp);
 int ppp_recv_config(PppPcb *pcb, int mru, uint32_t accm, int pcomp, int accomp);
 
-void netif_set_mtu(PppPcb *pcb, int mtu);
-int netif_get_mtu(PppPcb*pcb);
+void netif_set_mtu(PppPcb& pcb, uint16_t mtu);
+
+
+uint16_t
+ppp_netif_get_mtu(PppPcb& pcb);
 
 
 bool
@@ -686,7 +685,7 @@ struct PppPcb
     CcpOptions ccp_gotoptions{}; /* what the peer agreed to do */
     CcpOptions ccp_allowoptions{}; /* what we'll agree to do */
     CcpOptions ccp_hisoptions{}; /* what we agreed to do */
-    uint8_t ccp_localstate{};
+    CcpLocalState ccp_localstate{};
     /* Local state (mainly for handling reset-reqs and reset-acks). */
     uint8_t ccp_receive_method{}; /* Method chosen on receive path */
     uint8_t ccp_transmit_method{}; /* Method chosen on transmit path */

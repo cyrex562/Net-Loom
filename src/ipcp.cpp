@@ -977,7 +977,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
     u_short cishort; /* Parsed short value */
 
     uint32_t tl, ciaddr1, ciaddr2; /* Parsed address values */
-    int rc = CONFACK; /* Final packet return code */
+    int rc = CONF_ACK; /* Final packet return code */
     int orc; /* Individual option return code */
     uint8_t* p; /* Pointer to next char to parse */
     uint8_t* ucp = inp; /* Pointer to current output char */
@@ -999,13 +999,13 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
      */
     next = inp;
     while (l) {
-        orc = CONFACK; /* Assume success */
+        orc = CONF_ACK; /* Assume success */
         cip = p = next; /* Remember begining of CI */
         if (l < 2 || /* Not enough data for CI header or */
             p[1] < 2 || /*  CI length too small or */
             p[1] > l) {
             /*  CI length too big? */
-            orc = CONFREJ; /* Reject bad CI */
+            orc = CONF_REJECT; /* Reject bad CI */
             cilen = l; /* Reject till end of packet */
             l = 0; /* Don't loop again */
             goto endswitch;
@@ -1025,7 +1025,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             if (!ao->old_addrs || ho->neg_addr ||
                 cilen != CILEN_ADDRS) {
                 /* Check CI length */
-                orc = CONFREJ; /* Reject CI */
+                orc = CONF_REJECT; /* Reject CI */
                 break;
             }
 
@@ -1046,7 +1046,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             ciaddr1 = lwip_htonl(tl);
             if (ciaddr1 != wo->hisaddr
                 && (ciaddr1 == 0 || !wo->accept_remote)) {
-                orc = CONFNAK;
+                orc = CONF_NAK;
                 if (!reject_if_disagree) {
                     ((p) -= (sizeof(uint32_t)));
                     tl = lwip_ntohl(wo->hisaddr);
@@ -1062,7 +1062,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 /*
                  * If neither we nor he knows his address, reject the option.
                  */
-                orc = CONFREJ;
+                orc = CONF_REJECT;
                 wo->req_addr = false; /* don't NAK with 0.0.0.0 later */
                 break;
             }
@@ -1082,7 +1082,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             ciaddr2 = lwip_htonl(tl);
             if (ciaddr2 != wo->ouraddr) {
                 if (ciaddr2 == 0 || !wo->accept_local) {
-                    orc = CONFNAK;
+                    orc = CONF_NAK;
                     if (!reject_if_disagree) {
                         ((p) -= (sizeof(uint32_t)));
                         tl = lwip_ntohl(wo->ouraddr);
@@ -1108,7 +1108,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             if (!ao->neg_addr || ho->old_addrs ||
                 cilen != CILEN_ADDR) {
                 /* Check CI length */
-                orc = CONFREJ; /* Reject CI */
+                orc = CONF_REJECT; /* Reject CI */
                 break;
             }
 
@@ -1129,7 +1129,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             ciaddr1 = lwip_htonl(tl);
             if (ciaddr1 != wo->hisaddr
                 && (ciaddr1 == 0 || !wo->accept_remote)) {
-                orc = CONFNAK;
+                orc = CONF_NAK;
                 if (!reject_if_disagree) {
                     ((p) -= (sizeof(uint32_t)));
                     tl = lwip_ntohl(wo->hisaddr);
@@ -1145,7 +1145,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 /*
                  * Don't ACK an address of 0.0.0.0 - reject it instead.
                  */
-                orc = CONFREJ;
+                orc = CONF_REJECT;
                 wo->req_addr = false; /* don't NAK with 0.0.0.0 later */
                 break;
             }
@@ -1164,7 +1164,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             if (ao->dnsaddr[d] == 0 ||
                 cilen != CILEN_ADDR) {
                 /* Check CI length */
-                orc = CONFREJ; /* Reject CI */
+                orc = CONF_REJECT; /* Reject CI */
                 break;
             }
             {
@@ -1184,7 +1184,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                     *(p)++ = (uint8_t)((tl) >> 8);
                     *(p)++ = (uint8_t)(tl);
                 }
-                orc = CONFNAK;
+                orc = CONF_NAK;
             }
             break;
 
@@ -1192,7 +1192,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
         case CI_COMPRESSTYPE:
             if (!ao->neg_vj ||
                 (cilen != CILEN_VJ && cilen != CILEN_COMPRESS)) {
-                orc = CONFREJ;
+                orc = CONF_REJECT;
                 break;
             }
             {
@@ -1201,7 +1201,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
             }
             if (!(cishort == IPCP_VJ_COMP ||
                 (cishort == IPCP_VJ_COMP_OLD && cilen == CILEN_COMPRESS))) {
-                orc = CONFREJ;
+                orc = CONF_REJECT;
                 break;
             }
 
@@ -1212,7 +1212,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                     (maxslotindex) = *(p)++;
                 }
                 if (maxslotindex > ao->maxslotindex) {
-                    orc = CONFNAK;
+                    orc = CONF_NAK;
                     if (!reject_if_disagree) {
                         ((p) -= (1));
                         {
@@ -1222,7 +1222,7 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
                 }
                 GETCHAR(cflag, p);
                 if (cflag && !ao->cflag) {
-                    orc = CONFNAK;
+                    orc = CONF_NAK;
                     if (!reject_if_disagree) {
                         DECPTR(1, p);
                         PUTCHAR(wo->cflag, p);
@@ -1240,39 +1240,39 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
 
 
         default:
-            orc = CONFREJ;
+            orc = CONF_REJECT;
             break;
         }
     endswitch:
-        if (orc == CONFACK && /* Good CI */
-            rc != CONFACK) /*  but prior CI wasnt? */
+        if (orc == CONF_ACK && /* Good CI */
+            rc != CONF_ACK) /*  but prior CI wasnt? */
             continue; /* Don't send this one */
 
-        if (orc == CONFNAK) {
+        if (orc == CONF_NAK) {
             /* Nak this CI? */
             if (reject_if_disagree)
             {
                 /* Getting fed up with sending NAKs? */
-                orc = CONFREJ; /* Get tough if so */
+                orc = CONF_REJECT; /* Get tough if so */
             }
             else {
-                if (rc == CONFREJ)
+                if (rc == CONF_REJECT)
                 {
                     /* Rejecting prior CI? */
                     continue; /* Don't send this one */
                 }
-                if (rc == CONFACK) {
+                if (rc == CONF_ACK) {
                     /* Ack'd all prior CIs? */
-                    rc = CONFNAK; /* Not anymore... */
+                    rc = CONF_NAK; /* Not anymore... */
                     ucp = inp; /* Backup */
                 }
             }
         }
 
-        if (orc == CONFREJ && /* Reject this CI */
-            rc != CONFREJ) {
+        if (orc == CONF_REJECT && /* Reject this CI */
+            rc != CONF_REJECT) {
             /*  but no prior ones? */
-            rc = CONFREJ;
+            rc = CONF_REJECT;
             ucp = inp; /* Backup */
         }
 
@@ -1291,10 +1291,10 @@ ipcp_reqci(Fsm* f, uint8_t* inp, int* len, int reject_if_disagree)
      * input buffer is long enough that we can append the extra
      * option safely.
      */
-    if (rc != CONFREJ && !ho->neg_addr && !ho->old_addrs &&
+    if (rc != CONF_REJECT && !ho->neg_addr && !ho->old_addrs &&
         wo->req_addr && !reject_if_disagree && !pcb->settings.noremoteip) {
-        if (rc == CONFACK) {
-            rc = CONFNAK;
+        if (rc == CONF_ACK) {
+            rc = CONF_NAK;
             ucp = inp; /* reset pointer */
             wo->req_addr = false; /* don't ask again */
         }

@@ -25,17 +25,13 @@ constexpr auto CCP_MAX_OPTION_LENGTH = 32;
 
 constexpr auto DEFLATE_MIN_WORKS = 9;
 
-/*
- * Local state (mainly for handling reset-reqs and reset-acks).
- */
-constexpr auto RESET_ACK_PENDING = 1	/* waiting for reset-ack */;
-constexpr auto REPEAT_RESET_REQ = 2	/* send another reset-req if no reset-ack */;
-constexpr auto RESET_ACK_TIMEOUT = 1	/* second */;
+
+
 
 /*
  * Parts of a CCP packet.
  */
-
+// todo: modify these macros
 // #define CCP_CODE(dp)		((dp)[0])
 // #define CCP_ID(dp)		((dp)[1])
 #define CCP_LENGTH(dp)		(((dp)[2] << 8) + (dp)[3])
@@ -135,7 +131,10 @@ ccp_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
 
 bool
 ccp_proto_rejected(PppPcb& pcb);
-void ccp_datainput(PppPcb *pcb, uint8_t *pkt, int len);
+
+
+bool
+ccp_datainput(PppPcb& pcb, std::vector<uint8_t>& pkt);
 
 
 bool
@@ -155,8 +154,14 @@ ccp_rejci(Fsm&, std::vector<uint8_t>& pkt, PppPcb& pcb);
 
 bool
 ccp_reqci(Fsm&, std::vector<uint8_t>& pkt, bool, PppPcb& pcb);
-void ccp_up(Fsm*, PppPcb* pcb, Protent** protocols);
-void ccp_down(Fsm*, Fsm* lcp_fsm, PppPcb* pcb);
+
+
+bool
+ccp_up(Fsm&, PppPcb& pcb);
+
+
+bool
+ccp_down(Fsm&, Fsm& lcp_fsm, PppPcb& pcb);
 
 
 bool
@@ -164,12 +169,15 @@ ccp_extcode(PppPcb& pcb, Fsm&, int, int, std::vector<uint8_t>& data);
 
 
 bool
-ccp_rack_timeout(Fsm& f, PppPcb& pcb);
-const char* method_name(struct CcpOptions*, struct CcpOptions*);
+ccp_reset_ack_timeout(Fsm& f, PppPcb& pcb);
+
+
+std::string
+method_name(CcpOptions& opt1, CcpOptions&);
 
  /** Issue a reset-request. */
 bool
-ccp_reset_request(uint8_t& ppp_pcb_ccp_local_state, Fsm& f, PppPcb& pcb);
+ccp_reset_request(CcpLocalState& local_state, Fsm& f, PppPcb& pcb);
 
 
 inline bool ccp_test(PppPcb& pcb, std::vector<uint8_t>& opt_buf, uint32_t option, uint32_t idx)

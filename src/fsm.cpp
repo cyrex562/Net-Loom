@@ -170,7 +170,7 @@ terminate_layer(PppPcb& pcb, Fsm& f, PppFsmLinkState next_state) {
     std::vector<uint8_t> data;
     data.reserve(f.term_reason.length());
     std::copy(f.term_reason.begin(), f.term_reason.end(), data.begin());
-    fsm_send_data2(pcb, f, TERMREQ, f.reqid = ++f.id, data);
+    fsm_send_data2(pcb, f, TERM_REQ, f.reqid = ++f.id, data);
     if (f.retransmits == 0) {
         /*
             * User asked for no terminate requests at all; just close it.
@@ -237,7 +237,7 @@ fsm_timeout(PppPcb& pcb, Fsm& fsm) {
             std::vector<uint8_t> data;
             data.reserve(fsm.term_reason.length());
             std::copy(fsm.term_reason.begin(), fsm.term_reason.end(), data.begin());
-            fsm_send_data2(pcb, fsm, TERMREQ, fsm.reqid = ++fsm.id, data);
+            fsm_send_data2(pcb, fsm, TERM_REQ, fsm.reqid = ++fsm.id, data);
             // todo: schedule timeout for fsm_timeout_time
             --fsm.retransmits;
         }
@@ -303,17 +303,17 @@ fsm_input(PppPcb& pcb, Fsm& fsm, std::vector<uint8_t>& packet) {
      * Action depends on code.
      */
     switch (code) {
-    case CONFREQ: fsm_recv_conf_req(pcb, fsm, id, packet);
+    case CONF_REQ: fsm_recv_conf_req(pcb, fsm, id, packet);
         break;
-    case CONFACK: fsm_recv_conf_ack(pcb, fsm, id, packet);
+    case CONF_ACK: fsm_recv_conf_ack(pcb, fsm, id, packet);
         break;
-    case CONFNAK: case CONFREJ: fsm_recv_conf_nak_rej(pcb, fsm, code, id, packet);
+    case CONF_NAK: case CONF_REJECT: fsm_recv_conf_nak_rej(pcb, fsm, code, id, packet);
         break;
-    case TERMREQ: fsm_recv_term_req(pcb, fsm, id, packet);
+    case TERM_REQ: fsm_recv_term_req(pcb, fsm, id, packet);
         break;
-    case TERMACK: fsm_recv_term_ack(pcb, fsm);
+    case TERM_ACK: fsm_recv_term_ack(pcb, fsm);
         break;
-    case CODEREJ: fsm_recv_code_rej(pcb, fsm, packet);
+    case CODE_REJECT: fsm_recv_code_rej(pcb, fsm, packet);
         break;
     default:
         // if (!fsm.callbacks->extcode || !(*fsm.callbacks->extcode
@@ -340,7 +340,7 @@ fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet)
 
     std::vector<uint8_t> data;
     if (f.state == PPP_FSM_CLOSED) {
-        fsm_send_data2(pcb, f, TERMACK, id, data);
+        fsm_send_data2(pcb, f, TERM_ACK, id, data);
         return true;
     } // todo: call appropriate reqci func
     if (f.state == PPP_FSM_CLOSING || f.state == PPP_FSM_STOPPING) {
@@ -365,13 +365,13 @@ fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet)
      * to protocol-specific code for checking.
      */
     if (packet.size()) {
-        code = CONFREJ;
+        code = CONF_REJECT;
     }
     else {
-        code = CONFACK;
+        code = CONF_ACK;
     }
     fsm_send_data2(pcb, f, code, id, packet);
-    if (code == CONFACK) {
+    if (code == CONF_ACK) {
         if (f.state == PPP_FSM_ACKRCVD) {
             // Untimeout(fsm_timeout, f); /* Cancel timeout */
             // todo: cancel fsm timeout
@@ -387,7 +387,7 @@ fsm_recv_conf_req(PppPcb& pcb, Fsm& f, uint8_t id, std::vector<uint8_t>& packet)
     else {
         /* we sent CONFACK or CONFREJ */
         if (f.state != PPP_FSM_ACKRCVD) { f.state = PPP_FSM_REQSENT; }
-        if (code == CONFNAK) { ++f.nakloops; }
+        if (code == CONF_NAK) { ++f.nakloops; }
     }
 
     return true;
@@ -416,7 +416,7 @@ fsm_recv_conf_ack(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t> packet)
     f.rnakloops = 0;
     std::vector<uint8_t> data;
     switch (f.state) {
-    case PPP_FSM_CLOSED: case PPP_FSM_STOPPED: fsm_send_data2(pcb, f, TERMACK, id, data);
+    case PPP_FSM_CLOSED: case PPP_FSM_STOPPED: fsm_send_data2(pcb, f, TERM_ACK, id, data);
         break;
     case PPP_FSM_REQSENT: f.state = PPP_FSM_ACKRCVD;
         f.retransmits = pcb.settings.fsm_max_conf_req_transmits;
@@ -461,7 +461,7 @@ fsm_recv_conf_nak_rej(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t
         /* Expected id? */
         return; /* Nope, toss... */
     }
-    if (code == CONFNAK) {
+    if (code == CONF_NAK) {
         ++f.rnakloops;
         int treat_as_reject = (f.rnakloops >= f.maxnakloops);
         // if (f.callbacks->nakci == nullptr || !(ret = f
@@ -494,7 +494,7 @@ fsm_recv_conf_nak_rej(PppPcb& pcb, Fsm& f, int code, int id, std::vector<uint8_t
     std::vector<uint8_t> data;
     switch (f.state) {
 
-    case PPP_FSM_CLOSED: case PPP_FSM_STOPPED: fsm_send_data2(pcb, f, TERMACK, id, data);
+    case PPP_FSM_CLOSED: case PPP_FSM_STOPPED: fsm_send_data2(pcb, f, TERM_ACK, id, data);
         break;
     case PPP_FSM_REQSENT: case PPP_FSM_ACKSENT:
         // /* They didn't agree to what we wanted - try another request */ Untimeout(
@@ -562,7 +562,7 @@ fsm_recv_term_req(PppPcb& pcb, Fsm& f, int id, std::vector<uint8_t>& packet)
     default: break;
     }
     std::vector<uint8_t> data;
-    fsm_send_data2(pcb, f, TERMACK, id, data);
+    fsm_send_data2(pcb, f, TERM_ACK, id, data);
     return true;
 }
 
@@ -712,7 +712,7 @@ fsm_senc_conf_req(PppPcb& pcb, Fsm& f, bool retransmit) {
     PUTCHAR(PPP_ALLSTATIONS, p.bytes, index);
     PUTCHAR(PPP_UI, p.bytes, index);
     PUTSHORT(f.protocol, p.bytes, index);
-    PUTCHAR(CONFREQ, p.bytes, index);
+    PUTCHAR(CONF_REQ, p.bytes, index);
     PUTCHAR(f.reqid, p.bytes, index);
     PUTSHORT(cilen + FSM_PKT_HDR_LEN, p.bytes, index);
     // if (cilen != 0) {

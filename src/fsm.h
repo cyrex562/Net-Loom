@@ -42,10 +42,11 @@
  * $Id: fsm.h,v 1.10 2004/11/13 02:28:15 paulus Exp $
  */
 #pragma once
+#include "auth.h"
 #include "fsm_def.h"
 #include <cstdint>
 #include <vector>
-#include "auth.h"
+
 
 /*
  * Packet header = Code, id, length.
@@ -58,20 +59,22 @@ constexpr auto FSM_PKT_HDR_LEN = 4;
  */
 enum CpCodes
 {
-    CONFREQ =1,
+    // not set
+    CONF_NOT_SET = 0,
     /* Configuration Request */
-    CONFACK = 2,
+    CONF_REQ =1,
     /* Configuration Ack */
-    CONFNAK = 3,
+    CONF_ACK = 2,
     /* Configuration Nak */
-    CONFREJ = 4,
+    CONF_NAK = 3,
     /* Configuration Reject */
-    TERMREQ = 5,
+    CONF_REJECT = 4,
     /* Termination Request */
-    TERMACK = 6,
+    TERM_REQ = 5,
     /* Termination Ack */
-    CODEREJ = 7,
+    TERM_ACK = 6,
     /* Code Reject */
+    CODE_REJECT = 7,
 };
 
 /*
