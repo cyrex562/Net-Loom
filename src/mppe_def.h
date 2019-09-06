@@ -25,26 +25,6 @@ enum MppeOptions
     /* Bits !defined in RFC 3078 were set */
 };
 
-struct MppeOpts
-{
-    bool opt_40;
-    bool opt_128;
-    bool stateful;
-    bool opt_56;
-    bool opt_mppc;
-    bool opt_d;
-    bool unknown;
-};
-
-
-inline bool
-mppe_has_options(MppeOpts opts)
-{
-    if (opts.opt_40 | opts.opt_128 | opts.stateful | opts.opt_56 | opts.opt_mppc |
-        opts.opt_d | opts.unknown) { return true; }
-    return false;
-}
-
 /*
  * This is not nice ... the alternative is a bitfield struct though.
  * And unfortunately, we cannot share the same bits for the option
@@ -68,19 +48,18 @@ enum MppeBits
     /* Stateless (in a different byte) */
 };
 
-constexpr auto MPPE_PAD = 4 /* MPPE growth per frame */;
-constexpr auto MPPE_MAX_KEY_LEN = 16 /* largest key length (128-bit) */;
-constexpr auto MPPE_CCOUNT_SPACE = 0x1000; /* The size of the ccount space */
-constexpr auto MPPE_OVERHEAD_LEN = 2; /* MPPE overhead/packet */
-constexpr auto SANITY_MAX = 1600; /* Max bogon factor we will tolerate */
-
-
-
-
+/* MPPE growth per frame */
+constexpr auto MPPE_PAD = 4;
+/* largest key length (128-bit) */
+constexpr auto MPPE_MAX_KEY_LEN = 16;
+/* The size of the ccount space */
+constexpr auto MPPE_CCOUNT_SPACE = 0x1000;
+/* MPPE overhead/packet */
+constexpr auto MPPE_OVERHEAD_LEN = 2;
+/* Max bogon factor we will tolerate */
+constexpr auto SANITY_MAX = 1600;
 /* Does not include H bit; used for least significant octet only. */
 constexpr auto MPPE_ALL_BITS = (MPPE_D_BIT|MPPE_L_BIT|MPPE_S_BIT|MPPE_M_BIT|MPPE_H_BIT);
-
-
 /* Shared MPPE padding between MSCHAP and MPPE */
 constexpr auto SHA1_PAD_SIZE = 40;
 
@@ -98,7 +77,7 @@ static const uint8_t MPPE_SHA1_PAD2[SHA1_PAD_SIZE] = {
   0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
 };
 
-/*
+/**
  * State for an MPPE (de)compressor.
  */
 struct PppMppeState
@@ -112,3 +91,31 @@ struct PppMppeState
     bool stateful; /* stateful mode flag */
     bool discard; /* stateful mode packet loss flag */
 };
+
+
+/**
+ *
+ */
+struct MppeOpts
+{
+    bool opt_40;
+    bool opt_128;
+    bool stateful;
+    bool opt_56;
+    bool opt_mppc;
+    bool opt_d;
+    bool unknown;
+};
+
+
+inline bool
+mppe_has_options(MppeOpts opts)
+{
+    if (opts.opt_40 | opts.opt_128 | opts.stateful | opts.opt_56 | opts.opt_mppc |
+        opts.opt_d | opts.unknown) { return true; }
+    return false;
+}
+
+//
+// END OF FILE
+//
