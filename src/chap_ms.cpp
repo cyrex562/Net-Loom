@@ -75,7 +75,7 @@ chapms_verify_response(PppPcb& pcb,
         return false;
     }
     // Generate the expected response.
-    chap_ms(pcb, challenge, secret, md);
+    chap_ms(pcb, challenge, secret, md,chall_ptr,resp_ptr);
     /* Determine which part of response to verify against */
     if (!response[MS_CHAP_USENT])
         diff = memcmp(&response[MS_CHAP_LANMANRESP],
@@ -94,7 +94,7 @@ chapms_verify_response(PppPcb& pcb,
     //              challenge_len,
     //              challenge);
     message = "E=691 R=1 C=";
-    message += (const char*)challenge;
+    message += (const char*)challenge.data();
     message += " V=0";
     return 0;
 }
@@ -207,18 +207,23 @@ chapms2_verify_response(PppPcb* pcb,
 }
 
 
-static void
-chapms_make_response(PppPcb* pcb,
-                     unsigned char* response,
+void
+chapms_make_response(PppPcb& pcb,
+                     std::vector<uint8_t>& response,
                      int id,
                      std::string& our_name,
-                     const unsigned char* challenge,
+                     std::vector<uint8_t>& challenge,
                      std::string& secret,
-                     unsigned char* private_)
+                     std::vector<uint8_t>& private_)
 {
-    challenge++; /* skip length, should be 8 */
-    *response++ = MS_CHAP_RESPONSE_LEN;
-    chap_ms(pcb, challenge, secret, response);
+    size_t chall_ptr = 0;
+    chall_ptr++;
+    // challenge++; /* skip length, should be 8 */
+    // *response++ = MS_CHAP_RESPONSE_LEN;
+    size_t resp_ptr = 0;
+    response[resp_ptr++] = MS_CHAP_RESPONSE_LEN;
+
+    chap_ms(pcb, challenge, secret, response,chall_ptr,resp_ptr);
 }
 
 
@@ -382,20 +387,26 @@ ascii2unicode(const char ascii[], int ascii_len, uint8_t unicode[])
 }
 
 
-void
-NTPasswordHash(uint8_t* secret, int secret_len, uint8_t hash[MD4_SIGNATURE_SIZE])
+std::vector<uint8_t>
+nt_password_hash(std::vector<uint8_t>& secret)
 {
+    std::vector<uint8_t> hash;
     mbedtls_md4_context md4Context;
     mbedtls_md4_init(&md4Context);
     mbedtls_md4_starts_ret(&md4Context);
-    mbedtls_md4_update_ret(&md4Context, secret, secret_len);
-    mbedtls_md4_finish_ret(&md4Context, hash);
+    mbedtls_md4_update_ret(&md4Context, secret.data(), secret.size());
+    mbedtls_md4_finish_ret(&md4Context, hash.data());
     mbedtls_md4_free(&md4Context);
+    return hash;
 }
 
 
 void
-chap_ms_nt(std::vector<uint8_t>& r_challenge, std::string& secret, std::vector<uint8_t>& nt_response)
+chap_ms_nt(std::vector<uint8_t>& r_challenge,
+           std::string& secret,
+           std::vector<uint8_t>& nt_response,
+           size_t challenge_offset,
+           size_t response_offset)
 {
     std::wstring unicode_password;
     unicode_password.reserve(MAX_NT_PASSWORD * 2);
@@ -406,8 +417,8 @@ chap_ms_nt(std::vector<uint8_t>& r_challenge, std::string& secret, std::vector<u
     std::wstring_convert<std::codecvt_utf8<char>> converter;
     unicode_password = converter.from_bytes(secret);
     /* Hash the Unicode version of the secret (== password). */
-    NTPasswordHash(unicodePassword, secret.length() * 2, PasswordHash);
-    challenge_response(r_challenge, PasswordHash, nt_response);
+    password_hash = nt_password_hash(unicode_password);
+    challenge_response(r_challenge, password_hash, nt_response);
 }
 
 
@@ -424,22 +435,30 @@ ChapMS2_NT(const uint8_t* rchallenge,
     challenge_hash(PeerChallenge, rchallenge, username, Challenge);
     /* Hash the Unicode version of the secret (== password). */
     ascii2unicode(secret.c_str(), secret.length(), unicodePassword);
-    NTPasswordHash(unicodePassword, secret.length() * 2, PasswordHash);
+    nt_password_hash(unicodePassword);
     challenge_response(Challenge, PasswordHash, NTResponse);
 }
 
 
-static void
-ChapMsLanMan(const uint8_t* rchallenge, std::string& secret, uint8_t* response)
+void
+chap_ms_lanman(std::vector<uint8_t>& rchallenge,
+               std::string& secret,
+               std::vector<uint8_t>& response,
+               size_t rchallenge_offset,
+               size_t response_offset)
 {
-    uint8_t ucase_password[MAX_NT_PASSWORD]; /* max is actually 14 */
-    uint8_t password_hash[MD4_SIGNATURE_SIZE];
+
+    std::vector<uint8_t> ucase_password(MAX_NT_PASSWORD);
+    std::vector<uint8_t> password_hash(MD4_SIGNATURE_SIZE);
     mbedtls_des_context des;
-    uint8_t des_key[8]; /* LANMan password is case insensitive */
-    memset(ucase_password, 0, sizeof(ucase_password));
-    for (auto i = 0; i < secret.length(); i++) {
-        ucase_password[i] = static_cast<uint8_t>(toupper(secret[i]));
+    /* LANMan password is case insensitive */
+    std::vector<uint8_t> des_key(8);
+
+    for (auto& c : secret) {
+        ucase_password.push_back(toupper(c));
     }
+
+
     pppcrypt_56_to_64_bit_key(ucase_password + 0, des_key); // lwip_des_init(&des);
     mbedtls_des_setkey_enc(&des, des_key);
     mbedtls_des_crypt_ecb(&des, StdText, password_hash + 0); // lwip_des_free(&des);
@@ -494,8 +513,8 @@ GenerateAuthenticatorResponsePlain(std::string& secret,
     uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE];
     /* Hash (x2) the Unicode version of the secret (== password). */
     ascii2unicode(secret.c_str(), secret.length(), unicodePassword);
-    NTPasswordHash(unicodePassword, secret.length() * 2, PasswordHash);
-    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
+    nt_password_hash(unicodePassword);
+    nt_password_hash(PasswordHash);
     GenerateAuthenticatorResponse(PasswordHashHash,
                                   NTResponse,
                                   PeerChallenge,
@@ -515,8 +534,8 @@ set_start_key(PppPcb& pcb, std::vector<uint8_t>& rchallenge, std::string& secret
     uint8_t Digest[SHA1_SIGNATURE_SIZE]; /* >= MPPE_MAX_KEY_LEN */
     /* Hash (x2) the Unicode version of the secret (== password). */
     ascii2unicode(secret.c_str(), secret.length(), unicodePassword);
-    NTPasswordHash(unicodePassword, secret.length() * 2, PasswordHash);
-    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
+    nt_password_hash(unicodePassword);
+    nt_password_hash(PasswordHash);
     mbedtls_sha1_init(&sha1Context);
     mbedtls_sha1_starts_ret(&sha1Context);
     mbedtls_sha1_update_ret(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
@@ -541,8 +560,8 @@ SetMasterKeys(PppPcb* pcb, std::string& secret, uint8_t NTResponse[24], int IsSe
     uint8_t Digest[SHA1_SIGNATURE_SIZE]; /* >= MPPE_MAX_KEY_LEN */
     const uint8_t* s; /* Hash (x2) the Unicode version of the secret (== password). */
     ascii2unicode(secret.c_str(), secret.length(), unicodePassword);
-    NTPasswordHash(unicodePassword, secret.length() * 2, PasswordHash);
-    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
+    nt_password_hash(unicodePassword);
+    nt_password_hash(PasswordHash);
     mbedtls_sha1_init(&sha1Context);
     mbedtls_sha1_starts_ret(&sha1Context);
     mbedtls_sha1_update_ret(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
@@ -582,13 +601,15 @@ SetMasterKeys(PppPcb* pcb, std::string& secret, uint8_t NTResponse[24], int IsSe
 
 void
 chap_ms(PppPcb& pcb,
-       std::vector<uint8_t>& rchallenge,
-       std::string& secret,
-       std::vector<uint8_t>& response)
+        std::vector<uint8_t>& challenge,
+        std::string& secret,
+        std::vector<uint8_t>& response,
+        const size_t challenge_offset,
+        const size_t response_offset)
 {
-    response.erase(response.begin());
-    chap_ms_nt(rchallenge, secret, &response[MS_CHAP_NTRESP]);
-    ChapMsLanMan(rchallenge, secret, &response[MS_CHAP_LANMANRESP]);
+    response.erase(response.begin() + challenge_offset);
+    chap_ms_nt(challenge, secret, response, challenge_offset, MS_CHAP_NTRESP + response_offset);
+    chap_ms_lanman(challenge, secret, &response[MS_CHAP_LANMANRESP],,);
     /* preferred method is set by option  */
     response[MS_CHAP_USENT] = !ms_lanman;
     set_start_key(pcb, rchallenge, secret);
