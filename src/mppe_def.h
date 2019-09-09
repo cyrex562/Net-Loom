@@ -2,6 +2,7 @@
 
 #include <mbedtls/arc4.h>
 #include <cstdint>
+#include <vector>
 
 /* option bits for CcpOptions.mppe */
 enum MppeOptions

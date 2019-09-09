@@ -53,7 +53,7 @@ match_ip_addr_pcb_version(const IpPcb& pcb, const IpAddrInfo& ipaddr)
 /*
  * Option flags per-socket. These are the same like SO_XXX in sockets.h
  */
-enum IpSockOptFlags : uint16_t
+enum IpSocketOption : uint16_t
 {
     SOF_REUSEADDR = 0x04U,
     SOF_KEEPALIVE = 0x08U,
@@ -172,9 +172,9 @@ inline uint8_t ip_get_option(IpPcb* pcb, const uint8_t opt)
 /**
  * Sets an IP pcb option (SOF_* flags)
  */
-inline void set_ip4_option(uint8_t* so_options, const uint8_t opt)
+inline void ip4_set_ip_option(uint8_t& so_options, const uint8_t opt)
 {
-    *so_options = uint8_t(*so_options | opt);
+    so_options = uint8_t(so_options | opt);
 }
 
 

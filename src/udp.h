@@ -95,22 +95,24 @@ struct UdpPcb
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
     NetIfcHint* netif_hints; /* Protocol specific PCB members */
-    struct UdpPcb* next;
+    // struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
-    uint16_t local_port, remote_port;
+    uint16_t local_port;
+    uint16_t remote_port;
     /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
     Ip4Addr mcast_ip4;
     /** outgoing network interface for multicast packets, by interface index (if nonzero) */
     uint8_t mcast_ifindex; /** TTL for outgoing multicast packets */
     uint8_t mcast_ttl; /** used for UDP_LITE only */
-    uint16_t chksum_len_rx, chksum_len_tx; /** receive callback function */
-    UdpRecvFn recv; /** user-supplied argument for the recv callback */
-    void* recv_arg;
+    uint16_t chksum_len_rx;
+    uint16_t chksum_len_tx;
+    // UdpRecvFn recv; /** user-supplied argument for the recv callback */
+    // void* recv_arg;
 };
 
 
 /* udp_pcbs export for external reference (e.g. SNMP agent) */
-extern struct UdpPcb *udp_pcbs;
+// extern struct UdpPcb *udp_pcbs;
 
 /* The following functions is the application layer interface to the
    UDP code. */
@@ -206,12 +208,12 @@ void udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new
 inline bool ip4_accept_udp_port(const uint16_t dst_port)
 {
     return dst_port == pp_ntohs(12345);
-} 
+}
 
 ///
 /// accept DHCP client port and custom port
-/// 
+///
 inline bool ip_accept_link_layer_addressed_port(const uint16_t port)
 {
     return port == pp_ntohs(LWIP_IANA_PORT_DHCP_CLIENT) || ip4_accept_udp_port(port);
-} 
+}

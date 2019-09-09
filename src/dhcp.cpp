@@ -31,7 +31,7 @@ static LwipStatus dhcp_inc_pcb_refcount()
             return ERR_MEM;
         }
         // todo: this is setting the first field of the DHCP_PCB struct to SOF_BROADCAST; probably a bug.
-        set_ip4_option((uint8_t*)dhcp_pcb, SOF_BROADCAST);
+        ip4_set_ip_option((uint8_t*)dhcp_pcb, SOF_BROADCAST);
         // set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs
         auto any_addr = create_ip_addr_any();
         udp_bind(dhcp_pcb, &any_addr, LWIP_IANA_PORT_DHCP_CLIENT);

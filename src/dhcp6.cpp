@@ -24,118 +24,91 @@
  * corresponding bits set.
  */
 
-/*
- * Copyright (c) 2018 Simon Goldschmidt
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Simon Goldschmidt <goldsimon@gmx.de>
- */
 
-#include "opt.h"
 #include "dhcp6.h"
-#include "dhcp6_context.h"
+#include "opt.h"
+#include "dhcp6_def.h"
 #include "udp.h"
 #include "dns.h"
-#include <cstring>
 #include "lwip_debug.h"
 #include "ip.h"
+#include <cstring>
+#include "spdlog/spdlog.h"
 
-
-
-
-
-// Holds the decoded option info, only valid while in dhcp6_recv.
-// struct Dhcp6OptionInfo dhcp6_rx_options[DHCP6_OPTION_IDX_MAX];
-
-// const IpAddr dhcp6_All_DHCP6_Relay_Agents_and_Servers = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0x00010002);
-// const IpAddr dhcp6_All_DHCP6_Servers = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0x00010003);
-//
-// static struct UdpPcb *dhcp6_pcb;
-// static uint8_t dhcp6_pcb_refcount;
-
-
-
-
-/** Ensure DHCP PCB is allocated and bound */
-static bool
-dhcp6_inc_pcb_refcount(UdpPcb& dhcp6_pcb, uint8_t& dhcp6_pcb_refcount)
-{
-
-    if (dhcp6_pcb_refcount == 0)
-    {
-        /* allocate UDP PCB */
-        dhcp6_pcb = udp_new_ip_type(IPADDR_TYPE_V6);
-        if (dhcp6_pcb == nullptr)
-        {
-            return ERR_MEM;
-        }
-        set_ip4_option(&dhcp6_pcb->so_options, SOF_BROADCAST);
-        /* set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs */
-        auto addr_any = create_ip_addr_ip6_any();
-        udp_bind(dhcp6_pcb, &addr_any, DHCP6_CLIENT_PORT);
-        // udp_recv(dhcp6_pcb, dhcp6_recv, nullptr);
-    }
-    dhcp6_pcb_refcount++;
-    return STATUS_SUCCESS;
-}
-
-/** Free DHCP PCB if the last netif stops using it */
-static void
-dhcp6_dec_pcb_refcount(void)
-{
-  lwip_assert("dhcp6_pcb_refcount(): refcount error", (dhcp6_pcb_refcount > 0));
-  dhcp6_pcb_refcount--;
-
-  if (dhcp6_pcb_refcount == 0) {
-    udp_remove(dhcp6_pcb);
-    dhcp6_pcb = nullptr;
-  }
-}
 
 /**
- * @ingroup dhcp6
+ *
+ */
+bool dhcp6_bind(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port)
+{
+    // not implemented
+    return false;
+}
+
+
+/**
+ * Ensure DHCP PCB is allocated and bound
+ *
+ */
+bool
+dhcp6_inc_pcb_refcount(Dhcp6Context& ctx, size_t& ref_cnt, NetworkInterface& netif)
+{
+    if (ref_cnt == 0) {
+        ctx.socket_options |= SOF_BROADCAST;
+        /* set up local and remote port for the pcb -> listen on all interfaces on all
+         * src/dest IPs */
+        auto addr_any = create_ip_addr_ip4_any();
+        if (!dhcp6_bind(ctx, addr_any, DHCP6_CLIENT_PORT)) { return false; }
+        bool ok;
+        Dhcp6Message msg;
+        std::tie(ok, msg) = dhcp6_recv(ctx, addr_any, DHCP6_CLIENT_PORT, netif);
+        if (!ok) {
+            return false;
+        }
+    }
+    ref_cnt++;
+    return true;
+}
+
+
+/**
+ * Free DHCP PCB if the last netif stops using it
+ *
+ */
+void
+dhcp6_dec_pcb_refcount(Dhcp6Context& ctx)
+{
+    lwip_assert("dhcp6_pcb_refcount(): refcount error", (ctx.ref_cnt > 0));
+    ctx.ref_cnt--;
+    if (ctx.ref_cnt == 0) {
+        // todo: if ref_cnt is 0, 'free'/clean-up ctx
+        // udp_remove(dhcp6_pcb);
+        // dhcp6_pcb = nullptr;
+    }
+}
+
+
+/**
  * Set a statically allocated Dhcp6 to work with.
  * Using this prevents dhcp6_start to allocate it using mem_malloc.
  *
  * @param netif the netif for which to set the struct dhcp
- * @param dhcp6 (uninitialised) dhcp6 struct allocated by the application
+ * @param ctx (uninitialised) dhcp6 struct allocated by the application
  */
-void dhcp6_set_struct(NetworkInterface* netif, struct Dhcp6Context* dhcp6)
+void
+dhcp6_set_struct(NetworkInterface& netif, Dhcp6Context& ctx)
 {
-    lwip_assert("netif != NULL", netif != nullptr);
-    lwip_assert("dhcp6 != NULL", dhcp6 != nullptr);
-    lwip_assert("netif already has a Dhcp6 set",
-                get_netif_dhcp6_ctx(netif) == nullptr); /* clear data structure */
-    memset(dhcp6, 0, sizeof(struct Dhcp6Context)); /* dhcp6_set_state(&dhcp, DHCP6_STATE_OFF); */
-    netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = dhcp6;
+    // lwip_assert("netif already has a Dhcp6 set",
+    //             get_netif_dhcp6_ctx(netif) == nullptr);
+    /* clear data structure */
+    // memset(ctx, 0, sizeof(struct Dhcp6Context));
+    /* dhcp6_set_state(&dhcp, DHCP6_STATE_OFF); */
+    // netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = ctx;
+    dhcp6_set_state(ctx, DHCP6_STATE_OFF);
 }
 
+
 /**
- * @ingroup dhcp6
  * Removes a Dhcp6 from a netif.
  *
  * ATTENTION: Only use this when not using dhcp6_set_struct() to allocate the
@@ -143,53 +116,54 @@ void dhcp6_set_struct(NetworkInterface* netif, struct Dhcp6Context* dhcp6)
  *
  * @param netif the netif from which to remove the struct dhcp
  */
-void dhcp6_cleanup(NetworkInterface* netif)
+void dhcp6_cleanup(NetworkInterface& netif, Dhcp6Context& ctx)
 {
-    lwip_assert("netif != NULL", netif != nullptr);
-    if (get_netif_dhcp6_ctx(netif) != nullptr)
-    {
-        delete get_netif_dhcp6_ctx(netif);
-        netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = nullptr;
-    }
+    // lwip_assert("netif != NULL", netif != nullptr);
+    // if (get_netif_dhcp6_ctx(netif) != nullptr)
+    // {
+    //     delete get_netif_dhcp6_ctx(netif);
+    //     netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = nullptr;
+    // }
+
 }
 
-static struct Dhcp6Context* dhcp6_get_struct(NetworkInterface* netif, const char* dbg_requester)
-{
-    struct Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
-    if (dhcp6 == nullptr)
-    {
-        Logf(true,
-             "%s: mallocing new DHCPv6 client\n", dbg_requester);
-        dhcp6 = new struct Dhcp6Context;
-        if (dhcp6 == nullptr)
-        {
-            Logf(true,
-                 "%s: could not allocate dhcp6\n", dbg_requester);
-            return nullptr;
-        } /* clear data structure, this implies DHCP6_STATE_OFF */
-        memset(dhcp6, 0, sizeof(struct Dhcp6Context)); /* store this dhcp6 client in the netif */
-        netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = dhcp6;
-    }
-    else
-    {
-        /* already has DHCP6 client attached */
-        Logf(true,
-             ("%s: using existing DHCPv6 client\n", dbg_requester));
-    }
-    if (!dhcp6->pcb_allocated)
-    {
-        if (dhcp6_inc_pcb_refcount(,) != STATUS_SUCCESS)
-        {
-            /* ensure DHCP6 PCB is allocated */
-            delete dhcp6;
-            netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = nullptr;
-            return nullptr;
-        }
-        Logf(true, ("%s: allocated dhcp6", dbg_requester));
-        dhcp6->pcb_allocated = 1;
-    }
-    return dhcp6;
-}
+
+/**
+ *
+ */
+// Dhcp6Context
+// dhcp6_get_struct(NetworkInterface& netif)
+// {
+//     struct Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
+//     if (dhcp6 == nullptr) {
+//         Logf(true, "%s: mallocing new DHCPv6 client\n", dbg_requester);
+//         dhcp6 = new struct Dhcp6Context;
+//         if (dhcp6 == nullptr) {
+//             Logf(true, "%s: could not allocate dhcp6\n", dbg_requester);
+//             return nullptr;
+//         } /* clear data structure, this implies DHCP6_STATE_OFF */
+//         memset(dhcp6,
+//                0,
+//                sizeof(struct Dhcp6Context)); /* store this dhcp6 client in the netif */
+//         netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = dhcp6;
+//     }
+//     else {
+//         /* already has DHCP6 client attached */
+//         Logf(true, ("%s: using existing DHCPv6 client\n", dbg_requester));
+//     }
+//     if (!dhcp6->pcb_allocated) {
+//         if (dhcp6_inc_pcb_refcount(, , ) != STATUS_SUCCESS) {
+//             /* ensure DHCP6 PCB is allocated */
+//             delete dhcp6;
+//             netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP6] = nullptr;
+//             return nullptr;
+//         }
+//         Logf(true, ("%s: allocated dhcp6", dbg_requester));
+//         dhcp6->pcb_allocated = 1;
+//     }
+//     return dhcp6;
+// }
+
 
 /*
  * Set the DHCPv6 state
@@ -248,62 +222,51 @@ LwipStatus dhcp6_enable_stateful(NetworkInterface* netif)
 
 /**
  * @ingroup dhcp6
- * Enable stateless DHCPv6 on this netif
- * Requests are sent on receipt of an RA message with the
- * ND6_RA_FLAG_OTHER_CONFIG flag set.
- *
- * A Dhcp6 will be allocated for this netif if not
- * set via @ref dhcp6_set_struct before.
+ * Enable stateless DHCPv6 on this netif Requests are sent on receipt of an RA message
+ * with the ND6_RA_FLAG_OTHER_CONFIG flag set. A Dhcp6 will be allocated for this netif
+ * if not set via @ref dhcp6_set_struct before.
  */
-LwipStatus dhcp6_enable_stateless(NetworkInterface* netif)
+bool
+dhcp6_enable_stateless(NetworkInterface& netif, Dhcp6Context& ctx)
 {
     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_enable_stateless(netif=%p) %c%c%d\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
-    struct Dhcp6Context* dhcp6 = dhcp6_get_struct(netif, "dhcp6_enable_stateless()");
-    if (dhcp6 == nullptr)
-    {
-        return ERR_MEM;
+    // struct Dhcp6Context* dhcp6 = dhcp6_get_struct(netif);
+    // if (dhcp6 == nullptr)
+    // {
+    //     return ERR_MEM;
+    // }
+    if (dhcp6_stateless_enabled(ctx)) {
+        spdlog::info("dhcp6_enable_stateless(): stateless DHCPv6 already enabled");
+        return true;
     }
-    if (dhcp6_stateless_enabled(dhcp6))
-    {
-        Logf(true,
-             ("dhcp6_enable_stateless(): stateless DHCPv6 already enabled"));
-        return STATUS_SUCCESS;
-    }
-    else if (dhcp6->state != DHCP6_STATE_OFF)
-    {
+    if (ctx.state != DHCP6_STATE_OFF) {
         /* stateful running */ /* @todo: stop stateful once it is implemented */
-        Logf(true,
-             ("dhcp6_enable_stateless(): switching from stateful to stateless DHCPv6"));
+        spdlog::info(
+            "dhcp6_enable_stateless(): switching from stateful to stateless DHCPv6");
     }
-    Logf(true,
-         ("dhcp6_enable_stateless(): stateless DHCPv6 enabled\n"));
-    dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE, "dhcp6_enable_stateless");
-    return STATUS_SUCCESS;
+    spdlog::info("dhcp6_enable_stateless(): stateless DHCPv6 enabled");
+    dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE, "dhcp6_enable_stateless");
+    return true;
 }
 
+
 /**
- * @ingroup dhcp6
- * Disable stateful or stateless DHCPv6 on this netif
- * Requests are sent on receipt of an RA message with the
- * ND6_RA_FLAG_OTHER_CONFIG flag set.
+ * Disable stateful or stateless DHCPv6 on this netif Requests are sent on receipt of an
+ * RA message with the ND6_RA_FLAG_OTHER_CONFIG flag set.
  */
-void dhcp6_disable(NetworkInterface* netif)
+void
+dhcp6_disable(NetworkInterface& netif, Dhcp6Context& ctx)
 {
     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_disable(netif=%p) %c%c%d\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
-    struct Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
-    if (dhcp6 != nullptr)
-    {
-        if (dhcp6->state != DHCP6_STATE_OFF)
-        {
-            Logf(true,
-                 ("dhcp6_disable(): DHCPv6 disabled (old state: %s)\n", (
-                     dhcp6_stateless_enabled(dhcp6) ? "stateless" : "stateful")));
-            dhcp6_set_state(dhcp6, DHCP6_STATE_OFF, "dhcp6_disable");
-            if (dhcp6->pcb_allocated != 0)
-            {
-                dhcp6_dec_pcb_refcount(); /* free DHCPv6 PCB if not needed any more */
-                dhcp6->pcb_allocated = 0;
-            }
+    // struct Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
+    if (ctx.state != DHCP6_STATE_OFF) {
+        Logf(true,
+             ("dhcp6_disable(): DHCPv6 disabled (old state: %s)\n", (
+                 dhcp6_stateless_enabled(ctx) ? "stateless" : "stateful")));
+        dhcp6_set_state(ctx, DHCP6_STATE_OFF, "dhcp6_disable");
+        if (ctx.pcb_allocated != 0) {
+            dhcp6_dec_pcb_refcount(); /* free DHCPv6 PCB if not needed any more */
+            ctx.pcb_allocated = 0;
         }
     }
 }
@@ -341,7 +304,7 @@ static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
         return nullptr;
     }
     lwip_assert("dhcp6_create_msg: check that first pbuf can hold struct dhcp6_msg",
-                (p_out->len >= sizeof(struct Dhcp6Msg) + opt_len_alloc));
+                (p_out->len >= sizeof(struct Dhcp6Message) + opt_len_alloc));
     /* @todo: limit new xid for certain message types? */
     /* reuse transaction identifier in retransmissions */
     if (dhcp6->tries == 0)
@@ -350,9 +313,9 @@ static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
     }
     // Logf(true | LWIP_DBG_TRACE,
     //      ("transaction id xid(%x)\n", dhcp6->xid));
-    struct Dhcp6Msg* msg_out = (struct Dhcp6Msg *)p_out->payload;
-    memset(msg_out, 0, sizeof(struct Dhcp6Msg) + opt_len_alloc);
-    msg_out->msgtype = message_type;
+    struct Dhcp6Message* msg_out = (struct Dhcp6Message *)p_out->payload;
+    memset(msg_out, 0, sizeof(struct Dhcp6Message) + opt_len_alloc);
+    msg_out->msg_type = message_type;
     msg_out->transaction_id[0] = (uint8_t)(dhcp6->xid >> 16);
     msg_out->transaction_id[1] = (uint8_t)(dhcp6->xid >> 8);
     msg_out->transaction_id[2] = (uint8_t)dhcp6->xid;
@@ -377,7 +340,7 @@ static uint16_t dhcp6_option_optionrequest(size_t options_out_len,
 {
     lwip_assert(
         "dhcp6_option_optionrequest: options_out_len + sizeof(struct dhcp6_msg) + addlen <= max_len",
-        sizeof(struct Dhcp6Msg) + options_out_len + 4U + (2U * num_req_options) <=
+        sizeof(struct Dhcp6Message) + options_out_len + 4U + (2U * num_req_options) <=
         max_len);
     auto ret = dhcp6_option_short(options_out_len, options, DHCP6_OPTION_ORO);
     ret = dhcp6_option_short(ret, options, 2 * num_req_options);
@@ -410,7 +373,7 @@ dhcp6_information_request(NetworkInterface* netif, Dhcp6Context* dhcp6)
                                         &options_out_len);
     if (p_out != nullptr)
     {
-        const auto msg_out = reinterpret_cast<struct Dhcp6Msg *>(p_out->payload);
+        const auto msg_out = reinterpret_cast<struct Dhcp6Message *>(p_out->payload);
         const auto options = reinterpret_cast<uint8_t *>(msg_out + 1);
         Logf(true, "dhcp6_information_request: making request\n");
 
@@ -549,8 +512,8 @@ void dhcp6_nd6_ra_trigger(NetworkInterface* netif,
  */
 static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6)
 {
-    auto msg_in = reinterpret_cast<struct Dhcp6Msg *>(p->payload); /* parse options */
-    const auto options_idx = sizeof(struct Dhcp6Msg);
+    auto msg_in = reinterpret_cast<struct Dhcp6Message *>(p->payload); /* parse options */
+    const auto options_idx = sizeof(struct Dhcp6Message);
     /* parse options to the end of the received packet */
     const auto offset_max = p->tot_len;
     auto offset = options_idx; /* at least 4 byte to read? */
@@ -618,21 +581,17 @@ static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context*
     return STATUS_SUCCESS;
 }
 
-void dhcp6_recv(uint8_t* arg,
-                       struct UdpPcb* pcb,
-                       struct PacketBuffer* p,
-                       const IpAddrInfo* addr,
-                       uint16_t port,
-                       NetworkInterface* netif)
+
+std::tuple<bool, Dhcp6Message>
+dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface& netif)
 {
-    auto dhcp6 = get_netif_dhcp6_ctx(netif);
-    auto reply_msg = reinterpret_cast<Dhcp6Msg *>(p->payload); /* Caught DHCPv6 message from netif that does not have DHCPv6 enabled? -> not interested */
-    if ((dhcp6 == nullptr) || (dhcp6->pcb_allocated == 0))
-    {
-        goto free_pbuf_and_return;
-    } //
-    if (!ip_addr_is_v6(addr))
-    {
+    Dhcp6Message parsed_message{};
+    Dhcp6Message reply_message{};
+    // auto dhcp6 = get_netif_dhcp6_ctx(netif);
+    auto reply_msg = reinterpret_cast<Dhcp6Message *>(p->payload
+    ); /* Caught DHCPv6 message from netif that does not have DHCPv6 enabled? -> not interested */
+    if ((ctx == nullptr) || (ctx.pcb_allocated == 0)) { goto free_pbuf_and_return; } //
+    if (!ip_addr_is_v6(addr)) {
         printf("invalid server address type\n");
         goto free_pbuf_and_return;
     }
@@ -646,45 +605,37 @@ void dhcp6_recv(uint8_t* arg,
     // ;
     // ;
     // ;
-    if (p->len < sizeof(struct Dhcp6Msg))
-    {
-        Logf(true,
-             ("DHCPv6 reply message or PacketBuffer too short\n"));
+    if (p->len < sizeof(struct Dhcp6Message)) {
+        Logf(true, ("DHCPv6 reply message or PacketBuffer too short\n"));
         goto free_pbuf_and_return;
     } /* match transaction ID against what we expected */
     uint32_t xid = reply_msg->transaction_id[0] << 16;
     xid |= reply_msg->transaction_id[1] << 8;
     xid |= reply_msg->transaction_id[2];
-    if (xid != dhcp6->xid)
-    {
+    if (xid != ctx.xid) {
         // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
         //      ("transaction id mismatch reply_msg->xid(%x)!= dhcp6->xid(%x)\n",
         //          xid, dhcp6->xid));
         goto free_pbuf_and_return;
     } /* option fields could be unfold? */
-    if (dhcp6_parse_reply(p, dhcp6) != STATUS_SUCCESS)
-    {
-        Logf(true,
-             ("problem unfolding DHCPv6 message - too short on memory?\n"));
+    if (dhcp6_parse_reply(p, ctx) != STATUS_SUCCESS) {
+        Logf(true, ("problem unfolding DHCPv6 message - too short on memory?\n"));
         goto free_pbuf_and_return;
     } /* read DHCP message type */
     uint8_t msg_type = reply_msg->msgtype; /* message type is DHCP6 REPLY? */
-    if (msg_type == DHCP6_REPLY)
-    {
+    if (msg_type == DHCP6_REPLY) {
         Logf(true, ("DHCP6_REPLY received\n"));
 
-    /* in info-requesting state? */
-    if (dhcp6->state == DHCP6_STATE_REQUESTING_CONFIG) {
-      dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE, "dhcp6_recv");
-      dhcp6_handle_config_reply(netif, p);
-    } else
-
-        {
+        /* in info-requesting state? */
+        if (ctx.state == DHCP6_STATE_REQUESTING_CONFIG) {
+            dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE, "dhcp6_recv");
+            dhcp6_handle_config_reply(netif, p);
+        }
+        else {
             /* @todo: handle reply in other states? */
         }
     }
-    else
-    {
+    else {
         /* @todo: handle other message types */
     }
 free_pbuf_and_return: free_pkt_buf(p);

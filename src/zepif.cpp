@@ -239,7 +239,7 @@ zepif_init(NetworkInterface* netif)
         udp_bind_netif(state->pcb, state->init.zep_netif);
     }
     lwip_assert("udp_bind(lowpan6_broadcast_pcb) failed", err == STATUS_SUCCESS);
-    set_ip4_option(&state->pcb->so_options, SOF_BROADCAST);
+    ip4_set_ip_option(&state->pcb->so_options, SOF_BROADCAST);
     udp_recv(state->pcb, zepif_udp_recv, netif);
 
     err = lowpan6_if_init(netif);
