@@ -1,15 +1,15 @@
 #define NOMINMAX
-#include "chap_new.h"
 #include "chap_ms.h"
+#include "chap_new.h"
 #include "pppcrypt.h"
 #include "magic.h"
 #include "mppe.h"
 #include "ccp.h"
 #include "util.h"
-#include <spdlog/spdlog.h>
-#include <mbedtls/des.h>
-#include <mbedtls/sha1.h>
-#include <mbedtls/md4.h>
+#include "spdlog/spdlog.h"
+#include "mbedtls/des.h""
+#include "mbedtls/sha1.h"
+#include "mbedtls/md4.h""
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -325,10 +325,10 @@ print_msg: if (p != nullptr) { spdlog::error("MS-CHAP authentication failed: %v"
 }
 
 
-static void
-challenge_response(const uint8_t* challenge,
-                   const uint8_t password_hash[MD4_SIGNATURE_SIZE],
-                   uint8_t response[24])
+bool
+challenge_response(std::vector<uint8_t>& challenge,
+                   std::vector<uint8_t>& password_hash,
+                   std::vector<uint8_t>& response)
 {
     uint8_t ZPasswordHash[21];
     mbedtls_des_context des;
@@ -416,8 +416,9 @@ chap_ms_nt(std::vector<uint8_t>& r_challenge,
     password_hash.reserve(MD4_SIGNATURE_SIZE);
     std::wstring_convert<std::codecvt_utf8<char>> converter;
     unicode_password = converter.from_bytes(secret);
+    std::vector<uint8_t> unicode_password_vector(unicode_password.begin(), unicode_password.end());
     /* Hash the Unicode version of the secret (== password). */
-    password_hash = nt_password_hash(unicode_password);
+    password_hash = nt_password_hash(unicode_password_vector);
     challenge_response(r_challenge, password_hash, nt_response);
 }
 

@@ -30,6 +30,8 @@
  * $Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp $
  */
 #pragma once
+#include "ppp.h"
+#include <string>
 #include <vector>
 extern const struct ChapDigestType CHAP_MS_DIGEST;
 extern const struct ChapDigestType CHAP_MS_2_DIGEST;
@@ -79,7 +81,10 @@ void	ascii2unicode (const char[], int, uint8_t[]);
 
 std::vector<uint8_t>
 nt_password_hash(std::vector<uint8_t>&);
-void	challenge_response (const uint8_t *, const uint8_t *, uint8_t[24]);
+
+
+bool
+challenge_response(std::vector<uint8_t>&, std::vector<uint8_t>&, std::vector<uint8_t>&);
 void	challenge_hash (const uint8_t[16], const uint8_t *, std::string&, uint8_t[8]);
 void	chap_ms_nt (std::vector<uint8_t>& r_challenge, std::string&, std::vector<uint8_t>& nt_response, size_t
                     challenge_offset,

@@ -438,7 +438,10 @@ udp_send_chksum(UdpPcb* pcb, struct PacketBuffer* p, uint8_t have_chksum, uint16
                              pcb->remote_port,
                              have_chksum,
                              chksum);
-} /**
+}
+
+
+/**
  * @ingroup udp_raw
  * Send data to a specified address using UDP.
  *
@@ -456,21 +459,23 @@ udp_send_chksum(UdpPcb* pcb, struct PacketBuffer* p, uint8_t have_chksum, uint16
  *
  * @see udp_disconnect() udp_send()
  */
-LwipStatus
-udp_sendto(struct UdpPcb* pcb,
-           struct PacketBuffer* p,
-           const IpAddrInfo* dst_ip,
-           uint16_t dst_port)
+bool
+udp_sendto(UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& dst_ip, const uint16_t dst_port)
 {
-    return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
-} /** @ingroup udp_raw
- * Same as udp_sendto(), but with checksum */
-LwipStatus
-udp_sendto_chksum(UdpPcb* pcb,
+    return udp_sendto_chksum(pcb, p, dst_ip, dst_port, false, 0);
+}
+
+
+/**
+  * Same as udp_sendto(), but with checksum
+  *
+ */
+bool
+udp_sendto_chksum(UdpPcb& pcb,
                   PacketBuffer& p,
                   const IpAddrInfo& dst_ip,
                   uint16_t dst_port,
-                  uint8_t have_chksum,
+                  bool have_chksum,
                   uint16_t chksum)
 {
     NetworkInterface* netif;
@@ -1115,7 +1120,7 @@ udp_new_ip_type(IpAddrType type)
         set_ip_addr_type(pcb->remote_ip, type);
     }
     return pcb;
-} 
+}
 
 
 /** This function is called from netif.c when address is changed

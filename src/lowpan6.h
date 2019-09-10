@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 /** 1 second period for reassembly */
-constexpr auto kLowpan6TmrInterval = 1000;
+constexpr auto LOWPAN6_TIMER_INTERVAL = 1000;
 
 void lowpan6_tmr(void);
 

@@ -137,20 +137,28 @@ LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb,
                                         uint16_t dst_port,
                                         NetworkInterface*netif,
                                         IpAddrInfo* src_ip);
-LwipStatus            udp_sendto     (struct UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddrInfo *dst_ip, uint16_t dst_port);
+
+
+bool
+udp_sendto(UdpPcb& pcb,
+           PacketBuffer& p,
+           const IpAddrInfo& dst_ip,
+           uint16_t dst_port);
 LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
 
 LwipStatus            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  const IpAddrInfo *dst_ip, uint16_t dst_port,
                                  NetworkInterface*netif, uint8_t have_chksum,
                                  uint16_t chksum);
-LwipStatus            udp_sendto_chksum(UdpPcb *pcb,
-                                        PacketBuffer& p,
-                                        const IpAddrInfo& dst_ip,
-                                        uint16_t dst_port,
-                                        uint8_t have_chksum,
-                                        uint16_t chksum);
+
+
+bool
+udp_sendto_chksum(UdpPcb& pcb,
+                  PacketBuffer& p,
+                  const IpAddrInfo& dst_ip,
+                  uint16_t dst_port,
+                  bool have_chksum,
+                  uint16_t chksum);
 LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
                                  uint8_t have_chksum, uint16_t chksum);
 LwipStatus            udp_sendto_if_src_chksum(UdpPcb& pcb,

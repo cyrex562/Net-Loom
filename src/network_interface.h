@@ -127,11 +127,11 @@ struct NetworkInterface
     std::vector<Ip4AddrInfo> ip4_addresses;
     std::vector<Ip6AddrInfo> ip6_addresses;
     // void* state; // TODO: replace with different struct
-    DhcpContext dhcp_ctx;
-    Dhcp6Context dhcp6_ctx;
-    AutoipState auto_ip_state;
-    MldGroup mld_group;
-    PcapInterface pcap_if_private;
+    // DhcpContext dhcp_ctx;
+    // Dhcp6Context dhcp6_ctx;
+    // AutoipState auto_ip_state;
+    // MldGroup mld_group;
+    // PcapInterface pcap_if_private;
     std::vector<IgmpGroup> igmp_groups;
     std::string hostname;
     uint16_t checksum_flags;
