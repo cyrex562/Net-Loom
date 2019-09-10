@@ -211,9 +211,10 @@ enum Dhcp6Option
 /**
  *
  */
-struct Dhcp6Message
+struct Dhcp6ClientServerMessage
 {
     Dhcp6MessageType msg_type{};
+    uint8_t transaction_id[3];
     std::vector<uint8_t> data;
 };
 

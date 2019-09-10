@@ -83,7 +83,9 @@ dhcp6_set_option(Dhcp6Context& dhcp, const size_t idx, const size_t start, const
 
 void dhcp6_cleanup(NetworkInterface& netif, Dhcp6Context& ctx);
 
-LwipStatus dhcp6_enable_stateful(NetworkInterface*netif);
+
+bool
+dhcp6_enable_stateful(NetworkInterface& netif);
 
 
 bool
@@ -101,64 +103,63 @@ void dhcp6_set_ntp_servers(uint8_t num_ntp_servers, const IpAddrInfo* ntp_server
 
 
 /* receive, unfold, parse and free incoming messages */
-std::tuple<bool, Dhcp6Message>
+std::tuple<bool, Dhcp6ClientServerMessage>
 dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface& netif);
 
-static bool
+bool
 dhcp6_inc_pcb_refcount(Dhcp6Context& ctx, size_t& ref_cnt, NetworkInterface& netif);
 
-static void
+void
 dhcp6_dec_pcb_refcount(Dhcp6Context& ctx);
 
 
 
-static Dhcp6Context
-dhcp6_get_struct(NetworkInterface& netif);
+// Dhcp6Context
+// dhcp6_get_struct(NetworkInterface& netif);
 
-static void
-dhcp6_set_state(struct Dhcp6Context *dhcp6, uint8_t new_state, const char *dbg_caller);
-
-static int
-dhcp6_stateless_enabled(struct Dhcp6Context *dhcp6);
+void
+dhcp6_set_state(Dhcp6Context& ctx, uint8_t new_state);
 
 
+bool
+dhcp6_stateless_enabled(Dhcp6Context& ctx);
 
 
+Dhcp6ClientServerMessage
+dhcp6_create_msg(Dhcp6Context& dhcp6, Dhcp6MessageType message_type);
 
-static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
-                                     struct Dhcp6Context* dhcp6,
-                                     uint8_t message_type,
-                                     uint16_t opt_len_alloc,
-                                     uint16_t* options_out_len);
 
-static uint16_t dhcp6_option_short(uint16_t options_out_len,
-                                   uint8_t* options,
-                                   uint16_t value);
+size_t
+dhcp6_option_short(size_t& options_out_len,
+                   std::vector<uint8_t>& options,
+                   uint16_t value);
 
-static uint16_t dhcp6_option_optionrequest(size_t options_out_len,
-                                           uint8_t* options,
-                                           const uint16_t* req_options,
-                                           uint32_t num_req_options,
-                                           size_t max_len);
 
-static void
-dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out);
+size_t
+dhcp6_option_optionrequest(size_t options_out_len,
+                           std::vector<uint8_t>& options,
+                           std::vector<uint16_t>& req_options,
+                           size_t num_req_options);
 
-static void
-dhcp6_information_request(NetworkInterface* netif, Dhcp6Context* dhcp6);
 
-static LwipStatus
+bool
+dhcp6_msg_finalize(size_t options_out_len, PacketBuffer& p_out);
+
+void
+dhcp6_information_request(NetworkInterface& netif, Dhcp6Context& ctx);
+
+LwipStatus
 dhcp6_request_config(NetworkInterface*netif, Dhcp6Context *dhcp6);
 
-static void
+void
 dhcp6_abort_config_request(Dhcp6Context *dhcp6);
 
-static void
+void
 dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in);
 
-static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6);
+LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6);
 
-static void dhcp6_recv(void* arg,
+void dhcp6_recv(void* arg,
                        struct UdpPcb* pcb,
                        struct PacketBuffer* p,
                        const IpAddrInfo* addr,
@@ -166,7 +167,7 @@ static void dhcp6_recv(void* arg,
                        NetworkInterface* netif);
 
 
-static void
+void
 dhcp6_timeout(NetworkInterface*netif, struct Dhcp6Context *dhcp6);
 
 

@@ -33,6 +33,8 @@
 #include "lwip_debug.h"
 #include "ip.h"
 #include <cstring>
+#include <tuple>
+
 #include "spdlog/spdlog.h"
 
 
@@ -60,7 +62,7 @@ dhcp6_inc_pcb_refcount(Dhcp6Context& ctx, size_t& ref_cnt, NetworkInterface& net
         auto addr_any = create_ip_addr_ip4_any();
         if (!dhcp6_bind(ctx, addr_any, DHCP6_CLIENT_PORT)) { return false; }
         bool ok;
-        Dhcp6Message msg;
+        Dhcp6ClientServerMessage msg;
         std::tie(ok, msg) = dhcp6_recv(ctx, addr_any, DHCP6_CLIENT_PORT, netif);
         if (!ok) {
             return false;
@@ -169,29 +171,31 @@ void dhcp6_cleanup(NetworkInterface& netif, Dhcp6Context& ctx)
  * Set the DHCPv6 state
  * If the state changed, reset the number of tries.
  */
-static void
-dhcp6_set_state(struct Dhcp6Context *dhcp6, uint8_t new_state, const char *dbg_caller)
+void
+dhcp6_set_state(Dhcp6Context& ctx, uint8_t new_state)
 {
-  Logf(true, ("DHCPv6 state: %d -> %d (%s)\n",
-           dhcp6->state, new_state, dbg_caller));
-  if (new_state != dhcp6->state) {
-    dhcp6->state = new_state;
-    dhcp6->tries = 0;
-    dhcp6->request_timeout = 0;
-  }
+    spdlog::info("DHCPv6: {} -> {}", ctx.state, new_state);
+    if (new_state != ctx.state) {
+        ctx.state = new_state;
+        ctx.tries = 0;
+        ctx.request_timeout = 0;
+    }
 }
 
-static int
-dhcp6_stateless_enabled(struct Dhcp6Context *dhcp6)
+
+/**
+ *
+ */
+bool
+dhcp6_stateless_enabled(Dhcp6Context& ctx)
 {
-  if ((dhcp6->state == DHCP6_STATE_STATELESS_IDLE) ||
-      (dhcp6->state == DHCP6_STATE_REQUESTING_CONFIG)) {
-    return 1;
-  }
-  return 0;
+    if ((ctx.state == DHCP6_STATE_STATELESS_IDLE) || (ctx.state ==
+        DHCP6_STATE_REQUESTING_CONFIG)) { return true; }
+    return false;
 }
 
-/*static int
+
+/*int
 dhcp6_stateful_enabled(Dhcp6 *dhcp6)
 {
   if (dhcp6->state == DHCP6_STATE_OFF) {
@@ -214,11 +218,8 @@ dhcp6_stateful_enabled(Dhcp6 *dhcp6)
  *
  * @todo: stateful DHCPv6 not supported, yet
  */
-LwipStatus dhcp6_enable_stateful(NetworkInterface* netif)
-{
-    Logf(true, ("stateful dhcp6 not implemented yet"));
-    return ERR_VAL;
-}
+bool
+dhcp6_enable_stateful(NetworkInterface& netif) { return false; }
 
 /**
  * @ingroup dhcp6
@@ -245,7 +246,7 @@ dhcp6_enable_stateless(NetworkInterface& netif, Dhcp6Context& ctx)
             "dhcp6_enable_stateless(): switching from stateful to stateless DHCPv6");
     }
     spdlog::info("dhcp6_enable_stateless(): stateless DHCPv6 enabled");
-    dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE, "dhcp6_enable_stateless");
+    dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE);
     return true;
 }
 
@@ -257,15 +258,13 @@ dhcp6_enable_stateless(NetworkInterface& netif, Dhcp6Context& ctx)
 void
 dhcp6_disable(NetworkInterface& netif, Dhcp6Context& ctx)
 {
-    // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_disable(netif=%p) %c%c%d\n", (void *)netif, netif->name[0], netif->name[1], (uint16_t)netif->num));
-    // struct Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
     if (ctx.state != DHCP6_STATE_OFF) {
-        Logf(true,
-             ("dhcp6_disable(): DHCPv6 disabled (old state: %s)\n", (
-                 dhcp6_stateless_enabled(ctx) ? "stateless" : "stateful")));
-        dhcp6_set_state(ctx, DHCP6_STATE_OFF, "dhcp6_disable");
+        spdlog::info("dhcp6_disable(): DHCPv6 disabled (old state: {}})\n",
+                     dhcp6_stateless_enabled(ctx) ? "stateless" : "stateful");
+        dhcp6_set_state(ctx, DHCP6_STATE_OFF);
         if (ctx.pcb_allocated != 0) {
-            dhcp6_dec_pcb_refcount(); /* free DHCPv6 PCB if not needed any more */
+            dhcp6_dec_pcb_refcount(ctx);
+            /* free DHCPv6 PCB if not needed any more */
             ctx.pcb_allocated = 0;
         }
     }
@@ -281,129 +280,122 @@ dhcp6_disable(NetworkInterface& netif, Dhcp6Context& ctx)
  * @param options_out_len option length on exit
  * @return a PacketBuffer for the message
  */
-static struct PacketBuffer* dhcp6_create_msg(NetworkInterface* netif,
-                                     struct Dhcp6Context* dhcp6,
-                                     uint8_t message_type,
-                                     uint16_t opt_len_alloc,
-                                     uint16_t* options_out_len)
+Dhcp6ClientServerMessage
+dhcp6_create_msg(Dhcp6Context& dhcp6, Dhcp6MessageType message_type)
 {
-    if (netif == nullptr)
-    {
-        return nullptr;
-    }
-    if (dhcp6 == nullptr)
-    {
-        return nullptr;
-    }
-    // struct PacketBuffer* p_out = pbuf_alloc();
-    PacketBuffer p_out{};
-    if (p_out == nullptr)
-    {
-        Logf(true,
-             ("dhcp6_create_msg(): could not allocate pbuf\n"));
-        return nullptr;
-    }
-    lwip_assert("dhcp6_create_msg: check that first pbuf can hold struct dhcp6_msg",
-                (p_out->len >= sizeof(struct Dhcp6Message) + opt_len_alloc));
     /* @todo: limit new xid for certain message types? */
     /* reuse transaction identifier in retransmissions */
-    if (dhcp6->tries == 0)
+    if (dhcp6.tries == 0)
     {
-        dhcp6->xid = lwip_rand() & 0xFFFFFF;
+        dhcp6.xid = lwip_rand() & 0xFFFFFF;
     }
-    // Logf(true | LWIP_DBG_TRACE,
-    //      ("transaction id xid(%x)\n", dhcp6->xid));
-    struct Dhcp6Message* msg_out = (struct Dhcp6Message *)p_out->payload;
-    memset(msg_out, 0, sizeof(struct Dhcp6Message) + opt_len_alloc);
-    msg_out->msg_type = message_type;
-    msg_out->transaction_id[0] = (uint8_t)(dhcp6->xid >> 16);
-    msg_out->transaction_id[1] = (uint8_t)(dhcp6->xid >> 8);
-    msg_out->transaction_id[2] = (uint8_t)dhcp6->xid;
-    *options_out_len = 0;
-    return p_out;
+
+    // cast Dhcp6Message p_out.pay
+    Dhcp6ClientServerMessage msg{};
+
+    msg.msg_type = message_type;
+    msg.transaction_id[0] = uint8_t(dhcp6.xid >> 16);
+    msg.transaction_id[1] = uint8_t(dhcp6.xid >> 8);
+    msg.transaction_id[2] = uint8_t(dhcp6.xid);
+    return msg;
 }
 
-static uint16_t dhcp6_option_short(uint16_t options_out_len,
-                                   uint8_t* options,
-                                   uint16_t value)
+/**
+ *
+ */
+size_t
+dhcp6_option_short(size_t& options_out_len,
+                   std::vector<uint8_t>& options,
+                   uint16_t value)
 {
-    options[options_out_len++] = (uint8_t)((value & 0xff00U) >> 8);
-    options[options_out_len++] = (uint8_t)(value & 0x00ffU);
+    options[options_out_len++] = uint8_t((value & 0xff00U) >> 8);
+    options[options_out_len++] = uint8_t(value & 0x00ffU);
     return options_out_len;
 }
 
-static uint16_t dhcp6_option_optionrequest(size_t options_out_len,
-                                           uint8_t* options,
-                                           const uint16_t* req_options,
-                                           uint32_t num_req_options,
-                                           size_t max_len)
+
+/**
+ *
+ */
+size_t
+dhcp6_option_optionrequest(size_t options_out_len,
+                           std::vector<uint8_t>& options,
+                           std::vector<uint16_t>& req_options,
+                           size_t num_req_options)
 {
-    lwip_assert(
-        "dhcp6_option_optionrequest: options_out_len + sizeof(struct dhcp6_msg) + addlen <= max_len",
-        sizeof(struct Dhcp6Message) + options_out_len + 4U + (2U * num_req_options) <=
-        max_len);
+    // lwip_assert(
+    //     "dhcp6_option_optionrequest: options_out_len + sizeof(struct dhcp6_msg) + addlen <= max_len",
+    //     sizeof(struct Dhcp6ClientServerMessage) + options_out_len + 4U + (2U *
+    //         num_req_options) <= max_len);
     auto ret = dhcp6_option_short(options_out_len, options, DHCP6_OPTION_ORO);
     ret = dhcp6_option_short(ret, options, 2 * num_req_options);
-    for (size_t i = 0; i < num_req_options; i++)
-    {
+    for (size_t i = 0; i < num_req_options; i++) {
         ret = dhcp6_option_short(ret, options, req_options[i]);
     }
     return ret;
 }
 
+
 /* All options are added, shrink the PacketBuffer to the required size */
-static void
-dhcp6_msg_finalize(uint16_t options_out_len, struct PacketBuffer *p_out)
+bool
+dhcp6_msg_finalize(size_t options_out_len, PacketBuffer& p_out)
 {
   /* shrink the PacketBuffer to the actual content length */
-  pbuf_realloc(p_out);
+  //pbuf_realloc(p_out);
+    return false;
 }
 
 
-static void
-dhcp6_information_request(NetworkInterface* netif, Dhcp6Context* dhcp6)
+void
+dhcp6_information_request(NetworkInterface& netif, Dhcp6Context& ctx)
 {
     const uint16_t requested_options[] = {
-        DHCP6_OPTION_DNS_SERVERS, DHCP6_OPTION_DOMAIN_LIST, DHCP6_OPTION_SNTP_SERVERS
-    };
+            DHCP6_OPTION_DNS_SERVERS,
+            DHCP6_OPTION_DOMAIN_LIST,
+            DHCP6_OPTION_SNTP_SERVERS
+        };
     uint16_t options_out_len;
-    Logf(true, "dhcp6_information_request()\n");
+    spdlog::info("dhcp6_information_request()");
+
     /* create and initialize the DHCP message header */
-    const auto p_out = dhcp6_create_msg(netif, dhcp6, DHCP6_INFOREQUEST, 4 + sizeof(requested_options),
-                                        &options_out_len);
-    if (p_out != nullptr)
-    {
-        const auto msg_out = reinterpret_cast<struct Dhcp6Message *>(p_out->payload);
-        const auto options = reinterpret_cast<uint8_t *>(msg_out + 1);
-        Logf(true, "dhcp6_information_request: making request\n");
+    Dhcp6ClientServerMessage msg = dhcp6_create_msg(ctx, DHCP6_INFO_REQUEST);
 
-        options_out_len = dhcp6_option_optionrequest(options_out_len, options, requested_options, LWIP_ARRAYSIZE(requested_options), p_out->len);
-        LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, DHCP6_STATE_REQUESTING_CONFIG, msg_out,
-                                       DHCP6_INFOREQUEST, options_out_len, p_out->len);
-        dhcp6_msg_finalize(options_out_len, p_out);
+    // const auto options = reinterpret_cast<uint8_t *>(msg_out + 1);
 
-        const auto err = udp_sendto_if(dhcp6_pcb, p_out, &dhcp6_All_DHCP6_Relay_Agents_and_Servers, DHCP6_SERVER_PORT,
-                                       netif);
-        free_pkt_buf(p_out);
-        Logf(true, "dhcp6_information_request: INFOREQUESTING -> %d\n", err);
-    }
-    else
-    {
-        Logf(true,
-             "dhcp6_information_request: could not allocate DHCP6 request\n");
-    }
-    dhcp6_set_state(dhcp6, DHCP6_STATE_REQUESTING_CONFIG, "dhcp6_information_request");
-    if (dhcp6->tries < 255)
-    {
-        dhcp6->tries++;
-    }
+
+
+    spdlog::info("dhcp6_information_request: making request");
+
+    options_out_len = dhcp6_option_optionrequest(options_out_len,
+                                                 msg.options,
+                                                 requested_options,
+                                                 LWIP_ARRAYSIZE(requested_options));
+    // LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif,
+    //                                dhcp6,
+    //                                DHCP6_STATE_REQUESTING_CONFIG,
+    //                                msg_out,
+    //                                DHCP6_INFOREQUEST,
+    //                                options_out_len,
+    //                                msg->len);
+    dhcp6_msg_finalize(options_out_len, msg);
+    const auto err = udp_sendto_if(dhcp6_pcb,
+                                   msg,
+                                   &dhcp6_All_DHCP6_Relay_Agents_and_Servers,
+                                   DHCP6_SERVER_PORT,
+                                   netif);
+    free_pkt_buf(msg);
+    Logf(true, "dhcp6_information_request: INFOREQUESTING -> %d\n", err);
+    dhcp6_set_state(dhcp6, DHCP6_STATE_REQUESTING_CONFIG);
+    if (dhcp6->tries < 255) { dhcp6->tries++; }
     const auto msecs = uint16_t((dhcp6->tries < 6 ? 1 << dhcp6->tries : 60) * 1000);
-    dhcp6->request_timeout = uint16_t((msecs + DHCP6_TIMER_MSECS - 1) / DHCP6_TIMER_MSECS);
-    Logf(true, "dhcp6_information_request(): set request timeout %d msecs\n",
-         msecs);
+    dhcp6->request_timeout =
+        uint16_t((msecs + DHCP6_TIMER_MSECS - 1) / DHCP6_TIMER_MSECS);
+    Logf(true, "dhcp6_information_request(): set request timeout %d msecs\n", msecs);
 }
 
-static LwipStatus
+
+
+LwipStatus
 dhcp6_request_config(NetworkInterface*netif, Dhcp6Context *dhcp6)
 {
   /* stateless mode enabled and no request running? */
@@ -419,19 +411,19 @@ dhcp6_request_config(NetworkInterface*netif, Dhcp6Context *dhcp6)
 ///
 ///
 ///
-static void
+void
 dhcp6_abort_config_request(Dhcp6Context *dhcp6)
 {
   if (dhcp6->state == DHCP6_STATE_REQUESTING_CONFIG) {
     /* abort running request */
-    dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE, "dhcp6_abort_config_request");
+    dhcp6_set_state(dhcp6, DHCP6_STATE_STATELESS_IDLE);
   }
 }
 
 
 /// Handle a REPLY to INFOREQUEST
 /// This parses DNS and NTP server addresses from the reply.
-static void
+void
 dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in)
 {
     Dhcp6Context* dhcp6 = get_netif_dhcp6_ctx(netif);
@@ -510,10 +502,10 @@ void dhcp6_nd6_ra_trigger(NetworkInterface* netif,
  * Extract the DHCPv6 options (offset + length) so that we can later easily
  * check for them or extract the contents.
  */
-static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6)
+LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context* dhcp6)
 {
-    auto msg_in = reinterpret_cast<struct Dhcp6Message *>(p->payload); /* parse options */
-    const auto options_idx = sizeof(struct Dhcp6Message);
+    auto msg_in = reinterpret_cast<struct Dhcp6ClientServerMessage *>(p->payload); /* parse options */
+    const auto options_idx = sizeof(struct Dhcp6ClientServerMessage);
     /* parse options to the end of the received packet */
     const auto offset_max = p->tot_len;
     auto offset = options_idx; /* at least 4 byte to read? */
@@ -582,13 +574,13 @@ static LwipStatus dhcp6_parse_reply(struct PacketBuffer* p, struct Dhcp6Context*
 }
 
 
-std::tuple<bool, Dhcp6Message>
+std::tuple<bool, Dhcp6ClientServerMessage>
 dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface& netif)
 {
-    Dhcp6Message parsed_message{};
-    Dhcp6Message reply_message{};
+    Dhcp6ClientServerMessage parsed_message{};
+    Dhcp6ClientServerMessage reply_message{};
     // auto dhcp6 = get_netif_dhcp6_ctx(netif);
-    auto reply_msg = reinterpret_cast<Dhcp6Message *>(p->payload
+    auto reply_msg = reinterpret_cast<Dhcp6ClientServerMessage *>(p->payload
     ); /* Caught DHCPv6 message from netif that does not have DHCPv6 enabled? -> not interested */
     if ((ctx == nullptr) || (ctx.pcb_allocated == 0)) { goto free_pbuf_and_return; } //
     if (!ip_addr_is_v6(addr)) {
@@ -605,7 +597,7 @@ dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface&
     // ;
     // ;
     // ;
-    if (p->len < sizeof(struct Dhcp6Message)) {
+    if (p->len < sizeof(struct Dhcp6ClientServerMessage)) {
         Logf(true, ("DHCPv6 reply message or PacketBuffer too short\n"));
         goto free_pbuf_and_return;
     } /* match transaction ID against what we expected */
@@ -628,7 +620,7 @@ dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface&
 
         /* in info-requesting state? */
         if (ctx.state == DHCP6_STATE_REQUESTING_CONFIG) {
-            dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE, "dhcp6_recv");
+            dhcp6_set_state(ctx, DHCP6_STATE_STATELESS_IDLE);
             dhcp6_handle_config_reply(netif, p);
         }
         else {
@@ -647,7 +639,7 @@ free_pbuf_and_return: free_pkt_buf(p);
  * The timer that was started with the DHCPv6 request has
  * timed out, indicating no response was received in time.
  */
-static void
+void
 dhcp6_timeout(NetworkInterface*netif, struct Dhcp6Context *dhcp6)
 {
   Logf(true, ("dhcp6_timeout()\n"));
