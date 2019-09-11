@@ -35,24 +35,26 @@
 #include <vector>
 extern const struct ChapDigestType CHAP_MS_DIGEST;
 extern const struct ChapDigestType CHAP_MS_2_DIGEST;
-
-
-#define SHA1_SIGNATURE_SIZE	20
-#define MD4_SIGNATURE_SIZE	16	/* 16 bytes in a MD4 message digest */
-#define MAX_NT_PASSWORD		256	/* Max (Unicode) chars in an NT pass */
-
-#define MS_CHAP_RESPONSE_LEN	49	/* Response length for MS-CHAP */
-#define MS_CHAP2_RESPONSE_LEN	49	/* Response length for MS-CHAPv2 */
-#define MS_AUTH_RESPONSE_LENGTH	40	/* MS-CHAPv2 authenticator response, */
-                    /* as ASCII */
+const size_t LANMAN_KEY_LEN = 8;
+constexpr auto SHA1_SIGNATURE_SIZE = 20;
+constexpr auto MD4_SIGNATURE_SIZE = 16; /* 16 bytes in a MD4 message digest */
+constexpr auto MAX_NT_PASSWORD = 256; /* Max (Unicode) chars in an NT pass */
+constexpr auto MS_CHAP_RESPONSE_LEN = 49; /* Response length for MS-CHAP */
+constexpr auto MS_CHAP2_RESPONSE_LEN = 49; /* Response length for MS-CHAPv2 */
+constexpr auto MS_AUTH_RESPONSE_LENGTH =
+    40; /* MS-CHAPv2 authenticator response,  as ASCII */
 
 /* Error codes for MS-CHAP failure messages. */
-#define MS_CHAP_ERROR_RESTRICTED_LOGON_HOURS	646
-#define MS_CHAP_ERROR_ACCT_DISABLED		647
-#define MS_CHAP_ERROR_PASSWD_EXPIRED		648
-#define MS_CHAP_ERROR_NO_DIALIN_PERMISSION	649
-#define MS_CHAP_ERROR_AUTHENTICATION_FAILURE	691
-#define MS_CHAP_ERROR_CHANGING_PASSWORD		709
+enum MsChapErrorCode
+{
+    MS_CHAP_ERROR_RESTRICTED_LOGON_HOURS= 646,
+    MS_CHAP_ERROR_ACCT_DISABLED = 647,
+    MS_CHAP_ERROR_PASSWD_EXPIRED = 648,
+    MS_CHAP_ERROR_NO_DIALIN_PERMISSION =649,
+    MS_CHAP_ERROR_AUTHENTICATION_FAILURE =691,
+    MS_CHAP_ERROR_CHANGING_PASSWORD = 709,
+};
+
 
 /*
  * Offsets within the response field for MS-CHAP
@@ -84,36 +86,38 @@ nt_password_hash(std::vector<uint8_t>&);
 
 
 std::tuple<bool, std::vector<uint8_t>>
-challenge_response(std::vector<uint8_t>&, std::vector<uint8_t>&, std::vector<uint8_t>&);
+challenge_response(std::vector<uint8_t>&, size_t challenge_offset, std::vector<uint8_t>&);
 
-
-std::vector<bool, std::vector<uint8_t>>
+std::tuple<bool, std::vector<uint8_t>>
 challenge_hash(std::vector<uint8_t>& peer_challenge, std::vector<uint8_t>&, std::string&);
 void	chap_ms_nt (std::vector<uint8_t>& r_challenge, std::string&, std::vector<uint8_t>& nt_response, size_t
                     challenge_offset,
                     size_t response_offset);
 
-
-bool
-ChapMS2_NT(std::vector<uint8_t>&, std::vector<uint8_t>&, std::string&, std::string&, std::vector<
-           uint8_t>&);
-void	GenerateAuthenticatorResponsePlain
+std::tuple<bool, std::vector<uint8_t>>
+chap_ms2_nt(std::vector<uint8_t>&,
+            std::vector<uint8_t>&,
+            std::string&,
+            std::string&);
+void	ge_authenticator_response_plain
             (std::string&,
              uint8_t[24],
              const uint8_t[16],
              const uint8_t *,
              std::string&,
              uint8_t[41]);
-void chap_ms_lanman (std::vector<uint8_t>&, std::string&, std::vector<uint8_t>&, size_t rchallenge_offset, size_t
-                     response_offset);
 
+std::tuple<bool, std::vector<uint8_t>>
+chap_ms_lanman(std::vector<uint8_t>&,
+               std::string&,
+               size_t rchallenge_offset);
 
-void GenerateAuthenticatorResponse(const uint8_t PasswordHashHash[MD4_SIGNATURE_SIZE],
-                                          uint8_t NTResponse[24],
-                                          const uint8_t PeerChallenge[16],
-                                          const uint8_t *rchallenge,
-                                          std::string& username,
-                                          uint8_t authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
+std::tuple<bool, std::vector<uint8_t>>
+gen_authenticator_resp(std::vector<uint8_t>& password_hash_hash,
+                       std::vector<uint8_t>& nt_response,
+                       std::vector<uint8_t>& peer_challenge,
+                       std::vector<uint8_t>& rchallenge,
+                       std::string& username);
 
 
 bool
@@ -144,9 +148,12 @@ ChapMS2(PppPcb* pcb,
                 /* Has meaning only with MS-CHAP challenges */
 
 /* For MPPE debug */
-constexpr char MSCHAP_CHALLENGE[] = "[]|}{?/><,`!2&&(";
+constexpr char* MSCHAP_CHALLENGE = "[]|}{?/><,`!2&&(";
 
-constexpr char MSCHAP2_PEER_CHALLENGE[] = "!@\#$%^&*()_+:3|~";
+constexpr char* MSCHAP2_PEER_CHALLENGE = "!@\#$%^&*()_+:3|~";
+
+constexpr char* STD_TEXT = "KGS!@#$%";
+
 
 
 /* Use "[]|}{?/><,`!2&&(" (sans quotes) for RFC 3079 MS-CHAPv2 test value */
@@ -160,7 +167,7 @@ constexpr char MSCHAP2_PEER_CHALLENGE[] = "!@\#$%^&*()_+:3|~";
 /*
      * "Magic" constants used in response generation, from RFC 2759.
      */
-static const uint8_t Magic1[39] = /* "Magic server to client signing constant" */{
+static const uint8_t MAGIC_1[39] = /* "Magic server to client signing constant" */{
     0x4D,
     0x61,
     0x67,
@@ -201,7 +208,7 @@ static const uint8_t Magic1[39] = /* "Magic server to client signing constant" *
     0x6E,
     0x74
 };
-static const uint8_t Magic2[41] = /* "Pad to make it do more than one iteration" */{
+static const uint8_t MAGIC_2[41] = /* "Pad to make it do more than one iteration" */{
     0x50,
     0x61,
     0x64,

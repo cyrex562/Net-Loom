@@ -34,13 +34,22 @@ ascii_to_unicode(const std::string& str)
     const size_t wstr_len = str.length() * 2;
     wchar_t* wstr_raw = new wchar_t[wstr_len];
     memset(wstr_raw, 0, wstr_len);
+
+#ifdef _WIN32
     if (MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.size(), wstr_raw, wstr_len) == 0
     ) { return std::make_tuple(false, ret_wstr); }
-#ifdef _MSVC_LANG
-    ret_wstr = std::wstring(wstr_raw);
+#elif unix
+    // todo: call appropriate native function on Unix
+#elif __APPLE__
+    // todo: call appropriate native function on Mac OS X
+#elif __linux__
+    // todo: call appropriate native function on Linux
+#elif __FreeBSD__
+    // todo: call appropriate native function on Free BSD
 #else
-    // todo: define use of the posix standard
+    // todo: throw an error/exception
 #endif
+    ret_wstr = std::wstring(wstr_raw);
 
     // std::wstring wstr;
     // wstr.reserve(str.length() * 2);
