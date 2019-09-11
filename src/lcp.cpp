@@ -1490,7 +1490,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                     {
                         PUTCHAR(CILEN_CHAP, nakoutp);
                         PUTSHORT(PPP_CHAP, nakoutp);
-                        PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                        ppp_put_char(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
                     }
                     break;
                 }
@@ -1530,7 +1530,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                     PUTCHAR(CI_AUTHTYPE, nakoutp);
                     PUTCHAR(CILEN_CHAP, nakoutp);
                     PUTSHORT(PPP_CHAP, nakoutp);
-                    PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                    ppp_put_char(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
                     break;
                 }
                 ho->chap_mdtype = chap_mdtype_d(cichar); /* save md type */
@@ -1555,7 +1555,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                     {
                         PUTCHAR(CILEN_CHAP, nakoutp);
                         PUTSHORT(PPP_CHAP, nakoutp);
-                        PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                        ppp_put_char(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
                     }
                     else if (true)
                     {
@@ -1584,7 +1584,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
             {
                 PUTCHAR(CILEN_CHAP, nakoutp);
                 PUTSHORT(PPP_CHAP, nakoutp);
-                PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
+                ppp_put_char(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
             }
             else if (true)
             {

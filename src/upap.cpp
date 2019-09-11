@@ -413,11 +413,11 @@ upap_sresp(PppPcb& pcb, const uint8_t code, const uint8_t id, std::string& msg)
     size_t index = 0;
     PacketBuffer p = init_pkt_buf();
     ppp_make_header(p.bytes, PPP_PAP, index);
-    PUTCHAR(code, p.bytes, index);
-    PUTCHAR(id, p.bytes, index);
-    PUTSHORT(outlen, p.bytes, index);
-    PUTCHAR(msg.length(), p.bytes, index);
-    PUTSTRING(msg, p.bytes, index);
+    ppp_put_char(code, p.bytes, index);
+    ppp_put_char(id, p.bytes, index);
+    ppp_put_short(outlen, p.bytes, index);
+    ppp_put_char(msg.length(), p.bytes, index);
+    ppp_put_string(msg, p.bytes, index);
     return ppp_write(pcb, p);
 }
 

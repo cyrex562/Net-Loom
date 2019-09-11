@@ -256,14 +256,14 @@ inline std::tuple<bool,uint8_t> GETCHAR(std::vector<uint8_t>& cp, size_t index)
 }
 
 
-inline void PUTCHAR(uint8_t val, std::vector<uint8_t>& cp, size_t& index)
+inline void ppp_put_char(uint8_t val, std::vector<uint8_t>& cp, size_t& index)
 {
     cp.push_back(val);
     index += 1;
 }
 
 
-inline void PUTSTRING(std::string& str, std::vector<uint8_t>& cp, size_t& index)
+inline void ppp_put_string(std::string& str, std::vector<uint8_t>& cp, size_t& index)
 {
     for (auto&c : str) {
         cp.push_back(c);
@@ -289,7 +289,7 @@ inline std::tuple<bool, uint16_t> GETSHORT(std::vector<uint8_t>& cp, size_t& ind
 }
 
 
-inline void PUTSHORT(uint16_t s, std::vector<uint8_t>& cp, size_t& index)
+inline void ppp_put_short(uint16_t s, std::vector<uint8_t>& cp, size_t& index)
 {
     cp.push_back(s >> 8);
     cp.push_back(s);
@@ -372,9 +372,9 @@ ppp_make_header(std::vector<uint8_t>& p, PppProtoFieldValue t, size_t& index)
 {
     auto put_size = 1 + 1 + 2;
     if (p.size() < put_size) { p.resize(p.size() + put_size); }
-    PUTCHAR(PPP_ALLSTATIONS, p, index);
-    PUTCHAR(PPP_UI, p, index);
-    PUTSHORT(t, p, index);
+    ppp_put_char(PPP_ALLSTATIONS, p, index);
+    ppp_put_char(PPP_UI, p, index);
+    ppp_put_short(t, p, index);
 }
 
 /* Procedures exported from auth.c */

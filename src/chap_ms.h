@@ -77,19 +77,26 @@ extern const struct ChapDigestType CHAP_MS_2_DIGEST;
 #define MS_CHAP2_AUTHENTICATEE 0
 #define MS_CHAP2_AUTHENTICATOR 1
 
-void	ascii2unicode (const char[], int, uint8_t[]);
+// void	ascii_to_unicode (const char[], int, uint8_t[]);
 
 std::vector<uint8_t>
 nt_password_hash(std::vector<uint8_t>&);
 
 
-bool
+std::tuple<bool, std::vector<uint8_t>>
 challenge_response(std::vector<uint8_t>&, std::vector<uint8_t>&, std::vector<uint8_t>&);
-void	challenge_hash (const uint8_t[16], const uint8_t *, std::string&, uint8_t[8]);
+
+
+std::vector<bool, std::vector<uint8_t>>
+challenge_hash(std::vector<uint8_t>& peer_challenge, std::vector<uint8_t>&, std::string&);
 void	chap_ms_nt (std::vector<uint8_t>& r_challenge, std::string&, std::vector<uint8_t>& nt_response, size_t
                     challenge_offset,
                     size_t response_offset);
-void	ChapMS2_NT (const uint8_t *, const uint8_t[16], std::string&, std::string&, uint8_t[24]);
+
+
+bool
+ChapMS2_NT(std::vector<uint8_t>&, std::vector<uint8_t>&, std::string&, std::string&, std::vector<
+           uint8_t>&);
 void	GenerateAuthenticatorResponsePlain
             (std::string&,
              uint8_t[24],

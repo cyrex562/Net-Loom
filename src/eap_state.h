@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <cstdint>
+#include <vector>
 
 constexpr auto EAP_MAX_CHALLENGE_LENGTH = 24;
 
