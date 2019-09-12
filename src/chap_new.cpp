@@ -37,55 +37,18 @@
 #include "ppp_opts.h"
 #include "ppp.h"
 #include "spdlog/spdlog.h"
-/*
- * Command-line options.
- */
-// static option_t chap_option_list[] = {
-//     {
-//         "chap-restart", o_int, &chap_timeout_time,
-//         "Set timeout for CHAP", OPT_PRIO
-//     },
-//     {
-//         "chap-max-challenge", o_int, &pcb->settings.chap_max_transmits,
-//         "Set max #xmits for challenge", OPT_PRIO
-//     },
-//     {
-//         "chap-interval", o_int, &pcb->settings.chap_rechallenge_time,
-//         "Set interval for rechallenge", OPT_PRIO
-//     },
-//     {NULL}
-// };
-
-
-/* Values for flags in chap_client_state and chap_server_state */
-// constexpr auto kLowerup = 1;
-// constexpr auto kAuthStarted = 2;
-// constexpr auto kAuthDone = 4;
-// constexpr auto kAuthFailed = 8;
-// constexpr auto kTimeoutPending = 0x10;
-// constexpr auto kChallengeValid = 0x20;
 
 /*
  * Prototypes.
  */
 
-
-
-/* List of digest types that we know about */
-// static const struct ChapDigestType* chap_digests[] = {
-//     &kMd5Digest,
-//     &kChapmsDigest,
-//     &kChapms2Digest,
-//     nullptr
-// };
-
-/*
- * chap_init - reset to initial state.
+/**
+ * Reset to initial state.
  */
-static void
-chap_init(PppPcb* pcb)
+bool
+chap_init(PppPcb& pcb)
 {
-
+    return true;
 }
 
 /*
@@ -214,7 +177,7 @@ chap_timeout(PppPcb& pcb)
 
     PacketBuffer p = init_pkt_buf();
 
-    memcpy(p.bytes.data(), pcb.chap_server.challenge.data.bytes(), pcb.chap_server.challenge_pktlen);
+    memcpy(p.data.data(), pcb.chap_server.challenge.data(), pcb.chap_server.challenge_pktlen);
 
     ppp_write(pcb, p);
     ++pcb.chap_server.challenge_xmits;
@@ -226,61 +189,66 @@ chap_timeout(PppPcb& pcb)
     return true;
 }
 
-//
-// generate a challenge string and format
-// the challenge packet in pcb->chap_server.challenge_pkt.
-//
+
+/**
+ * generate a challenge string and format the challenge packet in
+ * pcb.chap_server.challenge_pkt
+ */
 void
 chap_generate_challenge(PppPcb& pcb)
 {
     auto p = pcb.chap_server.challenge;
-    ppp_make_header(p, PPP_CHAP);
-    auto p_ptr = p.data();
-    p_ptr += CHAP_HDR_LEN;
+    size_t index = 0;
+    ppp_make_header(p, PPP_CHAP, index);
+    // auto p_ptr = p.data();
+    // p_ptr += CHAP_HDR_LEN;
+    index += CHAP_HDR_LEN;
     // todo: generate challenge based on digest type
     //pcb.chap_server.digest->generate_challenge(pcb, p);
-    const auto clen = *p_ptr;
+    const auto clen = p[index];
     const auto nlen = pcb.chap_server.name.length();
-    memcpy(p_ptr + 1 + clen, pcb.chap_server.name.c_str(), nlen);
+    std::copy(pcb.chap_server.name.begin(),
+              pcb.chap_server.name.end(),
+              p.begin() + index + 1 + clen);
     const auto len = CHAP_HDR_LEN + 1 + clen + nlen;
     pcb.chap_server.challenge_pktlen = PPP_HDRLEN + len;
-    p_ptr = pcb.chap_server.challenge.data() + PPP_HDRLEN;
-    p[0] = CHAP_CHALLENGE;
-    p[1] = ++pcb.chap_server.id;
-    p[2] = len >> 8;
-    p[3] = len;
+    // p_ptr = pcb.chap_server.challenge.data() + PPP_HDRLEN;
+    p[0 + PPP_HDRLEN] = CHAP_CHALLENGE;
+    p[1 + PPP_HDRLEN] = ++pcb.chap_server.id;
+    p[2 + PPP_HDRLEN] = len >> 8;
+    p[3 + PPP_HDRLEN] = len;
 }
 
 /*
  * chap_handle_response - check the response to our challenge.
  */
-static void
-chap_handle_response(PppPcb& pcb,
-                     int code,
-                     std::vector<uint8_t>& pkt)
+bool
+chap_handle_response(PppPcb& pcb, int code, std::vector<uint8_t>& pkt)
 {
     int response_len;
-    // const char* name = nullptr; /* initialized to shut gcc up */
     std::string name;
-    char rname[MAXNAMELEN + 1];
-    char message[256];
+    std::string rname;
+    rname.reserve(MAXNAMELEN + 1);
+    std::string message;
+    message.reserve(256);
     if ((pcb.chap_server.flags.lower_up) == false)
     {
-        return;
+        return false;
     }
     if (code != pcb.chap_server.challenge[PPP_HDRLEN + 1] || pkt.size() < 2)
     {
-        return;
+        return false;
     }
     if (pcb.chap_server.flags.challenge_valid)
     {
-        uint8_t* response = pkt.data();
+        std::vector<uint8_t> response(pkt);
+        // uint8_t* response = pkt.data();
         bool ok = true;
         uint8_t response_len = 0;
         std::tie(ok, response_len) = GETCHAR(pkt, 0);
         // len -= response_len + 1; /* length of name */
-        name = reinterpret_cast<char *>(response) + response_len;
-
+        // name = reinterpret_cast<char *>(response) + response_len;
+        std::copy(response.begin(), response.begin() + response_len, name.begin());
         if (pcb.chap_server.flags.timeout_pending)
         {
             pcb.chap_server.flags.timeout_pending = false;
@@ -295,71 +263,86 @@ chap_handle_response(PppPcb& pcb,
             /* Null terminate and clean remote name. */
             // ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
             // name = rname;
+            rname = fmt::format("{}v", name);
+            name = rname;
         }
+        std::vector<uint8_t> challenge_part (pcb.chap_server.challenge.begin() + PPP_HDRLEN + CHAP_HDR_LEN, pcb.chap_server.challenge.end());
         ok = chap_verify_response(pcb,
                                   name,
                                   pcb.chap_server.name,
                                   code,
-                                  pcb.chap_server.challenge + PPP_HDRLEN + CHAP_HDR_LEN,
+                                  challenge_part,
                                   response,
                                   message,
                                   sizeof(message));
 
         if (!ok)
         {
-            pcb.chap_server.flags |= kAuthFailed;
-            ppp_warn("Peer %q failed CHAP authentication", name);
+            pcb.chap_server.flags.auth_failed = true;
+            spdlog::warn("peer {} failed CHAP authentication", name);
+            return false;
         }
     }
-    else if ((pcb.chap_server.flags & kAuthDone) == 0)
+    else if ((pcb.chap_server.flags.auth_done) == 0)
     {
-        return;
-    } /* send the response */
-    const auto mlen = strlen(message);
-    len = mlen + CHAP_HDR_LEN;
-    PacketBuffer p = ppp_make_header();
+        return false;
+    }
 
-    auto outp = static_cast<unsigned char *>(p->payload);
-    ppp_make_header(outp, PPP_CHAP);
+    /* send the response */
+    size_t mlen = message.size();
+    size_t len = mlen + CHAP_HDR_LEN;
+    size_t index = 0;
+    std::vector<uint8_t> packet_data;
+    ppp_make_header(packet_data, PPP_CHAP, index);
 
-    outp[0] = (pcb.chap_server.flags & kAuthFailed) ? CHAP_FAILURE : CHAP_SUCCESS;
-    outp[1] = code;
-    outp[2] = len >> 8;
-    outp[3] = len;
-    if (mlen > 0)
-        memcpy(outp + CHAP_HDR_LEN, message, mlen);
-    ppp_write(pcb, p);
+    // auto outp = static_cast<unsigned char *>(p->payload);
+    // ppp_make_header(outp, PPP_CHAP);
 
-    if (pcb.chap_server.flags & kChallengeValid)
+    packet_data[0] = (pcb.chap_server.flags.auth_failed) ? CHAP_FAILURE : CHAP_SUCCESS;
+    packet_data[1] = code;
+    packet_data[2] = len >> 8;
+    packet_data[3] = len;
+    if (mlen > 0) { std::copy(message.begin(), message.begin() + mlen, packet_data.begin() + CHAP_HDR_LEN);
+    }
+    PacketBuffer _pkt{};
+    _pkt.data = packet_data;
+    if (!ppp_write(pcb, _pkt)) {
+        return false;
+    }
+
+    if (pcb.chap_server.flags.challenge_valid)
     {
-        pcb.chap_server.flags &= ~kChallengeValid;
-        if (!(pcb.chap_server.flags & kAuthDone) && !(pcb.chap_server.flags & kAuthFailed))
+        pcb.chap_server.flags.challenge_valid = false;
+        if (!(pcb.chap_server.flags.auth_done) && !(pcb.chap_server.flags.auth_failed))
         {
         }
-        if (pcb.chap_server.flags & kAuthFailed)
+        if (pcb.chap_server.flags.auth_failed)
         {
             auth_peer_fail(pcb, PPP_CHAP);
+            // todo: check return value
         }
         else
         {
-            if ((pcb.chap_server.flags & kAuthDone) == 0)
+            if ((pcb.chap_server.flags.auth_done) == 0)
             {
                 auth_peer_success(pcb,
                                   PPP_CHAP,
-                                  pcb.chap_server.digest->code,
+                                  pcb.chap_server.digest_code,
                                   name);
             }
             if (pcb.settings.chap_rechallenge_time)
             {
-                pcb.chap_server.flags |= kTimeoutPending;
-                Timeout(chap_timeout,
-                        pcb,
-                        pcb.settings.chap_rechallenge_time);
+                pcb.chap_server.flags.timeout_pending = true;
+                // todo: schedule chap timeout function
+                // Timeout(chap_timeout,
+                //         pcb,
+                //         pcb.settings.chap_rechallenge_time);
             }
         }
-        pcb.chap_server.flags |= kAuthDone;
+        pcb.chap_server.flags.auth_done = true;
     }
 }
+
 
 /**
  * Check whether the peer's response matches what we think it should be.
@@ -376,148 +359,134 @@ chap_verify_response(PppPcb& pcb,
                      int message_space)
 {
     std::string secret;
+    bool ok = false;
 
     /* Get the secret that the peer is supposed to know */
-    if (!get_secret(pcb, name, ourname, secret))
-    {
+    if (!get_secret(pcb, name, ourname, secret)) {
         ppp_error("No CHAP secret found for authenticating %q", name.c_str());
-        return 0;
+        return false;
     }
-    auto ok = digest->verify_response(pcb,
-                                     id,
-                                     name,
-                                     secret,
-                                     challenge,
-                                     response,
-                                     message,
-                                     message_space);
+    // todo: call appropriate verify_response function for the given digest type
+    // auto ok = digest->verify_response(pcb,
+    //                                  id,
+    //                                  name,
+    //                                  secret,
+    //                                  challenge,
+    //                                  response,
+    //                                  message,
+    //                                  message_space);
     // memset(secret, 0, sizeof(secret));
-
     return ok;
 }
 
-/*
- * chap_respond - Generate and send a response to a challenge.
+
+/**
+ * Generate and send a response to a challenge.
  */
-static void
-chap_respond(PppPcb* pcb,
-             int id,
-             unsigned char* pkt,
-             int len)
+bool
+chap_respond(PppPcb& pcb, const int id, std::vector<uint8_t>& pkt_data)
 {
-    std::string rname;
     std::string secret;
+    size_t len = pkt_data.size();
+    PacketBuffer p{};
 
-    // p = pbuf_alloc(PBUF_RAW, (uint16_t)(RESP_MAX_PKTLEN), PPP_CTRL_PBUF_TYPE);
-    // auto p = new PacketBuffer;
-    // if (nullptr == p) {
-    //     return;
-    // }
-    // if (p->tot_len != p->len)
-    // {
-    //     free_pkt_buf(p);
-    //     return;
-    // }
-    PacketBuffer p = init_pkt_buf();
+    if ((!pcb.chap_client.flags.lower_up && !pcb.chap_client.flags.auth_started)) {
+        return false; /* not ready */
+    }
 
-    if ((pcb->chap_client.flags & (kLowerup | kAuthStarted)) != (kLowerup | kAuthStarted)) {
-        return; /* not ready */
-    }
-    if (len < 2 || len < pkt[0] + 1) {
-        return; /* too short */
-    }
-    int clen = pkt[0];
-    auto nlen = len - (clen + 1);
+    /* too short */
+    if (len < 2 || len < size_t(pkt_data[0]) + 1) { return false;  }
+    size_t clen = pkt_data[0];
+    size_t nlen = len - (clen + 1);
 
     /* Null terminate and clean remote name. */
-    // ppp_slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
-
+    std::string rname = fmt::format("{}", pkt_data.data() + clen + 1);
 
     /* Microsoft doesn't send their name back in the PPP packet */
-    // TODO: replace strlcpy on VS
-    // if (pcb->settings.explicit_remote || (pcb->settings.remote_name[0] != 0 && rname[0] == 0))
-    // 	strlcpy(rname, pcb->settings.remote_name, sizeof(rname));
-
+    if (pcb.settings.explicit_remote || (pcb.settings.remote_name[0] != 0 && rname[0] == 0
+    )) rname = pcb.settings.remote_name;
 
     /* get secret for authenticating ourselves with the specified host */
-    if (!get_secret(pcb, pcb->chap_client.name, rname, secret))
-    {
-        ppp_warn("No CHAP secret found for authenticating us to %q", rname);
+    if (!get_secret(pcb, pcb.chap_client.name, rname, secret)) {
+        spdlog::warn("No CHAP secret found for authenticating us to {}", rname);
     }
+    size_t index = 0;
+    ppp_make_header(p.data, PPP_CHAP, index);
+    index += CHAP_HDR_LEN;
 
-    auto outp = p->payload;
-    ppp_make_header(outp, PPP_CHAP);
-    outp += CHAP_HDR_LEN;
-
-    pcb->chap_client.digest->make_response(pcb,
-                                           outp,
-                                           id,
-                                           pcb->chap_client.name,
-                                           pkt,
-                                           secret,
-                                           pcb->chap_client.priv);
+    // todo: execute function make_response by digest type
+    // pcb.chap_client.digest->make_response(pcb,
+    //                                        outp,
+    //                                        id,
+    //                                        pcb.chap_client.name,
+    //                                        pkt_data,
+    //                                        secret,
+    //                                        pcb.chap_client.priv);
     // memset(secret, 0, secret_len);
-
-    clen = *outp;
-    nlen = pcb->chap_client.name.length();
-    memcpy(outp + clen + 1, pcb->chap_client.name.c_str(), nlen);
-
-    outp = p->payload + PPP_HDRLEN;
+    clen = p.data[0];
+    nlen = pcb.chap_client.name.length();
+    std::copy(pcb.chap_client.name.begin(),
+              pcb.chap_client.name.end(),
+              p.data.begin() + clen + 1);
+    index += PPP_HDRLEN;
     len = CHAP_HDR_LEN + clen + 1 + nlen;
-    outp[0] = CHAP_RESPONSE;
-    outp[1] = id;
-    outp[2] = len >> 8;
-    outp[3] = len;
-
-    // pbuf_realloc(p);
-    ppp_write(pcb, p);
+    p.data[index + 0] = CHAP_RESPONSE;
+    p.data[index + 1] = id;
+    p.data[index + 2] = len >> 8;
+    p.data[index + 3] = len;
+    return ppp_write(pcb, p);
 }
 
-static void
-chap_handle_status(PppPcb* pcb,
+
+/**
+ *
+ */
+bool
+chap_handle_status(PppPcb& pcb,
                    int code,
                    int id,
-                   unsigned char* pkt,
-                   int len,
-                   Protent** protocols)
+                   std::vector<uint8_t>& pkt)
 {
-    const char* msg = nullptr;
+    std::string msg;
+    bool ok = false;
 
 
-    if ((pcb->chap_client.flags & (kAuthDone | kAuthStarted | kLowerup))
-        != (kAuthStarted | kLowerup))
-    {
-        return;
+    auto flags = pcb.chap_client.flags;
+    if (pcb.chap_client.flags.auth_started && pcb.chap_client.flags.lower_up) {
+        return false;
     }
-    pcb->chap_client.flags |= kAuthDone;
+
+    pcb.chap_client.flags.auth_done = true;
 
     if (code == CHAP_SUCCESS)
     {
         /* used for MS-CHAP v2 mutual auth, yuck */
-        if (pcb->chap_client.digest->check_success != nullptr)
-        {
-            if (!(*pcb->chap_client.digest->check_success)(pcb, pkt, len, pcb->chap_client.priv))
-            {
-                code = CHAP_FAILURE;
-            }
-        }
-        else
-        {
-            msg = "CHAP authentication succeeded";
-        }
+        // todo: call check_success method by digest type
+        // if (pcb.chap_client.digest->check_success != nullptr)
+        // {
+        //     if (!(*pcb.chap_client.digest->check_success)(pcb, pkt, len, pcb.chap_client.priv))
+        //     {
+        //         code = CHAP_FAILURE;
+        //     }
+        // }
+        // else
+        // {
+        //     msg = "CHAP authentication succeeded";
+        // }
     }
     else
     {
-        if (pcb->chap_client.digest->handle_failure != nullptr)
-            (*pcb->chap_client.digest->handle_failure)(pcb, pkt, len);
-        else
-            msg = "CHAP authentication failed";
+        // todo: call handle_failure method by digest type
+        // if (pcb.chap_client.digest->handle_failure != nullptr)
+        //     (*pcb.chap_client.digest->handle_failure)(pcb, pkt, len);
+        // else
+        //     msg = "CHAP authentication failed";
     }
-    if (msg)
+    if (msg.empty() == false)
     {
-        if (len > 0)
+        if (!pkt.empty())
         {
-            ppp_info("%s: %.*v", msg, len, pkt);
+            //spdlog::info("{}: {}", msg, pkt.size(), pkt);
         }
         else
         {
@@ -526,39 +495,46 @@ chap_handle_status(PppPcb* pcb,
     }
     if (code == CHAP_SUCCESS)
     {
-        auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code);
+        // todo: include digest code from somewhere
+        // auth_withpeer_success(pcb, PPP_CHAP, pcb.chap_client.digest->code);
     }
     else
     {
-        pcb->chap_client.flags |= kAuthFailed;
-        ppp_error("CHAP authentication failed");
-        auth_withpeer_fail(pcb, PPP_CHAP);
+        pcb.chap_client.flags.auth_failed = true;
+        spdlog::error("CHAP authentication failed");
+        ok = auth_withpeer_fail(pcb, PPP_CHAP);
     }
+
+    return ok;
 }
 
-static void
-chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
-{
-    unsigned char code, id;
-    int len;
 
-    if (pktlen < CHAP_HDR_LEN)
+bool
+chap_input(PppPcb& pcb, std::vector<uint8_t>& pkt)
+{
+    unsigned char code;
+    unsigned char id;
+    size_t len;
+    size_t index = 0;
+    bool ok;
+    if (pkt.size() < CHAP_HDR_LEN)
     {
-        return;
+        return false;
     }
-    GETCHAR(code, pkt);
-    GETCHAR(id, pkt);
-    GETSHORT(len, pkt);
-    if (len < CHAP_HDR_LEN || len > pktlen)
-    {
-        return;
-    }
+    std::tie(ok, code) = GETCHAR(pkt, index);
+    if (!ok) { return false; }
+
+    std::tie(ok, id) = GETCHAR(pkt, index);
+    if (!ok) {return false;}
+
+    std::tie(ok, len) = GETSHORT(pkt, index);
+    if (len < CHAP_HDR_LEN || len > pkt.size()) { return false; }
     len -= CHAP_HDR_LEN;
 
     switch (code)
     {
     case CHAP_CHALLENGE:
-        chap_respond(pcb, id, pkt, len);
+        chap_respond(pcb, id, pkt);
         break;
 
     case CHAP_RESPONSE:
@@ -567,47 +543,36 @@ chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols)
 
     case CHAP_FAILURE:
     case CHAP_SUCCESS:
-        chap_handle_status(pcb, code, id, pkt, len, protocols);
+        chap_handle_status(pcb, code, id, pkt);
         break;
     default:
         break;
     }
 }
 
-static void
-chap_protrej(PppPcb* pcb)
-{
 
-    if (pcb->chap_server.flags & kTimeoutPending)
-    {
-        pcb->chap_server.flags &= ~kTimeoutPending;
-        Untimeout(chap_timeout, pcb);
+bool
+chap_protrej(PppPcb& pcb)
+{
+    if (pcb.chap_server.flags.timeout_pending) {
+        pcb.chap_server.flags.timeout_pending = false;
+        // todo: un-schedule timeout
+        //Untimeout(chap_timeout, pcb);
     }
-    if (pcb->chap_server.flags & kAuthStarted)
-    {
-        pcb->chap_server.flags = 0;
+    if (pcb.chap_server.flags.auth_started) {
+        // todo: clear chap server flags;
+        // pcb.chap_server.flags = 0;
         auth_peer_fail(pcb, PPP_CHAP);
     }
-
-    if ((pcb->chap_client.flags & (kAuthStarted | kAuthDone)) == kAuthStarted)
-    {
-        pcb->chap_client.flags &= ~kAuthStarted;
+    if ((pcb.chap_client.flags.auth_started)) {
+        pcb.chap_client.flags.auth_started = false;
         ppp_error("CHAP authentication failed due to protocol-reject");
         auth_withpeer_fail(pcb, PPP_CHAP);
     }
+
+    return true;
 }
 
-// const struct Protent kChapProtent = {
-//     PPP_CHAP,
-//     chap_init,
-//     chap_input,
-//     chap_protrej,
-//     chap_lowerup,
-//     chap_lowerdown,
-//     nullptr,
-//     nullptr,
-//     nullptr,
-//     nullptr,
-//     nullptr,
-//     nullptr,
-// };
+//
+// END OF FILE
+//

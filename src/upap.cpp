@@ -388,7 +388,7 @@ upap_sauthreq(PppPcb& pcb, UpapState& upap)
     const size_t out_len = UPAP_HEADERLEN + 2 * sizeof(uint8_t) + upap.us_user.length() +
         upap.us_passwd.length(); // todo: re-write not to overflow the buffer
     PacketBuffer p = init_pkt_buf();
-    auto outp = p.bytes;
+    auto outp = p.data;
     ppp_make_header(outp, PPP_PAP);
     PUTCHAR((uint8_t)UPAP_AUTHREQ, outp);
     PUTCHAR(upap.us_id, outp);
@@ -412,12 +412,12 @@ upap_sresp(PppPcb& pcb, const uint8_t code, const uint8_t id, std::string& msg)
     const size_t outlen = UPAP_HEADERLEN + sizeof(uint8_t) + msg.length();
     size_t index = 0;
     PacketBuffer p = init_pkt_buf();
-    ppp_make_header(p.bytes, PPP_PAP, index);
-    ppp_put_char(code, p.bytes, index);
-    ppp_put_char(id, p.bytes, index);
-    ppp_put_short(outlen, p.bytes, index);
-    ppp_put_char(msg.length(), p.bytes, index);
-    ppp_put_string(msg, p.bytes, index);
+    ppp_make_header(p.data, PPP_PAP, index);
+    ppp_put_char(code, p.data, index);
+    ppp_put_char(id, p.data, index);
+    ppp_put_short(outlen, p.data, index);
+    ppp_put_char(msg.length(), p.data, index);
+    ppp_put_string(msg, p.data, index);
     return ppp_write(pcb, p);
 }
 

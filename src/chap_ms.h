@@ -201,11 +201,11 @@ chap_ms(PppPcb& pcb,
 
 std::tuple<bool, std::vector<uint8_t>, std::vector<uint8_t>>
 chap_ms2(PppPcb& pcb,
-         std::vector<uint8_t>&,
-         std::vector<uint8_t>&,
-         std::string&,
-         std::string&,
-         int);
+         std::vector<uint8_t>& rchallenge,
+         std::vector<uint8_t>& peer_challenge,
+         std::string& user,
+         std::string& secret,
+         int authenticator);
 
 //
 // END OF FILE

@@ -17,7 +17,7 @@ enum Direction
 /** Main packet buffer struct */
 struct PacketBuffer
 {
-    std::vector<uint8_t> bytes;
+    std::vector<uint8_t> data;
     uint32_t input_netif_idx;
     Direction direction;
     // todo: add an {offset : header/framing} map for processing
@@ -28,7 +28,7 @@ inline PacketBuffer
 init_pkt_buf(size_t size = 0xffff)
 {
     PacketBuffer p{};
-    p.bytes.reserve(size);
+    p.data.reserve(size);
     return p;
 }
 

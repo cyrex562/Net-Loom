@@ -2,8 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "lwip_status.h"
-#include <locale>
-#include <codecvt>
+
 
 
 inline LwipStatus u8_vector_to_u32(std::vector<uint8_t> vec, const size_t offset, uint32_t out_u32)

@@ -245,7 +245,7 @@ auth_peer_fail(PppPcb& pcb, int protocol)
 bool
 auth_peer_success(PppPcb& pcb,
                   PppProtoFieldValue protocol,
-                  ChapDigestCodes prot_flavor,
+                  ChapDigestCode prot_flavor,
                   std::string& name)
 {
     int bit;

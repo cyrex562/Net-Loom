@@ -1,4 +1,4 @@
-/*
+/**
  * chap-new.c - New CHAP implementation.
  *
  * Copyright (c) 2003 Paul Mackerras. All rights reserved.
@@ -55,7 +55,7 @@ enum ChapFieldCodes
 /*
  * CHAP digest codes.
  */
-enum ChapDigestCodes
+enum ChapDigestCode
 {
     CHAP_MD5 = 5,
     CHAP_MICROSOFT = 0x80,
@@ -90,7 +90,7 @@ enum ChapMdTypes
 
 
 /* Return the digest alg. ID for the most preferred digest type. */
-inline ChapDigestCodes
+inline ChapDigestCode
 CHAP_DIGEST(const ChapMdTypes mdtype)
 {
     if (((mdtype) & MDTYPE_MD5))
@@ -114,7 +114,7 @@ CHAP_DIGEST(const ChapMdTypes mdtype)
 
 /* Return the bit flag for a given digest algorithm ID. */
 inline ChapMdTypes
-chap_mdtype_d(const ChapDigestCodes digest)
+chap_mdtype_d(const ChapDigestCode digest)
 {
     return ((digest) == CHAP_MICROSOFT_V2)
                ? MDTYPE_MICROSOFT_V2
@@ -128,7 +128,7 @@ chap_mdtype_d(const ChapDigestCodes digest)
 
 /* Can we do the requested digest? */
 inline bool
-chap_candigest(ChapMdTypes mdtype, ChapDigestCodes digest)
+chap_candigest(ChapMdTypes mdtype, ChapDigestCode digest)
 {
     return digest == CHAP_MICROSOFT_V2
                ? mdtype & MDTYPE_MICROSOFT_V2
@@ -218,16 +218,17 @@ struct ChapClientState
 };
 
 
-typedef struct ChapServerState
+struct ChapServerState
 {
     ChapStateFlags flags;
     uint8_t id;
     std::string name;
     // ChapDigestType digest;
+    ChapDigestCode digest_code;
     size_t challenge_xmits;
     size_t challenge_pktlen;
     std::vector<uint8_t> challenge;
-} chap_server_state;
+};
 
 
 /* Called by authentication code to start authenticating the peer. */
@@ -240,22 +241,22 @@ bool chap_auth_with_peer(PppPcb& pcb, std::string& our_name, int digest_code);
 /* Represents the CHAP protocol to the main pppd code */
 extern const struct Protent kChapProtent;
 
-static void chap_init(PppPcb* pcb);
+bool
+chap_init(PppPcb& pcb);
 
-static bool
+bool
 chap_lowerup(PppPcb& pcb);
 
-static bool
+bool
 chap_lower_down(PppPcb& pcb);
 
-static bool
+bool
 chap_timeout(PppPcb& pcb);
 
-static void chap_generate_challenge(PppPcb& pcb);
+void chap_generate_challenge(PppPcb& pcb);
 
-static void chap_handle_response(PppPcb& pcb,
-                                 int code,
-                                 std::vector<uint8_t>& pkt);
+bool
+chap_handle_response(PppPcb& pcb, int code, std::vector<uint8_t>& pkt);
 
 
 bool
@@ -268,18 +269,23 @@ chap_verify_response(PppPcb& pcb,
                      std::string& message,
                      int message_space);
 
-static void chap_respond(PppPcb* pcb,
-                         int id,
-                         unsigned char* pkt,
-                         int len);
+bool
+chap_respond(PppPcb& pcb,
+             int id,
+             std::vector<uint8_t>& pkt_data);
 
-static void chap_handle_status(PppPcb* pcb,
-                               int code,
-                               int id,
-                               unsigned char* pkt,
-                               int len,
-                               Protent** protocols);
+bool
+chap_handle_status(PppPcb& pcb,
+                   int code,
+                   int id,
+                   std::vector<uint8_t>& pkt);
 
-static void chap_protrej(PppPcb* pcb);
+bool
+chap_protrej(PppPcb& pcb);
 
-static void chap_input(PppPcb* pcb, unsigned char* pkt, int pktlen, Protent** protocols);
+bool
+chap_input(PppPcb& pcb, std::vector<uint8_t>& pkt);
+
+//
+// END OF FILE
+//

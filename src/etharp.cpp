@@ -420,7 +420,7 @@ etharp_recv(PacketBuffer& pkt_buf,
     const Ip4Addr dipaddr{};
     auto for_us = false;
     EtharpHdr hdr{};
-    memcpy(&hdr, pkt_buf.bytes.data(), sizeof(EtharpHdr));
+    memcpy(&hdr, pkt_buf.data.data(), sizeof(EtharpHdr));
 
     /* RFC 826 "Packet Reception": */
     if ((hdr.hwtype != pp_htons(LWIP_IANA_HWTYPE_ETHERNET)) || (hdr.hwlen != ETH_ADDR_LEN)
@@ -636,7 +636,7 @@ etharp_output(NetworkInterface& netif,
            a subnet broadcast. */
     else if (!netif_ip4_addr_in_net(netif, ip_addr) && !ip4_addr_is_link_local(ip_addr))
     {
-        auto iphdr = reinterpret_cast<Ip4Hdr*>(packet.bytes.data());
+        auto iphdr = reinterpret_cast<Ip4Hdr*>(packet.data.data());
         /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
                       a link-local source address must always be "directly to its destination
                       on the same physical link. The host MUST NOT send the packet to any
@@ -869,7 +869,7 @@ send_raw_arp_pkt(NetworkInterface& netif,
     etharp_hdr.hwlen = ETH_ADDR_LEN;
     etharp_hdr.protolen = sizeof(Ip4Addr);
 
-    packet_buffer.bytes = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr),
+    packet_buffer.data = std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&etharp_hdr),
                                               reinterpret_cast<uint8_t*>(&etharp_hdr) + sizeof(EtharpHdr));
 
     /* send ARP query */

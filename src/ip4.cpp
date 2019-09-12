@@ -154,7 +154,7 @@ forward_ip4_pkt(PacketBuffer& pkt_buf, const std::vector<NetworkInterface>& neti
         set_ip4_hdr_checksum(hdr,
                              (uint16_t)(get_ip4_hdr_checksum(hdr) + pp_htons(0x100)));
     } /* don't fragment if interface has mtu set to 0 [loopif] */
-    if (out_netif.mtu && pkt_buf.bytes.size() > out_netif.mtu)
+    if (out_netif.mtu && pkt_buf.data.size() > out_netif.mtu)
     {
         if ((get_ip4_hdr_offset(hdr) & pp_ntohs(IP4_DF_FLAG)) == 0)
         {
@@ -230,7 +230,7 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInt
     Ip4Hdr curr_dst_hdr{};
     Ip4Hdr curr_src_hdr{};
     /* identify the IP header */
-    auto ip4_hdr_ptr = reinterpret_cast<Ip4Hdr *>(pkt_buf.bytes.data());
+    auto ip4_hdr_ptr = reinterpret_cast<Ip4Hdr *>(pkt_buf.data.data());
     if (get_ip4_hdr_version2(ip4_hdr_ptr) != 4)
     {
         return false;
@@ -243,26 +243,26 @@ ip4_input(PacketBuffer& pkt_buf, NetworkInterface& netif, std::vector<NetworkInt
     size_t iphdr_len = lwip_ntohs(get_ip4_hdr_len2(ip4_hdr_ptr));
 
     /* Trim PacketBuffer. This is especially required for packets < 60 bytes. */
-    if (iphdr_len < pkt_buf.bytes.capacity())
+    if (iphdr_len < pkt_buf.data.capacity())
     {
         // pbuf_realloc(p);
     }
 
     /* header length exceeds first PacketBuffer length, or ip length exceeds total PacketBuffer length? */
-    if (iphdr_hlen > pkt_buf.bytes.size() || iphdr_len > pkt_buf.bytes.capacity() || iphdr_hlen < IP4_HDR_LEN)
+    if (iphdr_hlen > pkt_buf.data.size() || iphdr_len > pkt_buf.data.capacity() || iphdr_hlen < IP4_HDR_LEN)
     {
         if (iphdr_hlen < IP4_HDR_LEN)
         {
             //      Logf(true | LWIP_DBG_LEVEL_SERIOUS,
             //                  ("ip4_input: short IP header (%d bytes) received, IP packet dropped\n", iphdr_hlen));
         }
-        if (iphdr_hlen > pkt_buf.bytes.size())
+        if (iphdr_hlen > pkt_buf.data.size())
         {
             //      Logf(true | LWIP_DBG_LEVEL_SERIOUS,
             //                  ("IP header (len %d) does not fit in first PacketBuffer (len %d), IP packet dropped.\n",
             //                   iphdr_hlen, p->len));
         }
-        if (iphdr_len > pkt_buf.bytes.capacity())
+        if (iphdr_len > pkt_buf.data.capacity())
         {
             //      Logf(true | LWIP_DBG_LEVEL_SERIOUS,
             //                  ("IP (len %d) is longer than PacketBuffer (len %d), IP packet dropped.\n",

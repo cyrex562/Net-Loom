@@ -704,17 +704,17 @@ fsm_senc_conf_req(PppPcb& pcb, Fsm& f, bool retransmit) {
 
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(cilen + kHeaderlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     PacketBuffer p = init_pkt_buf()
-    p.bytes.reserve(cilen + 40 + 60 + PPP_HDRLEN + 1500);
+    p.data.reserve(cilen + 40 + 60 + PPP_HDRLEN + 1500);
 
     /* send the request to our peer */
     // uint8_t* outp = static_cast<uint8_t*>(p->payload.data());
     size_t index = 0;
-    ppp_put_char(PPP_ALLSTATIONS, p.bytes, index);
-    ppp_put_char(PPP_UI, p.bytes, index);
-    ppp_put_short(f.protocol, p.bytes, index);
-    ppp_put_char(CONF_REQ, p.bytes, index);
-    ppp_put_char(f.reqid, p.bytes, index);
-    ppp_put_short(cilen + FSM_PKT_HDR_LEN, p.bytes, index);
+    ppp_put_char(PPP_ALLSTATIONS, p.data, index);
+    ppp_put_char(PPP_UI, p.data, index);
+    ppp_put_short(f.protocol, p.data, index);
+    ppp_put_char(CONF_REQ, p.data, index);
+    ppp_put_char(f.reqid, p.data, index);
+    ppp_put_short(cilen + FSM_PKT_HDR_LEN, p.data, index);
     // if (cilen != 0) {
     // (*f.callbacks->addci)(f, outp, &cilen, f.pcb);
     // lwip_assert("cilen == p->len - kHeaderlen - PPP_HDRLEN", cilen == p->len - FSM_PKT_HDR_LEN - PPP_HDRLEN);
@@ -747,13 +747,13 @@ fsm_send_data2(PppPcb& pcb, Fsm& f, uint8_t code, uint8_t id, std::vector<uint8_
     size_t outlen = data.size() + FSM_PKT_HDR_LEN;
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(outlen + PPP_HDRLEN), PPP_CTRL_PBUF_TYPE);
     PacketBuffer p = init_pkt_buf()
-    p.bytes.reserve(data.size() + FSM_PKT_HDR_LEN);
+    p.data.reserve(data.size() + FSM_PKT_HDR_LEN);
     // todo: reserve size for packet
     size_t index = 0;
-    ppp_make_header(p.bytes, f.protocol);
-    ppp_put_char(code, p.bytes, index);
-    ppp_put_char(id, p.bytes, index);
-    ppp_put_short(outlen, p.bytes, index);
+    ppp_make_header(p.data, f.protocol);
+    ppp_put_char(code, p.data, index);
+    ppp_put_char(id, p.data, index);
+    ppp_put_short(outlen, p.data, index);
     // if (datalen) {
     //     /* && data != outp + PPP_HDRLEN + kHeaderlen)  -- was only for fsm_sconfreq() */
     //     memcpy(outp + PPP_HDRLEN + FSM_PKT_HDR_LEN, data, datalen);

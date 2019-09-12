@@ -35,8 +35,8 @@ constexpr auto IP6_ADDR_MCAST_MASK_7 = 0xff040000UL;
 
 
 ///
-///  IPv6 address states. 
-///  
+///  IPv6 address states.
+///
 enum Ip6AddrState
 {
     IP6_ADDR_INVALID = 0x00,
@@ -145,9 +145,9 @@ bool
 ip6_addr_aton(std::string& out_addr_str, Ip6Addr& in_addr);
 
 
-/// 
+///
 /// returns ptr to static buffer; not reentrant!
-/// 
+///
 std::string ip6_addr_ntoa(const Ip6Addr& addr);
 
 
@@ -157,9 +157,9 @@ std::string ip6_addr_ntoa(const Ip6Addr& addr);
 std::string ip6addr_ntoa_r(const Ip6Addr& addr);
 
 
-/// 
+///
 /// Does the given IPv6 address have a zone set? (0/1)
-/// 
+///
 inline bool
 ip6_addr_has_zone(const Ip6AddrInfo& addr_info)
 {
@@ -167,9 +167,9 @@ ip6_addr_has_zone(const Ip6AddrInfo& addr_info)
 }
 
 
-/// 
+///
 /// Set the zone field of an IPv6 address to a particular value.
-/// 
+///
 inline void
 set_ip6_addr_zone(Ip6AddrInfo& addr_info, const Ip6AddrZone zone)
 {
@@ -177,9 +177,9 @@ set_ip6_addr_zone(Ip6AddrInfo& addr_info, const Ip6AddrZone zone)
 }
 
 
-/// 
+///
 /// Clear the zone field of an IPv6 address, setting it to "no zone".
-/// 
+///
 inline void
 clear_ip6_addr_zone(Ip6AddrInfo& addr_info)
 {
@@ -187,9 +187,9 @@ clear_ip6_addr_zone(Ip6AddrInfo& addr_info)
 }
 
 
-/// 
+///
 /// Is the zone field of the given IPv6 address equal to the given zone index?  (0/1)
-/// 
+///
 inline bool
 cmp_ip6_addr_zone(const Ip6AddrInfo& addr_info, const Ip6AddrZone zone)
 {
@@ -197,10 +197,10 @@ cmp_ip6_addr_zone(const Ip6AddrInfo& addr_info, const Ip6AddrZone zone)
 }
 
 
-/// 
+///
 /// Are the zone fields of the given IPv6 addresses equal? (0/1)  This macro must only be
 ///  used on IPv6 addresses of the same scope.
-///  
+///
 inline bool
 cmp_ip6_addr_zone2(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info2)
 {
@@ -245,25 +245,25 @@ ip6_addr_is_multicast_link_local(const Ip6AddrInfo& addr_info)
  *  meaningful only if accompanied by a zone index to identify the scope's zone.
  *  The given address type may be used to eliminate at compile time certain
  *  checks that will evaluate to false at run time anyway.
- * 
+ *
  *  This default implementation follows the default model of RFC 4007, where
  *  only interface-local and link-local scopes are defined.
- * 
+ *
  *  Even though the unicast loopback address does have an implied link-local
  *  scope, in this implementation it does not have an explicitly assigned zone
  *  index. As such it should not be tested for in this macro.
- * 
+ *
  *  @param ip6_addr the IPv6 address (const); only its address part is examined.
  *  @param type address type; see @ref lwip_ipv6_scope_type.
  *  @return 1 if the address has a constrained scope, 0 if it does not.
- * 
+ *
 */
 inline bool ip6_addr_has_scope(const Ip6AddrInfo& ip6_addr, const Ip6AddrScopeType type)
 {
     return ip6_addr_is_linklocal(ip6_addr) || type != IP6_UNICAST && (
         ip6_addr_is_multicast_if_local(ip6_addr) || ip6_addr_is_multicast_link_local(ip6_addr)
     );
-} 
+}
 
 
 /**
@@ -310,7 +310,7 @@ is_ip6_zone_equal(const Ip6AddrInfo& info1, const Ip6AddrInfo& info2)
 
 ///
 ///  Set an IPv6 partial address given by byte-parts
-///  
+///
 inline void
 set_ip6_addr_part(Ip6Addr& addr,
                   const size_t index,
@@ -320,11 +320,11 @@ set_ip6_addr_part(Ip6Addr& addr,
                   const uint32_t d)
 {
     addr.word[index] = pp_htonl(make_u32(a, b, c, d));
-} 
+}
 
 /**
- * Set a full IPv6 address by passing the 4 uint32_t indices in network byte order (use 
- * pp_htonl() for constants) 
+ * Set a full IPv6 address by passing the 4 uint32_t indices in network byte order (use
+ * pp_htonl() for constants)
 */
 inline void
 set_ip6_addr(Ip6AddrInfo& addr_info,
@@ -340,10 +340,24 @@ set_ip6_addr(Ip6AddrInfo& addr_info,
     clear_ip6_addr_zone(addr_info);
 }
 
+inline Ip6AddrInfo set_ip6_addr2(const uint32_t a,
+             const uint32_t b,
+             const uint32_t c,
+             const uint32_t d)
+{
+    Ip6AddrInfo addr_info{};
+    addr_info.addr.word[0] = a;
+    addr_info.addr.word[1] = b;
+    addr_info.addr.word[2] = c;
+    addr_info.addr.word[3] = d;
+    clear_ip6_addr_zone(addr_info);
+    return addr_info;
+}
 
-/// 
+
+///
 /// Access address in 16-bit block
-/// 
+///
 inline uint16_t get_ip6_addr_u16_blk(const Ip6Addr& addr, size_t block)
 {
     if (block == 1)
@@ -381,9 +395,9 @@ inline uint16_t get_ip6_addr_u16_blk(const Ip6Addr& addr, size_t block)
 }
 
 
-/// 
+///
 /// Safely copy one IPv6 address to another (src may be NULL)
-/// 
+///
 inline void set_ip6_addr(Ip6AddrInfo& daddr, const Ip6AddrInfo& saddr)
 {
     daddr.addr.word[0] = saddr.addr.word[0];
@@ -394,9 +408,9 @@ inline void set_ip6_addr(Ip6AddrInfo& daddr, const Ip6AddrInfo& saddr)
 }
 
 
-/// 
-/// Set complete address to zero 
-/// 
+///
+/// Set complete address to zero
+///
 inline void zero_ip6_addr(Ip6AddrInfo& addr_info)
 {
     addr_info.addr.word[0] = 0;
@@ -407,18 +421,18 @@ inline void zero_ip6_addr(Ip6AddrInfo& addr_info)
 }
 
 
-/// 
+///
 /// Set address to ipv6 'any' (no need for lwip_htonl())
-/// 
+///
 inline void set_ip6_addr_any(Ip6AddrInfo& addr_info)
 {
     zero_ip6_addr(addr_info);
 }
 
 
-/// 
-/// Set address to ipv6 loopback address 
-/// 
+///
+/// Set address to ipv6 loopback address
+///
 inline void set_ip6_addr_loopback(Ip6AddrInfo& addr_info)
 {
     addr_info.addr.word[0] = 0;
@@ -429,9 +443,9 @@ inline void set_ip6_addr_loopback(Ip6AddrInfo& addr_info)
 }
 
 
-/// 
+///
 /// Safely copy one IPv6 address to another and change byte order from host- to network-order.
-/// 
+///
 inline void set_ip6_addr_hton(Ip6AddrInfo& dest, Ip6AddrInfo& src)
 {
     dest.addr.word[0] = lwip_htonl(src.addr.word[0]);
@@ -442,9 +456,9 @@ inline void set_ip6_addr_hton(Ip6AddrInfo& dest, Ip6AddrInfo& src)
 }
 
 
-/// 
+///
 /// Compare IPv6 networks, ignoring zone information. To be used sparingly!
-/// 
+///
 inline bool
 cmp_ip6_net_zoneless(const Ip6Addr& addr1, const Ip6Addr& addr2)
 {
@@ -465,7 +479,7 @@ ip6_addr_on_same_net(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info
     return cmp_ip6_net_zoneless(addr_info1.addr, addr_info2.addr) && cmp_ip6_addr_zone2(
         addr_info1,
         addr_info2);
-} 
+}
 
 
 /**
@@ -474,14 +488,14 @@ ip6_addr_on_same_net(const Ip6AddrInfo& addr_info1, const Ip6AddrInfo& addr_info
 inline bool
 ip6_addr_hosts_equal(const Ip6AddrInfo& addr1, const Ip6AddrInfo& addr2)
 {
-    return addr1.addr.word[2] == addr2.addr.word[2] && 
+    return addr1.addr.word[2] == addr2.addr.word[2] &&
         addr1.addr.word[3] == addr2.addr.word[3];
 }
 
 
 ///
 /// Compare IPv6 address to packed address and zone
-/// 
+///
 inline bool
 cmp_ip6_addr2(const Ip6AddrInfo& addr_info, const Ip6Addr& addr, const Ip6AddrZone zone)
 {
@@ -506,7 +520,7 @@ inline uint32_t get_ip6_subnet_id(Ip6Addr& addr)
 inline bool
 ip6_addr_is_any(const Ip6AddrInfo& addr)
 {
-    return addr.addr.word[0] == 0 && addr.addr.word[1] == 0 
+    return addr.addr.word[0] == 0 && addr.addr.word[1] == 0
     && addr.addr.word[2] == 0 && addr.addr.word[3] == 0;
 }
 
@@ -517,7 +531,7 @@ ip6_addr_is_any(const Ip6AddrInfo& addr)
 inline bool
 ip6_addr_is_loopback(const Ip6AddrInfo& addr)
 {
-    return addr.addr.word[0] == 0UL && addr.addr.word[1] == 0UL && addr.addr.word[2] == 0UL && 
+    return addr.addr.word[0] == 0UL && addr.addr.word[1] == 0UL && addr.addr.word[2] == 0UL &&
         addr.addr.word[3] == pp_htonl(IP6_ADDR_LOOPBACK_MASK);
 }
 
@@ -840,7 +854,7 @@ make_ip6_addr_host(const uint32_t a, const uint32_t b, const uint32_t c, const u
 
 ///
 /// Copy IPv6 address - faster than ip6_addr_set: no NULL check
-/// 
+///
 inline void copy_ip6_addr(Ip6Addr& dest, const Ip6Addr& src)
 {
     dest.word[0] = src.word[0];

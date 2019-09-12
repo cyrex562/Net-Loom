@@ -213,9 +213,9 @@ mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t proto
     state.ccount = (state.ccount + 1) % MPPE_CCOUNT_SPACE;
     spdlog::debug("mppe_compress[{}]: ccount {}\n", pcb.netif.number, state.ccount);
     /* FIXME: use PUT* macros */
-    np.bytes.resize(pcb.netif.mtu);
-    np.bytes[0] = state.ccount>>8;
-    np.bytes[1] = state.ccount;
+    np.data.resize(pcb.netif.mtu);
+    np.data[0] = state.ccount>>8;
+    np.data[1] = state.ccount;
 
     if (!state.stateful ||	/* stateless mode     */
         ((state.ccount & 0xff) == 0xff) ||	/* "flag" packet      */
@@ -228,14 +228,14 @@ mppe_compress(PppPcb& pcb, PppMppeState& state, PacketBuffer& pb, uint16_t proto
         mppe_rekey(state, 0);
         state.bits |= MPPE_BIT_FLUSHED;
     }
-    np.bytes[0] |= state.bits;
+    np.data[0] |= state.bits;
     state.bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
     auto ptr = 0;
     ptr += MPPE_OVERHEAD_LEN;
     /* Add protocol */
     /* FIXME: add PFC support */
-    np.bytes[ptr] = protocol >> 8;
-    np.bytes[ptr + 1] = protocol;
+    np.data[ptr] = protocol >> 8;
+    np.data[ptr + 1] = protocol;
 
     /* Hide MPPE header */
     // pbuf_remove_header(np, MPPE_OVHD);
@@ -272,13 +272,13 @@ bool
 mppe_decompress(PppPcb& pcb, PppMppeState& ppp_mppe_state, PacketBuffer& pkt_buf)
 {
     // struct PacketBuffer *n0 = *pkt_buf; /* MPPE Header */
-    if (pkt_buf.bytes.size() < MPPE_OVERHEAD_LEN) {
+    if (pkt_buf.data.size() < MPPE_OVERHEAD_LEN) {
         ppp_mppe_state.sanity_errors += 100;
         close_on_bad_mppe_state(pcb, ppp_mppe_state);
         return false;
     }
 
-    uint8_t* payload = pkt_buf.bytes.data();
+    uint8_t* payload = pkt_buf.data.data();
     uint8_t flushed = MPPE_BITS(payload) & MPPE_BIT_FLUSHED;
     uint16_t ccount = MPPE_CCOUNT(payload);
 

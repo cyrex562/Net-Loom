@@ -8,11 +8,47 @@
 #include "ip4_addr.h"
 #include "ip6_addr.h"
 #include "lwip_status.h"
+#include <vector>
 
 /** DNS server port address */
-
 constexpr auto DNS_SERVER_PORT = 53;
 
+/** UDP port for multicast DNS queries */
+constexpr auto DNS_MQUERY_PORT = 5353;
+
+// constexpr auto DNS_MQUERY_IPV4_GROUP_INIT = IpAddr4InitBytes(224,0,0,251);
+
+/* IPv6 group for multicast DNS queries: FF02::FB */
+// #define DNS_MQUERY_IPV6_GROUP_INIT  ip6(0xFF020000,0,0,0xFB)
+inline Ip6AddrInfo DNS_MQUERY_IPV6_GROUP_INIT() { return set_ip6_addr2(0xFF020000,0,0,0xFB); }
+
+/** DNS timer period */
+constexpr auto DNS_TMR_INTERVAL = 1000;
+
+/** Limits the source port to be >= 1024 by default */
+#define DNS_PORT_ALLOWED(port) ((port) >= 1024)
+
+
+/** DNS resource record max. TTL (one week as default) */
+#define DNS_MAX_TTL               604800
+
+
+/* The number of parallel requests (i.e. calls to dns_gethostbyname
+ * that cannot be answered from the DNS table.
+ * This is set to the table size by default.
+ */
+#define DNS_MAX_REQUESTS          DNS_TABLE_SIZE
+
+/* In this configuration, both arrays have to have the same size and are used
+ * like one entry (used/free) */
+
+/* The number of UDP source ports used in parallel */
+#define DNS_MAX_SOURCE_PORTS      DNS_MAX_REQUESTS
+
+
+const Ip4Addr dns_mquery_group_v4 = {make_u32(224,0,0,251)};
+
+const Ip6Addr dns_mquery_group_v6 = make_ip6_addr_host(0xf020000UL, 0, 0, 0x000000fbUL);
 
 /* DNS field TYPE used for "Resource Records" */
 #define DNS_RRTYPE_A              1     /* a host address */
@@ -56,7 +92,28 @@ constexpr auto DNS_SERVER_PORT = 53;
 #define DNS_FLAG2_ERR_NONE        0x00
 #define DNS_FLAG2_ERR_NAME        0x03
 
-#define DNS_HDR_GET_OPCODE(hdr) ((((hdr)->flags1) >> 3) & 0xF)
+
+
+/* DNS resolve types: */
+enum dns_addr_type
+{
+    LWIP_DNS_ADDRTYPE_IPV4 = 0,
+    LWIP_DNS_ADDRTYPE_IPV6 = 1,
+    LWIP_DNS_ADDRTYPE_IPV4_IPV6 = 2,
+    LWIP_DNS_ADDRTYPE_IPV6_IPV4 = 3,
+    LWIP_DNS_ADDRTYPE_DEFAULT = LWIP_DNS_ADDRTYPE_IPV4_IPV6
+};
+
+
+/* DNS table entry states */
+enum DnsStateEnumT
+{
+    DNS_STATE_UNUSED = 0,
+    DNS_STATE_NEW = 1,
+    DNS_STATE_ASKING = 2,
+    DNS_STATE_DONE = 3
+};
+
 
 /** DNS message header */
 struct DnsHdr
@@ -72,36 +129,73 @@ struct DnsHdr
 
 constexpr auto DNS_HDR_LEN = 12;
 
-
-/* Multicast DNS definitions */
-
-/** UDP port for multicast DNS queries */
-constexpr auto DNS_MQUERY_PORT = 5353;
-
-
-/* IPv4 group for multicast DNS queries: 224.0.0.251 */
-
-// constexpr auto DNS_MQUERY_IPV4_GROUP_INIT = IpAddr4InitBytes(224,0,0,251);
-
-
-/* IPv6 group for multicast DNS queries: FF02::FB */
-
-#define DNS_MQUERY_IPV6_GROUP_INIT  IPADDR6_INIT_HOST(0xFF020000,0,0,0xFB)
-
-/** DNS timer period */
-constexpr auto DNS_TMR_INTERVAL = 1000;
-
-/* DNS resolve types: */
-enum dns_addr_type
+/** DNS query message structure.
+    No packing needed: only used locally on the stack. */
+struct DnsQuery
 {
-    LWIP_DNS_ADDRTYPE_IPV4 = 0,
-    LWIP_DNS_ADDRTYPE_IPV6 = 1,
-    LWIP_DNS_ADDRTYPE_IPV4_IPV6 = 2,
-    LWIP_DNS_ADDRTYPE_IPV6_IPV4 = 3,
-    LWIP_DNS_ADDRTYPE_DEFAULT = LWIP_DNS_ADDRTYPE_IPV4_IPV6
+    /* DNS query record starts with either a domain name or a pointer
+       to a name already present somewhere in the packet. */
+    uint16_t type;
+    uint16_t cls;
+};
+constexpr auto DNS_QUERY_LEN = 4;
+
+/** DNS answer message structure.
+    No packing needed: only used locally on the stack. */
+struct DnsAnswer
+{
+    /* DNS answer record starts with either a domain name or a pointer
+       to a name already present somewhere in the packet. */
+    uint16_t type;
+    uint16_t cls;
+    uint32_t ttl;
+    uint16_t len;
+};
+#define SIZEOF_DNS_ANSWER 10
+/* maximum allowed size for the struct due to non-packed */
+#define SIZEOF_DNS_ANSWER_ASSERT 12
+
+
+#define DNS_HDR_GET_OPCODE(hdr) ((((hdr)->flags1) >> 3) & 0xF)
+
+#define LWIP_DNS_ADDRTYPE_ARG(x) , x
+#define LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(x) x
+#define LWIP_DNS_SET_ADDRTYPE(x, y) do { x = y; } while(0)
+#define LWIP_DNS_ISMDNS_ARG(x) , x
+
+
+
+
+
+
+
+/** DNS table entry */
+struct DnsTableEntry
+{
+    uint32_t ttl;
+    IpAddrInfo ipaddr;
+    uint16_t txid;
+    uint8_t state;
+    uint8_t server_idx;
+    uint8_t tmr;
+    uint8_t retries;
+    uint8_t seqno;
+    uint8_t pcb_idx;
+    char name[DNS_MAX_NAME_LENGTH];
+    uint8_t reqaddrtype;
+    uint8_t is_mdns;
 };
 
-
+/** DNS request table entry: used when dns_gehostbyname cannot answer the
+ * request from the DNS table */
+struct DnsRequestEntry
+{
+    /* pointer to callback on DNS query done */
+    dns_found_callback found; /* argument passed to the callback function */
+    void* arg;
+    uint8_t dns_table_idx;
+    uint8_t reqaddrtype;
+};
 
 
 
@@ -113,6 +207,9 @@ struct LocalHostListEntry
     IpAddrInfo addr;
     struct LocalHostListEntry* next;
 };
+
+
+
 #define DNS_LOCAL_HOSTLIST_ELEM(name, addr_init) {name, addr_init, NULL}
 #define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH
 #define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct LocalHostListEntry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
@@ -132,7 +229,8 @@ extern const IpAddrInfo dns_mquery_v6group;
 */
 typedef void (*dns_found_callback)(const char *name, const IpAddrInfo *ipaddr, uint8_t *callback_arg);
 
-void             dns_init(void);
+std::tuple<bool, std::vector<<unknown>>>
+dns_init(void);
 void             dns_tmr(void);
 void             dns_setserver(uint8_t numdns, const IpAddrInfo *dnsserver);
 IpAddrInfo dns_getserver(uint8_t numdns);
@@ -159,6 +257,9 @@ inline bool match_dns_addr_ip(uint8_t t, IpAddrInfo& ip)
 }
 
 
-const Ip4Addr dns_mquery_group_v4 = {make_u32(224,0,0,251)};
 
-const Ip6Addr dns_mquery_group_v6 = make_ip6_addr_host(0xf020000UL, 0, 0, 0x000000fbUL);
+
+
+//
+// END OF FILE
+//

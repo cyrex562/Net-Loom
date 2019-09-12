@@ -169,7 +169,7 @@ bool
 bridgeif_output(NetworkInterface& netif, PacketBuffer& pkt_buf, BridgeInterface& bridge_ifc)
 {
     // const auto br = static_cast<BridgeInterface *>(netif.state);
-    const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.bytes.data());
+    const auto eth_hdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
     const auto dstports = bridgeif_find_dst_ports(bridge_ifc, eth_hdr->dest);
     const auto err = bridgeif_send_to_ports(bridge_ifc, pkt_buf, dstports);
     if (eth_hdr->dest.bytes[0] & 1)
@@ -198,7 +198,7 @@ bridgeif_input(PacketBuffer& pkt_buf,
 
     const auto rx_idx = get_and_inc_netif_num(netif); /* store receive index in pbuf */
     pkt_buf.input_netif_idx = rx_idx;
-    auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.bytes.data());
+    auto eth_hdr = reinterpret_cast<EthHdr*>(pkt_buf.data.data());
     MacAddress src = eth_hdr->src;
 
     if ((src.bytes[0] & 1) == 0)

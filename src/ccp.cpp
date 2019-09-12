@@ -1290,7 +1290,6 @@ method_name(CcpOptions& opt1, CcpOptions& opt2)
 bool
 ccp_up(Fsm&, PppPcb& pcb)
 {
-    std::string method1;
     auto empty_opts = CcpOptions();
     ccp_set(pcb, true, true, pcb.ccp_gotoptions.method, pcb.ccp_hisoptions.method);
     if (ccp_anycompress(pcb.ccp_gotoptions)) {
@@ -1300,7 +1299,7 @@ ccp_up(Fsm&, PppPcb& pcb)
                              method_name(pcb.ccp_gotoptions, pcb.ccp_hisoptions));
             }
             else {
-                method1 = method_name(pcb.ccp_gotoptions, empty_opts);
+                const std::string method1 = method_name(pcb.ccp_gotoptions, empty_opts);
                 spdlog::info("%s / %s compression enabled",
                              method1,
                              method_name(pcb.ccp_hisoptions, empty_opts));
@@ -1319,6 +1318,7 @@ ccp_up(Fsm&, PppPcb& pcb)
         /* Bring up IP et al */
         continue_networks(pcb);
     }
+    return true;
 }
 
 /**

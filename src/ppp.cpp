@@ -525,19 +525,19 @@ bool
 ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
 {
     // magic_randomize();
-    if (pkt_buf.bytes.size() < 2)
+    if (pkt_buf.data.size() < 2)
     {
         return false;
     }
-    const auto pb_payload_0 = pkt_buf.bytes[0];
-    const auto pb_payload_1 = pkt_buf.bytes[1];
+    const auto pb_payload_0 = pkt_buf.data[0];
+    const auto pb_payload_1 = pkt_buf.data[1];
     uint16_t protocol = uint16_t(pb_payload_0) << 8 | uint16_t(pb_payload_1);
     const size_t proto_size = 2;
 
     // sizeof(protocol)
     // todo: replicate this call
     // pbuf_remove_header(pb, proto_size);
-    if (pkt_buf.bytes.size() < 2)
+    if (pkt_buf.data.size() < 2)
     {
         return false;
     }
@@ -560,13 +560,13 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
         }
 
         // Extract and hide protocol (do PFC decompression if necessary)
-        if (pkt_buf.bytes[0] & 0x01)
+        if (pkt_buf.data[0] & 0x01)
         {
-            protocol = pkt_buf.bytes[0];
+            protocol = pkt_buf.data[0];
         }
         else
         {
-            protocol = (pkt_buf.bytes[0] << 8) | pkt_buf.bytes[1];
+            protocol = (pkt_buf.data[0] << 8) | pkt_buf.data[1];
             // pbuf_remove_header(pb, 2);
         }
         if (protocol == PPP_COMP)
@@ -585,12 +585,12 @@ ppp_input(PppPcb& ppp_pcb, PacketBuffer& pkt_buf, Fsm& lcp_fsm)
                 /// Cannot really happen, we only negotiate what we are able to do
             }
             /// Assume no PFC
-            if (pkt_buf.bytes.size() < 2)
+            if (pkt_buf.data.size() < 2)
             {
                 return false;
             }
             /// Extract and hide protocol (do PFC decompression if necessary)
-            auto pl = static_cast<uint8_t*>(pkt_buf.bytes.data());
+            auto pl = static_cast<uint8_t*>(pkt_buf.data.data());
             if (pl[0] & 0x01)
             {
                 protocol = pl[0];

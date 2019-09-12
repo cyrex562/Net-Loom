@@ -51,13 +51,13 @@ zepif_udp_recv(UdpPcb& pcb,
     // lwip_assert("pcb != NULL", pcb != nullptr);
 
     /* Parse and hide the ZEP header */
-    if (p.bytes.size() < sizeof(struct ZepHdr))
+    if (p.data.size() < sizeof(struct ZepHdr))
     {
         /* need the ZepHdr in one piece */
         goto err_return;
     }
 
-    auto zep = reinterpret_cast<struct ZepHdr *>(p.bytes.data());
+    auto zep = reinterpret_cast<struct ZepHdr *>(p.data.data());
     if (zep->prot_id[0] != 'E')
     {
         return false;
@@ -79,7 +79,7 @@ zepif_udp_recv(UdpPcb& pcb,
     {
         return false;
     }
-    if (zep->len != p.bytes.size() - sizeof(struct ZepHdr))
+    if (zep->len != p.data.size() - sizeof(struct ZepHdr))
     {
         return false;
     }
@@ -115,7 +115,7 @@ zepif_linkoutput(NetworkInterface& netif,
 {
     // lwip_assert("invalid netif", netif != nullptr);
     // lwip_assert("invalid pbuf", p != nullptr);
-    if (p.bytes.size() > ZEP_MAX_DATA_LEN) { return ERR_VAL; }
+    if (p.data.size() > ZEP_MAX_DATA_LEN) { return ERR_VAL; }
     // lwip_assert("TODO: support chained pbufs", p->next == nullptr);
     // struct ZepifState* state = static_cast<struct ZepifState *>(netif->state);
     // lwip_assert("state->pcb != NULL", state->pcb != nullptr);
@@ -138,9 +138,9 @@ zepif_linkoutput(NetworkInterface& netif,
     zep.unknown_1 = 0xff;
     zep.seq_num = lwip_htonl(state.seqno);
     state.seqno++;
-    zep.len = p.bytes.size();
-    std::copy(&zep, (&zep) + sizeof(ZepHdr), q.bytes);
-    std::copy(p.bytes.begin(), p.bytes.end(), q.bytes.begin() + sizeof(ZepHdr));
+    zep.len = p.data.size();
+    std::copy(&zep, (&zep) + sizeof(ZepHdr), q.data);
+    std::copy(p.data.begin(), p.data.end(), q.data.begin() + sizeof(ZepHdr));
     IpAddrInfo empty{};
     if (!zepif_udp_recv(udp_pcb, q, empty, 0, netif, netif_lowpan6)) { return false; }
     auto err = udp_sendto(udp_pcb,

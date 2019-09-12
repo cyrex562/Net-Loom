@@ -175,18 +175,18 @@ bool
 eap_send_failure(PppPcb& pcb)
 {
     PacketBuffer p = init_pkt_buf();
-    p.bytes.reserve(1500); // todo: figure out correct size
+    p.data.reserve(1500); // todo: figure out correct size
     size_t index  = 0;
 
     ppp_make_header(outp, PPP_EAP);
-    ppp_put_char(PPP_ALLSTATIONS, p.bytes, index);
-    ppp_put_char(PPP_UI, p.bytes, index);
-    ppp_put_short(PPP_EAP, p.bytes, index);
+    ppp_put_char(PPP_ALLSTATIONS, p.data, index);
+    ppp_put_char(PPP_UI, p.data, index);
+    ppp_put_short(PPP_EAP, p.data, index);
 
-    ppp_put_char(EAP_FAILURE, p.bytes, index);
+    ppp_put_char(EAP_FAILURE, p.data, index);
     pcb.eap.es_server.ea_id++;
-    ppp_put_char(pcb.eap.es_server.ea_id, p.bytes, index);
-    ppp_put_short(EAP_HEADERLEN, p.bytes, index);
+    ppp_put_char(pcb.eap.es_server.ea_id, p.data, index);
+    ppp_put_short(EAP_HEADERLEN, p.data, index);
 
     ppp_write(pcb, p);
 
@@ -202,17 +202,17 @@ bool
 eap_send_success(PppPcb& pcb)
 {
     PacketBuffer p = init_pkt_buf()
-    p.bytes.reserve(1500);
+    p.data.reserve(1500);
     size_t index = 0;
-    ppp_make_header(p.bytes, PPP_EAP, index);
-    ppp_put_char(PPP_ALLSTATIONS, p.bytes, index);
-    ppp_put_char(PPP_UI, p.bytes, index);
-    ppp_put_short(PPP_EAP, p.bytes, index);
+    ppp_make_header(p.data, PPP_EAP, index);
+    ppp_put_char(PPP_ALLSTATIONS, p.data, index);
+    ppp_put_char(PPP_UI, p.data, index);
+    ppp_put_short(PPP_EAP, p.data, index);
 
-    ppp_put_char(EAP_SUCCESS, p.bytes, index);
+    ppp_put_char(EAP_SUCCESS, p.data, index);
     pcb.eap.es_server.ea_id++;
-    ppp_put_char(pcb.eap.es_server.ea_id, p.bytes, index);
-    ppp_put_short(EAP_HEADERLEN, p.bytes, index);
+    ppp_put_char(pcb.eap.es_server.ea_id, p.data, index);
+    ppp_put_short(EAP_HEADERLEN, p.data, index);
 
     ppp_write(pcb, p);
 
@@ -593,21 +593,21 @@ eap_send_request(PppPcb& pcb)
     }
     PacketBuffer p = init_pkt_buf()
     size_t index = 0;
-    ppp_make_header(p.bytes, PPP_EAP);
-    ppp_put_char(EAP_REQUEST, p.bytes, index);
-    ppp_put_char(pcb.eap.es_server.ea_id, p.bytes, index);
+    ppp_make_header(p.data, PPP_EAP);
+    ppp_put_char(EAP_REQUEST, p.data, index);
+    ppp_put_char(pcb.eap.es_server.ea_id, p.data, index);
     index += 2;
     auto ea_state = pcb.eap.es_server.ea_state;
     if (ea_state == EAP_IDENTIFY)
     {
-        ppp_put_char(EAPT_IDENTITY, p.bytes, index);
+        ppp_put_char(EAPT_IDENTITY, p.data, index);
         std::string str_name = "Name";
-        ppp_put_string(str_name, p.bytes, index);
+        ppp_put_string(str_name, p.data, index);
         index += str_name.size();
     }
     else if (ea_state == EAP_MD5_CHALL)
     {
-        ppp_put_char(EAPT_MD5CHAP, p.bytes, index);
+        ppp_put_char(EAPT_MD5CHAP, p.data, index);
 
         /*
          * pick a random challenge length between
@@ -618,13 +618,13 @@ eap_send_request(PppPcb& pcb)
             EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
         pcb.eap.es_challenge.reserve(new_eap_chall_len);
         // put the length of the challenge into the packet
-        ppp_put_char(new_eap_chall_len, p.bytes, index);
+        ppp_put_char(new_eap_chall_len, p.data, index);
         // fill the challenge buffer with random data
         magic_random_bytes(pcb.eap.es_challenge, pcb.eap.es_challenge.size(), 0);
-        PUTBYTES(pcb.eap.es_challenge, p.bytes, index);
+        PUTBYTES(pcb.eap.es_challenge, p.data, index);
 
         //
-        ppp_put_string(pcb.eap.es_server.ea_name, p.bytes, index);
+        ppp_put_string(pcb.eap.es_server.ea_name, p.data, index);
 
     }
     else { return false; }
@@ -792,15 +792,15 @@ eap_send_response(PppPcb& pcb, uint8_t id, uint8_t typenum, std::string& str)
     // p = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_HDRLEN + msglen), PPP_CTRL_PBUF_TYPE);
     PacketBuffer p = init_pkt_buf()
     size_t index = 0;
-    ppp_make_header(p.bytes, PPP_EAP);
-    ppp_put_char(EAP_RESPONSE, p.bytes, index);
-    ppp_put_char(id, p.bytes, index);
+    ppp_make_header(p.data, PPP_EAP);
+    ppp_put_char(EAP_RESPONSE, p.data, index);
+    ppp_put_char(id, p.data, index);
     pcb.eap.es_client.ea_id = id;
-    ppp_put_short(msg_len, p.bytes, index);
-    ppp_put_char(typenum, p.bytes, index);
+    ppp_put_short(msg_len, p.data, index);
+    ppp_put_char(typenum, p.data, index);
     if (str.length() > 0)
     {
-        ppp_put_string(str, p.bytes, index);
+        ppp_put_string(str, p.data, index);
     }
     ppp_write(pcb, p);
 }
@@ -814,21 +814,21 @@ eap_chap_response(PppPcb& pcb, uint8_t id, std::vector<uint8_t>& hash, std::stri
     const auto msglen = EAP_HEADERLEN + 2 * sizeof(uint8_t) + MD5_SIGNATURE_SIZE + name.length();
     PacketBuffer p{};
     size_t index = 0;
-    ppp_make_header(p.bytes, PPP_EAP, index);
+    ppp_make_header(p.data, PPP_EAP, index);
 
-    ppp_put_char(EAP_RESPONSE, p.bytes, index);
-    ppp_put_char(id, p.bytes, index);
+    ppp_put_char(EAP_RESPONSE, p.data, index);
+    ppp_put_char(id, p.data, index);
     pcb.eap.es_client.ea_id = id;
-    ppp_put_short(msglen, p.bytes, index);
-    ppp_put_char(EAPT_MD5CHAP, p.bytes, index);
-    ppp_put_char(MD5_SIGNATURE_SIZE, p.bytes, index);
-    std::copy(hash.begin(), hash.end(), p.bytes.begin() + index);
+    ppp_put_short(msglen, p.data, index);
+    ppp_put_char(EAPT_MD5CHAP, p.data, index);
+    ppp_put_char(MD5_SIGNATURE_SIZE, p.data, index);
+    std::copy(hash.begin(), hash.end(), p.data.begin() + index);
     index += MD5_SIGNATURE_SIZE;
 
 
     if (name.length() > 0)
     {
-        ppp_put_string(name, p.bytes, index);
+        ppp_put_string(name, p.data, index);
     }
 
     ppp_write(pcb, p);
@@ -844,13 +844,13 @@ eap_send_nak(PppPcb& pcb, const uint8_t id, const uint8_t type)
     const size_t msg_len = EAP_HEADERLEN + 2 * sizeof(uint8_t);
     PacketBuffer p{};
     size_t index = 0;
-    ppp_make_header(p.bytes, PPP_EAP, index);
-    ppp_put_char(EAP_RESPONSE, p.bytes, index);
-    ppp_put_char(id, p.bytes, index);
+    ppp_make_header(p.data, PPP_EAP, index);
+    ppp_put_char(EAP_RESPONSE, p.data, index);
+    ppp_put_char(id, p.data, index);
     pcb.eap.es_client.ea_id = id;
-    ppp_put_short(msg_len, p.bytes, index);
-    ppp_put_char(EAPT_NAK, p.bytes, index);
-    ppp_put_short(type, p.bytes, index);
+    ppp_put_short(msg_len, p.data, index);
+    ppp_put_char(EAPT_NAK, p.data, index);
+    ppp_put_short(type, p.data, index);
     return ppp_write(pcb, p);
 }
 

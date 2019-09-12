@@ -469,21 +469,21 @@ pcapif_low_level_output(NetworkInterface& netif, PacketBuffer& pkt_buf)
     // char buffer[ETH_MAX_FRAME_LEN + ETH_PAD_SIZE];
     // uint8_t* buf = buffer;
     std::vector<uint8_t> buffer;
-    uint16_t tot_len = pkt_buf.bytes.size() - ETH_PAD_SIZE;
+    uint16_t tot_len = pkt_buf.data.size() - ETH_PAD_SIZE;
     // struct pcapif_private* pa = (struct pcapif_private*)PCAPIF_GET_STATE_PTR(netif);
     PcapIfPrivate pa{};
 
     /* signal that packet should be sent */
-    if (pcap_sendpacket(pa.adapter, pkt_buf.bytes.data(), tot_len) < 0)
+    if (pcap_sendpacket(pa.adapter, pkt_buf.data.data(), tot_len) < 0)
     {
         return false;
     }
 
     if (is_netif_link_up(netif))
     {
-        pcapif_add_tx_packet(pa, pkt_buf.bytes);
+        pcapif_add_tx_packet(pa, pkt_buf.data);
     }
-    EthHdr* ethhdr = reinterpret_cast<EthHdr *>(pkt_buf.bytes.data());
+    EthHdr* ethhdr = reinterpret_cast<EthHdr *>(pkt_buf.data.data());
     if ((ethhdr->dest.bytes[0] & 1) != 0)
     {
         /* broadcast or multicast packet*/
@@ -512,13 +512,13 @@ pcapif_low_level_recv(NetworkInterface& netif,
     PacketBuffer pkt_buf{};
 
     for (size_t i = 0; i < packet_len; i++) {
-        pkt_buf.bytes.push_back(packet[i]);
+        pkt_buf.data.push_back(packet[i]);
     }
 
     const uint8_t bcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     const uint8_t ipv4mcast[] = {0x01, 0x00, 0x5e};
     const uint8_t ipv6mcast[] = {0x33, 0x33};
-    if (pcaipf_is_tx_packet(netif, pkt_buf.bytes, pcap_if_priv))
+    if (pcaipf_is_tx_packet(netif, pkt_buf.data, pcap_if_priv))
     {
         /* don't update counters here! */
         return std::make_tuple(false, pkt_buf);

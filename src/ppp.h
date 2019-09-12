@@ -393,7 +393,7 @@ bool
 auth_peer_fail(PppPcb& pcb, int protocol);
                 /* peer failed to authenticate itself */
 bool
-auth_peer_success(PppPcb& pcb, PppProtoFieldValue protocol, ChapDigestCodes prot_flavor, std::string& name);
+auth_peer_success(PppPcb& pcb, PppProtoFieldValue protocol, ChapDigestCode prot_flavor, std::string& name);
                 /* peer successfully authenticated itself */
 bool
 auth_withpeer_fail(PppPcb& pcb, int protocol);
@@ -667,7 +667,7 @@ struct PppPcb
     uint16_t auth_done{}; /* Records which authentication operations have been completed. */
     UpapState upap; /* PAP data */
     ChapClientState chap_client; /* CHAP client data */
-    chap_server_state chap_server; /* CHAP server data */
+    ChapServerState chap_server; /* CHAP server data */
     EapState eap; /* EAP data */
     Fsm lcp_fsm{}; /* LCP fsm structure */
     LcpOptions lcp_wantoptions{}; /* Options that we want to request */

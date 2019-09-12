@@ -181,7 +181,7 @@ lowpan6_parse_iee802154_header(PacketBuffer& pkt,
                                Lowpan6LinkAddr& dest)
 {
     int8_t i; /* Parse IEEE 802.15.4 header */
-  uint8_t* puc = pkt.bytes.data();
+  uint8_t* puc = pkt.data.data();
   uint16_t frame_control = puc[0] | (puc[1] << 8);
   uint16_t datagram_offset = 2;
   if (frame_control & IEEE_802154_FC_SEQNO_SUPPR) {

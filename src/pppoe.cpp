@@ -273,13 +273,13 @@ pppoe_disc_input(NetworkInterface& netif, PacketBuffer& pkt_buf, std::vector<Ppp
 
 
     // pb = pbuf_coalesce(pb, PBUF_RAW);
-    auto ethhdr = reinterpret_cast<struct EthHdr *>(pkt_buf.bytes.data());
+    auto ethhdr = reinterpret_cast<struct EthHdr *>(pkt_buf.data.data());
 
 
 
     auto offset = sizeof(struct EthHdr) + sizeof(struct PppoeHdr);
     auto ok = true;
-    if (offset > pkt_buf.bytes.size()) {
+    if (offset > pkt_buf.data.size()) {
         return false;
     }
 
@@ -290,7 +290,7 @@ pppoe_disc_input(NetworkInterface& netif, PacketBuffer& pkt_buf, std::vector<Ppp
     const auto session = lwip_ntohs(ph->session);
     auto plen = lwip_ntohs(ph->plen);
 
-    if (plen > (pkt_buf.bytes.size() - offset)) {
+    if (plen > (pkt_buf.data.size() - offset)) {
         return false;
     }
 
@@ -313,11 +313,11 @@ pppoe_disc_input(NetworkInterface& netif, PacketBuffer& pkt_buf, std::vector<Ppp
     uint16_t ac_cookie_len = 0;
     std::string err_msg;
     std::vector<uint8_t> hunique;
-    while (offset + sizeof(PppoeTag) <= pkt_buf.bytes.size()) {
-        memcpy(&pt, pkt_buf.bytes.data() + offset, sizeof(pt));
+    while (offset + sizeof(PppoeTag) <= pkt_buf.data.size()) {
+        memcpy(&pt, pkt_buf.data.data() + offset, sizeof(pt));
         tag = lwip_ntohs(pt.tag);
         len = lwip_ntohs(pt.len);
-        if (offset + sizeof(PppoeTag) + len > pkt_buf.bytes.size()) {
+        if (offset + sizeof(PppoeTag) + len > pkt_buf.data.size()) {
             return false;
         }
 
@@ -331,7 +331,7 @@ pppoe_disc_input(NetworkInterface& netif, PacketBuffer& pkt_buf, std::vector<Ppp
             // ignored
         }
         else if (tag == PPPOE_TAG_HUNIQUE) {
-           hu_ptr = pkt_buf.bytes.data() + offset + sizeof(PppoeTag);
+           hu_ptr = pkt_buf.data.data() + offset + sizeof(PppoeTag);
            hunique_len = len;
             std::vector<uint8_t> hunique;
             for (auto i = 0; i < hunique_len; i++) {
@@ -345,7 +345,7 @@ pppoe_disc_input(NetworkInterface& netif, PacketBuffer& pkt_buf, std::vector<Ppp
             if (len > PPPOE_MAX_AC_COOKIE_LEN) {
                 return false;
             }
-            ac_cookie = pkt_buf.bytes.data() + offset + sizeof(PppoeTag);
+            ac_cookie = pkt_buf.data.data() + offset + sizeof(PppoeTag);
             ac_cookie_len = len;
         } else if (tag == PPPOE_TAG_SNAME_ERR) {
             err_msg = "service name error";
@@ -556,7 +556,7 @@ static bool
 pppoe_output(PppoeSoftc& sc, PacketBuffer& pb)
 {
     // todo: add ethernet header to packet
-    auto* ethhdr = reinterpret_cast<EthHdr *>(pb.bytes.data());
+    auto* ethhdr = reinterpret_cast<EthHdr *>(pb.data.data());
     uint16_t ether_type = ETHTYPE_PPPOEDISC;
     if (sc.sc_state == PPPOE_STATE_SESSION) {
         ether_type = ETHTYPE_PPPOE;
@@ -753,7 +753,7 @@ pppoe_send_padr(PppoeSoftc& sc)
 
     PacketBuffer pb{};
 
-    uint8_t* p = pb.bytes.data();
+    uint8_t* p = pb.data.data();
     PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
     PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
     PPPOE_ADD_16(p, 0);
@@ -811,7 +811,7 @@ pppoe_send_pado(PppoeSoftc& sc)
     len += 2 + 2 + sizeof(sc); /* include hunique */
     len += 2 + 2 + sc.sc_hunique.size();
     PacketBuffer pb{};
-    auto* p = pb.bytes.data();
+    auto* p = pb.data.data();
     PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
     PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
     // todo: why are we copying the PppoeSoftc data structure into the packet?
@@ -837,7 +837,7 @@ pppoe_send_pads(PppoeSoftc& sc)
         len += l1;
     }
     PacketBuffer pb{};
-    auto p = pb.bytes.data();
+    auto p = pb.data.data();
     PPPOE_ADD_HEADER(p, PPPOE_CODE_PADS, sc.sc_session, len);
     PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
     if (!sc.sc_service_name.empty()) {
@@ -858,7 +858,7 @@ pppoe_send_pads(PppoeSoftc& sc)
 static bool
 pppoe_xmit(PppoeSoftc& sc, PacketBuffer& pkt_buf)
 {
-    size_t len = pkt_buf.bytes.size(); // todo: add pppoe header to packet
+    size_t len = pkt_buf.data.size(); // todo: add pppoe header to packet
     // uint8_t* p = (uint8_t*)pkt_buf->payload;
     // PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
     // /* make room for PPPoE header - should not fail */

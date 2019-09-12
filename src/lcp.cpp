@@ -738,7 +738,7 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     LcpOptions *go = &pcb->lcp_gotoptions;
     LcpOptions *wo = &pcb->lcp_wantoptions;
     uint8_t citype;
-    ChapDigestCodes cichar;
+    ChapDigestCode cichar;
     uint8_t* next;
     u_short cishort;
     uint32_t cilong;
@@ -911,7 +911,7 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
         }
     } else
     if (cishort == PPP_CHAP && cilen == 5) {
-        { (cichar) = (ChapDigestCodes)*(p)++; };
+        { (cichar) = (ChapDigestCode)*(p)++; };
         /* Stop asking for EAP, if we were. */
         if (go->neg_eap) {
         try_.neg_eap = false;
@@ -994,7 +994,7 @@ static int lcp_nakci(Fsm *f, uint8_t *p, int len, int treat_as_reject) {
     /*
      * Only implementing CBCP...not the rest of the callback options
      */
-    if (go->neg_cbcp && len >= CILEN_CHAR && p[1] == CILEN_CHAR && p[0] == CI_CALLBACK) { len -= CILEN_CHAR; INCPTR(2, p); { (cichar) = (ChapDigestCodes)*(p)++; }; no.neg_cbcp = 1; try_.neg_cbcp = 0; (void)cichar; };
+    if (go->neg_cbcp && len >= CILEN_CHAR && p[1] == CILEN_CHAR && p[0] == CI_CALLBACK) { len -= CILEN_CHAR; INCPTR(2, p); { (cichar) = (ChapDigestCode)*(p)++; }; no.neg_cbcp = 1; try_.neg_cbcp = 0; (void)cichar; };
 
     /*
      * Check for a looped-back line.
@@ -1349,7 +1349,7 @@ bool
 lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if_disagree) {
     uint8_t cilen;
     uint8_t citype;
-    ChapDigestCodes cichar;
+    ChapDigestCode cichar;
     u_short cishort;		/* Parsed short value */
     uint32_t cilong;		/* Parse long value */
     int rc = CONF_ACK;		/* Final packet return code */
@@ -1368,7 +1368,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
     uint8_t* next = inp.data();
     // nakp = pbuf_alloc(PBUF_RAW, (uint16_t)(PPP_CTRL_PBUF_MAX_SIZE));
     PacketBuffer nakp = init_pkt_buf();
-    uint8_t* nakoutp = nakp.bytes.data();
+    uint8_t* nakoutp = nakp.data.data();
     uint8_t* rejp = inp.data();
     while (rem_len != 0u)
     {
@@ -1518,7 +1518,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                     break;
                 }
                 {
-                    (cichar) = (ChapDigestCodes)*(p)++;
+                    (cichar) = (ChapDigestCode)*(p)++;
                 }; /* get digest type */
                 if (!(chap_candigest(ao->chap_mdtype, cichar)))
                 {
@@ -1678,7 +1678,7 @@ lcp_req_conf_info(PppPcb& pcb, Fsm& f, std::vector<uint8_t>& inp, bool reject_if
                 break;
             }
             {
-                (cichar) = (ChapDigestCodes)*(p)++;
+                (cichar) = (ChapDigestCode)*(p)++;
             };
             cilen -= CILEN_CHAR;
             ho->neg_endpoint = true;

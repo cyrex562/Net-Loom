@@ -39,8 +39,8 @@ chapms2_generate_challenge(PppPcb& pcb, std::vector<uint8_t>& challenge)
 {
     size_t ptr = 0;
     challenge[ptr++] = 16;
-    if (MSCHAP_CHALLENGE && strlen(MSCHAP_CHALLENGE) == 16) memcpy(
-        challenge.data + ptr,
+    if (strlen(MSCHAP_CHALLENGE) == 16) memcpy(
+        challenge.data() + ptr,
         MSCHAP_CHALLENGE,
         16);
     else magic_random_bytes(challenge, 16, ptr);
@@ -102,39 +102,48 @@ chapms_verify_response(PppPcb& pcb,
 }
 
 
-int
-chapms2_verify_response(PppPcb* pcb,
+bool
+chapms2_verify_response(PppPcb& pcb,
                         int id,
                         std::string& name,
                         std::string& secret,
-                        const unsigned char* challenge,
-                        const unsigned char* response,
+                        std::vector<uint8_t>& challenge,
+                        std::vector<uint8_t>& response,
                         std::string& message,
                         int message_space)
 {
-    unsigned char md[MS_CHAP2_RESPONSE_LEN];
-    char saresponse[MS_AUTH_RESPONSE_LENGTH + 1];
-    const int challenge_len = *challenge++; /* skip length, is 16 */
-    const int response_len = *response++;
+    // unsigned char md[MS_CHAP2_RESPONSE_LEN];
+    // char saresponse[MS_AUTH_RESPONSE_LENGTH + 1];
+    std::vector<uint8_t> chap_ms2_resp(MS_CHAP2_RESPONSE_LEN);
+    std::vector<uint8_t> chap_ms2_auth_resp(MS_AUTH_RESPONSE_LENGTH + 1);
+    const int challenge_len = challenge[0]; /* skip length, is 16 */
+    const int response_len = response[0];
     if (response_len != MS_CHAP2_RESPONSE_LEN) {
         // "E=691 R=1 C=%0.*B V=0 M=%s"
         message = "E=691 R=1 C=";
-        message += (const char*)challenge;
+        message += reinterpret_cast<const char*>(challenge.data() + 1);
         message += " V=0 M=";
-        message += "Access denied"; // ppp_slprintf(message,
-        //              message_space,
-        //              "E=691 R=1 C=%0.*B V=0 M=%s",
-        //              challenge_len,
-        //              challenge,
-        //              "Access denied");
-        return 0; /* not even the right length */
-    } /// Generate the expected response and our mutual auth.
-    chap_ms2(pcb,
+        message += "Access denied";
+        return false; /* not even the right length */
+    }
+
+    /* Generate the expected response and our mutual auth. */
+    std::vector<uint8_t> peer_challenge(response.begin() + MS_CHAP2_PEER_CHALLENGE,
+                                        response.begin() + MS_CHAP2_PEER_CHALLENGE +
+                                        MS_CHAP2_PEER_CHAL_LEN);
+    bool ok;
+
+    std::tie(ok, chap_ms2_resp, chap_ms2_auth_resp) = chap_ms2(pcb,
              challenge,
-             &response[MS_CHAP2_PEER_CHALLENGE],
+             peer_challenge,
              name,
              secret,
-             MS_CHAP2_AUTHENTICATOR,); /* compare MDs and send the appropriate status */ /*
+             MS_CHAP2_AUTHENTICATOR);
+    if (!ok) {
+        return false;
+    }
+    /* compare MDs and send the appropriate status */
+    /*
      * Per RFC 2759, success message must be formatted as
      *     "S=<auth_string> M=<message>"
      * where
@@ -153,26 +162,25 @@ chapms2_verify_response(PppPcb* pcb,
      * Special thanks to Alex Swiridov <say@real.kharkov.ua> for
      * help debugging this.
      */
-    if (memcmp(&md[MS_CHAP2_NTRESP], &response[MS_CHAP2_NTRESP], MS_CHAP2_NTRESP_LEN) == 0
-    ) {
+    const std::vector<uint8_t> ms_chap2_nt_resp(chap_ms2_resp.begin() + MS_CHAP2_NTRESP, chap_ms2_resp.begin() + MS_CHAP2_NTRESP + MS_CHAP2_NTRESP_LEN);
+    std::vector<uint8_t> ms_chap2_nt_response(response.begin() + MS_CHAP2_NTRESP, response.begin() + MS_CHAP2_NTRESP + MS_CHAP2_NTRESP_LEN);
+
+    if (ms_chap2_nt_resp != ms_chap2_nt_response) {
         if (response[MS_CHAP2_FLAGS]) {
-            // ppp_slprintf(message, message_space, "S=%s", saresponse);
             message = "S=";
-            message += saresponse;
+            message += reinterpret_cast<char*>(chap_ms2_auth_resp.data());
         }
         else {
-            // ppp_slprintf(message,
-            //              message_space,
-            //              "S=%s M=%s",
-            //              saresponse,
-            //              "Access granted");
             message = "S=";
-            message += saresponse;
+            message += reinterpret_cast<char*>(chap_ms2_auth_resp.data());
             message += " M=";
             message += "Access granted";
         }
-        return 1;
-    } /*
+        return true;
+    }
+
+
+    /**
      * Failure message must be formatted as
      *     "E=e R=r C=c V=v M=m"
      * where
@@ -192,18 +200,12 @@ chapms2_verify_response(PppPcb* pcb,
      *
      * Basically, this whole bit is useless code, even the small
      * implementation here is only because of overspecification.
-     */ // ppp_slprintf(message,
-    //                  message_space,
-    //                  "E=691 R=1 C=%0.*B V=0 M=%s",
-    //                  challenge_len,
-    //                  challenge,
-    //     "Access denied");
-    // "E=691 R=1 C=%0.*B V=0 M=%s"
+     */
     message = "E=691 R=1 C=";
-    message += reinterpret_cast<const char*>(challenge);
+    message += reinterpret_cast<const char*>(challenge.data());
     message += " V=0 M=";
     message += "Access denied";
-    return 0;
+    return false;
 }
 
 
@@ -227,64 +229,77 @@ chapms_make_response(PppPcb& pcb,
 }
 
 
-void
-chapms2_make_response(PppPcb* pcb,
-                      unsigned char* response,
+std::tuple<bool, std::vector<uint8_t>, std::vector<uint8_t>>
+chapms2_make_response(PppPcb& pcb,
                       int id,
                       std::string& our_name,
-                      const unsigned char* challenge,
-                      std::string& secret,
-                      unsigned char* private_)
+                      std::vector<uint8_t>& challenge,
+                      std::string& secret)
 {
-    challenge++; /* skip length, should be 16 */
-    *response++ = MS_CHAP2_RESPONSE_LEN;
-    chap_ms2(pcb,
-             challenge,
-             nullptr,
+    std::vector<uint8_t> _challenge(challenge.begin() + 1, challenge.end());
+    /* skip length, should be 16 */
+    // response[0] = MS_CHAP2_RESPONSE_LEN;
+    // std::vector<uint8_t> _response(response.begin() + 1, response.end());
+    bool ok;
+    std::vector<uint8_t> ms_chap2_nt_resp;
+    std::vector<uint8_t> ms_chap2_nt_auth_resp;
+    std::vector<uint8_t> peer_challenge;
+    return chap_ms2(pcb,
+             _challenge,
+             peer_challenge,
              our_name,
              secret,
-             MS_CHAP2_AUTHENTICATEE,);
+             MS_CHAP2_AUTHENTICATEE);
 }
 
 
-int
-chapms2_check_success(PppPcb* pcb, unsigned char* msg, int len, unsigned char* private_)
+bool
+chapms2_check_success(PppPcb& pcb,
+                      std::vector<uint8_t>& msg,
+                      std::vector<uint8_t>& private_)
 {
-    if ((len < MS_AUTH_RESPONSE_LENGTH + 2) || strncmp((char *)msg, "S=", 2) != 0) {
+    size_t len = msg.size();
+    size_t offset = 0;
+    if ((len < MS_AUTH_RESPONSE_LENGTH + 2) || strncmp(
+        reinterpret_cast<char *>(msg.data()),
+        "S=",
+        2) != 0) {
         /* Packet does not start with "S=" */
         spdlog::error("MS-CHAPv2 Success packet is badly formed.");
-        return 0;
+        return false;
     }
-    msg += 2;
+    offset += 2;
     len -= 2;
-    if (len < MS_AUTH_RESPONSE_LENGTH || memcmp(msg, private_, MS_AUTH_RESPONSE_LENGTH)) {
+    if (len < MS_AUTH_RESPONSE_LENGTH || memcmp(msg.data() + offset,
+                                                private_.data(),
+                                                MS_AUTH_RESPONSE_LENGTH)) {
         /* Authenticator Response did not match expected. */
         spdlog::error("MS-CHAPv2 mutual authentication failed.");
-        return 0;
+        return false;
     } /* Authenticator Response matches. */
-    msg += MS_AUTH_RESPONSE_LENGTH; /* Eat it */
+    offset += MS_AUTH_RESPONSE_LENGTH; /* Eat it */
     len -= MS_AUTH_RESPONSE_LENGTH;
-    if ((len >= 3) && !strncmp((char *)msg, " M=", 3)) {
-        msg += 3; /* Eat the delimiter */
+    if ((len >= 3) && !strncmp((char *)msg.data() + offset, " M=", 3)) {
+        offset += 3; /* Eat the delimiter */
     }
     else if (len) {
         /* Packet has extra text which does not begin " M=" */
         spdlog::error("MS-CHAPv2 Success packet is badly formed.");
-        return 0;
+        return false;
     }
-    return 1;
+    return true;
 }
 
 
 void
-chapms_handle_failure(PppPcb* pcb, unsigned char* inp, int len)
+chapms_handle_failure(PppPcb& pcb, std::vector<uint8_t>& inp)
 {
     int err;
-    char msg[64]; /* We want a null-terminated string for strxxx(). */
-    len = std::min(len, 63);
-    memcpy(msg, inp, len);
+    std::string msg; /* We want a null-terminated string for strxxx(). */
+    size_t len = std::min(inp.size(), (size_t)63);
+    std::copy(inp.begin(), inp.begin() + len, msg.begin());
     msg[len] = 0;
-    const char* p = msg; /*
+    const char* p = msg.data(); /*
      * Deal with MS-CHAP formatted failure messages; just print the
      * M=<message> part (if any).  For MS-CHAP we're not really supposed
      * to use M=<message>, but it shouldn't hurt.  See
@@ -381,7 +396,7 @@ challenge_hash(std::vector<uint8_t>& peer_challenge,
     mbedtls_sha1_finish_ret(&sha1_context, sha1_hash);
     mbedtls_sha1_free(&sha1_context);
     std::copy(sha1_hash, sha1_hash + SHA1_SIGNATURE_SIZE - 1, challenge);
-    std::make_tuple(true, challenge);
+    return std::make_tuple(true, challenge);
 }
 
 
@@ -412,9 +427,15 @@ chap_ms_nt(std::vector<uint8_t>& r_challenge,
     // uint8_t PasswordHash[MD4_SIGNATURE_SIZE];
     std::vector<uint8_t> password_hash;
     password_hash.reserve(MD4_SIGNATURE_SIZE);
-    std::wstring_convert<std::codecvt_utf8<char>> converter;
-    unicode_password = converter.from_bytes(secret);
+    // std::wstring_convert<std::codecvt_utf8<char>> converter;
+    // unicode_password = converter.from_bytes(secret);
+
+
+    bool ok;
+    std::wstring unicode_password_wstr;
+    std::tie(ok, unicode_password_wstr) = ascii_to_unicode(secret);
     std::vector<uint8_t> unicode_password_vector(unicode_password.begin(), unicode_password.end());
+
     /* Hash the Unicode version of the secret (== password). */
     password_hash = nt_password_hash(unicode_password_vector);
     challenge_response(r_challenge, 0, password_hash);

@@ -95,101 +95,6 @@
 #include <cstring>
 #include <cctype>
 
-/** Random generator function to create random TXIDs and source ports for queries */
-// #define DNS_RAND_TXID LwipRand
-
-
-/** Limits the source port to be >= 1024 by default */
-#define DNS_PORT_ALLOWED(port) ((port) >= 1024)
-
-
-/** DNS resource record max. TTL (one week as default) */
-#define DNS_MAX_TTL               604800
-
-
-/* The number of parallel requests (i.e. calls to dns_gethostbyname
- * that cannot be answered from the DNS table.
- * This is set to the table size by default.
- */
-#define DNS_MAX_REQUESTS          DNS_TABLE_SIZE
-
-/* In this configuration, both arrays have to have the same size and are used
- * like one entry (used/free) */
-
-/* The number of UDP source ports used in parallel */
-#define DNS_MAX_SOURCE_PORTS      DNS_MAX_REQUESTS
-
-
-
-
-
-#define LWIP_DNS_ADDRTYPE_ARG(x) , x
-#define LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(x) x
-#define LWIP_DNS_SET_ADDRTYPE(x, y) do { x = y; } while(0)
-#define LWIP_DNS_ISMDNS_ARG(x) , x
-
-/** DNS query message structure.
-    No packing needed: only used locally on the stack. */
-struct DnsQuery
-{
-    /* DNS query record starts with either a domain name or a pointer
-       to a name already present somewhere in the packet. */
-    uint16_t type;
-    uint16_t cls;
-};
-constexpr auto DNS_QUERY_LEN = 4;
-
-/** DNS answer message structure.
-    No packing needed: only used locally on the stack. */
-struct DnsAnswer
-{
-    /* DNS answer record starts with either a domain name or a pointer
-       to a name already present somewhere in the packet. */
-    uint16_t type;
-    uint16_t cls;
-    uint32_t ttl;
-    uint16_t len;
-};
-#define SIZEOF_DNS_ANSWER 10
-/* maximum allowed size for the struct due to non-packed */
-#define SIZEOF_DNS_ANSWER_ASSERT 12
-
-/* DNS table entry states */
-enum DnsStateEnumT
-{
-    DNS_STATE_UNUSED = 0,
-    DNS_STATE_NEW = 1,
-    DNS_STATE_ASKING = 2,
-    DNS_STATE_DONE = 3
-};
-
-/** DNS table entry */
-struct DnsTableEntry
-{
-    uint32_t ttl;
-    IpAddrInfo ipaddr;
-    uint16_t txid;
-    uint8_t state;
-    uint8_t server_idx;
-    uint8_t tmr;
-    uint8_t retries;
-    uint8_t seqno;
-    uint8_t pcb_idx;
-    char name[DNS_MAX_NAME_LENGTH];
-    uint8_t reqaddrtype;
-    uint8_t is_mdns;
-};
-
-/** DNS request table entry: used when dns_gehostbyname cannot answer the
- * request from the DNS table */
-struct DnsRequestEntry
-{
-    /* pointer to callback on DNS query done */
-    dns_found_callback found; /* argument passed to the callback function */
-    void* arg;
-    uint8_t dns_table_idx;
-    uint8_t reqaddrtype;
-};
 
 
 /** Local host-list. For hostnames in this list, no
@@ -227,7 +132,8 @@ static void dns_call_found(uint8_t idx, IpAddrInfo *addr);
  * Initialize the resolver: set up the UDP pcb and configure the default server
  * (if DNS_SERVER_ADDRESS is set).
  */
-void dns_init(void)
+std::tuple<bool, std::vector<DnsPcb>>
+dns_init()
 {
     /* initialize default DNS server address */
     IpAddrInfo dnsserver{}; // DNS_SERVER_ADDRESS(&dnsserver);
