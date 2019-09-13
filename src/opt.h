@@ -151,6 +151,14 @@ constexpr auto LWIP_DHCP6_MAX_NTP_SERVERS = 1;
 
 constexpr auto LWIP_DHCP6_MAX_DNS_SERVERS = DNS_MAX_SERVERS;
 
+/* From http://www.iana.org/assignments/port-numbers:
+   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
+constexpr auto LOCAL_PORT_RANGE_START = 0xc000;
+constexpr auto LOCAL_PORT_RANGE_END = 0xffff;
+
+
+
+
 //
 // END OF FILE
 //

@@ -94,39 +94,10 @@
 #include "ip4_addr.h"
 #include <cstring>
 #include <cctype>
-
-
-
-/** Local host-list. For hostnames in this list, no
- *  external name resolution is performed */
-static struct LocalHostListEntry *local_hostlist_dynamic;
-static void dns_init_local(void);
-static LwipStatus dns_lookup_local(const char *hostname, IpAddrInfo *addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype));
-
-
-
-/* forward declarations */
-static void dns_recv(uint8_t *s, UdpPcb* pcb, struct PacketBuffer *p, const IpAddrInfo *addr, uint16_t port, NetworkInterface*
-                     netif);
-static void dns_check_entries(void);
-static void dns_call_found(uint8_t idx, IpAddrInfo *addr);
-
-/*-----------------------------------------------------------------------------
- * Globals
- *----------------------------------------------------------------------------*/
-
-/* DNS variables */
-// static UdpPcb* dns_pcbs[DNS_MAX_SOURCE_PORTS];
-//
-// static uint8_t dns_last_pcb_idx;
-//
-// static uint8_t dns_seqno;
-// static DnsTableEntry dns_table[DNS_TABLE_SIZE];
-// static DnsRequestEntry dns_requests[DNS_MAX_REQUESTS];
-// static IpAddrInfo dns_servers[DNS_MAX_SERVERS];
-// const IpAddrInfo dns_mquery_v4group = init_ip_addr_ip4_bytes(224, 0, 0, 251);
-// const IpAddrInfo dns_mquery_v6group = init_ip_addr_ip6_host(0xFF020000, 0, 0, 0xFB);
-
+#include "ip6.h"
+#include "ip.h"
+#include "tcp_udp.h"
+#include "spdlog/spdlog.h"
 
 /**
  * Initialize the resolver: set up the UDP pcb and configure the default server
@@ -135,6 +106,8 @@ static void dns_call_found(uint8_t idx, IpAddrInfo *addr);
 std::tuple<bool, std::vector<DnsPcb>>
 dns_init()
 {
+    std::vector<DnsPcb> dns_pcbs;
+
     /* initialize default DNS server address */
     IpAddrInfo dnsserver{}; // DNS_SERVER_ADDRESS(&dnsserver);
     dns_setserver(0, &dnsserver);
@@ -144,16 +117,15 @@ dns_init()
                 sizeof(struct DnsAnswer) <= SIZEOF_DNS_ANSWER_ASSERT);
     Logf(true, ("dns_init: initializing\n"));
     /* if dns client not yet initialized... */
-    if (dns_pcbs[0] == nullptr)
+    if (dns_pcbs.empty())
     {
-        dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
-        lwip_assert("dns_pcbs[0] != NULL", dns_pcbs[0] != nullptr);
-        /* initialize DNS table not needed (initialized to zero since it is a
-            * global variable) */
-        lwip_assert("For implicit initialization to work, DNS_STATE_UNUSED needs to be 0",
-                    DNS_STATE_UNUSED == 0); /* initialize DNS client */
-        IpAddrInfo any_addr = create_ip_addr_any();
-        udp_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
+        DnsPcb new_pcb = dns_new_ip_type(IPADDR_TYPE_ANY);
+        dns_pcbs.push_back(new_pcb);
+        /* initialize DNS table not needed (initialized to zero since it is a global
+         * variable) */
+        /* initialize DNS client */
+        IpAddrInfo any_addr = ip_addr_create_any();
+        dns_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
     }
     dns_init_local();
 }
@@ -175,7 +147,7 @@ void dns_setserver(uint8_t numdns, const IpAddrInfo* dnsserver)
         }
         else
         {
-            IpAddrInfo any_addr = create_ip_addr_any();
+            IpAddrInfo any_addr = ip_addr_create_any();
             dns_servers[numdns] = any_addr;
         }
     }
@@ -199,7 +171,7 @@ IpAddrInfo dns_getserver(const uint8_t numdns)
     else
     {
 
-        return create_ip_addr_any();
+        return ip_addr_create_any();
     }
 }
 
@@ -213,7 +185,7 @@ void dns_tmr(void)
     dns_check_entries();
 }
 
-static void dns_init_local(void)
+void dns_init_local(void)
 {
     /* Dynamic: copy entries from DNS_LOCAL_HOSTLIST_INIT to list */
     struct LocalHostListEntry local_hostlist_init[] = {{"abc", {{{{0x123}}}}}};
@@ -280,13 +252,13 @@ dns_local_iterate(dns_found_callback iterator_fn, uint8_t *iterator_arg)
 LwipStatus
 dns_local_lookup(const char *hostname, IpAddrInfo *addr, uint8_t dns_addrtype)
 {
-  return dns_lookup_local(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype));
+  return dns_lookup_local(hostname, addr , dns_addrtype);
 }
 
 /* Internal implementation for dns_local_lookup and dns_lookup */
-static LwipStatus dns_lookup_local(const char* hostname,
+LwipStatus dns_lookup_local(const char* hostname,
                                   IpAddrInfo* addr
-                                  LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
+                                  , uint8_t dns_addrtype)
 {
     auto entry = local_hostlist_dynamic;
     while (entry != nullptr)
@@ -394,10 +366,10 @@ LwipStatus dns_local_addhost(const char* hostname, const IpAddrInfo* addr)
  *         was not found in the cached dns_table.
  * @return ERR_OK if found, ERR_ARG if not found
  */
-static LwipStatus dns_lookup(const char* name,
-                            IpAddrInfo* addr LWIP_DNS_ADDRTYPE_ARG(uint8_t dns_addrtype))
+LwipStatus dns_lookup(const char* name,
+                            IpAddrInfo* addr , uint8_t dns_addrtype)
 {
-    if (dns_lookup_local(name, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_SUCCESS)
+    if (dns_lookup_local(name, addr , dns_addrtype) == STATUS_SUCCESS)
     {
         return STATUS_SUCCESS;
     }
@@ -444,7 +416,7 @@ static LwipStatus dns_lookup(const char* name,
  * @param start_offset offset into p where the name starts
  * @return 0xFFFF: names differ, other: names equal -> offset behind name
  */
-static uint16_t
+uint16_t
 dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offset)
 {
   int n;
@@ -501,7 +473,7 @@ dns_compare_name(const char *query, struct PacketBuffer *p, uint16_t start_offse
  * @param query_idx start index into p pointing to encoded DNS name in the DNS server response
  * @return index to end of the name
  */
-static uint16_t
+uint16_t
 dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
 {
   int n;
@@ -541,7 +513,7 @@ dns_skip_name(struct PacketBuffer *p, uint16_t query_idx)
  * @param idx the DNS table entry index for which to send a request
  * @return ERR_OK if packet is sent; an LwipStatus indicating the problem otherwise
  */
-static LwipStatus dns_send(const uint8_t idx)
+LwipStatus dns_send(const uint8_t idx)
 {
     LwipStatus err;
     DnsHdr hdr;
@@ -638,7 +610,7 @@ overflow_return: free_pkt_buf(pbuf);
     return ERR_VAL;
 }
 
-static UdpPcb* dns_alloc_random_port(void)
+UdpPcb* dns_alloc_random_port(void)
 {
     LwipStatus err;
     UdpPcb* pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
@@ -650,9 +622,9 @@ static UdpPcb* dns_alloc_random_port(void)
     do
     {
         auto port = static_cast<uint16_t>(lwip_rand());
-        if (DNS_PORT_ALLOWED(port))
+        if (dns_port_allowed(port))
         {
-            IpAddrInfo any_addr = create_ip_addr_any();
+            IpAddrInfo any_addr = ip_addr_create_any();
             err = udp_bind(pcb, &any_addr, port);
         }
         else
@@ -677,7 +649,7 @@ static UdpPcb* dns_alloc_random_port(void)
  *
  * @return an index into dns_pcbs
  */
-static uint8_t
+uint8_t
 dns_alloc_pcb(void)
 {
   uint8_t i;
@@ -719,7 +691,7 @@ dns_alloc_pcb(void)
  * @param idx dns table index of the entry that is resolved or removed
  * @param addr IP address for the hostname (or NULL on error or memory shortage)
  */
-static void
+void
 dns_call_found(uint8_t idx, IpAddrInfo *addr)
 {
     if (addr != nullptr) {
@@ -766,7 +738,7 @@ dns_call_found(uint8_t idx, IpAddrInfo *addr)
 }
 
 /* Create a query transmission ID that is unique for all outstanding queries */
-static uint16_t
+uint16_t
 dns_create_txid(void)
 {
 again:
@@ -787,7 +759,7 @@ again:
 /**
  * Check whether there are other backup DNS servers available to try
  */
-static uint8_t
+uint8_t
 dns_backupserver_available(struct DnsTableEntry *pentry)
 {
   uint8_t ret = 0;
@@ -810,7 +782,7 @@ dns_backupserver_available(struct DnsTableEntry *pentry)
  *
  * @param i index of the dns_table entry to check
  */
-static void
+void
 dns_check_entry(uint8_t i)
 {
   LwipStatus err;
@@ -887,7 +859,7 @@ dns_check_entry(uint8_t i)
 /**
  * Call dns_check_entry for each entry in dns_table - check all entries.
  */
-static void
+void
 dns_check_entries(void)
 {
     for (uint8_t i = 0; i < DNS_TABLE_SIZE; ++i) {
@@ -931,7 +903,7 @@ dns_correct_response(uint8_t idx, uint32_t ttl)
 /**
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
  */
-static void dns_recv(void* arg,
+void dns_recv(void* arg,
                      UdpPcb* pcb,
                      struct PacketBuffer* p,
                      const IpAddrInfo* addr,
@@ -1142,12 +1114,10 @@ ignore_packet: /* deallocate memory and return */ free_pkt_buf(p);
  * @param callback_arg argument to pass to the callback function
  * @return LwipStatus return code.
  */
-static LwipStatus dns_enqueue(const char* name,
+LwipStatus dns_enqueue(const char* name,
                              size_t hostnamelen,
                              dns_found_callback found,
-                             void* callback_arg LWIP_DNS_ADDRTYPE_ARG(
-                                 uint8_t dns_addrtype) LWIP_DNS_ISMDNS_ARG(
-                                 uint8_t is_mdns))
+                             void* callback_arg , uint8_t dns_addrtype , uint8_t is_mdns)
 {
     uint8_t i;
     struct DnsTableEntry* entry = nullptr;
@@ -1173,7 +1143,7 @@ static LwipStatus dns_enqueue(const char* name,
                     dns_requests[r].found = found;
                     dns_requests[r].arg = callback_arg;
                     dns_requests[r].dns_table_idx = i;
-                    LWIP_DNS_SET_ADDRTYPE(dns_requests[r].reqaddrtype, dns_addrtype);
+                    lwip_dns_set_addrtype(dns_requests[r].reqaddrtype, dns_addrtype);
                     Logf(true, ("dns_enqueue: \"%s\": duplicate request\n", name));
                     return ERR_INPROGRESS;
                 }
@@ -1233,8 +1203,8 @@ static LwipStatus dns_enqueue(const char* name,
     req->dns_table_idx = i; /* use this entry */ /* fill the entry */
     entry->state = DNS_STATE_NEW;
     entry->seqno = dns_seqno;
-    LWIP_DNS_SET_ADDRTYPE(entry->reqaddrtype, dns_addrtype);
-    LWIP_DNS_SET_ADDRTYPE(req->reqaddrtype, dns_addrtype);
+    lwip_dns_set_addrtype(entry->reqaddrtype, dns_addrtype);
+    lwip_dns_set_addrtype(req->reqaddrtype, dns_addrtype);
     req->found = found;
     req->arg = callback_arg;
     const size_t dns_name_len_sz = DNS_MAX_NAME_LENGTH - 1;
@@ -1330,7 +1300,7 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
         }
     }
     // already have this address cached?
-    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == STATUS_SUCCESS)
+    if (dns_lookup(hostname, addr , dns_addrtype) == STATUS_SUCCESS)
     {
         return STATUS_SUCCESS;
     }
@@ -1347,7 +1317,7 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
         {
             fallback = LWIP_DNS_ADDRTYPE_IPV4;
         }
-        if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == STATUS_SUCCESS)
+        if (dns_lookup(hostname, addr , fallback) == STATUS_SUCCESS)
         {
             return STATUS_SUCCESS;
         }
@@ -1372,9 +1342,111 @@ LwipStatus dns_gethostbyname_addrtype(std::string& hostname,
     return dns_enqueue(hostname,
                        hostnamelen,
                        found,
-                       callback_arg LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)
-                       LWIP_DNS_ISMDNS_ARG(is_mdns));
+                       callback_arg , dns_addrtype
+                       , is_mdns);
 }
+
+
+/**
+ * Bind a DNS PCB
+ * @param netifs
+ * @param ports
+ * @param dns_pcbs
+ * @param pcb UDP PCB to be bound with a local address ipaddr and port.
+ * @param ip_addr
+ * @param ipaddr local IP address to bind with. Use IP_ANY_TYPE to
+ * bind to all local interfaces.
+ * @param port local UDP port to bind with. Use 0 to automatically bind
+ * to a random port between UDP_LOCAL_PORT_RANGE_START and
+ * UDP_LOCAL_PORT_RANGE_END.
+ *
+ * ipaddr & port are expected to be in the same byte order as in the pcb.
+ *
+ * @return lwIP error code.
+ * - ERR_OK. Successful. No error occurred.
+ * - ERR_USE. The specified ipaddr and port are already bound to by
+ * another UDP PCB.
+ *
+ * @see udp_disconnect()
+ */
+bool
+dns_bind(std::vector<NetworkInterface>& netifs,
+         std::vector<NetworkPort>& ports,
+         std::vector<DnsPcb>& dns_pcbs,
+         DnsPcb& pcb,
+         IpAddrInfo& ip_addr,
+         uint16_t port)
+{
+    IpAddrInfo zoned_ipaddr{};
+    bool ok;
+    bool rebind = false;
+
+    /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+    // Logf(true | LWIP_DBG_TRACE, ("udp_bind(ipaddr = "));
+    // ip_addr_debug_print(true | LWIP_DBG_TRACE, ipaddr);
+    // Logf(true | LWIP_DBG_TRACE, ", port = %d)\n", port);
+    /* Check for double bind and rebind of the same pcb */
+    for (auto& ipcb : dns_pcbs) {
+        if (pcb.id == ipcb.id) {
+            rebind = true;
+            break;
+        }
+    }
+
+    /*
+     * If the given IP address should have a zone but doesn't, assign one now.
+     * This is legacy support: scope-aware callers should always provide properly
+     * zoned source addresses. Do the zone selection before the address-in-use
+     * check below; as such we have to make a temporary copy of the address.
+     */
+    if (ip_addr_is_v6(ip_addr) && ip6_addr_lacks_zone((ip_addr.u_addr.ip6), IP6_UNKNOWN)
+    ) {
+        copy_ip_addr(zoned_ipaddr, ip_addr);
+        select_ip6_addr_zone(zoned_ipaddr.u_addr.ip6, zoned_ipaddr.u_addr.ip6, netifs);
+        ip_addr = zoned_ipaddr;
+    }
+
+    /* no port specified? */
+    if (port == 0) {
+        std::tie(ok, port) = reserve_port(ports);
+        if (!ok) {
+            /* no more ports available in local range */
+            spdlog::error("udp_bind: out of free UDP ports\n");
+            return false;
+        }
+    }
+    else {
+        for (auto& ipcb : dns_pcbs) {
+            if (pcb.id != ipcb.id) {
+                /* By default, we don't allow to bind to a port that any other udp
+                   PCB is already bound to, unless *all* PCBs with that port have tha
+                   REUSEADDR flag set. */
+
+                if (pcb.sock_opts & SOF_REUSEADDR == 0 || ipcb.sock_opts & SOF_REUSEADDR == 0) {
+                    if (ipcb.local_port == port && (compare_ip_addr(ipcb.local_ip, ip_addr) || is_ip_addr_any(ip_addr) || is_ip_addr_any(ipcb.local_ip))) {
+                        spdlog::error("udp_bind: local port {} already bound by another pcb\n",
+                             port);
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    set_ip_addr(pcb.local_ip, ip_addr);
+    pcb.local_port = port;
+    // mib2_udp_bind(pcb); /* pcb not active yet? */
+    if (rebind == 0)
+    {
+        /* place the PCB on the active list if not already there */
+        // pcb->next = udp_pcbs;
+        // udp_pcbs = pcb;
+    }
+    // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("udp_bind: bound to "));
+    // ip_addr_debug_print_val(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, pcb->local_ip);
+    // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %d)\n", pcb->local_port));
+    return true;
+}
+
 
 //
 // END OF FILE

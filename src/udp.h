@@ -94,7 +94,7 @@ struct UdpPcb
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
     uint8_t ttl;
-    NetIfcHint* netif_hints; /* Protocol specific PCB members */
+    // NetIfcHint* netif_hints; /* Protocol specific PCB members */
     // struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
     uint16_t local_port;
@@ -116,8 +116,11 @@ struct UdpPcb
 
 /* The following functions is the application layer interface to the
    UDP code. */
-struct UdpPcb * udp_new        (void);
-struct UdpPcb * udp_new_ip_type(IpAddrType type);
+UdpPcb
+udp_new(void);
+
+UdpPcb
+udp_new_ip_type(IpAddrType type);
 void             udp_remove     (struct UdpPcb *pcb);
 LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddrInfo *ipaddr,
                                  uint16_t port);
@@ -197,7 +200,14 @@ void             udp_init       ();
 #define udp_get_multicast_netif_addr(pcb)          (&(pcb)->mcast_ip4)
 #define udp_set_multicast_netif_index(pcb, idx)    ((pcb)->mcast_ifindex = (idx))
 #define udp_get_multicast_netif_index(pcb)         ((pcb)->mcast_ifindex)
-#define udp_set_multicast_ttl(pcb, value)          ((pcb)->mcast_ttl = (value))
+
+
+inline void
+udp_set_multicast_ttl(UdpPcb& pcb, uint8_t value) { ((pcb).mcast_ttl = (value)); }
+
+
+
+
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 
 

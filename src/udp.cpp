@@ -16,21 +16,8 @@
 #include "udp.h"
 #include "ip.h"
 
-/* From http://www.iana.org/assignments/port-numbers:
-   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
-constexpr auto UDP_LOCAL_PORT_RANGE_START = 0xc000;
-constexpr auto UDP_LOCAL_PORT_RANGE_END = 0xffff;
-
-
-inline uint16_t
-udp_ensure_local_port_range(uint16_t port)
-{
-    return uint16_t(
-        (port & uint16_t(~UDP_LOCAL_PORT_RANGE_START)) + UDP_LOCAL_PORT_RANGE_START);
-}
-
 /* last local UDP port */
-static uint16_t udp_port = UDP_LOCAL_PORT_RANGE_START; /* The list of UDP PCBs */
+// static uint16_t udp_port = LOCAL_PORT_RANGE_START; /* The list of UDP PCBs */
 
 /* exported in udp.h (was static) */
 struct UdpPcb* udp_pcbs;
@@ -39,49 +26,10 @@ struct UdpPcb* udp_pcbs;
  * Initialize this module.
  */
 void
-udp_init(void)
+udp_init()
 {
-    udp_port = udp_ensure_local_port_range(lwip_rand());
+    // udp_port = udp_ensure_local_port_range(lwip_rand());
 }
-
-
-inline bool port_in_list(std::vector<uint16_t>& ports, uint16_t port)
-{
-    for (auto& p : ports)
-    {
-        if(port == p)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/**
- * Allocate a new local UDP port.
- *
- * @return a new (free) local UDP port number
- */
-// todo: rewrite
-std::tuple<bool, uint16_t>
-udp_new_port(std::vector<uint16_t> used_ports)
-{
-    bool found = false;
-    const uint16_t port = UDP_LOCAL_PORT_RANGE_START;
-    while (port <= UDP_LOCAL_PORT_RANGE_END)
-    {
-        if (!port_in_list(used_ports, port))
-        {
-            found = true;
-            break;
-        }
-    }
-
-    used_ports.push_back(port);
-    return std::make_tuple(found, port);
-}
-
 
 /**
  * Common code to see if the current input packet matches the pcb
@@ -822,7 +770,10 @@ udp_sendto_if_src_chksum(UdpPcb& pcb,
     }
     // UDP_STATS_INC(udp.xmit);
     return err;
-} /**
+}
+
+
+/**
  * @ingroup udp_raw
  * Bind an UDP PCB.
  *
@@ -923,7 +874,9 @@ udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
     // ip_addr_debug_print_val(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, pcb->local_ip);
     // Logf(true | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %d)\n", pcb->local_port));
     return STATUS_SUCCESS;
-} /**
+}
+
+/**
  * @ingroup udp_raw
  * Bind an UDP PCB to a specific netif.
  * After calling this function, all packets received via this PCB
@@ -1013,7 +966,7 @@ udp_disconnect(struct UdpPcb* pcb)
     /* reset remote address association */
     if (is_ip_addr_any_type(pcb->local_ip))
     {
-        IpAddrInfo any_addr = create_ip_addr_any();
+        IpAddrInfo any_addr = ip_addr_create_any();
         copy_ip_addr(&pcb->remote_ip, &any_addr);
     }
     else
@@ -1070,37 +1023,30 @@ udp_remove(struct UdpPcb* pcb)
         }
     } // memp_free(MEMP_UDP_PCB, pcb);
     delete pcb;
-} /**
- * @ingroup udp_raw
- * Creates a new UDP pcb which can be used for UDP communication. The
- * pcb is not active until it has either been bound to a local address
- * or connected to a remote address.
+}
+
+/**
+ * Creates a new UDP pcb which can be used for UDP communication. The pcb is not active
+ * until it has either been bound to a local address or connected to a remote address.
  *
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
  *
  * @see udp_remove()
  */
-struct UdpPcb*
-udp_new(void)
+UdpPcb
+udp_new()
 {
-    // pcb = (UdpPcb *)memp_malloc(MEMP_UDP_PCB);
-    struct UdpPcb* pcb = new UdpPcb; /* could allocate UDP PCB? */
-    if (pcb != nullptr)
-    {
-        /* UDP Lite: by initializing to all zeroes, chksum_len is set to 0
-         * which means checksum is generated over the whole datagram per default
-         * (recommended as default by RFC 3828). */ /* initialize PCB to all zeroes */
-        memset(pcb, 0, sizeof(struct UdpPcb));
-        pcb->ttl = UDP_TTL;
-        udp_set_multicast_ttl(pcb, UDP_TTL);
-    }
+    UdpPcb pcb{};
+    pcb.ttl = UDP_TTL;
+    udp_set_multicast_ttl(pcb, UDP_TTL);
     return pcb;
-} /**
- * @ingroup udp_raw
- * Create a UDP PCB for specific IP type.
- * The pcb is not active until it has either been bound to a local address
- * or connected to a remote address.
+}
+
+
+/**
+ * Create a UDP PCB for specific IP type. The pcb is not active until it has either been
+ * bound to a local address or connected to a remote address.
  *
  * @param type IP address type, see @ref lwip_ip_addr_type definitions.
  * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
@@ -1110,15 +1056,12 @@ udp_new(void)
  *
  * @see udp_remove()
  */
-struct UdpPcb*
-udp_new_ip_type(IpAddrType type)
+UdpPcb
+udp_new_ip_type(const IpAddrType type)
 {
-    struct UdpPcb* pcb = udp_new();
-    if (pcb != nullptr)
-    {
-        set_ip_addr_type(pcb->local_ip, type);
-        set_ip_addr_type(pcb->remote_ip, type);
-    }
+    UdpPcb pcb = udp_new();
+    set_ip_addr_type(pcb.local_ip, type);
+    set_ip_addr_type(pcb.remote_ip, type);
     return pcb;
 }
 

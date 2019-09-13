@@ -283,7 +283,7 @@ raw_disconnect(struct RawPcb* pcb)
     /* reset remote address association */
     if (is_ip_addr_any(&pcb->local_ip))
     {
-        auto any_addr = create_ip_addr_any();
+        auto any_addr = ip_addr_create_any();
         copy_ip_addr(&pcb->remote_ip, &any_addr);
     }
     else

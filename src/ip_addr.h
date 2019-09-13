@@ -408,7 +408,7 @@ inline IpAddrInfo create_ip_addr_ip6_any() {
 ///
 ///
 ///
-inline IpAddrInfo create_ip_addr_any()
+inline IpAddrInfo ip_addr_create_any()
 {
     IpAddrInfo addr{};
     addr.u_addr.ip6.addr.word[0] = 0;
@@ -426,7 +426,7 @@ inline IpAddrInfo create_ip_addr_any()
 ///
 inline void zero_ip_addr(IpAddrInfo& ip)
 {
-    ip = create_ip_addr_any();
+    ip = ip_addr_create_any();
 }
 
 //

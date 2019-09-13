@@ -767,7 +767,7 @@ cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
     IpAddrInfo nsa;
     IpAddrInfo nsb;
-    auto any_addr = create_ip_addr_any();
+    auto any_addr = ip_addr_create_any();
     nsa = dns_getserver(0);
     set_ip_addr_ip4_u32_val(nsb, ns1);
     if (compare_ip_addr(&nsa, &nsb))
@@ -900,7 +900,7 @@ int
 sifnpmode(PppPcb* pcb, int proto, enum PppNetworkProtoMode mode)
 {
     return 0;
-} 
+}
 
 /**
  * Set the MTU on the PPP network interface.
@@ -935,7 +935,7 @@ ccp_set(PppPcb* pcb,
 * get_idle_time - return how long the link has been idle.
 */
 int
-get_idle_time(PppPcb* pcb, struct ppp_idle* ip) { return 1; } 
+get_idle_time(PppPcb* pcb, struct ppp_idle* ip) { return 1; }
 
 
 /********************************************************************
