@@ -318,7 +318,7 @@ void
 dns_call_found(uint8_t idx, IpAddrInfo* addr);
 
 std::tuple<bool, std::vector<DnsPcb>>
-dns_init();
+dns_init(std::vector<NetworkInterface>& netifs, std::vector<NetworkPort>& ports);
 
 void
 dns_tmr();

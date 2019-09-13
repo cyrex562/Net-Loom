@@ -104,7 +104,7 @@
  * (if DNS_SERVER_ADDRESS is set).
  */
 std::tuple<bool, std::vector<DnsPcb>>
-dns_init()
+dns_init(std::vector<NetworkInterface>& netifs, std::vector<NetworkPort>& ports)
 {
     std::vector<DnsPcb> dns_pcbs;
 
@@ -117,17 +117,22 @@ dns_init()
                 sizeof(struct DnsAnswer) <= SIZEOF_DNS_ANSWER_ASSERT);
     Logf(true, ("dns_init: initializing\n"));
     /* if dns client not yet initialized... */
-    if (dns_pcbs.empty())
-    {
+    if (dns_pcbs.empty()) {
         DnsPcb new_pcb = dns_new_ip_type(IPADDR_TYPE_ANY);
         dns_pcbs.push_back(new_pcb);
         /* initialize DNS table not needed (initialized to zero since it is a global
          * variable) */
         /* initialize DNS client */
         IpAddrInfo any_addr = ip_addr_create_any();
-        dns_bind(dns_pcbs[0], &any_addr, 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
+        dns_bind(netifs,
+                 ports,
+                 dns_pcbs,
+                 new_pcb,
+                 any_addr,
+                 0); // udp_recv(dns_pcbs[0], dns_recv, nullptr);
     }
     dns_init_local();
+    return std::make_tuple(true, dns_pcbs);
 }
 
 /**
