@@ -99,6 +99,8 @@
 #include "tcp_udp.h"
 #include "spdlog/spdlog.h"
 
+
+
 /**
  * Initialize the resolver: set up the UDP pcb and configure the default server
  * (if DNS_SERVER_ADDRESS is set).
@@ -135,6 +137,7 @@ dns_init(std::vector<NetworkInterface>& netifs, std::vector<NetworkPort>& ports)
     return std::make_tuple(true, dns_pcbs);
 }
 
+
 /**
  * @ingroup dns
  * Initialize one of the DNS servers.
@@ -157,6 +160,7 @@ void dns_setserver(uint8_t numdns, const IpAddrInfo* dnsserver)
         }
     }
 }
+
 
 /**
  * @ingroup dns
