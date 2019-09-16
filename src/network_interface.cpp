@@ -83,7 +83,7 @@ bool set_netif_ip4_addr(NetworkInterface& netif, const Ip4Addr& new_ip4_addr, co
     auto result = false;
     auto addr_it = netif.ip4_addresses.begin();
     for (addr_it; addr_it != netif.ip4_addresses.end(); ++addr_it) {
-        if (is_ip4_addr_equal(addr_it->address, old_ip4_addr)) {
+        if ((addr_it->address.u32 == old_ip4_addr)) {
             addr_it->address = new_ip4_addr;
             result = true;
             break;
@@ -101,7 +101,7 @@ set_netif_ip4_netmask(NetworkInterface& netif, const Ip4Addr& new_netmask, const
 
      auto addr_it = netif.ip4_addresses.begin();
     for (addr_it; addr_it != netif.ip4_addresses.end(); ++addr_it) {
-        if (is_ip4_addr_equal(addr_it->netmask, old_netmask)) {
+        if ((addr_it->netmask.u32 == old_netmask)) {
             addr_it->netmask = new_netmask;
             result = true;
             break;
@@ -119,7 +119,7 @@ set_netif_ip4_gw(NetworkInterface& netif, const Ip4Addr& new_gw, const Ip4Addr& 
 
     auto addr_it = netif.ip4_addresses.begin();
     for (addr_it; addr_it != netif.ip4_addresses.end(); ++addr_it) {
-        if (is_ip4_addr_equal(addr_it->gateway, old_gw)) {
+        if ((addr_it->gateway.u32 == old_gw)) {
             addr_it->netmask = new_gw;
             result = true;
             break;
@@ -461,7 +461,7 @@ netif_select_ip6_src_addr(const NetworkInterface& netif, const Ip6AddrInfo& dest
     else if (is_ip6_addr_unique_local(dest_addr.addr)) {
         dest_scope = IP6_MULTICAST_SCOPE_ORGANIZATION_LOCAL;
     }
-    else if (is_ip6_addr_mcast(dest_addr.addr)) {
+    else if (ip6_addr_is_mcast(dest_addr.addr)) {
         dest_scope = get_ip6_addr_mcast_scope(dest_addr.addr);
     }
     else if (is_ip6_addr_site_local(dest_addr.addr)) {

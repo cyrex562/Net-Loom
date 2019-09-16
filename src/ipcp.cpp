@@ -1423,7 +1423,7 @@ ipcp_up(Fsm* f)
     if (ho->hisaddr != 0) {
         uint32_t addr = lwip_ntohl(ho->hisaddr);
         if ((addr >> IP4_CLASS_A_NSHIFT) == IP_LOOPBACKNET
-            || is_ip4_multicast(addr) || is_ip4_bad_class(addr)
+            || ip4_addr_is_mcast(addr) || ip4_addr_bad_class(addr)
             /*
              * For now, consider that PPP in server mode with peer required
              * to authenticate must provide the peer IP address, reject any

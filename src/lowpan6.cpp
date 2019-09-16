@@ -569,7 +569,7 @@ lowpan6_output(NetworkInterface*netif, struct PacketBuffer *q, const Ip6Addr*ip6
   }
 
   /* multicast destination IP address? */
-  if (is_ip6_addr_mcast(ip6addr)) {
+  if (ip6_addr_is_mcast(ip6addr)) {
 
     /* We need to send to the broadcast address.*/
     return lowpan6_frag(netif, q, &src, &ieee_802154_broadcast);

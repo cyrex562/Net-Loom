@@ -59,7 +59,7 @@ dhcp6_inc_pcb_refcount(Dhcp6Context& ctx, size_t& ref_cnt, NetworkInterface& net
         ctx.socket_options |= SOF_BROADCAST;
         /* set up local and remote port for the pcb -> listen on all interfaces on all
          * src/dest IPs */
-        auto addr_any = create_ip_addr_ip4_any();
+        auto addr_any = ip_addr_create_ip4_any();
         if (!dhcp6_bind(ctx, addr_any, DHCP6_CLIENT_PORT)) { return false; }
         bool ok;
         Dhcp6ClientServerMessage msg;
@@ -446,7 +446,7 @@ dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in
             }
             assign_ip6_addr_zone(dns_addr6, IP6_UNKNOWN, netif,);
             /* @todo: do we need a different offset than DHCP(v4)? */
-            dns_setserver(n, &dns_addr);
+            dns_setserver(&dns_addr, );
         }
     }
     /* @ todo: parse and set Domain Search List */
@@ -462,7 +462,10 @@ dhcp6_handle_config_reply(NetworkInterface* netif, struct PacketBuffer* p_msg_in
         for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_MAX_NTP_SERVERS);
              n++, idx += sizeof(Ip6Addr)) {
             const auto ntp_addr6 = &ntp_server_addrs[n].u_addr.ip6;
-            zero_ip_addr_ip6(&ntp_server_addrs[n]);
+
+            ip6_addr_zero(&ntp_server_addrs[n].u_addr.ip6);
+            &ntp_server_addrs[n].type = IP_ADDR_TYPE_V6;
+
             const auto copied = pbuf_copy_partial(p_msg_in, (uint8_t*)ntp_addr6, sizeof(Ip6Addr), idx);
             if (copied != sizeof(Ip6Addr)) {
                 /* PacketBuffer length mismatch */
@@ -583,7 +586,7 @@ dhcp6_recv(Dhcp6Context& ctx, IpAddrInfo& addr, uint16_t port, NetworkInterface&
     auto reply_msg = reinterpret_cast<Dhcp6ClientServerMessage *>(p->payload
     ); /* Caught DHCPv6 message from netif that does not have DHCPv6 enabled? -> not interested */
     if ((ctx == nullptr) || (ctx.pcb_allocated == 0)) { goto free_pbuf_and_return; } //
-    if (!ip_addr_is_v6(addr)) {
+    if (!(addr.type == IP_ADDR_TYPE_V6)) {
         printf("invalid server address type\n");
         goto free_pbuf_and_return;
     }

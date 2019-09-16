@@ -1,6 +1,6 @@
 ///
 /// file: ip.cpp
-/// 
+///
 
 #include "ip_addr.h"
 #include "ip.h"
@@ -23,7 +23,7 @@
 std::string
 ipaddr_ntoa(const IpAddrInfo& addr)
 {
-    if (ip_addr_is_v6(addr))
+    if ((addr.type == IP_ADDR_TYPE_V6))
     {
         return ip6_addr_ntoa(addr.u_addr.ip6.addr);
     }
@@ -43,7 +43,7 @@ ipaddr_ntoa(const IpAddrInfo& addr)
 std::string
 ipaddr_ntoa_r(const IpAddrInfo& addr)
 {
-  if (ip_addr_is_v6(addr)) {
+  if ((addr.type == IP_ADDR_TYPE_V6)) {
     return ip6addr_ntoa_r(addr.u_addr.ip6.addr);
   } else {
     return ip4_addr_ntoa_r(addr.u_addr.ip4.address);
@@ -60,14 +60,14 @@ ipaddr_ntoa_r(const IpAddrInfo& addr)
  * @return 1 on success, 0 on error
  */
 int
-ipaddr_aton(const char *cp, IpAddrInfo *addr)
+ip_addr_aton(const char *cp, IpAddrInfo *addr)
 {
   if (cp != nullptr) {
       for (const char* c = cp; *c != 0; c++) {
       if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {
-          set_ip_addr_type(*addr, IPADDR_TYPE_V6);
+          (*addr.type = IP_ADDR_TYPE_V6);
         }
         return ip6_addr_aton(cp, &addr->u_addr.ip6);
       } else if (*c == '.') {
@@ -77,7 +77,7 @@ ipaddr_aton(const char *cp, IpAddrInfo *addr)
     }
     /* call ip4addr_aton as fallback or if IPv4 was found */
     if (addr) {
-      set_ip_addr_type(*addr, IPADDR_TYPE_V4);
+      (*addr.type = IP_ADDR_TYPE_V4);
     }
     return ip4_addr_aton(cp, &addr->u_addr.ip4);
   }

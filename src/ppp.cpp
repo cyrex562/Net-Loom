@@ -437,8 +437,8 @@ init_ppp_pcb(NetworkInterface& pppif, std::vector<NetworkInterface>& interfaces)
     pcb.settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
     pcb.settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
     pcb.netif = pppif;
-    Ip4Addr ip4_any = ip4_addr_create_any();
-    Ip4Addr ip4_bcast = make_ip4_addr_bcast();
+    Ip4Addr ip4_any = {IP4_ADDR_ANY_U32};
+    Ip4Addr ip4_bcast = {make_u32(255,255,255,255)};
     if (!add_netif(pcb.netif, interfaces))
     {
         return std::make_tuple(false, pcb);
@@ -723,9 +723,9 @@ sifaddr(PppPcb* pcb, const uint32_t our_adr, const uint32_t his_adr, const uint3
     Ip4Addr ip{};
     Ip4Addr nm{};
     Ip4Addr gw{};
-    set_ip4_addr_u32(&ip, our_adr);
-    set_ip4_addr_u32(&nm, netmask);
-    set_ip4_addr_u32(&gw, his_adr);
+    (&ip.u32 =  our_adr);
+    (&nm.u32 = netmask);
+    (&gw.u32 = his_adr);
     set_netif_addr(pcb->netif, &ip, &nm, &gw);
     return 1;
 }
@@ -741,9 +741,9 @@ sifaddr(PppPcb* pcb, const uint32_t our_adr, const uint32_t his_adr, const uint3
 int
 cifaddr(PppPcb* pcb, uint32_t our_adr, uint32_t his_adr)
 {
-    auto bcast_addr = create_ip_addr_ip4_bcast();
-    auto ip_addr = create_ip_addr_ip4_any();
-    auto gw = create_ip_addr_ip4_any();
+    auto bcast_addr = ip_addr_create_ip4_bcast();
+    auto ip_addr = ip_addr_create_ip4_any();
+    auto gw = ip_addr_create_ip4_any();
     set_netif_addr(pcb->netif, &ip_addr.u_addr.ip4, &bcast_addr.u_addr.ip4, &gw.u_addr.ip4);
     return 1;
 } /*
@@ -753,10 +753,10 @@ int
 sdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
 {
     IpAddrInfo ns{};
-    set_ip_addr_ip4_u32_val(ns, ns1);
-    dns_setserver(0, &ns);
-    set_ip_addr_ip4_u32_val(ns, ns2);
-    dns_setserver(1, &ns);
+    ip_addr_set_ip4_u32(ns, ns1);
+    dns_setserver(&ns, );
+    ip_addr_set_ip4_u32(ns, ns2);
+    dns_setserver(&ns, );
     return 1;
 } /********************************************************************
  *
@@ -768,17 +768,17 @@ cdns(PppPcb* pcb, uint32_t ns1, uint32_t ns2)
     IpAddrInfo nsa;
     IpAddrInfo nsb;
     auto any_addr = ip_addr_create_any();
-    nsa = dns_getserver(0);
-    set_ip_addr_ip4_u32_val(nsb, ns1);
-    if (compare_ip_addr(&nsa, &nsb))
+    nsa = dns_getserver(0,);
+    ip_addr_set_ip4_u32(nsb, ns1);
+    if (ip_addr_eq(&nsa, &nsb))
     {
-        dns_setserver(0, &any_addr);
+        dns_setserver(&any_addr, );
     }
-    nsa = dns_getserver(1);
-    set_ip_addr_ip4_u32_val(nsb, ns2);
-    if (compare_ip_addr(&nsa, &nsb))
+    nsa = dns_getserver(1,);
+    ip_addr_set_ip4_u32(nsb, ns2);
+    if (ip_addr_eq(&nsa, &nsb))
     {
-        dns_setserver(1, &any_addr);
+        dns_setserver(&any_addr, );
     }
     return 1;
 } /********************************************************************
@@ -862,7 +862,7 @@ sif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 int
 cif6addr(PppPcb* pcb, Eui64 our_eui64, Eui64 his_eui64)
 {
-    auto any_addr = create_ip_addr_ip6_any();
+    auto any_addr = ip_addr_create_ip6_any();
     set_netif_ip6_addr_state(pcb->netif, 0, IP6_ADDR_INVALID);
     set_netif_ip6_addr_info(pcb->netif, 0, &any_addr.u_addr.ip6);
     return 1;

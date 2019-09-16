@@ -59,7 +59,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
         Logf(true, "tcp_input: short packet (%d bytes) discarded\n", p->tot_len);
         goto dropped;
     } /// Don't even process incoming broadcasts/multicasts.
-    if (netif_is_ip4_addr_bcast(curr_dst_addr, curr_netif) || is_ip_addr_mcast(
+    if (netif_is_ip4_addr_bcast(curr_dst_addr, curr_netif) || ip_addr_is_mcast(
         curr_dst_addr))
     {
         goto dropped;
@@ -156,7 +156,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
             continue;
         }
         if (pcb->remote_port == tcphdr->src && pcb->local_port == tcphdr->dest &&
-            compare_ip_addr(&pcb->remote_ip, curr_src_addr) && compare_ip_addr(
+            ip_addr_eq(&pcb->remote_ip, curr_src_addr) && ip_addr_eq(
                 &pcb->local_ip,
                 curr_dst_addr))
         {
@@ -191,7 +191,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 continue;
             }
             if (pcb->remote_port == tcphdr->src && pcb->local_port == tcphdr->dest &&
-                compare_ip_addr(&pcb->remote_ip, curr_src_addr) && compare_ip_addr(
+                ip_addr_eq(&pcb->remote_ip, curr_src_addr) && ip_addr_eq(
                     &pcb->local_ip,
                     curr_dst_addr))
             {
@@ -222,7 +222,7 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
             }
             if (lpcb->local_port == tcphdr->dest)
             {
-                if (is_ip_addr_any_type(lpcb->local_ip))
+                if ((lpcb->local_ip.type == IP_ADDR_TYPE_ANY))
                 {
                     /* found an ANY TYPE (IPv4/IPv6) match */
                     lpcb_any = lpcb;
@@ -230,12 +230,12 @@ tcp_input(struct PacketBuffer* p, NetworkInterface* inp)
                 }
                 else if (match_exact_ip_addr_pcb_vers((IpPcb*)lpcb, curr_dst_addr))
                 {
-                    if (compare_ip_addr(&lpcb->local_ip, curr_dst_addr))
+                    if (ip_addr_eq(&lpcb->local_ip, curr_dst_addr))
                     {
                         /* found an exact match */
                         break;
                     }
-                    else if (is_ip_addr_any(&lpcb->local_ip))
+                    else if (ip_addr_is_any(&lpcb->local_ip))
                     {
                         /* found an ANY-match */
                         lpcb_any = lpcb;
@@ -544,8 +544,8 @@ tcp_listen_input(struct TcpPcbListen* pcb)
         }
         pcb->accepts_pending++;
         tcp_set_flags(npcb, TF_BACKLOGPEND); /* Set up the new PCB. */
-        copy_ip_addr(&npcb->local_ip, curr_dst_addr);
-        copy_ip_addr(&npcb->remote_ip, curr_src_addr);
+        (&npcb->local_ip = curr_dst_addr);
+        (&npcb->remote_ip = curr_src_addr);
         npcb->local_port = pcb->local_port;
         npcb->remote_port = tcphdr->src;
         npcb->state = SYN_RCVD;

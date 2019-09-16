@@ -40,14 +40,14 @@ struct IpPcb
 inline bool
 match_exact_ip_addr_pcb_vers(const IpPcb& pcb, const IpAddrInfo& ipaddr)
 {
-    return (get_ip_addr_type(pcb.local_ip) == get_ip_addr_type(ipaddr));
+    return ((pcb.local_ip.type) == (ipaddr.type));
 }
 
 
 inline bool
 match_ip_addr_pcb_version(const IpPcb& pcb, const IpAddrInfo& ipaddr)
 {
-    return (is_ip_addr_any_type(pcb.local_ip) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
+    return ((pcb.local_ip.type == IP_ADDR_TYPE_ANY) || match_exact_ip_addr_pcb_vers(pcb, ipaddr));
 }
 
 /*
@@ -194,7 +194,7 @@ inline void ip_reset_option(IpPcb* pcb, const uint8_t opt)
 inline LwipStatus
 ip_output(PacketBuffer& p, IpAddrInfo& src, IpAddrInfo& dest, const uint8_t ttl, const uint8_t tos, const uint8_t proto)
 {
-    if (ip_addr_is_v6(dest)) {
+    if ((dest.type == IP_ADDR_TYPE_V6)) {
         return
             ip6_output(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto);
     }
@@ -216,7 +216,7 @@ ip_output_if(PacketBuffer& p,
              const uint8_t proto,
              NetworkInterface& netif)
 {
-    if (ip_addr_is_v6(dest)) {
+    if ((dest.type == IP_ADDR_TYPE_V6)) {
         return ip6_output_if(p, src.u_addr.ip6, dest.u_addr.ip6, ttl, tos, proto, netif);
     }
     return ip4_output_if(p, src.u_addr.ip4, dest.u_addr.ip4, ttl, tos, proto, netif);
@@ -237,7 +237,7 @@ ip_output_if_src(PacketBuffer& p,
                  NetworkInterface& netif)
 {
     return
-    (ip_addr_is_v6(dest)
+    ((dest.type == IP_ADDR_TYPE_V6)
          ? ip6_output_if_src(p,
                              src.u_addr.ip6,
                              dest.u_addr.ip6,
@@ -281,7 +281,7 @@ ip_route(const IpAddrInfo& src,
          NetworkInterface& out_ifc,
          const std::vector<NetworkInterface>& interfaces)
 {
-    if (ip_addr_is_v6(dest)) {
+    if ((dest.type == IP_ADDR_TYPE_V6)) {
         return route_ip6_packet(src.u_addr.ip6, dest.u_addr.ip6, out_ifc, interfaces);
     }
     return source_route_ip4_addr(src.u_addr.ip4, dest.u_addr.ip4, out_ifc, interfaces);

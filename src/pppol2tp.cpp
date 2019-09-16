@@ -52,7 +52,7 @@ PppPcb* create_pppol2tp_session(NetworkInterface* pppif,
     {
         return nullptr;
     }
-    const auto udp = udp_new_ip_type(get_ip_addr_type(ipaddr));
+    const auto udp = udp_new_ip_type((ipaddr.type));
     if (udp == nullptr)
     {
         delete l2tp_pcb;
@@ -180,8 +180,8 @@ static void pppol2tp_connect(PppPcb *ppp, uint8_t *ctx) {
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
-  IpAddrInfo any_addr = create_ip_addr_ip6_any();
-  if (ip_addr_is_v6(&l2tp->udp->local_ip))
+  IpAddrInfo any_addr = ip_addr_create_ip6_any();
+  if ((&l2tp->udp->local_ip.type == IP_ADDR_TYPE_V6))
   {
       udp_bind(l2tp->udp, &any_addr, 0);
   }
@@ -243,7 +243,7 @@ pppol2tp_input(void* arg,
         goto free_and_return;
     }
 
-  if (!compare_ip_addr(&l2tp->remote_ip, addr)) {
+  if (!ip_addr_eq(&l2tp->remote_ip, addr)) {
     goto free_and_return;
   }
 

@@ -76,7 +76,7 @@ LwipStatus ethip6_output(NetworkInterface& net_ifc, PacketBuffer& pkt_buf, const
     const uint8_t* hwaddr;
     // The destination IP address must be properly zoned from here on down.
     // multicast destination IP address?
-    if (is_ip6_addr_mcast(ip6_addr))
+    if (ip6_addr_is_mcast(ip6_addr))
     {
         // Hash IP multicast address to MAC address
         dest.bytes[0] = 0x33;

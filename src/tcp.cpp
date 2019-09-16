@@ -684,9 +684,9 @@ tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
       * This is legacy support: scope-aware callers should always provide properly
       * zoned source addresses. Do the zone selection before the address-in-use
       * check below; as such we have to make a temporary copy of the address. */
-    if (ip_addr_is_v6(ipaddr) && ip6_addr_lacks_zone(&ipaddr->u_addr.ip6, IP6_UNICAST))
+    if ((ipaddr.type == IP_ADDR_TYPE_V6) && ip6_addr_lacks_zone(&ipaddr->u_addr.ip6, IP6_UNICAST))
     {
-        copy_ip_addr(&zoned_ipaddr, ipaddr);
+        (&zoned_ipaddr = ipaddr);
         select_ip6_addr_zone((&zoned_ipaddr.u_addr.ip6), (&zoned_ipaddr.u_addr.ip6),);
         ipaddr = &zoned_ipaddr;
     }
@@ -716,10 +716,10 @@ tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
 
                     {
                         /* @todo: check accept_any_ip_version */
-                        if ((ip_addr_is_v6(ipaddr) == ip_addr_is_v6(&cpcb->local_ip)) &&
-                            (is_ip_addr_any(&cpcb->local_ip) ||
-                                is_ip_addr_any(ipaddr) ||
-                                compare_ip_addr(&cpcb->local_ip, ipaddr)))
+                        if (((ipaddr.type == IP_ADDR_TYPE_V6) == (&cpcb->local_ip.type == IP_ADDR_TYPE_V6)) &&
+                            (ip_addr_is_any(&cpcb->local_ip) ||
+                                ip_addr_is_any(ipaddr) ||
+                                ip_addr_eq(&cpcb->local_ip, ipaddr)))
                         {
                             return ERR_USE;
                         }
@@ -729,13 +729,13 @@ tcp_bind(struct TcpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port)
         }
     }
 
-    if (!is_ip_addr_any(ipaddr)
+    if (!ip_addr_is_any(ipaddr)
 
-        || (get_ip_addr_type(ipaddr) != get_ip_addr_type(&pcb->local_ip))
+        || ((ipaddr.type) != (&pcb->local_ip.type))
 
     )
     {
-        set_ip_addr(&pcb->local_ip, ipaddr);
+        (&pcb->local_ip = ipaddr);
     }
     pcb->local_port = port;
     reg_tcp_pcb(&tcp_bound_pcbs, pcb);
@@ -858,7 +858,7 @@ tcp_listen_with_backlog_and_err(struct TcpPcb* pcb, uint8_t backlog, LwipStatus*
         for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != nullptr; lpcb = lpcb->next)
         {
             if ((lpcb->local_port == pcb->local_port) &&
-                compare_ip_addr(&lpcb->local_ip, &pcb->local_ip))
+                ip_addr_eq(&lpcb->local_ip, &pcb->local_ip))
             {
                 /* this address/port is already used */
                 lpcb = nullptr;
@@ -884,9 +884,9 @@ tcp_listen_with_backlog_and_err(struct TcpPcb* pcb, uint8_t backlog, LwipStatus*
     lpcb->ttl = pcb->ttl;
     lpcb->tos = pcb->tos;
 
-    set_ip_addr_type(lpcb->remote_ip, pcb->local_ip.type);
+    (lpcb->remote_ip.type = pcb->local_ip.type);
 
-    copy_ip_addr(&lpcb->local_ip, &pcb->local_ip);
+    (&lpcb->local_ip = &pcb->local_ip);
     if (pcb->local_port != 0)
     {
         // tcp_remove_listener(&tcp_bound_pcbs, pcb);
@@ -1065,7 +1065,7 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
 {
     NetworkInterface* netif = nullptr;
     Logf(true, "tcp_connect to port %d\n", port);
-    set_ip_addr(&pcb->remote_ip, ipaddr);
+    (&pcb->remote_ip = ipaddr);
     pcb->remote_port = port;
 
     if (pcb->netif_idx != NETIF_NO_INDEX)
@@ -1084,19 +1084,19 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
     }
 
     /* check if local IP has been assigned to pcb, if not, get one */
-    if (is_ip_addr_any(&pcb->local_ip))
+    if (ip_addr_is_any(&pcb->local_ip))
     {
         const IpAddrInfo* local_ip = netif_get_local_ip(netif, ipaddr);
         if (local_ip == nullptr)
         {
             return STATUS_E_ROUTING;
         }
-        copy_ip_addr(&pcb->local_ip, local_ip);
+        (&pcb->local_ip = local_ip);
     }
 
     /* If the given IP address should have a zone but doesn't, assign one now.
      * Given that we already have the target netif, this is easy and cheap. */
-    if (ip_addr_is_v6(&pcb->remote_ip) &&
+    if ((&pcb->remote_ip.type == IP_ADDR_TYPE_V6) &&
         ip6_addr_lacks_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST))
     {
         assign_ip6_addr_zone((&pcb->remote_ip.u_addr.ip6), IP6_UNICAST, netif,);
@@ -1121,8 +1121,8 @@ LwipStatus tcp_connect(struct TcpPcb* pcb,
                 {
                     if ((cpcb->local_port == pcb->local_port) &&
                         (cpcb->remote_port == port) &&
-                        compare_ip_addr(&cpcb->local_ip, &pcb->local_ip) &&
-                        compare_ip_addr(&cpcb->remote_ip, ipaddr))
+                        ip_addr_eq(&cpcb->local_ip, &pcb->local_ip) &&
+                        ip_addr_eq(&cpcb->remote_ip, ipaddr))
                     {
                         /* linux returns EISCONN here, but ERR_USE should be OK for us */
                         return ERR_USE;
@@ -2026,8 +2026,8 @@ struct TcpPcb* tcp_new_ip_type(IpAddrType type)
     auto pcb = tcp_alloc(TCP_PRIO_NORMAL);
     if (pcb != nullptr)
     {
-        set_ip_addr_type(pcb->local_ip, type);
-        set_ip_addr_type(pcb->remote_ip, type);
+        (pcb->local_ip.type = type);
+        (pcb->remote_ip.type = type);
     }
     return pcb;
 }
@@ -2294,7 +2294,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddrIn
     lwip_assert("tcp_eff_send_mss_netif: invalid dst_ip", dest != nullptr);
 
 
-    if (ip_addr_is_v6(dest))
+    if ((dest.type == IP_ADDR_TYPE_V6))
 
     {
         /* First look in destination cache, to see if there is a Path MTU. */
@@ -2316,7 +2316,7 @@ tcp_eff_send_mss_netif(uint16_t sendmss, NetworkInterface* outif, const IpAddrIn
     {
         uint16_t offset;
 
-        if (ip_addr_is_v6(dest))
+        if ((dest.type == IP_ADDR_TYPE_V6))
 
         {
             offset = IP6_HDR_LEN + TCP_HDR_LEN;
@@ -2351,10 +2351,10 @@ tcp_netif_ip_addr_changed_pcblist(const IpAddrInfo* old_addr, struct TcpPcb* pcb
     while (pcb != nullptr)
     {
         /* PCB bound to current local interface address? */
-        if (compare_ip_addr(&pcb->local_ip, old_addr)
+        if (ip_addr_eq(&pcb->local_ip, old_addr)
 
             /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-            && (!is_ip_addr_v4(pcb->local_ip) || !ip4_addr_is_link_local((&pcb->local_ip.u_addr.ip4)))
+            && (pcb->local_ip.type != IP_ADDR_TYPE_V4 || !ip4_addr_is_link_local((&pcb->local_ip.u_addr.ip4)))
 
         )
         {
@@ -2379,22 +2379,22 @@ tcp_netif_ip_addr_changed_pcblist(const IpAddrInfo* old_addr, struct TcpPcb* pcb
 void
 tcp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr)
 {
-    if (!is_ip_addr_any(old_addr))
+    if (!ip_addr_is_any(old_addr))
     {
         tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_active_pcbs);
         tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
 
-        if (!is_ip_addr_any(new_addr))
+        if (!ip_addr_is_any(new_addr))
         {
             /* PCB bound to current local interface address? */
             for (struct TcpPcbListen* lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != nullptr; lpcb = lpcb->next)
             {
                 /* PCB bound to current local interface address? */
-                if (compare_ip_addr(&lpcb->local_ip, old_addr))
+                if (ip_addr_eq(&lpcb->local_ip, old_addr))
                 {
                     /* The PCB is listening to the old ipaddr and
                       * is set to listen to the new one instead */
-                    copy_ip_addr(&lpcb->local_ip, new_addr);
+                    (&lpcb->local_ip = new_addr);
                 }
             }
         }

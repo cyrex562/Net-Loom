@@ -187,7 +187,7 @@ constexpr auto SIZEOF_DNS_ANSWER_ASSERT = 12;
 struct DnsTableEntry
 {
     uint32_t ttl;
-    IpAddrInfo ipaddr;
+    IpAddrInfo address;
     uint16_t txid;
     uint8_t state;
     uint8_t server_idx;
@@ -195,7 +195,7 @@ struct DnsTableEntry
     uint8_t retries;
     uint8_t seqno;
     uint8_t pcb_idx;
-    char name[DNS_MAX_NAME_LENGTH];
+    std::string hostname;
     uint8_t reqaddrtype;
     uint8_t is_mdns;
 };
@@ -206,7 +206,7 @@ struct DnsRequestEntry
 {
     /* pointer to callback on DNS query done */
     // dns_found_callback found; /* argument passed to the callback function */
-    void* arg;
+    // void* arg;
     uint8_t dns_table_idx;
     uint8_t reqaddrtype;
 };
@@ -215,10 +215,11 @@ struct DnsRequestEntry
 struct LocalHostListEntry
 {
     /** static hostname */
-    const char* name; /** static host address in network byteorder */
+    std::string name; /** static host address in network byteorder */
     IpAddrInfo addr;
-    struct LocalHostListEntry* next;
 };
+
+
 
 /**
  *
@@ -244,11 +245,19 @@ struct DnsPcb
 
 struct DnsTransaction
 {
-    
+
 };
 
 struct DnsBindingContext
 {
+    uint32_t id;
+
+};
+
+
+struct DnsServer
+{
+    IpAddrInfo address;
     uint32_t id;
 
 };
@@ -281,8 +290,8 @@ inline DnsPcb dns_create_pcb()
 inline DnsPcb dns_new_ip_type(const IpAddrType addr_type)
 {
     DnsPcb pcb = dns_create_pcb();
-    set_ip_addr_type(pcb.local_ip, addr_type);
-    set_ip_addr_type(pcb.remote_ip, addr_type);
+    (pcb.local_ip.type = addr_type);
+    (pcb.remote_ip.type = addr_type);
     return pcb;
 }
 
@@ -297,8 +306,9 @@ constexpr auto DNS_LOCAL_HOSTLIST_MAX_NAMELEN = DNS_MAX_NAME_LENGTH;
 */
 using dns_found_callback = void (*)(const char*, const IpAddrInfo*, uint8_t*);
 
-void
-dns_init_local();
+
+std::vector<LocalHostListEntry>
+dns_init_local(std::vector<LocalHostListEntry>& init_entries);
 
 LwipStatus
 dns_lookup_local(const char* hostname, IpAddrInfo* addr, uint8_t dns_addrtype);
@@ -317,17 +327,24 @@ dns_check_entries();
 void
 dns_call_found(uint8_t idx, IpAddrInfo* addr);
 
-std::tuple<bool, std::vector<DnsPcb>>
-dns_init(std::vector<NetworkInterface>& netifs, std::vector<NetworkPort>& ports);
+
+std::tuple<bool, std::vector<DnsPcb>, std::vector<DnsServer>, std::vector<
+LocalHostListEntry>>
+dns_init(std::vector<NetworkInterface>& netifs,
+         std::vector<NetworkPort>& ports,
+         DnsServer& default_dns_server,
+         std::vector<LocalHostListEntry>& initial_local_hosts);
 
 void
 dns_tmr();
 
-void
-dns_setserver(uint8_t numdns, const IpAddrInfo* dnsserver);
+
+bool
+dns_setserver(DnsServer& dnsserver, std::vector<DnsServer>& servers);
 
 
-IpAddrInfo dns_getserver(uint8_t numdns);
+std::tuple<bool, DnsServer>
+dns_getserver(uint32_t server_id, std::vector<DnsServer>& servers);
 
 LwipStatus
 dns_gethostbyname(const char* hostname,
@@ -345,14 +362,19 @@ dns_gethostbyname_addrtype(const char* hostname,
 size_t
 dns_local_iterate(dns_found_callback iterator_fn, uint8_t* iterator_arg);
 
-LwipStatus
-dns_local_lookup(const char* hostname, IpAddrInfo* addr, uint8_t dns_addrtype);
 
-int
-dns_local_removehost(const char* hostname, const IpAddrInfo* addr);
+std::tuple<bool, IpAddrInfo>
+dns_local_lookup(const std::string& hostname, const std::vector<LocalHostListEntry>& entries);
 
-LwipStatus
-dns_local_addhost(const char* hostname, const IpAddrInfo* addr);
+
+uint32_t
+dns_local_remove_host(std::string& hostname,
+                      const IpAddrInfo& address,
+                      std::vector<LocalHostListEntry>& local_host_list);
+
+
+bool
+dns_local_addhost(std::string& hostname, IpAddrInfo& address, std::vector<LocalHostListEntry>& local_hosts);
 
 inline bool lwip_dns_addrtype_is_ipv6(DnsAddrType t)
 {
@@ -361,7 +383,7 @@ inline bool lwip_dns_addrtype_is_ipv6(DnsAddrType t)
 
 inline bool match_dns_addr_ip(DnsAddrType t, IpAddrInfo& ip)
 {
-    return (ip_addr_is_v6(ip) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
+    return ((ip.type == IP_ADDR_TYPE_V6) ? lwip_dns_addrtype_is_ipv6(t) : (!lwip_dns_addrtype_is_ipv6(t)));
 }
 
 

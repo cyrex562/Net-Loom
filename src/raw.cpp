@@ -58,7 +58,7 @@
 inline bool
 match_pcb_ip_addr(RawPcb* pcb, IpAddrInfo* ipaddr)
 {
-    return (get_ip_addr_type(&pcb->local_ip) == get_ip_addr_type(ipaddr));
+    return ((&pcb->local_ip.type) == (ipaddr->type));
 }
 
 static uint8_t
@@ -66,12 +66,12 @@ raw_input_local_match(RawPcb& pcb, bool broadcast)
 {
     NetworkInterface* current_input_netif = nullptr;
     IpAddrInfo* curr_dst_addr = nullptr; /* check if PCB is bound to specific netif */
-    if ((pcb->netif_idx != NETIF_NO_INDEX) && (pcb->netif_idx != get_and_inc_netif_num(
+    if ((pcb.netif_idx != NETIF_NO_INDEX) && (pcb.netif_idx != get_and_inc_netif_num(
         current_input_netif)))
     {
         return 0;
     } /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
-    if (is_ip_addr_any_type(pcb->local_ip))
+    if ((pcb.local_ip.type == IP_ADDR_TYPE_ANY))
     {
         if ((broadcast != 0) && !ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
         {
@@ -88,15 +88,15 @@ raw_input_local_match(RawPcb& pcb, bool broadcast)
             if (ip_get_option((IpPcb*)pcb, SOF_BROADCAST))
 
             {
-                if (ip4_addr_isany((pcb.local_ip.u_addr.ip4.address)))
+                if (((pcb.local_ip.u_addr.ip4.address.u32 == IP4_ADDR_ANY_U32)))
                 {
                     return 1;
                 }
             }
         }
         else /* Handle IPv4 and IPv6: catch all or exact match */
-            if (is_ip_addr_any(&pcb->local_ip) || compare_ip_addr(
-                &pcb->local_ip,
+            if (ip_addr_is_any(&pcb.local_ip) || ip_addr_eq(
+                &pcb.local_ip,
                 curr_dst_addr))
             {
                 return 1;
@@ -145,7 +145,7 @@ raw_input(struct PacketBuffer* p, NetworkInterface* inp)
     while (pcb != nullptr)
     {
         if ((pcb->protocol == proto) && raw_input_local_match(pcb, broadcast) && (((pcb->
-            flags & RAW_FLAGS_CONNECTED) == 0) || compare_ip_addr(
+            flags & RAW_FLAGS_CONNECTED) == 0) || ip_addr_eq(
             &pcb->remote_ip,
             curr_src_addr)))
         {
@@ -205,11 +205,12 @@ raw_bind(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
     {
         return ERR_VAL;
     }
-    set_ip_addr(&pcb->local_ip, ipaddr);
+    &pcb->local_ip = ipaddr;
+
     /* If the given IP address should have a zone but doesn't, assign one now.
       * This is legacy support: scope-aware callers should always provide properly
       * zoned source addresses. */
-    if (ip_addr_is_v6(&pcb->local_ip) && ip6_addr_lacks_zone(
+    if ((&pcb->local_ip.type == IP_ADDR_TYPE_V6) && ip6_addr_lacks_zone(
         (&pcb->local_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
@@ -260,10 +261,10 @@ raw_connect(struct RawPcb* pcb, const IpAddrInfo* ipaddr)
     {
         return ERR_VAL;
     }
-    set_ip_addr(&pcb->remote_ip, ipaddr);
+    (&pcb->remote_ip = ipaddr);
     /* If the given IP address should have a zone but doesn't, assign one now,
       * using the bound address to make a more informed decision when possible. */
-    if (ip_addr_is_v6(&pcb->remote_ip) && ip6_addr_lacks_zone(
+    if ((&pcb->remote_ip.type == IP_ADDR_TYPE_V6) && ip6_addr_lacks_zone(
         (&pcb->remote_ip.u_addr.ip6),
         IP6_UNKNOWN))
     {
@@ -281,14 +282,14 @@ void
 raw_disconnect(struct RawPcb* pcb)
 {
     /* reset remote address association */
-    if (is_ip_addr_any(&pcb->local_ip))
+    if (ip_addr_is_any(&pcb->local_ip))
     {
         auto any_addr = ip_addr_create_any();
-        copy_ip_addr(&pcb->remote_ip, &any_addr);
+        (&pcb->remote_ip = &any_addr);
     }
     else
     {
-        set_ip_addr_any(ip_addr_is_v6(&pcb->remote_ip), &pcb->remote_ip);
+        ip_addr_set_any(&pcb->remote_ip, (&pcb->remote_ip.type == IP_ADDR_TYPE_V6));
     }
     pcb->netif_idx = NETIF_NO_INDEX; /* mark PCB as unconnected */
     raw_clear_flags(pcb, RAW_FLAGS_CONNECTED);
@@ -340,7 +341,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
     else
     {
         netif = nullptr;
-        if (is_ip_addr_mcast(ipaddr))
+        if (ip_addr_is_mcast(ipaddr))
         {
             /* For multicast-destined packets, use the user-provided interface index to
              * determine the outgoing interface, if an interface index is set and a
@@ -360,7 +361,7 @@ raw_sendto(struct RawPcb* pcb, struct PacketBuffer* p, const IpAddrInfo* ipaddr)
         // ip_addr_debug_print(true | LWIP_DBG_LEVEL_WARNING, ipaddr);
         return STATUS_E_ROUTING;
     }
-    if (is_ip_addr_any(&pcb->local_ip) || is_ip_addr_mcast(&pcb->local_ip))
+    if (ip_addr_is_any(&pcb->local_ip) || ip_addr_is_mcast(&pcb->local_ip))
     {
         /* use outgoing network interface IP address as source address */
         src_ip = netif_get_local_ip(netif, ipaddr);
@@ -456,7 +457,7 @@ raw_sendto_if_src(RawPcb& pcb,
     //         return ERR_MEM;
     //     }
     // }
-    if (is_ip_addr_v4(dst_ip))
+    if (dst_ip.type == IP_ADDR_TYPE_V4)
     {
         /* broadcast filter? */
         if (!ip_get_option((IpPcb*)pcb, SOF_BROADCAST) && netif_is_ip4_addr_bcast(
@@ -474,12 +475,12 @@ raw_sendto_if_src(RawPcb& pcb,
             return ERR_VAL;
         }
     } /* Multicast Loop? */
-    if (((pcb->flags & RAW_FLAGS_MULTICAST_LOOP) != 0) && is_ip_addr_mcast(dst_ip))
+    if (((pcb->flags & RAW_FLAGS_MULTICAST_LOOP) != 0) && ip_addr_is_mcast(dst_ip))
     {
         // q->multicast_loop = true;
     } /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-    if (ip_addr_is_v6(dst_ip) && pcb->chksum_reqd)
+    if ((dst_ip.type == IP_ADDR_TYPE_V6) && pcb->chksum_reqd)
     {
         uint16_t chksum = ip6_chksum_pseudo(p,
                                             pcb->protocol,
@@ -490,7 +491,7 @@ raw_sendto_if_src(RawPcb& pcb,
                     p->len >= (pcb->chksum_offset + 2));
         memcpy(((uint8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(uint16_t));
     } /* Determine TTL to use */
-    uint8_t ttl = (is_ip_addr_mcast(dst_ip) ? raw_get_multicast_ttl(pcb) : pcb->ttl);
+    uint8_t ttl = (ip_addr_is_mcast(dst_ip) ? raw_get_multicast_ttl(pcb) : pcb->ttl);
     netif_set_hints(netif, pcb->netif_hints);
     err = ip_output_if(q, src_ip, dst_ip, ttl, pcb->tos, pcb->protocol, netif);
     netif_reset_hints(netif); /* did we chain a header earlier? */
@@ -588,8 +589,8 @@ raw_new_ip_type(IpAddrType type, uint8_t proto)
     struct RawPcb* pcb = raw_new(proto);
     if (pcb != nullptr)
     {
-        set_ip_addr_type(pcb->local_ip, type);
-        set_ip_addr_type(pcb->remote_ip, type);
+        (pcb->local_ip.type = type);
+        (pcb->remote_ip.type = type);
     }
     return pcb;
 } /** This function is called from netif.c when address is changed
@@ -600,7 +601,7 @@ raw_new_ip_type(IpAddrType type, uint8_t proto)
 void
 raw_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr)
 {
-    if (!is_ip_addr_any(old_addr) && !is_ip_addr_any(new_addr))
+    if (!ip_addr_is_any(old_addr) && !ip_addr_is_any(new_addr))
     {
         // for (struct RawPcb* rpcb = raw_pcbs; rpcb != nullptr; rpcb = rpcb->next) {
         //   /* PCB bound to current local interface address? */

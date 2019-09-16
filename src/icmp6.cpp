@@ -83,7 +83,7 @@ void icmp6_input(PacketBuffer& pkt_buf, NetworkInterface& netif)
     case ICMP6_TYPE_MLQ: case ICMP6_TYPE_MLR: case ICMP6_TYPE_MLD:
         mld6_input(pkt_buf, netif);
         return;
-    case ICMP6_TYPE_EREQ: /* multicast destination address? */ if (is_ip6_addr_mcast(
+    case ICMP6_TYPE_EREQ: /* multicast destination address? */ if (ip6_addr_is_mcast(
             curr_dst_addr))
         {
             /* drop */
@@ -105,7 +105,7 @@ void icmp6_input(PacketBuffer& pkt_buf, NetworkInterface& netif)
             free_pkt_buf(r);
             return;
         } /* Determine reply source IPv6 address. */
-        if (is_ip6_addr_mcast(curr_dst_addr))
+        if (ip6_addr_is_mcast(curr_dst_addr))
         {
             reply_src = &netif_select_ip6_src_addr(netif, curr_dst_addr)->u_addr.ip6;
             if (reply_src == nullptr)

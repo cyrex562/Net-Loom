@@ -72,7 +72,7 @@ bool autoip_create_addr(AutoipState& autoip, NetworkInterface& netif, Ip4Addr& i
     }
     lwip_assert("AUTOIP address not in range",
                 (addr >= AUTOIP_RANGE_START) && (addr <= IP4_AUTO_IP_RANGE_END));
-    set_ip4_addr_u32(ipaddr, lwip_htonl(addr));
+    (ipaddr.u32 = lwip_htonl(addr));
 
     return true;
 }
@@ -130,7 +130,7 @@ autoip_start(NetworkInterface& netif, AutoipState& state)
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
          */
-    auto any_addr = ip4_addr_create_any();
+    auto any_addr = IP4_ADDR_ANY_U32;
 
     Ip4AddrInfo addr_info{};
     addr_info.address = any_addr;
@@ -160,7 +160,7 @@ autoip_start(NetworkInterface& netif, AutoipState& state)
     state.state = AUTOIP_STATE_OFF;
     state.ttw = 0;
     state.sent_num = 0;
-    ip4_addr_zero(state.llipaddr);
+    (state.llipaddr.u32 == IP4_ADDR_ANY_U32);
     state.lastconflict = 0;
 
     if (!autoip_create_addr(state, netif, state.llipaddr)) {return false;}
@@ -231,7 +231,7 @@ autoip_stop(NetworkInterface& netif, AutoipState& autoip)
     int i = 0;
     if (ip4_addr_is_link_local(netif.ip4_addresses[i].address))
     {
-        auto any_addr = ip4_addr_create_any();
+        auto any_addr = IP4_ADDR_ANY_U32;
         Ip4AddrInfo any_addr_info{};
         any_addr_info.address = any_addr;
         any_addr_info.netmask = any_addr;
@@ -347,8 +347,8 @@ autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
              * ip.src == llipaddr OR
              * ip.dst == llipaddr && hw.src != own hwaddr
              */
-            if ((is_ip4_addr_equal(sipaddr, state.llipaddr)) || (
-                is_ip4_addr_any(sipaddr) && is_ip4_addr_equal(dipaddr, state.llipaddr)
+            if (((sipaddr.u32 == state.llipaddr.u32)) || (
+                (sipaddr.u32 == IP4_ADDR_ANY_U32) && (dipaddr.u32 == state.llipaddr.u32)
                 && !eth_addr_cmp(netifaddr, hdr.shwaddr)))
             {
                 return autoip_restart(netif, state);
@@ -360,7 +360,7 @@ autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
              * in any state we have a conflict if
              * ip.src == llipaddr && hw.src != own hwaddr
              */
-            if (is_ip4_addr_equal(sipaddr, state.llipaddr) && !eth_addr_cmp(
+            if ((sipaddr.u32 == state.llipaddr.u32) && !eth_addr_cmp(
                 netifaddr,
                 hdr.shwaddr))
             {
@@ -389,7 +389,7 @@ autoip_supplied_address(const NetworkInterface& netif, AutoipState& autoip)
 bool
 autoip_accept_packet(AutoipState& state, const Ip4Addr& addr)
 {
-    return is_ip4_addr_equal(addr, state.llipaddr);
+    return (addr.u32 == state.llipaddr.u32);
 }
 
 //

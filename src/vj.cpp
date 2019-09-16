@@ -168,8 +168,8 @@ vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf)
    * most recently used connection since it's most likely to be used
    * again & we don't have to do any reordering if it's used.
    */ // vjs_packets +=1;
-    if (!is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) || !
-        is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th).v
+    if (!(&ip->src.u32 == &cs->vjcs_u.csu_ip.src.u32) || !
+        (&ip->dest.u32 == &cs->vjcs_u.csu_ip.dest.u32) || (*(struct vj_uint32_t*)th).v
         != (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
             &cs->vjcs_u.csu_ip)]).v)
     {
@@ -178,8 +178,8 @@ vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf)
         {
             Cstate* lcs = cs;
             cs = cs->cs_next; // INCR(vjs_searches);
-            if (is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) &&
-                is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct vj_uint32_t*
+            if ((&ip->src.u32 == &cs->vjcs_u.csu_ip.src.u32) &&
+                (&ip->dest.u32 == &cs->vjcs_u.csu_ip.dest.u32) && (*(struct vj_uint32_t*
                 )th).v == (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
                     &cs->vjcs_u.csu_ip)]).v)
             {
@@ -228,8 +228,8 @@ vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf)
      * most recently used connection since it's most likely to be used
      * again & we don't have to do any reordering if it's used.
      */ // INCR(vjs_packets);
-        if (!is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) || !
-            is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) || (*(struct vj_uint32_t*)th)
+        if (!(&ip->src.u32 == &cs->vjcs_u.csu_ip.src.u32) || !
+            (&ip->dest.u32 == &cs->vjcs_u.csu_ip.dest.u32) || (*(struct vj_uint32_t*)th)
             .v != (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[get_ip4_hdr_hdr_len(
                 &cs->vjcs_u.csu_ip)]).v)
         {
@@ -251,8 +251,8 @@ vj_compress_tcp(VjCompress& vj_comp, PacketBuffer& pkt_buf)
             {
                 lcs = cs;
                 cs = cs->cs_next; // INCR(vjs_searches);
-                if (is_ip4_addr_equal(&ip->src, &cs->vjcs_u.csu_ip.src) &&
-                    is_ip4_addr_equal(&ip->dest, &cs->vjcs_u.csu_ip.dest) && (*(struct
+                if ((&ip->src.u32 == &cs->vjcs_u.csu_ip.src.u32) &&
+                    (&ip->dest.u32 == &cs->vjcs_u.csu_ip.dest.u32) && (*(struct
                         vj_uint32_t*)th).v == (((struct vj_uint32_t*)&cs->vjcs_u.csu_ip)[
                         get_ip4_hdr_hdr_len(&cs->vjcs_u.csu_ip)]).v)
                 {

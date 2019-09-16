@@ -1212,12 +1212,12 @@ tcp_output(struct TcpPcb *pcb)
   }
 
   /* If we don't have a local IP address, we get one from netif */
-  if (is_ip_addr_any(&pcb->local_ip)) {
+  if (ip_addr_is_any(&pcb->local_ip)) {
     const IpAddrInfo *local_ip = netif_get_local_ip(netif, &pcb->remote_ip);
     if (local_ip == nullptr) {
       return STATUS_E_ROUTING;
     }
-    copy_ip_addr(&pcb->local_ip, local_ip);
+    (&pcb->local_ip = local_ip);
   }
 
   /* Handle the current segment not fitting within the window */

@@ -411,7 +411,7 @@ inline void set_ip6_addr(Ip6AddrInfo& daddr, const Ip6AddrInfo& saddr)
 ///
 /// Set complete address to zero
 ///
-inline void zero_ip6_addr(Ip6AddrInfo& addr_info)
+inline void ip6_addr_zero(Ip6AddrInfo& addr_info)
 {
     addr_info.addr.word[0] = 0;
     addr_info.addr.word[1] = 0;
@@ -426,14 +426,14 @@ inline void zero_ip6_addr(Ip6AddrInfo& addr_info)
 ///
 inline void set_ip6_addr_any(Ip6AddrInfo& addr_info)
 {
-    zero_ip6_addr(addr_info);
+    ip6_addr_zero(addr_info);
 }
 
 
 ///
 /// Set address to ipv6 loopback address
 ///
-inline void set_ip6_addr_loopback(Ip6AddrInfo& addr_info)
+inline void ip6_addr_set_loopback(Ip6AddrInfo& addr_info)
 {
     addr_info.addr.word[0] = 0;
     addr_info.addr.word[1] = 0;
@@ -582,7 +582,7 @@ is_ip6_addr_ip4_mapped_ip6(const Ip6Addr& addr)
 ///
 ///
 inline bool
-is_ip6_addr_mcast(const Ip6Addr& addr)
+ip6_addr_is_mcast(const Ip6Addr& addr)
 {
     return (addr.word[0] & pp_htonl(IP6_ADDR_MCAST_MASK_1)) == pp_htonl(
         IP6_ADDR_MCAST_MASK_2);

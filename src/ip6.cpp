@@ -332,7 +332,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
      * Don't accept multicast source addresses. */
     if (is_ip6_addr_ip4_mapped_ip6((&curr_dst_addr.u_addr.ip6)) ||
         is_ip6_addr_ip4_mapped_ip6((&curr_src_addr.u_addr.ip6)) ||
-        is_ip6_addr_mcast((&curr_src_addr.u_addr.ip6))) {
+        ip6_addr_is_mcast((&curr_src_addr.u_addr.ip6))) {
         /* free (drop) packet pbufs */
         free_pkt_buf(pkt_buf);
         return STATUS_SUCCESS;
@@ -352,7 +352,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
     // todo: set current netif
 
     /* match packet against an interface, i.e. is this packet for us? */
-    if (is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+    if (ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
         /* Always joined to multicast if-local and link-local all-nodes group. */
         if (is_ip6_addr_all_nodes_if_local(&curr_dst_addr.u_addr.ip6) ||
             ip6_addr_isallnodes_linklocal(&curr_dst_addr.u_addr.ip6)) {
@@ -423,7 +423,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
         Logf(true, ("ip6_input: packet not for us.\n"));
 
         /* non-multicast packet? */
-        if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+        if (!ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
             /* try to forward IP packet on (other) interfaces */
             forward_ip6_packet(pkt_buf, ip6_hdr, in_netif, &curr_dst_addr.u_addr.ip6, & curr_src_addr.u_addr.ip6,);
         }
@@ -505,7 +505,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
               * Don't accept multicast source addresses. */
             if (is_ip6_addr_ip4_mapped_ip6(&curr_dst_addr.u_addr.ip6) ||
                 is_ip6_addr_ip4_mapped_ip6(&curr_src_addr.u_addr.ip6) ||
-                is_ip6_addr_mcast(&curr_src_addr.u_addr.ip6)) {
+                ip6_addr_is_mcast(&curr_src_addr.u_addr.ip6)) {
                 Logf(true, ("ip6_input: packet with Routing header\n"));
 
                 Ip6RouteHdr* rout_hdr = (struct Ip6RouteHdr *)pkt_buf->payload;
@@ -535,7 +535,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
                 // todo: set current ip6 hdr
                 // ip_data.current_input_netif = inp;
                 /* match packet against an interface, i.e. is this packet for us? */
-                if (is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+                if (ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
                     /* Always joined to multicast if-local and link-local all-nodes group. */
                     if (is_ip6_addr_all_nodes_if_local(&curr_dst_addr.u_addr.ip6) ||
                         ip6_addr_isallnodes_linklocal(&curr_dst_addr.u_addr.ip6)) {
@@ -573,7 +573,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
                         /* packet not for us, route or discard */
                         Logf(true, ("ip6_input: packet not for us.\n"));
                         /* non-multicast packet? */
-                        if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+                        if (!ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
                             /* try to forward IP packet on (other) interfaces */
                             forward_ip6_packet(pkt_buf, ip6_hdr, in_netif, &curr_src_addr.u_addr.ip6, &curr_dst_addr.u_addr.ip6,);
                         }
@@ -646,7 +646,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
                                             goto ip6_input_cleanup;
                                         case 3:
                                             /* Send ICMP Parameter Problem if destination address is not a multicast address */
-                                            if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+                                            if (!ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
                                                 icmp6_param_problem(pkt_buf, ICMP6_PP_OPTION, (uint8_t*)opt_hdr);
                                             }
                                             Logf(true,
@@ -726,7 +726,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
                                             goto ip6_input_cleanup;
                                         case 3:
                                             /* Send ICMP Parameter Problem if destination address is not a multicast address */
-                                            if (!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) {
+                                            if (!ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) {
                                                 icmp6_param_problem(pkt_buf, ICMP6_PP_OPTION, (uint8_t*)opt_hdr);
                                             }
                                             Logf(true,
@@ -907,7 +907,7 @@ recv_ip6_pkt(PacketBuffer& pkt_buf, NetworkInterface& in_netif)
                             /* p points to IPv6 header again for raw_input. */
                             // pbuf_add_header_force(p, hlen_tot);
                             /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
-                            if ((!is_ip6_addr_mcast(&curr_dst_addr.u_addr.ip6)) && (
+                            if ((!ip6_addr_is_mcast(&curr_dst_addr.u_addr.ip6)) && (
                                 get_ip6_hdr_next_hop(ip6_hdr) != IP6_NEXTH_ICMP6)) {
                                 icmp6_param_problem(pkt_buf, ICMP6_PP_HEADER, nexth);
                             }
@@ -937,8 +937,8 @@ ip6_input_cleanup:
     // ip_data.current_input_netif = NULL;
     // ip_data.current_ip6_header = NULL;
     // ip_data.current_ip_header_tot_len = 0;
-    zero_ip6_addr(&curr_src_addr.u_addr.ip6);
-    zero_ip6_addr(&curr_dst_addr.u_addr.ip6);
+    ip6_addr_zero(&curr_src_addr.u_addr.ip6);
+    ip6_addr_zero(&curr_dst_addr.u_addr.ip6);
     return STATUS_SUCCESS;
 }
 

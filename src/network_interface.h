@@ -245,9 +245,9 @@ get_netif_ip4_gw(const NetworkInterface& netif, const Ip4Addr& addr1)
 {
     for (auto& addr2 : netif.ip4_addresses)
     {
-        if (cmp_ip4_addr_net(addr1, addr2.netmask, addr2.address))
+        if (ip4_addr_net_eq(addr1, addr2.netmask, addr2.address))
         {
-            if (!ip4_addr_isany(addr2.gateway))
+            if (!(addr2.gateway.u32 == IP4_ADDR_ANY_U32))
             {
                 return std::make_tuple(true, addr2.gateway);
             }
@@ -301,7 +301,7 @@ inline bool find_igmp_group(NetworkInterface& netif, Ip4AddrInfo& addr, IgmpGrou
 {
     for (auto& it : netif.igmp_groups)
     {
-        if(is_ip4_addr_equal(it.group_address, addr.address))
+        if((it.group_address.u32 == addr.address.u32))
         {
             found_igmp_group = it;
             return true;
@@ -483,7 +483,7 @@ inline bool netif_is_ip4_addr_bcast(const Ip4Addr& addr, const NetworkInterface&
 {
     for (auto info : netif.ip4_addresses)
     {
-        if (is_ip4_addr_equal(info.broadcast_address, addr))
+        if ((info.broadcast_address.u32 == addr.u32))
         {
             return true;
         }
@@ -496,7 +496,7 @@ inline bool netif_ip4_addr_in_net(NetworkInterface& netif, const Ip4Addr& addr)
 {
     for (auto info : netif.ip4_addresses)
     {
-        if (cmp_ip4_addr_net(info.address, addr, info.netmask))
+        if (ip4_addr_net_eq(info.address, addr, info.netmask))
         {
             return true;
         }
@@ -591,7 +591,7 @@ bool netif_upsert_ip4(NetworkInterface& netif, Ip4AddrInfo& addr_info)
     bool updated = false;
     for (auto& info : netif.ip4_addresses)
     {
-        if (cmp_ip4_addr_net(addr_info.address, info.address, info.netmask))
+        if (ip4_addr_net_eq(addr_info.address, info.address, info.netmask))
         {
             info.address = addr_info.address;
             updated = true;
@@ -617,7 +617,7 @@ netif_get_local_ip(const NetworkInterface& netif, const IpAddrInfo& dest_addr_in
     auto ok = true;
     IpAddrInfo out_addr_info{};
     Ip6AddrInfo ip6_addr_info{};
-    if (ip_addr_is_v6(dest_addr_info)) {
+    if ((dest_addr_info.type == IP_ADDR_TYPE_V6)) {
         std::tie(ok, ip6_addr_info) = get_netif_ip6_local_ip(netif,
                                                              dest_addr_info.u_addr.ip6);
         out_addr_info.u_addr.ip6 = ip6_addr_info;

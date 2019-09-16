@@ -261,7 +261,7 @@ lowpan6_compress_headers(NetworkInterface*netif, uint8_t *inbuf, size_t inbuf_si
   }
 
   /* Compress destination address */
-  if (is_ip6_addr_mcast(&ip6dst.u_addr.ip6)) {
+  if (ip6_addr_is_mcast(&ip6dst.u_addr.ip6)) {
     /* @todo support stateful multicast address compression */
 
     buffer[1] |= 0x08;
@@ -413,7 +413,7 @@ lowpan6_decompress_hdr(uint8_t *lowpan6_buffer, size_t lowpan6_bufsize,
   }
   /* offset for inline IP headers (RFC 6282 ch3)*/
   uint16_t lowpan6_offset = 2;
-  /* if CID is set (context identifier), the context byte 
+  /* if CID is set (context identifier), the context byte
    * follows immediately after the header, so other IPHC fields are @+3 */
   if (lowpan6_buffer[1] & 0x80) {
     lowpan6_offset++;

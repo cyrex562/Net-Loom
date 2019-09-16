@@ -5,14 +5,15 @@
 //
 // IP address types for use in IpAddr.type member.
 //
-enum IpAddrType
+enum IpAddrType : uint8_t
 {
+    IP_ADDR_TYPE_NOT_SET = 0,
     /** IPv4 */
-    IPADDR_TYPE_V4 = 0U,
+    IP_ADDR_TYPE_V4 = 4U,
     /** IPv6 */
-    IPADDR_TYPE_V6 = 6U,
+    IP_ADDR_TYPE_V6 = 6U,
     /** IPv4+IPv6 ("dual-stack") */
-    IPADDR_TYPE_ANY = 46U
+    IP_ADDR_TYPE_ANY = 46U
 };
 
 ///
@@ -32,64 +33,16 @@ struct IpAddrInfo
 struct NetworkInterface;
 
 
-///
-///
-///
-int ipaddr_aton(const char* cp, IpAddrInfo* addr);
+/**
+ *
+ */
+int ip_addr_aton(const char* cp, IpAddrInfo* addr);
 
-
-///
-///
-///
-inline bool
-is_ip_addr_v4(const IpAddrInfo& addr)
-{
-    return addr.type == IPADDR_TYPE_V4;
-}
-
-///
-///
-///
-inline IpAddrType
-get_ip_addr_type(const IpAddrInfo& ipaddr)
-{
-    return ipaddr.type;
-}
-
-///
-///
-///
-inline bool
-is_ip_addr_any_type(const IpAddrInfo& ipaddr)
-{
-    return get_ip_addr_type(ipaddr) == IPADDR_TYPE_ANY;
-}
-
-///
-///
-///
-inline bool
-ip_addr_is_v6(const IpAddrInfo& ipaddr)
-{
-    return get_ip_addr_type(ipaddr) == IPADDR_TYPE_V6;
-}
-
-
-///
-///
-///
+/**
+ *
+ */
 inline void
-set_ip_addr_type(IpAddrInfo& ipaddr, const IpAddrType iptype)
-{
-    ipaddr.type = iptype;
-}
-
-
-///
-///
-///
-inline void
-clear_ip_addr(IpAddrInfo& ipaddr)
+ip_addr_clear(IpAddrInfo& ipaddr)
 {
     ipaddr.u_addr.ip6.addr.word[0] = 0;
     ipaddr.u_addr.ip6.addr.word[1] = 0;
@@ -98,210 +51,109 @@ clear_ip_addr(IpAddrInfo& ipaddr)
     clear_ip6_addr_zone(ipaddr.u_addr.ip6);
 }
 
-
-///
-///
-///
-inline void
-copy_ip_addr(IpAddrInfo& daddr, const IpAddrInfo& saddr)
-{
-    daddr.type = saddr.type;
-    if (saddr.type == IPADDR_TYPE_V6)
-    {
-        copy_ip6_addr(daddr.u_addr.ip6.addr, saddr.u_addr.ip6.addr);
-    }
-    else
-    {
-        copy_ip4_addr(daddr.u_addr.ip4.address, saddr.u_addr.ip4.address);
-        clear_ip_addr(daddr);
-    }
-}
-
-
-///
-///
-///
-inline void
-copy_ip6_addr_to_ip_addr(IpAddrInfo& dest, Ip6Addr& src)
-{
-    copy_ip6_addr(dest.u_addr.ip6.addr, src);
-    dest.type = IPADDR_TYPE_V6;
-}
-
-
-///
-///
-///
+/**
+ *
+ */
 inline void
 copy_ip4_addr_to_ip_addr(IpAddrInfo& dest, Ip4Addr& src)
 {
-    copy_ip4_addr(dest.u_addr.ip4.address, src);
-    set_ip_addr_type(dest, IPADDR_TYPE_V4);
-    clear_ip_addr(dest);
+    ip_addr_clear(dest);
+    dest.u_addr.ip4.address = src;
+    dest.type = IP_ADDR_TYPE_V4;
 }
 
 
-///
-///
-///
-inline void set_ip_addr_ip4_u32(IpAddrInfo& ipaddr, const uint32_t val)
-{
-    set_ip4_addr_u32(ipaddr.u_addr.ip4.address, val);
-    set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
-    clear_ip_addr(ipaddr);
-}
-
-
-///
-///
-///
-inline IpAddrInfo
-set_ip_addr_ip4_u32_val(IpAddrInfo& ipaddr, const uint32_t val)
-{
-    set_ip4_addr_u32(ipaddr.u_addr.ip4.address, val);
-    set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
-    clear_ip_addr(ipaddr);
-    return ipaddr;
-}
-
-
-///
-///
-///
-inline uint32_t
-get_ip4_addr_u32_from_ip_addr(const IpAddrInfo& ipaddr)
-{
-    if (is_ip_addr_v4(ipaddr))
-    {
-        return get_ip4_addr_u32(ipaddr.u_addr.ip4.address);
-    }
-    return 0;
-}
-
-
-///
-///
-///
+/**
+ *
+ */
 inline void
-set_ip_addr(IpAddrInfo& dest, const IpAddrInfo& src)
+ip_addr_set_ip4_u32(IpAddrInfo& ipaddr, const uint32_t val)
 {
-    set_ip_addr_type(dest, get_ip_addr_type(src));
-    if (ip_addr_is_v6(src))
-    {
-        set_ip6_addr(dest.u_addr.ip6, src.u_addr.ip6);
-    }
-    else
-    {
-        copy_ip4_addr(dest.u_addr.ip4.address, src.u_addr.ip4.address);
-        clear_ip_addr(dest);
-    }
+    ip_addr_clear(ipaddr);
+    ipaddr.u_addr.ip4.address.u32 = val;
+    (ipaddr.type = IP_ADDR_TYPE_V4);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline void
-zero_ip_addr_ip4(IpAddrInfo& ipaddr)
+ip_addr_set_any(IpAddrInfo& ipaddr, const bool is_ipv6 = false)
 {
-    ip4_addr_zero(ipaddr.u_addr.ip4.address);
-    set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
-}
-
-
-///
-///
-///
-inline void
-zero_ip_addr_ip6(IpAddrInfo& ipaddr)
-{
-    zero_ip6_addr(ipaddr.u_addr.ip6);
-    set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
-}
-
-
-
-///
-///
-///
-inline void
-set_ip_addr_any(const bool is_ipv6, IpAddrInfo& ipaddr)
-{
-    if (is_ipv6)
-    {
+    if (is_ipv6) {
         set_ip6_addr_any(ipaddr.u_addr.ip6);
-        set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
+        (ipaddr.type = IP_ADDR_TYPE_V6);
     }
-    else
-    {
-        set_ip4_addr_any(ipaddr.u_addr.ip4.address);
-        set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
-        clear_ip_addr(ipaddr);
+    else {
+        (ipaddr.u_addr.ip4.address.u32 = IP4_ADDR_ANY_U32);
+        (ipaddr.type = IP_ADDR_TYPE_V4);
+        ip_addr_clear(ipaddr);
     }
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline void
-set_ip_addr_loopback(const bool is_ipv6, IpAddrInfo& ipaddr)
+ip_addr_set_loopback(IpAddrInfo& ipaddr, const bool is_ipv6 = false)
 {
     if (is_ipv6)
     {
-        set_ip6_addr_loopback(ipaddr.u_addr.ip6);
-        set_ip_addr_type(ipaddr, IPADDR_TYPE_V6);
+        ip6_addr_set_loopback(ipaddr.u_addr.ip6);
+        (ipaddr.type = IP_ADDR_TYPE_V6);
     }
     else
     {
-        set_ip4_addr_loopback(ipaddr.u_addr.ip4.address);
-        set_ip_addr_type(ipaddr, IPADDR_TYPE_V4);
-        clear_ip_addr(ipaddr);
+        (ipaddr.u_addr.ip4.address.u32 = pp_htonl(IP4_ADDR_LOOPBACK_U32));
+        (ipaddr.type = IP_ADDR_TYPE_V4);
+        ip_addr_clear(ipaddr);
     }
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-compare_ip_addr(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
+ip_addr_eq(const IpAddrInfo& addr1, const IpAddrInfo& addr2)
 {
-    if (get_ip_addr_type(addr1) != get_ip_addr_type(addr2))
+    if ((addr1.type) != (addr2.type))
     {
         return false;
     }
-    if (ip_addr_is_v6(addr1))
+    if ((addr1.type == IP_ADDR_TYPE_V6))
     {
         return ip6_addr_equal(addr1.u_addr.ip6, addr2.u_addr.ip6);
     }
-    return is_ip4_addr_equal(addr1.u_addr.ip4.address, addr2.u_addr.ip4.address);
+    return (addr1.u_addr.ip4.address.u32 == addr2.u_addr.ip4.address);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip_addr_any(const IpAddrInfo& ipaddr)
+ip_addr_is_any(const IpAddrInfo& ipaddr)
 {
-    if (ip_addr_is_v6(ipaddr))
+    if ((ipaddr.type == IP_ADDR_TYPE_V6))
     {
         return ip6_addr_is_any(ipaddr.u_addr.ip6);
     }
-    return ip4_addr_isany(ipaddr.u_addr.ip4.address);
+    return (ipaddr.u_addr.ip4.address.u32 == IP4_ADDR_ANY_U32);
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline bool
-is_ip_addr_mcast(const IpAddrInfo& ipaddr)
+ip_addr_is_mcast(const IpAddrInfo& ipaddr)
 {
-    if (ip_addr_is_v6(ipaddr))
+    if ((ipaddr.type == IP_ADDR_TYPE_V6))
     {
-        return is_ip6_addr_mcast(ipaddr.u_addr.ip6.addr);
+        return ip6_addr_is_mcast(ipaddr.u_addr.ip6.addr);
     }
     return ip4_addr_is_mcast(ipaddr.u_addr.ip4.address);
 }
@@ -311,13 +163,13 @@ is_ip_addr_mcast(const IpAddrInfo& ipaddr)
  *
  */
 inline bool
-is_ip_addr_loopback(const IpAddrInfo& ipaddr)
+ip_addr_is_loopback(const IpAddrInfo& ipaddr)
 {
-    if ((ip_addr_is_v6(ipaddr)))
+    if (((ipaddr.type == IP_ADDR_TYPE_V6)))
     {
         return ip6_addr_is_loopback(ipaddr.u_addr.ip6);
     }
-    return is_ip4_addr_loopback(ipaddr.u_addr.ip4.address);
+    return ip4_addr_is_loopback(ipaddr.u_addr.ip4.address);
 }
 
 
@@ -327,7 +179,7 @@ is_ip_addr_loopback(const IpAddrInfo& ipaddr)
 inline bool
 ip_addr_is_link_local(const IpAddrInfo& ipaddr)
 {
-    if (ip_addr_is_v6(ipaddr))
+    if ((ipaddr.type == IP_ADDR_TYPE_V6))
     {
         return ip6_addr_is_linklocal(ipaddr.u_addr.ip6);
     }
@@ -335,43 +187,44 @@ ip_addr_is_link_local(const IpAddrInfo& ipaddr)
 }
 
 
-///
-///
-///
-inline void
-make_ip_addr_ip6(IpAddrInfo& ipaddr,
+/**
+ *
+ */
+inline IpAddrInfo
+ip_addr_create_ip6_u32(
                  const uint32_t i0,
                  const uint32_t i1,
                  const uint32_t i2,
                  const uint32_t i3)
 {
+    IpAddrInfo ipaddr{};
     set_ip6_addr(ipaddr.u_addr.ip6, i0, i1, i2, i3);
+    return ipaddr;
 }
 
 
 /**
  *
  */
-inline void
-ip_addr_ip6_host(struct IpAddrInfo& ipaddr,
-                 const uint32_t i0,
-                 const uint32_t i1,
-                 const uint32_t i2,
-                 const uint32_t i3)
+inline IpAddrInfo
+ip_addr_create_ip6_u32_host(const uint32_t i0,
+                            const uint32_t i1,
+                            const uint32_t i2,
+                            const uint32_t i3)
 {
-    make_ip_addr_ip6(ipaddr, pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
+    return ip_addr_create_ip6_u32(pp_htonl(i0), pp_htonl(i1), pp_htonl(i2), pp_htonl(i3));
 }
 
 
 /**
  *
  */
-inline IpAddrInfo create_ip_addr_ip4_bcast()
+inline IpAddrInfo
+ip_addr_create_ip4_bcast()
 {
     IpAddrInfo addr{};
-    addr.u_addr.ip4.address.u32 = make_u32(255,255,255,255);
-    addr.type = IPADDR_TYPE_V4;
-    // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized
+    addr.u_addr.ip4.address.u32 = make_u32(255, 255, 255, 255);
+    addr.type = IP_ADDR_TYPE_V4;
     return addr;
 }
 
@@ -379,11 +232,11 @@ inline IpAddrInfo create_ip_addr_ip4_bcast()
 /**
  *
  */
-inline IpAddrInfo create_ip_addr_ip4_any()
+inline IpAddrInfo ip_addr_create_ip4_any()
 {
     IpAddrInfo addr{};
     addr.u_addr.ip4.address.u32 = make_u32(0,0,0,0);
-    addr.type = IPADDR_TYPE_V4;
+    addr.type = IP_ADDR_TYPE_V4;
     // ReSharper disable CppSomeObjectMembersMightNotBeInitialized
     return addr;
     // ReSharper restore CppSomeObjectMembersMightNotBeInitialized
@@ -393,21 +246,21 @@ inline IpAddrInfo create_ip_addr_ip4_any()
 /**
  *
  */
-inline IpAddrInfo create_ip_addr_ip6_any() {
+inline IpAddrInfo ip_addr_create_ip6_any() {
     IpAddrInfo addr{};
     addr.u_addr.ip6.addr.word[0] = 0;
     addr.u_addr.ip6.addr.word[1] = 0;
     addr.u_addr.ip6.addr.word[2] = 0;
     addr.u_addr.ip6.addr.word[3] = 0;
     addr.u_addr.ip6.zone = IP6_NO_ZONE;
-    addr.type = IPADDR_TYPE_V6;
+    addr.type = IP_ADDR_TYPE_V6;
     return addr;
 }
 
 
-///
-///
-///
+/**
+ *
+ */
 inline IpAddrInfo ip_addr_create_any()
 {
     IpAddrInfo addr{};
@@ -416,15 +269,15 @@ inline IpAddrInfo ip_addr_create_any()
     addr.u_addr.ip6.addr.word[2] = 0;
     addr.u_addr.ip6.addr.word[3] = 0;
     addr.u_addr.ip6.zone = IP6_NO_ZONE;
-    addr.type = IPADDR_TYPE_ANY;
+    addr.type = IP_ADDR_TYPE_ANY;
     return addr;
 }
 
 
-///
-///
-///
-inline void zero_ip_addr(IpAddrInfo& ip)
+/**
+ *
+ */
+inline void ip_addr_zero(IpAddrInfo& ip)
 {
     ip = ip_addr_create_any();
 }

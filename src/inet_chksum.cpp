@@ -1,6 +1,6 @@
 ///
 /// file: inet_checksum.cpp
-/// 
+///
 
 #include "opt.h"
 #include "def.h"
@@ -27,7 +27,7 @@ uint16_t lwip_standard_checksum(const uint8_t* dataptr,
         return lwip_standard_chksum_2(dataptr, len);
     }
     return lwip_standard_chksum_3(dataptr, len);
-} 
+}
 
 ///
 /// lwip checksum
@@ -97,19 +97,19 @@ uint16_t lwip_standard_chksum_2(const void* dataptr, const size_t len)
     {
         reinterpret_cast<uint8_t *>(&t)[1] = *pb++;
         local_len--;
-    } 
+    }
     /* Add the bulk of the data */
     const auto* ps = reinterpret_cast<const uint16_t *>(static_cast<const uint8_t *>(pb));
     while (local_len > 1)
     {
         sum += *ps++;
         local_len -= 2;
-    } 
+    }
     /* Consume left-over byte, if any */
     if (local_len > 0)
     {
         reinterpret_cast<uint8_t *>(&t)[0] = *reinterpret_cast<const uint8_t *>(ps);
-    } 
+    }
     /* Add end bytes */
     sum += t; /* Fold 32-bit sum to 16 bits
      calling this twice is probably faster than if statements... */
@@ -140,8 +140,8 @@ uint16_t lwip_standard_chksum_3(const void* dataptr, const size_t len)
     const auto* pb = static_cast<const uint8_t *>(dataptr);
     uint16_t t = 0;
     uint32_t sum = 0;
-    size_t local_len = len; 
-    
+    size_t local_len = len;
+
     /* starts at odd byte address? */
     int odd = uintptr_t(pb) & 1;
     if (odd && local_len > 0)
@@ -191,7 +191,7 @@ uint16_t lwip_standard_chksum_3(const void* dataptr, const size_t len)
         sum = SWAP_BYTES_IN_WORD(sum);
     }
     return (uint16_t)sum;
-} 
+}
 
 
 
@@ -251,10 +251,10 @@ uint16_t inet_chksum_pseudo(PacketBuffer& p,
                             const Ip4Addr& src,
                             const Ip4Addr& dest)
 {
-    uint32_t addr = get_ip4_addr_u32(src);
+    uint32_t addr = (src.u32);
     uint32_t acc = (addr & 0xffffUL);
     acc = static_cast<uint32_t>(acc + ((addr >> 16) & 0xffffUL));
-    addr = get_ip4_addr_u32(dest);
+    addr = (dest.u32);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = fold_u32(acc);
@@ -312,7 +312,7 @@ uint16_t ip_chksum_pseudo(PacketBuffer& p,
                           const IpAddrInfo& src,
                           const IpAddrInfo& dest)
 {
-  if (ip_addr_is_v6(dest)) {
+  if ((dest.type == IP_ADDR_TYPE_V6)) {
       return ip6_chksum_pseudo(p,
                                proto,
                                proto_len,
@@ -393,10 +393,10 @@ uint16_t inet_chksum_pseudo_partial(PacketBuffer& p,
                                     const Ip4Addr& src,
                                     const Ip4Addr& dest)
 {
-    uint32_t addr = get_ip4_addr_u32(src);
+    uint32_t addr = (src.u32);
     uint32_t acc = (addr & 0xffffUL);
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL));
-    addr = get_ip4_addr_u32(dest);
+    addr = (dest.u32);
     acc = (uint32_t)(acc + (addr & 0xffffUL));
     acc = (uint32_t)(acc + ((addr >> 16) & 0xffffUL)); /* fold down to 16 bits */
     acc = fold_u32(acc);
@@ -463,7 +463,7 @@ ip_chksum_pseudo_partial(PacketBuffer& p,
                          const IpAddrInfo& src,
                          const IpAddrInfo& dest)
 {
-    if (ip_addr_is_v6(dest))
+    if ((dest.type == IP_ADDR_TYPE_V6))
     {
         return ip6_chksum_pseudo_partial(p,
                                          proto,
@@ -478,7 +478,7 @@ ip_chksum_pseudo_partial(PacketBuffer& p,
                                       chksum_len,
                                       src.u_addr.ip4.address,
                                       dest.u_addr.ip4.address);
-} 
+}
 
 ///
 /// inet_chksum:
@@ -494,7 +494,7 @@ ip_chksum_pseudo_partial(PacketBuffer& p,
 uint16_t inet_chksum(const uint8_t* dataptr, size_t len)
 {
     return uint16_t(~static_cast<unsigned int>(lwip_standard_checksum(dataptr, len)));
-} 
+}
 
 
 ///
@@ -523,7 +523,7 @@ uint16_t inet_chksum_pbuf(struct PacketBuffer* p)
         acc = SWAP_BYTES_IN_WORD(acc);
     }
     return uint16_t(~(acc & 0xffffUL));
-} 
+}
 
 ///
 /// Safe but slow: first call memcpy, then call lwip_standard_checksum.

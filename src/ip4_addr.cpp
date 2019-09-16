@@ -10,7 +10,7 @@
 // @return 1 if the netmask is valid, 0 if it is not
 //
 bool
-is_ip4_netmask_valid(const uint32_t netmask)
+ip4_netmask_valid(const uint32_t netmask)
 {
     uint32_t mask;
     const auto nm_hostorder = lwip_htonl(netmask); /* first, check for the first zero */
@@ -45,9 +45,9 @@ ipaddr_addr(std::string& cp)
     Ip4Addr val;
     if (ip4_addr_aton(cp, val))
     {
-        return get_ip4_addr_u32(val);
+        return (val.u32);
     }
-    const auto addr_none = make_ip4_addr_none();
+    Ip4Addr addr_none = {IP4_ADDR_NONE_U32};
     return addr_none.u32;
 }
 
