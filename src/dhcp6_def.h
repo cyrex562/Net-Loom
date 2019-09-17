@@ -235,22 +235,21 @@ struct Dhcp6OptionInfo
  */
 struct Dhcp6Context
 {
-    /** transaction identifier of last sent request */
-    uint32_t xid{}; /** track PCB allocation state */
-    uint8_t pcb_allocated{}; /** current DHCPv6 state machine state */
-    uint8_t state{}; /** retries of current request */
+    /* transaction identifier of last sent request */
+    uint32_t xid{};
+    /* track PCB allocation state */
+    bool pcb_allocated{};
+    /* current DHCPv6 state machine state */
+    uint8_t state{};
+    /* retries of current request */
     uint8_t tries{};
-
     uint32_t ref_cnt;
-
-    /** if request config is triggered while another action is active, this keeps track of it */
+    /* if request config is triggered while another action is active, this keeps track
+     *of it */
     uint8_t request_config_pending{};
-
-    /** #ticks with period DHCP6_TIMER_MSECS for request timeout */
+    /* #ticks with period DHCP6_TIMER_MSECS for request timeout */
     uint16_t request_timeout{};
-
     std::vector<Dhcp6OptionInfo> dhcp6_rx_options;
-
     IpAddrInfo local_ip{};
     IpAddrInfo remote_ip{};
     uint8_t netif_index{};
@@ -265,7 +264,5 @@ struct Dhcp6Context
     uint8_t mcast_ttl{};
     uint16_t checksum_len_rx{};
     uint16_t checksum_len_tx{};
-
-
     /* @todo: add more members here to keep track of stateful DHCPv6 data, like lease times */
 };

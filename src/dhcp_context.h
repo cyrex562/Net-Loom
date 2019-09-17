@@ -75,6 +75,7 @@ struct DhcpContext
     uint32_t tries;
     DhcpAutoIpCoopState autoip_coop_state;
     bool subnet_mask_given;
+    uint32_t ref_cnt;
     uint64_t request_timeout;
     /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
     uint64_t t1_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */

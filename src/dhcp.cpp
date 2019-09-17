@@ -23,11 +23,18 @@
  * Ensure DHCP PCB is allocated and bound
  */
 bool
-dhcp_inc_pcb_refcount(uint32_t dhcp_pcb_refcount)
+dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount)
 {
     if (dhcp_pcb_refcount == 0) {
         // allocate UDP PCB
-        dhcp_pcb = udp_new();
+        //     UdpPcb pcb{};
+        // pcb.ttl = UDP_TTL;
+        // udp_set_multicast_ttl(pcb, UDP_TTL);
+        // return pcb;
+        // dhcp_pcb = udp_new();
+
+
+
         if (dhcp_pcb == nullptr) { return ERR_MEM; }
         // todo: this is setting the first field of the DHCP_PCB struct to SOF_BROADCAST; probably a bug.
         ip4_set_ip_option((uint8_t*)dhcp_pcb, SOF_BROADCAST);
@@ -137,7 +144,7 @@ dhcp_handle_offer(NetworkInterface* netif, DhcpMsg* msg_in, DhcpContext* dhcp_ct
         Logf(true,
              "dhcp_handle_offer(): offer for 0x%08%d\n",
              (&dhcp->offered_ip_addr.u32));
-        dhcp_select(netif);
+        dhcp_select(netif,);
     }
     else {
         Logf(true, "dhcp_handle_offer(netif=%p) did not get server ID!\n", (void*)netif);
@@ -152,21 +159,22 @@ dhcp_handle_offer(NetworkInterface* netif, DhcpMsg* msg_in, DhcpContext* dhcp_ct
  * @param netif the netif under DHCP control
  * @return lwIP specific error (see error.h)
  */
-LwipStatus
-dhcp_select(NetworkInterface* netif)
+bool
+dhcp_select(NetworkInterface& netif, DhcpContext& dhcp_ctx)
 {
     LwipStatus result;
     uint16_t options_out_len;
-    auto dhcp = get_netif_dhcp_ctx(netif);
-    Logf(true,
-         "dhcp_select(netif=%p) %c%c%d\n",
-         netif,
-         netif->name[0],
-         netif->name[1],
-         uint16_t(netif->number));
-    dhcp_set_state(dhcp, DHCP_STATE_REQUESTING);
+    bool ok;
+
+    spdlog::info("dhcp_select(netif={}) {}{}", netif, netif.name, netif.number);
+    dhcp_set_state(dhcp_ctx, DHCP_STATE_REQUESTING);
+
     /* create and initialize the DHCP message header */
-    struct PacketBuffer* p_out = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
+    std::vector<uint8_t> packet_data;
+    std::make_tuple(ok, packet_data) = dhcp_create_msg(netif, dhcp_ctx, DHCP_REQUEST);
+
+
+
     if (p_out != nullptr) {
         auto msg_out = reinterpret_cast<DhcpMsg*>(p_out->payload);
         options_out_len = dhcp_option(options_out_len,
@@ -175,7 +183,7 @@ dhcp_select(NetworkInterface* netif)
                                       DHCP_OPTION_MAX_MSG_SIZE_LEN);
         options_out_len = dhcp_option_short(options_out_len,
                                             msg_out->options,
-                                            (netif->mtu));
+                                            (netif.mtu));
         /* MUST request the offered IP address */
         options_out_len = dhcp_option(options_out_len,
                                       msg_out->options,
@@ -246,7 +254,7 @@ dhcp_coarse_tmr(void)
                 Logf(true, "dhcp_coarse_tmr(): t0 timeout\n");
                 /* this clients' lease time has expired */
                 dhcp_release_and_stop(netif);
-                dhcp_start(netif);
+                dhcp_start(netif,);
                 /* timer is active (non zero), and triggers (zeroes) now? */
             }
             else if (dhcp->t2_rebind_time && dhcp->t2_rebind_time-- == 1) {
@@ -316,11 +324,11 @@ dhcp_timeout(NetworkInterface& netif,
     }
     else if (dhcp.state == DHCP_STATE_REQUESTING) {
         spdlog::info("{}}: REQUESTING, DHCP request timed out", __func__);
-        if (dhcp.tries <= 5) { dhcp_select(netif); }
+        if (dhcp.tries <= 5) { dhcp_select(netif,); }
         else {
             spdlog::info("{}: REQUESTING, releasing, restarting", __func__);
             dhcp_release_and_stop(netif);
-            dhcp_start(netif);
+            dhcp_start(netif,);
         }
 
         /* received no ARP reply for the offered address (which is good) */
@@ -535,8 +543,8 @@ dhcp_cleanup(NetworkInterface* netif)
 /// * ERR_OK: No error
 /// * ERR_MEM: Out of memory
 ///
-LwipStatus
-dhcp_start(NetworkInterface* netif)
+bool
+dhcp_start(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt)
 {
     DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
     Logf(true,
@@ -578,7 +586,7 @@ dhcp_start(NetworkInterface* netif)
     memset(dhcp, 0, sizeof(DhcpContext));
     /* dhcp_set_state(&dhcp, DHCP_STATE_OFF); */
     Logf(true, "dhcp_start(): starting DHCP configuration\n");
-    if (dhcp_inc_pcb_refcount() != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return ERR_MEM;
     }
     dhcp->pcb_allocated = 1;
@@ -608,12 +616,12 @@ dhcp_start(NetworkInterface* netif)
  *
  * @param netif The lwIP network interface
  */
-void
-dhcp_inform(NetworkInterface* netif)
+bool
+dhcp_inform(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt)
 {
     DhcpContext dhcp;
     uint16_t options_out_len;
-    if (dhcp_inc_pcb_refcount() != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return;
     }
     memset(&dhcp, 0, sizeof(DhcpContext));
@@ -1196,18 +1204,17 @@ dhcp_release(NetworkInterface* netif)
 void
 dhcp_stop(NetworkInterface* netif) { dhcp_release_and_stop(netif); }
 
-/*
- * Set the DHCP state of a DHCP client.
- *
- * If the state changed, reset the number of tries.
+
+/**
+ * Set the DHCP state of a DHCP client. If the state changed, reset the number of tries.
  */
 void
-dhcp_set_state(DhcpContext* dhcp, uint8_t new_state)
+dhcp_set_state(DhcpContext& dhcp, const DhcpState new_state)
 {
-    if (new_state != dhcp->state) {
-        dhcp->state = new_state;
-        dhcp->tries = 0;
-        dhcp->request_timeout = 0;
+    if (new_state != dhcp.state) {
+        dhcp.state = new_state;
+        dhcp.tries = 0;
+        dhcp.request_timeout = 0;
     }
 }
 

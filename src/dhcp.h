@@ -131,8 +131,8 @@ dhcp_set_struct(struct NetworkInterface* netif, struct DhcpContext* dhcp);
 /** Remove a struct dhcp previously set to the netif using dhcp_set_struct() */
 // #define dhcp_remove_struct(netif) netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, NULL)
 // void dhcp_cleanup(NetworkInterface* netif);
-LwipStatus
-dhcp_start(NetworkInterface* netif);
+bool
+dhcp_start(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt);
 
 
 LwipStatus
@@ -151,8 +151,8 @@ void
 dhcp_release_and_stop(NetworkInterface* netif);
 
 
-void
-dhcp_inform(NetworkInterface* netif);
+bool
+dhcp_inform(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt);
 
 
 void
@@ -219,8 +219,8 @@ bool
 dhcp_discover(NetworkInterface& netif, DhcpContext& ctx);
 
 
-LwipStatus
-dhcp_select(NetworkInterface* netif);
+bool
+dhcp_select(NetworkInterface& netif, DhcpContext& dhcp_ctx);
 
 
 void
@@ -240,7 +240,7 @@ dhcp_reboot(NetworkInterface* netif);
 
 
 void
-dhcp_set_state(DhcpContext* dhcp, uint8_t new_state);
+dhcp_set_state(DhcpContext& dhcp, DhcpState new_state);
 
 /* receive, unfold, parse and free incoming messages */
 void
@@ -269,6 +269,8 @@ dhcp_t2_timeout(NetworkInterface* netif);
 /* create a DHCP message, fill in common headers */
 std::vector<bool, std::vector<uint8_t>>
 dhcp_create_msg(NetworkInterface& netif, DhcpContext& dhcp, uint8_t message_type);
+
+
 /* add a DHCP option (type, then length in bytes) */
 uint16_t
 dhcp_option(uint16_t options_out_len,
@@ -295,6 +297,9 @@ void
 dhcp_option_trailer(uint16_t options_out_len,
                     uint8_t* options,
                     struct PacketBuffer* p_out);
+
+bool
+dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount);
 
 //
 // END OF FILE
