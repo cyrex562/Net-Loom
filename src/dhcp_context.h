@@ -1,6 +1,7 @@
 #pragma once
-#include <cstdint>
 #include "ip4_addr.h"
+#include <cstdint>
+
 
 /* DHCP client states */
 enum DhcpState
@@ -101,6 +102,9 @@ struct DhcpContext
     Ip4Addr offered_si_addr;
     std::string boot_file_name;
     std::vector<DhcpOption> options;
+    uint8_t socket_options;
+    uint8_t ttl;
+    uint8_t mcast_ttl;
 };
 
 //

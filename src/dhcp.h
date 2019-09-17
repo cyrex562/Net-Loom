@@ -223,8 +223,8 @@ bool
 dhcp_select(NetworkInterface& netif, DhcpContext& dhcp_ctx);
 
 
-void
-dhcp_bind(NetworkInterface* netif);
+bool
+dhcp_bind(NetworkInterface& netif, DhcpContext& dhcp);
 
 
 LwipStatus
@@ -299,7 +299,7 @@ dhcp_option_trailer(uint16_t options_out_len,
                     struct PacketBuffer* p_out);
 
 bool
-dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount);
+dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount, NetworkInterface& netif);
 
 //
 // END OF FILE

@@ -48,8 +48,10 @@ constexpr auto UDP_HDR_LEN = 8;
 struct UdpHdr
 {
     uint16_t src;
+
     uint16_t dest; /* src/dest UDP ports */
     uint16_t len;
+
     uint16_t chksum;
 };
 
@@ -90,6 +92,7 @@ struct UdpPcb
     /** Common members of all PCB types */
     IpAddrInfo local_ip; /* Bound netif index */
     IpAddrInfo remote_ip;
+
     uint8_t netif_idx; /* Socket options */
     uint8_t so_options; /* Type Of Service */
     uint8_t tos; /* Time To Live */
@@ -98,6 +101,7 @@ struct UdpPcb
     // struct UdpPcb* next;
     uint8_t flags; /** ports are in host byte order */
     uint16_t local_port;
+
     uint16_t remote_port;
     /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
     Ip4Addr mcast_ip4;
@@ -105,6 +109,7 @@ struct UdpPcb
     uint8_t mcast_ifindex; /** TTL for outgoing multicast packets */
     uint8_t mcast_ttl; /** used for UDP_LITE only */
     uint16_t chksum_len_rx;
+
     uint16_t chksum_len_tx;
     // UdpRecvFn recv; /** user-supplied argument for the recv callback */
     // void* recv_arg;
@@ -113,46 +118,79 @@ struct UdpPcb
 
 /* udp_pcbs export for external reference (e.g. SNMP agent) */
 // extern struct UdpPcb *udp_pcbs;
-
 /* The following functions is the application layer interface to the
    UDP code. */
 UdpPcb
 udp_new(void);
 
+
+bool dhcp_connect(DhcpContext& pcb, IpAddrInfo& ip_addr);
+
+
+
+
+
 UdpPcb
 udp_new_ip_type(IpAddrType type);
-void             udp_remove     (struct UdpPcb *pcb);
-LwipStatus            udp_bind       (struct UdpPcb *pcb, const IpAddrInfo *ipaddr,
-                                 uint16_t port);
-void             udp_bind_netif (struct UdpPcb *pcb, const NetworkInterface* netif);
-LwipStatus            udp_connect    (struct UdpPcb *pcb, const IpAddrInfo *ipaddr,
-                                 uint16_t port);
-void             udp_disconnect (struct UdpPcb *pcb);
-void             udp_recv       (struct UdpPcb *pcb,
-                                 UdpRecvFn recv,
-                                 void* recv_arg);
-LwipStatus            udp_sendto_if  (struct UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddrInfo *dst_ip, uint16_t dst_port,
-                                 NetworkInterface*netif);
-LwipStatus            udp_sendto_if_src(struct UdpPcb *pcb,
-                                        struct PacketBuffer *p,
-                                        const IpAddrInfo *dst_ip,
-                                        uint16_t dst_port,
-                                        NetworkInterface*netif,
-                                        IpAddrInfo* src_ip);
+
+
+void
+udp_remove(struct UdpPcb* pcb);
+
+
+LwipStatus
+udp_bind(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port);
+
+
+void
+udp_bind_netif(struct UdpPcb* pcb, const NetworkInterface* netif);
+
+
+LwipStatus
+udp_connect(struct UdpPcb* pcb, const IpAddrInfo* ipaddr, uint16_t port);
+
+
+void
+udp_disconnect(struct UdpPcb* pcb);
+
+
+void
+udp_recv(struct UdpPcb* pcb, UdpRecvFn recv, void* recv_arg);
+
+
+LwipStatus
+udp_sendto_if(struct UdpPcb* pcb,
+              struct PacketBuffer* p,
+              const IpAddrInfo* dst_ip,
+              uint16_t dst_port,
+              NetworkInterface* netif);
+
+
+LwipStatus
+udp_sendto_if_src(struct UdpPcb* pcb,
+                  struct PacketBuffer* p,
+                  const IpAddrInfo* dst_ip,
+                  uint16_t dst_port,
+                  NetworkInterface* netif,
+                  IpAddrInfo* src_ip);
 
 
 bool
-udp_sendto(UdpPcb& pcb,
-           PacketBuffer& p,
-           const IpAddrInfo& dst_ip,
-           uint16_t dst_port);
-LwipStatus            udp_send       (struct UdpPcb *pcb, struct PacketBuffer *p);
+udp_sendto(UdpPcb& pcb, PacketBuffer& p, const IpAddrInfo& dst_ip, uint16_t dst_port);
 
-LwipStatus            udp_sendto_if_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 const IpAddrInfo *dst_ip, uint16_t dst_port,
-                                 NetworkInterface*netif, uint8_t have_chksum,
-                                 uint16_t chksum);
+
+LwipStatus
+udp_send(struct UdpPcb* pcb, struct PacketBuffer* p);
+
+
+LwipStatus
+udp_sendto_if_chksum(UdpPcb* pcb,
+                     struct PacketBuffer* p,
+                     const IpAddrInfo* dst_ip,
+                     uint16_t dst_port,
+                     NetworkInterface* netif,
+                     uint8_t have_chksum,
+                     uint16_t chksum);
 
 
 bool
@@ -162,58 +200,72 @@ udp_sendto_chksum(UdpPcb& pcb,
                   uint16_t dst_port,
                   bool have_chksum,
                   uint16_t chksum);
-LwipStatus            udp_send_chksum(UdpPcb *pcb, struct PacketBuffer *p,
-                                 uint8_t have_chksum, uint16_t chksum);
-LwipStatus            udp_sendto_if_src_chksum(UdpPcb& pcb,
-                                               PacketBuffer& p,
-                                               const IpAddrInfo& dst_ip,
-                                               uint16_t dst_port,
-                                               NetworkInterface& netif,
-                                               uint8_t have_chksum,
-                                               uint16_t chksum,
-                                               IpAddrInfo& src_ip);
 
-inline void udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
+
+LwipStatus
+udp_send_chksum(UdpPcb* pcb,
+                struct PacketBuffer* p,
+                uint8_t have_chksum,
+                uint16_t chksum);
+
+
+LwipStatus
+udp_sendto_if_src_chksum(UdpPcb& pcb,
+                         PacketBuffer& p,
+                         const IpAddrInfo& dst_ip,
+                         uint16_t dst_port,
+                         NetworkInterface& netif,
+                         uint8_t have_chksum,
+                         uint16_t chksum,
+                         IpAddrInfo& src_ip);
+
+
+inline void
+udp_set_flags(UdpPcb* pcb, const uint8_t set_flags)
 {
     (pcb)->flags = uint8_t((pcb)->flags | (set_flags));
 }
 
-inline void udp_clear_flags(UdpPcb* pcb, const uint8_t clr_flags)
+inline void
+udp_clear_flags(UdpPcb* pcb, const uint8_t clr_flags)
 {
     pcb->flags = uint8_t(pcb->flags & uint8_t(~clr_flags & 0xff));
 }
 
-inline bool udp_is_flag_set(UdpPcb* pcb, const uint8_t flag)
+inline bool
+udp_is_flag_set(UdpPcb* pcb, const uint8_t flag)
 {
     return (((pcb)->flags & (flag)) != 0);
 }
 
 /* The following functions are the lower layer interface to UDP. */
-void             udp_input      (struct PacketBuffer *p, NetworkInterface*inp);
+void
+udp_input(struct PacketBuffer* p, NetworkInterface* inp);
 
-void             udp_init       ();
+
+void
+udp_init();
 
 /* for compatibility with older implementation */
 #define udp_new_ip6() udp_new_ip_type(IPADDR_TYPE_V6)
-
-#define udp_set_multicast_netif_addr(pcb, ip4addr) ip4_addr_copy((pcb)->mcast_ip4, *(ip4addr))
+#define udp_set_multicast_netif_addr(pcb, ip4addr
+) ip4_addr_copy((pcb)->mcast_ip4, *(ip4addr))
 #define udp_get_multicast_netif_addr(pcb)          (&(pcb)->mcast_ip4)
 #define udp_set_multicast_netif_index(pcb, idx)    ((pcb)->mcast_ifindex = (idx))
 #define udp_get_multicast_netif_index(pcb)         ((pcb)->mcast_ifindex)
 
-
 inline void
 udp_set_multicast_ttl(UdpPcb& pcb, uint8_t value) { ((pcb).mcast_ttl = (value)); }
-
-
-
 
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 
 
-void udp_debug_print(UdpHdr *udphdr);
+void
+udp_debug_print(UdpHdr* udphdr);
 
-void udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr);
+
+void
+udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new_addr);
 
 /** Set this to 0 in the rare case of wanting to call an extra function to
  * generate the IP checksum (in contrast to calculating it on-the-fly). */
@@ -223,15 +275,14 @@ void udp_netif_ip_addr_changed(const IpAddrInfo* old_addr, const IpAddrInfo* new
 /// To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT(port)
 /// to return 1 if the port is accepted and 0 if the port is not accepted.
 ///
-inline bool ip4_accept_udp_port(const uint16_t dst_port)
-{
-    return dst_port == pp_ntohs(12345);
-}
+inline bool
+ip4_accept_udp_port(const uint16_t dst_port) { return dst_port == pp_ntohs(12345); }
 
 ///
 /// accept DHCP client port and custom port
 ///
-inline bool ip_accept_link_layer_addressed_port(const uint16_t port)
+inline bool
+ip_accept_link_layer_addressed_port(const uint16_t port)
 {
     return port == pp_ntohs(LWIP_IANA_PORT_DHCP_CLIENT) || ip4_accept_udp_port(port);
 }

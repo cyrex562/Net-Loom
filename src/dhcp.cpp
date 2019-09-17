@@ -20,10 +20,18 @@
 
 
 /**
+ *
+ */
+bool dhcp_connect(DhcpContext& pcb, IpAddrInfo& ip_addr)
+{
+    return false;
+}
+
+/**
  * Ensure DHCP PCB is allocated and bound
  */
 bool
-dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount)
+dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount, NetworkInterface& netif)
 {
     if (dhcp_pcb_refcount == 0) {
         // allocate UDP PCB
@@ -33,16 +41,23 @@ dhcp_inc_pcb_refcount(DhcpContext& ctx, uint32_t dhcp_pcb_refcount)
         // return pcb;
         // dhcp_pcb = udp_new();
 
+        ctx.socket_options |= SOF_BROADCAST;
+        ctx.ttl = UDP_TTL;
+        ctx.mcast_ttl = UDP_TTL;
 
-
-        if (dhcp_pcb == nullptr) { return ERR_MEM; }
         // todo: this is setting the first field of the DHCP_PCB struct to SOF_BROADCAST; probably a bug.
-        ip4_set_ip_option((uint8_t*)dhcp_pcb, SOF_BROADCAST);
         // set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs
         auto any_addr = ip_addr_create_any();
-        udp_bind(dhcp_pcb, &any_addr, LWIP_IANA_PORT_DHCP_CLIENT);
-        udp_connect(dhcp_pcb, &any_addr, LWIP_IANA_PORT_DHCP_SERVER);
-        udp_recv(dhcp_pcb, dhcp_recv, nullptr);
+
+        // udp_bind(dhcp_pcb, &any_addr, LWIP_IANA_PORT_DHCP_CLIENT);
+        // todo: figure out what to do for udp_bind and udp_recv
+        dhcp_bind(netif,);
+
+        // udp_connect(dhcp_pcb, &any_addr, LWIP_IANA_PORT_DHCP_SERVER);
+        dhcp_connect(ctx, any_addr);
+
+        // udp_recv(dhcp_pcb, dhcp_recv, nullptr);
+        dhcp_recv(nullptr, ctx, any_addr, LWIP_IANA_PORT_DHCP_SERVER, netif);
     }
     dhcp_pcb_refcount++;
     return STATUS_SUCCESS;
@@ -342,7 +357,7 @@ dhcp_timeout(NetworkInterface& netif,
         }
         else {
             /* bind the interface to the offered address */
-            dhcp_bind(netif);
+            dhcp_bind(netif,);
         }
     }
     else if (dhcp.state == DHCP_STATE_REBOOTING) {
@@ -586,7 +601,7 @@ dhcp_start(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt)
     memset(dhcp, 0, sizeof(DhcpContext));
     /* dhcp_set_state(&dhcp, DHCP_STATE_OFF); */
     Logf(true, "dhcp_start(): starting DHCP configuration\n");
-    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt,) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return ERR_MEM;
     }
     dhcp->pcb_allocated = 1;
@@ -621,7 +636,7 @@ dhcp_inform(NetworkInterface& netif, uint32_t dhcp_pcb_ref_cnt)
 {
     DhcpContext dhcp;
     uint16_t options_out_len;
-    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
+    if (dhcp_inc_pcb_refcount(, dhcp_pcb_ref_cnt,) != STATUS_SUCCESS) { /* ensure DHCP PCB is allocated */
         return;
     }
     memset(&dhcp, 0, sizeof(DhcpContext));
@@ -835,100 +850,97 @@ dhcp_discover(NetworkInterface& netif, DhcpContext& ctx)
  * Bind the interface to the offered IP address.
  *
  * @param netif network interface to bind to the offered address
+ * @param dhcp
  */
-void
-dhcp_bind(NetworkInterface* netif)
+bool
+dhcp_bind(NetworkInterface& netif, DhcpContext& dhcp)
 {
     uint32_t timeout;
-    Ip4Addr sn_mask, gw_addr;
-    DhcpContext* dhcp = get_netif_dhcp_ctx(netif);
-    Logf(true,
-         "dhcp_bind(netif=%p) %c%c%d\n",
-         (void*)netif,
-         netif->name[0],
-         netif->name[1],
-         (uint16_t)netif->number);
+    Ip4Addr sn_mask{};
+    Ip4Addr gw_addr{};
 
     /* reset time used of lease */
-    dhcp->lease_used = 0;
-    if (dhcp->offered_t0_lease != 0xffffffffUL) {
+    dhcp.lease_used = 0;
+    if (dhcp.offered_t0_lease != 0xffffffffUL) {
         /* set renewal period timer */
-        Logf(true, "dhcp_bind(): t0 renewal timer %d secs\n", dhcp->offered_t0_lease);
-        timeout = (dhcp->offered_t0_lease + DHCP_COARSE_TIMER_SECS / 2) /
+        Logf(true, "dhcp_bind(): t0 renewal timer %d secs\n", dhcp.offered_t0_lease);
+        timeout = (dhcp.offered_t0_lease + DHCP_COARSE_TIMER_SECS / 2) /
             DHCP_COARSE_TIMER_SECS;
         if (timeout > 0xffff) { timeout = 0xffff; }
-        dhcp->t0_timeout = (uint16_t)timeout;
-        if (dhcp->t0_timeout == 0) { dhcp->t0_timeout = 1; }
+        dhcp.t0_timeout = (uint16_t)timeout;
+        if (dhcp.t0_timeout == 0) { dhcp.t0_timeout = 1; }
         Logf(true,
              "dhcp_bind(): set request timeout %d msecs\n",
-             dhcp->offered_t0_lease * 1000);
+             dhcp.offered_t0_lease * 1000);
     }
 
     /* temporary DHCP lease? */
-    if (dhcp->offered_t1_renew != 0xffffffffUL) {
+    if (dhcp.offered_t1_renew != 0xffffffffUL) {
         /* set renewal period timer */
-        Logf(true, "dhcp_bind(): t1 renewal timer %d secs\n", dhcp->offered_t1_renew);
-        timeout = (dhcp->offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) /
+        Logf(true, "dhcp_bind(): t1 renewal timer %d secs\n", dhcp.offered_t1_renew);
+        timeout = (dhcp.offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) /
             DHCP_COARSE_TIMER_SECS;
         if (timeout > 0xffff) { timeout = 0xffff; }
-        dhcp->t1_timeout = (uint16_t)timeout;
-        if (dhcp->t1_timeout == 0) { dhcp->t1_timeout = 1; }
+        dhcp.t1_timeout = (uint16_t)timeout;
+        if (dhcp.t1_timeout == 0) { dhcp.t1_timeout = 1; }
         Logf(true,
              "dhcp_bind(): set request timeout %d msecs\n",
-             dhcp->offered_t1_renew * 1000);
-        dhcp->t1_renew_time = dhcp->t1_timeout;
+             dhcp.offered_t1_renew * 1000);
+        dhcp.t1_renew_time = dhcp.t1_timeout;
     }
     /* set renewal period timer */
-    if (dhcp->offered_t2_rebind != 0xffffffffUL) {
-        Logf(true, "dhcp_bind(): t2 rebind timer %d secs\n", dhcp->offered_t2_rebind);
-        timeout = (dhcp->offered_t2_rebind + DHCP_COARSE_TIMER_SECS / 2) /
+    if (dhcp.offered_t2_rebind != 0xffffffffUL) {
+        Logf(true, "dhcp_bind(): t2 rebind timer %d secs\n", dhcp.offered_t2_rebind);
+        timeout = (dhcp.offered_t2_rebind + DHCP_COARSE_TIMER_SECS / 2) /
             DHCP_COARSE_TIMER_SECS;
         if (timeout > 0xffff) { timeout = 0xffff; }
-        dhcp->t2_timeout = (uint16_t)timeout;
-        if (dhcp->t2_timeout == 0) { dhcp->t2_timeout = 1; }
+        dhcp.t2_timeout = (uint16_t)timeout;
+        if (dhcp.t2_timeout == 0) { dhcp.t2_timeout = 1; }
         Logf(true,
              "dhcp_bind(): set request timeout %d msecs\n",
-             dhcp->offered_t2_rebind * 1000);
-        dhcp->t2_rebind_time = dhcp->t2_timeout;
+             dhcp.offered_t2_rebind * 1000);
+        dhcp.t2_rebind_time = dhcp.t2_timeout;
     }
 
     /* If we have sub 1 minute lease, t2 and t1 will kick in at the same time. */
-    if (dhcp->t1_timeout >= dhcp->t2_timeout && dhcp->t2_timeout > 0) {
-        dhcp->t1_timeout = 0;
+    if (dhcp.t1_timeout >= dhcp.t2_timeout && dhcp.t2_timeout > 0) {
+        dhcp.t1_timeout = 0;
     }
-    if (dhcp->subnet_mask_given) {
+    if (dhcp.subnet_mask_given) {
         /* copy offered network mask */
-        (&sn_mask = &dhcp->offered_sn_mask);
+        (sn_mask = dhcp.offered_sn_mask);
     }
     else {
         /* subnet mask not given, choose a safe subnet mask given the network class */
-        uint8_t first_octet = ip4_addr1(&dhcp->offered_ip_addr);
-        if (first_octet <= 127) { (&sn_mask.u32 = pp_htonl(0xff000000UL)); }
-        else if (first_octet >= 192) { (&sn_mask.u32 = pp_htonl(0xffffff00UL)); }
-        else { (&sn_mask.u32 = pp_htonl(0xffff0000UL)); }
+        uint8_t first_octet = ip4_addr1(dhcp.offered_ip_addr);
+        if (first_octet <= 127) { (sn_mask.u32 = pp_htonl(0xff000000UL)); }
+        else if (first_octet >= 192) { (sn_mask.u32 = pp_htonl(0xffffff00UL)); }
+        else { (sn_mask.u32 = pp_htonl(0xffff0000UL)); }
     }
-    (&gw_addr = &dhcp->offered_gw_addr);
+    (gw_addr = dhcp.offered_gw_addr);
     /* gateway address not given? */
     if ((gw_addr.u32 == IP4_ADDR_ANY_U32)) {
         /* copy network address */
-        get_ip4_addr_net(&gw_addr, &dhcp->offered_ip_addr, &sn_mask);
+        ip4_addr_get_net(&gw_addr, &dhcp.offered_ip_addr, &sn_mask);
         /* use first host address on network as gateway */
         (&gw_addr.u32 = (&gw_addr.u32) | pp_htonl(0x00000001UL));
     }
-    if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+    if (dhcp.autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
         autoip_stop(netif, );
-        dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+        dhcp.autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
     }
     Logf(true,
          "dhcp_bind(): IP: 0x%08x SN: 0x%08x GW: 0x%08x\n",
-         (&dhcp->offered_ip_addr.u32),
+         (&dhcp.offered_ip_addr.u32),
          (&sn_mask.u32),
          (&gw_addr.u32));
     /* netif is now bound to DHCP leased address - set this before assigning the address
        to ensure the callback can use dhcp_supplied_address() */
     dhcp_set_state(dhcp, DHCP_STATE_BOUND);
-    set_netif_addr(netif, &dhcp->offered_ip_addr, &sn_mask, &gw_addr);
+    set_netif_addr(netif, &dhcp.offered_ip_addr, &sn_mask, &gw_addr);
     /* interface is used by routing now that an address is set */
+
+    return true;
 }
 
 /**
@@ -1595,14 +1607,14 @@ dhcp_recv(void* arg,
             }
             else {
                 /* bind interface to the acknowledged lease address */
-                dhcp_bind(netif);
+                dhcp_bind(netif,);
             }
         }
             /* already bound to the given lease address? */ else if (dhcp->state ==
             DHCP_STATE_REBOOTING || dhcp->state == DHCP_STATE_REBINDING || dhcp->state ==
             DHCP_STATE_RENEWING) {
             dhcp_handle_ack(netif, msg_in);
-            dhcp_bind(netif);
+            dhcp_bind(netif,);
         }
     }
         /* received a DHCP_NAK in appropriate state? */ else if (msg_type == DHCP_NAK && (
