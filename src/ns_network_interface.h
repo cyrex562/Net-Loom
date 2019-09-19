@@ -148,7 +148,7 @@ struct NetworkInterface
     uint16_t loop_cnt_current;
     std::queue<PacketContainer> rx_buffer;
     std::queue<PacketContainer> tx_buffer;
-    uuids::uuid
+    uuids::uuid id;
 };
 
 
