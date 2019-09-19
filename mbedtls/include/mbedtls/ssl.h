@@ -31,7 +31,7 @@
 #endif
 
 #include "bignum.h"
-#include "ecp.h"
+#include "ns_ppp_ecp.h"
 
 #include "ssl_ciphersuites.h"
 

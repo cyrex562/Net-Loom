@@ -33,7 +33,7 @@
 #include "ssl.h"
 
 #if defined(MBEDTLS_ECP_C)
-#include "ecp.h"
+#include "ns_ppp_ecp.h"
 #endif
 
 #if defined(MBEDTLS_DEBUG_C)

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 # project name
-project(lwip)
+project(ns)
 
 # set c++ standard to C++ 17
 set(CMAKE_CXX_STANDARD 17)
@@ -17,7 +17,7 @@ set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 #set(CPACK_PACKAGE_VERSION_MINOR "${LWIP_VERSION_MINOR}")
 #set(CPACK_PACKAGE_VERSION_PATCH "${LWIP_VERSION_REVISION}")
 #set(CPACK_SOURCE_IGNORE_FILES "/build/;${CPACK_SOURCE_IGNORE_FILES};.git")
-#set(CPACK_SOURCE_PACKAGE_FILE_NAME "lwip-${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}")
+#set(CPACK_SOURCE_PACKAGE_FILE_NAME "ns-${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}")
 #include(CPack)
 
 # Target for package generation
@@ -33,23 +33,27 @@ add_subdirectory(libzmq)
 # compile mbedtls
 add_subdirectory(mbedtls)
 
+# compile stduuid
+add_subdirectory(stduuid)
+
 #add_subdirectory(fmt/build)
 
 file(GLOB SRC_FILES src/*.c src/*.cpp)
 
 # add src
-add_library(lwip STATIC ${SRC_FILES})
-target_include_directories(lwip PUBLIC src)
-target_include_directories(lwip PUBLIC npcap/Include)
-target_include_directories(lwip PUBLIC npcap/Include/pcap)
-target_include_directories(lwip PUBLIC mbedtls/include)
-target_include_directories(lwip PUBLIC spdlog/include)
-target_link_libraries(lwip fmt)
-target_link_libraries(lwip libzmq)
-target_link_libraries(lwip spdlog)
-target_link_libraries(lwip npcap/Lib/x64/wpcap.lib)
-target_link_libraries(lwip npcap/Lib/x64/Packet.lib)
-
+add_library(ns STATIC ${SRC_FILES})
+target_include_directories(ns PUBLIC src)
+target_include_directories(ns PUBLIC npcap/Include)
+target_include_directories(ns PUBLIC npcap/Include/pcap)
+target_include_directories(ns PUBLIC mbedtls/include)
+target_include_directories(ns PUBLIC spdlog/include)
+target_include_directories(ns PUBLIC stduuid/include)
+target_link_libraries(ns fmt)
+target_link_libraries(ns libzmq)
+target_link_libraries(ns spdlog)
+target_link_libraries(ns npcap/Lib/x64/wpcap.lib)
+target_link_libraries(ns npcap/Lib/x64/Packet.lib)
+target_link_libraries(ns stduuid)
 #
 # END OF FILE
 #

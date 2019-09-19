@@ -63,21 +63,21 @@ help improve lwIP by use of Savannah's interface, Git and the
 mailing list. A core team of developers will commit changes to the
 Git source tree.
 
-The lwIP TCP/IP stack is maintained in the 'lwip' Git module and
+The lwIP TCP/IP stack is maintained in the 'ns' Git module and
 contributions (such as platform ports) are in the 'contrib' Git module.
 
 See doc/savannah.txt for details on Git server access for users and
 developers.
 
 The current Git trees are web-browsable:
-  http://git.savannah.gnu.org/cgit/lwip.git
-  http://git.savannah.gnu.org/cgit/lwip-contrib.git
+  http://git.savannah.gnu.org/cgit/ns.git
+  http://git.savannah.gnu.org/cgit/ns-contrib.git
 
 Submit patches and bugs via the lwIP project page:
   http://savannah.nongnu.org/projects/
 
 Continuous integration builds (GCC, clang):
-  https://travis-ci.org/yarrick/lwip-merged
+  https://travis-ci.org/yarrick/ns-merged
 
 
 DOCUMENTATION
@@ -87,13 +87,13 @@ Git sources and is available from this web page:
   http://www.nongnu.org/
 
 There is now a constantly growing wiki about lwIP at
-  http://lwip.wikia.com/wiki/LwIP_Wiki
+  http://ns.wikia.com/wiki/LwIP_Wiki
 
 Also, there are mailing lists you can subscribe at
-  http://savannah.nongnu.org/mail/?group=lwip
+  http://savannah.nongnu.org/mail/?group=ns
 plus searchable archives:
-  http://lists.nongnu.org/archive/html/lwip-users/
-  http://lists.nongnu.org/archive/html/lwip-devel/
+  http://lists.nongnu.org/archive/html/ns-users/
+  http://lists.nongnu.org/archive/html/ns-devel/
 
 lwIP was originally written by Adam Dunkels:
   http://dunkels.com/adam/

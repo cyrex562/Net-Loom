@@ -40,7 +40,7 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "ecp.h"
+#include "ns_ppp_ecp.h"
 
 /*
  * Use a backward compatible ECDH context.
