@@ -18,11 +18,12 @@ string(REGEX MATCH "IAR" CMAKE_COMPILER_IS_IAR "${CMAKE_C_COMPILER_ID}")
 string(REGEX MATCH "MSVC" CMAKE_COMPILER_IS_MSVC "${CMAKE_C_COMPILER_ID}")
 
 # the test suites currently have compile errors with MSVC
-if(CMAKE_COMPILER_IS_MSVC)
-    option(ENABLE_TESTING "Build mbed TLS tests." OFF)
-else()
-    option(ENABLE_TESTING "Build mbed TLS tests." ON)
-endif()
+#if(CMAKE_COMPILER_IS_MSVC)
+#    option(ENABLE_TESTING "Build mbed TLS tests." OFF)
+#else()
+#    option(ENABLE_TESTING "Build mbed TLS tests." ON)
+#endif()
+option(ENABLE_TESTING "Build mbed TLS tests." OFF)
 
 # Warning string - created as a list for compatibility with CMake 2.8
 set(WARNING_BORDER "*******************************************************\n")
@@ -47,37 +48,37 @@ set(CTR_DRBG_128_BIT_KEY_WARNING "${WARNING_BORDER}"
                          "${WARNING_BORDER}")
 
 find_package(PythonInterp)
-find_package(Perl)
-if(PERL_FOUND)
-
-    # If 128-bit keys are configured for CTR_DRBG, display an appropriate warning
-    execute_process(COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/config.pl -f ${CMAKE_CURRENT_SOURCE_DIR}/include/mbedtls/config.h get MBEDTLS_CTR_DRBG_USE_128_BIT_KEY
-                        RESULT_VARIABLE result)
-    if(${result} EQUAL 0)
-        message(WARNING ${CTR_DRBG_128_BIT_KEY_WARNING})
-    endif()
-
-    # If NULL Entropy is configured, display an appropriate warning
-    execute_process(COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/config.pl -f ${CMAKE_CURRENT_SOURCE_DIR}/include/mbedtls/config.h get MBEDTLS_TEST_NULL_ENTROPY
-                        RESULT_VARIABLE result)
-    if(${result} EQUAL 0)
-        message(WARNING ${NULL_ENTROPY_WARNING})
-
-        if(NOT UNSAFE_BUILD)
-            message(FATAL_ERROR "\
-\n\
-Warning! You have enabled MBEDTLS_TEST_NULL_ENTROPY. \
-This option is not safe for production use and negates all security \
-It is intended for development use only. \
-\n\
-To confirm you want to build with this option, re-run cmake with the \
-option: \n\
-  cmake -DUNSAFE_BUILD=ON ")
-
-            return()
-        endif()
-    endif()
-endif()
+#find_package(Perl)
+#if(PERL_FOUND)
+##
+##    # If 128-bit keys are configured for CTR_DRBG, display an appropriate warning
+##    execute_process(COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/config.pl -f ${CMAKE_CURRENT_SOURCE_DIR}/include/mbedtls/config.h get MBEDTLS_CTR_DRBG_USE_128_BIT_KEY
+##                        RESULT_VARIABLE result)
+##    if(${result} EQUAL 0)
+##        message(WARNING ${CTR_DRBG_128_BIT_KEY_WARNING})
+##    endif()
+##
+##    # If NULL Entropy is configured, display an appropriate warning
+##    execute_process(COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/config.pl -f ${CMAKE_CURRENT_SOURCE_DIR}/include/mbedtls/config.h get MBEDTLS_TEST_NULL_ENTROPY
+##                        RESULT_VARIABLE result)
+##    if(${result} EQUAL 0)
+##        message(WARNING ${NULL_ENTROPY_WARNING})
+##
+##        if(NOT UNSAFE_BUILD)
+##            message(FATAL_ERROR "\
+##\n\
+##Warning! You have enabled MBEDTLS_TEST_NULL_ENTROPY. \
+##This option is not safe for production use and negates all security \
+##It is intended for development use only. \
+##\n\
+##To confirm you want to build with this option, re-run cmake with the \
+##option: \n\
+##  cmake -DUNSAFE_BUILD=ON ")
+##
+##            return()
+##        endif()
+##    endif()
+##endif()
 
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
     CACHE STRING "Choose the type of build: None Debug Release Coverage ASan ASanDbg MemSan MemSanDbg Check CheckFull"
@@ -88,6 +89,7 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
 function(link_to_source base_name)
     # Get OS dependent path to use in `execute_process`
     if (CMAKE_HOST_WIN32)
+
         #mklink is an internal command of cmd.exe it can only work with \
         string(REPLACE "/" "\\" link "${CMAKE_CURRENT_BINARY_DIR}/${base_name}")
         string(REPLACE "/" "\\" target "${CMAKE_CURRENT_SOURCE_DIR}/${base_name}")
@@ -96,6 +98,7 @@ function(link_to_source base_name)
         set(target "${CMAKE_CURRENT_SOURCE_DIR}/${base_name}")
     endif()
 
+    message("link " ${link})
     if (NOT EXISTS ${link})
         if (CMAKE_HOST_UNIX)
             set(command ln -s ${target} ${link})
@@ -194,6 +197,9 @@ ADD_CUSTOM_TARGET(apidoc
     COMMAND doxygen mbedtls.doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doxygen)
 
+
+set(ENABLE_TESTING off)
+message("enable_testing " ${ENABLE_TESTING})
 if(ENABLE_TESTING)
     enable_testing()
 
