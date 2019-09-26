@@ -46,3 +46,5 @@ out/*
 .vs/lwip_refactor/config/applicationhost.config
 .vs/lwip_refactor/v16/.suo~41c519c7d6b6b61a29ad4efa59cc2dd342623202
 .vs/ProjectSettings.json
+cmake-build-debug/*
+.idea/*
