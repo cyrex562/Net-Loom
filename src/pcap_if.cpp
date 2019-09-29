@@ -3,7 +3,7 @@
  * file: pcapif.cpp
  *
  */
-#include "pcapif.h"
+#include "pcap_if.h"
 #include "netloom_config.h"
 #include "eth_arp.h"
 #include "ip.h"

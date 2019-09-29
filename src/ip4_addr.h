@@ -1,8 +1,8 @@
-///
-/// file: ip4_addr.h
-///
+/**
+ * @file: ip4_addr.h 
+ */
 #pragma once
-#include "ns_def.h"
+#include "netloom_config.h"
 #include <string>
 
 
