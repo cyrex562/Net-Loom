@@ -11,12 +11,12 @@
 #include "igmp_grp.h"
 #include "dhcp_context.h"
 #include "dhcp6_context.h"
-#include <vector>
 #include "auto_ip_state.h"
 #include "mld6_group.h"
 #include "pcap_if.h"
 #include "ip_addr.h"
 #include "uuid.h"
+#include <vector>
 
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;

@@ -3,7 +3,7 @@
 #include <cstdint>
 
 /** AutoIP state information per netif */
-struct AutoipState
+struct AutoipContext
 {
     /** the currently selected, probed, announced or used LL IP-Address */
     Ip4Addr llipaddr; /** current AutoIP state machine state */

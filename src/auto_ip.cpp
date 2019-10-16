@@ -18,19 +18,18 @@
  *
  */
 bool autoip_restart(NetworkInterface& netif,
-                    AutoipState& state)
+                    AutoipContext& state)
 {
     // ReSharper disable once CppLocalVariableMayBeConst
     state.tried_llipaddr++;
-    if (!autoip_start(netif, state)) { return false; }
-    return true;
+    return autoip_start(netif, state);
 }
 
 
 //
 // Handle a IP address conflict after an ARP conflict detection
 //
-bool autoip_handle_arp_conflict(NetworkInterface& net_ifc, AutoipState& state)
+bool autoip_handle_arp_conflict(NetworkInterface& net_ifc, AutoipContext& state)
 {
     /* RFC3927, 2.5 "Conflict Detection and Defense" allows two options where
            a) means retreat on the first conflict and
@@ -58,7 +57,7 @@ bool autoip_handle_arp_conflict(NetworkInterface& net_ifc, AutoipState& state)
 // @param netif network interface on which create the IP-Address
 // @param ipaddr ip address to initialize
 //
-bool autoip_create_addr(AutoipState& autoip, NetworkInterface& netif, Ip4Addr& ipaddr)
+bool autoip_create_addr(AutoipContext& autoip, NetworkInterface& netif, Ip4Addr& ipaddr)
 {
 
     /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
@@ -66,7 +65,7 @@ bool autoip_create_addr(AutoipState& autoip, NetworkInterface& netif, Ip4Addr& i
       * We have 254 * 256 possibilities */
     auto addr = ns_ntohl(autoip_gen_seed_addr(netif));
     addr += autoip.tried_llipaddr;
-    addr = IP4_AUTO_IP_NET | addr & 0xffff; /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
+    addr = IP4_AUTO_IP_NET | (addr & 0xffff); /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */
     if (addr < AUTOIP_RANGE_START)
     {
         addr += IP4_AUTO_IP_RANGE_END - AUTOIP_RANGE_START + 1;
@@ -88,7 +87,7 @@ bool autoip_create_addr(AutoipState& autoip, NetworkInterface& netif, Ip4Addr& i
 // @param netif network interface used to send the probe
 //
 bool
-autoip_arp_probe(NetworkInterface& netif, AutoipState& autoip)
+autoip_arp_probe(NetworkInterface& netif, AutoipContext& autoip)
 {
 
     /* this works because netif->ip_addr is ANY */
@@ -112,7 +111,7 @@ autoip_arp_announce(NetworkInterface& netif, Ip4Addr& announce_ip_addr)
  * @param state
  */
 bool
-autoip_bind(NetworkInterface& netif, AutoipState& state)
+autoip_bind(NetworkInterface& netif, AutoipContext& state)
 {
     Ip4Addr sn_mask = ip4_addr_create_hbo(255, 255, 0, 0);
     Ip4Addr gw_addr = ip4_addr_create_hbo(0, 0, 0, 0);
@@ -131,7 +130,7 @@ autoip_bind(NetworkInterface& netif, AutoipState& state)
  * @param state
  */
 bool
-autoip_start(NetworkInterface& netif, AutoipState& state)
+autoip_start(NetworkInterface& netif, AutoipContext& state)
 {
     /* Set IP-Address, Netmask and Gateway to 0 to make sure that
          * ARP Packets are formed correctly
@@ -166,7 +165,7 @@ autoip_start(NetworkInterface& netif, AutoipState& state)
     state.state = AUTOIP_STATE_OFF;
     state.ttw = 0;
     state.sent_num = 0;
-    (state.llipaddr.u32 == IP4_ADDR_ANY_U32);
+    (state.llipaddr.u32 = IP4_ADDR_ANY_U32);
     state.lastconflict = 0;
 
     if (!autoip_create_addr(state, netif, state.llipaddr)) {return false;}
@@ -175,7 +174,7 @@ autoip_start(NetworkInterface& netif, AutoipState& state)
 
 
 bool
-autoip_start_probing(NetworkInterface& netif, AutoipState& state)
+autoip_start_probing(NetworkInterface& netif, AutoipContext& state)
 {
     state.state = AUTOIP_STATE_PROBING;
     state.sent_num = 0;
@@ -197,7 +196,7 @@ autoip_start_probing(NetworkInterface& netif, AutoipState& state)
 
 
 uint32_t
-autoip_gen_rand(NetworkInterface& netif, AutoipState& state)
+autoip_gen_rand(NetworkInterface& netif, AutoipContext& state)
 {
     // todo: replace with system random function or real pseudo-random math function.
     auto x = (uint32_t(netif.mac_address.bytes[5] & 0xff) << 24 |
@@ -214,7 +213,7 @@ autoip_gen_rand(NetworkInterface& netif, AutoipState& state)
 // If there is an AutoIP address configured, take the interface down
 // and begin probing with the same address.
 //
-bool autoip_network_changed(NetworkInterface& netif, AutoipState& state)
+bool autoip_network_changed(NetworkInterface& netif, AutoipContext& state)
 {
     if ((state.state != AUTOIP_STATE_OFF))
     {
@@ -230,7 +229,7 @@ bool autoip_network_changed(NetworkInterface& netif, AutoipState& state)
 // @param netif network interface on which stop the AutoIP client
 //
 bool
-autoip_stop(NetworkInterface& netif, AutoipState& autoip)
+autoip_stop(NetworkInterface& netif, AutoipContext& autoip)
 {
     autoip.state = AUTOIP_STATE_OFF;
     // todo: determine which IP to modify
@@ -252,7 +251,7 @@ autoip_stop(NetworkInterface& netif, AutoipState& autoip)
 //
 bool
 autoip_timer_fn(std::vector<NetworkInterface>& interfaces,
-                AutoipState& state)
+                AutoipContext& state)
 {
     // loop through netif's
     for (auto& netif : interfaces)
@@ -324,7 +323,7 @@ autoip_timer_fn(std::vector<NetworkInterface>& interfaces,
 // @param hdr Incoming ARP packet
 //
 bool
-autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
+autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipContext& state)
 {
     if (state.state != AUTOIP_STATE_OFF)
     {
@@ -385,7 +384,7 @@ autoip_arp_reply(NetworkInterface& netif, EtharpHdr& hdr, AutoipState& state)
 //         0 otherwise
 //
 bool
-autoip_supplied_address(const NetworkInterface& netif, AutoipState& autoip)
+autoip_supplied_address(const NetworkInterface& netif, AutoipContext& autoip)
 {
     return (autoip.state == AUTOIP_STATE_BOUND) || (autoip.state ==
         AUTOIP_STATE_ANNOUNCING);
@@ -393,7 +392,7 @@ autoip_supplied_address(const NetworkInterface& netif, AutoipState& autoip)
 
 
 bool
-autoip_accept_packet(AutoipState& state, const Ip4Addr& addr)
+autoip_accept_packet(AutoipContext& state, const Ip4Addr& addr)
 {
     return (addr.u32 == state.llipaddr.u32);
 }

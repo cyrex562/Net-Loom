@@ -4,7 +4,6 @@
 #include "network_interface.h"
 #include "packet.h"
 #include "mac_address.h"
-
 #include <vector>
 #include "dhcp_context.h"
 

@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "ns_def.h"
+#include "netloom_config.h"
 #include "netloom_debug.h"
 #include <string>
 #include <array>

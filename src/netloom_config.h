@@ -164,7 +164,7 @@ constexpr unsigned int NETIF_MAX_HWADDR_LEN = 6; // typedef int64_t LONGLONG;
 //} LARGE_INTEGER;
 // typedef void* HANDLE;
 
-typedef uintptr_t HCRYPTPROV;
+typedef uintptr_t NTL_HCRYPTPROV;
 
 
 typedef uint32_t LwipInAddr;

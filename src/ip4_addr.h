@@ -3,6 +3,7 @@
  */
 #pragma once
 #include "netloom_config.h"
+#include "netloom_util.h"
 #include <string>
 
 
