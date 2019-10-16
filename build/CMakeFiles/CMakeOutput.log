@@ -1,0 +1,274 @@
+The system is: Windows - 10.0.18362 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.23.28105/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.23.28106.4 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCCompilerId.c
+Microsoft (R) Incremental Linker Version 14.23.28106.4
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCCompilerId.exe 
+CMakeCCompilerId.obj 
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+
+The C compiler identification is MSVC, found in "D:/projects/net_loom/build/CMakeFiles/3.15.2/CompilerIdC/CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.23.28105/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.23.28106.4 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCXXCompilerId.cpp
+Microsoft (R) Incremental Linker Version 14.23.28106.4
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCXXCompilerId.exe 
+CMakeCXXCompilerId.obj 
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "D:/projects/net_loom/build/CMakeFiles/3.15.2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_04bb8 && [1/2] Building C object CMakeFiles\cmTC_04bb8.dir\testCCompiler.c.obj
+[2/2] Linking C executable cmTC_04bb8.exe
+
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_14b8c && [1/2] Building C object CMakeFiles\cmTC_14b8c.dir\CMakeCCompilerABI.c.obj
+[2/2] Linking C executable cmTC_14b8c.exe
+
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_fc4b6 && [1/2] Building CXX object CMakeFiles\cmTC_fc4b6.dir\testCXXCompiler.cxx.obj
+[2/2] Linking CXX executable cmTC_fc4b6.exe
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_eb1bf && [1/2] Building CXX object CMakeFiles\cmTC_eb1bf.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_eb1bf.exe
+
+
+
+Performing C++ SOURCE FILE Test SUPPORTS_VARIADIC_TEMPLATES succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_143b0 && [1/2] Building CXX object CMakeFiles\cmTC_143b0.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_143b0.exe
+
+
+Source file was:
+
+  template <class T, class ...Types>
+  struct S { typedef typename S<Types...>::type type; };
+  int main() {}
+Performing C++ SOURCE FILE Test SUPPORTS_INITIALIZER_LIST succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_1a841 && [1/2] Building CXX object CMakeFiles\cmTC_1a841.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_1a841.exe
+
+
+Source file was:
+
+  #include <initializer_list>
+  int main() {}
+Performing C++ SOURCE FILE Test SUPPORTS_ENUM_BASE succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_bb899 && [1/2] Building CXX object CMakeFiles\cmTC_bb899.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_bb899.exe
+
+
+Source file was:
+
+  enum C : char {A};
+  int main() {}
+Performing C++ SOURCE FILE Test SUPPORTS_TYPE_TRAITS succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_27d35 && [1/2] Building CXX object CMakeFiles\cmTC_27d35.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_27d35.exe
+
+
+Source file was:
+
+  #include <type_traits>
+  class C { void operator=(const C&); };
+  int main() { static_assert(!std::is_copy_assignable<C>::value, ""); }
+Performing C++ SOURCE FILE Test SUPPORTS_USER_DEFINED_LITERALS succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_3f573 && [1/2] Building CXX object CMakeFiles\cmTC_3f573.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_3f573.exe
+
+
+Source file was:
+
+  void operator"" _udl(long double);
+  int main() {}
+Determining if the open exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_dc631 && [1/2] Building C object CMakeFiles\cmTC_dc631.dir\CheckSymbolExists.c.obj
+CheckSymbolExists.c(8): warning C4996: 'open': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _open. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt\corecrt_io.h(516): note: see declaration of 'open'
+[2/2] Linking C executable cmTC_dc631.exe
+
+
+File D:/projects/net_loom/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <io.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef open
+  return ((int*)(&open))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if files windows.h exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_10814 && [1/2] Building C object CMakeFiles\cmTC_10814.dir\ZMQ_HAVE_WINDOWS.c.obj
+[2/2] Linking C executable cmTC_10814.exe
+
+
+
+Determining if files condition_variable exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_8d62b && [1/2] Building CXX object CMakeFiles\cmTC_8d62b.dir\ZMQ_HAVE_STL_CONDITION_VARIABLE.cpp.obj
+[2/2] Linking CXX executable cmTC_8d62b.exe
+
+
+
+Determining if the WSAStartup exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_951b7 && [1/2] Building CXX object CMakeFiles\cmTC_951b7.dir\CheckSymbolExists.cxx.obj
+[2/2] Linking CXX executable cmTC_951b7.exe
+
+
+File D:/projects/net_loom/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <winsock2.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef WSAStartup
+  return ((int*)(&WSAStartup))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the UuidCreateSequential exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_6af88 && [1/2] Building CXX object CMakeFiles\cmTC_6af88.dir\CheckSymbolExists.cxx.obj
+[2/2] Linking CXX executable cmTC_6af88.exe
+
+
+File D:/projects/net_loom/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <rpc.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef UuidCreateSequential
+  return ((int*)(&UuidCreateSequential))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the GetAdaptersAddresses exist passed with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_80bd0 && [1/2] Building CXX object CMakeFiles\cmTC_80bd0.dir\CheckSymbolExists.cxx.obj
+[2/2] Linking CXX executable cmTC_80bd0.exe
+
+
+File D:/projects/net_loom/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <winsock2.h>
+#include <iphlpapi.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef GetAdaptersAddresses
+  return ((int*)(&GetAdaptersAddresses))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Performing C++ SOURCE FILE Test HAVE_FLAG_/W3 succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_d10e1 && [1/2] Building CXX object CMakeFiles\cmTC_d10e1.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_d10e1.exe
+
+
+Source file was:
+int main() { return 0; }
+Performing C++ SOURCE FILE Test ZMQ_HAVE_NOEXCEPT succeeded with the following output:
+Change Dir: D:/projects/net_loom/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/PROGRA~2/MICROS~1/2019/PROFES~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe cmTC_b4e81 && [1/2] Building CXX object CMakeFiles\cmTC_b4e81.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_b4e81.exe
+
+
+Source file was:
+
+struct X 
+{
+    X(int i) noexcept {}
+};
+
+int main(int argc, char *argv [])
+{
+    X x(5);
+    return 0;
+}
+

@@ -1,28 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 
 # project name
-project(ns)
+project(net_loom)
 
 # set c++ standard to C++ 17
 set(CMAKE_CXX_STANDARD 17)
-# set c standard to C11
-set(CMAKE_C_STANDARD 11)
-set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-# Package generation
-#set(CPACK_SOURCE_GENERATOR "ZIP")
-#set(CPACK_SOURCE_PACKAGE_DESCRIPTION_SUMMARY "lwIP lightweight IP stack")
-#set(CPACK_PACKAGE_VERSION_MAJOR "${LWIP_VERSION_MAJOR}")
-#set(CPACK_PACKAGE_VERSION_MINOR "${LWIP_VERSION_MINOR}")
-#set(CPACK_PACKAGE_VERSION_PATCH "${LWIP_VERSION_REVISION}")
-#set(CPACK_SOURCE_IGNORE_FILES "/build/;${CPACK_SOURCE_IGNORE_FILES};.git")
-#set(CPACK_SOURCE_PACKAGE_FILE_NAME "ns-${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}")
-#include(CPack)
-
-# Target for package generation
-#add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-#add_dependencies(dist lwipdocs)
+set(SOURCE src/main.cpp)
 
 # compile fmt
 add_subdirectory(fmt)
@@ -36,24 +21,32 @@ add_subdirectory(mbedtls)
 # compile stduuid
 add_subdirectory(stduuid)
 
-#add_subdirectory(fmt/build)
+# compile netloom_common
+add_subdirectory(src/common)
 
-file(GLOB SRC_FILES src/*.c src/*.cpp)
+# compile common
+
 
 # add src
-add_library(ns STATIC ${SRC_FILES})
-target_include_directories(ns PUBLIC src)
-target_include_directories(ns PUBLIC npcap/Include)
-target_include_directories(ns PUBLIC npcap/Include/pcap)
-target_include_directories(ns PUBLIC mbedtls/include)
-target_include_directories(ns PUBLIC spdlog/include)
-target_include_directories(ns PUBLIC stduuid/include)
-target_link_libraries(ns fmt)
-target_link_libraries(ns libzmq)
-target_link_libraries(ns spdlog)
-target_link_libraries(ns npcap/Lib/x64/wpcap.lib)
-target_link_libraries(ns npcap/Lib/x64/Packet.lib)
-target_link_libraries(ns stduuid)
+# add_library(net_loom STATIC ${SRC_FILES})
+# includes
+add_library(net_loom STATIC ${SOURCE})
+target_include_directories(net_loom PUBLIC src)
+target_include_directories(net_loom PUBLIC npcap/Include)
+target_include_directories(net_loom PUBLIC npcap/Include/pcap)
+target_include_directories(net_loom PUBLIC mbedtls/include)
+target_include_directories(net_loom PUBLIC spdlog/include)
+target_include_directories(net_loom PUBLIC stduuid/include)
+target_include_directories(net_loom PUBLIC src/common)
+
+# libraries to link
+target_link_libraries(net_loom fmt)
+target_link_libraries(net_loom libzmq)
+target_link_libraries(net_loom spdlog)
+target_link_libraries(net_loom npcap/Lib/x64/wpcap.lib)
+target_link_libraries(net_loom npcap/Lib/x64/Packet.lib)
+target_link_libraries(net_loom stduuid)
+
 #
 # END OF FILE
 #
