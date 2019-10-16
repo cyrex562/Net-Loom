@@ -42,7 +42,7 @@
 
 #include "netloom_config.h"
 #include "ip_addr.h"
-#include "ns_def.h"
+#include "netloom_config.h"
 #include "string.h"
 #include "ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
 #include <cctype>

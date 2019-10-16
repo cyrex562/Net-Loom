@@ -105,3 +105,5 @@
 28176	28873	592893639	libzmq/bin/libzmq-mt-gd-4_3_2.dll	fe50c845df0f9176
 28176	28873	592893639	libzmq/lib/libzmq-mt-gd-4_3_2.lib	fe50c845df0f9176
 28873	28899	592893639	net_loom.lib	74073bb7d959869b
+16	459	592894916	CMakeFiles/net_loom.dir/src/common/init.cpp.obj	21389ce171cfa3b5
+27	1457	592894917	CMakeFiles/net_loom.dir/src/common/netloom_sys.cpp.obj	7e10fa43a6cacfde

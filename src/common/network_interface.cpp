@@ -1,8 +1,8 @@
 /**
  * @file network_interface.cpp
  */
-#include "dhcp6.h"
-#include "eth_arp.h"
+// #include "dhcp6.h"
+// #include "eth_arp.h"
 #include "ip6_addr.h"
 #include "ip_addr.h"
 #include "netloom_status.h"

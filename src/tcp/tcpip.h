@@ -11,6 +11,53 @@
 /** The global semaphore to lock the stack. */
 extern Mutex lock_tcpip_core;
 
+
+//
+//
+//
+void sys_lock_tcpip_core()
+{
+    sys_mutex_lock(&lock_tcpip_core);
+    // lwip_core_lock_holder_thread_id = GetCurrentThreadId();
+}
+
+//
+//
+//
+void sys_unlock_tcpip_core()
+{
+    // lwip_core_lock_holder_thread_id = 0;
+    sys_mutex_unlock(&lock_tcpip_core);
+}
+
+
+// static DWORD lwip_tcpip_thread_id;
+
+uint32_t
+sys_mark_tcpip_thread(void)
+{
+    auto lwip_tcpip_thread_id = GetCurrentThreadId();
+    return lwip_tcpip_thread_id;
+}
+
+uint32_t
+sys_check_core_locking(uint32_t lwip_tcpip_thread_id)
+{
+    /* Embedded systems should check we are NOT in an interrupt context here */
+
+    if (lwip_tcpip_thread_id != 0)
+    {
+        uint32_t current_thread_id = GetCurrentThreadId();
+
+        // lwip_assert("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);;
+        /* for LWIP_NOASSERT */
+        return current_thread_id;
+    }
+
+    return 0;
+}
+
+
 /** Lock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
 /** Unlock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
