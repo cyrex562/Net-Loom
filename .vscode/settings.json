@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "codecvt": "cpp",
+        "random": "cpp",
+        "regex": "cpp",
+        "vector": "cpp",
+        "xlocale": "cpp"
+    }
+}

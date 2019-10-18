@@ -6,6 +6,7 @@
 #include "netloom_status.h"
 #include "packet.h"
 #include "mac_address.h"
+#include "ip_addr.h"
 #include "ip4_addr.h"
 #include "ip6_addr.h"
 // #include "igmp_grp.h"
@@ -17,7 +18,7 @@
 // #include "ip_addr.h"
 #include "uuid.h"
 #include <vector>
-
+#include <queue>
 constexpr auto NETIF_CHECKSUM_GEN_IP = 0x0001;
 constexpr auto NETIF_CHECKSUM_GEN_UDP = 0x0002;
 constexpr auto NETIF_CHECKSUM_GEN_TCP = 0x0004;
@@ -133,7 +134,7 @@ struct NetworkInterface
     // AutoipState auto_ip_state;
     // MldGroup mld_group;
     // PcapInterface pcap_if_private;
-    std::vector<IgmpGroup> igmp_groups;
+    // std::vector<IgmpGroup> igmp_groups;
     std::string hostname;
     uint16_t checksum_flags;
     uint16_t mtu; /** maximum transfer unit (in bytes) */

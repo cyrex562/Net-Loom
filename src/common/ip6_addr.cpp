@@ -8,8 +8,8 @@
  * Copyright (c) 2010 Inico Technologies Ltd.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
@@ -21,14 +21,14 @@
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
  *
@@ -40,15 +40,18 @@
  * <delamer@inicotech.com>
  */
 
-#include "netloom_config.h"
+#include "ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
 #include "ip_addr.h"
 #include "netloom_config.h"
 #include "string.h"
-#include "ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
 #include <cctype>
+#include <fmt/format.h>
 
-
-inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10));}
+inline char
+lwip_xchar(char i)
+{
+  return ((char)((i) < 10 ? '0' + (i) : 'A' + (i)-10));
+}
 
 /**
  * Check whether "cp" is a valid ascii representation
@@ -59,127 +62,129 @@ inline char lwip_xchar(char i){return        ((char)((i) < 10 ? '0' + (i) : 'A' 
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-bool ip6_addr_aton(std::string& cp, Ip6Addr& addr)
+bool
+ip6_addr_aton(std::string& cp, Ip6Addr& addr)
 {
-    const char *s;
+  const char* s;
 
   int check_ipv4_mapped = 0;
-  //todo: re-write
-//
-//   /* Count the number of colons, to count the number of blocks in a "::" sequence
-//      zero_blocks may be 1 even if there are no :: sequences */
-//   uint32_t zero_blocks = 8;
-//   for (s = cp; *s != 0; s++) {
-//     if (*s == ':') {
-//       zero_blocks--;
-//
-//     } else if (*s == '.') {
-//       if ((zero_blocks == 5) ||(zero_blocks == 2)) {
-//         check_ipv4_mapped = 1;
-//         /* last block could be the start of an IPv4 address */
-//         zero_blocks--;
-//       } else {
-//         /* invalid format */
-//         return false;
-//       }
-//       break;
-//
-//     } else if (!isxdigit(*s)) {
-//       break;
-//     }
-//   }
-//
-//   /* parse each block */
-//   uint32_t addr_index = 0;
-//   uint32_t current_block_index = 0;
-//   uint32_t current_block_value = 0;
-//   for (s = cp; *s != 0; s++) {
-//     if (*s == ':') {
-//       if (addr) {
-//         if (current_block_index & 0x1) {
-//           addr->addr[addr_index++] |= current_block_value;
-//         }
-//         else {
-//           addr->addr[addr_index] = current_block_value << 16;
-//         }
-//       }
-//       current_block_index++;
-//
-//       if (check_ipv4_mapped) {
-//         if (current_block_index == 6) {
-//           Ip4Addr ip4;
-//           int ret = lwip_ip4addr_aton(s + 1, &ip4);
-//           if (ret) {
-//             if (addr) {
-//               addr->addr[3] = lwip_htonl(ip4.addr);
-//               current_block_index++;
-//               goto fix_byte_order_and_return;
-//             }
-//             return true;
-//           }
-//         }
-//       }
-//
-//       current_block_value = 0;
-//       if (current_block_index > 7) {
-//         /* address too long! */
-//         return false;
-//       }
-//       if (s[1] == ':') {
-//         if (s[2] == ':') {
-//           /* invalid format: three successive colons */
-//           return false;
-//         }
-//         s++;
-//         /* "::" found, set zeros */
-//         while (zero_blocks > 0) {
-//           zero_blocks--;
-//           if (current_block_index & 0x1) {
-//             addr_index++;
-//           } else {
-//             if (addr) {
-//               addr->addr[addr_index] = 0;
-//             }
-//           }
-//           current_block_index++;
-//           if (current_block_index > 7) {
-//             /* address too long! */
-//             return false;
-//           }
-//         }
-//       }
-//     } else if (isxdigit(*s)) {
-//       /* add current digit */
-//       current_block_value = (current_block_value << 4) +
-//           (isdigit(*s) ? (uint32_t)(*s - '0') :
-//           (uint32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
-//     } else {
-//       /* unexpected digit, space? CRLF? */
-//       break;
-//     }
-//   }
-//
-//   if (addr) {
-//     if (current_block_index & 0x1) {
-//       addr->addr[addr_index++] |= current_block_value;
-//     }
-//     else {
-//       addr->addr[addr_index] = current_block_value << 16;
-//     }
-//
-// fix_byte_order_and_return:
-//
-//     /* convert to network byte order. */
-//     for (addr_index = 0; addr_index < 4; addr_index++) {
-//       addr->addr[addr_index] = lwip_htonl(addr->addr[addr_index]);
-//     }
-//
-//     ip6_addr_clear_zone(addr);
-//   }
-//
-//   if (current_block_index != 7) {
-//     return false;
-//   }
+  // todo: re-write
+  //
+  //   /* Count the number of colons, to count the number of blocks in a "::"
+  //   sequence
+  //      zero_blocks may be 1 even if there are no :: sequences */
+  //   uint32_t zero_blocks = 8;
+  //   for (s = cp; *s != 0; s++) {
+  //     if (*s == ':') {
+  //       zero_blocks--;
+  //
+  //     } else if (*s == '.') {
+  //       if ((zero_blocks == 5) ||(zero_blocks == 2)) {
+  //         check_ipv4_mapped = 1;
+  //         /* last block could be the start of an IPv4 address */
+  //         zero_blocks--;
+  //       } else {
+  //         /* invalid format */
+  //         return false;
+  //       }
+  //       break;
+  //
+  //     } else if (!isxdigit(*s)) {
+  //       break;
+  //     }
+  //   }
+  //
+  //   /* parse each block */
+  //   uint32_t addr_index = 0;
+  //   uint32_t current_block_index = 0;
+  //   uint32_t current_block_value = 0;
+  //   for (s = cp; *s != 0; s++) {
+  //     if (*s == ':') {
+  //       if (addr) {
+  //         if (current_block_index & 0x1) {
+  //           addr->addr[addr_index++] |= current_block_value;
+  //         }
+  //         else {
+  //           addr->addr[addr_index] = current_block_value << 16;
+  //         }
+  //       }
+  //       current_block_index++;
+  //
+  //       if (check_ipv4_mapped) {
+  //         if (current_block_index == 6) {
+  //           Ip4Addr ip4;
+  //           int ret = lwip_ip4addr_aton(s + 1, &ip4);
+  //           if (ret) {
+  //             if (addr) {
+  //               addr->addr[3] = lwip_htonl(ip4.addr);
+  //               current_block_index++;
+  //               goto fix_byte_order_and_return;
+  //             }
+  //             return true;
+  //           }
+  //         }
+  //       }
+  //
+  //       current_block_value = 0;
+  //       if (current_block_index > 7) {
+  //         /* address too long! */
+  //         return false;
+  //       }
+  //       if (s[1] == ':') {
+  //         if (s[2] == ':') {
+  //           /* invalid format: three successive colons */
+  //           return false;
+  //         }
+  //         s++;
+  //         /* "::" found, set zeros */
+  //         while (zero_blocks > 0) {
+  //           zero_blocks--;
+  //           if (current_block_index & 0x1) {
+  //             addr_index++;
+  //           } else {
+  //             if (addr) {
+  //               addr->addr[addr_index] = 0;
+  //             }
+  //           }
+  //           current_block_index++;
+  //           if (current_block_index > 7) {
+  //             /* address too long! */
+  //             return false;
+  //           }
+  //         }
+  //       }
+  //     } else if (isxdigit(*s)) {
+  //       /* add current digit */
+  //       current_block_value = (current_block_value << 4) +
+  //           (isdigit(*s) ? (uint32_t)(*s - '0') :
+  //           (uint32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
+  //     } else {
+  //       /* unexpected digit, space? CRLF? */
+  //       break;
+  //     }
+  //   }
+  //
+  //   if (addr) {
+  //     if (current_block_index & 0x1) {
+  //       addr->addr[addr_index++] |= current_block_value;
+  //     }
+  //     else {
+  //       addr->addr[addr_index] = current_block_value << 16;
+  //     }
+  //
+  // fix_byte_order_and_return:
+  //
+  //     /* convert to network byte order. */
+  //     for (addr_index = 0; addr_index < 4; addr_index++) {
+  //       addr->addr[addr_index] = lwip_htonl(addr->addr[addr_index]);
+  //     }
+  //
+  //     ip6_addr_clear_zone(addr);
+  //   }
+  //
+  //   if (current_block_index != 7) {
+  //     return false;
+  //   }
 
   return true;
 }
@@ -192,11 +197,14 @@ bool ip6_addr_aton(std::string& cp, Ip6Addr& addr)
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         representation of addr
  */
-std::string ip6_addr_ntoa(const Ip6Addr& addr)
+std::string
+ip6_addr_ntoa(const Ip6Addr& addr)
 {
-    std::string str;
-    return ip6addr_ntoa_r(addr);
+  std::string str;
+  return ip6addr_ntoa_r(addr);
 }
+
+constexpr std::string_view IP4MAPPED_HEADER = "::FFFF:";
 
 /**
  * Same as ipaddr_ntoa, but reentrant since a user-supplied buffer is used.
@@ -207,15 +215,15 @@ std::string ip6_addr_ntoa(const Ip6Addr& addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-std::string ip6addr_ntoa_r(const Ip6Addr& addr)
+std::string
+ip6addr_ntoa_r(const Ip6Addr& addr)
 {
-    uint8_t zero_flag;
-
+  uint8_t zero_flag;
 
   if (is_ip6_addr_ip4_mapped_ip6(addr)) {
     /* This is an IPv4 mapped address */
     Ip4Addr addr4;
-#define IP4MAPPED_HEADER "::FFFF:"
+
     // char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;
     // int buflen_ip4 = buflen - sizeof(IP4MAPPED_HEADER) + 1;
     // if (buflen < (int)sizeof(IP4MAPPED_HEADER)) {
@@ -233,9 +241,11 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
   int32_t i = 0;
   uint8_t empty_block_flag = 0; /* used to indicate a zero chain for "::' */
 
-  for (uint32_t current_block_index = 0; current_block_index < 8; current_block_index++) {
+  for (uint32_t current_block_index = 0; current_block_index < 8;
+       current_block_index++) {
     /* get the current 16-bit block */
-    uint32_t current_block_value = lwip_htonl(addr.word[current_block_index >> 1]);
+    uint32_t current_block_value =
+      lwip_htonl(addr.word[current_block_index >> 1]);
     if ((current_block_index & 0x1) == 0) {
       current_block_value = current_block_value >> 16;
     }
@@ -252,11 +262,12 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
         break;
       }
       if (empty_block_flag == 0) {
-        /* generate empty block "::", but only if more than one contiguous zero block,
-         * according to current formatting suggestions RFC 5952. */
-        uint32_t next_block_value = lwip_htonl(addr.word[(current_block_index + 1) >> 1]);
+        /* generate empty block "::", but only if more than one contiguous zero
+         * block, according to current formatting suggestions RFC 5952. */
+        uint32_t next_block_value =
+          lwip_htonl(addr.word[(current_block_index + 1) >> 1]);
         if ((current_block_index & 0x1) == 0x01) {
-            next_block_value = next_block_value >> 16;
+          next_block_value = next_block_value >> 16;
         }
         next_block_value &= 0xffff;
         if (next_block_value == 0) {
@@ -305,8 +316,7 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
 
     if (((current_block_value & 0xf0) == 0) && (zero_flag)) {
       /* do nothing */
-    }
-    else {
+    } else {
       buf[i++] = lwip_xchar(((current_block_value & 0xf0) >> 4));
       zero_flag = 0;
       // if (i >= buflen) {
@@ -324,4 +334,3 @@ std::string ip6addr_ntoa_r(const Ip6Addr& addr)
 
   return buf;
 }
-

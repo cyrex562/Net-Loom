@@ -48,3 +48,5 @@ out/*
 .vs/ProjectSettings.json
 cmake-build-debug/*
 .idea/*
+.vs/net_loom/v16/Browse.VC.opendb
+build/CMakeFiles/net_loom.dir/net_loom.pdb
