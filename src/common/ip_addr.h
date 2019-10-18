@@ -16,6 +16,18 @@ enum IpAddrType : uint8_t
     IP_ADDR_TYPE_ANY = 46U
 };
 
+
+constexpr size_t max_address_length = 16;
+
+class IpAddress
+{
+public:
+    IpAddrType type = IP_ADDR_TYPE_NOT_SET;
+    std::array<uint8_t, max_address_length> octets{};
+private:
+
+};
+
 ///
 /// Unified Ip Address struct
 ///
