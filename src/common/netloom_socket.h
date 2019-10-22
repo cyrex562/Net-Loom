@@ -46,6 +46,13 @@
 #define SELECT_SEM_PTR(sem) (sem)
 
 
+struct NetLoomSocket
+{
+    
+};
+
+
+
 /* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
    to prevent this code from redefining it. */
 
