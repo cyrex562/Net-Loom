@@ -50,3 +50,9 @@ cmake-build-debug/*
 .idea/*
 .vs/net_loom/v16/Browse.VC.opendb
 build/CMakeFiles/net_loom.dir/net_loom.pdb
+build/build.ninja
+build/CMakeCache.txt
+build/libzmq/clang-format-check.sh
+build/libzmq/cmake_install.cmake
+build/libzmq/CMakeFiles/clang-format-7852009.bat
+build/libzmq/CMakeFiles/clang-format-diff-8b2d988.bat

@@ -2254,7 +2254,7 @@ build libzmq\NSIS.template.in: CUSTOM_COMMAND ..\libzmq\builds\cmake\NSIS.templa
 # Custom command for libzmq\CMakeFiles\clang-format-diff
 
 build libzmq\CMakeFiles\clang-format-diff: CUSTOM_COMMAND
-  COMMAND = libzmq\CMakeFiles\clang-format-diff-8b2d988.bat 87bb275e8f05502d
+  COMMAND = libzmq\CMakeFiles\clang-format-diff-8b2d988.bat 864599f1fcb5a5b8
   DESC = Formatting with clang-format (using clang-format) and showing differences with latest commit
 
 
@@ -2262,7 +2262,7 @@ build libzmq\CMakeFiles\clang-format-diff: CUSTOM_COMMAND
 # Custom command for libzmq\CMakeFiles\clang-format
 
 build libzmq\CMakeFiles\clang-format: CUSTOM_COMMAND
-  COMMAND = libzmq\CMakeFiles\clang-format-7852009.bat 33df0afc73b3ee55
+  COMMAND = libzmq\CMakeFiles\clang-format-7852009.bat 2c1537e468bf21d4
 
 
 #############################################

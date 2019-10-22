@@ -117,7 +117,8 @@ enum Ip6MulticastScope: uint8_t
 // };
 
 struct Ip6Addr
-{
+{   
+    
     uint32_t word[4];  // NOLINT
 };
 
